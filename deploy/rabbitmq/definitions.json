@@ -1,0 +1,106 @@
+{
+  "_comment": [
+    "Topology AI (BR-A3). Bon hang doi TACH BIET voi consumer pool rieng.",
+    "Ly do tach: mot job bao cao chay 2 phut khong duoc phep lam khach trong",
+    "phong cho phai cho them 2 phut cho cau tra loi cua minh.",
+    "",
+    "Chuoi retry: ai.retry -> delay.5s / delay.30s / delay.2m -> quay lai hang",
+    "doi goc. Het 3 lan -> ai.dlq (co alert).",
+    "",
+    "x-message-ttl cua ai.chat.q la 60s va la CO Y: cau tra loi den sau khi",
+    "khach da duoc admit vao mua ve thi khong con gia tri gi."
+  ],
+  "vhosts": [{ "name": "/" }],
+  "exchanges": [
+    { "name": "ai.direct", "vhost": "/", "type": "direct", "durable": true },
+    { "name": "ai.retry", "vhost": "/", "type": "direct", "durable": true },
+    { "name": "ai.dlx", "vhost": "/", "type": "direct", "durable": true },
+    { "name": "ticketing.events", "vhost": "/", "type": "topic", "durable": true },
+    { "name": "notification.direct", "vhost": "/", "type": "direct", "durable": true }
+  ],
+  "queues": [
+    {
+      "name": "ai.chat.q", "vhost": "/", "durable": true,
+      "arguments": {
+        "x-queue-type": "quorum",
+        "x-message-ttl": 60000,
+        "x-max-priority": 5,
+        "x-dead-letter-exchange": "ai.retry",
+        "x-dead-letter-routing-key": "delay.5s"
+      }
+    },
+    {
+      "name": "ai.moderation.q", "vhost": "/", "durable": true,
+      "arguments": {
+        "x-queue-type": "quorum",
+        "x-message-ttl": 600000,
+        "x-dead-letter-exchange": "ai.retry",
+        "x-dead-letter-routing-key": "delay.30s"
+      }
+    },
+    {
+      "name": "ai.anomaly.q", "vhost": "/", "durable": true,
+      "arguments": {
+        "x-queue-type": "quorum",
+        "x-message-ttl": 1800000,
+        "x-dead-letter-exchange": "ai.retry",
+        "x-dead-letter-routing-key": "delay.30s"
+      }
+    },
+    {
+      "name": "ai.report.q", "vhost": "/", "durable": true,
+      "arguments": {
+        "x-queue-type": "quorum",
+        "x-message-ttl": 7200000,
+        "x-dead-letter-exchange": "ai.retry",
+        "x-dead-letter-routing-key": "delay.2m"
+      }
+    },
+    {
+      "name": "ai.delay.5s", "vhost": "/", "durable": true,
+      "arguments": {
+        "x-queue-type": "quorum", "x-message-ttl": 5000,
+        "x-dead-letter-exchange": "ai.direct"
+      }
+    },
+    {
+      "name": "ai.delay.30s", "vhost": "/", "durable": true,
+      "arguments": {
+        "x-queue-type": "quorum", "x-message-ttl": 30000,
+        "x-dead-letter-exchange": "ai.direct"
+      }
+    },
+    {
+      "name": "ai.delay.2m", "vhost": "/", "durable": true,
+      "arguments": {
+        "x-queue-type": "quorum", "x-message-ttl": 120000,
+        "x-dead-letter-exchange": "ai.direct"
+      }
+    },
+    {
+      "name": "ai.dlq", "vhost": "/", "durable": true,
+      "arguments": { "x-queue-type": "quorum" }
+    },
+    {
+      "name": "ticketing.hold.released.q", "vhost": "/", "durable": true,
+      "arguments": { "x-queue-type": "quorum" }
+    },
+    {
+      "name": "notification.email.q", "vhost": "/", "durable": true,
+      "arguments": { "x-queue-type": "quorum" }
+    }
+  ],
+  "bindings": [
+    { "source": "ai.direct", "vhost": "/", "destination": "ai.chat.q", "destination_type": "queue", "routing_key": "chat" },
+    { "source": "ai.direct", "vhost": "/", "destination": "ai.moderation.q", "destination_type": "queue", "routing_key": "moderation" },
+    { "source": "ai.direct", "vhost": "/", "destination": "ai.anomaly.q", "destination_type": "queue", "routing_key": "anomaly" },
+    { "source": "ai.direct", "vhost": "/", "destination": "ai.report.q", "destination_type": "queue", "routing_key": "report" },
+    { "source": "ai.retry", "vhost": "/", "destination": "ai.delay.5s", "destination_type": "queue", "routing_key": "delay.5s" },
+    { "source": "ai.retry", "vhost": "/", "destination": "ai.delay.30s", "destination_type": "queue", "routing_key": "delay.30s" },
+    { "source": "ai.retry", "vhost": "/", "destination": "ai.delay.2m", "destination_type": "queue", "routing_key": "delay.2m" },
+    { "source": "ai.dlx", "vhost": "/", "destination": "ai.dlq", "destination_type": "queue", "routing_key": "#" },
+    { "source": "ticketing.events", "vhost": "/", "destination": "ticketing.hold.released.q", "destination_type": "queue", "routing_key": "ticketing.hold.released" },
+    { "source": "notification.direct", "vhost": "/", "destination": "notification.email.q", "destination_type": "queue", "routing_key": "email" }
+  ],
+  "users": [], "permissions": [], "policies": [], "parameters": []
+}

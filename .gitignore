@@ -1,0 +1,12 @@
+node_modules/
+.next/
+dist/
+bin/
+*.exe
+.env
+.env.local
+__pycache__/
+.venv/
+.pytest_cache/
+coverage.out
+.DS_Store

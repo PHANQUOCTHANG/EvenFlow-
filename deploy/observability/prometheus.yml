@@ -1,0 +1,14 @@
+global:
+  scrape_interval: 5s      # ngan vi admit controller phan ung theo giay
+  evaluation_interval: 5s
+
+scrape_configs:
+  - job_name: waitingroom
+    static_configs: [{ targets: ["waitingroom:8081"] }]
+  - job_name: ticketing
+    static_configs: [{ targets: ["ticketing:8082"] }]
+  - job_name: ai-worker
+    static_configs: [{ targets: ["ai-worker:8090"] }]
+
+rule_files:
+  - /etc/prometheus/alerts.yml

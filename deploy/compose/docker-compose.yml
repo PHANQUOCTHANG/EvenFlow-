@@ -1,0 +1,173 @@
+name: eventflow
+
+# Moi truong phat trien cuc bo: du ca ha tang de chay tron mot dot mo ban thu.
+# Gemini co the chay o che do mock (GEMINI_MOCK=1) de khong ton quota khi dev.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: eventflow
+      POSTGRES_PASSWORD: eventflow
+      POSTGRES_DB: eventflow
+    # Cau hinh nghieng ve thong luong ghi, giong production hon mac dinh.
+    command: >
+      postgres
+      -c max_connections=200
+      -c shared_buffers=512MB
+      -c synchronous_commit=on
+      -c log_min_duration_statement=200ms
+    ports: ["5432:5432"]
+    volumes: ["pgdata:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U eventflow"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  pgbouncer:
+    image: edoburu/pgbouncer:latest
+    environment:
+      DB_HOST: postgres
+      DB_USER: eventflow
+      DB_PASSWORD: eventflow
+      DB_NAME: eventflow
+      # Transaction pooling: 2000 ket noi tu app -> 100 ket noi that toi Postgres.
+      # Khong co lop nay, dinh tai se lam can sach connection slot.
+      POOL_MODE: transaction
+      MAX_CLIENT_CONN: "2000"
+      DEFAULT_POOL_SIZE: "100"
+    ports: ["6432:5432"]
+    depends_on:
+      postgres: {condition: service_healthy}
+
+  redis:
+    image: redis:7-alpine
+    # appendonly bat de mo phong production; hang cho van chiu duoc mat du lieu
+    # (Postgres la nguon su that), nhung bat de test duoc kich ban failover.
+    command: >
+      redis-server
+      --appendonly yes
+      --maxmemory 2gb
+      --maxmemory-policy noeviction
+    ports: ["6379:6379"]
+    volumes: ["redisdata:/data"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: eventflow
+      RABBITMQ_DEFAULT_PASS: eventflow
+    ports: ["5672:5672", "15672:15672"]
+    volumes:
+      - "rabbitdata:/var/lib/rabbitmq"
+      - "../rabbitmq/definitions.json:/etc/rabbitmq/definitions.json:ro"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: eventflow
+      MINIO_ROOT_PASSWORD: eventflow123
+    ports: ["9000:9000", "9001:9001"]
+    volumes: ["miniodata:/data"]
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.60
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    ports: ["16686:16686", "4317:4317", "4318:4318"]
+
+  prometheus:
+    image: prom/prometheus:latest
+    volumes: ["../observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro"]
+    ports: ["9090:9090"]
+
+  grafana:
+    image: grafana/grafana:latest
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: eventflow
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+    ports: ["3001:3000"]
+    volumes: ["grafanadata:/var/lib/grafana"]
+
+  # ---------------------------- SERVICE ----------------------------
+
+  migrate:
+    image: ghcr.io/kukymbr/goose-docker:3.22.0
+    environment:
+      GOOSE_DRIVER: postgres
+      GOOSE_DBSTRING: "host=postgres user=eventflow password=eventflow dbname=eventflow sslmode=disable"
+    volumes: ["../../migrations:/migrations"]
+    depends_on:
+      postgres: {condition: service_healthy}
+
+  waitingroom:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/waitingroom.Dockerfile
+    environment:
+      HTTP_ADDR: ":8081"
+      REDIS_ADDR: "redis:6379"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://jaeger:4318"
+    ports: ["8081:8081"]
+    depends_on:
+      redis: {condition: service_healthy}
+
+  ticketing:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/ticketing.Dockerfile
+    environment:
+      HTTP_ADDR: ":8082"
+      REDIS_ADDR: "redis:6379"
+      # Qua PgBouncer, khong noi thang Postgres -- giong production.
+      DATABASE_URL: "postgres://eventflow:eventflow@pgbouncer:5432/eventflow?sslmode=disable"
+      AMQP_URL: "amqp://eventflow:eventflow@rabbitmq:5672/"
+    ports: ["8082:8082"]
+    depends_on:
+      redis: {condition: service_healthy}
+      rabbitmq: {condition: service_healthy}
+      migrate: {condition: service_completed_successfully}
+
+  ai-worker:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/ai-worker.Dockerfile
+    environment:
+      REDIS_URL: "redis://redis:6379/0"
+      AMQP_URL: "amqp://eventflow:eventflow@rabbitmq:5672/"
+      GEMINI_API_KEY: "${GEMINI_API_KEY:-}"
+      GEMINI_MOCK: "${GEMINI_MOCK:-1}"
+      # Dat thap hon han muc that de chua bien an toan (xem limiter.py).
+      GEMINI_RPM: "55"
+      GEMINI_TPM: "900000"
+    ports: ["8090:8090"]
+    depends_on:
+      redis: {condition: service_healthy}
+      rabbitmq: {condition: service_healthy}
+
+  web:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/web.Dockerfile
+    environment:
+      NEXT_PUBLIC_API_BASE: "http://localhost:8080"
+    ports: ["3000:3000"]
+
+volumes:
+  pgdata:
+  redisdata:
+  rabbitdata:
+  miniodata:
+  grafanadata:

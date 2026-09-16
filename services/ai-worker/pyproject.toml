@@ -1,0 +1,27 @@
+[project]
+name = "eventflow-ai-worker"
+version = "0.1.0"
+description = "Consumer Gemini cho EventFlow: tro ly phong cho, kiem duyet, phat hien bat thuong, bao cao"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.32",
+    "redis>=5.2",
+    "aio-pika>=9.4",
+    "google-genai>=0.3",
+    "pydantic>=2.9",
+    "pydantic-settings>=2.6",
+    "prometheus-client>=0.21",
+    "opentelemetry-sdk>=1.28",
+    "opentelemetry-instrumentation-fastapi>=0.49b0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.3", "pytest-asyncio>=0.24", "ruff>=0.7", "testcontainers>=4.8"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"

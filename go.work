@@ -1,0 +1,13 @@
+go 1.23
+
+use (
+	./libs/go
+	./services/gateway
+	./services/identity
+	./services/event
+	./services/waitingroom
+	./services/ticketing
+	./services/payment
+	./services/antibot
+	./services/notification
+)

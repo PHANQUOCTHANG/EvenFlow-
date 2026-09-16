@@ -1,0 +1,42 @@
+groups:
+  - name: eventflow-critical
+    rules:
+      # Bat bien so 1 cua he thong. Bat ky lan tu choi nao cung co nghia la
+      # tang tren da de lot mot request le ra phai bi chan som hon.
+      - alert: OversellGuardTriggered
+        expr: increase(ticketing_oversell_guard_rejections_total[1m]) > 0
+        for: 0m
+        labels: { severity: critical }
+        annotations:
+          summary: "Chot chan oversell o Postgres da phai ra tay"
+          runbook: "docs/runbook.md#oversell"
+
+      # Hang cho con nguoi ma khong ai duoc tha vao -> hoac controller chet,
+      # hoac leader lock bi ket. Khach dang ngoi cho vo ich.
+      - alert: AdmitRateStalled
+        expr: waitingroom_admit_rate == 0 and waitingroom_queue_depth > 0
+        for: 60s
+        labels: { severity: critical }
+
+      # Redis va Postgres lech nhau -> ve bi khoa hoac bao het som.
+      - alert: InventoryDrift
+        expr: abs(ticketing_inventory_drift) > 0
+        for: 30s
+        labels: { severity: warning }
+
+      # Limiter dang lam dung viec thi con so nay phai bang 0. Khac 0 nghia la
+      # co duong goi Gemini nao do di vong qua limiter.
+      - alert: GeminiRateLimited
+        expr: increase(ai_gemini_429_total[5m]) > 0
+        for: 0m
+        labels: { severity: warning }
+
+      - alert: AiQueueLag
+        expr: ai_queue_lag_seconds{queue="ai.chat.q"} > 30
+        for: 2m
+        labels: { severity: warning }
+
+      - alert: SemanticCacheDegraded
+        expr: ai_semantic_cache_hit_ratio < 0.7
+        for: 5m
+        labels: { severity: warning }
