@@ -36,7 +36,7 @@ Toàn bộ áp lực được hấp thụ ở tầng Redis/CDN — nơi rẻ và
 | G4 | **Không sập ở T0** | Pre-warm pod trước 30', HPA custom metric, load shedding có ưu tiên, circuit breaker |
 | G5 | **AI luôn trả lời, không bao giờ 429 ra tới user** | 100% qua RabbitMQ, limiter toàn cục, cache ngữ nghĩa, suy biến có tầng (degradation) |
 
-## 4. Lộ trình 6 sprint (12 tuần)
+## 4. Lộ trình 7 sprint (14 tuần)
 
 | Sprint | Mục tiêu | Định nghĩa hoàn thành |
 |---|---|---|
@@ -45,7 +45,10 @@ Toàn bộ áp lực được hấp thụ ở tầng Redis/CDN — nơi rẻ và
 | **S2** — Phòng chờ ảo | Token, lottery, admit controller, SSE vị trí | k6: 100k VU join < 2s p99, admit rate ổn định |
 | **S3** — Thanh toán & AI | Payment state machine, AI worker, chat trợ lý | Webhook idempotent; 5.000 câu hỏi/phút, 0 lỗi 429 tới user |
 | **S4** — Anti-bot & Kiểm duyệt | Rule engine, scoring, AI moderation, anomaly | Bot script bị chặn ≥ 95%, false positive < 1% |
-| **S5** — Chịu tải & Vận hành | K8s, HPA, load test, runbook, báo cáo sau bán | Load test 10x đạt SLO, chaos drill pass, báo cáo AI tự sinh |
+| **S5** — Chịu tải & Vận hành | K8s, HPA, load test, chaos drill, runbook | Load test 10x đạt SLO, chaos drill pass, runbook đã diễn tập |
+| **S6** — Ổn định & Hoàn thiện | Báo cáo sau bán, phát hiện bất thường, hạng mục P2, sửa lỗi sau load test | Báo cáo AI tự sinh, không còn bug P0/P1 mở |
+
+> Backlog 461 SP ở vận tốc ~70 SP/sprint cần 7 sprint. Chi tiết phân bổ: [04-jira-backlog.md](04-jira-backlog.md#kế-hoạch-sprint).
 
 ## 5. SLO mục tiêu
 
