@@ -1,100 +1,2197 @@
-Issue Type,Issue ID,Parent ID,Summary,Epic Name,Story Points,Priority,Labels,Sprint,Description
-Epic,1000,,E1 - Nen mong & Ha tang,E1 Nen mong,,Highest,foundation,Sprint 0,"Monorepo, thu vien dung chung, compose local, CI/CD, observability."
-Story,1001,1000,Khoi tao monorepo: go.work + pnpm workspace + uv + Makefile,,3,Highest,foundation,Sprint 0,"AC: make bootstrap cai het phu thuoc; make lint/test/build chay duoc o goc repo."
-Story,1002,1000,libs/go/httpx - router, middleware, loi RFC7807,,5,Highest,foundation;go,Sprint 0,"Middleware: recover, structured log, trace, auth, ratelimit, idempotency hook. Loi chuan RFC7807. AC: co unit test cho tung middleware."
-Story,1003,1000,libs/go/otelx - OpenTelemetry trace + Prometheus metric,,5,Highest,foundation;observability,Sprint 0,"Propagate trace context qua AMQP header. AC: 1 trace duy nhat xuyen >=3 service nhin thay trong Jaeger."
-Story,1004,1000,docker-compose local day du,,5,Highest,foundation;devex,Sprint 0,"Postgres, PgBouncer, Redis, RabbitMQ, MinIO, Jaeger, Prometheus, Grafana + toan bo service. AC: make up khoi dong toan bo; make smoke chay het 1 luong mua ve."
-Story,1005,1000,Khung migration goose + schema khoi tao,,3,Highest,foundation;db,Sprint 0,"Forward-only tren production. AC: make migrate-up/down chay sach tren DB trong."
-Story,1006,1000,CI pipeline lint-test-build-scan,,5,Highest,foundation;ci,Sprint 0,"lint -> unit -> integration (testcontainers) -> build -> Trivy scan. AC: PR bi chan khi coverage domain/app < 70%."
-Story,1007,1000,libs/go/mq - publisher/consumer co retry va DLQ,,5,Highest,foundation;go,Sprint 0,"Khai bao topology bang code. AC: message loi 3 lan di vao DLQ, co test."
-Task,1008,1000,Template service Go hexagonal + generator,,3,High,foundation;devex,Sprint 0,"AC: tao service moi bang 1 lenh, build va chay duoc ngay."
-Epic,1100,,E2 - Dinh danh & Bao mat,E2 Dinh danh,,High,identity,Sprint 1,"Dang ky, OTP, JWT, device, RBAC, PII."
-Story,1101,1100,Dang ky / dang nhap voi argon2id,,5,Highest,identity,Sprint 1,"AC: khong luu mat khau dang thuong; rate-limit dang nhap."
-Story,1102,1100,Xac thuc OTP SMS/email truoc khi xep hang,,5,Highest,identity;antibot,Sprint 1,"Hien thuc BR-Q3. AC: chua verify OTP thi POST /queue/join tra 403."
-Story,1103,1100,JWT ngan han + refresh token xoay vong,,5,Highest,identity;security,Sprint 1,"Access 15 phut, refresh xoay vong va thu hoi duoc. AC: tai su dung refresh cu -> vo hieu ca chuoi."
-Story,1104,1100,Device fingerprint va lien ket identity-device,,3,High,identity;antibot,Sprint 1,"AC: 1 device gan nhieu identity -> phat tin hieu cho antibot."
-Story,1105,1100,RBAC Buyer/Organizer/Moderator/Ops,,5,High,identity;security,Sprint 1,"AC: ma tran quyen trong docs/01 duoc phu boi test."
-Task,1106,1100,Ma hoa PII tang cot + loc PII khoi log,,3,High,security;compliance,Sprint 1,"AC: grep log khong tim thay so dien thoai/email dang thuong."
-Epic,1200,,E3 - Su kien & Kiem duyet,E3 Su kien,,High,event,Sprint 1,"CRUD su kien, hang ve, lich mo ban, kiem duyet."
-Story,1201,1200,CRUD su kien + hang ve + state machine,,8,Highest,event,Sprint 1,"BR-E1. AC: chuyen trang thai sai bi tu choi kem loi ro rang; co test bang trang thai."
-Story,1202,1200,Cau hinh lich mo ban, rang buoc T0 >= now + 30 phut,,3,Highest,event,Sprint 1,"BR-E2. AC: dat T0 gan hon bi tu choi."
-Story,1203,1200,Khoa giam quota sau khi ON_SALE,,3,Highest,event;ticketing,Sprint 1,"BR-E3. AC: giam quota tra 409; tang quota phat event inventory.increased."
-Story,1204,1200,Day job kiem duyet AI khi submit,,5,High,event;ai,Sprint 2,"AC: submit tra ngay 202; ket qua ve bat dong bo cap nhat trang thai."
-Story,1205,1200,Hang doi viec cho Moderator,,5,High,event;moderation,Sprint 2,"BR-E5. AC: moi lat nguoc quyet dinh AI deu ghi audit_log kem ly do."
-Story,1206,1200,Trang su kien cong khai render ISR tu CDN,,5,Highest,event;frontend;scale,Sprint 2,"AC: trang su kien 0 query DB khi cache hit; so ve hien thi dang khoang."
-Task,1207,1200,Upload anh len object storage + sinh bien the,,2,Medium,event,Sprint 3,"AC: anh duoc resize 3 kich thuoc, phuc vu qua CDN."
-Epic,1300,,E4 - Ticketing & Chong oversell,E4 Ticketing,,Highest,ticketing;critical,Sprint 2,"Epic rui ro cao nhat. Bat bien: khong bao gio oversell."
-Story,1301,1300,Schema ton kho phan manh bucket + CHECK available >= 0,,5,Highest,ticketing;db;critical,Sprint 1,"32 bucket moi hang ve. AC: constraint chan duoc UPDATE lam am ton kho."
-Story,1302,1300,Redis Lua inventory gate - hold atomic,,8,Highest,ticketing;redis;critical,Sprint 2,"Giam ton, tao hold, ZADD han het. AC: script atomic, benchmark < 0.5ms p99."
-Story,1303,1300,Ghi hold vao Postgres trong transaction + chon bucket ngau nhien co fallback,,8,Highest,ticketing;db;critical,Sprint 2,"AC: bucket het thi thu bucket ke tiep toi da 3 lan roi moi bao SOLD_OUT."
-Story,1304,1300,Middleware Idempotency-Key cho moi API ghi,,5,Highest,ticketing;api;critical,Sprint 2,"BR-O5. AC: goi lai cung key trong 24h tra dung response cu, khong tao don trung."
-Story,1305,1300,Hold sweeper quet ZSET moi 1s, tra kho idempotent,,8,Highest,ticketing;worker;critical,Sprint 2,"BR-O7. AC: chay sweeper 2 instance song song khong gay double-release."
-Story,1306,1300,Gioi han mua max_per_order va max_per_identity,,5,Highest,ticketing,Sprint 2,"BR-O4. AC: tinh gop moi don da PAID; mua vuot bi chan."
-Story,1307,1300,Transactional outbox + relay ra RabbitMQ,,5,Highest,ticketing;mq,Sprint 2,"AC: khong mat event khi service chet giua chung; co test kill-restart."
-Story,1308,1300,Job doi soat ton kho Redis vs Postgres moi 10s,,5,Highest,ticketing;reliability,Sprint 2,"AC: co tinh lam lech Redis -> job tu sua trong <= 20s; metric inventory_drift ve 0."
-Story,1309,1300,Phat hanh ve + QR ky HMAC co jti,,5,High,ticketing;security,Sprint 3,"BR-O8. AC: QR gia mao bi tu choi; QR dung lai lan 2 bi tu choi."
-Test,1310,1300,TEST DONG THOI - 10.000 goroutine mua 100 ve,,5,Highest,ticketing;critical;quality-gate,Sprint 2,"AC (cong chat luong): chay 200 lan trong CI, dung 100 don thanh cong moi lan, 0 oversell, 0 under-sell. Fail -> chan merge va chan release."
-Task,1311,1300,API check-in doi ISSUED -> CHECKED_IN mot lan,,3,Medium,ticketing,Sprint 4,"AC: check-in lan 2 tra 409."
-Epic,1400,,E5 - Phong cho ao,E5 Phong cho,,Highest,waitingroom;critical,Sprint 2,"Xep hang cong bang va dieu tiet tai."
-Story,1401,1400,Queue token ky gan identity+device+event, join idempotent,,5,Highest,waitingroom;critical,Sprint 2,"BR-Q3. AC: join lai tu tab/thiet bi khac tra dung token va rank cu."
-Story,1402,1400,join.lua - O(1) mot round-trip, shard theo event,,5,Highest,waitingroom;redis;critical,Sprint 2,"AC: benchmark 100k ops/s tren 1 node; hash tag dam bao cung event cung shard."
-Story,1403,1400,LOBBY truoc T0 + lottery xao tron cong bang tai T0,,8,Highest,waitingroom;fairness;critical,Sprint 2,"BR-Q1. AC: kiem dinh thong ke - thoi diem join truoc T0 khong tuong quan voi rank (p > 0.05)."
-Story,1404,1400,Noi duoi FIFO sau T0,,3,Highest,waitingroom,Sprint 2,"BR-Q2. AC: nguoi vao sau T0 luon co rank lon hon toan bo nhom lottery."
-Story,1405,1400,GET /queue/status - rank, ETA, poll_after_ms thich nghi, ETag,,8,Highest,waitingroom;scale,Sprint 2,"BR-Q4. AC: rank > 10000 -> poll_after_ms = 30000; rank < 500 -> 3000; tra 304 khi khong doi."
-Story,1406,1400,Admit controller AIMD + bau leader qua Redis lock co fencing,,8,Highest,waitingroom;critical;scale,Sprint 3,"BR-Q5. AC: tiem do tre gia vao checkout -> admit_rate giam trong <= 10s, phuc hoi <= 60s, khong dao dong qua 2 chu ky."
-Story,1407,1400,admit.lua - ZPOPMIN theo lo sang tap admitted TTL 15 phut,,5,Highest,waitingroom;redis,Sprint 3,"BR-Q7. AC: atomic, khong admit trung mot token."
-Story,1408,1400,SSE push YOUR_TURN + fallback polling,,5,Highest,waitingroom;frontend,Sprint 3,"AC: mat ket noi SSE -> tu dong chuyen polling, khong mat luot."
-Story,1409,1400,Heartbeat va giu cho 5 phut khi rot ket noi,,3,High,waitingroom,Sprint 3,"AC: dong mang 3 phut roi quay lai van giu rank."
-Story,1410,1400,Xu ly SOLD_OUT va chuyen waitlist,,3,High,waitingroom,Sprint 3,"BR-Q6. AC: het ve -> toan bo QUEUED nhan thong bao trong <= 5s, khong ai bi day vao checkout nua."
-Story,1411,1400,Ops API/UI xem va ghi de admit_rate, tam dung khan cap,,5,High,waitingroom;ops,Sprint 3,"AC: ghi de co hieu luc trong <= 2s va duoc ghi audit."
-Task,1412,1400,Jitter client 0..5s tai T0,,2,Highest,waitingroom;frontend;scale,Sprint 2,"AC: phan bo thoi diem join trai deu tren 5s, khong don cuc tai giay dau."
-Epic,1500,,E6 - Thanh toan,E6 Thanh toan,,High,payment,Sprint 3,"Cong thanh toan, webhook exactly-once, doi soat, hoan tien."
-Story,1501,1500,Adapter cong thanh toan + sandbox mock,,8,Highest,payment,Sprint 3,"AC: chay duoc local hoan toan bang mock, khong can cong that."
-Story,1502,1500,Webhook exactly-once,,8,Highest,payment;critical,Sprint 3,"BR-O6. AC: ban lai cung webhook 100 lan -> dung 1 don PAID; chu ky sai bi tu choi."
-Story,1503,1500,payment_inbox cho webhook den som + replay,,5,High,payment;reliability,Sprint 3,"AC: webhook den truoc khi don ton tai duoc luu va replay thanh cong."
-Story,1504,1500,Job doi soat don qua 15 phut khong co webhook,,5,Highest,payment;reliability,Sprint 3,"AC: don treo duoc tu chua ve PAID hoac CANCELLED, khong con trang thai lung lo."
-Story,1505,1500,Luong hoan tien khi su kien bi huy,,5,Medium,payment,Sprint 5,"AC: huy su kien -> toan bo ve ISSUED chuyen REFUNDING va hoan het."
-Task,1506,1500,Email/SMS xac nhan kem ve,,3,High,payment;notification,Sprint 3,"AC: gui qua notification-svc, retry khi that bai, khong gui trung."
-Epic,1600,,E7 - AI (Gemini),E7 AI,,Highest,ai;critical,Sprint 3,"Tro ly, kiem duyet, phat hien bat thuong, bao cao - toan bo qua queue."
-Story,1601,1600,Khung ai-worker FastAPI + 4 consumer RabbitMQ tach biet,,8,Highest,ai,Sprint 3,"BR-A3. AC: job report nang khong lam tang lag cua ai.chat.q qua 5s."
-Story,1602,1600,Global token-bucket limiter RPM+TPM tren Redis Lua,,8,Highest,ai;critical;scale,Sprint 3,"AC: ban 5000 cau/phut trong 10 phut voi han muc gia 60 RPM -> gemini_429_total == 0, khong mat job, p95 < 4s."
-Story,1603,1600,Retry backoff qua delay-queue 5s/30s/2m + DLQ,,5,Highest,ai;mq,Sprint 3,"AC: loi tam thoi tu phuc hoi; loi vinh vien vao DLQ co alert."
-Story,1604,1600,Tang FAQ/intent tra loi 0 token,,5,Highest,ai;cost,Sprint 3,"AC: >= 40% cau hoi thuc te duoc giai quyet khong goi LLM."
-Story,1605,1600,Cache ngu nghia bang embedding tren Redis,,8,Highest,ai;cost;scale,Sprint 3,"AC: cache hit >= 80% trong kich ban phong cho; khong lan du lieu giua cac su kien."
-Story,1606,1600,Singleflight gop cau hoi trung dang in-flight,,3,High,ai;cost,Sprint 4,"AC: 1000 nguoi hoi cung cau trong 1s -> dung 1 call Gemini."
-Story,1607,1600,Tool-call lay so lieu that (vi tri, ETA, tinh trang ve),,5,Highest,ai;correctness,Sprint 4,"BR-A5. AC: moi con so trong cau tra loi truy nguyen duoc ve mot truy van that."
-Story,1608,1600,4 nac suy bien NORMAL/SAVING/FAQ_ONLY/OFF,,5,Highest,ai;reliability,Sprint 4,"AC: Gemini down hoan toan -> khach van nhan cau tra loi FAQ, khong thay loi."
-Story,1609,1600,Ngan sach token theo su kien, canh bao 80%, khoa 100%,,3,High,ai;cost,Sprint 4,"BR-A6. AC: chay ngan sach -> tu chuyen FAQ_ONLY va bao Ops."
-Story,1610,1600,Kiem duyet su kien - structured JSON, cham 4 truc,,8,High,ai;moderation,Sprint 4,"BR-E4. AC: output luon dung schema; nguong dinh tuyen dung; co gold set 100 mau."
-Story,1611,1600,Phat hien bat thuong - gom cum thong ke truoc, LLM dien giai,,8,High,ai;antibot,Sprint 4,"BR-B2. AC: khong day log tho vao LLM; rule de xuat phai qua nguoi duyet."
-Story,1612,1600,Bao cao sau ban 6 phan,,8,High,ai;reporting,Sprint 5,"AC: moi so lieu do SQL tinh; LLM chi viet dien giai; bao cao sinh trong <= 10 phut sau khi dong ban."
-Story,1613,1600,Chong prompt injection + loc dau ra,,5,Highest,ai;security,Sprint 4,"BR-A7. AC: bo test 50 payload injection -> 0 lan vuot rao."
-Task,1614,1600,Bo eval prompt gold set 200 cau,,5,Medium,ai;quality,Sprint 5,"AC: doi prompt/model chay eval tu dong, bao cao delta chat luong."
-Story,1615,1600,API tro ly phia user - 202 + job_id + SSE + quota,,5,Highest,ai;api,Sprint 3,"BR-A1, BR-A2. AC: API tra 202 trong < 50ms, khong bao gio goi Gemini dong bo."
-Epic,1700,,E8 - Anti-bot,E8 Anti-bot,,High,antibot,Sprint 4,"Chan bot vet ve bang luat hanh vi."
-Story,1701,1700,Thu thap tin hieu client va gui kem request,,5,Highest,antibot;frontend,Sprint 4,"AC: tin hieu duoc ky de chong gia mao phia client."
-Story,1702,1700,Rule engine R1-R7 chay in-path < 5ms,,8,Highest,antibot;critical,Sprint 4,"AC: benchmark p99 < 5ms; moi rule co unit test rieng."
-Story,1703,1700,Cham diem va 4 tang hanh dong,,5,Highest,antibot,Sprint 4,"AC: bot script mau bi chan >= 95%; false positive tren traffic that < 1%."
-Story,1704,1700,Tich hop Turnstile o join va o buoc thu thach nang cao,,3,High,antibot,Sprint 4,"AC: token Turnstile duoc verify phia server, khong tin client."
-Story,1705,1700,bot_decisions giai thich duoc + UI khieu nai/go chan,,5,High,antibot;ops,Sprint 5,"BR-B1. AC: moi quyet dinh chan tra ve duoc danh sach rule da kich hoat."
-Task,1706,1700,Quy trinh duyet rule do AI de xuat,,3,Medium,antibot;ai,Sprint 5,"AC: rule chi co hieu luc sau khi nguoi duyet; co lich su thay doi."
-Epic,1800,,E9 - Frontend,E9 Frontend,,High,frontend,Sprint 2,"Next.js cho Buyer, Organizer, Ops."
-Story,1801,1800,Khung Next.js App Router + design system + dark mode,,5,Highest,frontend,Sprint 2,"AC: token mau/typography tap trung; dark mode dong bo toan trang."
-Story,1802,1800,Trang su kien ISR + dong ho dem nguoc theo gio server,,5,Highest,frontend;scale,Sprint 2,"AC: lech gio may khach khong anh huong dem nguoc."
-Story,1803,1800,UI phong cho - vi tri, ETA, tien trinh, polling thich nghi + SSE,,8,Highest,frontend;waitingroom,Sprint 3,"AC: client luon ton trong poll_after_ms tu server; reconnect co backoff."
-Story,1804,1800,Chon ve + dong ho giu ghe 10:00 theo expires_at server,,8,Highest,frontend;ticketing,Sprint 3,"BR-O2. AC: doi gio may khach khong keo dai duoc thoi gian giu ghe."
-Story,1805,1800,Luong thanh toan + trang ket qua,,5,Highest,frontend;payment,Sprint 3,"AC: xu ly dung truong hop hold het han ngay giua luc thanh toan."
-Story,1806,1800,Panel chat tro ly - streaming, FAQ chips, trang thai suy bien,,5,High,frontend;ai,Sprint 4,"AC: o che do FAQ_ONLY hien thong bao ro rang, khong bao loi ky thuat."
-Story,1807,1800,Console Organizer,,5,High,frontend;event,Sprint 4,"AC: tao su kien, xem trang thai duyet, doanh so realtime."
-Story,1808,1800,War room cho Ops,,5,High,frontend;ops,Sprint 5,"AC: mot man hinh thay du pheu chuyen doi, admit rate, ton kho, AI lag."
-Task,1809,1800,Accessibility WCAG AA + i18n vi/en,,3,Medium,frontend;a11y,Sprint 5,"AC: axe-core 0 loi nghiem trong; chuyen ngon ngu khong reload."
-Epic,1900,,E10 - Van hanh, chiu tai, phat hanh,E10 Van hanh,,Highest,ops;scale,Sprint 5,"K8s, HPA, pre-warm, load test, chaos, runbook."
-Story,1901,1900,K8s manifest moi service - probe, resource, PDB, anti-affinity,,8,Highest,ops;k8s,Sprint 5,"AC: rolling update khong rot request; pod trai deu tren cac zone."
-Story,1902,1900,HPA theo custom metric rps va queue_depth,,5,Highest,ops;scale,Sprint 5,"AC: scale theo metric nghiep vu, khong theo CPU."
-Story,1903,1900,CronJob pre-warm scale len muc dinh tai T0 - 30 phut,,5,Highest,ops;scale;critical,Sprint 5,"AC: tai T0 khong co pod nao dang khoi dong."
-Story,1904,1900,Load shedding phan lop uu tien + circuit breaker,,5,Highest,ops;reliability,Sprint 5,"AC: khi qua tai, queue/status va payment/webhook van song; endpoint phu tra 503 + Retry-After."
-Story,1905,1900,Bo k6 - 100k VU join trong 5s, 30 phut cho, dot checkout,,8,Highest,ops;testing;critical,Sprint 5,"AC: dat toan bo SLO trong docs/00; ket qua luu thanh bao cao so sanh duoc giua cac lan."
-Story,1906,1900,Dashboard Grafana + alert cho 9 metric nghiep vu,,5,Highest,ops;observability,Sprint 5,"AC: oversell_guard_rejections > 0 bat alert nghiem trong ngay lap tuc."
-Story,1907,1900,Chaos drill,,5,High,ops;reliability,Sprint 5,"AC: giet Redis primary giua dot ban, Gemini 429 100%, Postgres failover - khong oversell, khong mat don."
-Task,1908,1900,Runbook truc su kien + checklist dong bang deploy,,3,High,ops;docs,Sprint 5,"AC: runbook duoc dien tap 1 lan truoc khi len production."
-Task,1909,1900,E2E Playwright luong day du,,3,High,testing;frontend,Sprint 5,"AC: xep hang -> duoc goi -> giu ghe -> thanh toan -> nhan ve, chay trong CI."
+Issue Type,Issue ID,Parent ID,Summary,Epic Name,Story Points,Priority,Labels,Component,Sprint,Description,Blocked By,Blocked By,Blocked By
+Epic,1000,,E1 – Nền móng & Hạ tầng,E1 Nền móng,,Highest,foundation,platform,,"h3. Mục tiêu
+Dựng monorepo, thư viện dùng chung, môi trường local, CI/CD và observability để mọi đội phát triển song song trên cùng một chuẩn.
+
+h3. Phạm vi
+* Monorepo Go + pnpm + uv, Makefile thống nhất
+* libs/go: httpx, otelx, mq, idem, outbox
+* docker-compose đầy đủ hạ tầng + service
+* Migration goose, CI pipeline, template service
+
+h3. Tiêu chí hoàn thành epic
+# `make up` khởi động toàn hệ, `make smoke` chạy qua 1 luồng mua vé
+# Một trace duy nhất xuyên ≥ 3 service trong Jaeger
+# CI chặn PR khi lint/test/scan fail hoặc coverage domain/app < 70%
+
+h3. Rủi ro chính
+Nền móng chậm sẽ kéo lùi toàn bộ đường tới hạn — phải xong trong Sprint 0.",,,
+Story,1001,1000,"Khởi tạo monorepo: go.work, pnpm workspace, uv, Makefile",,3,Highest,foundation devex,platform,Sprint 0,"h3. User story
+Là lập trình viên, tôi muốn một monorepo có lệnh thống nhất để cài đặt, lint, test và build mọi service chỉ từ thư mục gốc.
+
+h3. Bối cảnh
+Dự án gồm service Go, ai-worker Python và web Next.js. Cần một cách làm việc chung để không mỗi thành viên tự dựng môi trường riêng.
+
+h3. Phạm vi công việc
+* Cấu hình go.work gom toàn bộ module Go (services/*, libs/go)
+* pnpm-workspace cho apps/web và packages/*
+* uv cho services/ai-worker
+* Makefile với các target bootstrap, lint, test, build, up, down, smoke
+* Cập nhật README hướng dẫn chạy lần đầu
+
+h3. Tiêu chí nghiệm thu (AC)
+# `make bootstrap` cài đủ phụ thuộc Go, Node, Python trên máy mới
+# `make lint`, `make test`, `make build` chạy thành công từ thư mục gốc
+# README mô tả đủ các bước từ clone tới chạy được local
+
+h3. Hiện trạng mã nguồn
+Đã có go.work, pnpm-workspace.yaml, Makefile — cần rà soát và bổ sung target còn thiếu.
+
+h3. Tham chiếu
+Mã backlog: EVF-1 · docs/03-cau-truc-src.md mục 1
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",,,
+Story,1002,1000,"libs/go/httpx: router, middleware và lỗi chuẩn RFC 7807",,5,Highest,foundation go,platform,Sprint 0,"h3. User story
+Là lập trình viên backend, tôi muốn một thư viện HTTP dùng chung để mọi service có cùng middleware và định dạng lỗi.
+
+h3. Bối cảnh
+8 service Go cần xử lý HTTP đồng nhất: phục hồi panic, log có cấu trúc, trace, xác thực, rate-limit và trả lỗi theo một chuẩn duy nhất.
+
+h3. Phạm vi công việc
+* Router + các middleware: recover, structured log, trace, auth (JWT), ratelimit, hook idempotency
+* Kiểu lỗi chuẩn RFC 7807 (application/problem+json)
+* Endpoint health/readiness mẫu
+
+h3. Tiêu chí nghiệm thu (AC)
+# Mỗi middleware có unit test riêng
+# Panic trong handler trả 500 dạng RFC 7807, không làm chết process
+# Log mỗi request có trace_id, method, path, status, latency
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-1 (Khởi tạo monorepo: go.work, pnpm workspace, uv, Makefile)
+
+h3. Tham chiếu
+Mã backlog: EVF-2 · docs/03-cau-truc-src.md mục 3
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1001,,
+Story,1003,1000,"libs/go/otelx: OpenTelemetry trace + Prometheus metric, lan truyền qua AMQP header",,5,Highest,foundation observability,platform,Sprint 0,"h3. User story
+Là SRE, tôi muốn theo dõi một request xuyên suốt qua HTTP và RabbitMQ để khoanh vùng sự cố nhanh trong giờ mở bán.
+
+h3. Bối cảnh
+Luồng mua vé đi qua nhiều service và hàng đợi bất đồng bộ; thiếu trace liên tục thì không thể chẩn đoán độ trễ.
+
+h3. Phạm vi công việc
+* Khởi tạo tracer, meter, logger chuẩn
+* Propagate trace context qua HTTP header và AMQP message header
+* Expose /metrics cho Prometheus
+
+h3. Tiêu chí nghiệm thu (AC)
+# Một trace duy nhất xuyên ≥ 3 service (có cả bước qua RabbitMQ) nhìn thấy trong Jaeger
+# Metric HTTP chuẩn (request_total, duration histogram) có sẵn ở mọi service
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-1 (Khởi tạo monorepo: go.work, pnpm workspace, uv, Makefile)
+
+h3. Tham chiếu
+Mã backlog: EVF-3 · docs/02-kien-truc.md mục 6
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1001,,
+Story,1004,1000,docker-compose local đầy đủ hạ tầng và service,,5,Highest,foundation devex,platform,Sprint 0,"h3. User story
+Là lập trình viên, tôi muốn chạy toàn bộ hệ thống trên máy cá nhân bằng một lệnh để phát triển và kiểm thử end-to-end.
+
+h3. Bối cảnh
+Cần môi trường local gần giống production: Postgres, PgBouncer, Redis, RabbitMQ, MinIO, Jaeger, Prometheus, Grafana và toàn bộ service.
+
+h3. Phạm vi công việc
+* Compose cho hạ tầng + mọi service, có healthcheck
+* Nạp topology RabbitMQ từ definitions.json
+* Script seed dữ liệu mẫu
+* Target `make smoke` chạy 1 luồng mua vé end-to-end
+
+h3. Tiêu chí nghiệm thu (AC)
+# `make up` khởi động toàn bộ, mọi container healthy
+# `make smoke` chạy qua 1 luồng mua vé end-to-end
+# Một trace duy nhất xuyên ≥ 3 service nhìn thấy trong Jaeger
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-1 (Khởi tạo monorepo: go.work, pnpm workspace, uv, Makefile)
+
+h3. Hiện trạng mã nguồn
+Đã có deploy/compose/docker-compose.yml và Dockerfile — cần hoàn thiện healthcheck và smoke test.
+
+h3. Tham chiếu
+Mã backlog: EVF-4 · docs/02-kien-truc.md mục 7
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1001,,
+Story,1005,1000,Khung migration goose + schema khởi tạo,,3,Highest,foundation db,platform,Sprint 0,"h3. User story
+Là lập trình viên, tôi muốn quản lý schema bằng migration có version để mọi môi trường có cấu trúc DB giống nhau.
+
+h3. Bối cảnh
+Schema là nguồn sự thật cho tồn kho và đơn hàng; thay đổi phải truy vết được và chỉ tiến trên production.
+
+h3. Phạm vi công việc
+* Tích hợp goose, quy ước đặt tên NNNN_mo_ta.sql
+* Schema khởi tạo cho các bảng lõi
+* Target make migrate-up / migrate-down
+
+h3. Tiêu chí nghiệm thu (AC)
+# `make migrate-up` và `make migrate-down` chạy sạch trên DB trống
+# Tài liệu ghi rõ quy tắc forward-only trên production
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-4 (docker-compose local đầy đủ hạ tầng và service)
+
+h3. Hiện trạng mã nguồn
+Đã có migrations/0001_core.sql.
+
+h3. Tham chiếu
+Mã backlog: EVF-5 · docs/02-kien-truc.md mục 4
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1004,,
+Story,1006,1000,CI pipeline: lint → unit → integration → build → Trivy scan,,5,Highest,foundation ci,platform,Sprint 0,"h3. User story
+Là trưởng nhóm kỹ thuật, tôi muốn mọi PR được kiểm tra tự động để lỗi không lọt vào nhánh chính.
+
+h3. Bối cảnh
+Nhiều ngôn ngữ, nhiều service; cần một pipeline chung bảo đảm chất lượng tối thiểu và an toàn image.
+
+h3. Phạm vi công việc
+* Job lint, unit test, integration test (testcontainers), build image, Trivy scan
+* Chỉ build lại service bị ảnh hưởng
+* Báo cáo coverage
+
+h3. Tiêu chí nghiệm thu (AC)
+# PR bị chặn khi bất kỳ bước nào fail
+# PR bị chặn khi coverage domain/app < 70%
+# Trivy phát hiện lỗ hổng CRITICAL thì chặn merge
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-1 (Khởi tạo monorepo: go.work, pnpm workspace, uv, Makefile)
+
+h3. Tham chiếu
+Mã backlog: EVF-6 · docs/02-kien-truc.md mục 7
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1001,,
+Story,1007,1000,"libs/go/mq: publisher + consumer có retry/DLQ, khai báo topology",,5,Highest,foundation go mq,platform,Sprint 0,"h3. User story
+Là lập trình viên backend, tôi muốn thư viện RabbitMQ dùng chung có retry và DLQ để xử lý message tin cậy mà không viết lại ở mỗi service.
+
+h3. Bối cảnh
+Nhiều luồng bất đồng bộ (outbox, thông báo, AI) cần cơ chế retry và dead-letter thống nhất.
+
+h3. Phạm vi công việc
+* Publisher có publisher-confirm
+* Consumer có retry giới hạn số lần, chuyển DLQ khi vượt
+* Khai báo topology bằng code, khớp definitions.json
+
+h3. Tiêu chí nghiệm thu (AC)
+# Message lỗi 3 lần đi vào DLQ, có test
+# Trace context được giữ nguyên qua publish/consume
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-3 (libs/go/otelx: OpenTelemetry trace + Prometheus metric, lan truyền qua AMQP header)
+
+h3. Hiện trạng mã nguồn
+Topology đã khai báo ở deploy/rabbitmq/definitions.json.
+
+h3. Tham chiếu
+Mã backlog: EVF-7 · docs/03-cau-truc-src.md mục 3
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1003,,
+Task,1008,1000,Template service Go (hexagonal) + generator tạo service mới,,3,High,foundation devex,platform,Sprint 0,"h3. Bối cảnh
+Mọi service Go phải dùng chung layout hexagonal-lite; một generator giúp tạo service mới đúng chuẩn trong vài giây.
+
+h3. Phạm vi công việc
+* Template cmd/, internal/{config,domain,app,port,adapter}, test/
+* Lệnh generator (make new-service name=...)
+* Lint kiểm tra quy tắc phụ thuộc adapter → app → domain
+
+h3. Tiêu chí nghiệm thu (AC)
+# Tạo service mới bằng 1 lệnh, build và chạy được ngay
+# Lint báo lỗi khi domain import package hạ tầng
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-2 (libs/go/httpx: router, middleware và lỗi chuẩn RFC 7807)
+
+h3. Tham chiếu
+Mã backlog: EVF-8 · docs/03-cau-truc-src.md mục 2
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1002,,
+Epic,1100,,E2 – Định danh & Bảo mật,E2 Định danh,,High,identity,identity,,"h3. Mục tiêu
+Xác thực người dùng chắc chắn (OTP), cấp token an toàn và gắn identity ↔ thiết bị làm nền cho quy tắc 1 người 1 chỗ và anti-bot.
+
+h3. Phạm vi
+* Đăng ký/đăng nhập argon2id
+* OTP SMS/email
+* JWT + refresh token xoay vòng
+* Device fingerprint
+* RBAC 4 vai trò
+* Mã hoá PII
+
+h3. Tiêu chí hoàn thành epic
+# Chưa verify OTP thì không xếp hàng được (BR-Q3)
+# Ma trận quyền ở docs/01 được phủ bằng test
+# Log không chứa PII dạng thường
+
+h3. Rủi ro chính
+Lỗ hổng xác thực cho phép nhân bản chỗ trong hàng chờ, phá vỡ tính công bằng.",,,
+Story,1101,1100,"Đăng ký / đăng nhập, băm mật khẩu argon2id",,5,Highest,identity security,identity,Sprint 0,"h3. User story
+Là khách mua vé, tôi muốn đăng ký và đăng nhập an toàn để mua vé bằng tài khoản của mình.
+
+h3. Bối cảnh
+Tài khoản là gốc cho mọi quy tắc giới hạn mua và công bằng hàng chờ.
+
+h3. Phạm vi công việc
+* API đăng ký, đăng nhập, đăng xuất
+* Băm mật khẩu argon2id với tham số cấu hình được
+* Rate-limit đăng nhập theo IP và tài khoản
+
+h3. Tiêu chí nghiệm thu (AC)
+# Không lưu mật khẩu dạng thường ở bất kỳ đâu (DB, log)
+# Đăng nhập sai quá ngưỡng bị rate-limit
+# Lỗi trả về theo RFC 7807, không tiết lộ tài khoản có tồn tại hay không
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-2 (libs/go/httpx: router, middleware và lỗi chuẩn RFC 7807), EVF-5 (Khung migration goose + schema khởi tạo)
+
+h3. Tham chiếu
+Mã backlog: EVF-10
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1002,1005,
+Story,1102,1100,Xác thực OTP qua SMS/email trước khi xếp hàng,,5,Highest,identity antibot,identity,Sprint 1,"h3. User story
+Là nền tảng, tôi muốn mọi người xếp hàng đều đã xác thực OTP để mỗi người thật chỉ có một chỗ.
+
+h3. Bối cảnh
+BR-Q3 yêu cầu token hàng chờ gắn với identity đã xác thực OTP, chặn việc tạo hàng loạt tài khoản ảo.
+
+h3. Phạm vi công việc
+* Gửi và xác minh OTP qua SMS/email (qua notification-svc)
+* Giới hạn số lần gửi lại và thử sai
+* Cờ otp_verified trên identity
+
+h3. Tiêu chí nghiệm thu (AC)
+# Chưa verify OTP thì POST /queue/join trả 403
+# OTP hết hạn sau 5 phút, thử sai 5 lần thì khoá tạm
+# Không gửi quá 3 OTP / 15 phút cho một số
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-10 (Đăng ký / đăng nhập, băm mật khẩu argon2id)
+
+h3. Tham chiếu
+Mã backlog: EVF-11 · BR-Q3
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1101,,
+Story,1103,1100,"JWT ngắn hạn + refresh token xoay vòng, thu hồi được",,5,Highest,identity security,identity,Sprint 0,"h3. User story
+Là người dùng, tôi muốn phiên đăng nhập an toàn và có thể bị thu hồi khi token bị lộ.
+
+h3. Bối cảnh
+Token dài hạn bị lộ sẽ cho kẻ xấu chiếm chỗ trong hàng chờ; cần token ngắn hạn và phát hiện tái sử dụng refresh token.
+
+h3. Phạm vi công việc
+* Access token 15 phút, refresh token xoay vòng
+* Phát hiện tái sử dụng refresh token cũ
+* API thu hồi phiên
+* libs/go/authx ký và xác minh token
+
+h3. Tiêu chí nghiệm thu (AC)
+# Access token hết hạn sau 15 phút
+# Tái sử dụng refresh token cũ → vô hiệu toàn bộ chuỗi token
+# Thu hồi phiên có hiệu lực ngay ở gateway
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-10 (Đăng ký / đăng nhập, băm mật khẩu argon2id)
+
+h3. Tham chiếu
+Mã backlog: EVF-12 · docs/02-kien-truc.md mục 5
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1101,,
+Story,1104,1100,"Đăng ký device fingerprint, liên kết identity ↔ device",,3,High,identity antibot,identity,Sprint 1,"h3. User story
+Là hệ thống anti-bot, tôi muốn biết một thiết bị gắn với bao nhiêu identity để phát hiện trang trại tài khoản.
+
+h3. Bối cảnh
+Rule R4 cần dữ liệu identity ↔ device; queue token cũng gắn device_id.
+
+h3. Phạm vi công việc
+* Nhận fingerprint từ client, chuẩn hoá và lưu bảng devices
+* Liên kết identity ↔ device
+* Phát tín hiệu khi 1 device gắn nhiều identity
+
+h3. Tiêu chí nghiệm thu (AC)
+# 1 device gắn > N identity trong 5 phút → phát tín hiệu cho antibot
+# Fingerprint được băm, không lưu dữ liệu thô nhận dạng được
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-10 (Đăng ký / đăng nhập, băm mật khẩu argon2id)
+
+h3. Tham chiếu
+Mã backlog: EVF-13 · BR-Q3 · R4
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1101,,
+Story,1105,1100,Phân quyền RBAC: Buyer / Organizer / Moderator / Ops,,5,High,identity security,identity,Sprint 1,"h3. User story
+Là quản trị nền tảng, tôi muốn mỗi vai trò chỉ làm được đúng việc của mình để tránh thao tác trái phép.
+
+h3. Bối cảnh
+Ma trận quyền đã định nghĩa ở docs/01 mục 3.
+
+h3. Phạm vi công việc
+* Mô hình vai trò và quyền
+* Claim role trong JWT, middleware kiểm tra quyền
+* Organizer chỉ thao tác sự kiện của mình
+
+h3. Tiêu chí nghiệm thu (AC)
+# Toàn bộ ma trận quyền trong docs/01 được phủ bằng test
+# Truy cập trái quyền trả 403 và ghi audit_log
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-12 (JWT ngắn hạn + refresh token xoay vòng, thu hồi được)
+
+h3. Tham chiếu
+Mã backlog: EVF-14 · docs/01-nghiep-vu.md mục 3
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1103,,
+Task,1106,1100,Mã hoá PII ở tầng cột + lọc PII khỏi log,,3,High,security compliance,identity,Sprint 1,"h3. Bối cảnh
+Số điện thoại, email là dữ liệu cá nhân; phải mã hoá khi lưu và không bao giờ xuất hiện dạng thường trong log.
+
+h3. Phạm vi công việc
+* Mã hoá cột phone, email (khoá quản lý qua Vault/External Secrets)
+* Cột băm để tra cứu
+* Bộ lọc PII trong logger dùng chung
+
+h3. Tiêu chí nghiệm thu (AC)
+# grep log không tìm thấy số điện thoại/email dạng thường
+# Dump DB không đọc được PII khi thiếu khoá
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-10 (Đăng ký / đăng nhập, băm mật khẩu argon2id)
+
+h3. Tham chiếu
+Mã backlog: EVF-15 · docs/02-kien-truc.md mục 5
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1101,,
+Epic,1200,,E3 – Sự kiện & Kiểm duyệt,E3 Sự kiện,,High,event,event,,"h3. Mục tiêu
+Cho Organizer tạo và vận hành sự kiện theo đúng state machine, có kiểm duyệt AI + con người trước khi mở bán.
+
+h3. Phạm vi
+* CRUD sự kiện, hạng vé, state machine (BR-E1)
+* Lịch mở bán, khoá giảm quota (BR-E2, BR-E3)
+* Kiểm duyệt AI bất đồng bộ + hàng đợi Moderator (BR-E4, BR-E5)
+* Trang sự kiện ISR phục vụ từ CDN
+
+h3. Tiêu chí hoàn thành epic
+# Mọi chuyển trạng thái sai bị từ chối kèm lỗi rõ ràng
+# Mọi quyết định AI có audit_log và lật ngược được
+# Trang sự kiện 0 query DB khi cache hit
+
+h3. Rủi ro chính
+Trang sự kiện chạm DB tại T0 sẽ làm sập Postgres trước cả khi hàng chờ hoạt động.",,,
+Story,1201,1200,"CRUD sự kiện + hạng vé, state machine DRAFT → … → COMPLETED",,8,Highest,event,event,Sprint 1,"h3. User story
+Là Ban tổ chức, tôi muốn tạo và quản lý sự kiện cùng các hạng vé để đưa sự kiện lên bán.
+
+h3. Bối cảnh
+Vòng đời sự kiện theo docs/01 mục 2.1; BR-E1 yêu cầu có ≥ 1 hạng vé hợp lệ mới được SCHEDULED.
+
+h3. Phạm vi công việc
+* API CRUD sự kiện, hạng vé
+* State machine đầy đủ các trạng thái và chuyển tiếp hợp lệ
+* Phát domain event khi đổi trạng thái
+
+h3. Tiêu chí nghiệm thu (AC)
+# Chuyển trạng thái sai bị từ chối kèm lỗi rõ ràng
+# Có test bảng trạng thái (mọi cặp from → to)
+# Không SCHEDULED được khi chưa có hạng vé quota > 0, price >= 0
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-5 (Khung migration goose + schema khởi tạo), EVF-14 (Phân quyền RBAC: Buyer / Organizer / Moderator / Ops)
+
+h3. Tham chiếu
+Mã backlog: EVF-20 · BR-E1
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1005,1105,
+Story,1202,1200,"Cấu hình lịch mở bán, ràng buộc T0 ≥ thời điểm duyệt + 30 phút",,3,Highest,event,event,Sprint 1,"h3. User story
+Là Ban tổ chức, tôi muốn đặt giờ mở bán để khách biết khi nào vào xếp hàng.
+
+h3. Bối cảnh
+BR-E2: cần tối thiểu 30 phút để hệ thống pre-warm hạ tầng trước T0.
+
+h3. Phạm vi công việc
+* Trường sale_start_at, sale_end_at
+* Validate ràng buộc 30 phút
+* Phát sự kiện lịch mở bán cho CronJob pre-warm
+
+h3. Tiêu chí nghiệm thu (AC)
+# Đặt T0 gần hơn 30 phút so với thời điểm duyệt bị từ chối
+# Thay đổi lịch sau khi SCHEDULED được ghi audit_log
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-20 (CRUD sự kiện + hạng vé, state machine DRAFT → … → COMPLETED)
+
+h3. Tham chiếu
+Mã backlog: EVF-21 · BR-E2
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1201,,
+Story,1203,1200,Khoá không cho giảm quota sau khi ON_SALE,,3,Highest,event ticketing,event,Sprint 1,"h3. User story
+Là nền tảng, tôi muốn cấm giảm quota khi đang bán để không phát sinh oversell.
+
+h3. Bối cảnh
+BR-E3: sau ON_SALE chỉ được tăng quota; tăng quota phải đồng bộ sang kho.
+
+h3. Phạm vi công việc
+* Chặn giảm quota khi ON_SALE
+* Tăng quota phát sự kiện inventory.increased
+* Ticketing nhận sự kiện và cộng kho vào các bucket
+
+h3. Tiêu chí nghiệm thu (AC)
+# Giảm quota khi ON_SALE trả 409
+# Tăng quota phát event inventory.increased và kho tăng tương ứng
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-20 (CRUD sự kiện + hạng vé, state machine DRAFT → … → COMPLETED), EVF-30 (Schema tồn kho phân mảnh 32 bucket/hạng vé + CHECK (available >= 0))
+
+h3. Tham chiếu
+Mã backlog: EVF-22 · BR-E3
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1201,1301,
+Story,1204,1200,"Đẩy job kiểm duyệt AI khi submit, nhận kết quả bất đồng bộ",,5,High,event ai,event,Sprint 4,"h3. User story
+Là Ban tổ chức, tôi muốn gửi duyệt sự kiện và nhận kết quả sớm mà không phải chờ.
+
+h3. Bối cảnh
+Kiểm duyệt chạy qua ai.moderation.q; kết quả quyết định AUTO_APPROVED / NEEDS_HUMAN / AUTO_REJECTED.
+
+h3. Phạm vi công việc
+* Submit chuyển PENDING_REVIEW và publish job lên ai.moderation.q
+* Consumer nhận kết quả, cập nhật trạng thái theo ngưỡng
+* Lưu moderation_reviews
+
+h3. Tiêu chí nghiệm thu (AC)
+# Submit trả ngay 202
+# Kết quả về bất đồng bộ cập nhật đúng trạng thái theo ngưỡng BR-E4
+# AI lỗi/timeout → NEEDS_HUMAN, không kẹt ở PENDING_REVIEW
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-20 (CRUD sự kiện + hạng vé, state machine DRAFT → … → COMPLETED), EVF-89 (Kiểm duyệt sự kiện: structured JSON output, chấm 4 trục, ngưỡng định tuyến)
+
+h3. Tham chiếu
+Mã backlog: EVF-23 · BR-E4
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1201,1610,
+Story,1205,1200,Hàng đợi việc cho Moderator: duyệt / từ chối / lật ngược quyết định AI,,5,High,event moderation,event,Sprint 4,"h3. User story
+Là Moderator, tôi muốn danh sách sự kiện cần xem xét cùng lý do AI để ra quyết định nhanh và chính xác.
+
+h3. Bối cảnh
+BR-E5: mọi quyết định AI ghi audit_log và luôn có thể bị Moderator lật ngược.
+
+h3. Phạm vi công việc
+* API + UI danh sách NEEDS_HUMAN, kèm điểm 4 trục và lý do AI
+* Hành động duyệt, từ chối, lật ngược quyết định tự động
+* Ghi audit_log
+
+h3. Tiêu chí nghiệm thu (AC)
+# Mọi lần lật ngược quyết định AI đều ghi audit_log kèm lý do bắt buộc
+# Chỉ vai trò Moderator thao tác được
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-23 (Đẩy job kiểm duyệt AI khi submit, nhận kết quả bất đồng bộ), EVF-14 (Phân quyền RBAC: Buyer / Organizer / Moderator / Ops)
+
+h3. Tham chiếu
+Mã backlog: EVF-24 · BR-E5
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1204,1105,
+Story,1206,1200,"Trang sự kiện công khai render ISR, phục vụ từ CDN",,5,Highest,event frontend scale,event,Sprint 2,"h3. User story
+Là khách, tôi muốn trang sự kiện tải tức thì kể cả lúc hàng trăm nghìn người cùng vào.
+
+h3. Bối cảnh
+Tầng 1 của chiến lược scale: trang sự kiện phải tĩnh 100%, không chạm backend tại T0.
+
+h3. Phạm vi công việc
+* API snapshot sự kiện cho ISR
+* Revalidate khi sự kiện thay đổi
+* Tình trạng vé hiển thị dạng khoảng từ snapshot cache 5s
+
+h3. Tiêu chí nghiệm thu (AC)
+# Trang sự kiện 0 query DB khi cache hit
+# Số vé hiển thị dạng khoảng (còn nhiều / sắp hết), không lộ tồn kho chính xác
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-20 (CRUD sự kiện + hạng vé, state machine DRAFT → … → COMPLETED)
+
+h3. Tham chiếu
+Mã backlog: EVF-25 · docs/02-kien-truc.md Tầng 1 · BR-A4
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1201,,
+Task,1207,1200,Upload ảnh sự kiện lên object storage + sinh biến thể,,2,Medium,event,event,Sprint 6,"h3. Bối cảnh
+Ảnh sự kiện phục vụ qua CDN với nhiều kích thước để tối ưu băng thông.
+
+h3. Phạm vi công việc
+* Presigned URL upload lên MinIO/S3
+* Sinh 3 biến thể kích thước
+* Kiểm tra định dạng và dung lượng
+
+h3. Tiêu chí nghiệm thu (AC)
+# Ảnh được resize 3 kích thước, phục vụ qua CDN
+# File sai định dạng hoặc quá dung lượng bị từ chối
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-20 (CRUD sự kiện + hạng vé, state machine DRAFT → … → COMPLETED)
+
+h3. Tham chiếu
+Mã backlog: EVF-26
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1201,,
+Epic,1300,,E4 – Ticketing & Chống oversell,E4 Ticketing,,Highest,ticketing critical,ticketing,,"h3. Mục tiêu
+Giữ ghế, đặt vé và phát vé dưới tải cao với bất biến tuyệt đối: KHÔNG BAO GIỜ bán quá quota (BR-O1).
+
+h3. Phạm vi
+* Kho phân mảnh 32 bucket + CHECK available >= 0
+* Redis Lua gate + Postgres transaction
+* Idempotency-Key, giới hạn mua
+* Hold sweeper, outbox, đối soát tồn kho
+* Phát hành vé QR HMAC, check-in
+
+h3. Tiêu chí hoàn thành epic
+# EVF-39 chạy 200 lần trong CI: 0 oversell, 0 under-sell
+# Metric inventory_drift về 0 trong ≤ 20s sau khi cố ý làm lệch
+# Không double-release khi chạy 2 sweeper song song
+
+h3. Rủi ro chính
+Epic rủi ro cao nhất. Một lần oversell là sự cố nghiêm trọng về uy tín và pháp lý.",,,
+Story,1301,1300,Schema tồn kho phân mảnh 32 bucket/hạng vé + CHECK (available >= 0),,5,Highest,ticketing db critical,ticketing,Sprint 0,"h3. User story
+Là nền tảng, tôi muốn tồn kho được phân mảnh và ràng buộc ở tầng schema để không thể âm kho dưới tải cao.
+
+h3. Bối cảnh
+Hàng nghìn transaction cùng UPDATE một dòng sẽ gây lock contention; phân 32 bucket giảm contention 32 lần. CHECK là chốt chặn cuối cùng.
+
+h3. Phạm vi công việc
+* Bảng ticket_inventory(ticket_type_id, bucket, available) với CHECK (available >= 0)
+* Hàm chia quota vào 32 bucket
+* Index phục vụ truy vấn theo bucket
+
+h3. Tiêu chí nghiệm thu (AC)
+# Constraint chặn được mọi UPDATE làm âm tồn kho
+# Tổng available của 32 bucket luôn bằng quota ban đầu
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-5 (Khung migration goose + schema khởi tạo)
+
+h3. Tham chiếu
+Mã backlog: EVF-30 · BR-O1 · docs/02-kien-truc.md mục Chống oversell
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1005,,
+Story,1302,1300,"Redis Lua inventory gate: hold atomic, giảm tồn, ghi ZSET hết hạn",,8,Highest,ticketing redis critical,ticketing,Sprint 1,"h3. User story
+Là nền tảng, tôi muốn chặn phần lớn request thua ngay tại Redis để Postgres chỉ nhận request có khả năng thành công.
+
+h3. Bối cảnh
+Lớp 1 trong 2 lớp chống oversell: Lua atomic giảm tồn, tạo hold và ghi hạn hết vào ZSET.
+
+h3. Phạm vi công việc
+* hold.lua: kiểm tra và giảm available, HSET hold, ZADD holds:{ev}
+* release.lua trả kho
+* Nạp script có SHA cache qua libs/go/redisx
+
+h3. Tiêu chí nghiệm thu (AC)
+# Script atomic, không race khi chạy song song
+# Benchmark < 0.5 ms p99
+# Hết hàng trả SOLD_OUT, không giảm kho
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-30 (Schema tồn kho phân mảnh 32 bucket/hạng vé + CHECK (available >= 0))
+
+h3. Hiện trạng mã nguồn
+Đã có internal/adapter/redis/gate.go, script/hold.lua, release.lua.
+
+h3. Tham chiếu
+Mã backlog: EVF-31 · BR-O1
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1301,,
+Story,1303,1300,"Ghi hold vào Postgres trong transaction, chọn bucket ngẫu nhiên + fallback vòng tròn",,8,Highest,ticketing db critical,ticketing,Sprint 1,"h3. User story
+Là nền tảng, tôi muốn Postgres là nguồn sự thật cho mỗi hold để Redis lệch cũng không gây oversell.
+
+h3. Bối cảnh
+Lớp 2 (authoritative): UPDATE có điều kiện available >= qty trong transaction đơn hàng.
+
+h3. Phạm vi công việc
+* Use case create_hold: Redis gate → transaction Postgres
+* Chọn bucket ngẫu nhiên, hết thì thử bucket kế tiếp (vòng tròn, tối đa 3 lần)
+* Hoàn Redis khi Postgres từ chối
+* BR-O3: tạo hold mới huỷ hold cũ
+
+h3. Tiêu chí nghiệm thu (AC)
+# Bucket hết thì thử bucket kế tiếp tối đa 3 lần rồi mới báo SOLD_OUT
+# Postgres từ chối → Redis được hoàn lại, không rò rỉ kho
+# Mỗi khách chỉ có 1 hold đang hoạt động trên mỗi sự kiện
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-31 (Redis Lua inventory gate: hold atomic, giảm tồn, ghi ZSET hết hạn)
+
+h3. Hiện trạng mã nguồn
+Đã có internal/app/create_hold.go, adapter/postgres/repository.go.
+
+h3. Tham chiếu
+Mã backlog: EVF-32 · BR-O1 · BR-O3
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1302,,
+Story,1304,1300,Middleware Idempotency-Key (libs/go/idem) cho mọi API ghi,,5,Highest,ticketing api critical,ticketing,Sprint 0,"h3. User story
+Là khách, tôi muốn bấm lại hoặc mạng chập chờn cũng không tạo đơn trùng.
+
+h3. Bối cảnh
+BR-O5: mọi API ghi bắt buộc header Idempotency-Key, lưu response 24h.
+
+h3. Phạm vi công việc
+* Bảng idempotency_keys(key, endpoint, response, expires_at)
+* Middleware bắt buộc header ở API ghi
+* Xử lý request đồng thời cùng key
+
+h3. Tiêu chí nghiệm thu (AC)
+# Thiếu header trả 400
+# Gọi lại cùng key trong 24h trả đúng response cũ, không tạo đơn trùng
+# 2 request đồng thời cùng key → chỉ 1 được xử lý, request còn lại nhận 409 hoặc response cũ
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-2 (libs/go/httpx: router, middleware và lỗi chuẩn RFC 7807), EVF-5 (Khung migration goose + schema khởi tạo)
+
+h3. Tham chiếu
+Mã backlog: EVF-33 · BR-O5
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1002,1005,
+Story,1305,1300,"Hold sweeper: quét ZSET mỗi 1s, trả kho idempotent",,8,Highest,ticketing worker critical,ticketing,Sprint 1,"h3. User story
+Là khách đang xếp hàng, tôi muốn ghế hết hạn giữ được trả lại ngay để người khác có cơ hội mua.
+
+h3. Bối cảnh
+BR-O2/BR-O7: giữ ghế đúng 10:00; mỗi hold chỉ release đúng một lần (WHERE released_at IS NULL). Không dùng keyspace notification.
+
+h3. Phạm vi công việc
+* Worker quét ZRANGEBYSCORE holds:{ev} -inf now mỗi 1s
+* Transaction release idempotent + cộng kho + đơn EXPIRED
+* Phát outbox hold.released
+
+h3. Tiêu chí nghiệm thu (AC)
+# Chạy 2 sweeper song song không gây double-release
+# Hold hết hạn được trả kho trong ≤ 2s
+# Crash giữa chừng rồi chạy lại vẫn đúng
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-32 (Ghi hold vào Postgres trong transaction, chọn bucket ngẫu nhiên + fallback vòng tròn)
+
+h3. Hiện trạng mã nguồn
+Đã có internal/worker/hold_sweeper.go.
+
+h3. Tham chiếu
+Mã backlog: EVF-34 · BR-O2 · BR-O7
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1303,,
+Story,1306,1300,Giới hạn mua: max_per_order và max_per_identity gộp mọi đơn,,5,Highest,ticketing,ticketing,Sprint 1,"h3. User story
+Là Ban tổ chức, tôi muốn giới hạn số vé mỗi người để vé đến được nhiều khách thật hơn.
+
+h3. Bối cảnh
+BR-O4: mặc định 4 vé/đơn và 4 vé/người/sự kiện, tính gộp mọi đơn đã PAID và hold đang hoạt động.
+
+h3. Phạm vi công việc
+* Kiểm tra max_per_order khi tạo hold
+* Kiểm tra max_per_identity gộp đơn PAID + hold
+* Cấu hình theo sự kiện
+
+h3. Tiêu chí nghiệm thu (AC)
+# Mua vượt giới hạn bị chặn với lỗi rõ ràng
+# Tính gộp mọi đơn đã PAID; 2 request song song không vượt được giới hạn
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-32 (Ghi hold vào Postgres trong transaction, chọn bucket ngẫu nhiên + fallback vòng tròn)
+
+h3. Tham chiếu
+Mã backlog: EVF-35 · BR-O4
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1303,,
+Story,1307,1300,Transactional outbox + relay ra RabbitMQ,,5,Highest,ticketing mq,ticketing,Sprint 0,"h3. User story
+Là nền tảng, tôi muốn sự kiện nghiệp vụ không bao giờ bị mất dù service chết giữa chừng.
+
+h3. Bối cảnh
+Ghi DB và publish MQ không nằm chung transaction; outbox bảo đảm at-least-once.
+
+h3. Phạm vi công việc
+* Bảng outbox_events ghi trong cùng transaction nghiệp vụ
+* Relay đọc và publish, đánh dấu đã gửi
+* libs/go/outbox dùng chung
+
+h3. Tiêu chí nghiệm thu (AC)
+# Không mất event khi service chết giữa chừng — có test kill-restart
+# Event có event_id để consumer khử trùng lặp
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-7 (libs/go/mq: publisher + consumer có retry/DLQ, khai báo topology)
+
+h3. Tham chiếu
+Mã backlog: EVF-36 · docs/03-cau-truc-src.md mục 7
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1007,,
+Story,1308,1300,"Job đối soát tồn kho Redis ↔ Postgres mỗi 10s, export metric inventory_drift",,5,Highest,ticketing reliability,ticketing,Sprint 1,"h3. User story
+Là SRE, tôi muốn Redis tự được sửa khi lệch so với Postgres để không báo hết vé sai.
+
+h3. Bối cảnh
+Redis có thể lệch (failover, mất dữ liệu); lệch chỉ gây báo hết sớm và phải được đồng bộ lại từ Postgres.
+
+h3. Phạm vi công việc
+* Job so sánh available Redis vs Postgres mỗi 10s
+* Đồng bộ Redis theo Postgres
+* Export metric ticketing_inventory_drift
+
+h3. Tiêu chí nghiệm thu (AC)
+# Cố ý làm lệch Redis → job tự sửa trong ≤ 20s
+# Metric inventory_drift về 0 sau khi sửa
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-31 (Redis Lua inventory gate: hold atomic, giảm tồn, ghi ZSET hết hạn), EVF-32 (Ghi hold vào Postgres trong transaction, chọn bucket ngẫu nhiên + fallback vòng tròn)
+
+h3. Tham chiếu
+Mã backlog: EVF-37 · BR-O1
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1302,1303,
+Story,1309,1300,Phát hành vé + QR ký HMAC có jti,,5,High,ticketing security,ticketing,Sprint 3,"h3. User story
+Là khách, tôi muốn nhận vé có mã QR không thể làm giả để vào cửa.
+
+h3. Bối cảnh
+BR-O8: QR ký HMAC-SHA256 kèm jti và hạn dùng; check-in xác minh online.
+
+h3. Phạm vi công việc
+* Consumer payment PAID → tạo tickets
+* Sinh QR ký HMAC (libs/go/authx), lưu jti
+* Lưu ảnh QR lên object storage
+
+h3. Tiêu chí nghiệm thu (AC)
+# QR giả mạo bị từ chối
+# QR dùng lại lần 2 bị từ chối
+# Mỗi đơn PAID phát đúng số vé, không trùng khi nhận event lặp
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-71 (Webhook exactly-once: UNIQUE provider_txn_id, xác minh chữ ký, chống replay)
+
+h3. Tham chiếu
+Mã backlog: EVF-38 · BR-O8
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1502,,
+Task,1310,1300,"Test đồng thời: 10.000 goroutine mua 100 vé → đúng 100 đơn, 0 oversell",,5,Highest,ticketing critical quality-gate test,ticketing,Sprint 1,"h3. Bối cảnh
+Cổng chất lượng không thể bỏ qua cho bất biến BR-O1. Chạy trên Postgres + Redis thật (testcontainers).
+
+h3. Phạm vi công việc
+* Test 10.000 goroutine cùng mua hạng vé quota 100
+* Kiểm tra cả oversell và under-sell (bug trả kho)
+* Tích hợp vào CI, chạy lặp 200 lần
+
+h3. Tiêu chí nghiệm thu (AC)
+# Chạy 200 lần trong CI: đúng 100 đơn thành công mỗi lần
+# 0 lần oversell, 0 lần under-sell
+# Test fail → chặn merge và chặn release
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-32 (Ghi hold vào Postgres trong transaction, chọn bucket ngẫu nhiên + fallback vòng tròn), EVF-34 (Hold sweeper: quét ZSET mỗi 1s, trả kho idempotent)
+
+h3. Hiện trạng mã nguồn
+Đã có test/concurrency/oversell_test.go và helpers.go.
+
+h3. Tham chiếu
+Mã backlog: EVF-39 · BR-O1 · BR-O7
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1303,1305,
+Task,1311,1300,API check-in: đổi ISSUED → CHECKED_IN đúng một lần,,3,Medium,ticketing,ticketing,Sprint 6,"h3. Bối cảnh
+Nhân viên soát vé quét QR tại cổng; mỗi vé chỉ được vào một lần.
+
+h3. Phạm vi công việc
+* API check-in xác minh chữ ký QR và jti
+* Cập nhật trạng thái có điều kiện
+* Ghi log check-in
+
+h3. Tiêu chí nghiệm thu (AC)
+# Check-in lần 2 trả 409
+# QR chữ ký sai trả 400
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-38 (Phát hành vé + QR ký HMAC có jti)
+
+h3. Tham chiếu
+Mã backlog: EVF-40 · BR-O8
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1309,,
+Epic,1400,,E5 – Phòng chờ ảo,E5 Phòng chờ,,Highest,waitingroom critical,waitingroom,,"h3. Mục tiêu
+Xếp hàng công bằng và biến đỉnh tải vô hạn thành dòng tải hằng số xuống checkout bằng admit controller.
+
+h3. Phạm vi
+* Queue token, join O(1) idempotent
+* LOBBY + lottery tại T0, FIFO sau T0
+* Status thích nghi + ETag, SSE
+* Admit controller AIMD + leader election
+* Heartbeat, SOLD_OUT/waitlist, Ops override
+
+h3. Tiêu chí hoàn thành epic
+# k6: 100k VU join trong 5s, p99 < 300 ms
+# Kiểm định thống kê: thời điểm join trước T0 không tương quan với rank
+# admit_rate tự giảm ≤ 10s khi checkout chậm, phục hồi ≤ 60s
+
+h3. Rủi ro chính
+Controller sai thì hoặc DB sập (admit quá nhanh) hoặc khách chờ vô ích (admit quá chậm).",,,
+Story,1401,1400,"Queue token ký, gắn identity + device + event, join idempotent",,5,Highest,waitingroom critical,waitingroom,Sprint 2,"h3. User story
+Là khách, tôi muốn vào lại từ tab hay thiết bị khác vẫn giữ nguyên chỗ trong hàng.
+
+h3. Bối cảnh
+BR-Q3: 1 người 1 chỗ; join lại trả đúng token và rank cũ, không có cách nhân bản chỗ.
+
+h3. Phạm vi công việc
+* Ký queue token gắn identity_id, device_id, event_id
+* Xác minh token ở mọi API hàng chờ
+* Yêu cầu OTP đã xác thực
+
+h3. Tiêu chí nghiệm thu (AC)
+# Join lại từ tab/thiết bị khác trả đúng token và rank cũ
+# Token giả hoặc của sự kiện khác bị từ chối
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-11 (Xác thực OTP qua SMS/email trước khi xếp hàng), EVF-13 (Đăng ký device fingerprint, liên kết identity ↔ device)
+
+h3. Tham chiếu
+Mã backlog: EVF-50 · BR-Q3
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1102,1104,
+Story,1402,1400,"join.lua: O(1), một round-trip Redis, shard theo event",,5,Highest,waitingroom redis critical,waitingroom,Sprint 2,"h3. User story
+Là nền tảng, tôi muốn thao tác join cực rẻ để chịu được hàng trăm nghìn request mỗi giây.
+
+h3. Bối cảnh
+Tầng 3: đường đi nóng chỉ chạy một Lua script atomic, không chạm Postgres.
+
+h3. Phạm vi công việc
+* join.lua: GET token cũ, INCR seq, ZADD lobby/queue, SET token
+* Hash tag {ev} để cùng sự kiện cùng shard
+
+h3. Tiêu chí nghiệm thu (AC)
+# Benchmark 100k ops/s trên 1 node Redis
+# Hash tag bảo đảm mọi key của một sự kiện nằm cùng shard
+# Không có truy vấn Postgres trên đường join
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-50 (Queue token ký, gắn identity + device + event, join idempotent)
+
+h3. Hiện trạng mã nguồn
+Đã có adapter/redis/script/join.lua, queue.go.
+
+h3. Tham chiếu
+Mã backlog: EVF-51 · docs/02-kien-truc.md Tầng 3
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1401,,
+Story,1403,1400,LOBBY trước T0 + lottery xáo trộn công bằng tại T0,,8,Highest,waitingroom fairness critical,waitingroom,Sprint 2,"h3. User story
+Là khách, tôi muốn vào sớm hay muộn trước giờ mở bán đều có cơ hội như nhau.
+
+h3. Bối cảnh
+BR-Q1: vào trước T0 thì ở LOBBY không có số thứ tự; đúng T0 xáo trộn ngẫu nhiên rồi mới cấp rank. Triệt tiêu động cơ bấm F5 của bot.
+
+h3. Phạm vi công việc
+* shuffle.lua / job xáo trộn tại T0 bằng nguồn ngẫu nhiên an toàn
+* Chuyển LOBBY → QUEUED với rank
+* Xử lý LOBBY lớn theo lô, không khoá Redis quá lâu
+
+h3. Tiêu chí nghiệm thu (AC)
+# Kiểm định thống kê: thời điểm join trước T0 không tương quan với rank (p > 0.05)
+# Xáo trộn 300k phần tử hoàn tất trong ≤ 2s
+# Chạy lại job không xáo trộn lần 2
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-51 (join.lua: O(1), một round-trip Redis, shard theo event)
+
+h3. Hiện trạng mã nguồn
+Đã có adapter/redis/script/shuffle.lua.
+
+h3. Tham chiếu
+Mã backlog: EVF-52 · BR-Q1
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1402,,
+Story,1404,1400,Nối đuôi FIFO sau T0,,3,Highest,waitingroom,waitingroom,Sprint 2,"h3. User story
+Là khách vào sau giờ mở bán, tôi muốn được xếp theo thứ tự đến.
+
+h3. Bối cảnh
+BR-Q2: người vào sau T0 nối đuôi FIFO sau toàn bộ nhóm lottery.
+
+h3. Phạm vi công việc
+* Score FIFO sau T0 lớn hơn mọi score lottery
+* Xử lý đúng khi join sát T0 (đang xáo trộn)
+
+h3. Tiêu chí nghiệm thu (AC)
+# Người vào sau T0 luôn có rank lớn hơn toàn bộ nhóm lottery
+# Join đúng lúc đang xáo trộn không bị mất hoặc chen lên trước
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-52 (LOBBY trước T0 + lottery xáo trộn công bằng tại T0)
+
+h3. Tham chiếu
+Mã backlog: EVF-53 · BR-Q2
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1403,,
+Story,1405,1400,"GET /queue/status: rank, ETA, poll_after_ms thích nghi + ETag",,8,Highest,waitingroom scale,waitingroom,Sprint 2,"h3. User story
+Là khách, tôi muốn biết vị trí và thời gian chờ ước tính mà không làm quá tải hệ thống.
+
+h3. Bối cảnh
+Chiếm ~90% lưu lượng trong 30 phút chờ. BR-Q4: server quyết định nhịp poll theo rank.
+
+h3. Phạm vi công việc
+* status.lua đọc rank + trạng thái trong 1 round-trip
+* Tính ETA từ admit_rate
+* poll_after_ms thích nghi, ETag / 304
+* Cache theo bucket rank
+
+h3. Tiêu chí nghiệm thu (AC)
+# rank > 10.000 → poll_after_ms = 30000; rank < 500 → 3000
+# Trả 304 khi trạng thái không đổi
+# p99 < 150 ms
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-51 (join.lua: O(1), một round-trip Redis, shard theo event)
+
+h3. Hiện trạng mã nguồn
+Đã có script/status.lua, domain/position.go.
+
+h3. Tham chiếu
+Mã backlog: EVF-54 · BR-Q4 · docs/02-kien-truc.md Tầng 4
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1402,,
+Story,1406,1400,"Admit controller AIMD, bầu leader qua Redis lock có fencing",,8,Highest,waitingroom critical scale,waitingroom,Sprint 2,"h3. User story
+Là SRE, tôi muốn tốc độ cho khách vào checkout tự điều chỉnh theo sức khoẻ hệ thống.
+
+h3. Bối cảnh
+BR-Q5, trái tim giải pháp scale: ghim tải xuống Postgres ở mức hằng số bất kể số người xếp hàng.
+
+h3. Phạm vi công việc
+* Thu thập checkout_throughput, p99, db_pool_usage, error_rate mỗi 1s
+* AIMD: khoẻ thì cộng, có sức ép thì nhân 0.7
+* Leader election SET NX PX + fencing token (libs/go/leader)
+* Hỗ trợ manual_override
+
+h3. Tiêu chí nghiệm thu (AC)
+# Tiêm độ trễ giả vào checkout → admit_rate giảm trong ≤ 10s
+# Phục hồi trong ≤ 60s sau khi hết độ trễ
+# Không dao động quá 2 chu kỳ
+# Chỉ 1 leader mỗi sự kiện; leader cũ bị fencing chặn ghi
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-54 (GET /queue/status: rank, ETA, poll_after_ms thích nghi + ETag)
+
+h3. Hiện trạng mã nguồn
+Đã có internal/app/admit_controller.go.
+
+h3. Tham chiếu
+Mã backlog: EVF-55 · BR-Q5 · docs/02-kien-truc.md Tầng 5
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1405,,
+Story,1407,1400,"admit.lua: ZPOPMIN theo lô → tập admitted, TTL 15 phút",,5,Highest,waitingroom redis,waitingroom,Sprint 2,"h3. User story
+Là khách, tôi muốn khi tới lượt được vào mua vé ngay và đủ thời gian chọn vé.
+
+h3. Bối cảnh
+BR-Q7: suất admit có TTL 15 phút (10 phút giữ ghế + thời gian chọn vé).
+
+h3. Phạm vi công việc
+* admit.lua: ZPOPMIN N từ queue sang admitted atomic
+* Đặt TTL 15 phút
+* Publish sự kiện YOUR_TURN
+
+h3. Tiêu chí nghiệm thu (AC)
+# Atomic, không admit trùng một token
+# Hết TTL chưa thanh toán → EXPIRED, không được ưu tiên khi xếp lại
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-55 (Admit controller AIMD, bầu leader qua Redis lock có fencing)
+
+h3. Hiện trạng mã nguồn
+Đã có script/admit.lua.
+
+h3. Tham chiếu
+Mã backlog: EVF-56 · BR-Q7
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1406,,
+Story,1408,1400,"SSE push ""tới lượt bạn"" + fallback polling",,5,Highest,waitingroom frontend,waitingroom,Sprint 2,"h3. User story
+Là khách gần tới lượt, tôi muốn được báo ngay lập tức khi tới lượt.
+
+h3. Bối cảnh
+SSE tốn kết nối nên chỉ dùng cho nhóm gần lượt; nhóm xa vẫn polling.
+
+h3. Phạm vi công việc
+* Endpoint SSE cho nhóm rank nhỏ
+* Fan-out sự kiện YOUR_TURN qua notification-svc
+* Fallback polling khi SSE lỗi
+
+h3. Tiêu chí nghiệm thu (AC)
+# Mất kết nối SSE → tự động chuyển polling, không mất lượt
+# Thông báo YOUR_TURN tới client trong ≤ 2s
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-56 (admit.lua: ZPOPMIN theo lô → tập admitted, TTL 15 phút)
+
+h3. Tham chiếu
+Mã backlog: EVF-57
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1407,,
+Story,1409,1400,Heartbeat + giữ chỗ 5 phút khi rớt kết nối,,3,High,waitingroom,waitingroom,Sprint 2,"h3. User story
+Là khách bị rớt mạng, tôi muốn quay lại vẫn giữ nguyên vị trí.
+
+h3. Bối cảnh
+QUEUED rớt kết nối > 90s được giữ chỗ 5 phút; quá hạn → DROPPED.
+
+h3. Phạm vi công việc
+* API heartbeat
+* Đánh dấu mất kết nối và thời hạn giữ chỗ
+* Job dọn DROPPED
+
+h3. Tiêu chí nghiệm thu (AC)
+# Tắt mạng 3 phút rồi quay lại vẫn giữ rank
+# Quá 5 phút + 90s → DROPPED và phải xếp lại
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-54 (GET /queue/status: rank, ETA, poll_after_ms thích nghi + ETag)
+
+h3. Tham chiếu
+Mã backlog: EVF-58
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1405,,
+Story,1410,1400,"Xử lý SOLD_OUT: thông báo hàng chờ, chuyển sang waitlist",,3,High,waitingroom,waitingroom,Sprint 6,"h3. User story
+Là khách đang chờ, tôi muốn biết ngay khi hết vé thay vì chờ vô ích.
+
+h3. Bối cảnh
+BR-Q6: hết vé thì toàn bộ QUEUED nhận SOLD_OUT, được mời vào waitlist; không đẩy thêm ai vào checkout.
+
+h3. Phạm vi công việc
+* Nhận sự kiện hết vé từ ticketing
+* Dừng admit, broadcast SOLD_OUT
+* Đăng ký waitlist
+
+h3. Tiêu chí nghiệm thu (AC)
+# Hết vé → toàn bộ QUEUED nhận thông báo trong ≤ 5s
+# Không ai bị đẩy vào checkout sau khi SOLD_OUT
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-57 (SSE push ""tới lượt bạn"" + fallback polling)
+
+h3. Tham chiếu
+Mã backlog: EVF-59 · BR-Q6
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1408,,
+Story,1411,1400,"Ops API + UI: xem/ghi đè admit_rate, tạm dừng khẩn cấp",,5,High,waitingroom ops,waitingroom,Sprint 5,"h3. User story
+Là Ops trực sự kiện, tôi muốn can thiệp tốc độ admit hoặc tạm dừng khi có sự cố.
+
+h3. Bối cảnh
+BR-Q5 cho phép Ops ghi đè thủ công (manual_override).
+
+h3. Phạm vi công việc
+* API xem/ghi đè admit_rate, tạm dừng/tiếp tục
+* UI trong console Ops
+* Ghi audit_log
+
+h3. Tiêu chí nghiệm thu (AC)
+# Ghi đè có hiệu lực trong ≤ 2s
+# Mọi thao tác được ghi audit kèm người thực hiện
+# Chỉ vai trò Ops thao tác được
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-55 (Admit controller AIMD, bầu leader qua Redis lock có fencing), EVF-14 (Phân quyền RBAC: Buyer / Organizer / Moderator / Ops)
+
+h3. Tham chiếu
+Mã backlog: EVF-60 · BR-Q5
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1406,1105,
+Task,1412,1400,Jitter phía client 0..5s tại T0,,2,Highest,waitingroom frontend scale,web,Sprint 2,"h3. Bối cảnh
+Tầng 2: client tự hoãn gọi join ngẫu nhiên 0..5s sau T0, trải đỉnh 300k rps thành ~60k rps. Nhờ lottery nên hoãn không gây thiệt.
+
+h3. Phạm vi công việc
+* lib/jitter.ts
+* Áp dụng trước lời gọi join tại T0
+* Đồng bộ giờ theo GET /time
+
+h3. Tiêu chí nghiệm thu (AC)
+# Phân bố thời điểm join trải đều trên 5s, không dồn cục tại giây đầu
+# Dùng giờ server, không dùng giờ máy khách
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-51 (join.lua: O(1), một round-trip Redis, shard theo event)
+
+h3. Hiện trạng mã nguồn
+Có apps/web/src/lib/queue-client.ts làm nền.
+
+h3. Tham chiếu
+Mã backlog: EVF-61 · docs/02-kien-truc.md Tầng 2
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1402,,
+Epic,1500,,E6 – Thanh toán,E6 Thanh toán,,Highest,payment,payment,,"h3. Mục tiêu
+Thu tiền chính xác một lần cho mỗi đơn, tự chữa đơn treo và hoàn tiền khi sự kiện huỷ.
+
+h3. Phạm vi
+* Adapter VNPay/Momo/Stripe + mock
+* Webhook exactly-once, payment_inbox
+* Job đối soát đơn treo
+* Hoàn tiền, email/SMS xác nhận
+
+h3. Tiêu chí hoàn thành epic
+# Bắn lại cùng webhook 100 lần → đúng 1 đơn PAID
+# Không còn đơn ở trạng thái lửng lơ quá 15 phút
+# Chạy local hoàn toàn bằng mock
+
+h3. Rủi ro chính
+Webhook trùng hoặc mất gây thu tiền 2 lần hoặc thu tiền mà không phát vé.",,,
+Story,1501,1500,Adapter cổng thanh toán (VNPay/Momo/Stripe) + sandbox mock,,8,Highest,payment,payment,Sprint 3,"h3. User story
+Là khách, tôi muốn thanh toán bằng phương thức quen thuộc của mình.
+
+h3. Bối cảnh
+Cần một port chung cho nhiều cổng; môi trường local chạy bằng mock.
+
+h3. Phạm vi công việc
+* Port PaymentGateway và adapter cho từng cổng
+* Mock gateway giả lập thành công/thất bại/trễ webhook
+* Luồng HELD → PAYMENT_PENDING
+
+h3. Tiêu chí nghiệm thu (AC)
+# Chạy được local hoàn toàn bằng mock, không cần cổng thật
+# Đổi cổng chỉ cần cấu hình
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-32 (Ghi hold vào Postgres trong transaction, chọn bucket ngẫu nhiên + fallback vòng tròn)
+
+h3. Tham chiếu
+Mã backlog: EVF-70
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1303,,
+Story,1502,1500,"Webhook exactly-once: UNIQUE provider_txn_id, xác minh chữ ký, chống replay",,8,Highest,payment critical,payment,Sprint 3,"h3. User story
+Là nền tảng, tôi muốn mỗi giao dịch chỉ được ghi nhận đúng một lần dù cổng gửi webhook nhiều lần.
+
+h3. Bối cảnh
+BR-O6: UNIQUE index trên provider_txn_id; webhook lặp là no-op trả 200.
+
+h3. Phạm vi công việc
+* Xác minh chữ ký + cửa sổ timestamp chống replay
+* Ghi payments + chuyển đơn PAID trong transaction
+* Phát outbox order.paid
+
+h3. Tiêu chí nghiệm thu (AC)
+# Bắn lại cùng webhook 100 lần → đúng 1 đơn PAID
+# Chữ ký sai bị từ chối
+# Webhook quá cửa sổ thời gian bị từ chối
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-70 (Adapter cổng thanh toán (VNPay/Momo/Stripe) + sandbox mock), EVF-36 (Transactional outbox + relay ra RabbitMQ)
+
+h3. Tham chiếu
+Mã backlog: EVF-71 · BR-O6
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1501,1307,
+Story,1503,1500,payment_inbox cho webhook đến sớm + replay,,5,High,payment reliability,payment,Sprint 5,"h3. User story
+Là nền tảng, tôi muốn webhook đến trước khi đơn tồn tại không bị mất.
+
+h3. Bối cảnh
+BR-O6: webhook đến sớm được lưu payment_inbox và replay sau.
+
+h3. Phạm vi công việc
+* Lưu webhook chưa khớp đơn vào payment_inbox
+* Job replay định kỳ
+* Cảnh báo bản ghi tồn quá lâu
+
+h3. Tiêu chí nghiệm thu (AC)
+# Webhook đến trước khi đơn tồn tại được lưu và replay thành công
+# Replay idempotent
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-71 (Webhook exactly-once: UNIQUE provider_txn_id, xác minh chữ ký, chống replay)
+
+h3. Tham chiếu
+Mã backlog: EVF-72 · BR-O6
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1502,,
+Story,1504,1500,"Job đối soát: đơn quá 15 phút không có webhook → hỏi cổng thanh toán, tự chữa",,5,Highest,payment reliability,payment,Sprint 3,"h3. User story
+Là khách, tôi muốn đơn của mình không bị treo khi cổng thanh toán không gửi webhook.
+
+h3. Bối cảnh
+Đơn PAYMENT_PENDING quá 15 phút phải được truy vấn chủ động để chuyển PAID hoặc CANCELLED.
+
+h3. Phạm vi công việc
+* Job quét đơn PAYMENT_PENDING quá 15 phút
+* Gọi API tra cứu của cổng
+* Chuyển PAID (tự chữa) hoặc CANCELLED (trả kho)
+
+h3. Tiêu chí nghiệm thu (AC)
+# Đơn treo được tự chữa về PAID hoặc CANCELLED, không còn trạng thái lửng lơ
+# Metric payment_webhook_lag_seconds được export
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-71 (Webhook exactly-once: UNIQUE provider_txn_id, xác minh chữ ký, chống replay)
+
+h3. Tham chiếu
+Mã backlog: EVF-73
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1502,,
+Story,1505,1500,Luồng hoàn tiền khi sự kiện bị huỷ,,5,Medium,payment,payment,Sprint 6,"h3. User story
+Là khách, tôi muốn được hoàn tiền tự động khi sự kiện bị huỷ.
+
+h3. Bối cảnh
+Organizer huỷ sự kiện → toàn bộ vé ISSUED chuyển REFUNDING → REFUNDED.
+
+h3. Phạm vi công việc
+* Consumer event.cancelled
+* Gọi API hoàn tiền của cổng theo lô, có retry
+* Thông báo khách
+
+h3. Tiêu chí nghiệm thu (AC)
+# Huỷ sự kiện → toàn bộ vé ISSUED chuyển REFUNDING và được hoàn hết
+# Không hoàn trùng khi retry
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-71 (Webhook exactly-once: UNIQUE provider_txn_id, xác minh chữ ký, chống replay), EVF-38 (Phát hành vé + QR ký HMAC có jti)
+
+h3. Tham chiếu
+Mã backlog: EVF-74
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1502,1309,
+Task,1506,1500,Email/SMS xác nhận + đính kèm vé qua notification-svc,,3,High,payment notification,notification,Sprint 5,"h3. Bối cảnh
+Khách cần nhận xác nhận thanh toán và vé điện tử ngay sau khi PAID.
+
+h3. Phạm vi công việc
+* Consumer order.paid / ticket.issued trong notification-svc
+* Template email/SMS tiếng Việt
+* Retry khi gửi thất bại
+
+h3. Tiêu chí nghiệm thu (AC)
+# Gửi qua notification-svc, retry khi thất bại
+# Không gửi trùng khi nhận event lặp
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-38 (Phát hành vé + QR ký HMAC có jti)
+
+h3. Tham chiếu
+Mã backlog: EVF-75
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1309,,
+Epic,1600,,E7 – AI (Gemini),E7 AI,,Highest,ai critical,ai-worker,,"h3. Mục tiêu
+Trả lời hàng nghìn câu hỏi/phút trong phòng chờ và hỗ trợ kiểm duyệt, phát hiện bất thường, báo cáo — không bao giờ để lỗi 429 tới người dùng.
+
+h3. Phạm vi
+* ai-worker 4 consumer tách biệt
+* Limiter RPM+TPM toàn cục, retry/DLQ
+* FAQ, cache ngữ nghĩa, singleflight
+* Tool-call số liệu thật, suy biến 4 nấc, ngân sách token
+* Kiểm duyệt, phát hiện bất thường, báo cáo sau bán
+* Chống prompt injection, bộ eval
+
+h3. Tiêu chí hoàn thành epic
+# 5.000 câu/phút × 10 phút với hạn mức 60 RPM → gemini_429_total == 0, p95 < 4s, cache hit ≥ 80%
+# Gemini sập hoàn toàn → khách vẫn nhận câu trả lời FAQ
+# 0/50 payload injection vượt rào
+
+h3. Rủi ro chính
+Limiter sai khiến trợ lý chết đúng lúc cần nhất; LLM bịa số gây hiểu lầm cho khách.",,,
+Story,1601,1600,Khung ai-worker: FastAPI + 4 consumer RabbitMQ tách biệt,,8,Highest,ai,ai-worker,Sprint 3,"h3. User story
+Là nền tảng, tôi muốn job AI nặng không bao giờ làm nghẽn chat của khách.
+
+h3. Bối cảnh
+BR-A3: 4 hàng đợi ai.chat.q, ai.moderation.q, ai.anomaly.q, ai.report.q với consumer pool riêng.
+
+h3. Phạm vi công việc
+* FastAPI: health, metrics, admin
+* 4 consumer với prefetch và số worker riêng
+* Cấu hình TTL theo queue (chat 60s)
+
+h3. Tiêu chí nghiệm thu (AC)
+# Job report nặng không làm tăng lag của ai.chat.q quá 5s
+# Metric ai_queue_lag_seconds theo từng queue
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-7 (libs/go/mq: publisher + consumer có retry/DLQ, khai báo topology)
+
+h3. Hiện trạng mã nguồn
+Đã có app/main.py, consumers/chat.py.
+
+h3. Tham chiếu
+Mã backlog: EVF-80 · BR-A3
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1007,,
+Story,1602,1600,"Global token-bucket limiter RPM + TPM trên Redis Lua, đặt chỗ token trước khi gọi",,8,Highest,ai critical scale,ai-worker,Sprint 3,"h3. User story
+Là nền tảng, tôi muốn không bao giờ vượt hạn mức Gemini dù chạy nhiều worker song song.
+
+h3. Bối cảnh
+Lớp L6: mọi replica dùng chung bucket, tính cả RPM và TPM; ước lượng token và đặt chỗ trước, hoàn phần chênh sau.
+
+h3. Phạm vi công việc
+* limiter.lua refill theo thời gian, kiểm cả 2 bucket
+* Ước lượng token prompt + max_output_tokens
+* Hoàn token chênh lệch sau khi có usage thật
+* Thiếu permit → nack + requeue sau wait_ms
+
+h3. Tiêu chí nghiệm thu (AC)
+# Bắn 5.000 câu/phút liên tục 10 phút với hạn mức giả 60 RPM → gemini_429_total == 0
+# Không job nào mất
+# p95 phản hồi < 4s, cache hit ≥ 80%
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-80 (Khung ai-worker: FastAPI + 4 consumer RabbitMQ tách biệt)
+
+h3. Hiện trạng mã nguồn
+Đã có app/gemini/limiter.py, scripts/limiter.lua.
+
+h3. Tham chiếu
+Mã backlog: EVF-81 · docs/02-kien-truc.md L6
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1601,,
+Story,1603,1600,Retry backoff qua delay-queue 5s/30s/2m + DLQ,,5,Highest,ai mq,ai-worker,Sprint 3,"h3. User story
+Là nền tảng, tôi muốn lỗi tạm thời được tự phục hồi mà không dồn tải vào Gemini.
+
+h3. Bối cảnh
+Lớp L7: dead-letter sang ai.retry với các delay-queue; hết 3 lần → ai.dlq.
+
+h3. Phạm vi công việc
+* Topology ai.retry + 3 delay-queue
+* Phân loại lỗi tạm thời / vĩnh viễn
+* Alert khi DLQ có message
+
+h3. Tiêu chí nghiệm thu (AC)
+# Lỗi tạm thời tự phục hồi
+# Lỗi vĩnh viễn vào DLQ và bắn alert
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-80 (Khung ai-worker: FastAPI + 4 consumer RabbitMQ tách biệt)
+
+h3. Tham chiếu
+Mã backlog: EVF-82 · docs/02-kien-truc.md L7
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1601,,
+Story,1604,1600,Tầng FAQ/intent trả lời 0 token (~50 mẫu),,5,Highest,ai cost,ai-worker,Sprint 3,"h3. User story
+Là khách, tôi muốn câu hỏi thường gặp được trả lời tức thì.
+
+h3. Bối cảnh
+Lớp L2: phần lớn câu hỏi lặp lại; trả lời bằng template + số liệu thật, không gọi LLM.
+
+h3. Phạm vi công việc
+* Intent classifier nhẹ (từ khoá + embedding cục bộ)
+* ~50 mẫu FAQ tiếng Việt
+* Template chèn số liệu qua tool (BR-A5)
+
+h3. Tiêu chí nghiệm thu (AC)
+# ≥ 40% câu hỏi thực tế được giải quyết không gọi LLM
+# Phản hồi FAQ < 200 ms
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-80 (Khung ai-worker: FastAPI + 4 consumer RabbitMQ tách biệt)
+
+h3. Hiện trạng mã nguồn
+Đã có app/pipeline/faq.py.
+
+h3. Tham chiếu
+Mã backlog: EVF-83 · BR-A5
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1601,,
+Story,1605,1600,"Cache ngữ nghĩa bằng embedding trên Redis, ngưỡng 0.93, scope theo sự kiện",,8,Highest,ai cost scale,ai-worker,Sprint 4,"h3. User story
+Là nền tảng, tôi muốn tái sử dụng câu trả lời cho câu hỏi tương tự để tiết kiệm quota.
+
+h3. Bối cảnh
+Lớp L3: cosine ≥ 0.93 dùng lại câu trả lời; key có event_id; TTL 15 phút (động) / 24h (tĩnh).
+
+h3. Phạm vi công việc
+* Chuẩn hoá câu hỏi, sinh embedding
+* Tìm láng giềng gần nhất trên Redis vector
+* Phân loại TTL động/tĩnh
+
+h3. Tiêu chí nghiệm thu (AC)
+# Cache hit ≥ 80% trong kịch bản phòng chờ
+# Không lẫn dữ liệu giữa các sự kiện
+# Câu trả lời chứa số liệu động không bị cache quá TTL
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-80 (Khung ai-worker: FastAPI + 4 consumer RabbitMQ tách biệt)
+
+h3. Hiện trạng mã nguồn
+Đã có app/pipeline/semantic_cache.py.
+
+h3. Tham chiếu
+Mã backlog: EVF-84
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1601,,
+Story,1606,1600,Singleflight gộp câu hỏi trùng đang in-flight,,3,High,ai cost,ai-worker,Sprint 4,"h3. User story
+Là nền tảng, tôi muốn nhiều người hỏi cùng một câu cùng lúc chỉ tốn một lần gọi Gemini.
+
+h3. Bối cảnh
+Lớp L4: SET NX trên hash câu hỏi; người đến sau subscribe kết quả của call đang chạy.
+
+h3. Phạm vi công việc
+* Khoá theo hash câu hỏi + event_id
+* Cơ chế chờ kết quả có timeout
+* Xử lý khi call gốc lỗi
+
+h3. Tiêu chí nghiệm thu (AC)
+# 1.000 người hỏi cùng câu trong 1s → đúng 1 call Gemini
+# Call gốc lỗi → người chờ nhận câu trả lời dự phòng
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-84 (Cache ngữ nghĩa bằng embedding trên Redis, ngưỡng 0.93, scope theo sự kiện)
+
+h3. Hiện trạng mã nguồn
+Đã có app/pipeline/singleflight.py.
+
+h3. Tham chiếu
+Mã backlog: EVF-85
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1605,,
+Story,1607,1600,"Tool-call lấy số liệu thật (vị trí, ETA, tình trạng vé) — cấm bịa số",,5,Highest,ai correctness,ai-worker,Sprint 4,"h3. User story
+Là khách, tôi muốn thông tin về vị trí và vé do trợ lý đưa ra là chính xác.
+
+h3. Bối cảnh
+BR-A5: mọi con số về vị trí/ETA/tồn kho phải lấy qua tool-call vào hệ thống thật. BR-A4: không tiết lộ tồn kho chính xác.
+
+h3. Phạm vi công việc
+* Tool get_queue_position, get_eta, get_ticket_availability (dạng khoảng)
+* Kiểm tra đầu ra: số không truy nguyên được thì chặn
+
+h3. Tiêu chí nghiệm thu (AC)
+# Mọi con số trong câu trả lời truy nguyên được về một truy vấn thật
+# Không bao giờ trả tồn kho chính xác
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-80 (Khung ai-worker: FastAPI + 4 consumer RabbitMQ tách biệt), EVF-54 (GET /queue/status: rank, ETA, poll_after_ms thích nghi + ETag)
+
+h3. Hiện trạng mã nguồn
+Đã có app/pipeline/tools.py.
+
+h3. Tham chiếu
+Mã backlog: EVF-86 · BR-A4 · BR-A5
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1601,1405,
+Story,1608,1600,4 nấc suy biến NORMAL / SAVING / FAQ_ONLY / OFF + công tắc cho Ops,,5,Highest,ai reliability,ai-worker,Sprint 4,"h3. User story
+Là khách, tôi muốn trợ lý vẫn hữu ích kể cả khi AI quá tải hoặc gặp sự cố.
+
+h3. Bối cảnh
+Lớp L7: tự chuyển nấc theo queue lag / ngân sách / circuit breaker; Ops có thể ghi đè.
+
+h3. Phạm vi công việc
+* Máy trạng thái suy biến với ngưỡng tự động
+* API admin cho Ops chuyển nấc
+* Phát trạng thái nấc cho frontend
+
+h3. Tiêu chí nghiệm thu (AC)
+# Gemini sập hoàn toàn → khách vẫn nhận câu trả lời FAQ, không thấy lỗi
+# Queue lag > 30s → SAVING; > 2 phút → FAQ_ONLY
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-83 (Tầng FAQ/intent trả lời 0 token (~50 mẫu))
+
+h3. Hiện trạng mã nguồn
+Đã có app/pipeline/degradation.py.
+
+h3. Tham chiếu
+Mã backlog: EVF-87 · BR-A7 · docs/02-kien-truc.md L7
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1604,,
+Story,1609,1600,"Ngân sách token theo sự kiện: cảnh báo 80%, tự khoá 100%",,3,High,ai cost,ai-worker,Sprint 5,"h3. User story
+Là Ops, tôi muốn kiểm soát chi phí AI theo từng sự kiện.
+
+h3. Bối cảnh
+BR-A6: chạm 80% cảnh báo Ops; chạm 100% tự chuyển FAQ_ONLY.
+
+h3. Phạm vi công việc
+* Đếm token thực dùng theo event_id
+* Cấu hình ngân sách theo sự kiện
+* Alert 80%, chuyển nấc ở 100%
+
+h3. Tiêu chí nghiệm thu (AC)
+# Chạm 80% → alert Ops
+# Chạy hết ngân sách → tự chuyển FAQ_ONLY và báo Ops
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-81 (Global token-bucket limiter RPM + TPM trên Redis Lua, đặt chỗ token trước khi gọi), EVF-87 (4 nấc suy biến NORMAL / SAVING / FAQ_ONLY / OFF + công tắc cho Ops)
+
+h3. Tham chiếu
+Mã backlog: EVF-88 · BR-A6
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1602,1608,
+Story,1610,1600,"Kiểm duyệt sự kiện: structured JSON output, chấm 4 trục, ngưỡng định tuyến",,8,High,ai moderation,ai-worker,Sprint 4,"h3. User story
+Là Moderator, tôi muốn AI lọc trước sự kiện vi phạm để tập trung vào ca khó.
+
+h3. Bối cảnh
+BR-E4: 4 trục — nội dung cấm, sai lệch/lừa đảo, bản quyền hình ảnh, thông tin thiếu. ≥ 0.8 AUTO_REJECTED; 0.3–0.8 NEEDS_HUMAN; < 0.3 AUTO_APPROVED.
+
+h3. Phạm vi công việc
+* Consumer ai.moderation.q
+* Prompt moderation.v2 + schema pydantic
+* Bọc dữ liệu Organizer như dữ liệu (BR-A7)
+* Gold set 100 mẫu
+
+h3. Tiêu chí nghiệm thu (AC)
+# Output luôn đúng schema
+# Ngưỡng định tuyến đúng BR-E4
+# Có gold set 100 mẫu và báo cáo độ chính xác
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-81 (Global token-bucket limiter RPM + TPM trên Redis Lua, đặt chỗ token trước khi gọi)
+
+h3. Tham chiếu
+Mã backlog: EVF-89 · BR-E4 · BR-A7
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1602,,
+Story,1611,1600,"Phát hiện bất thường: gom cụm thống kê trước, LLM chỉ diễn giải và đề xuất rule",,8,High,ai antibot,ai-worker,Sprint 6,"h3. User story
+Là Moderator/Ops, tôi muốn phát hiện kiểu bot mới mà rule hiện tại chưa bắt được.
+
+h3. Bối cảnh
+BR-B2: AI không chặn trực tiếp; chỉ phân tích đặc trưng cụm đã tóm tắt và đề xuất rule chờ người duyệt.
+
+h3. Phạm vi công việc
+* Cron 30s trong cửa sổ bán: gom cụm thống kê từ log hành vi
+* Tóm tắt đặc trưng cụm → prompt anomaly.v1
+* Lưu rule đề xuất trạng thái chờ duyệt
+
+h3. Tiêu chí nghiệm thu (AC)
+# Không đẩy log thô vào LLM
+# Rule đề xuất phải qua người duyệt mới có hiệu lực
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-81 (Global token-bucket limiter RPM + TPM trên Redis Lua, đặt chỗ token trước khi gọi), EVF-104 (bot_decisions giải thích được + UI khiếu nại/gỡ chặn)
+
+h3. Tham chiếu
+Mã backlog: EVF-90 · BR-B2
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1602,1705,
+Story,1612,1600,"Báo cáo sau bán 6 phần: SQL tính số, LLM viết",,8,High,ai reporting,ai-worker,Sprint 6,"h3. User story
+Là Ban tổ chức, tôi muốn nhận báo cáo tổng kết đợt mở bán ngay sau khi đóng bán.
+
+h3. Bối cảnh
+6 phần: thương mại, phễu, kỹ thuật, gian lận, trải nghiệm, khuyến nghị (docs/01 mục 4). Nguyên tắc: LLM diễn giải, hệ thống tính toán.
+
+h3. Phạm vi công việc
+* Truy vấn SQL/analytics cho từng phần
+* Prompt report.v2 chỉ nhận số liệu đã tính
+* Xuất Markdown + JSON, lưu sale_reports, gửi Organizer & Ops
+
+h3. Tiêu chí nghiệm thu (AC)
+# Mọi số liệu do SQL tính; LLM chỉ viết diễn giải
+# Báo cáo sinh trong ≤ 10 phút sau khi đóng bán
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-81 (Global token-bucket limiter RPM + TPM trên Redis Lua, đặt chỗ token trước khi gọi)
+
+h3. Tham chiếu
+Mã backlog: EVF-91 · docs/01-nghiep-vu.md mục 4
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1602,,
+Story,1613,1600,Chống prompt injection + lọc đầu ra,,5,Highest,ai security,ai-worker,Sprint 4,"h3. User story
+Là nền tảng, tôi muốn người dùng không thể điều khiển trợ lý làm sai chính sách.
+
+h3. Bối cảnh
+BR-A7: nội dung người dùng/Organizer luôn bọc trong khối dữ liệu, đánh dấu là dữ liệu không phải chỉ thị. BR-A4: giới hạn phạm vi trả lời.
+
+h3. Phạm vi công việc
+* Bọc input trong khối dữ liệu có đánh dấu
+* Bộ lọc đầu ra: hứa giữ vé, số không truy nguyên, lộ tồn kho, ngoài phạm vi
+* Bộ test 50 payload injection
+
+h3. Tiêu chí nghiệm thu (AC)
+# Bộ test 50 payload injection → 0 lần vượt rào
+# Câu hỏi ngoài phạm vi được từ chối lịch sự
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-80 (Khung ai-worker: FastAPI + 4 consumer RabbitMQ tách biệt)
+
+h3. Tham chiếu
+Mã backlog: EVF-92 · BR-A4 · BR-A7
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1601,,
+Task,1614,1600,"Bộ eval prompt: gold set 200 câu, chạy khi đổi prompt/model",,5,Medium,ai quality,ai-worker,Sprint 6,"h3. Bối cảnh
+Prompt được đánh version; đổi prompt là đổi hành vi hệ thống nên phải được đo như đổi code.
+
+h3. Phạm vi công việc
+* Gold set 200 câu (trợ lý + kiểm duyệt)
+* Chạy eval trong CI khi thư mục prompts/ hoặc model thay đổi
+* Báo cáo delta chất lượng
+
+h3. Tiêu chí nghiệm thu (AC)
+# Đổi prompt/model tự động chạy eval và báo cáo delta chất lượng
+# Chất lượng giảm quá ngưỡng thì chặn merge
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-83 (Tầng FAQ/intent trả lời 0 token (~50 mẫu)), EVF-89 (Kiểm duyệt sự kiện: structured JSON output, chấm 4 trục, ngưỡng định tuyến)
+
+h3. Tham chiếu
+Mã backlog: EVF-93
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1604,1610,
+Story,1615,1600,"API trợ lý phía user: 202 + job_id, SSE trả kết quả, quota 10 câu / 15 phút",,5,Highest,ai api,ai-worker,Sprint 3,"h3. User story
+Là khách trong phòng chờ, tôi muốn hỏi trợ lý và nhận câu trả lời nhanh mà không làm chậm hệ thống.
+
+h3. Bối cảnh
+BR-A1: không request nào chờ đồng bộ Gemini. BR-A2: tối đa 10 câu / 15 phút mỗi khách.
+
+h3. Phạm vi công việc
+* POST /assistant/messages trả 202 + job_id
+* Kết quả qua SSE hoặc GET /assistant/messages/{job_id}
+* Quota theo identity; vượt → FAQ + gợi ý CSKH
+
+h3. Tiêu chí nghiệm thu (AC)
+# API trả 202 trong < 50 ms, không bao giờ gọi Gemini đồng bộ
+# Vượt 10 câu / 15 phút → trả FAQ + gợi ý liên hệ CSKH
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-80 (Khung ai-worker: FastAPI + 4 consumer RabbitMQ tách biệt)
+
+h3. Tham chiếu
+Mã backlog: EVF-94 · BR-A1 · BR-A2
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1601,,
+Epic,1700,,E8 – Anti-bot,E8 Anti-bot,,Highest,antibot,antibot,,"h3. Mục tiêu
+Phát hiện và xử lý bot vét vé bằng luật hành vi chạy in-path, giải thích được mọi quyết định.
+
+h3. Phạm vi
+* Thu thập tín hiệu client
+* Rule engine R1–R7 < 5ms
+* Chấm điểm + 4 tầng hành động
+* Turnstile, bot_decisions, khiếu nại
+* Quy trình duyệt rule do AI đề xuất
+
+h3. Tiêu chí hoàn thành epic
+# Bot script mẫu bị chặn ≥ 95%, false positive < 1%
+# Rule engine p99 < 5ms
+# Mọi quyết định chặn truy ra được danh sách rule đã kích hoạt
+
+h3. Rủi ro chính
+False positive cao sẽ chặn nhầm khách thật ngay trong giờ mở bán.",,,
+Story,1701,1700,"Thu thập tín hiệu client (nhịp, tương tác, fingerprint) gửi kèm request",,5,Highest,antibot frontend,web,Sprint 4,"h3. User story
+Là hệ thống anti-bot, tôi muốn có tín hiệu hành vi từ trình duyệt để phân biệt người và máy.
+
+h3. Bối cảnh
+Tín hiệu phục vụ rule R1, R2, R3, R5: nhịp request, thời gian render → click, sự kiện chuột/cuộn/phím, dấu hiệu headless.
+
+h3. Phạm vi công việc
+* lib/fingerprint.ts thu tín hiệu
+* Đóng gói và ký tín hiệu gửi kèm request join/hold
+* Gateway chuyển tín hiệu cho antibot
+
+h3. Tiêu chí nghiệm thu (AC)
+# Tín hiệu được ký để chống giả mạo phía client
+# Thu thập không làm chậm trang quá 10 ms
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-13 (Đăng ký device fingerprint, liên kết identity ↔ device)
+
+h3. Tham chiếu
+Mã backlog: EVF-100
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1104,,
+Story,1702,1700,Rule engine R1–R7 chạy in-path < 5 ms,,8,Highest,antibot critical,antibot,Sprint 4,"h3. User story
+Là nền tảng, tôi muốn đánh giá bot ngay trên đường request mà không làm chậm khách thật.
+
+h3. Bối cảnh
+7 rule theo docs/01 mục 2.5, dữ liệu đếm trên Redis.
+
+h3. Phạm vi công việc
+* Hiện thực R1–R7
+* Bộ đếm cửa sổ trượt trên Redis
+* Cấu hình ngưỡng bật/tắt từng rule không cần deploy
+
+h3. Tiêu chí nghiệm thu (AC)
+# Benchmark p99 < 5 ms
+# Mỗi rule có unit test riêng
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-100 (Thu thập tín hiệu client (nhịp, tương tác, fingerprint) gửi kèm request)
+
+h3. Tham chiếu
+Mã backlog: EVF-101 · docs/01-nghiep-vu.md mục 2.5
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1701,,
+Story,1703,1700,Chấm điểm rủi ro + 4 tầng hành động (qua / thử thách / làn chậm / chặn),,5,Highest,antibot,antibot,Sprint 4,"h3. User story
+Là nền tảng, tôi muốn xử lý bot theo mức độ nghi ngờ thay vì chặn cứng.
+
+h3. Bối cảnh
+Điểm 0..1: < 0.30 qua; 0.30–0.60 thử thách; 0.60–0.85 làn chậm (không báo cho bot); > 0.85 chặn + vô hiệu token.
+
+h3. Phạm vi công việc
+* Tổng hợp điểm từ các rule
+* Thực thi 4 tầng hành động ở gateway/waitingroom
+* Làn chậm: vẫn xếp hàng nhưng ưu tiên thấp
+
+h3. Tiêu chí nghiệm thu (AC)
+# Bot script mẫu bị chặn ≥ 95%
+# False positive trên traffic thật < 1%
+# Bot ở làn chậm không nhận tín hiệu nào cho thấy bị phát hiện
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-101 (Rule engine R1–R7 chạy in-path < 5 ms)
+
+h3. Tham chiếu
+Mã backlog: EVF-102
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1702,,
+Story,1704,1700,Tích hợp Turnstile ở bước join và bước thử thách nâng cao,,3,High,antibot,antibot,Sprint 4,"h3. User story
+Là khách bị nghi ngờ, tôi muốn chứng minh mình là người thật để tiếp tục xếp hàng.
+
+h3. Bối cảnh
+Tầng thử thách (0.30–0.60) dùng Turnstile hoặc OTP lại.
+
+h3. Phạm vi công việc
+* Widget Turnstile ở frontend
+* Verify token phía server
+* Luồng thử thách nâng cao
+
+h3. Tiêu chí nghiệm thu (AC)
+# Token Turnstile được verify phía server, không tin client
+# Vượt thử thách → được đi tiếp đúng vị trí
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-102 (Chấm điểm rủi ro + 4 tầng hành động (qua / thử thách / làn chậm / chặn))
+
+h3. Tham chiếu
+Mã backlog: EVF-103
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1703,,
+Story,1705,1700,bot_decisions giải thích được + UI khiếu nại/gỡ chặn,,5,High,antibot ops,antibot,Sprint 4,"h3. User story
+Là khách bị chặn nhầm, tôi muốn khiếu nại và được gỡ chặn nhanh.
+
+h3. Bối cảnh
+BR-B1: mọi quyết định chặn phải giải thích được (danh sách rule đã kích hoạt).
+
+h3. Phạm vi công việc
+* Bảng bot_decisions lưu điểm + rule kích hoạt
+* Form khiếu nại cho khách
+* UI Moderator/Ops xem và gỡ chặn
+
+h3. Tiêu chí nghiệm thu (AC)
+# Mọi quyết định chặn trả về được danh sách rule đã kích hoạt
+# Gỡ chặn ghi audit_log; chỉ Moderator/Ops thao tác được
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-102 (Chấm điểm rủi ro + 4 tầng hành động (qua / thử thách / làn chậm / chặn)), EVF-14 (Phân quyền RBAC: Buyer / Organizer / Moderator / Ops)
+
+h3. Tham chiếu
+Mã backlog: EVF-104 · BR-B1
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1703,1105,
+Task,1706,1700,Quy trình duyệt rule do AI đề xuất,,3,Medium,antibot ai,antibot,Sprint 6,"h3. Bối cảnh
+BR-B2: rule do AI đề xuất chỉ có hiệu lực sau khi người duyệt.
+
+h3. Phạm vi công việc
+* UI danh sách rule đề xuất kèm bằng chứng cụm
+* Duyệt / từ chối / chỉnh ngưỡng
+* Lịch sử thay đổi rule
+
+h3. Tiêu chí nghiệm thu (AC)
+# Rule chỉ có hiệu lực sau khi người duyệt
+# Có lịch sử thay đổi đầy đủ (ai, khi nào, nội dung)
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-90 (Phát hiện bất thường: gom cụm thống kê trước, LLM chỉ diễn giải và đề xuất rule)
+
+h3. Tham chiếu
+Mã backlog: EVF-105 · BR-B2
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1611,,
+Epic,1800,,E9 – Frontend,E9 Frontend,,Highest,frontend,web,,"h3. Mục tiêu
+Giao diện Next.js cho Buyer, Organizer và Ops — nhanh, tôn trọng tín hiệu điều tiết từ server và rõ ràng khi hệ thống suy biến.
+
+h3. Phạm vi
+* Khung App Router + design system
+* Trang sự kiện, phòng chờ, chọn vé, thanh toán
+* Panel chat trợ lý
+* Console Organizer, War room Ops
+* Accessibility + i18n
+
+h3. Tiêu chí hoàn thành epic
+# Client luôn tuân thủ poll_after_ms và expires_at của server
+# E2E Playwright luồng mua vé xanh trong CI
+# axe-core 0 lỗi nghiêm trọng
+
+h3. Rủi ro chính
+Client tự poll dày hoặc tự tính giờ sẽ phá cơ chế điều tiết tải và giữ ghế.",,,
+Story,1801,1800,Khung Next.js App Router + design system + dark mode,,5,Highest,frontend,web,Sprint 0,"h3. User story
+Là lập trình viên frontend, tôi muốn bộ khung và design system thống nhất để xây màn hình nhanh và nhất quán.
+
+h3. Bối cảnh
+apps/web phục vụ Buyer, Organizer và Ops; cấu trúc route group theo docs/03 mục 6.
+
+h3. Phạm vi công việc
+* Route groups (marketing), (queue), (checkout), (organizer), (ops)
+* Design token màu/typography, component ui cơ bản
+* Dark mode, client API sinh từ OpenAPI
+
+h3. Tiêu chí nghiệm thu (AC)
+# Token màu/typography tập trung một nơi
+# Dark mode đồng bộ toàn trang
+# Lint + typecheck chạy trong CI
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-1 (Khởi tạo monorepo: go.work, pnpm workspace, uv, Makefile)
+
+h3. Hiện trạng mã nguồn
+Đã có khung apps/web (layout, page).
+
+h3. Tham chiếu
+Mã backlog: EVF-110 · docs/03-cau-truc-src.md mục 6
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1001,,
+Story,1802,1800,Trang sự kiện ISR + đồng hồ đếm ngược theo giờ server,,5,Highest,frontend scale,web,Sprint 2,"h3. User story
+Là khách, tôi muốn thấy chính xác còn bao lâu tới giờ mở bán.
+
+h3. Bối cảnh
+Đồng hồ đồng bộ qua GET /time (cache edge 1s), không dùng giờ máy khách.
+
+h3. Phạm vi công việc
+* Trang events/[slug] ISR
+* Hook đồng bộ độ lệch giờ với server
+* Nút vào phòng chờ kích hoạt đúng T0 (kèm jitter)
+
+h3. Tiêu chí nghiệm thu (AC)
+# Lệch giờ máy khách không ảnh hưởng đếm ngược
+# Trang đạt Lighthouse performance ≥ 90
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-25 (Trang sự kiện công khai render ISR, phục vụ từ CDN), EVF-110 (Khung Next.js App Router + design system + dark mode)
+
+h3. Tham chiếu
+Mã backlog: EVF-111
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1206,1801,
+Story,1803,1800,"UI phòng chờ: vị trí, ETA, tiến trình, polling thích nghi + SSE",,8,Highest,frontend waitingroom,web,Sprint 2,"h3. User story
+Là khách, tôi muốn thấy rõ vị trí và thời gian chờ để yên tâm chờ đợi.
+
+h3. Bối cảnh
+Client phải tôn trọng tuyệt đối poll_after_ms và ETag từ server (BR-Q4).
+
+h3. Phạm vi công việc
+* Component QueuePosition, ProgressRing, AdmitBanner
+* Hook use-queue-status: polling theo poll_after_ms, If-None-Match
+* lib/sse.ts reconnect có backoff
+* Chuyển sang chọn vé khi YOUR_TURN
+
+h3. Tiêu chí nghiệm thu (AC)
+# Client luôn tôn trọng poll_after_ms từ server
+# Reconnect có backoff, không bão request khi mất mạng
+# Tab ẩn không tăng tần suất poll
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-54 (GET /queue/status: rank, ETA, poll_after_ms thích nghi + ETag), EVF-57 (SSE push ""tới lượt bạn"" + fallback polling), EVF-110 (Khung Next.js App Router + design system + dark mode)
+
+h3. Hiện trạng mã nguồn
+Có apps/web/src/lib/queue-client.ts làm nền.
+
+h3. Tham chiếu
+Mã backlog: EVF-112 · BR-Q4
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1405,1408,1801
+Story,1804,1800,Chọn vé + đồng hồ giữ ghế 10:00 theo expires_at của server,,8,Highest,frontend ticketing,web,Sprint 3,"h3. User story
+Là khách được vào lượt, tôi muốn chọn vé và biết chính xác còn bao lâu để thanh toán.
+
+h3. Bối cảnh
+BR-O2: đồng hồ lấy expires_at từ server; client không tự tính.
+
+h3. Phạm vi công việc
+* Màn chọn hạng vé, số lượng (tuân thủ giới hạn mua)
+* Gửi Idempotency-Key cho mọi thao tác ghi
+* Hook use-hold-timer theo expires_at
+
+h3. Tiêu chí nghiệm thu (AC)
+# Đổi giờ máy khách không kéo dài được thời gian giữ ghế
+# Bấm đặt nhiều lần không tạo hold trùng
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-32 (Ghi hold vào Postgres trong transaction, chọn bucket ngẫu nhiên + fallback vòng tròn), EVF-33 (Middleware Idempotency-Key (libs/go/idem) cho mọi API ghi), EVF-112 (UI phòng chờ: vị trí, ETA, tiến trình, polling thích nghi + SSE)
+
+h3. Tham chiếu
+Mã backlog: EVF-113 · BR-O2 · BR-O5
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1303,1304,1803
+Story,1805,1800,Luồng thanh toán + trang kết quả (kể cả hold hết hạn giữa chừng),,5,Highest,frontend payment,web,Sprint 3,"h3. User story
+Là khách, tôi muốn thanh toán suôn sẻ và biết rõ kết quả đơn hàng.
+
+h3. Bối cảnh
+Phải xử lý các tình huống: thanh toán thành công, thất bại, hold hết hạn giữa lúc thanh toán, webhook đến chậm.
+
+h3. Phạm vi công việc
+* Chuyển hướng sang cổng thanh toán và quay về
+* Trang kết quả poll trạng thái đơn
+* Thông điệp rõ ràng cho từng trường hợp
+
+h3. Tiêu chí nghiệm thu (AC)
+# Xử lý đúng trường hợp hold hết hạn ngay giữa lúc thanh toán
+# Webhook chậm → trang hiển thị ""đang xác nhận"" thay vì báo lỗi
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-70 (Adapter cổng thanh toán (VNPay/Momo/Stripe) + sandbox mock), EVF-113 (Chọn vé + đồng hồ giữ ghế 10:00 theo expires_at của server)
+
+h3. Tham chiếu
+Mã backlog: EVF-114
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1501,1804,
+Story,1806,1800,"Panel chat trợ lý: streaming, FAQ chips, trạng thái suy biến",,5,High,frontend ai,web,Sprint 5,"h3. User story
+Là khách đang chờ, tôi muốn hỏi trợ lý ngay trong phòng chờ.
+
+h3. Bối cảnh
+Kết quả trả qua SSE; khi suy biến phải hiển thị thông điệp thân thiện.
+
+h3. Phạm vi công việc
+* ChatPanel, StreamingMessage, FaqChips
+* Hook use-assistant (202 + SSE)
+* Hiển thị theo nấc NORMAL/SAVING/FAQ_ONLY/OFF
+
+h3. Tiêu chí nghiệm thu (AC)
+# Ở chế độ FAQ_ONLY hiện thông báo rõ ràng, không báo lỗi kỹ thuật
+# Ở chế độ OFF ẩn trợ lý, hiện kênh CSKH
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-94 (API trợ lý phía user: 202 + job_id, SSE trả kết quả, quota 10 câu / 15 phút), EVF-87 (4 nấc suy biến NORMAL / SAVING / FAQ_ONLY / OFF + công tắc cho Ops)
+
+h3. Tham chiếu
+Mã backlog: EVF-115
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1615,1608,
+Story,1807,1800,"Console Organizer: tạo sự kiện, trạng thái duyệt, doanh số realtime",,5,High,frontend event,web,Sprint 6,"h3. User story
+Là Ban tổ chức, tôi muốn tự quản lý sự kiện và theo dõi doanh số trực tiếp.
+
+h3. Bối cảnh
+Organizer chỉ xem và thao tác trên sự kiện của mình.
+
+h3. Phạm vi công việc
+* Form tạo/sửa sự kiện, hạng vé, lịch mở bán
+* Hiển thị trạng thái duyệt và lý do
+* Dashboard doanh số realtime, xem báo cáo sau bán
+
+h3. Tiêu chí nghiệm thu (AC)
+# Tạo được sự kiện end-to-end tới SCHEDULED
+# Doanh số cập nhật trong ≤ 5s
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-20 (CRUD sự kiện + hạng vé, state machine DRAFT → … → COMPLETED), EVF-24 (Hàng đợi việc cho Moderator: duyệt / từ chối / lật ngược quyết định AI)
+
+h3. Tham chiếu
+Mã backlog: EVF-116
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1201,1205,
+Story,1808,1800,"War room cho Ops: phễu realtime, admit rate, tồn kho, AI lag",,5,High,frontend ops,web,Sprint 5,"h3. User story
+Là Ops trực sự kiện, tôi muốn một màn hình duy nhất thấy toàn cảnh đợt mở bán.
+
+h3. Bối cảnh
+Dùng trong diễn tập chaos và khi trực sự kiện thật.
+
+h3. Phạm vi công việc
+* Phễu lobby → admitted → hold → paid → issued
+* Admit rate, queue depth, tồn kho theo hạng vé, AI lag, nấc suy biến
+* Liên kết thao tác ghi đè admit_rate (EVF-60)
+
+h3. Tiêu chí nghiệm thu (AC)
+# Một màn hình thấy đủ phễu chuyển đổi, admit rate, tồn kho, AI lag
+# Dữ liệu trễ không quá 5s
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-55 (Admit controller AIMD, bầu leader qua Redis lock có fencing), EVF-125 (Dashboard Grafana + alert rule cho 9 metric nghiệp vụ)
+
+h3. Tham chiếu
+Mã backlog: EVF-117
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1406,1906,
+Task,1809,1800,Accessibility (WCAG AA) + i18n vi/en,,3,Medium,frontend a11y,web,Sprint 6,"h3. Bối cảnh
+Bảo đảm khả năng tiếp cận và hỗ trợ khách quốc tế.
+
+h3. Phạm vi công việc
+* Rà soát WCAG AA các màn hình Buyer
+* Tách chuỗi ra file ngôn ngữ vi/en
+* Chạy axe-core trong CI
+
+h3. Tiêu chí nghiệm thu (AC)
+# axe-core 0 lỗi nghiêm trọng
+# Chuyển ngôn ngữ không reload trang
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-110 (Khung Next.js App Router + design system + dark mode)
+
+h3. Tham chiếu
+Mã backlog: EVF-118
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1801,,
+Epic,1900,,"E10 – Vận hành, chịu tải & phát hành",E10 Vận hành,,Highest,ops scale,platform,,"h3. Mục tiêu
+Đưa hệ thống lên Kubernetes, chứng minh chịu tải 10× bằng load test + chaos drill và sẵn sàng trực sự kiện.
+
+h3. Phạm vi
+* K8s manifest, HPA custom metric, pre-warm
+* Load shedding + circuit breaker
+* k6, dashboard + alert, chaos drill
+* Runbook, E2E Playwright
+
+h3. Tiêu chí hoàn thành epic
+# Load test 10× đạt toàn bộ SLO ở docs/00
+# Chaos drill: không oversell, không mất đơn
+# Runbook đã diễn tập ít nhất 1 lần
+
+h3. Rủi ro chính
+Dựa vào autoscale tại T0 là quá muộn (pod khởi động 30–60s) — phải pre-warm.",,,
+Story,1901,1900,"K8s manifest mọi service: probe, resource, PDB, anti-affinity",,8,Highest,ops k8s,platform,Sprint 5,"h3. User story
+Là SRE, tôi muốn triển khai mọi service lên Kubernetes an toàn và sẵn sàng cao.
+
+h3. Bối cảnh
+Production chạy K8s multi-AZ; rolling update không được làm rớt request.
+
+h3. Phạm vi công việc
+* Kustomize/Helm cho mọi service
+* Liveness/readiness riêng, resource request/limit
+* PDB, anti-affinity theo zone
+* Secret qua External Secrets
+
+h3. Tiêu chí nghiệm thu (AC)
+# Rolling update không rớt request
+# Pod trải đều trên các zone
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-4 (docker-compose local đầy đủ hạ tầng và service)
+
+h3. Tham chiếu
+Mã backlog: EVF-120 · docs/02-kien-truc.md mục 7
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1004,,
+Story,1902,1900,"HPA theo custom metric (rps, queue_depth) qua Prometheus adapter",,5,Highest,ops scale,platform,Sprint 5,"h3. User story
+Là SRE, tôi muốn hệ thống scale theo tải nghiệp vụ thay vì CPU.
+
+h3. Bối cảnh
+CPU tăng trễ; scale theo queue_depth và rps phản ứng đúng hơn.
+
+h3. Phạm vi công việc
+* Prometheus adapter
+* HPA cho gateway, waitingroom, ticketing, ai-worker
+* Tham số scale-down an toàn
+
+h3. Tiêu chí nghiệm thu (AC)
+# Scale theo metric nghiệp vụ, không theo CPU
+# Không flapping trong bài test tải
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-120 (K8s manifest mọi service: probe, resource, PDB, anti-affinity)
+
+h3. Tham chiếu
+Mã backlog: EVF-121
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1901,,
+Story,1903,1900,CronJob pre-warm: scale lên mức đỉnh tại T0 − 30 phút,,5,Highest,ops scale critical,platform,Sprint 5,"h3. User story
+Là SRE, tôi muốn hạ tầng đã sẵn sàng đầy đủ trước giờ mở bán.
+
+h3. Bối cảnh
+Pod khởi động mất 30–60s — dựa vào autoscale tại T0 là quá muộn.
+
+h3. Phạm vi công việc
+* Nhận lịch mở bán từ event-svc
+* CronJob scale deployment lên mức đỉnh T0 − 30 phút
+* HPA chỉ thu nhỏ sau đó
+
+h3. Tiêu chí nghiệm thu (AC)
+# Tại T0 không có pod nào đang khởi động
+# Lịch thay đổi thì CronJob cập nhật theo
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-121 (HPA theo custom metric (rps, queue_depth) qua Prometheus adapter), EVF-21 (Cấu hình lịch mở bán, ràng buộc T0 ≥ thời điểm duyệt + 30 phút)
+
+h3. Tham chiếu
+Mã backlog: EVF-122 · BR-E2
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1902,1202,
+Story,1904,1900,Load shedding có phân lớp ưu tiên + circuit breaker giữa service,,5,Highest,ops reliability,platform,Sprint 5,"h3. User story
+Là nền tảng, tôi muốn khi quá tải vẫn giữ được các luồng quan trọng nhất.
+
+h3. Bối cảnh
+Ưu tiên queue/status và payment/webhook; endpoint phụ trả 503 + Retry-After. Circuit breaker ngăn sập dây chuyền.
+
+h3. Phạm vi công việc
+* Phân lớp ưu tiên request ở gateway
+* Shedding theo tín hiệu tải
+* Circuit breaker cho lời gọi giữa service
+
+h3. Tiêu chí nghiệm thu (AC)
+# Khi quá tải, queue/status và payment/webhook vẫn hoạt động
+# Endpoint phụ trả 503 + Retry-After
+# Hỏng một service không kéo sập service khác
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-2 (libs/go/httpx: router, middleware và lỗi chuẩn RFC 7807)
+
+h3. Tham chiếu
+Mã backlog: EVF-123
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1002,,
+Story,1905,1900,"Bộ k6: 100k VU join trong 5s, 30 phút chờ, đợt checkout",,8,Highest,ops testing critical,platform,Sprint 5,"h3. User story
+Là trưởng nhóm kỹ thuật, tôi muốn chứng minh hệ thống chịu được tải thật trước khi lên production.
+
+h3. Bối cảnh
+Mô phỏng đầy đủ 3 pha: dồn join tại T0, 30 phút polling, đợt checkout.
+
+h3. Phạm vi công việc
+* Script k6 cho 3 pha
+* Chạy trên staging với dữ liệu giả
+* Lưu kết quả thành báo cáo so sánh giữa các lần
+
+h3. Tiêu chí nghiệm thu (AC)
+# Đạt toàn bộ SLO trong docs/00
+# 0 oversell trong suốt bài test
+# Kết quả lưu thành báo cáo so sánh được giữa các lần
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-56 (admit.lua: ZPOPMIN theo lô → tập admitted, TTL 15 phút), EVF-120 (K8s manifest mọi service: probe, resource, PDB, anti-affinity)
+
+h3. Tham chiếu
+Mã backlog: EVF-124 · docs/00-tong-quan.md mục 5
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1407,1901,
+Story,1906,1900,Dashboard Grafana + alert rule cho 9 metric nghiệp vụ,,5,Highest,ops observability,platform,Sprint 5,"h3. User story
+Là SRE, tôi muốn được cảnh báo sớm khi bất biến nghiệp vụ bị đe doạ.
+
+h3. Bối cảnh
+9 metric nghiệp vụ và ngưỡng cảnh báo theo docs/02 mục 6.
+
+h3. Phạm vi công việc
+* Dashboard theo service và dashboard nghiệp vụ
+* Alert rule cho 9 metric
+* Định tuyến alert tới kênh trực
+
+h3. Tiêu chí nghiệm thu (AC)
+# ticketing_oversell_guard_rejections > 0 bắn alert nghiêm trọng ngay lập tức
+# Đủ alert cho 9 metric nghiệp vụ, có runbook link
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-3 (libs/go/otelx: OpenTelemetry trace + Prometheus metric, lan truyền qua AMQP header)
+
+h3. Hiện trạng mã nguồn
+Đã có deploy/observability/alerts.yml, prometheus.yml.
+
+h3. Tham chiếu
+Mã backlog: EVF-125 · docs/02-kien-truc.md mục 6
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1003,,
+Story,1907,1900,"Chaos drill: giết Redis primary, Gemini 429 100%, Postgres failover",,5,High,ops reliability,platform,Sprint 5,"h3. User story
+Là trưởng nhóm kỹ thuật, tôi muốn chắc chắn hệ thống giữ bất biến khi hạ tầng hỏng giữa đợt bán.
+
+h3. Bối cảnh
+Kịch bản: giết Redis primary, Gemini trả 429 100%, Postgres failover, RabbitMQ mất 1 node.
+
+h3. Phạm vi công việc
+* Kịch bản chaos tự động hoá
+* Chạy song song với k6
+* Biên bản kết quả và việc cần sửa
+
+h3. Tiêu chí nghiệm thu (AC)
+# Mọi kịch bản: không oversell, không mất đơn
+# Gemini 429 100% → khách vẫn nhận câu trả lời FAQ
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-124 (Bộ k6: 100k VU join trong 5s, 30 phút chờ, đợt checkout)
+
+h3. Tham chiếu
+Mã backlog: EVF-126
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1905,,
+Task,1908,1900,Runbook trực sự kiện + checklist đóng băng deploy,,3,High,ops docs,platform,Sprint 5,"h3. Bối cảnh
+Sự kiện lớn đóng băng deploy từ T0 − 2h tới T0 + 2h; Ops cần runbook cho từng tình huống.
+
+h3. Phạm vi công việc
+* Runbook: admit_rate bất thường, inventory drift, AI lag, webhook lag, oversell alert
+* Checklist trước/trong/sau đợt mở bán
+* Quy trình đóng băng deploy
+
+h3. Tiêu chí nghiệm thu (AC)
+# Runbook được diễn tập 1 lần trước khi lên production
+# Mỗi alert có link tới mục runbook tương ứng
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-125 (Dashboard Grafana + alert rule cho 9 metric nghiệp vụ)
+
+h3. Tham chiếu
+Mã backlog: EVF-127
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1906,,
+Task,1909,1900,E2E Playwright luồng đầy đủ,,3,High,testing frontend,web,Sprint 5,"h3. Bối cảnh
+Bảo vệ luồng quan trọng nhất khỏi hồi quy.
+
+h3. Phạm vi công việc
+* Kịch bản: xếp hàng → được gọi → giữ ghế → thanh toán (mock) → nhận vé
+* Chạy trên compose trong CI
+
+h3. Tiêu chí nghiệm thu (AC)
+# Luồng đầy đủ chạy xanh trong CI
+# Test ổn định, không flaky qua 20 lần chạy liên tiếp
+
+h3. Phụ thuộc
+Cần hoàn thành trước: EVF-114 (Luồng thanh toán + trang kết quả (kể cả hold hết hạn giữa chừng))
+
+h3. Tham chiếu
+Mã backlog: EVF-128
+
+_Hoàn thành khi thoả mọi AC và Definition of Done chung (docs/04-jira-backlog.md)._",1805,,
