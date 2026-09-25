@@ -43,11 +43,11 @@ Dev không cần API key Gemini: `GEMINI_MOCK=1` (mặc định) dùng client gi
 
 | Tài liệu | Nội dung |
 |---|---|
-| [docs/00-tong-quan.md](docs/00-tong-quan.md) | Kế hoạch, SLO, lộ trình 6 sprint |
+| [docs/00-tong-quan.md](docs/00-tong-quan.md) | Kế hoạch, SLO, lộ trình 7 sprint |
 | [docs/01-nghiep-vu.md](docs/01-nghiep-vu.md) | Actor, state machine, 30+ business rule |
 | [docs/02-kien-truc.md](docs/02-kien-truc.md) | Chiến lược scale 10×, xử lý rate-limit AI, anti-bot |
 | [docs/03-cau-truc-src.md](docs/03-cau-truc-src.md) | Cấu trúc thư mục, quy ước |
-| [docs/04-jira-backlog.md](docs/04-jira-backlog.md) | 90 issue, 411 SP — kèm `docs/jira-import.csv` |
+| [docs/04-jira-backlog.md](docs/04-jira-backlog.md) | 10 epic, 89 story/task, 461 SP — kèm `docs/jira-import.csv` |
 
 ## Cấu trúc
 
