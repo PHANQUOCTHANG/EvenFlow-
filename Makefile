@@ -11,6 +11,7 @@ help: ## Liet ke cac lenh
 .PHONY: bootstrap
 bootstrap: ## Cai phu thuoc cho ca ba he sinh thai
 	cd apps/web && npm install
+	cd tests/e2e && npm install
 	cd services/ai-worker && uv sync
 	go work sync
 
@@ -52,6 +53,7 @@ lint: ## Lint toan bo
 test: ## Unit test (nhanh, khong can ha tang)
 	go test ./... -race -count=1
 	cd services/ai-worker && uv run pytest -q
+	cd apps/web && npm test
 
 .PHONY: test-integration
 test-integration: ## Integration test (testcontainers -- can Docker)
@@ -72,3 +74,7 @@ load: ## Mo phong gio mo ban (can k6)
 .PHONY: smoke
 smoke: ## Chay tron mot luong mua ve de kiem tra moi truong
 	./deploy/scripts/smoke.sh
+
+.PHONY: test-e2e
+test-e2e: ## E2E Playwright (can make up truoc)
+	cd tests/e2e && npm test
