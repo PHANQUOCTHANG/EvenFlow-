@@ -26,7 +26,7 @@ jobs:
             sleep 2
           done
           echo "web khong san sang sau 60s"; exit 1
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: "20"
           # tests/e2e chua co package-lock.json nen khong bat cache npm o day
