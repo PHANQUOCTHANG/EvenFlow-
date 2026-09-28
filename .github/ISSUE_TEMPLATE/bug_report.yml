@@ -1,0 +1,32 @@
+name: Báo lỗi
+description: Báo một lỗi phát hiện trong code (backlog nghiệp vụ quản lý ở Jira dự án EVF)
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Backlog tính năng và task nghiệp vụ nằm ở Jira (project EVF), xem docs/04-jira-backlog.md.
+        Issue GitHub chỉ dùng để báo lỗi phát hiện trong code hoặc CI.
+  - type: input
+    id: jira-ref
+    attributes:
+      label: Mã Jira liên quan (nếu có)
+      placeholder: EVF-123
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: Hiện tượng
+      description: Chuyện gì xảy ra, mong đợi gì
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Các bước tái hiện
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: Môi trường
+      placeholder: local (make up) / staging / commit SHA
