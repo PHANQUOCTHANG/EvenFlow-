@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-FROM golang:1.23-alpine AS build
+FROM golang:1.27-alpine AS build
 WORKDIR /src
 # Copy truoc phan manifest de tan dung cache layer: doi code khong lam tai lai module.
 COPY go.work ./
