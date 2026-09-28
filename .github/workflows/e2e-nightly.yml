@@ -1,0 +1,45 @@
+name: E2E nightly
+
+# EVF-128: luong day du qua Playwright, chay tren toan bo docker-compose.
+# Chay dinh ky + thu cong, KHONG chan PR (qua nang de bat buoc moi lan push).
+
+on:
+  schedule:
+    - cron: '0 19 * * *' # 02:00 gio VN
+  workflow_dispatch: {}
+
+jobs:
+  e2e:
+    name: e2e
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: make up
+        run: make up
+      - name: make migrate
+        run: make migrate
+      - name: cho web san sang
+        run: |
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:3000 >/dev/null && exit 0
+            sleep 2
+          done
+          echo "web khong san sang sau 60s"; exit 1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          # tests/e2e chua co package-lock.json nen khong bat cache npm o day
+      - name: cai playwright
+        working-directory: tests/e2e
+        run: |
+          npm install
+          npm run install-browsers
+      - name: make test-e2e
+        run: make test-e2e
+      - name: log service khi fail
+        if: failure()
+        run: docker compose -f deploy/compose/docker-compose.yml logs --tail=200
+      - name: don dep
+        if: always()
+        run: make down
