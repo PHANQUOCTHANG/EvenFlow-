@@ -20,7 +20,7 @@ jobs:
     outputs:
       any: ${{ steps.filter.outputs.any }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: dorny/paths-filter@v3
         id: filter
         with:
@@ -51,7 +51,7 @@ jobs:
           - name: web
             dockerfile: deploy/docker/web.Dockerfile
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: build image ${{ matrix.name }}
         run: docker build -f ${{ matrix.dockerfile }} -t eventflow/${{ matrix.name }}:ci .
       - name: trivy scan ${{ matrix.name }}
