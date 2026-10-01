@@ -1,0 +1,31 @@
+name: Oversell Gate (EVF-39)
+
+# Cong chat luong khong the bo qua: chay TestNoOversell 200 lan.
+# Theo docs/04-jira-backlog.md: fail -> khong duoc merge vao main, khong duoc
+# release. Chi bat buoc truoc khi vao main (nang, ~30 phut) -- PR vao develop
+# va cac nhanh feature dung gate nhe hon trong integration.yml.
+#
+# LUU Y cho doi: test that (setupEnv) hien con la TODO (xem
+# services/ticketing/test/concurrency/helpers.go). Workflow nay da san sang
+# chay ngay khi EVF-39 duoc hien thuc, khong can sua CI.
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+jobs:
+  oversell-gate:
+    name: oversell-gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.23"
+          cache-dependency-path: services/ticketing/go.mod
+      - name: TestNoOversell x200 (make test-oversell)
+        run: make test-oversell

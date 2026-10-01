@@ -10,3 +10,8 @@ __pycache__/
 .pytest_cache/
 coverage.out
 .DS_Store
+coverage/
+*.tsbuildinfo
+
+# Tai lieu ca nhan
+*.pdf

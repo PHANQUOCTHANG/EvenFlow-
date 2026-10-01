@@ -1,0 +1,28 @@
+version: "2"
+
+# Cau hinh dung chung cho moi module Go trong go.work (libs/go + services/*).
+# Chay: golangci-lint run ./... tai tung thu muc module (xem .github/workflows/ci.yml).
+
+linters:
+  enable:
+    - errcheck
+    - govet
+    - staticcheck
+    - unused
+    - ineffassign
+    - gocritic
+    - revive
+  settings:
+    revive:
+      rules:
+        - name: package-comments
+          disabled: true # nhieu package con dang scaffold, bat sau
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+
+formatters:
+  enable:
+    - gofmt
+    - goimports

@@ -1,0 +1,73 @@
+name: Trivy scan
+
+# EVF-6: Trivy phat hien lo hong CRITICAL thi chan merge.
+# Chi build + scan image nao thuc su co Dockerfile hien nay.
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main, develop]
+  workflow_dispatch: {}
+
+concurrency:
+  group: trivy-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  changes:
+    name: detect-changes
+    runs-on: ubuntu-latest
+    outputs:
+      any: ${{ steps.filter.outputs.any }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            any:
+              - 'deploy/docker/**'
+              - 'services/waitingroom/**'
+              - 'services/ticketing/**'
+              - 'services/ai-worker/**'
+              - 'apps/web/**'
+              - 'libs/go/**'
+
+  scan:
+    name: trivy
+    needs: changes
+    if: needs.changes.outputs.any == 'true' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: waitingroom
+            dockerfile: deploy/docker/waitingroom.Dockerfile
+          - name: ticketing
+            dockerfile: deploy/docker/ticketing.Dockerfile
+          - name: ai-worker
+            dockerfile: deploy/docker/ai-worker.Dockerfile
+          - name: web
+            dockerfile: deploy/docker/web.Dockerfile
+    steps:
+      - uses: actions/checkout@v4
+      - name: build image ${{ matrix.name }}
+        run: docker build -f ${{ matrix.dockerfile }} -t eventflow/${{ matrix.name }}:ci .
+      - name: trivy scan ${{ matrix.name }}
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: eventflow/${{ matrix.name }}:ci
+          severity: CRITICAL
+          exit-code: '1'
+          ignore-unfixed: true
+          format: table
+
+  trivy-gate:
+    name: trivy-gate
+    needs: [changes, scan]
+    if: always() && !cancelled() && !contains(needs.scan.result, 'failure')
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "khong co CRITICAL moi hoac khong co gi lien quan Docker de scan"

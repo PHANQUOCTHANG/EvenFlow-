@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Backlog tính năng / task nghiệp vụ
+    url: https://github.com/PHANQUOCTHANG/EvenFlow-/blob/main/docs/04-jira-backlog.md
+    about: Quản lý trên Jira (project EVF). Chỉ dùng GitHub Issues để báo lỗi.
