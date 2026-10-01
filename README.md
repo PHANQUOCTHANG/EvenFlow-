@@ -48,6 +48,7 @@ Dev không cần API key Gemini: `GEMINI_MOCK=1` (mặc định) dùng client gi
 | [docs/02-kien-truc.md](docs/02-kien-truc.md) | Chiến lược scale 10×, xử lý rate-limit AI, anti-bot |
 | [docs/03-cau-truc-src.md](docs/03-cau-truc-src.md) | Cấu trúc thư mục, quy ước |
 | [docs/04-jira-backlog.md](docs/04-jira-backlog.md) | 90 issue, 411 SP — kèm `docs/jira-import.csv` |
+| [docs/08-stitch-ui-ux-handoff.md](docs/08-stitch-ui-ux-handoff.md) | Product/UI context, design direction và prompt Stitch theo page/component |
 
 ## Cấu trúc
 
