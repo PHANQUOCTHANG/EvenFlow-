@@ -15,7 +15,7 @@
  */
 import { describe, expect, it } from "vitest";
 
-import { formatClock, formatVnd } from "./format";
+import { formatClock, formatVnd, spellDuration } from "./format";
 
 describe("formatClock — dang mm:ss (AC-1)", () => {
   it.each([
@@ -111,6 +111,75 @@ describe("formatClock — gia tri khong huu hien (AC-1)", () => {
     expect(formatClock(Number.NaN)).not.toContain("NaN");
     expect(formatClock(Number.POSITIVE_INFINITY)).not.toContain("Infinity");
   });
+});
+
+/**
+ * `spellDuration` la TOAN BO thong tin ve dong ho ma nguoi dung screen reader
+ * nghe duoc (vung chu so bi aria-hidden), cong chuoi ETA cua trang thai QUEUED.
+ * Truoc do no khong co mot test truc tiep nao: ai "don gian hoa" bo phan giay di
+ * thi con 1 phut 59 giay se duoc doc thanh "con 1 phut" — sai 59 giay tren dong
+ * ho giu ghe — ma ca bo test van xanh. Bang duoi day la chot do.
+ */
+describe("spellDuration — doc thanh chu cho screen reader (AC-5)", () => {
+  it.each([
+    [1_000, "1 giây"],
+    [59_000, "59 giây"],
+    [60_000, "1 phút"],
+    [90_000, "1 phút 30 giây"],
+    [119_000, "1 phút 59 giây"],
+    [570_000, "9 phút 30 giây"],
+    [600_000, "10 phút"],
+    [3_600_000, "1 giờ"],
+    [3_660_000, "1 giờ 1 phút"],
+    [3_661_000, "1 giờ 1 phút 1 giây"],
+  ])("spellDuration(%i) = '%s'", (ms, expected) => {
+    expect(spellDuration(ms as number)).toBe(expected);
+  });
+
+  it("KHONG doc don vi bang 0 (60_000 la '1 phút', khong phai '1 phút 0 giây')", () => {
+    expect(spellDuration(60_000)).not.toContain("0 giây");
+    expect(spellDuration(3_600_000)).not.toContain("0 phút");
+    expect(spellDuration(3_600_000)).not.toContain("0 giây");
+    expect(spellDuration(3_660_000)).not.toContain("0 giây");
+  });
+
+  it("GIU phan giay: 1 phut 59 giay khong duoc rut gon thanh '1 phút'", () => {
+    expect(spellDuration(119_000)).toContain("59");
+    expect(spellDuration(119_000)).toContain("giây");
+  });
+
+  it("lam tron XUONG giong formatClock (1999ms -> '1 giây')", () => {
+    expect(spellDuration(1_999)).toBe("1 giây");
+    expect(spellDuration(59_999)).toBe("59 giây");
+  });
+
+  it("khop voi formatClock tren cung mot gia tri", () => {
+    expect(formatClock(570_000)).toBe("09:30");
+    expect(spellDuration(570_000)).toBe("9 phút 30 giây");
+  });
+
+  it("duoi 1 giay: 0 va 999 cho ra cung mot chuoi, khong hua them thoi gian", () => {
+    expect(spellDuration(999)).toBe(spellDuration(0));
+    expect(spellDuration(999)).not.toContain("1 giây");
+    expect(spellDuration(0).length).toBeGreaterThan(0);
+  });
+
+  it("so am khong lot dau tru ra UI", () => {
+    expect(spellDuration(-1_000)).not.toContain("-");
+    expect(spellDuration(-600_000)).not.toContain("-");
+    expect(() => spellDuration(-1)).not.toThrow();
+  });
+
+  it.each([Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY])(
+    "gia tri khong huu hien (%s): khong throw, khong lot 'NaN'/'Infinity' ra UI",
+    (ms) => {
+      expect(() => spellDuration(ms)).not.toThrow();
+      const out = spellDuration(ms);
+      expect(typeof out).toBe("string");
+      expect(out).not.toContain("NaN");
+      expect(out).not.toContain("Infinity");
+    },
+  );
 });
 
 describe("formatVnd — dinh dang tien VND (AC-2)", () => {
