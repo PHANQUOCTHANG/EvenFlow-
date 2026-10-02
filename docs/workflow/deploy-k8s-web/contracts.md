@@ -40,19 +40,51 @@ toàn bộ pod web — không sửa được Redis mà còn mất luôn khả n�
 Trạng thái nằm ở **mã HTTP**, không ở field trong body: Kubernetes chỉ đọc mã, nên `200` kèm
 `{"ready":false}` sẽ bị hiểu là sẵn sàng và traffic đẩy vào pod chưa sẵn sàng.
 
-### C1.1 — Predicate readiness (B2, bản 1 thiếu hẳn)
+### C1.1 — Predicate readiness (B2; sửa lại ở vòng 2 theo D5)
 
-Bản 1 chốt rất kỹ *hình dạng* nhưng **không nói khi nào là chưa sẵn sàng**, nên nhánh 503 là code
-chết không test được. Chốt:
+`readiness.ts` là **toggle thuần**: `setReady(true)` và `setReady(false)` đều có tác dụng, gọi qua lại
+bao nhiêu lần cũng được (file test đã đóng băng assert đúng điều này).
 
-> **`isReady()` trả `true` ngay từ đầu, và trở thành `false` vĩnh viễn khi tiến trình nhận `SIGTERM`.**
+Tính **một chiều là bất biến của HỆ THỐNG, không phải của module**:
+
+> Nơi **duy nhất** gọi `setReady(false)` là handler `SIGTERM` trong `instrumentation.ts`, và **không
+> nơi nào** gọi `setReady(true)` sau đó.
+
+> Bản 1 viết "`isReady()` … trở thành `false` **vĩnh viễn**", tức phát biểu tính một chiều như thuộc
+> tính của chính hàm. Một agent đọc theo nghĩa chữ sẽ hiện thực latch (`if (!ready) return`) và làm đỏ
+> ba test đã đóng băng. Mất một WP vì một chữ.
 
 Mặc định `true`: frontend Next không có bước khởi tạo bất đồng bộ nào; mặc định `false` thì pod không
-bao giờ vào Service endpoints và Deployment treo ở `0/N ready`.
+bao giờ vào Service endpoints và Deployment treo ở `0/N ready`. Việc tách "đang khởi động" khỏi "đã
+treo" đã do `startupProbe` làm, đúng chỗ.
 
-Chuyển sang `false` khi `SIGTERM`: đây mới là lý do readiness tồn tại cho mục tiêu G4. Khi pod bắt đầu
-drain, endpoint phải bị rút khỏi Service **trước khi** server đóng, nếu không request đang bay bị reset
-— đúng vào lúc khách đang ở phòng chờ.
+### C1.1b — `NEXT_MANUAL_SIG_HANDLE` là BẮT BUỘC (D1, phát hiện ở vòng 2)
+
+Đã kiểm `apps/web/node_modules/next/dist/server/lib/start-server.js`: Next **tự** đăng ký handler
+`SIGTERM`/`SIGINT`, và handler đó `server.close()` rồi `process.exit(0)` **ngay**. Đoạn này **không**
+nằm trong nhánh dev.
+
+Hệ quả nếu không xử lý: sau `SIGTERM` server đã đóng, nên `/api/readyz` **không trả `503` được nữa** —
+client nhận `ECONNREFUSED`. Toàn bộ predicate C1.1 trở thành không quan sát được qua HTTP, và nhánh
+`503` lại là code chết trong vận hành — đúng thứ mà C1.1 được viết ra để diệt.
+
+Chốt:
+
+| | |
+|---|---|
+| Biến | `NEXT_MANUAL_SIG_HANDLE=1` |
+| Đặt ở | `deploy/docker/web.Dockerfile` (**Integrator**) — **một chỗ duy nhất**, không đặt thêm trong Deployment để tránh hai bên tưởng bên kia làm |
+
+Handler trong `apps/web/src/instrumentation.ts` (**WP-A**) phải làm **đủ ba việc, đúng thứ tự**:
+
+```
+1. setReady(false)        -> readyz tra 503 ngay lap tuc
+2. cho DRAIN_MS = 5000    -> de kubelet/endpoints controller kip rut endpoint
+3. process.exit(0)
+```
+
+Giới hạn phải ghi vào runbook: request đang bay quá 5 giây sẽ bị cắt. `terminationGracePeriodSeconds:
+30` là biên ngoài, không phải cửa sổ drain.
 
 ### C1.2 — Ký hiệu `apps/web/src/lib/readiness.ts` (đóng băng)
 
@@ -113,7 +145,12 @@ Mục tiêu G4 là "không sập ở T0", nên một `kubectl rollout` giữa l�
 |---|---|
 | `startupProbe` → `/api/healthz` | `periodSeconds: 2`, `failureThreshold: 30` |
 | `livenessProbe` → `/api/healthz` | `periodSeconds: 10`, `timeoutSeconds: 2`, `failureThreshold: 3` |
-| `readinessProbe` → `/api/readyz` | `periodSeconds: 5`, `timeoutSeconds: 2`, `failureThreshold: 3`, `successThreshold: 1` |
+| `readinessProbe` → `/api/readyz` | `periodSeconds: 5`, `timeoutSeconds: 2`, **`failureThreshold: 1`**, `successThreshold: 1` |
+
+`readinessProbe` dùng `failureThreshold: 1` chứ không 3 (D12): mục đích của nhánh 503 là **rút
+endpoint cho kịp**, mà `3 × 5s` là tới 15-20 giây trong khi cửa sổ drain chỉ 5 giây. Readiness không
+có lý do phải khoan dung như liveness — một lần 503 là rút ngay, và rút nhầm thì chỉ mất vài giây
+traffic chứ không giết pod.
 
 Có `startupProbe` để tách "đang khởi động" khỏi "đã treo"; thiếu nó thì lần đầu khởi động chậm sẽ bị
 liveness giết và người đọc kết luận sai là health endpoint hỏng.
@@ -210,9 +247,29 @@ error: failed to download openapi: Get "http://localhost:8080/openapi/v2?timeout
 
 1. Điều kiện phát hiện là **`kubectl cluster-info` thành công**, không phải "có `kubectl`".
 2. Có cluster ⇒ `kubectl apply --dry-run=server -f deploy/k8s/` (đây mới là validate thật).
-3. Không có cluster ⇒ chỉ **parse YAML** bằng `js-yaml` (đã có trong `node_modules`) để bắt lỗi cú
-   pháp, **và in rõ**: `[gates] BO QUA validate k8s: khong co cluster. YAML chi duoc parse cu phap.`
-   Tuyệt đối không âm thầm pass.
+3. Không có cluster ⇒ **KHÔNG kiểm gì cả**, in đúng dòng này rồi tiếp tục:
+
+```
+[gates] BO QUA validate k8s: khong co cluster (kubectl cluster-info that bai).
+[gates] KHONG kiem duoc apiVersion, ten field, selector, hay duong dan probe.
+[gates] Chay lai sau khi bat Kubernetes cua Docker Desktop.
+```
+
+> **Bỏ phương án parse YAML bằng `js-yaml` của bản 2 (D2).** Hai lý do, lý do thứ hai mới là lý do thật:
+>
+> 1. **Không chạy được.** C4 chốt script gọi từ gốc repo, nhưng gốc repo không có `package.json`;
+>    `node -e "require('js-yaml')"` từ đó crash `MODULE_NOT_FOUND` (đã kiểm). Nó chỉ resolve từ
+>    `apps/web`, và ở đó nó là **dependency bắc cầu** của eslint/jsdom — không khai báo, một lần bump
+>    là biến mất, mà C6 cấm WP-C khai thêm dependency.
+> 2. **Nó kiểm sai thứ.** Parse YAML chỉ bắt lỗi cú pháp, mà lỗi cú pháp gần như không phải thứ sẽ xảy
+>    ra. Thứ thật sự xảy ra khi viết manifest tay là: sai `apiVersion` (`autoscaling/v2beta2` đã bị
+>    xoá), đặt sai cấp `securityContext.capabilities.drop`, `Service.spec.selector` không khớp
+>    `template.metadata.labels`, probe trỏ sai path, `scaleTargetRef.name` không khớp tên Deployment.
+>    **Tất cả đều là YAML hợp lệ hoàn hảo.** In "đã parse cú pháp" sẽ bị đọc thành "đã kiểm ở mức cơ
+>    bản" — an toàn giả, đúng thứ C4.4 sinh ra để chống.
+>
+> **AC-4 không được đóng bằng nhánh bỏ qua này.** Bằng chứng hợp lệ duy nhất là `--dry-run=server` ở
+> bước P4.5. Muốn kiểm offline thật thì phải cài `kubeconform` (chưa có) — ghi lệnh cài vào runbook.
 
 Script duyệt `deploy/k8s/` theo **glob**, không giả định tên file — nhờ vậy WP-B tự do đặt tên.
 
@@ -237,6 +294,11 @@ apps/web/src/lib/readiness.test.ts
 trong `next.config.mjs` thì **escalate**, không tự sửa (C6).
 
 `gates.sh` cần bit thực thi: Integrator chạy `git update-index --chmod=+x` sau khi merge.
+
+**Cửa sổ quyền sửa file test (D4).** Integrator được sửa file test **chỉ trong khoảng trước khi tạo ba
+worktree**, và chỉ cho việc hạ tầng test (vd thêm pragma `// @vitest-environment node` theo C1.3).
+Sau thời điểm đó, file test **đóng băng tuyệt đối**: sửa test giữa lúc P3 đang chạy là đúng thứ §7.5
+của PDF cấm. Pragma đã được thêm trước khi mở P3.
 
 ## C6 — Những gì KHÔNG WP nào được làm
 

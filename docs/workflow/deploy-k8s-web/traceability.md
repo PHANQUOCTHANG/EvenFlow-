@@ -1,6 +1,6 @@
 # Ma trận truy vết — slice deploy web lên Kubernetes
 
-Nguồn: `spec.md` (AC-1 … AC-7), `contracts.md` (C1 … C6), `work-packages.md` (WP-A/B/C).
+Nguồn: `spec.md` (AC-1 … AC-7), `contracts.md` (C1 … C7, **bản 2 sau P2 vòng 2**), `work-packages.md` (WP-A/B/C).
 
 Bước 2 (Test Design) chỉ viết **test cho WP-A** (AC-1, AC-2). Các AC còn lại được kiểm bằng **lệnh**
 (không phải unit test) nên vẫn có một dòng mỗi AC để ma trận phủ **toàn bộ** slice, không chỉ phần WP-A.
@@ -63,7 +63,23 @@ nên `apps/web/src/app/api/healthz/route.ts`, `apps/web/src/app/api/readyz/route
 | AC-1, AC-2 | `readiness` không chạm dependency ngoài (`fetch` / `XMLHttpRequest` không được gọi) | `apps/web/src/lib/readiness.test.ts` | `isReady / setReady / uptimeMs khong goi fetch hay XMLHttpRequest` | chưa chạy |
 | AC-1, AC-2 | Nạp `readiness` không gây request nào, và export đủ 3 hàm | `apps/web/src/lib/readiness.test.ts` | `nap module khong gay request nao (khong co side effect luc import)` | chưa chạy |
 | AC-3 | Compose: service `web` có `healthcheck` gọi `/api/healthz`, đặt tường minh `interval`/`timeout`/`retries`/`start_period`, parse được | **WP-C** sở hữu (`deploy/compose/docker-compose.yml`) — kiểm bằng **lệnh**, không có unit test | `docker compose -f deploy/compose/docker-compose.yml config` | chưa chạy |
-| AC-4 | Manifest k8s: Namespace/Deployment/Service/Ingress/HPA, probe trỏ đúng C1, `resources.requests` + `limits`, `securityContext` non-root drop ALL, image `ghcr.io/<owner>/eventflow-web`, `minReplicas` >= 2 | **WP-B** sở hữu (`deploy/k8s/**`) — kiểm bằng **lệnh**, không có unit test | `kubectl apply --dry-run=client -f deploy/k8s/` cho **mọi** file | chưa chạy |
-| AC-5 | Script gate chạy đủ `lint`, `typecheck`, `test:coverage`, `build`; fail thì exit khác 0 và nêu rõ bước; kiểm diff test `.skip`/`.only`/`it.todo`; validate `deploy/k8s/**`; chạy được trên Git Bash Windows | **WP-C** sở hữu (`.github/scripts/gates.sh`, `Makefile`) — kiểm bằng **lệnh**, không có unit test | `make gates` / `bash .github/scripts/gates.sh` (chạy từ gốc repo) | chưa chạy |
+| AC-4 | Manifest k8s: Namespace/Deployment/Service/Ingress/HPA, probe trỏ đúng C1, `resources.requests` + `limits`, `securityContext` non-root drop ALL, image `ghcr.io/phanquocthang/eventflow-web` tag `sha-<short>`, `minReplicas` >= 2 | **WP-B** sở hữu (`deploy/k8s/**`) — kiểm bằng **lệnh**, không có unit test | `kubectl apply --dry-run=**server** -f deploy/k8s/` ở bước **P4.5** (client dry-run KHÔNG chạy offline) | chưa chạy |
+| AC-5 | Script gate chạy đủ `lint`, `typecheck`, `test:coverage`, `build`; fail thì exit khác 0 và nêu rõ bước; kiểm diff test `.skip`/`.only`/`it.todo`; validate `deploy/k8s/**`; chạy được trên Git Bash Windows | **WP-C** sở hữu (`.github/scripts/gates.sh`, `Makefile`) — kiểm bằng **lệnh**, không có unit test | `bash .github/scripts/gates.sh` từ gốc repo (`make gates` chỉ là tuỳ chọn — máy dev không có `make`) | chưa chạy |
 | AC-6 | Runbook: lệnh cụ thể để build image, load vào cluster, apply, kiểm pod ready, xem log, rollback; ghi rõ phần **chưa** verify được và vì sao | **Integrator** sở hữu (`docs/workflow/deploy-k8s-web/runbook.md`) — kiểm bằng **đọc + chạy lệnh**, không có unit test | Đối chiếu từng lệnh trong runbook khi Docker Desktop chạy | chưa chạy |
 | AC-7 | Không hồi quy: toàn bộ test hiện có vẫn pass; không WP nào sửa file ngoài ownership (C5) | **Integrator** kiểm sau merge — kiểm bằng **lệnh**, không có unit test | `npm run test:coverage` (apps/web) + `git diff --name-only` đối chiếu bảng C5 | chưa chạy |
+
+## Bổ sung sau P2 vòng 2
+
+| AC | Nội dung ngắn | Chủ | Bằng chứng | Trạng thái |
+|---|---|---|---|---|
+| AC-2b | `instrumentation.ts` bắt `SIGTERM` → `setReady(false)` → chờ 5s → `exit(0)`; readyz trả `503` trong cửa sổ drain | **WP-A** | P4.5 bước 5: gửi SIGTERM, curl `/api/readyz` phải ra `503` chứ không `ECONNREFUSED` | chưa chạy |
+| AC-4b | `maxUnavailable: 0`, `maxSurge: 1`, `terminationGracePeriodSeconds: 30`, `preStop` | **WP-B** | đọc manifest + `--dry-run=server` ở P4.5 | chưa chạy |
+| AC-4c | đủ `startupProbe` / `livenessProbe` / `readinessProbe` đúng C2.2; Deployment **không** khai `replicas` | **WP-B** | đọc manifest; `kubectl get deploy -o yaml` ở P4.5 | chưa chạy |
+| AC-5b | gate chặn `.skip`/`.only`/`it.todo` **mới thêm**; gate chặn probe nằm trong `prerender-manifest.json` | **WP-C** | chạy `gates.sh` với một test cố tình `.skip` → phải fail | chưa chạy |
+| AC-8 | xác minh chạy thật: pod Ready, 2 probe, SIGTERM→503, `rollout undo` | **Integrator** | log thô trong `integration-report.md` | chưa chạy |
+
+### Giới hạn đã biết, không được tính là đã kiểm
+
+- **AC-4 không đóng được trong P3.** Không có cluster thì `--dry-run=client` không chạy, và nhánh bỏ qua của gate **không kiểm gì** (không bắt được sai `apiVersion`, sai cấp field, `selector` lệch, probe sai path — tất cả đều là YAML hợp lệ). Bằng chứng duy nhất là `--dry-run=server` ở P4.5.
+- **`NEXT_PUBLIC_API_BASE`**: deploy có thể Ready với cả hai probe xanh mà frontend **không gọi được backend**. Cần người duyệt (spec mục 6, điểm 4).
+- **CI không chạy gì** cho `deploy/**` và `.github/scripts/**` (paths-filter không khớp) ⇒ PR của WP-B/WP-C xanh là **dương tính giả**. Bằng chứng là thủ công.

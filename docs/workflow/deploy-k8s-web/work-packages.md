@@ -36,6 +36,10 @@ contract không còn thay đổi sau P2; task không nhỏ tới mức chi phí 
           +-----------------+-----------------+
                             v
                   P4 Integration (gates trên kết quả đã merge)
+                            |
+                            v
+              P4.5 Xác minh chạy thật (NỐI TIẾP, không song song)
+              build image -> apply -> port-forward -> SIGTERM -> rollout undo
 ```
 
 Ba WP **không phụ thuộc lẫn nhau**, chỉ cùng phụ thuộc contract. Chạy đồng thời cả ba, dưới giới hạn
@@ -47,8 +51,8 @@ khuyến nghị 3–5 agent của §7.2.
 
 | | |
 |---|---|
-| AC phụ trách | AC-1, AC-2 |
-| Sở hữu | `src/app/api/healthz/route.ts`, `src/app/api/readyz/route.ts`, `src/lib/readiness.ts`, `src/instrumentation.ts` — **tên file cụ thể, không dùng glob `**`**: glob của bản 1 nuốt luôn file test, xung đột với quy tắc "không WP nào sửa test" |
+| AC phụ trách | AC-1, AC-2, **AC-2b** (graceful shutdown, tách từ AC-4b vì AC đó có hai chủ) |
+| Sở hữu | `apps/web/src/app/api/healthz/route.ts`, `apps/web/src/app/api/readyz/route.ts`, `apps/web/src/lib/readiness.ts`, `apps/web/src/instrumentation.ts` — **tên file cụ thể, không dùng glob `**`**: glob của bản 1 nuốt luôn file test, xung đột với quy tắc "không WP nào sửa test" |
 | Contract | C1 |
 | Test | Do bước Test Design viết **trước**; WP-A **không** được sửa file test |
 
@@ -60,7 +64,7 @@ trả về một kết quả đóng băng từ lúc build và **luôn xanh kể 
 
 | | |
 |---|---|
-| AC phụ trách | AC-4 |
+| AC phụ trách | AC-4, **AC-4b** (rolling update), **AC-4c** (tham số probe) |
 | Sở hữu | `deploy/k8s/**` |
 | Contract | C1 (đường dẫn probe), C2 (cổng, tên image, namespace, nhãn) |
 
@@ -68,22 +72,29 @@ Namespace, Deployment, Service, Ingress, HPA. Điểm bắt buộc: probe trỏ 
 `resources.requests` **và** `limits` cho cpu + memory (thiếu `requests` thì HPA không có mẫu số và
 không scale được); `securityContext` chạy non-root drop ALL capabilities; `minReplicas` ≥ 2.
 
-Chưa có cluster nên bằng chứng là `kubectl apply --dry-run=client`.
+⚠️ **Sửa khẳng định sai của bản 1** (B1, đã kiểm bằng lệnh): `kubectl apply --dry-run=client`
+**không** chạy offline — nó tải openapi từ API server và fail khi chưa có cluster. Bằng chứng hợp lệ
+duy nhất cho AC-4 là `kubectl apply --dry-run=server` ở **bước P4.5**, sau khi bật Kubernetes của
+Docker Desktop. Trong lúc P3, WP-B **không có cách tự chứng minh manifest đúng** — đây là giới hạn đã
+biết, không phải thiếu sót của WP-B. Xem C4.4.
 
 ### WP-C — Script gate + healthcheck compose
 
 | | |
 |---|---|
-| AC phụ trách | AC-3, AC-5 |
+| AC phụ trách | AC-3, AC-5, **AC-5b** (chặn .skip/.only mới thêm + chặn probe bị prerender) |
 | Sở hữu | `.github/scripts/gates.sh`, `Makefile`, `deploy/compose/docker-compose.yml` |
 | Contract | C1 (đường dẫn), C3 (lệnh healthcheck), C4 (hành vi script) |
 
 Script gate tồn tại vì một lý do cụ thể, không phải vì đẹp quy trình: ở slice trước một type error đã
-lọt vào commit `9607fa6` do chạy `test` + `lint` + `build` mà **quên `typecheck`**. PDF bước 6 ghi rõ
+lọt vào commit `9607fa6` do chạy `test` + `lint` + `build` mà **quên `typecheck`** — nhưng ⚠️ **sửa lý
+do**: đó là vòng chạy **cục bộ**, không phải lỗ hổng CI. `ci.yml` **đã có đủ bốn lệnh** (dòng 104, 105,
+170, 227). Script này để chạy đúng bốn lệnh đó cục bộ trước khi push, cộng **hai check CI không có**:
+chặn `.skip`/`.only` mới thêm, và chặn probe bị prerender. PDF bước 6 ghi rõ
 gate là *"script, không dùng LLM"* đúng để chặn kiểu lỗi đó.
 
 Service `web` trong compose chưa có `healthcheck` trong khi postgres/redis/rabbitmq đều có, nên
-`make up` báo "đã chạy" trước khi web thật sự phục vụ được.
+`docker compose -f deploy/compose/docker-compose.yml up -d` báo "đã chạy" trước khi web thật sự phục vụ được.
 
 ## 4. Việc của Integrator (không giao cho WP nào)
 
@@ -101,8 +112,8 @@ Bản 1 kết thúc ở "merge + gates + runbook", tức slice sinh ra một đ�
 "deploy được lên Kubernetes" không có cơ sở. Bước này **nối tiếp, không song song**:
 
 1. Bật Kubernetes của Docker Desktop
-2. `docker build` image — lần đầu tiên file này được build thành công, vì review đã chứng minh
-   `COPY /app/public` từng trỏ vào thư mục không tồn tại
+2. `docker build` image — lần đầu tiên file này được build thành công, — lý do chưa build được là
+   **Docker daemon chưa chạy**, không phải lỗi Dockerfile (`apps/web/public/.gitkeep` đã tồn tại)
 3. `kubectl apply --dry-run=server` (lúc này mới chạy được), rồi apply thật
 4. `kubectl port-forward`, xác nhận pod `Ready`, `/api/healthz` 200, `/api/readyz` 200
 5. Gửi `SIGTERM`, xác nhận `/api/readyz` chuyển 503 **trước khi** pod biến mất

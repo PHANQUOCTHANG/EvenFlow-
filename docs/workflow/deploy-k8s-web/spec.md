@@ -107,7 +107,10 @@ một lần sửa Dockerfile là mất tính chất đó mà không ai biết.
 - **Then** `securityContext`: `runAsNonRoot: true`, `allowPrivilegeEscalation: false`, `capabilities.drop: [ALL]`
 - **Then** image tham chiếu đúng tên mà `cd-web.yml` publish (`ghcr.io/<owner>/eventflow-web`)
 - **Then** HPA có `minReplicas` ≥ 2 (G4: không được có điểm chết đơn lẻ ở T0)
-- **Then** `kubectl apply --dry-run=client -f deploy/k8s/` thành công cho **mọi** file
+- **Then** `kubectl apply --dry-run=**server** -f deploy/k8s/` thành công cho **mọi** file, chạy ở bước
+  **P4.5** sau khi bật Kubernetes của Docker Desktop. ⚠️ Bản đầu ghi `--dry-run=client`; đã kiểm là
+  **không chạy offline** (tải openapi từ API server). AC-4 **không** được đóng bằng nhánh "bỏ qua" của
+  script gate — xem C4.4.
 
 ### AC-5 — Script gate
 - **Then** chạy **đủ** `lint`, `typecheck`, `test:coverage`, `build`; thiếu bất kỳ cái nào là lỗi script
@@ -151,13 +154,20 @@ một lần sửa Dockerfile là mất tính chất đó mà không ai biết.
 
 ## 7. Bổ sung AC sau P2
 
-### AC-4b — Rolling update và graceful shutdown (M3)
+### AC-4b — Rolling update (M3) — **chủ: WP-B**
 Mục tiêu G4 là "không sập ở T0", nhưng bản đầu không có AC nào cho việc này, và `minReplicas: 2`
 không cứu được nếu `maxUnavailable` mặc định 25%.
 - **Then** Deployment có `strategy.rollingUpdate.maxUnavailable: 0`, `maxSurge: 1`
 - **Then** có `terminationGracePeriodSeconds: 30` và hook `preStop`
-- **Then** `/api/readyz` trả `503` sau khi tiến trình nhận `SIGTERM`, để endpoint bị rút khỏi Service
-  **trước khi** server đóng
+
+### AC-2b — Graceful shutdown ở tầng ứng dụng (D1) — **chủ: WP-A**
+Tách khỏi AC-4b vì AC đó có **hai chủ** nên không ai đóng được.
+- **Then** `src/instrumentation.ts` đăng ký handler `SIGTERM` gọi `setReady(false)` **ngay**, chờ
+  `DRAIN_MS = 5000`, rồi `process.exit(0)`
+- **Then** nhờ đó `/api/readyz` trả `503` **trong cửa sổ drain**, trước khi tiến trình kết thúc
+- **Phụ thuộc**: `NEXT_MANUAL_SIG_HANDLE=1` phải có trong image (Integrator đặt trong Dockerfile).
+  Thiếu nó thì Next tự đóng server rồi `process.exit(0)` ngay, và readyz trả về `ECONNREFUSED` chứ
+  không phải `503` — đã kiểm trong `next/dist/server/lib/start-server.js`.
 
 ### AC-4c — Tham số probe (M4)
 - **Then** có đủ `startupProbe`, `livenessProbe`, `readinessProbe` với tham số đúng C2.2
@@ -172,7 +182,9 @@ không cứu được nếu `maxUnavailable` mặc định 25%.
 Bản đầu dừng ở "merge + gates + runbook", tức slice kết thúc với một đống YAML **chưa ai chạy**.
 - **Then** sau P4, Integrator bật Kubernetes của Docker Desktop, build image, apply, port-forward
 - **Then** xác nhận pod `Ready`, `/api/healthz` trả 200, `/api/readyz` trả 200
-- **Then** gửi `SIGTERM` và xác nhận `/api/readyz` chuyển sang 503 **trước khi** pod biến mất
+- **Then** gửi `SIGTERM` và xác nhận `/api/readyz` chuyển sang `503` **trong cửa sổ drain 5 giây**,
+  trước khi tiến trình thoát. Nếu nhận `ECONNREFUSED` thay vì `503` thì nguyên nhân gần như chắc chắn
+  là thiếu `NEXT_MANUAL_SIG_HANDLE=1` trong image, **không phải** WP-A làm sai
 - **Then** thử `kubectl rollout undo` và xác nhận quay về đúng tag trước đó
 - **Bằng chứng**: log thô dán vào `integration-report.md`. Thiếu bước này thì nhãn "deploy được lên
   Kubernetes" là không có cơ sở.

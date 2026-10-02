@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * Test cho `GET /api/readyz` — AC-2 (spec muc 4), contract C1.
  *

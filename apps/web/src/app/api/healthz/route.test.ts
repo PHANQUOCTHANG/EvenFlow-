@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * Test cho `GET /api/healthz` — AC-1 (spec muc 4), contract C1.
  *
