@@ -163,6 +163,27 @@ describe("PublicHeader — AC-4 danh dau route dang mo", () => {
     expect(screen.getByRole("link", { name: "Sự kiện" })).not.toHaveAttribute("aria-current");
     expect(screen.getByRole("link", { name: "Tổ chức" })).not.toHaveAttribute("aria-current");
   });
+
+  /**
+   * Bug M4 o cap shell: hai href long tien to nhau thi neu dat aria-current bang
+   * isActive cho tung item, CA HAI cung sang. Shell phai dung activeHref.
+   */
+  it("hai href long tien to nhau: chi item KHOP DAI NHAT co aria-current", () => {
+    const nested: NavItem[] = [
+      { href: "/events", label: "Sự kiện", ready: true },
+      { href: "/events/sap-dien-ra", label: "Sắp diễn ra", ready: true },
+    ];
+    pathnameMock.mockReturnValue("/events/sap-dien-ra");
+
+    const { container } = render(<PublicHeader items={nested} />);
+
+    expect(screen.getByRole("link", { name: "Sắp diễn ra" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    expect(screen.getByRole("link", { name: "Sự kiện" })).not.toHaveAttribute("aria-current");
+    expect(container.querySelectorAll('[aria-current="page"]')).toHaveLength(1);
+  });
 });
 
 describe("PublicHeader — AC-6 nut mo menu mobile", () => {
@@ -285,5 +306,88 @@ describe("PublicHeader — AC-6 mo / dong menu", () => {
 
     expect(toggle()).toHaveAttribute("aria-expanded", "true");
     expect(nav()).toHaveAttribute("data-state", "open");
+  });
+});
+
+/**
+ * Bug M1 — thu tu DOM. Cho nay von da dung, nhung khong co test nao giu nen de bi
+ * pha ve sau. Neu <nav> dung TRUOC nut toggle thi o mobile Tab tu nut di thang qua
+ * nav (hoac vao main), va panel mo ra day chinh nut vua bam xuong duoi con tro.
+ */
+describe("PublicHeader — M1 thu tu DOM: toggle truoc <nav>", () => {
+  it("nut toggle dung TRUOC <nav> trong DOM", () => {
+    render(<PublicHeader items={ITEMS} />);
+
+    const position = toggle().compareDocumentPosition(nav());
+    expect(position & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("menu mo thi thu tu DOM khong doi (nav van sau toggle)", async () => {
+    const user = userEvent.setup();
+    render(<PublicHeader items={ITEMS} />);
+
+    await user.click(toggle());
+
+    expect(toggle().compareDocumentPosition(nav()) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+});
+
+/**
+ * Bug m4 — bam link trong menu phai dong menu.
+ *
+ * Effect theo pathname khong du: bam link TRUNG route dang mo thi pathname khong doi,
+ * effect khong chay, menu nam do che ca trang.
+ */
+describe("PublicHeader — m4 bam link trong nav thi dong menu", () => {
+  it("bam link ready: true -> menu dong, KE CA khi pathname khong doi", async () => {
+    const user = userEvent.setup();
+    pathnameMock.mockReturnValue("/events");
+    render(<PublicHeader items={ITEMS} />);
+
+    await user.click(toggle());
+    expect(toggle()).toHaveAttribute("aria-expanded", "true");
+    expect(nav()).toHaveAttribute("data-state", "open");
+
+    // pathname KHONG doi: bam dung link cua trang dang mo.
+    await user.click(screen.getByRole("link", { name: "Sự kiện" }));
+
+    expect(pathnameMock).toHaveReturnedWith("/events");
+    expect(toggle()).toHaveAttribute("aria-expanded", "false");
+    expect(nav()).toHaveAttribute("data-state", "closed");
+  });
+
+  it("bam link sang route KHAC cung dong menu", async () => {
+    const user = userEvent.setup();
+    pathnameMock.mockReturnValue("/");
+    render(<PublicHeader items={ITEMS} />);
+
+    await user.click(toggle());
+    await user.click(screen.getByRole("link", { name: "Tổ chức" }));
+
+    expect(toggle()).toHaveAttribute("aria-expanded", "false");
+    expect(nav()).toHaveAttribute("data-state", "closed");
+  });
+
+  it("bam vao item ready: false (khong phai link) cung dong menu", async () => {
+    const user = userEvent.setup();
+    const { container } = render(<PublicHeader items={ITEMS} />);
+
+    await user.click(toggle());
+    const disabled = container.querySelector('[aria-disabled="true"]');
+    expect(disabled).not.toBeNull();
+
+    await user.click(disabled as Element);
+
+    expect(nav()).toHaveAttribute("data-state", "closed");
+  });
+
+  it("menu dang dong thi bam link khong gay loi, van dong", async () => {
+    const user = userEvent.setup();
+    render(<PublicHeader items={ITEMS} />);
+
+    await user.click(screen.getByRole("link", { name: "Sự kiện" }));
+
+    expect(toggle()).toHaveAttribute("aria-expanded", "false");
+    expect(nav()).toHaveAttribute("data-state", "closed");
   });
 });
