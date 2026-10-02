@@ -1,11 +1,44 @@
+import { ThemeToggle } from "@/components/theme/theme-toggle";
+import { Badge, Button, Card } from "@/components/ui";
+
 export default function Home() {
   return (
-    <main style={{ maxWidth: 720, margin: "0 auto", padding: "4rem 1.5rem" }}>
-      <h1 style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>EventFlow</h1>
-      <p style={{ opacity: 0.7, lineHeight: 1.6 }}>
-        Nen tang ban ve su kien chiu tai dot bien, co phong cho ao va AI ho tro
-        van hanh. Xem <code>docs/</code> de biet ke hoach va backlog.
+    <main className="mx-auto flex max-w-3xl flex-col gap-lg px-gutter py-xl md:px-margin">
+      <div className="flex flex-wrap items-center justify-between gap-md">
+        <h1 className="text-headline-xl text-fg">EventFlow</h1>
+        <ThemeToggle />
+      </div>
+
+      <p className="text-body-lg text-fg-muted">
+        Nền tảng bán vé sự kiện chịu tải đột biến, có phòng chờ ảo và AI hỗ trợ vận hành. Xem{" "}
+        <code className="rounded-sm bg-surface-subtle px-xs text-body-md">docs/</code> để biết kế
+        hoạch và backlog.
       </p>
+
+      <Card
+        header="Trạng thái dự án"
+        footer="Design system EVF-1801 — token và component dùng chung đã sẵn sàng."
+      >
+        <ul className="flex flex-col gap-sm text-body-md text-fg">
+          <li className="flex items-center justify-between gap-md">
+            <span>Phòng chờ ảo</span>
+            <Badge variant="admitted">Đã có mã</Badge>
+          </li>
+          <li className="flex items-center justify-between gap-md">
+            <span>Bán vé &amp; giữ chỗ</span>
+            <Badge variant="admitted">Đã có mã</Badge>
+          </li>
+          <li className="flex items-center justify-between gap-md">
+            <span>Identity, Event, Payment, Anti-bot</span>
+            <Badge variant="pending">Đang là stub</Badge>
+          </li>
+        </ul>
+      </Card>
+
+      <div className="flex flex-wrap gap-sm">
+        <Button>Xem sự kiện</Button>
+        <Button variant="secondary">Tài liệu</Button>
+      </div>
     </main>
   );
 }
