@@ -223,3 +223,115 @@ export interface QueueStatusPanelProps {
 
 - Nếu phát hiện thêm trạng thái nghiệp vụ nào trong `docs/01` mà handoff thiếu → báo, **không** tự thêm vào UI mà không ghi lại
 - Nếu `warningThresholdMs` cần một giá trị mặc định để UI dùng được → **dừng và hỏi**, vì ngưỡng cảnh báo là policy nghiệp vụ (`DESIGN.md` gợi ý 2 phút cho hold, nhưng đó là tài liệu design chứ không phải BR)
+
+### 3.1 Phát hiện thêm: DESIGN.md hướng dẫn hiện rank + progress ở LOBBY, trái BR-Q1
+
+`apps/web/doc/design/stitch/md/DESIGN.md` mục Components.3 ghi:
+
+> **Lobby Progress Card:** Hiển thị vị trí người dùng trong hàng đợi (Queue Position) với cỡ chữ
+> `numeric-metric`, nhãn "Số thứ tự của bạn". Bên dưới là thanh tiến trình (progress bar) màu
+> Action Indigo, kèm ước tính thời gian chờ trung bình…
+
+Đây là chỉ dẫn **hiện số thứ tự và thanh tiến trình ở LOBBY** — trái trực diện BR-Q1, và chính là
+lỗi mà AC-7 tồn tại để chặn. Code làm theo `docs/01`, nhưng **tài liệu design vẫn đang hướng dẫn
+người làm tiếp đi sai**, nên phải báo lại y như đã báo việc handoff §11.3 thiếu `DROPPED`.
+
+Phát hiện bởi code review độc lập (m9). Nguy hiểm hơn việc thiếu `DROPPED`: thiếu một trạng thái
+thì sẽ có người nhận ra, còn làm theo một chỉ dẫn sai thì phá đúng cơ chế chống bot mà không ai thấy.
+
+---
+
+## 8. Lệch khỏi plan trong lúc làm
+
+### 8.1 Hai hàm public không có trong hợp đồng §5 ban đầu
+
+`spellDuration` (`lib/format.ts`) và `toEpochMs` (`lib/server-time.ts`) được thêm trong lúc hiện thực
+nhưng §5 không khai. Code review (M4) chỉ ra hậu quả: `spellDuration` sinh **toàn bộ** nội dung mà
+người dùng screen reader nghe được về đồng hồ giữ vé, mà `grep -c spellDuration format.test.ts` = **0**
+— không một test trực tiếp nào. Kịch bản: ai đó bỏ phần giây thì "còn 1 phút 59 giây" đọc thành "còn
+1 phút", sai 59 giây trên đồng hồ giữ ghế, và cả 717 test vẫn xanh. Đã bổ sung cả hai vào hợp đồng và
+có test bảng trực tiếp.
+
+### 8.2 `ServerCountdown` thêm field `ready` sau code review
+
+Không có trong §5 ban đầu. Lý do ở §10 (M1).
+
+### 8.3 File ngoài bảng §1
+
+`src/components/ui/index.ts` (thêm 5 dòng export) và 5 file test — §1 chỉ liệt 5 file nguồn.
+
+### 8.4 Những thứ cố ý KHÔNG làm, và lý do
+
+| Việc | Lý do không làm |
+|---|---|
+| Icon dạng inline SVG | Dùng ký tự `⏱` / `⚠` với `aria-hidden`. Thoả yêu cầu "icon ngữ nghĩa" của DESIGN.md mà không thêm dependency icon nào. Đổi sang SVG thì phải sửa test (đang khớp theo lớp ký tự). |
+| Ngưỡng thoát cho copy "Đang xác nhận" | Nếu server không bao giờ gửi `EXPIRED` về thì khách mắc ở copy chuyển tiếp vô hạn. Cần một policy (bao lâu thì mời tải lại) — là quyết định nghiệp vụ, không tự chọn. Ticket riêng. |
+| `reconnectDeadlineAt` cho cửa sổ giữ chỗ 5 phút | Cần variant đồng hồ thứ 4 mà handoff §11.4 chỉ định nghĩa 3. Không tự phát minh. Ticket riêng, **nên ưu tiên**: `RECONNECTING` nói "chưa mất chỗ" mà không nói còn bao lâu là thiếu đúng con số khách cần nhất trong 5 phút đó. |
+| `warningThresholdMs` thành bắt buộc `number \| null` | Code review (m1) đề nghị, và lập luận đúng: `variant` đã bắt buộc chính vì sợ default sai âm thầm, rồi lại để ngưỡng cảnh báo optional âm thầm — caller quên prop thì đồng hồ 10 phút chạy tới 0 không bao giờ cảnh báo, và không typecheck/test/lint nào bắt. Hoãn vì bắt buộc ở đây sẽ lan sang `QueueStatusPanelProps` và mọi caller. Ticket riêng. |
+| `poll_after_ms` dạng "cập nhật lại sau N giây" | Polling ngoài phạm vi slice (§1). Nhưng copy hiện tại **đã hứa** "trang tự cập nhật" / "không cần tải lại" — nếu panel được cắm vào page trước khi `queue-client.ts` được nối thì lời hứa đó sai. Là điều kiện bàn giao, ghi vào traceability. |
+
+## 9. Evidence
+
+Chạy sau lần sửa cuối (không phải output cũ chép lại).
+
+```
+$ cd apps/web
+
+$ npm run typecheck
+> tsc --noEmit
+(khong output = 0 error)
+
+$ npm run lint
+> next lint
+✔ No ESLint warnings or errors
+
+$ npm run test:coverage
+exit=0
+ Test Files  36 passed (36)
+      Tests  830 passed (830)
+```
+
+830 test, 0 fail, 0 skip. Phân rã: 308 test của slice này + 522 test đã có từ trước → **không hồi
+quy** (mốc 522 khớp đúng tổng của branch `feature/EVF-1801-route-groups`).
+
+Code review độc lập **tự chạy lại cả 4 gate** và xác nhận số liệu khớp, kể cả việc `717 − 195 = 522`
+ở lần chạy trước.
+
+> **Lưu ý về con số coverage.** `vitest.config.ts` đặt `coverage.include = ["src/**/*.{ts,tsx}"]` và
+> không loại `*.test.*`, nên file test được tính như source và con số tổng bị đẩy lên. Con số tái lập
+> được nhưng **không phải coverage của source**, nên không dùng nó làm bằng chứng chất lượng. Coverage
+> source thật của 5 file mới: 100% trừ `format.ts` branches, chính là khoảng trống `spellDuration` mà
+> M4 chỉ ra và đã được đóng. Lỗi config có từ slice trước, đã có ticket riêng.
+
+## 10. Code review độc lập (bước 7) và cách xử lý
+
+Reviewer: agent riêng, context sạch. **Kết luận: không có blocker**, 4 major, 13 minor. Nó xác nhận
+phần logic đồng hồ thực sự tính lại từ mốc chứ không chỉ nói vậy trong comment, và **BR-Q1 sạch tuyệt
+đối** — đã soi từng nhánh điều kiện cộng cả đường rò qua `aria-*`, `data-*` và live region.
+
+| | Nội dung | Xử lý |
+|---|---|---|
+| **M1** | Hook đọc `Date.now()` ngay trong thân render. Mọi route là `○ (Static)` nên HTML được prerender **lúc build** → con số thời điểm build bị đóng băng vào HTML; khách mở trang ba ngày sau thấy "Đã hết thời gian giữ vé" ở first paint. `formatClockTime` dùng `getHours()` nên prerender ở UTC vs browser ICT lệch 7 tiếng → hydration mismatch. Reviewer chỉ ra repo **đã có** đúng pattern phòng lỗi này (`use-theme.ts` khởi tạo bằng hằng số rồi đọc giá trị phụ thuộc browser trong effect) và slice này đi ngược lại. | **Đã sửa.** Thêm `ready: boolean`; trước mount trả giá trị xác định và hiện `--:--` (không phải `00:00`, vì `00:00` trông như đã hết hạn). `lastUpdatedAt` chỉ render sau mount. Hook cũng chuyển sang tính trong lúc render, nhờ đó sửa luôn m6. |
+| **M2** | `typeof x === "number"` cho `NaN`/`Infinity` đi qua. `rank={NaN}` → hiện chữ `NaN`, `aria-valuenow="NaN"`, và `width: "NaN%"` bị browser bỏ qua nên div trong có `h-full` không width → **thanh tiến trình hiện đầy 100%**, báo với khách "gần tới lượt" trong khi không biết gì. `etaSeconds={NaN}` → `spellDuration(NaN)` ra `"0 giây"` → "Thời gian ước tính: ~0 giây", đúng cái AC-8 cấm. Reviewer chỉ ra `format.ts` và `server-time.ts` đều dùng `Number.isFinite`, panel là chỗ **duy nhất** lệch khỏi chuẩn đó. | **Đã sửa:** `Number.isInteger(rank)`, `Number.isInteger(initialRank) && > 0`, `Number.isFinite(etaSeconds)`. |
+| **M3** | `ADMITTED` + đồng hồ đã hết hạn cho hai thông điệp ngược nhau, và tình huống này **bắt buộc xảy ra**: BR-Q4 cho `poll_after_ms` tới 30s nên luôn có cửa sổ tới 30 giây giữa lúc đồng hồ về 0 và lúc server đẩy `EXPIRED` về. Trong đó panel vừa mời đi thanh toán vừa báo suất đã hết, không một chữ nói khách phải làm gì. | **Đã sửa:** panel tự biết đồng hồ đã hết và đổi sang copy chuyển tiếp ("Suất mua vừa hết hạn… chưa cần làm gì thêm"), đồng thời **bỏ render đồng hồ** để panel và đồng hồ không lệch nhau một nhịp. |
+| **M4** | `spellDuration` / `toEpochMs` là public API trên luồng tiền, không AC, không dòng truy vết, không test trực tiếp. | **Đã sửa:** thêm vào hợp đồng §5, có test bảng trực tiếp. |
+
+Minor đã sửa: **m2** (`aria-valuetext` — "958" một mình vô nghĩa với screen reader; dùng "đã tiến"
+chứ không "đã gọi" vì BR-Q2 cho người vào sau T0 nối FIFO nên con số đó không chắc là số người thực
+sự được gọi), **m3** (hết hạn đổi sang `role="alert"` + `assertive`: mất hold là sự kiện khách mất
+vé, polite bị xếp sau mọi output đang đọc, ví dụ khách đang gõ số thẻ), **m4** (gộp nhãn — trước đó
+screen reader đọc nhãn 2–3 lần), **m7** (`toEpochMs` từ chối chuỗi không có múi giờ: ECMA hiểu
+`"2026-10-03"` là UTC còn `"2026-10-03T09:00:00"` là giờ địa phương, nên mốc mở bán lệch 7 tiếng),
+**m8** (thêm icon ngữ nghĩa theo DESIGN.md), **m9** (báo lại xung đột DESIGN.md vs BR-Q1 — xem §3.1),
+**m13** (viết §8 và §9 này).
+
+Thêm một việc do agent test nêu sau đó: `toEpochMs` trả `null` im lặng biến **lỗi backend thành UI
+đứng im** — khách thấy `--:--` vô thời hạn và không ai biết tại sao. Đã thêm `console.warn` ở
+dev/CI. Đây là điểm agent test nói nó lo nhất.
+
+Hoãn có ghi lại: **m1** (bắt buộc `warningThresholdMs`), **m5** (nhịp 250ms vẫn có thể hiện nhiều hơn
+thời gian còn lại tới 249ms — phá đúng tính chất §6 tuyên bố, nhưng tác động thực tế gần như bằng 0),
+**m10** (`SOLD_OUT` im lặng tuyệt đối về waitlist khi caller quên prop), **m11** (copy hứa trang tự
+cập nhật trong khi polling chưa nối), **m12** (coverage bị thổi phồng), và 4 khoảng trống hợp đồng mà
+agent test nêu: `ADMITTED` + `ready === false`, ngưỡng thoát cho copy "Đang xác nhận",
+`spellDuration(0)`/`(NaN)` chưa chốt chuỗi, và hai bộ đếm trên cùng một mốc.
