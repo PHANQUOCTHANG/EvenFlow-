@@ -33,6 +33,7 @@
  * thai phai khac nhau", chi dung regex rong cho nhung y bat buoc phai noi ra.
  */
 import { act, fireEvent, render } from "@testing-library/react";
+import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ServerExpiryCountdown } from "../ui/server-expiry-countdown";
@@ -315,6 +316,18 @@ describe("QueueStatusPanel — QUEUED (AC-8)", () => {
     expect(max).toBe(1000);
   });
 
+  it("progressbar co aria-valuetext dang chu (so '958' tran khong co nghia voi AT)", () => {
+    const { getByRole } = render(
+      <QueueStatusPanel state="QUEUED" rank={42} initialRank={1000} />,
+    );
+
+    const valueText = getByRole("progressbar").getAttribute("aria-valuetext");
+    expect(valueText).toBeTruthy();
+    expect(valueText).toContain("958");
+    expect(valueText).toMatch(/1[.,]?000/);
+    expect(valueText).toMatch(/người/i);
+  });
+
   it("don dieu: cung initialRank, rank NHO hon thi valuenow LON hon", () => {
     const valuesByRank = [900, 500, 100, 42].map((rank) => {
       const view = render(<QueueStatusPanel state="QUEUED" rank={rank} initialRank={1000} />);
@@ -326,6 +339,100 @@ describe("QueueStatusPanel — QUEUED (AC-8)", () => {
     for (let i = 1; i < valuesByRank.length; i += 1) {
       expect(valuesByRank[i]).toBeGreaterThan(valuesByRank[i - 1]);
     }
+  });
+});
+
+/**
+ * Chan so rac (major M2). `typeof x === "number"` cho NaN di qua, va hau qua rat
+ * cu the:
+ *   - `rank={NaN}` -> hien chu "NaN" o "So thu tu cua ban", `aria-valuenow="NaN"`,
+ *     va `style={{width:"NaN%"}}` bi browser bo qua nen div trong (`h-full`) khong
+ *     co width -> thanh tien trinh hien DAY 100%, tuc bao voi khach "gan toi luot
+ *     roi" trong khi he thong khong biet gi ca.
+ *   - `etaSeconds={NaN}` -> `spellDuration(NaN)` ra "0 giây" -> "Thoi gian uoc tinh:
+ *     ~0 giây", dung cai ma handoff §5 nguyen tac 3 va AC-8 cam.
+ * Chot: `Number.isInteger(rank)`, `Number.isInteger(initialRank) && > 0`,
+ * `Number.isFinite(etaSeconds)`.
+ */
+describe("QueueStatusPanel — so rac phai bi coi nhu KHONG CO (AC-8, M2)", () => {
+  const BAD_RANKS: Array<[number, string]> = [
+    [Number.NaN, "NaN"],
+    [Number.POSITIVE_INFINITY, "Infinity"],
+    [Number.NEGATIVE_INFINITY, "-Infinity"],
+    [42.5, "so khong nguyen"],
+  ];
+
+  it.each(BAD_RANKS)("rank = %s (%s) -> y het nhu khong truyen rank", (rank) => {
+    const withBadRank = renderPanelText({
+      state: "QUEUED",
+      rank,
+      etaSeconds: 427,
+    });
+    const withoutRank = renderPanelText({ state: "QUEUED", etaSeconds: 427 });
+
+    expect(withBadRank).toBe(withoutRank);
+    expect(withBadRank).not.toContain("NaN");
+    expect(withBadRank).not.toContain("Infinity");
+  });
+
+  it.each(BAD_RANKS)("rank = %s (%s) -> KHONG co progressbar (khong hien day 100%%)", (rank) => {
+    const { queryByRole } = render(
+      <QueueStatusPanel state="QUEUED" rank={rank} initialRank={1000} />,
+    );
+
+    expect(queryByRole("progressbar")).toBeNull();
+  });
+
+  it.each([
+    [Number.NaN, "NaN"],
+    [Number.POSITIVE_INFINITY, "Infinity"],
+    [0, "khong co ai -> khong co mau so"],
+    [-5, "am"],
+    [0.5, "khong nguyen, truoc day lot vi 0.5 > 0"],
+    [999.9, "khong nguyen"],
+  ])("initialRank = %s (%s) -> KHONG co progressbar", (initialRank) => {
+    const { queryByRole, container } = render(
+      <QueueStatusPanel state="QUEUED" rank={42} initialRank={initialRank as number} />,
+    );
+
+    expect(queryByRole("progressbar")).toBeNull();
+    expect(allText(container)).not.toContain("NaN");
+  });
+
+  it.each([
+    [Number.NaN, "NaN"],
+    [Number.POSITIVE_INFINITY, "Infinity"],
+  ])("etaSeconds = %s (%s) -> 'dang cap nhat', TUYET DOI khong ra '0 giây'", (etaSeconds) => {
+    const { container } = render(
+      <QueueStatusPanel state="QUEUED" rank={42} etaSeconds={etaSeconds as number} />,
+    );
+    const text = allText(container);
+
+    expect(text).toMatch(/đang cập nhật/i);
+    expect(text).not.toContain("0 giây");
+    expect(text).not.toContain("NaN");
+    expect(text).not.toContain("Infinity");
+  });
+
+  it("etaSeconds = NaN cho ra ket qua y het khi khong truyen etaSeconds", () => {
+    const withNaN = renderPanelText({ state: "QUEUED", rank: 42, etaSeconds: Number.NaN });
+    const without = renderPanelText({ state: "QUEUED", rank: 42 });
+
+    expect(withNaN).toBe(without);
+  });
+
+  it("etaSeconds am khong tao ra so thoi gian am tren UI", () => {
+    const text = renderPanelText({ state: "QUEUED", rank: 42, etaSeconds: -60 });
+
+    expect(text).not.toMatch(/-\s*\d/);
+    expect(text).not.toContain("NaN");
+  });
+
+  it("admissionExpiresAt la chuoi rac -> khong lo 'NaN'/'Invalid Date' ra UI", () => {
+    const text = renderPanelText({ state: "ADMITTED", admissionExpiresAt: "soon" });
+
+    expect(text).not.toContain("NaN");
+    expect(text).not.toContain("Invalid Date");
   });
 });
 
@@ -381,6 +488,82 @@ describe("QueueStatusPanel — ADMITTED (AC-9)", () => {
     );
 
     expect(allText(container)).toContain("02:00");
+  });
+});
+
+/**
+ * ADMITTED + dong ho DA HET HAN (major M3).
+ *
+ * Tinh huong nay BAT BUOC xay ra: BR-Q4 cho `poll_after_ms` toi 30s, nen luon co
+ * cua so toi 30 giay giua luc dong ho ve 0 va luc server day `EXPIRED` ve. Truoc
+ * khi sua, trong cua so do panel vua moi khach "Den luot ban mua ve / Hay hoan tat
+ * chon ve va thanh toan" vua bao "Suat mua da het han" — hai thong diep nguoc nhau
+ * cung luc, khach khong biet nen lam gi.
+ *
+ * Chot: khi dong ho het han, panel doi sang copy CHUYEN TIEP (dang xac nhan lai,
+ * chua can lam gi them) va BO loi moi di thanh toan.
+ */
+describe("QueueStatusPanel — ADMITTED vua het han: khong duoc mau thuan (AC-9, M3)", () => {
+  const INVITE = /đến lượt|hoàn tất/i;
+
+  it("moc tuong lai -> van la copy moi mua binh thuong", () => {
+    const text = renderPanelText({ state: "ADMITTED", admissionExpiresAt: ADMISSION_EXP });
+
+    expect(text).toMatch(INVITE);
+  });
+
+  it("moc da qua -> BO loi moi di thanh toan", () => {
+    const text = renderPanelText({ state: "ADMITTED", admissionExpiresAt: START - 60_000 });
+
+    expect(text).not.toMatch(INVITE);
+  });
+
+  it("moc da qua -> co copy chuyen tiep: dang xac nhan lai, chua can lam gi them", () => {
+    const text = renderPanelText({ state: "ADMITTED", admissionExpiresAt: START - 60_000 });
+
+    expect(text).toMatch(/xác nhận/i);
+    expect(text).toMatch(/hết hạn/i);
+    expect(text).toMatch(/(chưa|không) cần/i);
+  });
+
+  it("moc da qua cho noi dung KHAC han moc tuong lai", () => {
+    const expired = renderPanelText({
+      state: "ADMITTED",
+      admissionExpiresAt: START - 60_000,
+    });
+    const running = renderPanelText({
+      state: "ADMITTED",
+      admissionExpiresAt: ADMISSION_EXP,
+    });
+
+    expect(expired).not.toBe(running);
+  });
+
+  it("chay qua moc trong luc dang mount -> copy TU DOI, khong con mau thuan", () => {
+    const { container } = render(
+      <QueueStatusPanel state="ADMITTED" admissionExpiresAt={START + 5_000} />,
+    );
+    expect(allText(container)).toMatch(INVITE);
+
+    act(() => {
+      vi.advanceTimersByTime(6_000);
+    });
+
+    const after = allText(container);
+    expect(after).not.toMatch(INVITE);
+    expect(after).toMatch(/hết hạn/i);
+  });
+
+  it("copy chuyen tiep KHAC han trang thai EXPIRED that (chua chac la mat suat)", () => {
+    const justExpired = renderPanelText({
+      state: "ADMITTED",
+      admissionExpiresAt: START - 60_000,
+    });
+    const reallyExpired = renderPanelText({ state: "EXPIRED" });
+
+    expect(justExpired).not.toBe(reallyExpired);
+    // EXPIRED moi la noi noi "phai xep lai"; copy chuyen tiep thi khong.
+    expect(justExpired).not.toMatch(/xếp lại|xếp hàng lại/i);
   });
 });
 
@@ -635,6 +818,50 @@ describe("QueueStatusPanel — do tuoi du lieu va vung live (AC-10)", () => {
 
     const live = container.querySelector('[aria-live="polite"]');
     expect(live).not.toBeNull();
+  });
+});
+
+/**
+ * An toan hydration. Moi route la `○ (Static)`: HTML duoc prerender luc build,
+ * tren may build chay UTC, con browser cua khach chay ICT (+07:00). Neu dau thoi
+ * gian "cap nhat luc ..." duoc render ca o phia tinh thi hai ben ra hai chuoi lech
+ * 7 tieng -> hydration mismatch. Vi vay no chi duoc render SAU khi mount.
+ */
+describe("QueueStatusPanel — an toan hydration (prerender tinh)", () => {
+  it("markup prerender giong y nhau du co hay khong co lastUpdatedAt", () => {
+    const base = { state: "QUEUED" as const, rank: 42, etaSeconds: 427 };
+
+    const withStamp = renderToStaticMarkup(
+      <QueueStatusPanel {...base} lastUpdatedAt={START - 30_000} />,
+    );
+    const without = renderToStaticMarkup(<QueueStatusPanel {...base} />);
+
+    expect(withStamp).toBe(without);
+  });
+
+  it("sau khi mount thi lastUpdatedAt moi xuat hien (khong mat tinh nang)", () => {
+    const withStamp = renderPanelText({
+      state: "QUEUED",
+      rank: 42,
+      etaSeconds: 427,
+      lastUpdatedAt: START - 30_000,
+    });
+    const without = renderPanelText({ state: "QUEUED", rank: 42, etaSeconds: 427 });
+
+    expect(withStamp).not.toBe(without);
+  });
+
+  it("dong ho admit trong markup prerender la '--:--', khong phai so cua luc build", () => {
+    const markup = renderToStaticMarkup(
+      <QueueStatusPanel state="ADMITTED" admissionExpiresAt={ADMISSION_EXP} />,
+    );
+
+    expect(markup).toContain("--:--");
+    expect(markup).not.toContain("09:30");
+  });
+
+  it.each(STATES)("state %s prerender duoc ma khong throw", (state) => {
+    expect(() => renderToStaticMarkup(<QueueStatusPanel state={state} />)).not.toThrow();
   });
 });
 

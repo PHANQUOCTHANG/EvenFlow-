@@ -1,7 +1,10 @@
 "use client";
 
+import { useEffect, useState } from "react";
+
 import { Badge, Button, type BadgeVariant } from "@/components/ui";
 import { ServerExpiryCountdown } from "@/components/ui/server-expiry-countdown";
+import { useServerCountdown } from "@/hooks/use-server-countdown";
 import { cn } from "@/lib/cn";
 import { spellDuration } from "@/lib/format";
 
@@ -147,24 +150,56 @@ export function QueueStatusPanel({
   offsetMs,
   className,
 }: QueueStatusPanelProps) {
-  const copy = COPY[state];
+  // BR-Q4 cho `poll_after_ms` len toi 30s, nen luon co mot cua so toi 30 giay giua luc dong
+  // ho ve 0 va luc server day EXPIRED ve. Trong cua so do, neu van giu copy ADMITTED thi
+  // panel vua moi khach di thanh toan vua bao suat da het han — hai thong diep nguoc nhau
+  // tren luong tien. Panel vi vay tu biet dong ho da het hay chua.
+  const admission = useServerCountdown(
+    state === "ADMITTED" ? admissionExpiresAt : null,
+    offsetMs,
+  );
+  const admissionLapsed = state === "ADMITTED" && admission.expired;
+
+  const copy: StateCopy = admissionLapsed
+    ? {
+        badge: "pending",
+        badgeText: "Đang xác nhận",
+        title: "Suất mua vừa hết hạn",
+        description:
+          "Đồng hồ suất mua đã về 0. Hệ thống đang xác nhận lại trạng thái của bạn, chưa cần làm gì thêm.",
+      }
+    : COPY[state];
+
+  // `typeof x === "number"` cho NaN va Infinity di qua. Day khong phai phong thu qua muc:
+  // mot `Number(res.rank)` tren field thieu se ra NaN, va hau qua rat cu the —
+  // "So thu tu cua ban: NaN", `width: "NaN%"` bi browser bo qua nen thanh tien trinh HIEN
+  // DAY 100% (bao voi khach la gan toi luot), va `spellDuration(NaN)` cho ra
+  // "Thoi gian uoc tinh: ~0 giay" tuc la khang dinh mot con so trong khi khong biet gi.
+  const validRank = Number.isInteger(rank) ? (rank as number) : null;
+  const validInitialRank =
+    Number.isInteger(initialRank) && (initialRank as number) > 0 ? (initialRank as number) : null;
+  const validEta = Number.isFinite(etaSeconds) ? (etaSeconds as number) : null;
 
   // BR-Q1: o LOBBY thi rank/ETA/progress bi BO QUA ngay ca khi caller truyen vao. Chot o
   // day thay vi tin caller, vi mot cho hien nham so thu tu la pha ca co che chong bot.
-  const showRank = state === "QUEUED" && typeof rank === "number";
+  const showRank = state === "QUEUED" && validRank !== null;
   const showEta = state === "QUEUED";
-  const showProgress =
-    state === "QUEUED" &&
-    typeof rank === "number" &&
-    typeof initialRank === "number" &&
-    initialRank > 0;
+  const showProgress = state === "QUEUED" && validRank !== null && validInitialRank !== null;
 
   // Da duoc goi bao nhieu nguoi ke tu luc minh vao. `rank` giam dan nen gia tri nay chi
   // tang — thanh tien trinh khong bao gio nhay nguoc.
   const cleared = showProgress
-    ? Math.min(initialRank as number, Math.max(0, (initialRank as number) - (rank as number)))
+    ? Math.min(validInitialRank as number, Math.max(0, (validInitialRank as number) - (validRank as number)))
     : 0;
-  const updatedAt = lastUpdatedAt === undefined ? null : formatClockTime(lastUpdatedAt);
+
+  // `formatClockTime` doc getHours() tuc la mui gio cua MOI TRUONG dang render. Prerender
+  // chay o UTC con browser o ICT -> hai chuoi khac nhau 7 tieng -> React bao hydration
+  // mismatch. Nen chi render sau khi mount.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+  const updatedAt = mounted && lastUpdatedAt !== undefined ? formatClockTime(lastUpdatedAt) : null;
 
   return (
     <section
@@ -196,7 +231,7 @@ export function QueueStatusPanel({
       {showRank ? (
         <div className="flex flex-col gap-xs">
           <span className="text-label-md text-fg-muted">Số thứ tự của bạn</span>
-          <span className="text-numeric-metric tabular-nums text-fg">{rank}</span>
+          <span className="text-numeric-metric tabular-nums text-fg">{validRank}</span>
         </div>
       ) : null}
 
@@ -204,28 +239,37 @@ export function QueueStatusPanel({
         <div
           role="progressbar"
           aria-valuemin={0}
-          aria-valuemax={initialRank}
+          aria-valuemax={validInitialRank as number}
           aria-valuenow={cleared}
           aria-label="Tiến trình hàng đợi"
+          // "958" mot minh la vo nghia voi screen reader — 958 cai gi?
+          // Dung "da tien" chu khong phai "da goi": BR-Q2 cho nguoi vao sau T0 noi FIFO va
+          // server co the dieu chinh rank, nen con so nay la muc tien cua VI TRI cua minh,
+          // khong chac la so nguoi thuc su da duoc goi vao checkout.
+          aria-valuetext={`Đã tiến ${cleared} trong ${validInitialRank} người xếp trước bạn`}
           className="h-2 w-full overflow-hidden rounded-full bg-neutral-soft"
         >
           <div
             className="h-full bg-primary"
-            style={{ width: `${Math.min(100, (cleared / (initialRank as number)) * 100)}%` }}
+            style={{ width: `${Math.min(100, (cleared / (validInitialRank as number)) * 100)}%` }}
           />
         </div>
       ) : null}
 
       {showEta ? (
         <p className="text-body-md text-fg-muted">
-          {typeof etaSeconds === "number"
+          {validEta !== null
             ? // Chi hien con so khi SERVER cung cap. Khong tu suy ra tu rank.
-              `Thời gian ước tính: ~${spellDuration(etaSeconds * 1000)}`
+              `Thời gian ước tính: ~${spellDuration(validEta * 1000)}`
             : "Thời gian ước tính: đang cập nhật"}
         </p>
       ) : null}
 
-      {state === "ADMITTED" && admissionExpiresAt !== undefined ? (
+      {/* Khi suat da het thi KHONG render dong ho nua. Panel va dong ho tu tinh thoi han doc
+        * lap nen co the lech nhau mot nhip; neu van render ca hai thi co mot cua so ngan ma
+        * copy noi "vua het han" trong khi dong ho con hien "con 00:00". Copy chuyen tiep da
+        * noi dong ho ve 0 roi, nen bo dong ho di la het mau thuan. */}
+      {state === "ADMITTED" && !admissionLapsed && admissionExpiresAt !== undefined ? (
         // Variant "admission" (TTL 15 phut), KHONG phai "hold" (10 phut) — BR-Q7.
         <ServerExpiryCountdown
           variant="admission"
