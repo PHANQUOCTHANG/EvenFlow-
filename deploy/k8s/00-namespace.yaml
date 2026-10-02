@@ -1,0 +1,12 @@
+# Namespace cho slice deploy web (C2: namespace `eventflow`).
+#
+# Ten file co tien to so vi `kubectl apply -f deploy/k8s/` duyet file theo thu tu
+# alphabet: Namespace phai duoc tao TRUOC cac resource nam trong no, neu khong lan
+# apply dau tien fail voi `namespaces "eventflow" not found`.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: eventflow
+  labels:
+    app.kubernetes.io/name: eventflow-web
+    app.kubernetes.io/part-of: eventflow

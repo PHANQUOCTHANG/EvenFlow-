@@ -1,0 +1,38 @@
+# HorizontalPodAutoscaler cho frontend web (C2.3).
+#
+# `autoscaling/v2` — KHONG dung `autoscaling/v2beta2`: no da bi xoa khoi API server
+# tu Kubernetes 1.26, nen manifest dung v2beta2 se bi tu choi thang tren 1.34.
+#
+# Gioi han da biet (C7 / m4): HPA theo CPU cung can metrics-server, ma Docker Desktop
+# khong cai san. Khi do HPA se hien `<unknown>/60%` va KHONG scale theo tai. Runbook
+# khong duoc noi "HPA da chay". Bien `minReplicas: 2` thi van duoc ap vi HPA controller
+# ap bien min/max khong phu thuoc metric.
+#
+# Day CUNG CHUA phai thu G4 yeu cau: G4 doi HPA theo custom metric (do sau hang doi),
+# can prometheus-adapter — ngoai pham vi slice nay (spec muc 2).
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: eventflow-web
+  namespace: eventflow
+  labels:
+    app.kubernetes.io/name: eventflow-web
+    app.kubernetes.io/part-of: eventflow
+spec:
+  scaleTargetRef:
+    # Ba truong nay phai tro dung Deployment cua 10-deployment.yaml. Sai `name` thi
+    # HPA bao `failed to get scale` va khong scale gi — YAML van hop le.
+    apiVersion: apps/v1
+    kind: Deployment
+    name: eventflow-web
+  # >= 2 (AC-4): khong duoc co diem chet don le o T0.
+  minReplicas: 2
+  maxReplicas: 6
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          # 60% CUA `resources.requests.cpu` trong Deployment (= 60m tren moi pod).
+          averageUtilization: 60

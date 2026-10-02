@@ -1,0 +1,26 @@
+# Service ClusterIP cho frontend web.
+#
+# `spec.selector` phai trung khop voi `template.metadata.labels` cua
+# 10-deployment.yaml. Lech thi Service khong co endpoint nao va Ingress tra 503 —
+# YAML van hop le hoan hao, nen loi nay chi lo ra luc chay that.
+apiVersion: v1
+kind: Service
+metadata:
+  name: eventflow-web
+  namespace: eventflow
+  labels:
+    app.kubernetes.io/name: eventflow-web
+    app.kubernetes.io/part-of: eventflow
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: eventflow-web
+    app.kubernetes.io/part-of: eventflow
+  ports:
+    # port 80 la cong cua Service (30-ingress.yaml tro vao dung so nay);
+    # targetPort la TEN cong cua container (`http` = 3000 theo C2), dung ten de
+    # khong phai nhac lai so 3000 o hai cho roi lech nhau.
+    - name: http
+      port: 80
+      targetPort: http
+      protocol: TCP
