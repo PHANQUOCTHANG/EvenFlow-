@@ -1,0 +1,31 @@
+# Ingress cho frontend web (C2.4).
+#
+# KHONG co annotation rewrite va KHONG dung path-prefix kieu `/web`:
+# `apps/web/next.config.mjs` khong co `basePath`/`assetPrefix` va C6 cam sua file do,
+# nen `/web` + rewrite se lam moi asset `/_next/static/*` tra 404 ma khong co duong sua.
+#
+# Gioi han da biet (C7): Docker Desktop khong co ingress controller, nen resource nay
+# se duoc tao nhung khong dinh tuyen gi. Truy cap bang `kubectl port-forward`.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: eventflow-web
+  namespace: eventflow
+  labels:
+    app.kubernetes.io/name: eventflow-web
+    app.kubernetes.io/part-of: eventflow
+spec:
+  ingressClassName: nginx
+  rules:
+    # `localtest.me` phan giai ve 127.0.0.1 nen khong can sua file hosts.
+    - host: eventflow.localtest.me
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                # Phai trung ten Service cua 20-service.yaml va so `port` cua no.
+                name: eventflow-web
+                port:
+                  number: 80
