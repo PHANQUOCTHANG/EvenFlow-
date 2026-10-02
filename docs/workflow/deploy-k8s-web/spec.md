@@ -105,9 +105,9 @@ một lần sửa Dockerfile là mất tính chất đó mà không ai biết.
 - **Then** Deployment có `livenessProbe` → `/api/healthz`, `readinessProbe` → `/api/readyz`
 - **Then** có `resources.requests` **và** `limits` cho cpu + memory
 - **Then** `securityContext`: `runAsNonRoot: true`, `allowPrivilegeEscalation: false`, `capabilities.drop: [ALL]`
-- **Then** image tham chiếu đúng tên mà `cd-web.yml` publish (`ghcr.io/<owner>/eventflow-web`)
+- **Then** image tham chiếu đúng tên mà `cd-web.yml` publish: `ghcr.io/phanquocthang/eventflow-web`, tag `sha-<short>`
 - **Then** HPA có `minReplicas` ≥ 2 (G4: không được có điểm chết đơn lẻ ở T0)
-- **Then** `kubectl apply --dry-run=**server** -f deploy/k8s/` thành công cho **mọi** file, chạy ở bước
+- **Then** `kubectl apply --dry-run=server -f deploy/k8s/` thành công cho **mọi** file, chạy ở bước
   **P4.5** sau khi bật Kubernetes của Docker Desktop. ⚠️ Bản đầu ghi `--dry-run=client`; đã kiểm là
   **không chạy offline** (tải openapi từ API server). AC-4 **không** được đóng bằng nhánh "bỏ qua" của
   script gate — xem C4.4.

@@ -145,9 +145,14 @@ Mục tiêu G4 là "không sập ở T0", nên một `kubectl rollout` giữa l�
 |---|---|
 | `startupProbe` → `/api/healthz` | `periodSeconds: 2`, `failureThreshold: 30` |
 | `livenessProbe` → `/api/healthz` | `periodSeconds: 10`, `timeoutSeconds: 2`, `failureThreshold: 3` |
-| `readinessProbe` → `/api/readyz` | `periodSeconds: 5`, `timeoutSeconds: 2`, **`failureThreshold: 1`**, `successThreshold: 1` |
+| `readinessProbe` → `/api/readyz` | **`periodSeconds: 2`**, `timeoutSeconds: 2`, **`failureThreshold: 1`**, `successThreshold: 1` |
 
-`readinessProbe` dùng `failureThreshold: 1` chứ không 3 (D12): mục đích của nhánh 503 là **rút
+`readinessProbe` dùng `periodSeconds: 2` chứ không 5 (R5): `DRAIN_MS = 5000` bằng đúng chu kỳ 5s thì
+nhịp probe kế tiếp có thể rơi **sau** lúc tiến trình thoát, nên kubelet không bao giờ đọc được `503` —
+nhánh đó thành ra chỉ trang trí. Hạ xuống 2 giây cũng làm pod vào Service nhanh hơn lúc scale-up
+trước T0, đúng hướng G4.
+
+`failureThreshold: 1` chứ không 3 (D12): mục đích của nhánh 503 là **rút
 endpoint cho kịp**, mà `3 × 5s` là tới 15-20 giây trong khi cửa sổ drain chỉ 5 giây. Readiness không
 có lý do phải khoan dung như liveness — một lần 503 là rút ngay, và rút nhầm thì chỉ mất vài giây
 traffic chứ không giết pod.

@@ -102,8 +102,9 @@ Service `web` trong compose chưa có `healthcheck` trong khi postgres/redis/rab
 - Merge ba nhánh theo DAG
 - Chạy **toàn bộ** gates trên **kết quả đã merge** — §P4: *"Branch xanh chưa chắc merge xanh"*
 - Kiểm diff từng WP có nằm trong ownership không
-- Sửa `deploy/docker/web.Dockerfile`: thêm `ENV HOSTNAME=0.0.0.0`, `ENV PORT=3000` (C3), và
-  `ARG NEXT_PUBLIC_API_BASE` (C7)
+- Sửa `deploy/docker/web.Dockerfile`: thêm `ENV HOSTNAME=0.0.0.0`, `ENV PORT=3000` (C3),
+  **`ENV NEXT_MANUAL_SIG_HANDLE=1` (C1.1b)**, và `ARG NEXT_PUBLIC_API_BASE` (C7).
+  Thiếu cờ `NEXT_MANUAL_SIG_HANDLE` thì P4.5 bước 5 sẽ nhận `ECONNREFUSED` thay vì `503`.
 - `git update-index --chmod=+x .github/scripts/gates.sh`
 
 **P4.5 — xác minh chạy thật (bổ sung sau P2, AC-8)**
@@ -112,11 +113,13 @@ Bản 1 kết thúc ở "merge + gates + runbook", tức slice sinh ra một đ�
 "deploy được lên Kubernetes" không có cơ sở. Bước này **nối tiếp, không song song**:
 
 1. Bật Kubernetes của Docker Desktop
-2. `docker build` image — lần đầu tiên file này được build thành công, — lý do chưa build được là
+2. `docker build` image — lần đầu tiên file này được build thành công — lý do chưa build được là
    **Docker daemon chưa chạy**, không phải lỗi Dockerfile (`apps/web/public/.gitkeep` đã tồn tại)
 3. `kubectl apply --dry-run=server` (lúc này mới chạy được), rồi apply thật
 4. `kubectl port-forward`, xác nhận pod `Ready`, `/api/healthz` 200, `/api/readyz` 200
-5. Gửi `SIGTERM`, xác nhận `/api/readyz` chuyển 503 **trước khi** pod biến mất
+5. Gửi `SIGTERM`, xác nhận `/api/readyz` chuyển `503` **trong cửa sổ drain 5 giây**, trước khi tiến
+   trình thoát. Nhận `ECONNREFUSED` thay vì `503` ⇒ gần như chắc chắn thiếu
+   `ENV NEXT_MANUAL_SIG_HANDLE=1` trong image, **không phải** WP-A sai
 6. `kubectl rollout undo`, xác nhận quay về đúng tag trước
 7. Log thô dán vào `integration-report.md`
 
