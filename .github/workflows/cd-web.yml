@@ -1,0 +1,93 @@
+name: CD web
+
+# Publish image frontend len GitHub Container Registry.
+#
+# Chay sau khi workflow "CI" tren main KET THUC THANH CONG, khong chay song song voi CI:
+# khong publish image tu commit ma lint/test/build con dang do hoac da do.
+# Day la buoc PUBLISH, khong phai deploy: chua co cluster/host nao de deploy len.
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch: {}
+
+concurrency:
+  # Khong cancel-in-progress: huy giua luc dang push se de lai image/layer do dang.
+  group: cd-web
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish:
+    name: build & push ghcr web
+    # Hai cong, va ca hai deu bat buoc ket thuc o main:
+    #
+    # 1. workflow_run: `branches: [main]` loc theo head_branch, va head_branch cua mot PR tu
+    #    FORK la ten nhanh trong fork — mot fork dat nhanh nguon ten "main" se lot qua filter
+    #    do. Nen phai chot them `event == 'push'` (loai pull_request) va `head_repository`
+    #    dung la repo nay. Thieu hai dieu kien nay thi code tu fork chua review co the duoc
+    #    build va push len GHCR bang GITHUB_TOKEN co packages: write.
+    # 2. workflow_dispatch: khong gioi han nhanh, nen phai tu chot `github.ref` = main. Neu
+    #    khong, bat ky ai co quyen write cung dich duoc tag :latest sang mot nhanh tuy y va
+    #    bo qua hoan toan cong CI.
+    if: >-
+      (github.event_name == 'workflow_run' &&
+       github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push' &&
+       github.event.workflow_run.head_repository.full_name == github.repository) ||
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
+    runs-on: ubuntu-latest
+    steps:
+      - name: xac dinh commit va ten image
+        id: src
+        run: |
+          set -euo pipefail
+          sha="${{ github.event.workflow_run.head_sha || github.sha }}"
+          owner="${{ github.repository_owner }}"
+          # GHCR chi nhan ten image chu thuong; owner cua repo nay dang chu hoa.
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+          echo "short=${sha:0:7}" >> "$GITHUB_OUTPUT"
+          echo "image=ghcr.io/${owner,,}/eventflow-web" >> "$GITHUB_OUTPUT"
+
+      # workflow_run mac dinh checkout HEAD cua nhanh mac dinh, khong phai commit da
+      # chay CI -> phai chi ro ref, neu khong se publish image cua commit khac.
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.src.outputs.sha }}
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: deploy/docker/web.Dockerfile
+          push: true
+          # `if` cua job da bao dam chi chay tu main, nen :latest khong the bi dich sang
+          # nhanh khac. Tag sha- la tag bat bien de truy nguoc image <-> commit.
+          tags: |
+            ${{ steps.src.outputs.image }}:sha-${{ steps.src.outputs.short }}
+            ${{ steps.src.outputs.image }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: tom tat
+        run: |
+          {
+            echo "### Image frontend da publish"
+            echo
+            echo "- \`${{ steps.src.outputs.image }}:sha-${{ steps.src.outputs.short }}\`"
+            echo "- \`${{ steps.src.outputs.image }}:latest\`"
+            echo
+            echo "Commit: \`${{ steps.src.outputs.sha }}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
