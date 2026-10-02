@@ -15,7 +15,7 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { serverNow, serverOffsetMs } from "./server-time";
+import { serverNow, serverOffsetMs, toEpochMs } from "./server-time";
 
 const FIXED_NOW = Date.UTC(2026, 0, 15, 3, 0, 0);
 
@@ -92,6 +92,81 @@ describe("serverNow (AC-3)", () => {
     expect(serverNow(1_000)).toBe(FIXED_NOW + 1_000);
     vi.setSystemTime(FIXED_NOW + 60_000);
     expect(serverNow(1_000)).toBe(FIXED_NOW + 61_000);
+  });
+});
+
+/**
+ * `toEpochMs` — cua duy nhat doi moc tu server thanh epoch ms. Day la ham tren
+ * luong TIEN nen phai co test truc tiep.
+ *
+ * Ly do tu choi chuoi KHONG co mui gio: ECMA-262 dinh nghia hai quy tac trai
+ * nhau trong cung `Date.parse` — dang chi co ngay ("2026-10-03") duoc hieu la
+ * UTC, con dang co gio ma khong co offset ("2026-10-03T09:00:00") duoc hieu la
+ * gio DIA PHUONG. Hau qua that: `expiresAt = "2026-10-03"` se dem nguoc toi
+ * 07:00 gio VN thay vi 00:00 — lech 7 tieng dung vao moc mo ban. Chuoi mo nghia
+ * nhu vay phai bi tu choi (`null` = "chua biet moc"), KHONG duoc doan.
+ */
+describe("toEpochMs — chi nhan moc co mui gio tuong minh (AC-3)", () => {
+  it.each([
+    ["2026-10-03", "chi co ngay, ECMA hieu la UTC"],
+    ["2026-10-03T09:00:00", "co gio nhung khong co offset -> gio dia phuong"],
+    ["2026-10-03T09:00:00.500", "co milisecond nhung van khong co offset"],
+    ["2026-10-03 09:00:00", "dang co dau cach, khong co offset"],
+  ])("tu choi '%s' (%s) -> null", (value) => {
+    expect(toEpochMs(value as string)).toBeNull();
+  });
+
+  it("nhan chuoi ket thuc bang Z", () => {
+    expect(toEpochMs("2026-10-03T09:00:00Z")).toBe(Date.UTC(2026, 9, 3, 9, 0, 0));
+  });
+
+  it("nhan offset dang ±HH:MM va tru dung mui gio", () => {
+    expect(toEpochMs("2026-10-03T09:00:00+07:00")).toBe(Date.UTC(2026, 9, 3, 2, 0, 0));
+    expect(toEpochMs("2026-10-03T09:00:00-05:00")).toBe(Date.UTC(2026, 9, 3, 14, 0, 0));
+  });
+
+  it("nhan offset dang ±HHMM", () => {
+    expect(toEpochMs("2026-10-03T09:00:00+0700")).toBe(Date.UTC(2026, 9, 3, 2, 0, 0));
+  });
+
+  it("giu milisecond khi co offset", () => {
+    expect(toEpochMs("2026-10-03T09:00:00.250Z")).toBe(Date.UTC(2026, 9, 3, 9, 0, 0) + 250);
+  });
+
+  it("Date#toISOString() luon doc duoc (dang app tu sinh)", () => {
+    const ms = Date.UTC(2026, 9, 3, 9, 0, 0);
+    expect(toEpochMs(new Date(ms).toISOString())).toBe(ms);
+  });
+
+  it("so epoch tra lai chinh no", () => {
+    const ms = Date.UTC(2026, 9, 3, 9, 0, 0);
+    expect(toEpochMs(ms)).toBe(ms);
+    expect(toEpochMs(0)).toBe(0);
+  });
+
+  it.each([null, undefined])("%s -> null (chua co moc)", (value) => {
+    expect(toEpochMs(value)).toBeNull();
+  });
+
+  it.each(["", "   ", "soon", "not-a-date", "2026-13-45T99:99:99Z"])(
+    "chuoi rac '%s' -> null, khong throw",
+    (value) => {
+      expect(() => toEpochMs(value)).not.toThrow();
+      expect(toEpochMs(value)).toBeNull();
+    },
+  );
+
+  it.each([Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY])(
+    "so khong huu hien (%s) -> null",
+    (value) => {
+      expect(toEpochMs(value)).toBeNull();
+    },
+  );
+
+  it("tra ve number hoac null, khong bao gio tra NaN", () => {
+    const out = toEpochMs("2026-10-03T09:00:00Z");
+    expect(out).not.toBeNull();
+    expect(Number.isFinite(out as number)).toBe(true);
   });
 });
 
