@@ -22,12 +22,34 @@
  * nen sau khi nhay dong ho phai `advanceTimersByTime` them moi co nhip chay.
  */
 import { act, renderHook } from "@testing-library/react";
+import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useServerCountdown } from "./use-server-countdown";
 
 const START = Date.UTC(2026, 0, 15, 3, 0, 0);
 const TEN_MIN = 600_000;
+
+/**
+ * Component tham do: in ket qua hook ra attribute de doc duoc ca trong markup
+ * prerender (`renderToStaticMarkup`) — noi KHONG co effect nao chay.
+ */
+function Probe({
+  expiresAt,
+  offsetMs,
+}: {
+  expiresAt: number | string | null | undefined;
+  offsetMs?: number;
+}) {
+  const { remainingMs, expired, ready } = useServerCountdown(expiresAt, offsetMs);
+  return (
+    <span
+      data-ready={String(ready)}
+      data-expired={String(expired)}
+      data-remaining={String(remainingMs)}
+    />
+  );
+}
 
 beforeEach(() => {
   vi.useFakeTimers();
@@ -328,6 +350,152 @@ describe("useServerCountdown — don dep timer (AC-4)", () => {
 
     expect(result.current.remainingMs).toBe(120_000);
     expect(result.current.expired).toBe(false);
+  });
+});
+
+/**
+ * `ready` — vi sao can (major M1).
+ *
+ * Moi route cua app la `○ (Static)`, tuc HTML duoc PRERENDER luc build. Neu hook
+ * doc `Date.now()` ngay trong than render thi con so cua THOI DIEM BUILD bi dong
+ * bang vao HTML: khach mo trang ba ngay sau se thay "Da het thoi gian giu ve" o
+ * first paint roi moi nhay ve so dung. Va vi lan render hydrate phai cho ra output
+ * y het server, gia tri khoi tao buoc phai xac dinh.
+ *
+ * Hop dong: truoc khi mount LUON la { remainingMs: 0, expired: false, ready: false }
+ * — ke ca khi moc da qua. `ready === false` nghia la "CHUA BIET", khac "con 0" va
+ * khac "da het han".
+ */
+describe("useServerCountdown — truoc khi mount (prerender tinh): ready false (AC-4, M1)", () => {
+  it("moc tuong lai: markup prerender khong chua so nao cua luc build", () => {
+    const markup = renderToStaticMarkup(<Probe expiresAt={START + TEN_MIN} />);
+
+    expect(markup).toContain('data-ready="false"');
+    expect(markup).toContain('data-expired="false"');
+    expect(markup).toContain('data-remaining="0"');
+  });
+
+  it("moc DA QUA: prerender van KHONG duoc noi la het han", () => {
+    const markup = renderToStaticMarkup(<Probe expiresAt={START - 600_000} />);
+
+    // Day la bug that: HTML tinh bi dong bang trang thai "het han" cua luc build.
+    expect(markup).toContain('data-expired="false"');
+    expect(markup).toContain('data-ready="false"');
+  });
+
+  it("khong co moc: prerender cung la chua biet", () => {
+    const markup = renderToStaticMarkup(<Probe expiresAt={null} />);
+
+    expect(markup).toContain('data-ready="false"');
+    expect(markup).toContain('data-expired="false"');
+    expect(markup).toContain('data-remaining="0"');
+  });
+
+  it("offsetMs khong lam thay doi gia tri truoc mount", () => {
+    const markup = renderToStaticMarkup(
+      <Probe expiresAt={START + TEN_MIN} offsetMs={60_000} />,
+    );
+
+    expect(markup).toContain('data-ready="false"');
+    expect(markup).toContain('data-remaining="0"');
+  });
+});
+
+describe("useServerCountdown — ready sau khi mount (AC-4)", () => {
+  it("moc tuong lai hop le -> ready true", () => {
+    const { result } = renderHook(() => useServerCountdown(START + TEN_MIN));
+
+    expect(result.current.ready).toBe(true);
+    expect(result.current.remainingMs).toBe(TEN_MIN);
+    expect(result.current.expired).toBe(false);
+  });
+
+  it("moc da qua -> ready true VA expired true (biet roi, va biet la het)", () => {
+    const { result } = renderHook(() => useServerCountdown(START - 60_000));
+
+    expect(result.current.ready).toBe(true);
+    expect(result.current.expired).toBe(true);
+    expect(result.current.remainingMs).toBe(0);
+  });
+
+  it("ready la boolean trong moi truong hop", () => {
+    const { result } = renderHook(() => useServerCountdown(START + TEN_MIN));
+
+    expect(typeof result.current.ready).toBe("boolean");
+  });
+
+  it.each([
+    [null, "null"],
+    [undefined, "undefined"],
+    ["", "chuoi rong"],
+    ["soon", "chuoi rac"],
+    ["2026-10-03", "chuoi khong co mui gio"],
+    ["2026-10-03T09:00:00", "chuoi co gio nhung khong co offset"],
+    [Number.NaN, "NaN"],
+  ])("moc khong doc duoc (%s) -> ready FALSE va expired FALSE", (value) => {
+    const { result } = renderHook(() =>
+      useServerCountdown(value as number | string | null | undefined),
+    );
+
+    // ready false = "chua biet moc", KHONG duoc hieu la het han.
+    expect(result.current.ready).toBe(false);
+    expect(result.current.expired).toBe(false);
+    expect(result.current.remainingMs).toBe(0);
+  });
+
+  it("ready khong bao gio true cung luc voi moc khong doc duoc, du thoi gian troi", () => {
+    const { result } = renderHook(() => useServerCountdown("khong-phai-ngay"));
+
+    act(() => {
+      vi.advanceTimersByTime(600_000);
+    });
+
+    expect(result.current.ready).toBe(false);
+    expect(result.current.expired).toBe(false);
+  });
+
+  it("doi tu moc khong doc duoc sang moc hop le -> ready chuyen thanh true", () => {
+    const { result, rerender } = renderHook(
+      ({ exp }: { exp: number | string | null }) => useServerCountdown(exp),
+      { initialProps: { exp: null as number | string | null } },
+    );
+    expect(result.current.ready).toBe(false);
+
+    rerender({ exp: START + TEN_MIN });
+
+    expect(result.current.ready).toBe(true);
+    expect(result.current.remainingMs).toBe(TEN_MIN);
+  });
+});
+
+describe("useServerCountdown — doi moc khong duoc loe mot frame 'het han' (minor m6)", () => {
+  it("tu moc da qua sang moc tuong lai: expired false NGAY tai lan render do", () => {
+    const { result, rerender } = renderHook(
+      ({ exp }: { exp: number }) => useServerCountdown(exp),
+      { initialProps: { exp: START - 60_000 } },
+    );
+    expect(result.current.expired).toBe(true);
+
+    // Hold moi vua tao, con nguyen 10 phut. Neu gia tri duoc tinh trong effect
+    // thay vi trong than render thi o day con mot frame hien "da het thoi gian
+    // giu ve" tren mot hold VAN con 10 phut.
+    rerender({ exp: START + TEN_MIN });
+
+    expect(result.current.expired).toBe(false);
+    expect(result.current.remainingMs).toBe(TEN_MIN);
+    expect(result.current.ready).toBe(true);
+  });
+
+  it("tu hold cu (con 10s) sang hold moi (con 10 phut) khong di qua trang thai het han", () => {
+    const { result, rerender } = renderHook(
+      ({ exp }: { exp: number }) => useServerCountdown(exp),
+      { initialProps: { exp: START + 10_000 } },
+    );
+
+    rerender({ exp: START + TEN_MIN });
+
+    expect(result.current.expired).toBe(false);
+    expect(result.current.remainingMs).toBe(TEN_MIN);
   });
 });
 

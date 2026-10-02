@@ -24,6 +24,7 @@
  * tokens.css.
  */
 import { act, render } from "@testing-library/react";
+import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ServerExpiryCountdown, type CountdownVariant } from "./server-expiry-countdown";
@@ -73,6 +74,42 @@ function dataState(container: HTMLElement): string | undefined {
   return (
     container.querySelector("[data-state]")?.getAttribute("data-state") ?? undefined
   );
+}
+
+/**
+ * Chu ma tro ho tro THUC SU doc: bo qua moi nhanh `aria-hidden="true"`.
+ * Dung de chot "nhan chi duoc doc DUNG MOT LAN".
+ */
+function atText(root: Element): string {
+  if (root.getAttribute?.("aria-hidden") === "true") return "";
+
+  let out = "";
+  for (const node of Array.from(root.childNodes)) {
+    if (node.nodeType === 3) {
+      out += node.textContent ?? "";
+    } else if (node.nodeType === 1) {
+      out += ` ${atText(node as Element)}`;
+    }
+  }
+  return norm(out);
+}
+
+/**
+ * Co cum tu >= `minWords` nao bi lap lai trong chuoi khong?
+ * Bug that da xay ra: nhan vua hien thi vua nam trong cau sr-only nen screen
+ * reader doc "Suat mua cua ban con. Suat mua cua ban con 9 phut 30 giay".
+ * Kiem theo cach nay khong phu thuoc cau chu cu the cua nhan.
+ */
+function hasRepeatedPhrase(text: string, minWords = 3): boolean {
+  const parts = text.split(" ").filter(Boolean);
+
+  for (let len = Math.floor(parts.length / 2); len >= minWords; len -= 1) {
+    for (let i = 0; i + len <= parts.length; i += 1) {
+      const phrase = parts.slice(i, i + len).join(" ");
+      if (parts.slice(i + len).join(" ").includes(phrase)) return true;
+    }
+  }
+  return false;
 }
 
 /** Node trong cung chua dung chuoi dong ho dang mm:ss hoac h:mm:ss. */
@@ -388,6 +425,204 @@ describe("ServerExpiryCountdown — data-state: chot nguong khong qua cau chu (A
       vi.advanceTimersByTime(2_000);
     });
     expect(dataState(container)).toBe("expired");
+  });
+});
+
+/**
+ * Trang thai `unknown` — vi sao can (major M1).
+ *
+ * Moi route la `○ (Static)` nen HTML duoc prerender luc build. Component khong
+ * duoc hien con so nao truoc khi biet gio thuc cua may khach: so cua luc build
+ * se bi dong bang vao HTML. Va `00:00` la lua chon TOI nhat cho luc "chua biet"
+ * vi no trong y nhu da het han — dung lam khach tuong minh mat ve. Vi vay
+ * `--:--` + `data-state="unknown"`.
+ */
+describe("ServerExpiryCountdown — truoc khi biet moc: unknown + '--:--' (AC-5, M1)", () => {
+  it("markup prerender la unknown, hien '--:--', KHONG hien so cua luc build", () => {
+    const markup = renderToStaticMarkup(
+      <ServerExpiryCountdown variant="hold" expiresAt={START + 570_000} />,
+    );
+
+    expect(markup).toContain('data-state="unknown"');
+    expect(markup).toContain("--:--");
+    expect(markup).not.toContain("09:30");
+  });
+
+  it("markup prerender cua moc DA QUA cung khong noi la het han", () => {
+    const markup = renderToStaticMarkup(
+      <ServerExpiryCountdown variant="hold" expiresAt={START - 600_000} />,
+    );
+
+    expect(markup).toContain('data-state="unknown"');
+    expect(markup).not.toContain('data-state="expired"');
+    expect(markup).toContain("--:--");
+  });
+
+  it("moc khong doc duoc (string rac) -> unknown va '--:--', khong phai 00:00", () => {
+    const { container } = render(<ServerExpiryCountdown variant="hold" expiresAt="soon" />);
+
+    expect(dataState(container)).toBe("unknown");
+    expect(norm(container.textContent)).toContain("--:--");
+    expect(norm(container.textContent)).not.toContain("00:00");
+  });
+
+  it("chuoi khong co mui gio bi coi la chua biet moc (khong doan lech 7 tieng)", () => {
+    const { container } = render(
+      <ServerExpiryCountdown variant="hold" expiresAt="2026-10-03T09:00:00" />,
+    );
+
+    expect(dataState(container)).toBe("unknown");
+  });
+
+  it("unknown KHONG BAO GIO thanh warning, du nguong lon the nao", () => {
+    const { container } = render(
+      <ServerExpiryCountdown
+        variant="hold"
+        expiresAt="soon"
+        warningThresholdMs={999_999_999}
+      />,
+    );
+
+    expect(dataState(container)).toBe("unknown");
+
+    act(() => {
+      vi.advanceTimersByTime(60_000);
+    });
+
+    expect(dataState(container)).toBe("unknown");
+  });
+
+  it("unknown khong thong bao gi cho screen reader (vung live rong)", () => {
+    const { container } = render(<ServerExpiryCountdown variant="hold" expiresAt="soon" />);
+
+    expect(liveText(container)).toHaveLength(0);
+  });
+
+  it("unknown khong hien so am va khong hien 'NaN'", () => {
+    const { container } = render(<ServerExpiryCountdown variant="hold" expiresAt="soon" />);
+    const text = norm(container.textContent);
+
+    expect(text).not.toMatch(/-\s*\d/);
+    expect(text).not.toContain("NaN");
+  });
+});
+
+describe("ServerExpiryCountdown — thong bao khi het han phai gianh duoc mic (AC-5)", () => {
+  // Mat hold = khach MAT VE. `polite` bi xep sau moi thu AT dang doc (vi du khach
+  // dang go so the), nen su kien nay phai la `role="alert"` + `assertive`.
+  // Luc chi moi CANH BAO thi van `polite` de khong cat loi khach.
+
+  it("het han -> vung thong bao la role=alert + aria-live=assertive va co noi dung", () => {
+    const { container } = render(
+      <ServerExpiryCountdown variant="hold" expiresAt={START - 1_000} />,
+    );
+
+    const alert = container.querySelector('[role="alert"]');
+    expect(alert).not.toBeNull();
+    expect(alert?.getAttribute("aria-live")).toBe("assertive");
+    expect(norm(alert?.textContent).length).toBeGreaterThan(0);
+  });
+
+  it("canh bao -> van la role=status + aria-live=polite, KHONG phai alert", () => {
+    const { container } = render(
+      <ServerExpiryCountdown
+        variant="hold"
+        expiresAt={START + 60_000}
+        warningThresholdMs={120_000}
+      />,
+    );
+
+    expect(dataState(container)).toBe("warning");
+    expect(container.querySelector('[role="alert"]')).toBeNull();
+
+    const status = container.querySelector('[role="status"]');
+    expect(status).not.toBeNull();
+    expect(status?.getAttribute("aria-live")).toBe("polite");
+  });
+
+  it("chay tu canh bao sang het han thi doi tu status sang alert", () => {
+    const { container } = render(
+      <ServerExpiryCountdown
+        variant="hold"
+        expiresAt={START + 10_000}
+        warningThresholdMs={120_000}
+      />,
+    );
+    expect(container.querySelector('[role="alert"]')).toBeNull();
+
+    act(() => {
+      vi.advanceTimersByTime(11_000);
+    });
+
+    expect(dataState(container)).toBe("expired");
+    expect(container.querySelector('[role="alert"]')).not.toBeNull();
+  });
+});
+
+describe("ServerExpiryCountdown — screen reader chi doc nhan MOT lan (AC-5)", () => {
+  it.each(VARIANTS)("variant %s: khong co cum tu nao bi doc lap", (variant) => {
+    const { container } = render(
+      <ServerExpiryCountdown variant={variant} expiresAt={START + 570_000} />,
+    );
+
+    const spoken = words(atText(container));
+
+    expect(spoken.length).toBeGreaterThan(0);
+    expect(hasRepeatedPhrase(spoken)).toBe(false);
+  });
+
+  it("vung chu so khong di vao noi dung AT doc (da aria-hidden)", () => {
+    const { container } = render(
+      <ServerExpiryCountdown variant="hold" expiresAt={START + 570_000} />,
+    );
+
+    expect(atText(container)).not.toContain("09:30");
+    expect(atText(container)).toMatch(/9\s*phút/i);
+  });
+
+  it("cau sr-only nhac don vi phut dung mot lan", () => {
+    const { container } = render(
+      <ServerExpiryCountdown variant="hold" expiresAt={START + 570_000} />,
+    );
+
+    const spoken = atText(container);
+    expect(spoken.split("phút").length - 1).toBe(1);
+  });
+});
+
+describe("ServerExpiryCountdown — icon ngu nghia kem van ban (DESIGN.md)", () => {
+  // DESIGN.md: "bat buoc ket hop van ban ro rang VA icon ngu nghia".
+  // Icon la trang tri cho AT nen phai aria-hidden; chu moi la nguon thong tin.
+
+  it("trang thai dang chay co icon va icon khong bi AT doc", () => {
+    const { container } = render(
+      <ServerExpiryCountdown variant="hold" expiresAt={START + 570_000} />,
+    );
+
+    expect(norm(container.textContent)).toMatch(/[⏱⏳⌛🕒]/u);
+    expect(atText(container)).not.toMatch(/[⏱⏳⌛🕒]/u);
+  });
+
+  it("trang thai canh bao co icon canh bao rieng va cung bi an khoi AT", () => {
+    const { container } = render(
+      <ServerExpiryCountdown
+        variant="hold"
+        expiresAt={START + 60_000}
+        warningThresholdMs={120_000}
+      />,
+    );
+
+    expect(norm(container.textContent)).toMatch(/[⚠❗⏰]/u);
+    expect(atText(container)).not.toMatch(/[⚠❗⏰]/u);
+  });
+
+  it("thong tin khong bao gio chi nam o icon: bo icon di van con chu", () => {
+    const { container } = render(
+      <ServerExpiryCountdown variant="hold" expiresAt={START + 570_000} />,
+    );
+
+    const withoutIcons = norm(container.textContent).replace(/[\p{Emoji_Presentation}⏱⏳⌛🕒⚠❗⏰]/gu, "");
+    expect(words(withoutIcons).length).toBeGreaterThan(3);
   });
 });
 
