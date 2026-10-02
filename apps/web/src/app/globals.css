@@ -1,11 +1,68 @@
-:root { color-scheme: light dark; }
-* { box-sizing: border-box; }
-body {
-  margin: 0;
-  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-  background: #fafaf9;
-  color: #1c1917;
+@import "tailwindcss";
+@import "../styles/tokens.css";
+
+/* Khong duoc hard-code mau o day — moi mau nam trong src/styles/tokens.css (AC-1). */
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    background-color: var(--ef-bg);
+    color: var(--ef-fg);
+    font-family: var(--font-sans);
+    font-size: var(--text-body-lg);
+    line-height: 1.5rem;
+    -webkit-font-smoothing: antialiased;
+  }
 }
-@media (prefers-color-scheme: dark) {
-  body { background: #0c0a09; color: #e7e5e4; }
+
+/* Phai la `utilities`, khong phai `components`: cascade layer THANG specificity, nen neu
+ * .ef-focus-ring nam o layer components thi utility `.border-border-strong` (layer utilities)
+ * se de mat `border-color` cua focus ring du specificity thap hon. */
+@layer utilities {
+  /* Focus ring dung chung. Khong dung `outline: none` tron: luon kem box-shadow thay the,
+   * va o che do forced-colors thi tra lai outline that vi box-shadow bi he thong bo qua. */
+  .ef-focus-ring:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--ef-ring);
+    border-color: var(--ef-primary);
+  }
+
+  @media (forced-colors: active) {
+    .ef-focus-ring:focus-visible {
+      outline: 2px solid;
+      outline-offset: 2px;
+    }
+  }
+
+  .ef-spin {
+    animation: ef-spin 0.8s linear infinite;
+  }
+
+  .ef-pulse {
+    animation: ef-pulse 1.6s ease-in-out infinite;
+  }
+
+  /* DESIGN.md: ton trong reduced motion cho moi chi bao dang tai. */
+  @media (prefers-reduced-motion: reduce) {
+    .ef-spin,
+    .ef-pulse {
+      animation: none;
+    }
+  }
+}
+
+@keyframes ef-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes ef-pulse {
+  50% {
+    opacity: 0.45;
+  }
 }

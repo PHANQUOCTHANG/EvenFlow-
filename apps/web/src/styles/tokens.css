@@ -1,0 +1,268 @@
+/* EventFlow design tokens — NOI DUY NHAT dinh nghia mau, typography, spacing, radius, shadow.
+ *
+ * Nguon:
+ *   - docs/08-stitch-ui-ux-handoff.md muc 6 (token table)
+ *   - apps/web/doc/design/stitch/md/DESIGN.md (phan prose: Colors / Typography / Shapes / Elevation)
+ *
+ * Quyet dinh da chot (chi tiet o docs/workflow/EVF-1801/spec.md muc 3.1):
+ *   - BO qua YAML frontmatter cua DESIGN.md (palette Material auto-gen cua Stitch, mau thuan
+ *     voi phan prose). Lay prose + handoff muc 6 lam chuan.
+ *   - border = #DCE2EA (handoff), border-strong = #D0D5DD (DESIGN.md elevation cap 2).
+ *   - radius: control 10px, card 16px, panel 20px.
+ *
+ * CANH BAO ACCESSIBILITY (spec muc 3.2):
+ *   --ef-accent (#E6A23C) chi dat 2.19:1 tren nen trang -> KHONG duoc dung lam mau CHU.
+ *   Chi dung cho vien / nen / icon. Chu canh bao dung --ef-warning-fg (#9A5B00, 5.43:1).
+ *
+ * Palette dark la GIA TRI DE XUAT do EVF-1801 dan xuat, Design chua xac nhan.
+ */
+
+:root {
+  color-scheme: light;
+
+  /* --- be mat & chu --- */
+  --ef-bg: #f5f7fa;
+  --ef-surface: #ffffff;
+  --ef-surface-subtle: #eeedff;
+  --ef-fg: #182230;
+  --ef-fg-muted: #526071;
+  --ef-border: #dce2ea;
+  --ef-border-strong: #d0d5dd;
+
+  /* --- thuong hieu --- */
+  --ef-brand: #18243a;
+  --ef-brand-soft: #34496b;
+  --ef-brand-fg: #ffffff;
+
+  /* --- hanh dong chinh --- */
+  --ef-primary: #5b55e7;
+  --ef-primary-hover: #4a44d4;
+  --ef-primary-fg: #ffffff;
+
+  /* --- semantic trang thai --- */
+  --ef-accent: #e6a23c; /* vien / nen / icon — KHONG dung lam color */
+  --ef-info: #5b55e7;
+  --ef-success: #18794e;
+  --ef-warning-fg: #9a5b00;
+  --ef-danger: #b42318;
+  --ef-danger-hover: #9a1e14;
+  --ef-on-semantic: #ffffff;
+
+  /* --- nen nhat cho badge / alert ---
+   * Giá trị TƯỜNG MINH, co y khong dung color-mix().
+   *
+   * Ban dau cac token nay dung color-mix(in oklab, <mau semantic> N%, var(--ef-surface)).
+   * Lightning CSS cua Tailwind v4 sinh fallback `--ef-info-soft: var(--ef-info)` ben ngoai
+   * @supports, nghia la tren browser khong co color-mix (chrome 109, and_uc 15.5, kaios 2.5...
+   * dang nam trong browserslist cua project) thi nen soft = mau semantic DAC, cung mau voi
+   * chu dat tren no -> tuong phan 1:1, CHU BIEN MAT. Badge mat chu cung pha nguyen tac
+   * "khong truyen tin chi bang mau".
+   *
+   * Moi gia tri duoi day da duoc tinh va kiem tuong phan voi mau chu that (>= 4.75:1,
+   * co bien an toan tren nguong AA 4.5). Xem evidence.md muc 14. */
+  --ef-info-soft: #f0f0fd; /* chu --ef-info     #5b55e7 -> 4.77:1 */
+  --ef-success-soft: #eaf3ef; /* chu --ef-success  #18794e -> 4.78:1 */
+  --ef-warning-soft: #fbefde; /* chu --ef-warning-fg #9a5b00 -> 4.78:1 */
+  --ef-danger-soft: #f1d5d3; /* chu --ef-danger   #b42318 -> 4.76:1 */
+  --ef-neutral-soft: #dbdee1; /* chu --ef-fg-muted #526071 -> 4.75:1 */
+
+  /* --- focus ring --- */
+  --ef-ring: rgba(91, 85, 231, 0.2);
+
+  /* --- shadow (elevation 1/2/3 theo DESIGN.md) --- */
+  --ef-shadow-card: 0 1px 3px rgba(16, 24, 40, 0.05);
+  --ef-shadow-float: 0 4px 12px -2px rgba(16, 24, 40, 0.08);
+  --ef-shadow-modal: 0 12px 32px -4px rgba(16, 24, 40, 0.14);
+}
+
+/* Dark mode: theo he thong khi nguoi dung CHUA chon thu cong.
+ * :root:not([data-theme="light"]) de lua chon "light" thu cong luon thang media query. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+
+    --ef-bg: #0b1220;
+    --ef-surface: #121c2e;
+    --ef-surface-subtle: #221f4a;
+    --ef-fg: #e8edf5;
+    --ef-fg-muted: #a3b1c4;
+    --ef-border: #27354a;
+    --ef-border-strong: #3a4b66;
+
+    --ef-brand: #121c2e;
+    --ef-brand-soft: #27354a;
+    --ef-brand-fg: #e8edf5;
+
+    /* Indigo sang hon de noi tren nen toi. Chu tren nut primary doi sang MAU TOI:
+     * chu trang tren #8b87f5 chi dat 3.05:1 (fail AA), chu #0b1220 dat 5.98:1. */
+    --ef-primary: #8b87f5;
+    --ef-primary-hover: #9d99f8;
+    --ef-primary-fg: #0b1220;
+
+    --ef-accent: #f0b355;
+    --ef-info: #8b87f5;
+    --ef-success: #45c78a;
+    --ef-warning-fg: #f0b355;
+    --ef-danger: #f97066;
+    --ef-danger-hover: #fd8a81;
+    --ef-on-semantic: #0b1220;
+
+    /* Phai khai bao lai cho dark: khong con dua vao color-mix de tu dan xuat (xem :root). */
+    --ef-info-soft: #1f2844; /* chu #8b87f5 -> 4.76:1 */
+    --ef-success-soft: #1d4242; /* chu #45c78a -> 5.12:1 */
+    --ef-warning-soft: #433d37; /* chu #f0b355 -> 5.75:1 */
+    --ef-danger-soft: #392a38; /* chu #f97066 -> 4.82:1 */
+    --ef-neutral-soft: #323d4f; /* chu #a3b1c4 -> 5.03:1 */
+
+    --ef-ring: rgba(139, 135, 245, 0.28);
+
+    --ef-shadow-card: 0 1px 3px rgba(0, 0, 0, 0.4);
+    --ef-shadow-float: 0 4px 12px -2px rgba(0, 0, 0, 0.5);
+    --ef-shadow-modal: 0 12px 32px -4px rgba(0, 0, 0, 0.6);
+  }
+}
+
+/* Dark mode: nguoi dung chon thu cong. Dat sau media query de thang do thu tu. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --ef-bg: #0b1220;
+  --ef-surface: #121c2e;
+  --ef-surface-subtle: #221f4a;
+  --ef-fg: #e8edf5;
+  --ef-fg-muted: #a3b1c4;
+  --ef-border: #27354a;
+  --ef-border-strong: #3a4b66;
+
+  --ef-brand: #121c2e;
+  --ef-brand-soft: #27354a;
+  --ef-brand-fg: #e8edf5;
+
+  --ef-primary: #8b87f5;
+  --ef-primary-hover: #9d99f8;
+  --ef-primary-fg: #0b1220;
+
+  --ef-accent: #f0b355;
+  --ef-info: #8b87f5;
+  --ef-success: #45c78a;
+  --ef-warning-fg: #f0b355;
+  --ef-danger: #f97066;
+  --ef-danger-hover: #fd8a81;
+  --ef-on-semantic: #0b1220;
+
+  /* Phai khai bao lai cho dark: khong con dua vao color-mix de tu dan xuat (xem :root). */
+  --ef-info-soft: #1f2844; /* chu #8b87f5 -> 4.76:1 */
+  --ef-success-soft: #1d4242; /* chu #45c78a -> 5.12:1 */
+  --ef-warning-soft: #433d37; /* chu #f0b355 -> 5.75:1 */
+  --ef-danger-soft: #392a38; /* chu #f97066 -> 4.82:1 */
+  --ef-neutral-soft: #323d4f; /* chu #a3b1c4 -> 5.03:1 */
+
+  --ef-ring: rgba(139, 135, 245, 0.28);
+
+  --ef-shadow-card: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --ef-shadow-float: 0 4px 12px -2px rgba(0, 0, 0, 0.5);
+  --ef-shadow-modal: 0 12px 32px -4px rgba(0, 0, 0, 0.6);
+}
+
+/* `inline` de Tailwind nhung thang var(--ef-*) vao utility, nho vay utility tu doi
+ * theo theme ma khong can sinh 2 bo class rieng. */
+@theme inline {
+  --color-bg: var(--ef-bg);
+  --color-surface: var(--ef-surface);
+  --color-surface-subtle: var(--ef-surface-subtle);
+  --color-fg: var(--ef-fg);
+  --color-fg-muted: var(--ef-fg-muted);
+  --color-border: var(--ef-border);
+  --color-border-strong: var(--ef-border-strong);
+
+  --color-brand: var(--ef-brand);
+  --color-brand-soft: var(--ef-brand-soft);
+  --color-brand-fg: var(--ef-brand-fg);
+
+  --color-primary: var(--ef-primary);
+  --color-primary-hover: var(--ef-primary-hover);
+  --color-primary-fg: var(--ef-primary-fg);
+
+  --color-accent: var(--ef-accent);
+  --color-info: var(--ef-info);
+  --color-success: var(--ef-success);
+  --color-warning-fg: var(--ef-warning-fg);
+  --color-danger: var(--ef-danger);
+  --color-danger-hover: var(--ef-danger-hover);
+  --color-on-semantic: var(--ef-on-semantic);
+
+  --color-info-soft: var(--ef-info-soft);
+  --color-success-soft: var(--ef-success-soft);
+  --color-warning-soft: var(--ef-warning-soft);
+  --color-danger-soft: var(--ef-danger-soft);
+  --color-neutral-soft: var(--ef-neutral-soft);
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+
+  --text-headline-xl: 2.25rem;
+  --text-headline-xl--line-height: 2.75rem;
+  --text-headline-xl--font-weight: 700;
+  --text-headline-xl--letter-spacing: -0.02em;
+
+  --text-headline-lg: 1.75rem;
+  --text-headline-lg--line-height: 2.25rem;
+  --text-headline-lg--font-weight: 600;
+  --text-headline-lg--letter-spacing: -0.015em;
+
+  --text-headline-md: 1.25rem;
+  --text-headline-md--line-height: 1.75rem;
+  --text-headline-md--font-weight: 600;
+  --text-headline-md--letter-spacing: -0.01em;
+
+  --text-headline-sm: 1rem;
+  --text-headline-sm--line-height: 1.5rem;
+  --text-headline-sm--font-weight: 600;
+
+  --text-body-lg: 1rem;
+  --text-body-lg--line-height: 1.5rem;
+
+  --text-body-md: 0.875rem;
+  --text-body-md--line-height: 1.25rem;
+
+  --text-body-sm: 0.75rem;
+  --text-body-sm--line-height: 1.125rem;
+
+  --text-label-lg: 0.875rem;
+  --text-label-lg--line-height: 1.25rem;
+  --text-label-lg--font-weight: 600;
+
+  --text-label-md: 0.75rem;
+  --text-label-md--line-height: 1rem;
+  --text-label-md--font-weight: 600;
+
+  --text-label-sm: 0.6875rem;
+  --text-label-sm--line-height: 0.875rem;
+  --text-label-sm--font-weight: 600;
+  --text-label-sm--letter-spacing: 0.02em;
+
+  --text-numeric-metric: 2rem;
+  --text-numeric-metric--line-height: 2.375rem;
+  --text-numeric-metric--font-weight: 700;
+  --text-numeric-metric--letter-spacing: -0.02em;
+
+  --text-numeric-timer: 1.25rem;
+  --text-numeric-timer--line-height: 1.5rem;
+  --text-numeric-timer--font-weight: 700;
+  --text-numeric-timer--letter-spacing: 0.04em;
+
+  --radius-control: 10px;
+  --radius-card: 16px;
+  --radius-panel: 20px;
+
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  --spacing-gutter: 1rem;
+  --spacing-margin: 1.5rem;
+
+  --shadow-card: var(--ef-shadow-card);
+  --shadow-float: var(--ef-shadow-float);
+  --shadow-modal: var(--ef-shadow-modal);
+}

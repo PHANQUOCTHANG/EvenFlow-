@@ -1,8 +1,10 @@
 # syntax=docker/dockerfile:1
 FROM node:22-alpine AS deps
 WORKDIR /app
-COPY apps/web/package.json ./
-RUN npm install
+# Copy ca lockfile va dung `npm ci`: `npm install` khong co lockfile thi moi lan build
+# co the giai dependency khac nhau -> image CI khac image local.
+COPY apps/web/package.json apps/web/package-lock.json ./
+RUN npm ci
 
 FROM node:22-alpine AS build
 WORKDIR /app

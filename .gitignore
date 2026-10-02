@@ -12,6 +12,8 @@ coverage.out
 .DS_Store
 coverage/
 *.tsbuildinfo
+# `next build` tu sinh lai file nay moi lan; khong commit (giong .gitignore mac dinh cua Next).
+next-env.d.ts
 
 # Tai lieu ca nhan
 *.pdf
