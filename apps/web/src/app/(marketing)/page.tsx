@@ -1,13 +1,11 @@
-import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { Badge, Button, Card } from "@/components/ui";
 
+/** <main> va ThemeToggle bay gio thuoc PublicShell (layout cua route group (marketing)),
+ *  khong con o day — neu de ca hai noi thi trang co 2 <main> va 2 nut doi theme. */
 export default function Home() {
   return (
-    <main className="mx-auto flex max-w-3xl flex-col gap-lg px-gutter py-xl md:px-margin">
-      <div className="flex flex-wrap items-center justify-between gap-md">
-        <h1 className="text-headline-xl text-fg">EventFlow</h1>
-        <ThemeToggle />
-      </div>
+    <div className="flex max-w-3xl flex-col gap-lg">
+      <h1 className="text-headline-xl text-fg">EventFlow</h1>
 
       <p className="text-body-lg text-fg-muted">
         Nền tảng bán vé sự kiện chịu tải đột biến, có phòng chờ ảo và AI hỗ trợ vận hành. Xem{" "}
@@ -39,6 +37,6 @@ export default function Home() {
         <Button>Xem sự kiện</Button>
         <Button variant="secondary">Tài liệu</Button>
       </div>
-    </main>
+    </div>
   );
 }
