@@ -432,7 +432,7 @@ describe("useServerCountdown — ready sau khi mount (AC-4)", () => {
     ["2026-10-03", "chuoi khong co mui gio"],
     ["2026-10-03T09:00:00", "chuoi co gio nhung khong co offset"],
     [Number.NaN, "NaN"],
-  ])("moc khong doc duoc (%s) -> ready FALSE va expired FALSE", (value) => {
+  ])("moc khong doc duoc (%s) -> ready FALSE va expired FALSE", (value, _label) => {
     const { result } = renderHook(() =>
       useServerCountdown(value as number | string | null | undefined),
     );
