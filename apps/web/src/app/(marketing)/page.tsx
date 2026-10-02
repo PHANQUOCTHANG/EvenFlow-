@@ -1,4 +1,6 @@
-import { Badge, Button, Card } from "@/components/ui";
+import Link from "next/link";
+
+import { Badge, Card } from "@/components/ui";
 
 /** <main> va ThemeToggle bay gio thuoc PublicShell (layout cua route group (marketing)),
  *  khong con o day — neu de ca hai noi thi trang co 2 <main> va 2 nut doi theme. */
@@ -34,8 +36,12 @@ export default function Home() {
       </Card>
 
       <div className="flex flex-wrap gap-sm">
-        <Button>Xem sự kiện</Button>
-        <Button variant="secondary">Tài liệu</Button>
+        <Link
+          href="/showcase"
+          className="ef-focus-ring inline-flex h-12 items-center rounded-control border border-transparent bg-primary px-md text-label-lg text-primary-fg transition-colors hover:bg-primary-hover md:h-11"
+        >
+          Xem design system
+        </Link>
       </div>
     </div>
   );
