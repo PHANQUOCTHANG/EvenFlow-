@@ -55,6 +55,12 @@ test: ## Unit test (nhanh, khong can ha tang)
 	cd services/ai-worker && uv run pytest -q
 	cd apps/web && npm test
 
+# Chi la tien ich. Duong chay CHINH THUC la `bash .github/scripts/gates.sh`:
+# may dev khong co `make`, nen script khong duoc phu thuoc muc tieu nay (C4).
+.PHONY: gates
+gates: ## Cong chat luong cuc bo cho apps/web (lint, typecheck, coverage, build + C4.2/C4.3/C4.4)
+	bash .github/scripts/gates.sh
+
 .PHONY: test-integration
 test-integration: ## Integration test (testcontainers -- can Docker)
 	go test -tags=integration ./... -count=1 -timeout=10m
