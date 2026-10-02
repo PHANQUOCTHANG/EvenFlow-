@@ -1,0 +1,17 @@
+# Khong dua tao tac cua may local vao build context.
+#
+# Quan trong voi web.Dockerfile: `COPY apps/web ./` se ghi de node_modules da duoc
+# `npm ci` cai trong stage deps bang node_modules cua may host — tren Windows/macOS
+# thi binary native khong chay duoc trong image alpine.
+**/node_modules
+**/.next
+**/coverage
+**/.venv
+**/__pycache__
+.git
+.github
+
+# Tai lieu khong can cho build. apps/web/doc/design chua 37 anh mockup (~14 MB) va se bi
+# `COPY apps/web ./` keo vao build stage mot cach vo ich.
+docs
+apps/web/doc
