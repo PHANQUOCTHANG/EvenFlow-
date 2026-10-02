@@ -1,0 +1,207 @@
+#!/usr/bin/env bash
+#
+# Cong chat luong cuc bo cho slice deploy -- WP-C, hop dong C4.
+#
+#   bash .github/scripts/gates.sh
+#
+# Script chay DUNG bon lenh cua C4.1, luon luon, dung thu tu do, roi them hai
+# check ma CI khong co -- C4.2 (chan .skip/.only/it.todo moi them) va C4.3
+# (chan probe bi prerender tinh) -- va cuoi cung la C4.4 (validate manifest k8s).
+#
+# KHONG co co dong lenh hay bien moi truong nao bo qua duoc bat ky buoc nao.
+# Bien moi truong duy nhat script doc la BASE_REF (C4, C4.2).
+#
+# Ly do script ton tai (sua lai cho dung theo m1/P2): KHONG phai vi ci.yml thieu
+# lenh -- ci.yml da co du bon (dong 104 lint, 105 typecheck, 170 test:coverage,
+# 227 build). Loi that da xay ra la o vong chay CUC BO truoc khi commit. Script
+# nay de chay dung bon lenh do cuc bo, cong hai check CI khong co.
+#
+# Phu thuoc: bash, git, node, npm. kubectl la TUY CHON (xem C4.4).
+# KHONG phu thuoc make / go / golangci-lint -- may dev khong co ca ba.
+# Vi vay `make gates` chi la tien ich; duong chay chinh thuc la chinh file nay.
+
+set -euo pipefail
+
+# Goc repo suy ra tu vi tri script => chay dung ca khi duoc goi tu thu muc khac.
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+cd "$ROOT"
+
+# Mac dinh la base commit ghi o dau contracts.md: commit chua chinh file do tren
+# feature/deploy-k8s-web -- 8b869bb "docs(workflow): contract approved; close the
+# remaining review items". Khong dung SHA cua develop (B5/m5).
+BASE_REF="${BASE_REF:-8b869bb2981a41a3393180b31e2a14e5cb95f6ec}"
+
+WEB_DIR="apps/web"
+K8S_DIR="deploy/k8s"
+PRERENDER_MANIFEST="$WEB_DIR/.next/prerender-manifest.json"
+TEST_GLOB='apps/web/**/*.test.*'
+PROBE_ROUTES=("/api/healthz" "/api/readyz")
+
+TOTAL_STEPS=4
+step_no=0
+
+log()  { printf '[gates] %s\n' "$*"; }
+fail() { printf '[gates] FAIL: %s\n' "$*" >&2; }
+
+# run_step <nhan> <doan lenh>
+# Doan lenh duoc in ra nguyen van roi chay nguyen van. Fail o bat ky buoc nao
+# => in ro buoc nao fail va thoat voi dung exit code cua lenh do (AC-5).
+run_step() {
+  local label="$1" snippet="$2" rc=0
+  step_no=$((step_no + 1))
+  log "buoc ${step_no}/${TOTAL_STEPS} ${label}: ${snippet}"
+  bash -c "$snippet" || rc=$?
+  if [ "$rc" -ne 0 ]; then
+    fail "buoc ${step_no}/${TOTAL_STEPS} ${label} that bai (exit ${rc}): ${snippet}"
+    exit "$rc"
+  fi
+  log "  OK buoc ${step_no}/${TOTAL_STEPS} ${label}"
+}
+
+# ---------------------------------------------------------------------------
+# C4.1 -- bon lenh, ghi literal, chay het moi lan
+# ---------------------------------------------------------------------------
+
+run_step lint          '(cd apps/web && npm run lint)'
+run_step typecheck     '(cd apps/web && npm run typecheck)'
+run_step test:coverage '(cd apps/web && npm run test:coverage)'
+run_step build         '(cd apps/web && npm run build)'
+
+# ---------------------------------------------------------------------------
+# C4.2 -- chan .skip/.only/it.todo MOI THEM trong file test
+# ---------------------------------------------------------------------------
+
+log "check C4.2: .skip/.only/it.todo moi them trong ${TEST_GLOB} so voi BASE_REF"
+log "  BASE_REF=${BASE_REF}"
+
+if ! git rev-parse --verify --quiet "${BASE_REF}^{commit}" >/dev/null; then
+  fail "BASE_REF='${BASE_REF}' khong giai duoc thanh commit trong repo nay."
+  fail "Khong the so diff test => coi nhu KHONG DAT, khong im lang pass."
+  exit 1
+fi
+
+# Chi xet dong THEM ('^\+'), nen test cu von da co .skip thi khong bi tinh.
+# `|| true` bao ca pipeline: grep khong tim thay gi thi tra ve 1, va day la ket
+# qua TOT, khong phai loi.
+added_skips="$(
+  git diff --unified=0 "$BASE_REF"...HEAD -- "$TEST_GLOB" \
+    | grep -E '^\+' \
+    | grep -E '\.(skip|only)\(|it\.todo\(' \
+    || true
+)"
+
+if [ -n "$added_skips" ]; then
+  fail "co .skip/.only/it.todo MOI THEM trong file test:"
+  printf '%s\n' "$added_skips" >&2
+  exit 1
+fi
+log "  OK: khong co dong them nao chua .skip/.only/it.todo"
+
+# ---------------------------------------------------------------------------
+# C4.3 -- hai probe KHONG duoc nam trong prerender manifest
+# ---------------------------------------------------------------------------
+
+log "check C4.3: ${PROBE_ROUTES[*]} khong duoc bi prerender tinh"
+
+if [ ! -f "$PRERENDER_MANIFEST" ]; then
+  fail "khong thay ${PRERENDER_MANIFEST} sau 'npm run build'."
+  fail "Khong khang dinh duoc hai probe la dynamic => coi nhu KHONG DAT."
+  fail "Im lang pass o day chinh la che do loi ma check nay sinh ra de chong."
+  exit 1
+fi
+
+# Hai duong dan probe duoc truyen qua BIEN MOI TRUONG duoi dang JSON, KHONG qua
+# argv. Ly do, da gap that khi tu kiem script nay: Git Bash (MSYS2) dich moi
+# tham so trong giong duong dan POSIX thanh duong dan Windows truoc khi goi mot
+# .exe native, nen `node -e ... /api/healthz` lam node nhan duoc
+# "C:/Program Files/Git/api/healthz". So khop khi do KHONG BAO GIO dung, va check
+# luon xanh KE CA khi probe thuc su bi prerender -- dung che do loi te nhat ma
+# C4.3 sinh ra de chong. Gia tri JSON bat dau bang [ nen MSYS2 khong dich.
+probe_routes_json="[$(printf '"%s",' "${PROBE_ROUTES[@]}" | sed 's/,$//')]"
+
+GATES_PROBE_ROUTES="$probe_routes_json" node -e '
+const fs = require("node:fs");
+const manifestPath = process.argv[1];
+const routes = JSON.parse(process.env.GATES_PROBE_ROUTES);
+
+let manifest;
+try {
+  manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+} catch (err) {
+  console.error("[gates] FAIL: khong doc/parse duoc " + manifestPath + ": " + err.message);
+  process.exit(1);
+}
+
+// Duong dan route xuat hien o nhieu cho trong manifest: khoa cua "routes" va
+// "dynamicRoutes", phan tu cua "notFoundRoutes". Quet ca cay va so khop ca khoa
+// lan gia tri chuoi, de khong phu thuoc shape cua mot phien ban Next cu the.
+const seen = new Set();
+const walk = (node) => {
+  if (Array.isArray(node)) { node.forEach(walk); return; }
+  if (node && typeof node === "object") {
+    for (const [key, value] of Object.entries(node)) { seen.add(key); walk(value); }
+    return;
+  }
+  if (typeof node === "string") seen.add(node);
+};
+walk(manifest);
+
+const hits = routes.filter((route) => seen.has(route));
+if (hits.length > 0) {
+  console.error("[gates] FAIL: probe bi prerender tinh: " + hits.join(", "));
+  console.error("[gates] Probe bi prerender tra ve ket qua dong bang tu luc build,");
+  console.error("[gates] tuc luon xanh ke ca khi tien trinh da hong -- che do loi te nhat.");
+  console.error("[gates] Sua: dat dynamic = force-dynamic trong route handler (C1).");
+  process.exit(1);
+}
+
+console.log("[gates]   OK: " + routes.join(", ") + " khong nam trong prerender manifest");
+' "$PRERENDER_MANIFEST"
+
+# ---------------------------------------------------------------------------
+# C4.4 -- validate manifest k8s, hoac noi thang ra la khong kiem duoc gi
+# ---------------------------------------------------------------------------
+
+log "check C4.4: validate manifest trong ${K8S_DIR}/"
+
+# Dieu kien phat hien la `kubectl cluster-info` THANH CONG, khong phai "co
+# kubectl" (B1). Da kiem tren may that: --dry-run=client KHONG phai che do
+# offline, no tai openapi tu API server va fail khi chua co cluster.
+if kubectl cluster-info >/dev/null 2>&1; then
+  if [ ! -d "$K8S_DIR" ]; then
+    log "  ${K8S_DIR}/ chua ton tai (WP-B tao) -- khong co gi de validate."
+  else
+    # Duyet theo glob, khong gia dinh ten file, de WP-B tu do dat ten.
+    shopt -s nullglob globstar
+    manifests=( "$K8S_DIR"/**/*.yaml "$K8S_DIR"/**/*.yml )
+    shopt -u nullglob globstar
+
+    if [ "${#manifests[@]}" -eq 0 ]; then
+      log "  khong co file .yaml/.yml nao trong ${K8S_DIR}/ -- khong co gi de validate."
+    else
+      files_args=()
+      for manifest_file in "${manifests[@]}"; do
+        files_args+=( -f "$manifest_file" )
+      done
+      log "  co cluster -> kubectl apply --dry-run=server tren ${#manifests[@]} file"
+      rc=0
+      kubectl apply --dry-run=server "${files_args[@]}" || rc=$?
+      if [ "$rc" -ne 0 ]; then
+        fail "kubectl apply --dry-run=server that bai (exit ${rc})."
+        exit "$rc"
+      fi
+      log "  OK: ${#manifests[@]} file qua duoc --dry-run=server"
+    fi
+  fi
+else
+  # Ba dong duoi day la nguyen van C4.4. KHONG thay bang parse YAML hay bat ky
+  # check mot phan nao: parse chi bat loi cu phap, con loi that (sai apiVersion,
+  # sai cap securityContext, selector khong khop, probe sai path) deu la YAML
+  # hop le hoan hao. In "da parse cu phap" se bi doc thanh "da kiem o muc co
+  # ban" -- an toan gia, dung thu C4.4 sinh ra de chong (D2).
+  echo "[gates] BO QUA validate k8s: khong co cluster (kubectl cluster-info that bai)."
+  echo "[gates] KHONG kiem duoc apiVersion, ten field, selector, hay duong dan probe."
+  echo "[gates] Chay lai sau khi bat Kubernetes cua Docker Desktop."
+fi
+
+log "TAT CA GATE DAT."
