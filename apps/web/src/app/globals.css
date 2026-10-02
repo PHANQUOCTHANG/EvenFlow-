@@ -42,9 +42,14 @@
     animation: ef-spin 0.8s linear infinite;
   }
 
+  .ef-pulse {
+    animation: ef-pulse 1.6s ease-in-out infinite;
+  }
+
   /* DESIGN.md: ton trong reduced motion cho moi chi bao dang tai. */
   @media (prefers-reduced-motion: reduce) {
-    .ef-spin {
+    .ef-spin,
+    .ef-pulse {
       animation: none;
     }
   }
@@ -53,5 +58,11 @@
 @keyframes ef-spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+@keyframes ef-pulse {
+  50% {
+    opacity: 0.45;
   }
 }
