@@ -246,7 +246,7 @@ describe("NavLink — AC-4 chi dung mot item active trong nhom", () => {
     expect(container.querySelectorAll('[aria-current="page"]')).toHaveLength(1);
   });
 
-  it("khong trang nao khop thi khong co item nao active", () => {
+  it("khong trang nao khop thi khong co item nao active (tu tinh bang isActive)", () => {
     pathnameMock.mockReturnValue("/ops/queues");
     const { container } = render(
       <ul>
@@ -263,5 +263,78 @@ describe("NavLink — AC-4 chi dung mot item active trong nhom", () => {
     );
 
     expect(container.querySelectorAll("[aria-current]")).toHaveLength(0);
+  });
+});
+
+/**
+ * Prop `active` — ban sua cua bug M4 o cap danh sach.
+ *
+ * `isActive` khong the biet trong ca danh sach con item nao khop sat hon, nen khi 2
+ * href long tien to nhau (`/organizer/events` va `/organizer/events/new`) thi ca 2
+ * item cung sang. Cach sua: shell goi `activeHref(items, pathname)` de chon DUY NHAT
+ * mot item roi truyen xuong qua `active`. NavLink van tu tinh khi khong duoc truyen,
+ * de dung le van hoat dong.
+ *
+ * Vi vay `active` phai THANG pathname o ca hai chieu — bat len va tat di.
+ */
+describe("NavLink — prop `active` ghi de ket qua tu tinh", () => {
+  it('active={true} tuy pathname KHONG khop item -> van co aria-current="page"', () => {
+    pathnameMock.mockReturnValue("/ops/queues");
+    render(<NavLink item={EVENTS} active />);
+
+    expect(linkNamed("Sự kiện")).toHaveAttribute("aria-current", "page");
+  });
+
+  it("active={false} tuy pathname KHOP item -> KHONG co aria-current", () => {
+    pathnameMock.mockReturnValue("/organizer/events");
+    render(<NavLink item={EVENTS} active={false} />);
+
+    expect(linkNamed("Sự kiện")).not.toHaveAttribute("aria-current");
+  });
+
+  it("active={false} tuy pathname la route con cua item -> KHONG co aria-current", () => {
+    pathnameMock.mockReturnValue("/organizer/events/123");
+    render(<NavLink item={EVENTS} active={false} />);
+
+    expect(linkNamed("Sự kiện")).not.toHaveAttribute("aria-current");
+  });
+
+  it("khong truyen `active` -> hanh vi nhu cu (tu tinh bang isActive, truong hop khop)", () => {
+    pathnameMock.mockReturnValue("/organizer/events");
+    render(<NavLink item={EVENTS} />);
+
+    expect(linkNamed("Sự kiện")).toHaveAttribute("aria-current", "page");
+  });
+
+  it("khong truyen `active` -> hanh vi nhu cu (tu tinh bang isActive, truong hop khong khop)", () => {
+    pathnameMock.mockReturnValue("/ops/queues");
+    render(<NavLink item={EVENTS} />);
+
+    expect(linkNamed("Sự kiện")).not.toHaveAttribute("aria-current");
+  });
+
+  it("active={true} tren item ready: false van KHONG sinh the <a> (AC-5 khong bi pha)", () => {
+    pathnameMock.mockReturnValue("/ops/queues");
+    const { container } = render(<NavLink item={SOON} active />);
+
+    expect(container.querySelector("a")).toBeNull();
+  });
+
+  it("`active` chi doi mot item, item ben canh khong bi anh huong", () => {
+    pathnameMock.mockReturnValue("/organizer/events");
+    const { container } = render(
+      <ul>
+        <li>
+          <NavLink item={EVENTS} active={false} />
+        </li>
+        <li>
+          <NavLink item={REPORTS} active />
+        </li>
+      </ul>,
+    );
+
+    expect(linkNamed("Báo cáo")).toHaveAttribute("aria-current", "page");
+    expect(linkNamed("Sự kiện")).not.toHaveAttribute("aria-current");
+    expect(container.querySelectorAll('[aria-current="page"]')).toHaveLength(1);
   });
 });

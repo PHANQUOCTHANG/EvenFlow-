@@ -4,6 +4,7 @@ export {
   OPS_NAV,
   ORGANIZER_NAV,
   PUBLIC_NAV,
+  activeHref,
   isActive,
   type NavItem,
 } from "./nav-config";

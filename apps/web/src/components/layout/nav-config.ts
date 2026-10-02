@@ -27,6 +27,9 @@ export const ORGANIZER_NAV: NavItem[] = [
   { href: "/organizer/events/new", label: "Tạo sự kiện", ready: false },
 ];
 
+/** `/ops/events` la route index DE XUAT, chua co trong handoff muc 4 — o do Ops chi co
+ *  `/ops/events/[eventId]` (war room) va `/ops/ai`. Mot muc nav khong the tro vao route co
+ *  tham so, nen can mot trang danh sach. Giu `ready: false` cho den khi Product chot. */
 export const OPS_NAV: NavItem[] = [
   { href: "/ops/events", label: "War room", ready: false },
   { href: "/ops/ai", label: "Hạ tầng AI", ready: false },
@@ -39,4 +42,23 @@ export function isActive(pathname: string, href: string): boolean {
     return pathname === "/";
   }
   return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+/** Item nao thuc su la "trang hien tai" trong MOT danh sach nav.
+ *
+ * `isActive` tinh cho tung item roi la khong du khi danh sach co item long tien to nhau.
+ * Vi du that: ORGANIZER_NAV co ca `/organizer/events` va `/organizer/events/new`. O pathname
+ * `/organizer/events/new` thi `isActive` tra true cho CA HAI -> hai muc cung mang
+ * aria-current="page", screen reader bao hai "trang hien tai" trong cung mot nav.
+ *
+ * Nen trang hien tai duoc chon theo khop DAI NHAT, va tinh o cap danh sach. */
+export function activeHref(items: NavItem[], pathname: string): string | null {
+  let best: string | null = null;
+  for (const item of items) {
+    if (!isActive(pathname, item.href)) continue;
+    if (best === null || item.href.length > best.length) {
+      best = item.href;
+    }
+  }
+  return best;
 }
