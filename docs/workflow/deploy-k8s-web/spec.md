@@ -116,7 +116,13 @@ một lần sửa Dockerfile là mất tính chất đó mà không ai biết.
 - **Then** chạy **đủ** `lint`, `typecheck`, `test:coverage`, `build`; thiếu bất kỳ cái nào là lỗi script
 - **Then** fail ở bất kỳ bước nào → exit code khác 0 và nêu rõ bước nào fail
 - **Then** kiểm diff test: có `.skip` / `.only` / `it.todo` mới thêm → fail
-- **Then** validate `deploy/k8s/**` bằng `kubectl --dry-run=client` nếu `kubectl` có; không có thì **bỏ qua có thông báo**, không âm thầm pass
+- **Then** validate `deploy/k8s/**` bằng `kubectl apply --dry-run=server` **nếu `kubectl cluster-info`
+  thành công**; không có cluster thì **bỏ qua kèm thông báo nói thẳng là KHÔNG kiểm được gì**, không
+  âm thầm pass.
+  ⚠️ **Sửa ở P4 (do WP-C phát hiện):** câu cũ ghi `--dry-run=client` và điều kiện "nếu `kubectl` có" —
+  đúng hai giả định mà C4.4 đã chứng minh sai. Mình sửa `spec.md` mục 1, `contracts.md` và
+  `work-packages.md` nhưng **vẫn sót dòng AC này**, nên đọc AC-5 theo nghĩa chữ thì WP-C bị coi là
+  không đạt dù nó làm đúng contract. Đây là lần thứ **ba** cùng một kiểu sót khi sửa tài liệu nhiều nơi.
 - **Then** chạy được trên Git Bash của Windows (môi trường thật của dự án)
 
 ### AC-6 — Runbook

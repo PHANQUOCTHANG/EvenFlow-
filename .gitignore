@@ -17,3 +17,6 @@ next-env.d.ts
 
 # Tai lieu ca nhan
 *.pdf
+
+# Worktree tam cua agent, khong thuoc ma nguon
+.claude/worktrees/

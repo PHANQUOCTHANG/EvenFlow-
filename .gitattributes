@@ -1,0 +1,7 @@
+# Script shell phai giu LF ke ca khi clone tren Windows (core.autocrlf=true):
+# CRLF trong shebang lam Linux bao "bad interpreter".
+*.sh text eol=lf
+
+# Manifest k8s va compose cung nen giu LF cho nhat quan khi apply tu may Windows.
+*.yaml text eol=lf
+*.yml  text eol=lf
