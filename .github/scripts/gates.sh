@@ -34,7 +34,20 @@ BASE_REF="${BASE_REF:-8b869bb2981a41a3393180b31e2a14e5cb95f6ec}"
 WEB_DIR="apps/web"
 K8S_DIR="deploy/k8s"
 PRERENDER_MANIFEST="$WEB_DIR/.next/prerender-manifest.json"
-TEST_GLOB='apps/web/**/*.test.*'
+# Hai vung mu da duoc Challenge chung minh:
+#
+# 1. `apps/web/**/*.test.*` can it nhat mot cap thu muc, nen file test dat ngay tai
+#    `apps/web/` se VO HINH. Dung pathspec `:(glob)` cho dung ngu nghia.
+# 2. `vitest.config.ts` include ca `*.spec.*`, nhung pathspec cu chi co `*.test.*`:
+#    doi ten file tu .test.ts sang .spec.ts la du vo hieu hoa TOAN BO AC-5b, ma test
+#    van chay binh thuong nen khong ai thay gi la.
+TEST_GLOBS=(
+  ':(glob)apps/web/**/*.test.*'
+  ':(glob)apps/web/*.test.*'
+  ':(glob)apps/web/**/*.spec.*'
+  ':(glob)apps/web/*.spec.*'
+)
+TEST_GLOB="${TEST_GLOBS[*]}"
 PROBE_ROUTES=("/api/healthz" "/api/readyz")
 
 TOTAL_STEPS=4
@@ -83,10 +96,36 @@ fi
 # Chi xet dong THEM ('^\+'), nen test cu von da co .skip thi khong bi tinh.
 # `|| true` bao ca pipeline: grep khong tim thay gi thi tra ve 1, va day la ket
 # qua TOT, khong phai loi.
+# `|| true` dat o cuoi CA pipeline se nuot luon exit code cua `git diff`, khong
+# chi cua `grep` -- va `set -o pipefail` cung bi vo hieu vi `||` thay the status
+# cua toan bo pipeline. Khi do mot BASE_REF khong co merge base voi HEAD (clone
+# shallow bi cat to tien) lam `git diff` fail, bien rong, va gate in "OK" roi di
+# tiep: dung che do am tham pass ma C4.2/AC-5 cam. Tach lam hai tang.
+if ! committed_diff="$(git diff --unified=0 "$BASE_REF"...HEAD -- "${TEST_GLOBS[@]}" 2>&1)"; then
+  fail "git diff voi BASE_REF='$BASE_REF' that bai:"
+  printf '%s\n' "$committed_diff" >&2
+  fail "KHONG khang dinh duoc la khong co .skip moi them => coi nhu KHONG DAT."
+  exit 1
+fi
+
+# Tang thu hai: WORKING TREE. `$BASE_REF...HEAD` chi so hai COMMIT, no khong thay
+# thay doi chua commit -- tuc mu dung voi vong chay ma script nay tu nhan la ly do
+# no ton tai ("chay cuc bo TRUOC khi commit"). Kich ban dung tinh huong nhat: dev
+# them .skip -> chay gate -> xanh -> commit -> push. Check chi bat duoc sau khi da
+# commit, tuc sau thoi diem no can phat huy.
+if ! worktree_diff="$(git diff --unified=0 HEAD -- "${TEST_GLOBS[@]}" 2>&1)"; then
+  fail "git diff working tree that bai:"
+  printf '%s\n' "$worktree_diff" >&2
+  exit 1
+fi
+
+diff_out="$committed_diff
+$worktree_diff"
+
 added_skips="$(
-  git diff --unified=0 "$BASE_REF"...HEAD -- "$TEST_GLOB" \
+  printf '%s\n' "$diff_out" \
     | grep -E '^\+' \
-    | grep -E '\.(skip|only)\(|it\.todo\(' \
+    | grep -E '\.(skip|only|todo|skipIf|runIf|concurrent\.skip)\(|\.(skip|only|todo)If\(' \
     || true
 )"
 
@@ -183,6 +222,21 @@ if kubectl cluster-info >/dev/null 2>&1; then
       for manifest_file in "${manifests[@]}"; do
         files_args+=( -f "$manifest_file" )
       done
+      # --dry-run=server KHONG persist object, nen Namespace trong chinh lan
+      # dry-run nay chua ton tai that. Admission plugin NamespaceLifecycle se tu
+      # choi moi resource namespaced bang `namespaces "eventflow" not found`,
+      # lam gate do trong khi manifest hoan toan dung -- va nguoi doc log rat de
+      # ket luan sai la manifest hong. Nen apply THAT Namespace truoc (idempotent)
+      # roi moi dry-run phan con lai.
+      ns_file="$K8S_DIR/00-namespace.yaml"
+      if [ -f "$ns_file" ]; then
+        log "  tao truoc namespace (that, idempotent) de --dry-run=server khong bi NamespaceLifecycle tu choi"
+        if ! kubectl apply -f "$ns_file" >/dev/null; then
+          fail "khong tao duoc namespace tu $ns_file"
+          exit 1
+        fi
+      fi
+
       log "  co cluster -> kubectl apply --dry-run=server tren ${#manifests[@]} file"
       rc=0
       kubectl apply --dry-run=server "${files_args[@]}" || rc=$?
