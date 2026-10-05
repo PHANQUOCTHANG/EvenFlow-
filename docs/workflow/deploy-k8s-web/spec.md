@@ -25,7 +25,8 @@ Hiện trạng đã kiểm:
 | `deploy/k8s/` | **Không tồn tại** |
 | `.github/workflows/cd-web.yml` | Publish image lên GHCR sau khi CI xanh trên `main`. **Không có bước deploy** — đúng như đã ghi |
 | `web.Dockerfile` | Đã sửa `npm ci` + `apps/web/public/.gitkeep`, nhưng **chưa từng được build thành công lần nào** (Docker daemon chưa chạy ở mọi lần thử) |
-| `kubectl` | Có (đi kèm Docker Desktop) → validate manifest được kể cả khi chưa có cluster |
+| `kubectl` | Có (v1.34.1, đi kèm Docker Desktop) nhưng **chưa có cluster** (`current-context is not set`). ⚠️ **Sửa khẳng định sai của bản đầu**: bản đầu viết "validate manifest được kể cả khi chưa có cluster" — **sai**. Đã kiểm: `kubectl apply --dry-run=client` cố tải openapi từ `localhost:8080` và fail. `--dry-run=client` **không** phải chế độ offline. Xem C4.4. |
+| `make`, `go`, `golangci-lint` | **Không có** trên máy dev (đã kiểm). Ảnh hưởng tới phạm vi script gate — xem C4.1 |
 | `helm` / `minikube` / `kind` | Không có |
 
 ## 2. Phạm vi
@@ -68,9 +69,17 @@ trả về một kết quả **đóng băng từ lúc build** — probe luôn xa
 `securityContext` (`runAsNonRoot`, `allowPrivilegeEscalation: false`, drop ALL capabilities), nếu không
 một lần sửa Dockerfile là mất tính chất đó mà không ai biết.
 
-**3.6 Script gate phải chạy ĐỦ bốn lệnh, không cho chọn lọc.** Lý do cụ thể: ở slice trước mình chạy
-`test` + `lint` + `build` nhưng **quên `typecheck`**, và một type error đã lọt vào commit `9607fa6`.
-PDF bước 6 ghi rõ gate là "script, không dùng LLM" chính để chặn đúng kiểu lỗi đó.
+**3.6 Script gate phải chạy ĐỦ bốn lệnh, không cho chọn lọc.**
+
+> ⚠️ **Sửa lý do sai của bản đầu.** Bản đầu viết script này tồn tại vì "CI quên typecheck". **Sai, và
+> P2 đã chứng minh bằng số dòng cụ thể**: `ci.yml` có đủ bốn — dòng 104 `npm run lint`, 105
+> `npm run typecheck`, 170 `test:coverage`, 227 `npm run build`. Lỗi thật đã xảy ra (type error lọt
+> vào commit `9607fa6`) là ở vòng chạy **cục bộ** trước khi push, không phải lỗ hổng CI.
+>
+> Giữ lại việc viết script, nhưng với lý do đúng: rút ngắn vòng phản hồi cục bộ, và thêm **hai check
+> mà CI không có** — chặn `.skip`/`.only` mới thêm, và chặn probe bị prerender tĩnh.
+>
+> Ghi sai lý do nguy hiểm hơn nó có vẻ: người đọc sau sẽ tưởng CI có lỗ hổng rồi đi "sửa" CI vô ích.
 
 ## 4. Tiêu chí nghiệm thu (AC)
 
@@ -96,15 +105,24 @@ PDF bước 6 ghi rõ gate là "script, không dùng LLM" chính để chặn đ
 - **Then** Deployment có `livenessProbe` → `/api/healthz`, `readinessProbe` → `/api/readyz`
 - **Then** có `resources.requests` **và** `limits` cho cpu + memory
 - **Then** `securityContext`: `runAsNonRoot: true`, `allowPrivilegeEscalation: false`, `capabilities.drop: [ALL]`
-- **Then** image tham chiếu đúng tên mà `cd-web.yml` publish (`ghcr.io/<owner>/eventflow-web`)
+- **Then** image tham chiếu đúng tên mà `cd-web.yml` publish: `ghcr.io/phanquocthang/eventflow-web`, tag `sha-<short>`
 - **Then** HPA có `minReplicas` ≥ 2 (G4: không được có điểm chết đơn lẻ ở T0)
-- **Then** `kubectl apply --dry-run=client -f deploy/k8s/` thành công cho **mọi** file
+- **Then** `kubectl apply --dry-run=server -f deploy/k8s/` thành công cho **mọi** file, chạy ở bước
+  **P4.5** sau khi bật Kubernetes của Docker Desktop. ⚠️ Bản đầu ghi `--dry-run=client`; đã kiểm là
+  **không chạy offline** (tải openapi từ API server). AC-4 **không** được đóng bằng nhánh "bỏ qua" của
+  script gate — xem C4.4.
 
 ### AC-5 — Script gate
 - **Then** chạy **đủ** `lint`, `typecheck`, `test:coverage`, `build`; thiếu bất kỳ cái nào là lỗi script
 - **Then** fail ở bất kỳ bước nào → exit code khác 0 và nêu rõ bước nào fail
 - **Then** kiểm diff test: có `.skip` / `.only` / `it.todo` mới thêm → fail
-- **Then** validate `deploy/k8s/**` bằng `kubectl --dry-run=client` nếu `kubectl` có; không có thì **bỏ qua có thông báo**, không âm thầm pass
+- **Then** validate `deploy/k8s/**` bằng `kubectl apply --dry-run=server` **nếu `kubectl cluster-info`
+  thành công**; không có cluster thì **bỏ qua kèm thông báo nói thẳng là KHÔNG kiểm được gì**, không
+  âm thầm pass.
+  ⚠️ **Sửa ở P4 (do WP-C phát hiện):** câu cũ ghi `--dry-run=client` và điều kiện "nếu `kubectl` có" —
+  đúng hai giả định mà C4.4 đã chứng minh sai. Mình sửa `spec.md` mục 1, `contracts.md` và
+  `work-packages.md` nhưng **vẫn sót dòng AC này**, nên đọc AC-5 theo nghĩa chữ thì WP-C bị coi là
+  không đạt dù nó làm đúng contract. Đây là lần thứ **ba** cùng một kiểu sót khi sửa tài liệu nhiều nơi.
 - **Then** chạy được trên Git Bash của Windows (môi trường thật của dự án)
 
 ### AC-6 — Runbook
@@ -130,3 +148,49 @@ PDF bước 6 ghi rõ gate là "script, không dùng LLM" chính để chặn đ
 1. **Trước khi thêm bước deploy vào `cd-web.yml`** — nó sẽ tác động tới môi trường ngoài repo.
 2. **Trước khi apply lên bất kỳ cluster nào không phải Docker Desktop local.**
 3. Nếu `docker build` fail vì lý do ngoài Dockerfile (mạng, base image) → dừng và báo.
+4. **`NEXT_PUBLIC_API_BASE` (phát hiện ở P2, blocker B4).** Next inline biến `NEXT_PUBLIC_*` vào
+   bundle lúc build, nên image hiện tại có `API_BASE = ""` và frontend sẽ **không gọi được backend**
+   dù pod Ready và cả hai probe xanh. Sửa đúng là thêm `ARG` vào Dockerfile + truyền `--build-arg`
+   trong `cd-web.yml` — chạm CD nên cần duyệt. Slice này **chỉ** thêm `ARG` vào Dockerfile và ghi
+   giới hạn vào runbook; không tự sửa CD.
+5. **Thêm paths-filter cho `deploy/**` và `.github/scripts/**` vào `ci.yml` (M8).** Hiện CI **không
+   chạy lệnh nào** cho hai vùng đó, nên PR của WP-B và WP-C sẽ xanh mà không kiểm gì — dương tính
+   giả. Slice này không tự sửa `ci.yml` (C6); bằng chứng là thủ công, dán log vào
+   `integration-report.md`.
+
+## 7. Bổ sung AC sau P2
+
+### AC-4b — Rolling update (M3) — **chủ: WP-B**
+Mục tiêu G4 là "không sập ở T0", nhưng bản đầu không có AC nào cho việc này, và `minReplicas: 2`
+không cứu được nếu `maxUnavailable` mặc định 25%.
+- **Then** Deployment có `strategy.rollingUpdate.maxUnavailable: 0`, `maxSurge: 1`
+- **Then** có `terminationGracePeriodSeconds: 30` và hook `preStop`
+
+### AC-2b — Graceful shutdown ở tầng ứng dụng (D1) — **chủ: WP-A**
+Tách khỏi AC-4b vì AC đó có **hai chủ** nên không ai đóng được.
+- **Then** `src/instrumentation.ts` đăng ký handler `SIGTERM` gọi `setReady(false)` **ngay**, chờ
+  `DRAIN_MS = 5000`, rồi `process.exit(0)`
+- **Then** nhờ đó `/api/readyz` trả `503` **trong cửa sổ drain**, trước khi tiến trình kết thúc
+- **Phụ thuộc**: `NEXT_MANUAL_SIG_HANDLE=1` phải có trong image (Integrator đặt trong Dockerfile).
+  Thiếu nó thì Next tự đóng server rồi `process.exit(0)` ngay, và readyz trả về `ECONNREFUSED` chứ
+  không phải `503` — đã kiểm trong `next/dist/server/lib/start-server.js`.
+
+### AC-4c — Tham số probe (M4)
+- **Then** có đủ `startupProbe`, `livenessProbe`, `readinessProbe` với tham số đúng C2.2
+- **Then** Deployment **không** khai báo `replicas` (để HPA làm chủ)
+
+### AC-5b — Hai check mà CI không có
+- **Then** script chặn `.skip` / `.only` / `it.todo` **mới thêm** so với `BASE_REF`
+- **Then** script khẳng định `/api/healthz` và `/api/readyz` **không** nằm trong
+  `.next/prerender-manifest.json` sau khi build
+
+### AC-8 — Xác minh chạy thật sau khi merge
+Bản đầu dừng ở "merge + gates + runbook", tức slice kết thúc với một đống YAML **chưa ai chạy**.
+- **Then** sau P4, Integrator bật Kubernetes của Docker Desktop, build image, apply, port-forward
+- **Then** xác nhận pod `Ready`, `/api/healthz` trả 200, `/api/readyz` trả 200
+- **Then** gửi `SIGTERM` và xác nhận `/api/readyz` chuyển sang `503` **trong cửa sổ drain 5 giây**,
+  trước khi tiến trình thoát. Nếu nhận `ECONNREFUSED` thay vì `503` thì nguyên nhân gần như chắc chắn
+  là thiếu `NEXT_MANUAL_SIG_HANDLE=1` trong image, **không phải** WP-A làm sai
+- **Then** thử `kubectl rollout undo` và xác nhận quay về đúng tag trước đó
+- **Bằng chứng**: log thô dán vào `integration-report.md`. Thiếu bước này thì nhãn "deploy được lên
+  Kubernetes" là không có cơ sở.

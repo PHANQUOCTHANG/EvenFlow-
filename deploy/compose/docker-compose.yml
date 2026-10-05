@@ -161,9 +161,39 @@ services:
     build:
       context: ../..
       dockerfile: deploy/docker/web.Dockerfile
-    environment:
-      NEXT_PUBLIC_API_BASE: "http://localhost:8080"
+      # Next INLINE moi bien NEXT_PUBLIC_* vao bundle luc BUILD. Dat no o
+      # `environment:` (runtime) hoan toan vo tac dung: bundle da duoc build xong
+      # truoc do voi API_BASE = "". Khi ay browser goi URL tuong doi tren chinh
+      # origin cua pod web -- noi chi co /api/healthz va /api/readyz -- nen moi
+      # call queue/ticketing tra 404, trong khi compose TRONG NHU da cau hinh dung
+      # va nguoi doc se di tim loi o backend.
+      args:
+        NEXT_PUBLIC_API_BASE: "http://localhost:8080"
     ports: ["3000:3000"]
+    # Goi /api/healthz (liveness) chu khong phai /api/readyz: compose coi
+    # unhealthy la trang thai cua container, con readyz la trang thai "co nen
+    # nhan traffic khong" -- do la viec cua k8s readinessProbe.
+    #
+    # Dung `node` chu khong `curl` (khong co trong node:22-alpine) va khong
+    # `wget` (co nhung la chi tiet cua base image, mat khi doi base).
+    #
+    # DIEU KIEN de lenh nay chay duoc: Next standalone bind theo
+    # process.env.HOSTNAME (`const hostname = process.env.HOSTNAME || '0.0.0.0'`
+    # trong server.js do output: "standalone" sinh ra). Docker dat HOSTNAME =
+    # container id => Next bind vao IP eth0, KHONG bind loopback => fetch toi
+    # 127.0.0.1 nhan ECONNREFUSED va service web unhealthy vinh vien. Vi vay
+    # web.Dockerfile phai co ENV HOSTNAME=0.0.0.0 va ENV PORT=3000 (C3, chu la
+    # Integrator).
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3000/api/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 30s
 
 volumes:
   pgdata:

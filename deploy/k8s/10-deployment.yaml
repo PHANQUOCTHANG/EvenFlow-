@@ -1,0 +1,153 @@
+# Deployment cho frontend `apps/web` (WP-B: AC-4, AC-4b, AC-4c).
+#
+# Moi gia tri ben duoi lay nguyen van tu contracts.md: C1 (duong dan probe),
+# C2 (cong, ten image, tag, pull policy, namespace, nhan), C2.1 (rolling update +
+# graceful shutdown), C2.2 (tham so probe), C2.3 (khong khai bao replicas).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: eventflow-web
+  namespace: eventflow
+  labels:
+    app.kubernetes.io/name: eventflow-web
+    app.kubernetes.io/part-of: eventflow
+spec:
+  # KHONG co `replicas` o day — co y, khong phai thieu sot (C2.3 / AC-4c).
+  # HPA (40-hpa.yaml) lam chu so pod. Khai bao ca hai thi moi lan `kubectl apply`
+  # se giat so pod ve gia tri tinh sau khi HPA da scale.
+  #
+  # Luu y van hanh: lan apply dau tien Deployment tao 1 pod (mac dinh cua k8s khi
+  # thieu `replicas`), roi HPA keo len `minReplicas: 2`. Viec keo len bien duoi
+  # KHONG can metrics-server — HPA controller ap bien min/max ngay ca khi metric la
+  # `<unknown>` — nen 2 pod van dat duoc tren Docker Desktop (xem C7).
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      # C2.1 / AC-4b: khong cho phep bat ky pod nao unavailable trong luc rollout,
+      # vi rollout co the xay ra giua luc dang ban ve (G4 "khong sap o T0").
+      # Mac dinh 25% se cat traffic.
+      maxUnavailable: 0
+      maxSurge: 1
+  selector:
+    # Bo nhan nay phai TRUNG KHOP tuyet doi voi `template.metadata.labels` ben duoi
+    # va voi `spec.selector` cua 20-service.yaml. Lech mot ky tu thi Deployment
+    # khong nhan pod cua chinh no / Service khong co endpoint nao.
+    matchLabels:
+      app.kubernetes.io/name: eventflow-web
+      app.kubernetes.io/part-of: eventflow
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: eventflow-web
+        app.kubernetes.io/part-of: eventflow
+    spec:
+      # C2.1: bien ngoai cua qua trinh tat, KHONG phai cua so drain.
+      #
+      # Tong thoi gian tat ~10s, khong 5s: hai cua so chay NOI TIEP nhau, khong
+      # song song. kubelet chay preStop TRUOC roi moi gui SIGTERM, nen:
+      #   t=0   : pod -> Terminating (endpoints controller bat dau rut endpoint)
+      #           + preStop exec: node -e setTimeout(...,5000)
+      #   t=5s  : preStop xong -> kubelet gui SIGTERM
+      #           -> instrumentation.ts: setReady(false), readyz = 503
+      #   t=10s : DRAIN_MS het -> process.exit(0)
+      #
+      # 30s grace phai lon hon tong do: dat 10s thi SIGKILL roi dung luc exit(0)
+      # va ExitCode se la 137 chu khong 0 -- AC-2b hong vi mot con so o day.
+      terminationGracePeriodSeconds: 30
+      securityContext:
+        # 3.5 / AC-4: image da co `USER 1000`, nhung manifest khang dinh lai de mot
+        # lan sua Dockerfile khong am tham lam mat tinh chat nay.
+        #
+        # `USER` trong Dockerfile phai la DANG SO. kubelet chi doc field
+        # `Config.User` cua image de xac minh non-root, no khong resolve ten qua
+        # /etc/passwd ben trong image; gap `USER node` no tu choi container bang
+        # `CreateContainerConfigError: ... image has non-numeric user (node)`.
+        #
+        # Co y KHONG dat `runAsUser`: neu Dockerfile mat `USER 1000`, `runAsNonRoot`
+        # mot minh se lam container fail to lon (CreateContainerConfigError) — dung
+        # thu ta muon. Dat them `runAsUser: 1000` se che lap hoi quy do bang cach
+        # am tham chay dung uid 1000.
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: web
+          # C2: ten image dung chuoi ma `cd-web.yml` publish (owner ha chu thuong
+          # tu `PHANQUOCTHANG`). Tag dang `sha-<short>` voi short = 7 ky tu dau cua
+          # commit sha; KHONG dung `:latest` (xem B3 trong C2).
+          #
+          # Gia tri duoi day la commit base cua slice. Doi tag bang:
+          #   kubectl -n eventflow set image deployment/eventflow-web web=<image>:sha-<short>
+          # Tag tro toi commit TICH HOP, khong phai commit contract. Ban truoc dat
+          # `sha-8b869bb` la commit "contract approved" -- commit do co 3 file test
+          # dong bang nhung KHONG co route.ts / readiness.ts / instrumentation.ts.
+          # Ai debug "sao readyz khong co" roi `git checkout` theo tag image se thay
+          # khong co health endpoint nao, tuc tag noi sai nguon goc image -- dung thu
+          # ma ly le "tag bat bien de truy nguoc image <-> commit" dua vao.
+          #
+          # Image nay CHUA ton tai tren GHCR (cd-web.yml chi build tu `main`). Tren
+          # cluster local thi `IfNotPresent` dung image build tay voi dung tag nay.
+          # Doi tag: kubectl -n eventflow set image deployment/eventflow-web web=<image>
+          image: ghcr.io/phanquocthang/eventflow-web:sha-60b4930
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 3000
+              protocol: TCP
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          resources:
+            # 3.4 / AC-4: HPA theo CPU tinh phan tram CUA `requests`. Thieu
+            # `requests` thi HPA khong co mau so va khong scale gi ca.
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          # C1 + C2.2. Ba probe tro vao HAI duong dan khac nhau, co y:
+          #   /api/healthz = liveness  -> "tien trinh con song", khong cham dependency
+          #   /api/readyz  = readiness -> "san sang nhan traffic", tra 503 khi drain
+          # Doi cho hai duong dan nay la loi khong parser nao bat duoc: readiness tro
+          # vao healthz thi pod khong bao gio bi rut khoi endpoints luc SIGTERM.
+          startupProbe:
+            # Tach "dang khoi dong" khoi "da treo": thieu probe nay thi lan khoi dong
+            # dau tien cham se bi liveness giet, va nguoi doc ket luan sai la health
+            # endpoint hong. 2s x 30 = toi da 60s cho lan boot dau.
+            httpGet:
+              path: /api/healthz
+              port: http
+            periodSeconds: 2
+            failureThreshold: 30
+          livenessProbe:
+            httpGet:
+              path: /api/healthz
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /api/readyz
+              port: http
+            # periodSeconds: 2 chu khong 5 (R5): DRAIN_MS = 5000, neu chu ky probe
+            # cung la 5s thi nhip ke tiep co the roi SAU luc tien trinh thoat va
+            # kubelet khong bao gio doc duoc 503.
+            periodSeconds: 2
+            timeoutSeconds: 2
+            # failureThreshold: 1 chu khong 3 (D12): muc dich la rut endpoint cho kip
+            # trong cua so drain 5 giay. Rut nham chi mat vai giay traffic, khong giet pod.
+            failureThreshold: 1
+            successThreshold: 1
+          lifecycle:
+            preStop:
+              exec:
+                # C2.1: dung `node` chu khong `sleep` — khong phu thuoc busybox cua
+                # base image (cung ly do voi C3).
+                command:
+                  - "node"
+                  - "-e"
+                  - "setTimeout(()=>{},5000)"
