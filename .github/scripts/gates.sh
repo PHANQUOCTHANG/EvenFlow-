@@ -6,7 +6,9 @@
 #
 # Script chay DUNG bon lenh cua C4.1, luon luon, dung thu tu do, roi them hai
 # check ma CI khong co -- C4.2 (chan .skip/.only/it.todo moi them) va C4.3
-# (chan probe bi prerender tinh) -- va cuoi cung la C4.4 (validate manifest k8s).
+# (chan probe bi prerender tinh) -- roi C4.4 (validate manifest k8s) va cuoi cung
+# C4.5 (co readiness + nhanh 503 phai con trong .next/server/, tang ma 4 gate
+# cong C4.2 cong C4.3 deu khong thay).
 #
 # KHONG co co dong lenh hay bien moi truong nao bo qua duoc bat ky buoc nao.
 # Bien moi truong duy nhat script doc la BASE_REF (C4, C4.2).
@@ -257,5 +259,94 @@ else
   echo "[gates] KHONG kiem duoc apiVersion, ten field, selector, hay duong dan probe."
   echo "[gates] Chay lai sau khi bat Kubernetes cua Docker Desktop."
 fi
+
+
+# C4.5 -- kiem o TANG BUNDLE: co readiness va nhanh 503 phai con trong ban build
+#
+# Vi sao can mot check rieng o day, khi da co 4 gate + C4.2 + C4.3: hoi quy that
+# su da xay ra trong slice nay (integration-report.md muc 4.1) TAI HIEN DUOC voi
+# CA SAU check kia xanh. Next dong goi `instrumentation.ts` va TUNG route handler
+# thanh CAC BUNDLE WEBPACK RIENG, nen `lib/readiness.ts` bi nhan ban vao moi
+# bundle. Khi co ready la mot `let` o tam module:
+#
+#   - bundle `/api/readyz` khong co ai GHI co  -> terser chung minh no luon true
+#     -> body bi fold thanh {status:"ready"} va NHANH 503 BI XOA KHOI BAN BUILD
+#   - bundle `instrumentation.js` khong co ai DOC co -> `setReady(false)` thanh
+#     dead code va cung bi xoa
+#
+# Vitest KHONG bundle (no dung dung mot module instance) nen 1086 test van xanh;
+# `next build` thanh cong; probe van la dynamic nen C4.3 van xanh. Tuc ca sau
+# check deu khong the thay. Chi co doc chinh `.next/server/**` moi thay duoc.
+#
+# Check nay la grep tren marker, CO Y chon marker khong bi minify:
+#   - `__eventflowWebReadiness__` la mot KHOA CHUOI tren globalThis, terser
+#     khong rename duoc chuoi -> ton tai duoc trong ban production
+#   - `not-ready` / `503` la literal cua nhanh loi
+# `grep -c setReady` thi VO DUNG o day: ten ham bi minify, nen no ra 0 ca khi
+# code hoan toan dung -- dung loai check sinh ra bao dong gia roi bi tat di.
+log "check C4.5: co readiness + nhanh 503 phai con trong $WEB_DIR/.next/server/"
+
+C45_SERVER_DIR="$WEB_DIR/.next/server"
+C45_READINESS_KEY='__eventflowWebReadiness__'
+c45_failed=0
+
+# Tra ve 0 neu $1 chua literal $2. Dung -F: marker la chuoi thuan, de regex
+# dien giai `__...__` hay `503` la moi cua cho duong tinh gia.
+c45_has() { grep -q -F -- "$2" "$1"; }
+
+# $1=file  $2=marker  $3=hau qua neu marker bien mat
+c45_need() {
+  if [ ! -f "$1" ]; then
+    fail "C4.5: khong thay bundle $1"
+    echo "[gates] Buoc build 4/4 o tren phai sinh ra file nay. Neu Next doi cau truc" >&2
+    echo "[gates] .next/server/ thi phai CAP NHAT check nay, khong duoc bo di --" >&2
+    echo "[gates] mot check tu im lang chinh la che do loi C4.5 sinh ra de chong." >&2
+    c45_failed=1
+    return
+  fi
+  if ! c45_has "$1" "$2"; then
+    fail "C4.5: '$2' khong con trong $1"
+    echo "[gates] $3" >&2
+    c45_failed=1
+  fi
+}
+
+# $1=file  $2=marker  $3=hau qua neu marker XUAT HIEN
+c45_forbid() {
+  if [ -f "$1" ] && c45_has "$1" "$2"; then
+    fail "C4.5: '$2' KHONG duoc co trong $1"
+    echo "[gates] $3" >&2
+    c45_failed=1
+  fi
+}
+
+c45_readyz="$C45_SERVER_DIR/app/api/readyz/route.js"
+c45_healthz="$C45_SERVER_DIR/app/api/healthz/route.js"
+c45_instr="$C45_SERVER_DIR/instrumentation.js"
+
+c45_need "$c45_readyz" "$C45_READINESS_KEY" \
+  "Co ready khong con doc tu globalThis trong bundle readyz => no da thanh bien cuc bo cua bundle => setReady(false) tu instrumentation KHONG con tac dung o day."
+c45_need "$c45_readyz" "not-ready" \
+  "Nhanh 503 da bi optimizer xoa. /api/readyz se LUON tra 200, ke ca luc drain: kubelet khong bao gio rut endpoint va graceful shutdown im lang mat tac dung."
+c45_need "$c45_readyz" "503" \
+  "Khong con ma 503 nao trong bundle readyz. Cung nguyen nhan voi dong tren."
+c45_need "$c45_instr" "$C45_READINESS_KEY" \
+  "setReady(false) da bi xoa khoi bundle instrumentation (dead code elimination). Handler SIGTERM se chi cho 5s roi exit, khong bao gio ha readiness."
+c45_need "$c45_instr" "SIGTERM" \
+  "Khong con dang ky SIGTERM trong ban build => k8s gui SIGTERM, khong ai nghe, pod chet bang default disposition (exit 143) thay vi drain roi exit 0."
+c45_need "$c45_instr" "SIGINT" \
+  "Khong con dang ky SIGINT. NEXT_MANUAL_SIG_HANDLE=1 da tat handler cua Next cho CA SIGINT, nen Ctrl+C se mat graceful shutdown (exit 130)."
+
+# Bat bien nguoc: liveness KHONG BAO GIO duoc tra 503. Doi cho hai duong dan
+# probe la loi khong parser nao bat duoc, va day la mot trong vai dau hieu may
+# doc duoc tu ban build.
+c45_forbid "$c45_healthz" "503" \
+  "Liveness khong bao gio duoc tra 503 (AC-1). Co 503 trong bundle healthz nghia la logic readiness da lot vao liveness -- k8s se RESTART pod dang drain thay vi chi rut endpoint."
+
+if [ "$c45_failed" -ne 0 ]; then
+  echo "[gates] C4.5 that bai. Day la tang ma 4 gate + C4.2 + C4.3 deu KHONG thay." >&2
+  exit 1
+fi
+log "  OK: co readiness co trong ca hai bundle, nhanh 503 con nguyen, healthz khong co 503"
 
 log "TAT CA GATE DAT."
