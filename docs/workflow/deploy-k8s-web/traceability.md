@@ -103,11 +103,21 @@ dòng đã đổi.
 | AC-4, AC-4b, AC-4c | ❌ **vẫn chưa chạy** | `kubectl config current-context` ⇒ `current-context is not set`. Kubernetes chưa bật trong Docker Desktop, nên `--dry-run=server` chưa chạy được. `gates.sh` **bỏ qua** C4.4 chứ không fail — một gate xanh ở đây **không** nói gì về `deploy/k8s/` |
 | AC-8 | ⚠️ một phần | Đã chạy thật ở tầng **container** (bảng AC-2b). Phần **cluster** — pod Ready, 2 probe qua kubelet, `rollout undo` — vẫn chưa chạy, cùng lý do trên |
 
-### Khoảng trống gate còn mở (P5 Challenge, F1)
+### Khoảng trống gate ở tầng bundle (P5 Challenge, F1) — đã đóng
 
 Hồi quy ở §4.1 của `integration-report.md` — nhánh 503 bị optimizer **xoá khỏi bản production** —
-tái hiện được với **cả 4 gate xanh** và C4.2, C4.3 cũng xanh. Chưa có check nào đọc `.next/server/**`,
-nên lớp bảo vệ duy nhất hiện tại là comment trong `readiness.ts` giải thích vì sao cờ phải nằm trên
-`globalThis`. Dấu hiệu dùng được cho một check như vậy: `grep -c __eventflowWebReadiness__` trong
-bundle `instrumentation.js`, và `grep -c 503` / `not-ready` trong chunk của `/api/readyz`.
-(`grep -c setReady` **vô dụng** — tên hàm bị minify.)
+tái hiện được với **cả 4 gate xanh** và C4.2, C4.3 cũng xanh, nên trước đó lớp bảo vệ duy nhất chỉ là
+comment trong `readiness.ts`. Đã thêm **C4.5** vào `gates.sh`: grep `.next/server/**` tìm marker mà
+minifier không đổi tên được.
+
+| AC | Trạng thái | Bằng chứng |
+|---|---|---|
+| AC-5b (mở rộng: tầng bundle) | ✅ đạt, **kiểm cả hai chiều** | Tiêm lại hồi quy (cờ ready về `let` ở tầng module) → lint, typecheck, **44 file / 1086 test**, `next build`, C4.2, C4.3 **đều xanh** trong khi bundle readyz **không còn `not-ready` và không còn `503`**; chỉ C4.5 fail, exit 1, nêu đúng 4 marker mất. Hoàn nguyên → exit 0 |
+
+Marker được chọn vì **tồn tại được qua minify**: `__eventflowWebReadiness__` là khoá **chuỗi** trên
+`globalThis` (terser không rename chuỗi), cộng `not-ready` / `503` / `SIGTERM` / `SIGINT` là literal.
+Thêm một bất biến ngược: `503` **không** được có trong bundle `healthz` — liveness trả 503 nghĩa là
+logic readiness đã lọt vào nó, và k8s sẽ **restart** pod đang drain thay vì chỉ rút endpoint.
+
+`grep -c setReady` **không** dùng được: tên hàm bị minify nên nó ra 0 ngay cả khi code hoàn toàn
+đúng — đúng loại check sinh ra báo động giả rồi bị tắt đi.

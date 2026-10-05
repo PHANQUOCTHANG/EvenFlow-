@@ -209,5 +209,43 @@ kéo tổng lên. Đây là ticket riêng (sửa `vitest.config.ts` chạm file 
 `current-context is not set`, tức **Kubernetes chưa bật** trong Docker Desktop. Toàn bộ phần apply /
 pod Ready / HPA / Ingress / rolling update vẫn **chưa ai chạy**; chi tiết trong `runbook.md` §6.2.
 
-Một khoảng trống gate còn mở (P5 Challenge, F1): §4.1 là hồi quy ở **tầng bundle**, mà nó tái hiện
-được với cả 4 gate xanh **và** C4.2, C4.3 xanh. Chưa có check nào đọc `.next/server/**`.
+### 7.5 Khoảng trống gate ở tầng bundle (F1) — đã đóng, và đã kiểm cả hai chiều
+
+§4.1 là hồi quy ở **tầng bundle**, và nó tái hiện được với cả 4 gate xanh **và** C4.2, C4.3 xanh.
+Đã thêm **C4.5** vào `gates.sh` (`bdbbea8`): grep `.next/server/**`.
+
+Một check chưa từng fail thì chưa phải bằng chứng, nên đã tiêm lại đúng hồi quy đó (cờ ready quay về
+`let` ở tầng module) rồi chạy toàn bộ gate:
+
+```
+[gates]   OK buoc 1/4 lint
+[gates]   OK buoc 2/4 typecheck
+ Test Files  44 passed (44)
+[gates]   OK buoc 3/4 test:coverage
+[gates]   OK buoc 4/4 build
+[gates]   OK: khong co dong them nao chua .skip/.only/it.todo
+[gates]   OK: /api/healthz, /api/readyz khong nam trong prerender manifest
+[gates] check C4.5: co readiness + nhanh 503 phai con trong apps/web/.next/server/
+[gates] FAIL: C4.5: '__eventflowWebReadiness__' khong con trong .../api/readyz/route.js
+[gates] FAIL: C4.5: 'not-ready' khong con trong .../api/readyz/route.js
+[gates] FAIL: C4.5: '503' khong con trong .../api/readyz/route.js
+[gates] FAIL: C4.5: '__eventflowWebReadiness__' khong con trong .../instrumentation.js
+=== EXIT=1 ===
+```
+
+Đếm marker trực tiếp trên bản build có hồi quy — cả bốn đều về **0**:
+
+| bundle | marker | bản đúng | bản hồi quy |
+|---|---|---|---|
+| `app/api/readyz/route.js` | `__eventflowWebReadiness__` | 1 | **0** |
+| `app/api/readyz/route.js` | `not-ready` | 1 | **0** |
+| `app/api/readyz/route.js` | `503` | 1 | **0** |
+| `instrumentation.js` | `__eventflowWebReadiness__` | 1 | **0** |
+
+Tức `/api/readyz` trong bản production **không còn mã 503 nào** mà `next build` vẫn exit 0 và 1086
+test vẫn xanh. Hoàn nguyên `readiness.ts` → `git diff` trống, gate exit 0.
+
+Marker chọn theo tiêu chí **sống qua minify**: `__eventflowWebReadiness__` là khoá **chuỗi** trên
+`globalThis`; `not-ready` / `503` / `SIGTERM` / `SIGINT` là literal. `grep -c setReady` bị loại vì tên
+hàm bị minify ⇒ ra 0 cả khi code đúng. Thêm bất biến ngược: `503` **không** được xuất hiện trong
+bundle `healthz`.
