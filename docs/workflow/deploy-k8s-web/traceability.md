@@ -83,3 +83,31 @@ nên `apps/web/src/app/api/healthz/route.ts`, `apps/web/src/app/api/readyz/route
 - **AC-4 không đóng được trong P3.** Không có cluster thì `--dry-run=client` không chạy, và nhánh bỏ qua của gate **không kiểm gì** (không bắt được sai `apiVersion`, sai cấp field, `selector` lệch, probe sai path — tất cả đều là YAML hợp lệ). Bằng chứng duy nhất là `--dry-run=server` ở P4.5.
 - **`NEXT_PUBLIC_API_BASE`**: deploy có thể Ready với cả hai probe xanh mà frontend **không gọi được backend**. Cần người duyệt (spec mục 6, điểm 4).
 - **CI không chạy gì** cho `deploy/**` và `.github/scripts/**` (paths-filter không khớp) ⇒ PR của WP-B/WP-C xanh là **dương tính giả**. Bằng chứng là thủ công.
+
+## Cập nhật trạng thái sau P4 / P4.5 (một phần) / P5
+
+Trạng thái `chưa chạy` ở các bảng trên là ảnh chụp tại **P2**, khi ba file test đã được viết nhưng
+WP-A chưa hiện thực gì. Để nguyên để giữ dấu vết. Bảng dưới là trạng thái **hiện tại**; chỉ liệt kê
+dòng đã đổi.
+
+| AC | Trạng thái | Bằng chứng |
+|---|---|---|
+| AC-1, AC-2 (toàn bộ dòng unit test) | ✅ đạt | `44 file / 1086 test` pass; `gates.sh` exit 0. Per-file coverage: `route.ts` healthz 10/10, readyz 16/16, `readiness.ts` 22/22 dòng |
+| AC-1, AC-2 "xuất hiện là dynamic trong output build" | ✅ đạt | `next build` in `ƒ (Dynamic)` cho cả hai probe; thêm check C4.3 của `gates.sh` xác nhận hai đường dẫn **không** nằm trong `prerender-manifest.json` |
+| AC-2b | ✅ **đạt bằng signal POSIX thật** | `docker kill -s SIGTERM` trong container Linux: readyz ⇒ 503 sau **77 ms**, healthz **giữ 200**, ExitCode **0** ở t=5129 ms; SIGTERM thứ hai ở t=2s dưới `--init` không cắt ngắn drain. Thêm SIGINT: 503 trong ~1s, ExitCode 0. Chi tiết `integration-report.md` §7.1 |
+| AC-3 | ✅ đạt | `docker compose -f deploy/compose/docker-compose.yml config` parse được; `healthcheck` gọi `/api/healthz` với bốn tham số tường minh |
+| AC-5 | ✅ đạt | `bash .github/scripts/gates.sh` chạy đủ 4 lệnh, exit 0, chạy được trên Git Bash Windows |
+| AC-5b | ✅ đạt, đã mở rộng | Ngoài `.skip`/`.only`/`it.todo`, nay chặn cả `.spec.*`, file test ở cấp gốc, `.skipIf`/`.runIf`/`.concurrent.skip`, và marker **chưa commit** (tầng diff với working tree) — `bb4facb` |
+| AC-6 | ✅ đạt | `docs/workflow/deploy-k8s-web/runbook.md`: build → đưa image vào cluster → apply → kiểm pod Ready → log/port-forward → rollback, kèm §6 liệt kê từng thứ **chưa** verify được và vì sao |
+| AC-7 | ✅ đạt | `1016 → 1086` test, không test nào bị sửa/xoá/skip; `git diff --name-only` khớp bảng ownership C5 |
+| AC-4, AC-4b, AC-4c | ❌ **vẫn chưa chạy** | `kubectl config current-context` ⇒ `current-context is not set`. Kubernetes chưa bật trong Docker Desktop, nên `--dry-run=server` chưa chạy được. `gates.sh` **bỏ qua** C4.4 chứ không fail — một gate xanh ở đây **không** nói gì về `deploy/k8s/` |
+| AC-8 | ⚠️ một phần | Đã chạy thật ở tầng **container** (bảng AC-2b). Phần **cluster** — pod Ready, 2 probe qua kubelet, `rollout undo` — vẫn chưa chạy, cùng lý do trên |
+
+### Khoảng trống gate còn mở (P5 Challenge, F1)
+
+Hồi quy ở §4.1 của `integration-report.md` — nhánh 503 bị optimizer **xoá khỏi bản production** —
+tái hiện được với **cả 4 gate xanh** và C4.2, C4.3 cũng xanh. Chưa có check nào đọc `.next/server/**`,
+nên lớp bảo vệ duy nhất hiện tại là comment trong `readiness.ts` giải thích vì sao cờ phải nằm trên
+`globalThis`. Dấu hiệu dùng được cho một check như vậy: `grep -c __eventflowWebReadiness__` trong
+bundle `instrumentation.js`, và `grep -c 503` / `not-ready` trong chunk của `/api/readyz`.
+(`grep -c setReady` **vô dụng** — tên hàm bị minify.)

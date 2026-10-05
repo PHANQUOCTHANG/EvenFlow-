@@ -79,6 +79,10 @@ All files   95.22 stmts | 96.47 branch | 94 funcs | 95.22 lines
 
 **Không hồi quy**: 1016 → 1067 (+51 test của WP-A). Không test nào bị sửa, xoá hay skip.
 
+> **Các con số trong mục này là ảnh chụp tại commit tích hợp `60b4930`, không phải trạng thái hiện
+> tại.** Sau P5 chúng đã đổi (44 file / 1086 test) — xem **mục 7**. Để nguyên ở đây vì mục 3 là biên
+> bản của *lần chạy gate khi merge*, sửa số vào đây sẽ xoá mất dấu vết đó.
+
 Output `next build` xác nhận hai probe là **`ƒ (Dynamic)`**, không phải `○ (Static)` — tức AC-1/AC-2
 phần "không bị prerender" đạt trên bản build thật, không chỉ qua assert `export const dynamic`.
 
@@ -124,18 +128,86 @@ sẽ **che** hồi quy đó bằng cách âm thầm chạy đúng uid.
 |---|---|---|
 | **AC-4** manifest k8s | ❌ **chưa verify bằng bất cứ cách nào** | `kubectl apply --dry-run=server -f deploy/k8s/` sau khi bật Kubernetes. Nhánh "bỏ qua" của gate **không** đóng được AC này — nó in rõ là không kiểm gì |
 | **AC-8** chạy thật | ❌ chưa chạy | P4.5: build image, apply, port-forward, SIGTERM → 503, `rollout undo` |
-| **AC-2b** hành vi SIGTERM | ⚠️ một phần | WP-A verify bằng `process.emit("SIGTERM")` in-process trên standalone server thật: readyz 503 suốt 5s, healthz giữ 200, exit code 0 sau 5005ms. Nhưng **Windows không có signal POSIX** (`child.kill('SIGTERM')` = `TerminateProcess`), nên giao hàng signal thật phải để P4.5 trên container |
-| `docker build` | ❌ chưa từng chạy thành công lần nào | Docker daemon chưa bật |
+| **AC-2b** hành vi SIGTERM | ✅ **đã đóng ở mục 7** | WP-A verify bằng `process.emit("SIGTERM")` in-process trên standalone server thật: readyz 503 suốt 5s, healthz giữ 200, exit code 0 sau 5005ms. Nhưng **Windows không có signal POSIX** (`child.kill('SIGTERM')` = `TerminateProcess`), nên giao hàng signal thật phải để P4.5 trên container — **đã làm**, xem mục 7.1 |
+| `docker build` | ✅ **đã đóng ở mục 7** | Docker daemon chưa bật ở thời điểm merge |
 | `NEXT_PUBLIC_API_BASE` | ⚠️ ARG đã có, **giá trị chưa truyền** | Cần người duyệt sửa CD |
 | HPA scale theo tải | ❌ | Docker Desktop không có metrics-server ⇒ HPA sẽ hiện `<unknown>/60%`. Việc áp `minReplicas: 2` thì **không** cần metrics-server |
 | Ingress định tuyến | ❌ | Không có ingress controller ⇒ dùng `kubectl port-forward` |
-| `instrumentation.ts` coverage | **0%** | Test Design chỉ viết 3 file test, không file nào phủ nó. Muốn có test tự động cho AC-2b thì cần file test mới — quyết định của P1/Test Design, không phải của WP-A |
+| `instrumentation.ts` coverage | ✅ **đã đóng ở mục 7** | Lúc merge là 0%: Test Design chỉ viết 3 file test, không file nào phủ nó. `877c4c7` đã thêm file test — nay **100%** |
+| **AC-6** runbook | ✅ **đã đóng ở mục 7** | `runbook.md` **không tồn tại** ở thời điểm merge, và mục 5 bản đầu **không** liệt kê nó là thiếu — tức báo cáo tự bỏ qua một AC chưa đạt. Phát hiện ở P5 Challenge (F7) |
 
 ## 6. Việc còn lại
 
-1. **P4.5** (hoãn sang hôm sau theo yêu cầu người dùng): bật Kubernetes Docker Desktop → `docker build`
-   → `--dry-run=server` → apply → port-forward → SIGTERM → `rollout undo` → dán log vào mục 5 này.
-2. **P5** review song song theo vai + Challenge.
+1. ~~**P4.5**~~ — một phần đã làm, xem mục 7. Phần còn lại cần bật Kubernetes Docker Desktop:
+   `--dry-run=server` → apply → kiểm pod Ready → `rollout undo`.
+2. ~~**P5** review song song theo vai + Challenge~~ — đã chạy, các phát hiện đã áp ở mục 7.
 3. **P6** verification độc lập read-only.
 4. Ba việc cần người duyệt: giá trị `NEXT_PUBLIC_API_BASE` trong CD; paths-filter `deploy/**` +
    `.github/scripts/**` trong `ci.yml`; bước deploy trong `cd-web.yml`.
+5. `readinessProbe.failureThreshold: 1` + 2 replica + không có PodDisruptionBudget ⇒ có thể rơi về
+   **0 endpoint**. Chạm contract đã đóng băng (C2.2) nên không sửa trong slice này; đã ghi vào
+   `runbook.md` §6.5 và cần quay lại ở P1 của slice sau.
+
+## 7. Cập nhật sau P4.5 (một phần) và P5
+
+### 7.1 Đã verify bằng container thật — AC-2b đóng bằng signal POSIX
+
+Docker đã chạy được. `docker build -f deploy/docker/web.Dockerfile .` **thành công lần đầu tiên**
+trong lịch sử repo (trước đó `COPY --from=build /app/public ./public` trỏ vào thư mục không tồn tại).
+
+Kiểm trong container Linux, bằng signal POSIX thật (`docker kill -s`), không phải `process.emit`:
+
+| Quan sát | Kết quả |
+|---|---|
+| `/api/readyz` sau SIGTERM | **503 sau 77 ms** |
+| `/api/healthz` suốt cửa sổ drain | **giữ 200** (liveness không được sập, nếu không kubelet restart pod giữa lúc drain) |
+| Thoát tiến trình | **ExitCode 0** ở t=5129 ms |
+| SIGTERM thứ hai ở t=2s, chạy dưới `--init` | **không** cắt ngắn drain |
+| SIGINT (sau khi sửa F6) | readyz 503 trong ~1s, ExitCode 0 |
+| `Config.User` của image | `1000` — dạng số; `docker exec … process.getuid()` ⇒ `1000` |
+
+### 7.2 Phát hiện của P5 đã áp
+
+| # | Vấn đề | Sửa |
+|---|---|---|
+| S1 | `USER node` ⇒ kubelet từ chối container (`runAsNonRoot` + user không phải dạng số) — pod fail **100%**, không phải chỉ khi hồi quy | `USER 1000` (`6264c60`) |
+| F6 | `NEXT_MANUAL_SIG_HANDLE=1` tắt handler của Next cho **cả** SIGINT, mà chỉ SIGTERM được đăng ký lại ⇒ Ctrl+C mất graceful shutdown, exit 130 | đăng ký SIGINT (`bec9665`) |
+| — | Ô `globalThis` giữ cờ ready ai cũng ghi được; chỉ kiểm tồn tại thì nhận cả chuỗi/object rỗng ⇒ `isReady()` trả non-boolean ⇒ readyz 503 vĩnh viễn ⇒ rollout treo mãi vì `maxUnavailable: 0` | kiểm **hình dạng** + `=== true` (`bec9665`) |
+| F10 | Comment nói cửa sổ drain là 5s, thực tế ~10s (preStop và DRAIN_MS **nối tiếp**). Hạ grace period theo comment đó thì ExitCode thành 137 | sửa comment (`9e1f478`) |
+| — | Tag image là `sha-8b869bb` = commit contract, **không có** route.ts/readiness.ts/instrumentation.ts ⇒ tag nói sai nguồn gốc image | `sha-60b4930` (`9e1f478`) |
+| C7-B4 | `environment:` trong compose vô tác dụng với `NEXT_PUBLIC_*` | `build.args` (`b0ae290`) |
+| F11 | `gates.sh` còn CRLF trong index dù `.gitattributes` khai `eol=lf` ⇒ `bad interpreter` khi chạy trên Linux | `git ls-files --eol` nay cho `i/lf` |
+| — | Check C4.2 chỉ soi `**/*.test.*` và chỉ so với BASE_REF ⇒ `.spec.*`, file test ở cấp gốc, `.skipIf/.runIf`, và marker chưa commit đều **qua gate** | mở rộng glob + regex + thêm tầng diff với working tree (`bb4facb`) |
+| F7 | `runbook.md` không tồn tại ⇒ **AC-6 chưa đạt**, mà mục 5 lại không liệt kê | đã viết `runbook.md` |
+| F8 | Số trong mục 3/5 lạc hậu | mục này |
+
+### 7.3 Số liệu hiện tại
+
+```
+Test Files  44 passed (44)
+     Tests  1086 passed (1086)
+All files   95.42 stmts | 96.49 branch | 94.58 funcs | 95.42 lines
+```
+
+Per-file, đọc từ `coverage/lcov.info`:
+
+| File | lines | funcs | branch |
+|---|---|---|---|
+| `src/instrumentation.ts` | 16/16 | 2/2 | 7/7 |
+| `src/lib/readiness.ts` | 22/22 | 4/4 | 10/10 |
+| `src/app/api/healthz/route.ts` | 10/10 | 1/1 | 1/1 |
+| `src/app/api/readyz/route.ts` | 16/16 | 1/1 | 5/5 |
+
+**Con số `All files` bị thổi phồng** và không được dùng làm bằng chứng: `lcov.info` có cả
+`src/instrumentation.test.ts`, `src/lib/readiness.test.ts`… tức `coverage.include` của
+`vitest.config.ts` đếm **file test như file nguồn**. File test gần như luôn tự phủ 100% chính nó nên
+kéo tổng lên. Đây là ticket riêng (sửa `vitest.config.ts` chạm file của WP-C ⇒ ngoài slice này).
+
+### 7.4 Vẫn chưa verify
+
+`gates.sh` vẫn in `BO QUA validate k8s: khong co cluster` — `kubectl config current-context` cho
+`current-context is not set`, tức **Kubernetes chưa bật** trong Docker Desktop. Toàn bộ phần apply /
+pod Ready / HPA / Ingress / rolling update vẫn **chưa ai chạy**; chi tiết trong `runbook.md` §6.2.
+
+Một khoảng trống gate còn mở (P5 Challenge, F1): §4.1 là hồi quy ở **tầng bundle**, mà nó tái hiện
+được với cả 4 gate xanh **và** C4.2, C4.3 xanh. Chưa có check nào đọc `.next/server/**`.
