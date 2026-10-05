@@ -40,6 +40,18 @@ ENV NEXT_MANUAL_SIG_HANDLE=1
 COPY --from=build /app/.next/standalone ./
 COPY --from=build /app/.next/static ./.next/static
 COPY --from=build /app/public ./public
-USER node
+# `USER 1000` chu khong `USER node` — cung mot user (uid 1000 = node trong
+# node:22-alpine), nhung phai la DANG SO.
+#
+# Manifest dat `runAsNonRoot: true` va co y KHONG dat `runAsUser`. Khi do kubelet
+# phai tu xac minh user cua image khac 0, ma no chi doc duoc field `Config.User`
+# cua image — no KHONG doc /etc/passwd ben trong image de resolve ten. Gap mot
+# chuoi ten, kubelet tu choi container bang `CreateContainerConfigError:
+# container has runAsNonRoot and image has non-numeric user (node)`. Tuc pod fail
+# 100% thoi gian chu khong phai chi khi co hoi quy.
+#
+# Dang so giu nguyen y dinh cua manifest: neu ai do bo dong nay di thi container
+# chay bang root va `runAsNonRoot` se chan lai — hoi quy van lo ra.
+USER 1000
 EXPOSE 3000
 CMD ["node", "server.js"]
