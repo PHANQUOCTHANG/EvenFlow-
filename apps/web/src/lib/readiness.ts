@@ -63,8 +63,16 @@ type GlobalWithReadiness = typeof globalThis & {
 function state(): ReadinessState {
   const scope = globalThis as GlobalWithReadiness;
 
+  // Kiem HINH DANG chu khong chi kiem ton tai. Dat state tren `globalThis` la cai gia phai
+  // tra de optimizer khong fold duoc no (xem comment dau file) — nhung cai gia di kem la mot
+  // o nho ai cung ghi duoc. `if (existing)` khong thoi se nhan ca `"ready"` (chuoi), `1`, hay
+  // `{}`: khi do `existing.ready` la `undefined`, `isReady()` tra ve mot gia tri khong phai
+  // boolean (vi pham chu ky C1.2), readyz tra 503 VINH VIEN, va cong voi `maxUnavailable: 0`
+  // thi rollout treo mai trong khi `kubectl describe` chi noi readiness probe fail.
   const existing = scope[STATE_KEY];
-  if (existing) return existing;
+  if (typeof existing === "object" && existing !== null && typeof existing.ready === "boolean") {
+    return existing;
+  }
 
   const created: ReadinessState = { ready: true };
   scope[STATE_KEY] = created;
@@ -85,7 +93,9 @@ export function uptimeMs(): number {
  * Dong bo la bat buoc: `/api/readyz` phai tra loi duoc trong mot nhip probe, va mot API
  * `Promise` o day se moi goi them I/O vao dung cho khong duoc co I/O. */
 export function isReady(): boolean {
-  return state().ready;
+  // `=== true` chu khong tra thang: chu ky C1.2 chot kieu tra ve la `boolean`, va day la lop
+  // chan cuoi neu `state()` bao gio do tra ve thu khong dung hinh dang.
+  return state().ready === true;
 }
 
 /** Duong DUY NHAT doi trang thai san sang.
