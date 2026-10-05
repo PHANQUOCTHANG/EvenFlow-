@@ -161,8 +161,14 @@ services:
     build:
       context: ../..
       dockerfile: deploy/docker/web.Dockerfile
-    environment:
-      NEXT_PUBLIC_API_BASE: "http://localhost:8080"
+      # Next INLINE moi bien NEXT_PUBLIC_* vao bundle luc BUILD. Dat no o
+      # `environment:` (runtime) hoan toan vo tac dung: bundle da duoc build xong
+      # truoc do voi API_BASE = "". Khi ay browser goi URL tuong doi tren chinh
+      # origin cua pod web -- noi chi co /api/healthz va /api/readyz -- nen moi
+      # call queue/ticketing tra 404, trong khi compose TRONG NHU da cau hinh dung
+      # va nguoi doc se di tim loi o backend.
+      args:
+        NEXT_PUBLIC_API_BASE: "http://localhost:8080"
     ports: ["3000:3000"]
     # Goi /api/healthz (liveness) chu khong phai /api/readyz: compose coi
     # unhealthy la trang thai cua container, con readyz la trang thai "co nen
