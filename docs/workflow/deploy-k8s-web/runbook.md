@@ -68,19 +68,21 @@ bật** — mọi bước dưới đây sẽ fail, và `gates.sh` sẽ **bỏ qu
 
 ## 3. Apply
 
+**Bước 1 — kiểm cú pháp + schema thật trước** (server-side, cần cluster):
+
+```bash
+kubectl apply -f deploy/k8s/00-namespace.yaml          # namespace phai ton tai truoc
+kubectl apply -f deploy/k8s/ --dry-run=server
+```
+
+**Bước 2 — chỉ khi bước 1 sạch mới apply thật:**
+
 ```bash
 kubectl apply -f deploy/k8s/
 ```
 
 Thứ tự alphabet của `kubectl apply -f <dir>` là lý do các file có tiền tố số: `00-namespace.yaml`
 phải vào trước, nếu không bốn manifest còn lại fail vì namespace `eventflow` chưa tồn tại.
-
-Kiểm cú pháp + schema **thật** trước khi apply (server-side, cần cluster):
-
-```bash
-kubectl apply -f deploy/k8s/00-namespace.yaml          # namespace phai ton tai truoc
-kubectl apply -f deploy/k8s/ --dry-run=server
-```
 
 `--dry-run=client` **không** thay thế được: nó vẫn tải OpenAPI schema từ API server
 (`localhost:8080`) nên offline là fail, không phải pass. Muốn kiểm offline thật thì cài
@@ -170,7 +172,7 @@ là 137 thay vì 0.
 | `docker build` thành công | Build xanh; trước slice này image **chưa từng** build được lần nào (`COPY /app/public` trỏ vào thư mục không tồn tại). |
 | Image chạy non-root dạng số | `Config.User=1000`; `docker exec … node -e 'process.getuid()'` ⇒ `1000`. |
 | Hai probe phân biệt nhau | `/api/healthz` 200 và `/api/readyz` 200 khi bình thường. |
-| Drain thật dưới SIGTERM | readyz ⇒ **503 sau 77 ms**, healthz **giữ 200** suốt cửa sổ drain, tiến trình thoát ở t=5129 ms với **ExitCode 0**. SIGTERM thứ hai ở t=2s (dưới `--init`) **không** cắt ngắn drain. |
+| Drain thật dưới SIGTERM | readyz ⇒ 503 **dưới nửa giây** (77 ms lần đo đầu, ~316 ms khi P6 đo lại — xem `integration-report.md` §8), healthz **giữ 200** suốt cửa sổ drain, tiến trình thoát ở t=5129 ms với **ExitCode 0**. SIGTERM thứ hai ở t=2s (dưới `--init`) **không** cắt ngắn drain. |
 | Drain thật dưới SIGINT | readyz ⇒ 503 trong ~1s, ExitCode 0. Trước khi đăng ký SIGINT thì Ctrl+C rơi vào default disposition: không drain, exit 130. |
 
 ### 6.2 Chưa verify — thiếu hạ tầng trên Docker Desktop

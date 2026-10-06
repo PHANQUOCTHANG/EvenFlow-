@@ -115,7 +115,12 @@ mô tả lại mã, không phát hiện được sai lệch so với yêu cầu.
 từng task.
 
 **Không được sửa, xoá, skip test để cho qua.** Khi test đỏ, phải xác định test sai hay mã sai rồi
-mới xử lý, và ghi lại kết luận. Toàn bộ repo hiện **không có** `.skip` / `.only` / `it.todo` nào.
+mới xử lý, và ghi lại kết luận. Trong `apps/web` hiện **không có** `.skip` / `.only` / `it.todo` nào.
+Toàn repo có **đúng một** chỗ: `tests/e2e/specs/smoke.spec.ts:9` là `test.skip` cho kịch bản E2E mua
+vé **chưa viết** (chờ trang phòng chờ / checkout), không phải test đỏ bị tắt đi. Gate C4.2 soi cả
+`tests/e2e/**` nhưng chỉ chặn dòng **mới thêm**, nên dòng có sẵn này không làm gate đỏ — và một
+`.skip` mới thêm ở đó thì bị chặn. (Bản trước của câu này ghi "toàn bộ repo không có" là **sai**;
+phát hiện ở bước xác minh độc lập P6.)
 
 ## 5. Ma trận truy vết theo từng tính năng
 
@@ -204,7 +209,7 @@ không có cách nào kiểm thật.
 
 | Quan sát | Kết quả |
 |---|---|
-| `/api/readyz` sau SIGTERM | 503 sau **77 ms** |
+| `/api/readyz` sau SIGTERM | 503 **dưới nửa giây** (77 ms lần đo đầu, ~316 ms khi P6 đo lại — xem `integration-report.md` §8) |
 | `/api/healthz` suốt cửa sổ drain | **giữ 200** — liveness không được sập, nếu không kubelet sẽ restart pod giữa lúc drain |
 | Thoát tiến trình | ExitCode **0** ở t=5129 ms |
 | SIGTERM thứ hai ở t=2s, chạy dưới `--init` | **không** cắt ngắn drain |
