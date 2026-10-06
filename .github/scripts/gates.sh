@@ -36,18 +36,24 @@ BASE_REF="${BASE_REF:-8b869bb2981a41a3393180b31e2a14e5cb95f6ec}"
 WEB_DIR="apps/web"
 K8S_DIR="deploy/k8s"
 PRERENDER_MANIFEST="$WEB_DIR/.next/prerender-manifest.json"
-# Hai vung mu da duoc Challenge chung minh:
+# Pham vi file test ma C4.2 soi:
 #
-# 1. `apps/web/**/*.test.*` can it nhat mot cap thu muc, nen file test dat ngay tai
-#    `apps/web/` se VO HINH. Dung pathspec `:(glob)` cho dung ngu nghia.
-# 2. `vitest.config.ts` include ca `*.spec.*`, nhung pathspec cu chi co `*.test.*`:
+# 1. `vitest.config.ts` include ca `*.spec.*`, nhung pathspec cu chi co `*.test.*`:
 #    doi ten file tu .test.ts sang .spec.ts la du vo hieu hoa TOAN BO AC-5b, ma test
 #    van chay binh thuong nen khong ai thay gi la.
+# 2. `tests/e2e/**` (Playwright) nam NGOAI `apps/web/`, nen truoc day C4.2 khong soi
+#    no chut nao -- trong khi Playwright co ca `test.skip` lan `test.fixme`. (Dong
+#    `test.skip` co san o `tests/e2e/specs/smoke.spec.ts` co tu truoc BASE_REF nen
+#    khong bi tinh: C4.2 chi xet dong MOI THEM.)
+#
+# Ghi chu de khong ai "sua" nham: `**` cua `:(glob)` khop CA 0 thu muc, nen
+# `apps/web/**/*.test.*` da khop `apps/web/x.test.ts` tu truoc (P6 da thu thuc
+# nghiem). Khong co glob rieng cho cap goc vi khong co vung mu nao o do.
 TEST_GLOBS=(
   ':(glob)apps/web/**/*.test.*'
-  ':(glob)apps/web/*.test.*'
   ':(glob)apps/web/**/*.spec.*'
-  ':(glob)apps/web/*.spec.*'
+  ':(glob)tests/e2e/**/*.test.*'
+  ':(glob)tests/e2e/**/*.spec.*'
 )
 TEST_GLOB="${TEST_GLOBS[*]}"
 PROBE_ROUTES=("/api/healthz" "/api/readyz")
@@ -121,13 +127,29 @@ if ! worktree_diff="$(git diff --unified=0 HEAD -- "${TEST_GLOBS[@]}" 2>&1)"; th
   exit 1
 fi
 
-diff_out="$committed_diff
-$worktree_diff"
+# Tang thu ba: file test MOI, CHUA `git add`. `git diff HEAD` chi thay file da duoc
+# track, nen mot file spec moi tao chua `.skip` lot qua ca hai tang tren. Moi dong
+# cua file untracked deu la dong "them", nen gan tien to '+' cho dong nhat dinh dang.
+untracked_diff=""
+while IFS= read -r f; do
+  [ -n "$f" ] || continue
+  untracked_diff+="$(sed 's/^/+/' -- "$f")"$'\n'
+done < <(git ls-files --others --exclude-standard -- "${TEST_GLOBS[@]}")
 
+diff_out="$committed_diff
+$worktree_diff
+$untracked_diff"
+
+# Cac dang vo hieu hoa test ma regex bat:
+#   .skip( .only( .todo( .fixme(          -- vitest + Playwright (`test.fixme`)
+#   .skipIf( .runIf(                      -- vitest, dieu kien
+#   .skip.each( .only.each( .todo.each(   -- vitest tham so hoa: vo hieu TRON bang
+#   .concurrent.skip( / .only( / .todo(
+# `.onlyIf` / `.todoIf` khong ton tai trong vitest nen da bo khoi regex.
 added_skips="$(
   printf '%s\n' "$diff_out" \
     | grep -E '^\+' \
-    | grep -E '\.(skip|only|todo|skipIf|runIf|concurrent\.skip)\(|\.(skip|only|todo)If\(' \
+    | grep -E '\.(skip|only|todo|fixme|skipIf|runIf)(\.each)?\(|\.concurrent\.(skip|only|todo)\(' \
     || true
 )"
 
