@@ -300,3 +300,83 @@ dòng. Hoàn nguyên → gate exit 0, kể cả với `test.skip` có sẵn tron
 
 **Không kiểm được (giữ nguyên):** mọi thứ trên cluster — `kubectl config current-context` vẫn
 `current-context is not set`.
+
+## 9. Lần chạy sau khi bật Docker (2026-10-06)
+
+Docker Engine 28.5.1 chạy, nhưng **Kubernetes của Docker Desktop chưa bật**: không có
+`~/.kube/config`, `kubectl config get-contexts` rỗng. Bật Docker và bật Kubernetes là hai công tắc
+khác nhau (Settings → Kubernetes → *Enable Kubernetes*).
+
+### 9.1 Manifest — kiểm schema offline
+
+`kubeconform -strict -kubernetes-version 1.32.0` chạy qua image Docker (không cần cài Go):
+`5 resources found in 5 files - Valid: 5, Invalid: 0, Errors: 0`. Để chắc nó không phải một dòng "OK"
+vô điều kiện, đã làm hỏng một bản sao: HPA sang `autoscaling/v2beta2` và
+`terminationGracePeriodSecond` (thiếu `s`) ⇒ exit 1, `could not find schema for
+HorizontalPodAutoscaler` và `additional properties 'terminationGracePeriodSecond' not allowed`.
+**Không** kiểm được ngữ nghĩa chéo giữa resource — vẫn cần `--dry-run=server` và apply thật.
+
+### 9.2 Tag image trỏ sai commit — lần thứ hai
+
+`deploy/k8s/10-deployment.yaml` ghi `sha-60b4930`, nhưng `git show 60b4930:deploy/docker/web.Dockerfile`
+cho `USER node`. Image local mang tag đó chạy đúng chỉ vì được build từ working tree đã có fix. Ai build
+lại theo đúng commit trong tag sẽ ra image làm pod fail 100% (`CreateContainerConfigError`). Cùng loại
+lỗi với lần sửa `sha-8b869bb` ở mục 7.2.
+
+Không thể "gắn tag lại" image cũ: kiểm nội dung thì thấy giữa `6264c60` và `c848afa` có
+`package.json` / `package-lock.json` đổi — đồng đội đã nâng Next `15.0.3` → `^15.2.0` (`b4696f8`; lock
+giải ra **15.5.27**). Image cũ chứa Next 15.0.3, gắn tag `sha-c848afa` cho nó là nói sai nội dung.
+
+Đã đổi tag sang `sha-c848afa` và sửa runbook §1: build từ `git archive <sha>` chứ không từ working
+tree, kèm lệnh kiểm `USER` của đúng commit đó.
+
+### 9.3 Build image — chặn vì mạng
+
+`docker build` từ bản export sạch của `c848afa` fail **hai lần** ở `npm ci`:
+`npm error code ECONNRESET` / `network aborted` (sau ~330s và ~530s). `npm ci` trên host cũng mất 5
+phút. Đây là lỗi **ngoài** Dockerfile ⇒ theo spec §6.3 dừng và báo, không sửa Dockerfile để né. Hệ quả:
+image `sha-c848afa` **chưa tồn tại**, nên apply lúc này sẽ ra `ErrImageNeverPull`/`ImagePullBackOff` —
+một lỗi trung thực, thay vì chạy một image có nội dung khác tag.
+
+### 9.4 Tắt êm sau khi nâng Next — kiểm lại bằng signal POSIX
+
+Nâng Next là rủi ro trực tiếp cho AC-2b: toàn bộ cơ chế dựa vào việc Next tôn trọng
+`NEXT_MANUAL_SIG_HANDLE`, mà điều đó mới được kiểm trên 15.0.3.
+
+- Đọc mã: `next/dist/server/lib/start-server.js:364` của 15.5.27 vẫn là
+  `if (!process.env.NEXT_MANUAL_SIG_HANDLE) { process.on('SIGINT', …); process.on('SIGTERM', …) }`.
+- Gate C4.5 trên worktree đã cài 15.5.27: marker còn đủ trong cả hai bundle.
+- Chạy thật: lấy output standalone của `next build` (đã trace sẵn `node_modules`, nên **không cần
+  mạng**), chạy trong `node:22-alpine` với `--user 1000 --init` và đúng các biến của Dockerfile, rồi
+  `docker kill -s SIGTERM`:
+
+```
+next trong standalone: 15.5.27   (apps/web/node_modules/next/package.json)
+san sang: readyz=200 healthz=200 uid=1000
+t=312ms readyz=503 lan dau, healthz=200
+t=2081ms gui SIGTERM thu hai
+t=4998ms tien trinh da thoat
+ExitCode=0
+so lan healthz KHAC 200 trong cua so drain: 0
+```
+
+312 ms khớp với ~316 ms của P6 — củng cố giả thuyết ở mục 8 rằng con số 77 ms ban đầu phản ánh vòng
+poll, không phải ứng dụng.
+
+Một lần chạy trước đó **bị loại**: script giả định `server.js` ở gốc standalone, `ls` fail nhưng chuỗi
+lệnh vẫn chạy tiếp, ra `ExitCode=128` do container không khởi tạo được. Không tính là bằng chứng gì;
+lần chạy trên dùng script có `set -euo pipefail` ở bước chuẩn bị.
+
+**Phát hiện phụ — chưa kiểm được:** với Next 15.5 trên host, `server.js` nằm lồng ở
+`.next/standalone/apps/web/` chứ không ở gốc, vì Next tự suy luận gốc workspace là gốc repo (thấy
+nhiều lockfile). Trong Docker build thì context chỉ có `apps/web` (một lockfile duy nhất ở `/app`) nên
+lẽ ra vẫn ra `/app/.next/standalone/server.js` như Dockerfile đang `CMD`. Nhưng đó là suy luận — chỉ
+xác nhận được khi image build xong. Nếu sai, container sẽ chết ngay với `Cannot find module
+'/app/server.js'`.
+
+### 9.5 Còn chặn
+
+1. **Bật Kubernetes** trong Docker Desktop.
+2. **Mạng tới registry npm** đủ ổn để `npm ci` trong `docker build` chạy xong.
+
+Có cả hai thì chạy nốt theo runbook §1 → §5.

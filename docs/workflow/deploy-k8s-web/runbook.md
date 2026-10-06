@@ -10,7 +10,8 @@ Ký hiệu dùng xuyên suốt:
 
 ```bash
 IMG=ghcr.io/phanquocthang/eventflow-web
-TAG=sha-60b4930        # = 7 ky tu dau cua commit tich hop; phai khop image: trong 10-deployment.yaml
+SHA=c848afa            # commit ma image duoc build TU DO; phai khop image: trong 10-deployment.yaml
+TAG=sha-$SHA
 NS=eventflow
 ```
 
@@ -18,12 +19,21 @@ NS=eventflow
 
 ## 1. Build image
 
+Build từ **bản export sạch của đúng commit trong tag**, không phải từ working tree:
+
 ```bash
-docker build -f deploy/docker/web.Dockerfile -t "$IMG:$TAG" .
+SRC=$(mktemp -d)
+git archive "$SHA" | tar -x -C "$SRC"
+docker build -f "$SRC/deploy/docker/web.Dockerfile" -t "$IMG:$TAG" "$SRC"
 ```
 
-Context là **gốc repo** (`.`), không phải `apps/web/`: Dockerfile copy `apps/web/package.json` theo
-đường dẫn từ gốc.
+Vì sao không `docker build .` trên working tree: tag là `sha-<commit>`, mà working tree có thể chứa
+thay đổi chưa commit, hoặc đang ở commit khác. Đã xảy ra thật: image `sha-60b4930` chạy đúng vì được
+build từ working tree đã có fix, trong khi chính commit `60b4930` vẫn là `USER node` — ai build lại theo
+tag sẽ ra image làm pod fail 100%.
+
+Context là **gốc của bản export**, không phải `apps/web/`: Dockerfile copy `apps/web/package.json`
+theo đường dẫn từ gốc.
 
 Hai điều phải kiểm ngay sau khi build, vì cả hai đều làm pod fail 100% mà log build vẫn xanh:
 
@@ -32,9 +42,13 @@ Hai điều phải kiểm ngay sau khi build, vì cả hai đều làm pod fail 
 docker image inspect "$IMG:$TAG" --format 'Config.User={{.Config.User}}'
 # ky vong: Config.User=1000
 
-# (b) tag phai tro toi commit CO health endpoint, khong phai commit contract.
-git show --stat --oneline 60b4930 | head -1
+# (b) commit trong tag phai co dung Dockerfile ma image dang mang.
+git show "$SHA:deploy/docker/web.Dockerfile" | grep '^USER'
+# ky vong: USER 1000 (neu ra USER node thi tag dang tro sai commit)
 ```
+
+`npm ci` trong Dockerfile cần mạng tới registry npm. Lỗi `ECONNRESET` / `network aborted` là lỗi
+**ngoài** Dockerfile (spec §6.3): dừng và báo, không sửa Dockerfile để né.
 
 ### Truyền API base (giới hạn đã biết — xem 6.4)
 
@@ -89,11 +103,23 @@ phải vào trước, nếu không bốn manifest còn lại fail vì namespace 
 `kubeconform`:
 
 ```bash
-go install github.com/yannh/kubeconform/cmd/kubeconform@latest
-kubeconform -strict -summary deploy/k8s/
+# khong can cai Go: chay qua image. MSYS_NO_PATHCONV=1 de Git Bash khong dich duong dan /m
+MSYS_NO_PATHCONV=1 docker run --rm -v "$(pwd)/deploy/k8s:/m:ro" \
+  ghcr.io/yannh/kubeconform:latest -strict -summary -kubernetes-version 1.32.0 /m
+# ky vong: Valid: 5, Invalid: 0, Errors: 0
 ```
 
-Chưa cài trong dự án, nên hiện **chưa có** cách kiểm manifest offline nào đáng tin.
+Đọc kết quả cho đúng: **`Invalid`** là manifest sai schema. **`Errors`** là kubeconform **không tải được
+schema** (nó lấy từ GitHub mỗi lần chạy) — không nói gì về manifest. Đã gặp thật: một lần ra
+`Valid: 3, Errors: 2` khi mạng chập chờn, chạy lại hai lần liền đều `Valid: 5`. `Errors > 0` thì chạy
+lại; **đừng** đọc nó là "3/5 đạt", và cũng đừng đọc `Invalid: 0` là "đạt" khi `Errors` còn khác 0.
+
+Đã chạy được: 5/5 hợp lệ. Và đã kiểm nó **có fail thật**: trên bản sao, đổi HPA sang
+`autoscaling/v2beta2` và gõ sai `terminationGracePeriodSecond` ⇒ exit 1, nêu đúng cả hai.
+
+Giới hạn: kubeconform kiểm **schema**, không kiểm ngữ nghĩa chéo giữa các resource — `Service.selector`
+lệch nhãn pod, `scaleTargetRef.name` sai tên Deployment, probe trỏ sai path đều là schema hợp lệ. Nên
+nó **không** thay được `--dry-run=server` và càng không thay được apply thật.
 
 ## 4. Kiểm pod đã Ready
 
@@ -174,6 +200,7 @@ là 137 thay vì 0.
 | Hai probe phân biệt nhau | `/api/healthz` 200 và `/api/readyz` 200 khi bình thường. |
 | Drain thật dưới SIGTERM | readyz ⇒ 503 **dưới nửa giây** (77 ms lần đo đầu, ~316 ms khi P6 đo lại — xem `integration-report.md` §8), healthz **giữ 200** suốt cửa sổ drain, tiến trình thoát ở t=5129 ms với **ExitCode 0**. SIGTERM thứ hai ở t=2s (dưới `--init`) **không** cắt ngắn drain. |
 | Drain thật dưới SIGINT | readyz ⇒ 503 trong ~1s, ExitCode 0. Trước khi đăng ký SIGINT thì Ctrl+C rơi vào default disposition: không drain, exit 130. |
+| Drain sau khi nâng **Next 15.0.3 → 15.5.27** | Chạy output standalone của `next build` (Next 15.5.27) trong `node:22-alpine`, `--user 1000 --init`: readyz ⇒ 503 ở 312 ms, healthz giữ 200 (0 lần khác 200), SIGTERM thứ hai ở 2081 ms không cắt ngắn drain, thoát ở 4998 ms, ExitCode 0. `start-server.js` của 15.5.27 vẫn bọc cả SIGINT lẫn SIGTERM trong `if (!process.env.NEXT_MANUAL_SIG_HANDLE)`. **Chưa** chạy bằng image build từ Dockerfile — xem integration-report §9. |
 
 ### 6.2 Chưa verify — thiếu hạ tầng trên Docker Desktop
 
