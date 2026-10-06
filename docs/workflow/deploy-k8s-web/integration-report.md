@@ -118,7 +118,8 @@ thay vì argv.
 ### 4.3 WP-B: không đặt `runAsUser`, có chủ ý
 
 Chỉ `runAsNonRoot: true` + `allowPrivilegeEscalation: false` + `capabilities.drop: [ALL]`. Lý do: mục
-đích của `securityContext` là để một lần sửa Dockerfile làm mất `USER node` thì phải **lộ ra** —
+đích của `securityContext` là để một lần sửa Dockerfile làm mất dòng `USER` thì phải **lộ ra** (lúc
+merge dòng đó là `USER node`; nay là `USER 1000`, xem §7.2 S1) —
 `runAsNonRoot` một mình sẽ làm container fail (`CreateContainerConfigError`). Thêm `runAsUser: 1000`
 sẽ **che** hồi quy đó bằng cách âm thầm chạy đúng uid.
 
@@ -159,7 +160,7 @@ Kiểm trong container Linux, bằng signal POSIX thật (`docker kill -s`), kh�
 
 | Quan sát | Kết quả |
 |---|---|
-| `/api/readyz` sau SIGTERM | **503 sau 77 ms** |
+| `/api/readyz` sau SIGTERM | 503 **dưới nửa giây** (77 ms lần đo đầu, ~316 ms khi P6 đo lại — xem `integration-report.md` §8) |
 | `/api/healthz` suốt cửa sổ drain | **giữ 200** (liveness không được sập, nếu không kubelet restart pod giữa lúc drain) |
 | Thoát tiến trình | **ExitCode 0** ở t=5129 ms |
 | SIGTERM thứ hai ở t=2s, chạy dưới `--init` | **không** cắt ngắn drain |
@@ -249,3 +250,53 @@ Marker chọn theo tiêu chí **sống qua minify**: `__eventflowWebReadiness__`
 `globalThis`; `not-ready` / `503` / `SIGTERM` / `SIGINT` là literal. `grep -c setReady` bị loại vì tên
 hàm bị minify ⇒ ra 0 cả khi code đúng. Thêm bất biến ngược: `503` **không** được xuất hiện trong
 bundle `healthz`.
+
+## 8. P6 — xác minh độc lập
+
+Một tác tử **chỉ đọc**, không tham gia viết mã, kiểm 24 khẳng định của mục 7, runbook và
+`docs/kiem-thu/README.md` tại commit `96091aa`. **Kết luận: ĐẠT CÓ ĐIỀU KIỆN.**
+
+**Khớp hoàn toàn:** 1086 test / 44 file, cả 44 dòng bảng per-file, các tổng nhóm, coverage `All files`
+và per-file (cả cột funcs/branch), marker trong bundle, `setReady` = 0 trong bundle (xác nhận lý do
+loại nó). C4.5 được tái kiểm độc lập trên bundle giả: exit 0 khi đúng, exit 1 khi mất marker, khi có
+`503` trong healthz, và khi thiếu `.next`. Khẳng định "preStop chạy **trước** SIGTERM, nối tiếp" được
+tài liệu Kubernetes xác nhận: *"the hook must complete its execution before the TERM signal can be
+sent"*. Commit đúng Conventional Commits, không trailer.
+
+**Chạy lại container trên máy của tác tử P6** — hành vi khớp, con số lệch:
+
+| | mục 7.1 | P6 |
+|---|---|---|
+| readyz → 503 sau SIGTERM | 77 ms | ~316 ms |
+| exit, ExitCode | t=5129 ms, 0 | t=5052 ms, 0 |
+| healthz suốt drain | 200 | 200 |
+| SIGTERM thứ hai dưới `--init` | không cắt drain | t=2251 ms gửi, exit t=5303 ms, ExitCode 0 |
+| SIGINT | ~1s, ExitCode 0 | 315 ms, exit 5118 ms, ExitCode 0 |
+
+Con số **77 ms không tái lập được**. Nhiều khả năng mốc đo là độ trễ của vòng poll `curl` trên Git
+Bash, không phải độ trễ của ứng dụng — nên đọc nó là "dưới nửa giây", không phải một số đo chính xác.
+Khẳng định định tính (503 gần như tức thì, healthz giữ 200, exit 0 sau ~5s) đứng vững.
+
+**Phát hiện và cách xử lý:**
+
+| # | Mức | Vấn đề | Xử lý |
+|---|---|---|---|
+| 1 | trung | `spec.md` §3.5 vẫn ghi Dockerfile có `USER node` — lần thứ **tư** cùng kiểu "sửa chỗ này sót chỗ khác"; ai đọc spec có thể "sửa ngược" về giá trị làm pod fail 100% | sửa, ghi rõ bản đầu sai |
+| 2 | trung | `docs/kiem-thu/README.md` ghi "toàn bộ repo không có `.skip`" — sai, `tests/e2e/specs/smoke.spec.ts:9` có `test.skip` | sửa, nêu đúng chỗ và vì sao nó tồn tại |
+| 3 | trung | C4.2 không soi `tests/e2e/**` | thêm glob; thêm `.fixme` của Playwright vào regex |
+| 4 | thấp–trung | regex C4.2 không bắt `.skip.each(` / `.only.each(` / `.todo.each(` | sửa regex; bỏ `.onlyIf`/`.todoIf` không tồn tại trong vitest |
+| 5 | thấp | comment `gates.sh` và traceability AC-5b nói đã "đóng" vùng mù "file test ở cấp gốc" — vùng đó chưa từng mù | sửa comment, bỏ 2 glob thừa, sửa dòng AC-5b |
+| 6 | thấp | runbook §3 đặt `kubectl apply` thật **trước** `--dry-run=server` | đảo thứ tự, đánh số bước |
+| 7 | thấp | mục 4.3 báo cáo này còn nhắc `USER node` không nhãn | thêm nhãn "lúc merge" |
+
+Trong lúc vá #3–#4 tìm thêm một lỗ thứ ba mà P6 chưa nêu: file test **mới, chưa `git add`** lọt qua
+cả hai tầng diff (`git diff HEAD` không thấy file untracked). Đã thêm tầng thứ ba quét
+`git ls-files --others`.
+
+Bằng chứng cho đợt vá: regex kiểm trên 18 mẫu (bắt 12/12 dạng vô hiệu hoá, không bắt nhầm 6/6 dòng
+sạch như `it.each(`, `it.concurrent(`, `getByText("skip")`). Tiêm `test.fixme` vào một file e2e
+**untracked** và `it.skip.each` vào `lib/cn.test.ts` → **bộ test vẫn xanh**, gate exit 1 nêu đúng hai
+dòng. Hoàn nguyên → gate exit 0, kể cả với `test.skip` có sẵn trong `smoke.spec.ts`.
+
+**Không kiểm được (giữ nguyên):** mọi thứ trên cluster — `kubectl config current-context` vẫn
+`current-context is not set`.
