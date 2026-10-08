@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"math/rand"
+	"math/rand/v2"
 	"time"
 
 	"github.com/eventflow/eventflow/services/ticketing/internal/domain"
@@ -29,7 +29,6 @@ type CreateHold struct {
 	gate port.InventoryGate // Redis
 	repo port.Repository    // Postgres
 	log  *slog.Logger
-	rng  *rand.Rand
 }
 
 func NewCreateHold(gate port.InventoryGate, repo port.Repository, log *slog.Logger) *CreateHold {
@@ -37,7 +36,6 @@ func NewCreateHold(gate port.InventoryGate, repo port.Repository, log *slog.Logg
 		gate: gate,
 		repo: repo,
 		log:  log,
-		rng:  rand.New(rand.NewSource(time.Now().UnixNano())),
 	}
 }
 
@@ -84,8 +82,13 @@ func (uc *CreateHold) Execute(ctx context.Context, in CreateHoldInput) (CreateHo
 
 	// 2. Cong chan Redis. Bucket bat dau ngau nhien de trai deu contention tren
 	//    32 dong ton kho thay vi dam ca vao mot dong.
+	//
+	//    `rand.IntN` cua math/rand/v2 la ham cap goi, AN TOAN khi nhieu goroutine goi cung
+	//    luc. Ban cu dung chung mot `*rand.Rand` cho moi request -- kieu do KHONG an toan
+	//    dong thoi, ma Execute chay song song tu HTTP handler dung luc mo ban (bat duoc
+	//    duoi `go test -race` voi 50 khach giu ghe dong thoi).
 	holdID := domain.NewID()
-	startBucket := uc.rng.Intn(ev.BucketCount)
+	startBucket := rand.IntN(ev.BucketCount)
 	ttl := time.Duration(ev.HoldTTLSeconds) * time.Second
 
 	res, err := uc.gate.Hold(ctx, port.HoldRequest{

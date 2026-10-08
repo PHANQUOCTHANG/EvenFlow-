@@ -9,7 +9,6 @@ package app_test
 
 import (
 	"context"
-	"sync"
 	"testing"
 	"time"
 
@@ -71,43 +70,5 @@ func TestBug_BRO3_TaoHoldMoiPhaiHuyHoldCuVaTraKho(t *testing.T) {
 	}
 }
 
-// BUG (chay voi -race): CreateHold dung chung mot *rand.Rand cho moi request.
-// rand.Rand KHONG an toan cho nhieu goroutine, trong khi Execute duoc goi dong
-// thoi tu HTTP handler -- dung luc mo ban, khi nhieu khach cung giu ghe (BR-O1).
-// Race nay lam hong trang thai nguon ngau nhien va co the panic giua request.
-func TestBug_NhieuKhachGiuGheDongThoi_KhongDuocDataRace(t *testing.T) {
-	const quota = 10
-	const soKhach = 50
-
-	var mu sync.Mutex
-	conLai := quota
-	gate := &fakeGate{admitted: true}
-	gate.holdFn = func(port.HoldRequest) (port.HoldResult, error) {
-		mu.Lock()
-		defer mu.Unlock()
-		if conLai <= 0 {
-			return port.HoldResult{Status: port.HoldSoldOut}, nil
-		}
-		conLai--
-		return port.HoldResult{Status: port.HoldOK}, nil
-	}
-	repo := &fakeRepo{cfg: cauHinhMacDinh()}
-	uc := app.NewCreateHold(gate, repo, loggerBo())
-
-	var wg sync.WaitGroup
-	start := make(chan struct{})
-	for i := 0; i < soKhach; i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			<-start
-			_, _ = uc.Execute(context.Background(), dauVaoHopLe(1))
-		}()
-	}
-	close(start)
-	wg.Wait()
-
-	if n := len(repo.persistCalls); n != quota {
-		t.Errorf("BR-O1: so hold chot phai dung bang quota %d, nhan %d", quota, n)
-	}
-}
+// (Test data race tung o day da chuyen sang create_hold_concurrency_test.go va chay mac
+// dinh, sau khi bug duoc sua bang math/rand/v2.)
