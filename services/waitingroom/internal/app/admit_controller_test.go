@@ -115,6 +115,9 @@ func TestTick_BackpressureDecreasesRate(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			c, _, _ := newTestController(goodHealth, nil)
 			c.SetRateOverride(300) // dua rate len cao de thay ro su suy giam
+			// SetRateOverride chi de dat diem xuat phat; bo ghi de de AIMD chay (BR-Q5: ghi de
+			// duoc GIU cho toi khi Ops bo).
+			c.ClearRateOverride()
 			before := c.Rate()
 			c.metrics.(*fakeHealth).set(h, nil)
 			mustTick(t, c)
@@ -134,6 +137,9 @@ func TestTick_SustainedBackpressureFloorsAtMinRateAndKeepsTrickling(t *testing.T
 	// va van tha nho giot de hang cho khong dung han.
 	c, q, _ := newTestController(badP99, nil)
 	c.SetRateOverride(c.cfg.MaxRate)
+	// SetRateOverride chi de dat diem xuat phat; bo ghi de de AIMD chay (BR-Q5: ghi de
+	// duoc GIU cho toi khi Ops bo).
+	c.ClearRateOverride()
 	prev := c.Rate()
 	for i := 0; i < 100; i++ {
 		mustTick(t, c)
@@ -160,6 +166,9 @@ func TestTick_UnknownHealthIsTreatedAsBackpressure(t *testing.T) {
 	// Khong do duoc suc khoe tang duoi -> khong duoc tang rate "mu".
 	c, _, _ := newTestController(goodHealth, errors.New("prometheus timeout"))
 	c.SetRateOverride(200)
+	// SetRateOverride chi de dat diem xuat phat; bo ghi de de AIMD chay (BR-Q5: ghi de
+	// duoc GIU cho toi khi Ops bo).
+	c.ClearRateOverride()
 	before := c.Rate()
 	mustTick(t, c)
 	if after := c.Rate(); after >= before {
@@ -170,6 +179,9 @@ func TestTick_UnknownHealthIsTreatedAsBackpressure(t *testing.T) {
 func TestTick_RecoversAfterBackpressureClears(t *testing.T) {
 	c, _, m := newTestController(badPool, nil)
 	c.SetRateOverride(200)
+	// SetRateOverride chi de dat diem xuat phat; bo ghi de de AIMD chay (BR-Q5: ghi de
+	// duoc GIU cho toi khi Ops bo).
+	c.ClearRateOverride()
 	mustTick(t, c)
 	low := c.Rate()
 	m.set(goodHealth, nil)
