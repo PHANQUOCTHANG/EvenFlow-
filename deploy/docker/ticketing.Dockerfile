@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-FROM golang:1.23-alpine AS build
+FROM golang:1.25-alpine AS build
 WORKDIR /src
 # `go.work` khai `use` CA 9 module. O che do workspace Go phai doc duoc go.mod cua TAT CA
 # module do, nen ban cu -- chi copy libs/go va ticketing -- fail ngay o lenh dau voi
