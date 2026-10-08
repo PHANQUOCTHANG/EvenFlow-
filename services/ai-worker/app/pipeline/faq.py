@@ -14,8 +14,8 @@ from __future__ import annotations
 
 import logging
 import re
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
-from typing import Callable, Awaitable
 
 from app.pipeline.semantic_cache import normalize
 

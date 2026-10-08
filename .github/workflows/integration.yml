@@ -15,6 +15,9 @@ concurrency:
   group: integration-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   integration:
     name: integration
@@ -23,13 +26,16 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version: "1.23"
+          go-version: "1.25"
           cache-dependency-path: services/ticketing/go.mod
       - name: go test -tags=integration (ticketing)
         working-directory: services/ticketing
         run: go test -tags=integration ./... -count=1 -timeout=10m
+      # Bao qua run-and-report-tests.sh de mot smoke skip toan bo khong con xanh cam (xem
+      # oversell-gate.yml). Duong dan tuyet doi vi step chay trong services/ticketing.
       - name: oversell smoke (20 lan, gate day du 200 lan nam o oversell-gate.yml)
         working-directory: services/ticketing
         run: |
-          go test -tags=integration -run TestNoOversell \
+          bash "$GITHUB_WORKSPACE/.github/scripts/run-and-report-tests.sh" TestNoOversell \
+            go test -v -tags=integration -run TestNoOversell \
             ./test/concurrency/... -count=20 -timeout=15m

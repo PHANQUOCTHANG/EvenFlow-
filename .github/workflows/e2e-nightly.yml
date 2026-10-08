@@ -8,6 +8,9 @@ on:
     - cron: '0 19 * * *' # 02:00 gio VN
   workflow_dispatch: {}
 
+permissions:
+  contents: read
+
 jobs:
   e2e:
     name: e2e
@@ -21,14 +24,14 @@ jobs:
         run: make migrate
       - name: cho web san sang
         run: |
-          for i in $(seq 1 30); do
+          for _ in $(seq 1 30); do
             curl -sf http://localhost:3000 >/dev/null && exit 0
             sleep 2
           done
           echo "web khong san sang sau 60s"; exit 1
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
           # tests/e2e chua co package-lock.json nen khong bat cache npm o day
       - name: cai playwright
         working-directory: tests/e2e

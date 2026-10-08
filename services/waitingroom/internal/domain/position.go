@@ -19,23 +19,23 @@ const (
 
 // Position la trang thai tra ve cho client moi lan hoi.
 type Position struct {
-	State       State  `json:"state"`
-	Rank        int64  `json:"rank"`          // -1 khi con o LOBBY
-	QueueDepth  int64  `json:"queue_depth"`
-	AdmitRate   float64 `json:"admit_rate"`   // nguoi/giay
-	EtaSeconds  int64  `json:"eta_seconds"`   // -1 khi chua uoc luong duoc
-	PollAfterMs int64  `json:"poll_after_ms"` // server quyet dinh (BR-Q4)
-	ExpiresAt   int64  `json:"expires_at,omitempty"`
+	State       State   `json:"state"`
+	Rank        int64   `json:"rank"` // -1 khi con o LOBBY
+	QueueDepth  int64   `json:"queue_depth"`
+	AdmitRate   float64 `json:"admit_rate"`    // nguoi/giay
+	EtaSeconds  int64   `json:"eta_seconds"`   // -1 khi chua uoc luong duoc
+	PollAfterMs int64   `json:"poll_after_ms"` // server quyet dinh (BR-Q4)
+	ExpiresAt   int64   `json:"expires_at,omitempty"`
 }
 
 // Cac nguong polling. Day la mot trong nhung con so anh huong lon nhat toi tai
 // he thong: 300.000 nguoi poll moi 3 giay la 100k rps, con poll moi 30 giay chi
 // la 10k rps. Nen khach o xa luot duoc gian ra, khach gan luot duoc uu tien.
 const (
-	pollNear   = 3 * time.Second  // rank < 500  -- sap toi luot
-	pollMid    = 10 * time.Second // rank < 10000
-	pollFar    = 30 * time.Second // con lai
-	pollLobby  = 15 * time.Second // truoc T0: chi cho toi gio, khong voi
+	pollNear     = 3 * time.Second  // rank < 500  -- sap toi luot
+	pollMid      = 10 * time.Second // rank < 10000
+	pollFar      = 30 * time.Second // con lai
+	pollLobby    = 15 * time.Second // truoc T0: chi cho toi gio, khong voi
 	minAdmitRate = 0.01
 )
 

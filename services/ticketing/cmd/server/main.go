@@ -14,10 +14,10 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
 
-	"github.com/eventflow/eventflow/services/ticketing/internal/app"
 	httpadapter "github.com/eventflow/eventflow/services/ticketing/internal/adapter/http"
 	postgresadapter "github.com/eventflow/eventflow/services/ticketing/internal/adapter/postgres"
 	redisadapter "github.com/eventflow/eventflow/services/ticketing/internal/adapter/redis"
+	"github.com/eventflow/eventflow/services/ticketing/internal/app"
 )
 
 func main() {
@@ -59,7 +59,11 @@ func run(log *slog.Logger) error {
 		ReadTimeout:  200 * time.Millisecond,
 		WriteTimeout: 200 * time.Millisecond,
 	})
-	defer rdb.Close()
+	defer func() {
+		if err := rdb.Close(); err != nil {
+			log.Warn("dong redis client loi", "err", err)
+		}
+	}()
 
 	gate, err := redisadapter.NewGate(ctx, rdb)
 	if err != nil {

@@ -80,7 +80,7 @@ async def readyz() -> dict[str, str]:
         raise HTTPException(status_code=503, detail="chua khoi dong xong")
     try:
         await redis.ping()
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         raise HTTPException(status_code=503, detail="redis khong san sang") from exc
     return {"status": "ready"}
 

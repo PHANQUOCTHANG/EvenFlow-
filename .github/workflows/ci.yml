@@ -15,9 +15,18 @@ concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# Quyen toi thieu. Khong khai thi GITHUB_TOKEN nhan quyen mac dinh cua repo, co the
+# la write-all. `pull-requests: read` vi dorny/paths-filter tren su kien pull_request
+# goi API liet ke file doi cua PR.
+permissions:
+  contents: read
+  pull-requests: read
+
 env:
-  GO_VERSION: "1.23"
-  NODE_VERSION: "20"
+  GO_VERSION: "1.25"
+  # Trung voi runtime that: deploy/docker/web.Dockerfile chay `node:22-alpine`.
+  # Test tren Node 20 la test mot moi truong ma production khong bao gio chay.
+  NODE_VERSION: "22"
 
 jobs:
   changes:
@@ -27,11 +36,17 @@ jobs:
       go: ${{ steps.filter.outputs.go }}
       web: ${{ steps.filter.outputs.web }}
       python: ${{ steps.filter.outputs.python }}
+      deploy: ${{ steps.filter.outputs.deploy }}
+      ci: ${{ steps.filter.outputs.ci }}
     steps:
       - uses: actions/checkout@v4
       - uses: dorny/paths-filter@v3
         id: filter
         with:
+          # Moi filter phai gom CA thu ma job cua no bao ve, khong chi ma nguon. Truoc day
+          # sua `.golangci.yml`, Dockerfile, script gate, manifest, hay chinh file nay deu
+          # khong kich hoat job nao -- nen lint-go hong (action v6 + config v2) ma khong ai
+          # thay. `ci.yml` co mat o go/web/python de PR sua CI chay lai dung cac job no sua.
           filters: |
             go:
               - 'libs/go/**'
@@ -44,10 +59,23 @@ jobs:
               - 'services/antibot/**'
               - 'services/notification/**'
               - 'go.work'
+              - '.golangci.yml'
+              - '.github/scripts/check-domain-coverage.sh'
+              - '.github/workflows/ci.yml'
             web:
               - 'apps/web/**'
+              - 'deploy/docker/web.Dockerfile'
+              - '.github/scripts/gates.sh'
+              - '.github/workflows/ci.yml'
             python:
               - 'services/ai-worker/**'
+              - '.github/workflows/ci.yml'
+            deploy:
+              - 'deploy/k8s/**'
+              - 'deploy/compose/**'
+            ci:
+              - '.github/workflows/**'
+              - '.github/scripts/**'
 
   lint-go:
     name: lint-go
@@ -69,19 +97,24 @@ jobs:
             echo "== go vet $m =="
             (cd "$m" && go vet ./...)
           done
-      - uses: golangci/golangci-lint-action@v6
+      # `.golangci.yml` la dinh dang v2. action v6 tu choi golangci-lint v2, con
+      # golangci-lint v1 khong doc duoc config v2 -- tuc v6 + `version: latest` khong co
+      # to hop nao chay duoc. v9 la cap duoc README cua no ghi kem v2.12.
+      # Pin ban cu the, KHONG `latest`: `latest` chinh la thu da doi ngam tu v1 sang v2
+      # va lam hong job nay ma khong ai sua dong nao.
+      - uses: golangci/golangci-lint-action@v9
         with:
-          version: latest
+          version: v2.12.2
           args: --timeout=5m
           working-directory: libs/go
-      - uses: golangci/golangci-lint-action@v6
+      - uses: golangci/golangci-lint-action@v9
         with:
-          version: latest
+          version: v2.12.2
           args: --timeout=5m
           working-directory: services/ticketing
-      - uses: golangci/golangci-lint-action@v6
+      - uses: golangci/golangci-lint-action@v9
         with:
-          version: latest
+          version: v2.12.2
           args: --timeout=5m
           working-directory: services/waitingroom
 
@@ -149,6 +182,15 @@ jobs:
                    services/antibot services/notification; do
             ./.github/scripts/check-domain-coverage.sh "$m" 70
           done
+      # Test tai hien bug (`//go:build bugrepro`) co y KHONG chay mac dinh -- chung FAIL cho
+      # toi khi bug duoc sua. Nhung khong gate nao bien dich chung, nen doi chu ky cua port
+      # hay fake se lam chung hong ma khong ai biet. Chi BIEN DICH (go vet), khong chay.
+      - name: bien dich test bugrepro (khong chay)
+        run: |
+          set -e
+          for m in services/ticketing services/waitingroom; do
+            (cd "$m" && go vet -tags bugrepro ./internal/...)
+          done
 
   test-web:
     name: test-web
@@ -191,12 +233,117 @@ jobs:
           set -e
           if [ "$code" -ne 0 ] && [ "$code" -ne 5 ]; then exit "$code"; fi
 
-  build:
-    name: build
-    needs: [changes, lint-go, lint-web, lint-python, test-go, test-web, test-python]
-    if: always() && !cancelled() && !contains(needs.*.result, 'failure')
+  # Gate C4.2 (.skip moi them), C4.3 (probe bi prerender), C4.5 (nhanh 503 con trong
+  # bundle) chi ton tai trong gates.sh. Truoc day script nay chi chay tay -- C4.5 la
+  # check DUY NHAT bat duoc loi nhanh 503 bi optimizer xoa khoi ban production trong
+  # khi ca 1086 test van xanh. Job nay lap lai lint/test/build cua cac job tren; gop
+  # lai thi phai doi ten job (co the dang la required check), nen chap nhan lap.
+  gates-web:
+    name: gates-web
+    needs: changes
+    if: needs.changes.outputs.web == 'true'
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+        with:
+          # C4.2 so diff voi BASE_REF; checkout nong 1 commit thi BASE_REF khong co
+          # trong lich su va script fail "khong giai duoc thanh commit".
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: apps/web/package-lock.json
+      - run: npm ci
+        working-directory: apps/web
+      - name: gates.sh (C4.1 - C4.5)
+        # Gia tri su kien di qua env, khong noi suy thang vao script.
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PUSH_BEFORE: ${{ github.event.before }}
+        # Tinh BASE_REF va goi script trong CUNG mot step: bien shell khong song sang
+        # step sau.
+        run: |
+          set -euo pipefail
+          base=""
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            base="$PR_BASE"
+          elif [ -n "$PUSH_BEFORE" ] && [ "$PUSH_BEFORE" != "0000000000000000000000000000000000000000" ]; then
+            base="$PUSH_BEFORE"
+          fi
+          if [ -n "$base" ]; then
+            if ! git cat-file -e "${base}^{commit}" 2>/dev/null; then
+              git fetch --no-tags origin "$base" || true
+            fi
+            if ! git cat-file -e "${base}^{commit}" 2>/dev/null; then
+              echo "::error title=gates-web::commit base ${base} khong con trong lich su (force-push?). Khong so duoc diff test => KHONG DAT."
+              exit 1
+            fi
+            export BASE_REF="$base"
+          fi
+          bash .github/scripts/gates.sh
+
+  validate-deploy:
+    name: validate-deploy
+    needs: changes
+    if: needs.changes.outputs.deploy == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # Kiem SCHEMA (sai apiVersion, sai ten field, sai cap). KHONG kiem ngu nghia cheo
+      # giua resource (selector, scaleTargetRef, duong dan probe) -- cai do can
+      # `kubectl apply --dry-run=server` tren cluster that. Xem runbook.md §3.
+      - name: kubeconform -strict
+        run: |
+          docker run --rm -v "$PWD/deploy/k8s:/m:ro" ghcr.io/yannh/kubeconform:v0.8.0 \
+            -strict -summary -kubernetes-version 1.32.0 /m
+      - name: docker compose config
+        run: docker compose -f deploy/compose/docker-compose.yml config -q
+
+  lint-ci:
+    name: lint-ci
+    needs: changes
+    if: needs.changes.outputs.ci == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: actionlint (kem shellcheck)
+        run: docker run --rm -v "$PWD:/repo:ro" -w /repo rhysd/actionlint:1.7.7 -color=false
+      - name: test cua script CI
+        # `|| exit 1` trong vong lap: khong co no thi vong lap chi tra exit code cua
+        # file CUOI, va mot file test fail o giua van ra xanh.
+        run: |
+          set -uo pipefail
+          for t in .github/scripts/tests/*.sh; do
+            echo "== $t =="
+            bash "$t" || exit 1
+          done
+
+  build:
+    name: build
+    needs: [changes, lint-go, lint-web, lint-python, test-go, test-web, test-python, gates-web, validate-deploy, lint-ci]
+    # `always()`, KHONG dat dieu kien "khong co job nao fail" o day. GitHub tinh mot job
+    # bi SKIP la "Success" -- ke ca khi no la required check. Ban cu dat
+    # `!contains(needs.*.result, 'failure')` vao `if:` cua job, nen khi lint/test fail
+    # thi `build` bi skip va bao XANH. Dieu kien phai nam trong mot STEP de job FAIL that.
+    # Run cu bi `cancel-in-progress` huy: `cancelled` trong needs khong duoc tinh la dat.
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      # `if: always()` ca o STEP: khong co no thi step mang dieu kien ngam `success()`, va
+      # khi run bi huy step co the bi skip -- gate khong `exit 1` duoc va job khong fail.
+      - name: chan neu co job truoc fail hoac bi huy
+        if: always()
+        env:
+          GATE_BAD: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}
+          NEEDS_JSON: ${{ toJSON(needs) }}
+        run: |
+          if [ "$GATE_BAD" = "true" ]; then
+            echo "::error title=build::co job truoc fail hoac bi huy -- build KHONG DAT."
+            printf '%s\n' "$NEEDS_JSON"
+            exit 1
+          fi
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         if: needs.changes.outputs.go == 'true'

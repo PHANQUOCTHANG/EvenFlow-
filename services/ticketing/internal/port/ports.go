@@ -32,10 +32,10 @@ type HoldRequest struct {
 }
 
 type HoldResult struct {
-	Status        HoldStatus
-	Bucket        int
-	ExpiresAt     time.Time
-	ExistingHold  string
+	Status       HoldStatus
+	Bucket       int
+	ExpiresAt    time.Time
+	ExistingHold string
 }
 
 // InventoryGate la cong chan nhanh tren Redis.

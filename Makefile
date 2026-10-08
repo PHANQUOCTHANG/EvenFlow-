@@ -65,9 +65,15 @@ gates: ## Cong chat luong cuc bo cho apps/web (lint, typecheck, coverage, build 
 test-integration: ## Integration test (testcontainers -- can Docker)
 	go test -tags=integration ./... -count=1 -timeout=10m
 
+# TESTFLAGS: co them cho `go test`, mac dinh rong (chay tay khong doi hanh vi). CI
+# truyen `TESTFLAGS=-v` de .github/scripts/run-and-report-tests.sh dem duoc so lan
+# PASS/SKIP -- `go test` coi SKIP la thanh cong, nen khong co -v thi mot gate skip
+# toan bo van xanh ma khong ai biet.
+TESTFLAGS ?=
+
 .PHONY: test-oversell
 test-oversell: ## EVF-39 -- cong chat luong. Fail thi KHONG duoc release.
-	go test -tags=integration -run TestNoOversell \
+	go test $(TESTFLAGS) -tags=integration -run TestNoOversell \
 		./services/ticketing/test/concurrency/... -count=200 -timeout=30m
 
 ## ---------- Chiu tai ----------

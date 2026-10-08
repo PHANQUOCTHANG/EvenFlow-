@@ -14,6 +14,11 @@ concurrency:
   group: trivy-${{ github.ref }}
   cancel-in-progress: true
 
+# Quyen toi thieu; `pull-requests: read` cho dorny/paths-filter tren pull_request.
+permissions:
+  contents: read
+  pull-requests: read
+
 jobs:
   changes:
     name: detect-changes
@@ -26,13 +31,20 @@ jobs:
         id: filter
         with:
           filters: |
+            # Filter phai gom MOI thu ma `docker build` doc, khong chi thu muc cua service
+            # duoc quet. Image Go copy `go.work` + go.mod cua CA 9 module, nen sua go.mod cua
+            # gateway (vd nang `go` directive) lam hong image ticketing -- truoc day thay doi
+            # do khong kich hoat quet nao, va day la noi DUY NHAT build image Go tren PR.
             any:
               - 'deploy/docker/**'
-              - 'services/waitingroom/**'
-              - 'services/ticketing/**'
-              - 'services/ai-worker/**'
+              - 'services/**'
               - 'apps/web/**'
               - 'libs/go/**'
+              - 'go.work'
+              - '.dockerignore'
+              # Sua chinh workflow nay thi phai quet lai, neu khong mot thay doi lam hong
+              # buoc quet se merge ma khong lan nao chay.
+              - '.github/workflows/trivy.yml'
 
   scan:
     name: trivy
@@ -67,7 +79,24 @@ jobs:
   trivy-gate:
     name: trivy-gate
     needs: [changes, scan]
-    if: always() && !cancelled() && !contains(needs.scan.result, 'failure')
+    # `always()`, KHONG dat dieu kien vao day. GitHub tinh job bi SKIP la "Success", ke ca
+    # khi no la required check. Ban cu `!contains(needs.scan.result, 'failure')` o `if:` nen
+    # khi scan tim ra CRITICAL thi gate bi skip va bao XANH -- dung cai gate sinh ra de chan.
+    # No cung chi xet `scan`, nen `detect-changes` hong => scan skip => gate xanh.
+    if: always()
     runs-on: ubuntu-latest
     steps:
-      - run: echo "khong co CRITICAL moi hoac khong co gi lien quan Docker de scan"
+      # `if: always()` ca o STEP: khong co no thi step mang dieu kien ngam `success()` va co
+      # the bi skip khi run bi huy -- gate khong fail duoc.
+      - name: chan neu scan hoac detect-changes fail / bi huy
+        if: always()
+        env:
+          GATE_BAD: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}
+          NEEDS_JSON: ${{ toJSON(needs) }}
+        run: |
+          if [ "$GATE_BAD" = "true" ]; then
+            echo "::error title=trivy-gate::co job truoc fail hoac bi huy (CRITICAL, hoac detect-changes hong) -- KHONG DAT."
+            printf '%s\n' "$NEEDS_JSON"
+            exit 1
+          fi
+          echo "khong co CRITICAL moi hoac khong co gi lien quan Docker de scan"
