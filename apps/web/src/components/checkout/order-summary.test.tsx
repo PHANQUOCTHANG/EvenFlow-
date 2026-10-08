@@ -23,8 +23,10 @@
  *      - noi "da giu duoc ve" la co the sai -> khach tuong minh an chac roi roi di mat.
  *      - noi "that bai" cung co the sai -> khach di mua lai o cho khac trong khi ve
  *        cua minh dang bi giu, roi het han vo ich.
- *      - moi bam lai la te nhat: bam lai sinh key MOI -> hai hold cho cung mot khach,
- *        va BR-O3 noi hold moi HUY hold cu, nen ket qua phu thuoc thu tu toi dich.
+ *      - moi bam lai la te nhat: bam lai sinh key MOI, tuc mot request tao hold thu hai.
+ *        Neu lan dau da toi dich thi BR-O3 tra lai hold do; neu chua thi lan hai tao hold
+ *        moi -- khach khong biet minh dang o truong hop nao, va ket qua phu thuoc thu tu
+ *        toi dich cua hai request.
  *    Test doi khang: truyen `primaryActionLabel` + `onPrimaryAction` vao trang thai
  *    `ambiguous` roi bam HET moi nut va bat buoc `onPrimaryAction` khong he duoc goi.
  *
