@@ -118,7 +118,8 @@ thay vì argv.
 ### 4.3 WP-B: không đặt `runAsUser`, có chủ ý
 
 Chỉ `runAsNonRoot: true` + `allowPrivilegeEscalation: false` + `capabilities.drop: [ALL]`. Lý do: mục
-đích của `securityContext` là để một lần sửa Dockerfile làm mất `USER node` thì phải **lộ ra** —
+đích của `securityContext` là để một lần sửa Dockerfile làm mất dòng `USER` thì phải **lộ ra** (lúc
+merge dòng đó là `USER node`; nay là `USER 1000`, xem §7.2 S1) —
 `runAsNonRoot` một mình sẽ làm container fail (`CreateContainerConfigError`). Thêm `runAsUser: 1000`
 sẽ **che** hồi quy đó bằng cách âm thầm chạy đúng uid.
 
@@ -159,7 +160,7 @@ Kiểm trong container Linux, bằng signal POSIX thật (`docker kill -s`), kh�
 
 | Quan sát | Kết quả |
 |---|---|
-| `/api/readyz` sau SIGTERM | **503 sau 77 ms** |
+| `/api/readyz` sau SIGTERM | 503 **dưới nửa giây** (77 ms lần đo đầu, ~316 ms khi P6 đo lại — xem `integration-report.md` §8) |
 | `/api/healthz` suốt cửa sổ drain | **giữ 200** (liveness không được sập, nếu không kubelet restart pod giữa lúc drain) |
 | Thoát tiến trình | **ExitCode 0** ở t=5129 ms |
 | SIGTERM thứ hai ở t=2s, chạy dưới `--init` | **không** cắt ngắn drain |
@@ -249,3 +250,133 @@ Marker chọn theo tiêu chí **sống qua minify**: `__eventflowWebReadiness__`
 `globalThis`; `not-ready` / `503` / `SIGTERM` / `SIGINT` là literal. `grep -c setReady` bị loại vì tên
 hàm bị minify ⇒ ra 0 cả khi code đúng. Thêm bất biến ngược: `503` **không** được xuất hiện trong
 bundle `healthz`.
+
+## 8. P6 — xác minh độc lập
+
+Một tác tử **chỉ đọc**, không tham gia viết mã, kiểm 24 khẳng định của mục 7, runbook và
+`docs/kiem-thu/README.md` tại commit `96091aa`. **Kết luận: ĐẠT CÓ ĐIỀU KIỆN.**
+
+**Khớp hoàn toàn:** 1086 test / 44 file, cả 44 dòng bảng per-file, các tổng nhóm, coverage `All files`
+và per-file (cả cột funcs/branch), marker trong bundle, `setReady` = 0 trong bundle (xác nhận lý do
+loại nó). C4.5 được tái kiểm độc lập trên bundle giả: exit 0 khi đúng, exit 1 khi mất marker, khi có
+`503` trong healthz, và khi thiếu `.next`. Khẳng định "preStop chạy **trước** SIGTERM, nối tiếp" được
+tài liệu Kubernetes xác nhận: *"the hook must complete its execution before the TERM signal can be
+sent"*. Commit đúng Conventional Commits, không trailer.
+
+**Chạy lại container trên máy của tác tử P6** — hành vi khớp, con số lệch:
+
+| | mục 7.1 | P6 |
+|---|---|---|
+| readyz → 503 sau SIGTERM | 77 ms | ~316 ms |
+| exit, ExitCode | t=5129 ms, 0 | t=5052 ms, 0 |
+| healthz suốt drain | 200 | 200 |
+| SIGTERM thứ hai dưới `--init` | không cắt drain | t=2251 ms gửi, exit t=5303 ms, ExitCode 0 |
+| SIGINT | ~1s, ExitCode 0 | 315 ms, exit 5118 ms, ExitCode 0 |
+
+Con số **77 ms không tái lập được**. Nhiều khả năng mốc đo là độ trễ của vòng poll `curl` trên Git
+Bash, không phải độ trễ của ứng dụng — nên đọc nó là "dưới nửa giây", không phải một số đo chính xác.
+Khẳng định định tính (503 gần như tức thì, healthz giữ 200, exit 0 sau ~5s) đứng vững.
+
+**Phát hiện và cách xử lý:**
+
+| # | Mức | Vấn đề | Xử lý |
+|---|---|---|---|
+| 1 | trung | `spec.md` §3.5 vẫn ghi Dockerfile có `USER node` — lần thứ **tư** cùng kiểu "sửa chỗ này sót chỗ khác"; ai đọc spec có thể "sửa ngược" về giá trị làm pod fail 100% | sửa, ghi rõ bản đầu sai |
+| 2 | trung | `docs/kiem-thu/README.md` ghi "toàn bộ repo không có `.skip`" — sai, `tests/e2e/specs/smoke.spec.ts:9` có `test.skip` | sửa, nêu đúng chỗ và vì sao nó tồn tại |
+| 3 | trung | C4.2 không soi `tests/e2e/**` | thêm glob; thêm `.fixme` của Playwright vào regex |
+| 4 | thấp–trung | regex C4.2 không bắt `.skip.each(` / `.only.each(` / `.todo.each(` | sửa regex; bỏ `.onlyIf`/`.todoIf` không tồn tại trong vitest |
+| 5 | thấp | comment `gates.sh` và traceability AC-5b nói đã "đóng" vùng mù "file test ở cấp gốc" — vùng đó chưa từng mù | sửa comment, bỏ 2 glob thừa, sửa dòng AC-5b |
+| 6 | thấp | runbook §3 đặt `kubectl apply` thật **trước** `--dry-run=server` | đảo thứ tự, đánh số bước |
+| 7 | thấp | mục 4.3 báo cáo này còn nhắc `USER node` không nhãn | thêm nhãn "lúc merge" |
+
+Trong lúc vá #3–#4 tìm thêm một lỗ thứ ba mà P6 chưa nêu: file test **mới, chưa `git add`** lọt qua
+cả hai tầng diff (`git diff HEAD` không thấy file untracked). Đã thêm tầng thứ ba quét
+`git ls-files --others`.
+
+Bằng chứng cho đợt vá: regex kiểm trên 18 mẫu (bắt 12/12 dạng vô hiệu hoá, không bắt nhầm 6/6 dòng
+sạch như `it.each(`, `it.concurrent(`, `getByText("skip")`). Tiêm `test.fixme` vào một file e2e
+**untracked** và `it.skip.each` vào `lib/cn.test.ts` → **bộ test vẫn xanh**, gate exit 1 nêu đúng hai
+dòng. Hoàn nguyên → gate exit 0, kể cả với `test.skip` có sẵn trong `smoke.spec.ts`.
+
+**Không kiểm được (giữ nguyên):** mọi thứ trên cluster — `kubectl config current-context` vẫn
+`current-context is not set`.
+
+## 9. Lần chạy sau khi bật Docker (2026-10-06)
+
+Docker Engine 28.5.1 chạy, nhưng **Kubernetes của Docker Desktop chưa bật**: không có
+`~/.kube/config`, `kubectl config get-contexts` rỗng. Bật Docker và bật Kubernetes là hai công tắc
+khác nhau (Settings → Kubernetes → *Enable Kubernetes*).
+
+### 9.1 Manifest — kiểm schema offline
+
+`kubeconform -strict -kubernetes-version 1.32.0` chạy qua image Docker (không cần cài Go):
+`5 resources found in 5 files - Valid: 5, Invalid: 0, Errors: 0`. Để chắc nó không phải một dòng "OK"
+vô điều kiện, đã làm hỏng một bản sao: HPA sang `autoscaling/v2beta2` và
+`terminationGracePeriodSecond` (thiếu `s`) ⇒ exit 1, `could not find schema for
+HorizontalPodAutoscaler` và `additional properties 'terminationGracePeriodSecond' not allowed`.
+**Không** kiểm được ngữ nghĩa chéo giữa resource — vẫn cần `--dry-run=server` và apply thật.
+
+### 9.2 Tag image trỏ sai commit — lần thứ hai
+
+`deploy/k8s/10-deployment.yaml` ghi `sha-60b4930`, nhưng `git show 60b4930:deploy/docker/web.Dockerfile`
+cho `USER node`. Image local mang tag đó chạy đúng chỉ vì được build từ working tree đã có fix. Ai build
+lại theo đúng commit trong tag sẽ ra image làm pod fail 100% (`CreateContainerConfigError`). Cùng loại
+lỗi với lần sửa `sha-8b869bb` ở mục 7.2.
+
+Không thể "gắn tag lại" image cũ: kiểm nội dung thì thấy giữa `6264c60` và `c848afa` có
+`package.json` / `package-lock.json` đổi — đồng đội đã nâng Next `15.0.3` → `^15.2.0` (`b4696f8`; lock
+giải ra **15.5.27**). Image cũ chứa Next 15.0.3, gắn tag `sha-c848afa` cho nó là nói sai nội dung.
+
+Đã đổi tag sang `sha-c848afa` và sửa runbook §1: build từ `git archive <sha>` chứ không từ working
+tree, kèm lệnh kiểm `USER` của đúng commit đó.
+
+### 9.3 Build image — chặn vì mạng
+
+`docker build` từ bản export sạch của `c848afa` fail **hai lần** ở `npm ci`:
+`npm error code ECONNRESET` / `network aborted` (sau ~330s và ~530s). `npm ci` trên host cũng mất 5
+phút. Đây là lỗi **ngoài** Dockerfile ⇒ theo spec §6.3 dừng và báo, không sửa Dockerfile để né. Hệ quả:
+image `sha-c848afa` **chưa tồn tại**, nên apply lúc này sẽ ra `ErrImageNeverPull`/`ImagePullBackOff` —
+một lỗi trung thực, thay vì chạy một image có nội dung khác tag.
+
+### 9.4 Tắt êm sau khi nâng Next — kiểm lại bằng signal POSIX
+
+Nâng Next là rủi ro trực tiếp cho AC-2b: toàn bộ cơ chế dựa vào việc Next tôn trọng
+`NEXT_MANUAL_SIG_HANDLE`, mà điều đó mới được kiểm trên 15.0.3.
+
+- Đọc mã: `next/dist/server/lib/start-server.js:364` của 15.5.27 vẫn là
+  `if (!process.env.NEXT_MANUAL_SIG_HANDLE) { process.on('SIGINT', …); process.on('SIGTERM', …) }`.
+- Gate C4.5 trên worktree đã cài 15.5.27: marker còn đủ trong cả hai bundle.
+- Chạy thật: lấy output standalone của `next build` (đã trace sẵn `node_modules`, nên **không cần
+  mạng**), chạy trong `node:22-alpine` với `--user 1000 --init` và đúng các biến của Dockerfile, rồi
+  `docker kill -s SIGTERM`:
+
+```
+next trong standalone: 15.5.27   (apps/web/node_modules/next/package.json)
+san sang: readyz=200 healthz=200 uid=1000
+t=312ms readyz=503 lan dau, healthz=200
+t=2081ms gui SIGTERM thu hai
+t=4998ms tien trinh da thoat
+ExitCode=0
+so lan healthz KHAC 200 trong cua so drain: 0
+```
+
+312 ms khớp với ~316 ms của P6 — củng cố giả thuyết ở mục 8 rằng con số 77 ms ban đầu phản ánh vòng
+poll, không phải ứng dụng.
+
+Một lần chạy trước đó **bị loại**: script giả định `server.js` ở gốc standalone, `ls` fail nhưng chuỗi
+lệnh vẫn chạy tiếp, ra `ExitCode=128` do container không khởi tạo được. Không tính là bằng chứng gì;
+lần chạy trên dùng script có `set -euo pipefail` ở bước chuẩn bị.
+
+**Phát hiện phụ — chưa kiểm được:** với Next 15.5 trên host, `server.js` nằm lồng ở
+`.next/standalone/apps/web/` chứ không ở gốc, vì Next tự suy luận gốc workspace là gốc repo (thấy
+nhiều lockfile). Trong Docker build thì context chỉ có `apps/web` (một lockfile duy nhất ở `/app`) nên
+lẽ ra vẫn ra `/app/.next/standalone/server.js` như Dockerfile đang `CMD`. Nhưng đó là suy luận — chỉ
+xác nhận được khi image build xong. Nếu sai, container sẽ chết ngay với `Cannot find module
+'/app/server.js'`.
+
+### 9.5 Còn chặn
+
+1. **Bật Kubernetes** trong Docker Desktop.
+2. **Mạng tới registry npm** đủ ổn để `npm ci` trong `docker build` chạy xong.
+
+Có cả hai thì chạy nốt theo runbook §1 → §5.
