@@ -36,11 +36,13 @@
  *    render roi assert `onQuantityChange` chua he duoc goi, DONG THOI assert khong co
  *    `role="spinbutton"`/`input[type=number]`/nut tang-giam nao.
  *
- * 3) BR-O3 (docs/01 dong 86) — "Mot khach chi co 1 hold dang hoat dong moi su kien.
- *    Tao hold moi -> hold cu bi huy va tra kho ngay." Khach dang giu 2 ve hang A ma
- *    bam sang hang B thi MAT 2 ve hang A. Khong canh bao thi khach khong hieu vi sao
- *    cho cua minh bien mat. Canh bao phai la TEXT (handoff §5 nguyen tac 7: trang
- *    thai khong duoc phan biet chi bang mau).
+ * 3) BR-O3 (docs/01 dong 86, sua 2026-10-08) — "Mot khach chi co 1 hold dang hoat dong
+ *    moi su kien. Goi tao hold khi da co hold con han -> tra ve dung hold dang co." Khach
+ *    dang giu 2 ve hang A ma bam sang hang B thi nhan lai CHINH 2 ve hang A, khong doi duoc
+ *    cho toi khi thanh toan hoac het han. Khong noi truoc thi khach chon B roi nhan ve A ma
+ *    khong hieu vi sao. Canh bao phai la TEXT (handoff §5 nguyen tac 7: trang thai khong
+ *    duoc phan biet chi bang mau), va KHONG duoc noi "huy" -- ban cu cua BR-O3 noi hold cu
+ *    bi huy, dieu chua tung xay ra o backend.
  */
 import { fireEvent, render } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
@@ -735,7 +737,7 @@ describe("TicketTierCard — sold_out khong mot chieu, phai hoi phuc duoc (AC-4,
 });
 
 describe("TicketTierCard — dang co hold o hang khac: phai canh bao (AC-6, BR-O3)", () => {
-  it("`hasActiveHoldElsewhere` -> co canh bao bang CHU rang hold hien tai se bi huy", () => {
+  it("`hasActiveHoldElsewhere` -> canh bao bang CHU noi cach doi duoc hang: thanh toan hoac het han", () => {
     const { container } = render(
       <TicketTierCard
         {...BASE}
@@ -747,7 +749,24 @@ describe("TicketTierCard — dang co hold o hang khac: phai canh bao (AC-6, BR-O
       />,
     );
 
-    expect(allText(container)).toMatch(/hu[ỷyỳ]/i);
+    expect(allText(container)).toMatch(/thanh to[áa]n/i);
+    expect(allText(container)).toMatch(/h[ếe]t h[ạa]n/i);
+  });
+
+  it("canh bao KHONG duoc noi hold dang co se bi huy (BR-O3: bam lai nhan lai dung hold cu)", () => {
+    const { container } = render(
+      <TicketTierCard
+        {...BASE}
+        availability="available"
+        maxSelectable={3}
+        quantity={0}
+        hasActiveHoldElsewhere
+        onQuantityChange={vi.fn()}
+      />,
+    );
+
+    expect(allText(container)).not.toMatch(/hu[ỷyỳ]/i);
+    expect(allText(container)).not.toMatch(/tr[ảa] (l[ạa]i )?kho/i);
   });
 
   it("canh bao noi ro la lien quan den ve dang giu", () => {
@@ -776,7 +795,8 @@ describe("TicketTierCard — dang co hold o hang khac: phai canh bao (AC-6, BR-O
       />,
     );
 
-    expect(allText(container)).not.toMatch(/hu[ỷyỳ]/i);
+    expect(allText(container)).not.toMatch(/đang gi[ữu] v[ée] [ởo] h[ạa]ng kh[áa]c/i);
+    expect(allText(container)).not.toMatch(/h[ếe]t h[ạa]n/i);
   });
 
   it("canh bao la text thuc su, khong phai chi mot thuoc tinh mau/data", () => {
@@ -819,12 +839,13 @@ describe("TicketTierCard — dang co hold o hang khac: phai canh bao (AC-6, BR-O
       />,
     );
 
-    expect(atText(container)).toMatch(/hu[ỷyỳ]/i);
+    expect(atText(container)).toMatch(/h[ếe]t h[ạa]n/i);
   });
 
   it("canh bao khong lam mat dieu khien chon so luong (canh bao, khong phai chan)", () => {
-    // AC-6 doi CANH BAO truoc khi doi lua chon, khong doi khoa lua chon lai: khach
-    // van phai doi duoc hang ve, chi la phai biet truoc minh se mat hold cu.
+    // AC-6 chi doi CANH BAO, khong doi khoa lua chon. Sau khi BR-O3 duoc sua (2026-10-08)
+    // thi chon hang khac khong doi duoc hold -- khoa dieu khien la mot quyet dinh UX rieng,
+    // CHUA lam; test nay ghim hanh vi hien tai de quyet dinh do phai doi no co chu y.
     const { container } = render(
       <TicketTierCard
         {...BASE}

@@ -38,8 +38,10 @@ export interface TicketTierCardProps {
   onQuantityChange?: (next: number) => void;
   selected?: boolean;
   disabled?: boolean;
-  /** BR-O3: moi khach chi co 1 hold hoat dong tren moi su kien; tao hold moi thi hold cu bi
-   *  huy va tra kho ngay. Phai canh bao truoc, khong thi khach mat cho dang giu ma khong hieu. */
+  /** BR-O3: moi khach chi co 1 hold hoat dong tren moi su kien. Dang giu ve o hang khac thi
+   *  dat giu o hang nay se nhan lai DUNG hold dang co (hang ve + so luong cu), khong doi
+   *  duoc cho toi khi thanh toan xong hoac hold het han. Phai noi truoc, khong thi khach chon
+   *  hang nay roi nhan ve hang cu ma khong hieu vi sao. */
   hasActiveHoldElsewhere?: boolean;
   className?: string;
 }
@@ -97,7 +99,8 @@ export function TicketTierCard({
 
       {hasActiveHoldElsewhere ? (
         <Alert variant="warning" title="Bạn đang giữ vé ở hạng khác">
-          Chọn hạng vé này sẽ huỷ phần vé đang giữ và trả lại kho ngay.
+          Mỗi khách chỉ giữ được một lượt vé cho sự kiện này. Hoàn tất thanh toán phần đang giữ,
+          hoặc đợi nó hết hạn, rồi mới chọn được hạng vé khác.
         </Alert>
       ) : null}
 
