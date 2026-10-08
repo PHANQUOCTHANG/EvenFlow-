@@ -1,10 +1,28 @@
 # syntax=docker/dockerfile:1
 FROM golang:1.23-alpine AS build
 WORKDIR /src
-# Copy truoc phan manifest de tan dung cache layer: doi code khong lam tai lai module.
+# `go.work` khai `use` CA 9 module. O che do workspace Go phai doc duoc go.mod cua TAT CA
+# module do, nen ban cu -- chi copy libs/go va waitingroom -- fail ngay o lenh dau voi
+# `go: cannot load module ../gateway listed in go.work file` (tai hien tai cho tu ban
+# export sach). Image nay CHUA TUNG build duoc: Trivy matrix waitingroom do tren moi push
+# len main, va nhieu kha nang day cung la ly do E2E nightly do o `make up` (chua tai hien
+# rieng).
+#
+# Chi copy go.mod cua cac module KHONG dung, khong copy ma nguon cua chung: copy ca
+# `services/` se keo file chua track cua moi service (`.env`, `*.pem`) vao build stage, va
+# sua bat ky service nao cung lam mat cache cua image nay. Danh sach phai khop `go.work`:
+# them module vao go.work thi them mot dong o day.
+#
+# Khong dung GOWORK=off de ne: repo khong track go.sum nao, nen o che do module `go build`
+# doi checksum ma khong co (`missing go.sum entry`, da thu).
 COPY go.work ./
-COPY libs/go/go.mod libs/go/
-COPY services/waitingroom/go.mod services/waitingroom/
+COPY services/gateway/go.mod services/gateway/
+COPY services/identity/go.mod services/identity/
+COPY services/event/go.mod services/event/
+COPY services/ticketing/go.mod services/ticketing/
+COPY services/payment/go.mod services/payment/
+COPY services/antibot/go.mod services/antibot/
+COPY services/notification/go.mod services/notification/
 COPY libs ./libs
 COPY services/waitingroom ./services/waitingroom
 RUN --mount=type=cache,target=/go/pkg/mod \
