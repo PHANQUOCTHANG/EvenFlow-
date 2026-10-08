@@ -19,7 +19,7 @@ export interface NavItem {
 /** Nguon: docs/08-stitch-ui-ux-handoff.md muc 4 (Information architecture). */
 export const PUBLIC_NAV: NavItem[] = [
   { href: "/", label: "Trang chủ", ready: true },
-  { href: "/events", label: "Sự kiện", ready: false },
+  { href: "/events", label: "Sự kiện", ready: true },
 ];
 
 export const ORGANIZER_NAV: NavItem[] = [
