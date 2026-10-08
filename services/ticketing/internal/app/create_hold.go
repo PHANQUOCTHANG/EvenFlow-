@@ -19,17 +19,17 @@ import (
 //
 // Trinh tu hai lop, co chu y:
 //
-//	1. Redis (nhanh, khong ben)  -- chan 95% request thua truoc khi chung cham DB.
-//	2. Postgres (cham, ben vung) -- NGUON SU THAT. Constraint CHECK (available >= 0)
-//	   la chot chan cuoi cung; du tang tren sai het, DB van tu choi.
+//  1. Redis (nhanh, khong ben)  -- chan 95% request thua truoc khi chung cham DB.
+//  2. Postgres (cham, ben vung) -- NGUON SU THAT. Constraint CHECK (available >= 0)
+//     la chot chan cuoi cung; du tang tren sai het, DB van tu choi.
 //
 // Neu lop 2 that bai sau khi lop 1 da thanh cong, phai tra lai kho cho Redis --
 // neu khong, ve se "bien mat" (bi giu vinh vien ma khong ai mua duoc).
 type CreateHold struct {
-	gate  port.InventoryGate // Redis
-	repo  port.Repository    // Postgres
-	log   *slog.Logger
-	rng   *rand.Rand
+	gate port.InventoryGate // Redis
+	repo port.Repository    // Postgres
+	log  *slog.Logger
+	rng  *rand.Rand
 }
 
 func NewCreateHold(gate port.InventoryGate, repo port.Repository, log *slog.Logger) *CreateHold {

@@ -40,7 +40,11 @@ func run(log *slog.Logger) error {
 		ReadTimeout:  200 * time.Millisecond,
 		WriteTimeout: 200 * time.Millisecond,
 	})
-	defer rdb.Close()
+	defer func() {
+		if err := rdb.Close(); err != nil {
+			log.Warn("dong redis client loi", "err", err)
+		}
+	}()
 
 	if err := rdb.Ping(ctx).Err(); err != nil {
 		return err

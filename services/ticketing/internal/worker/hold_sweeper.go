@@ -21,11 +21,11 @@ import (
 //   - An toan khi chay nhieu instance song song: viec tra kho la idempotent o
 //     CA HAI tang (Lua xoa-truoc-cong-sau, va SQL co dieu kien released_at IS NULL).
 type HoldSweeper struct {
-	gate  port.InventoryGate
-	repo  port.Repository
-	pub   port.Publisher
-	log   *slog.Logger
-	cfg   SweeperConfig
+	gate port.InventoryGate
+	repo port.Repository
+	pub  port.Publisher
+	log  *slog.Logger
+	cfg  SweeperConfig
 }
 
 type SweeperConfig struct {

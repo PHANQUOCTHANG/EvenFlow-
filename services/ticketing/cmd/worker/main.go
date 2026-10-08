@@ -45,7 +45,11 @@ func run(log *slog.Logger) error {
 	defer pool.Close()
 
 	rdb := redis.NewClient(&redis.Options{Addr: env("REDIS_ADDR", "localhost:6379")})
-	defer rdb.Close()
+	defer func() {
+		if err := rdb.Close(); err != nil {
+			log.Warn("dong redis client loi", "err", err)
+		}
+	}()
 
 	gate, err := redisadapter.NewGate(ctx, rdb)
 	if err != nil {

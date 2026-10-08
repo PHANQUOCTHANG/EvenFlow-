@@ -41,9 +41,9 @@ func NewGate(ctx context.Context, rdb *redis.Client) (*Gate, error) {
 func invKey(eventID, ticketTypeID string) string {
 	return fmt.Sprintf("inv:{%s}:tt:%s", eventID, ticketTypeID)
 }
-func invPrefix(eventID string) string  { return fmt.Sprintf("inv:{%s}:tt:", eventID) }
-func holdZKey(eventID string) string   { return fmt.Sprintf("hold:{%s}:z", eventID) }
-func holdHKey(eventID string) string   { return fmt.Sprintf("hold:{%s}:h", eventID) }
+func invPrefix(eventID string) string   { return fmt.Sprintf("inv:{%s}:tt:", eventID) }
+func holdZKey(eventID string) string    { return fmt.Sprintf("hold:{%s}:z", eventID) }
+func holdHKey(eventID string) string    { return fmt.Sprintf("hold:{%s}:h", eventID) }
 func userHoldKey(eventID string) string { return fmt.Sprintf("uhold:{%s}", eventID) }
 func admittedKey(eventID string) string { return fmt.Sprintf("wr:{%s}:admitted", eventID) }
 

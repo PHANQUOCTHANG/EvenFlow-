@@ -162,7 +162,11 @@ func (h *Handler) stream(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			b, _ := json.Marshal(pos)
-			fmt.Fprintf(w, "event: position\ndata: %s\n\n", b)
+			// Ghi loi = client da ngat ket noi. Dung luon thay vi tiep tuc hoi store moi 2 giay
+			// cho mot ket noi da chet.
+			if _, err := fmt.Fprintf(w, "event: position\ndata: %s\n\n", b); err != nil {
+				return
+			}
 			flusher.Flush()
 
 			if pos.State == domain.StateAdmitted || pos.State == domain.StateExpired {
