@@ -16,6 +16,9 @@ on:
     branches: [main]
   workflow_dispatch: {}
 
+permissions:
+  contents: read
+
 jobs:
   oversell-gate:
     name: oversell-gate
@@ -27,5 +30,10 @@ jobs:
         with:
           go-version: "1.23"
           cache-dependency-path: services/ticketing/go.mod
+      # `go test` coi SKIP la thanh cong. Khi `setupEnv` con `t.Skip` thi gate nay xanh voi
+      # 0 lan kiem that -- trong y het mot gate dang bao ve bat bien "khong ban qua so ve".
+      # Script dem PASS/FAIL/SKIP, giu nguyen exit code, va canh bao khi 0 lan PASS.
+      # (Bien skip thanh fail cung la quyet dinh cua truong nhom: no se chan moi PR vao main
+      # cho toi khi EVF-39 xong. Xem docs/workflow/ci-cd-review/spec.md §3.)
       - name: TestNoOversell x200 (make test-oversell)
-        run: make test-oversell
+        run: bash .github/scripts/run-and-report-tests.sh TestNoOversell make test-oversell TESTFLAGS=-v
