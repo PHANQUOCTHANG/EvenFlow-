@@ -147,10 +147,17 @@ jobs:
         working-directory: services/ai-worker
     steps:
       - uses: actions/checkout@v4
+      # setup-uv bat `enable-cache` thi tim `**/uv.lock` va THROW khi khong co file nao
+      # ("No file ... matched to [**/uv.lock]"). Repo khong co uv.lock nen ca hai job
+      # Python do ngay o buoc nay -- loi an tu dau, chi lo ra khi filter cho job Python
+      # chay that. Gio co services/ai-worker/uv.lock. `version` pin: mac dinh la `latest`,
+      # dung kieu da lam hong lint-go.
       - uses: astral-sh/setup-uv@v3
         with:
+          version: "0.9.30"
           enable-cache: true
-      - run: uv sync --all-extras
+          cache-dependency-glob: services/ai-worker/uv.lock
+      - run: uv sync --all-extras --locked
       - run: uv run ruff check .
 
   test-go:
@@ -223,8 +230,10 @@ jobs:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v3
         with:
+          version: "0.9.30"
           enable-cache: true
-      - run: uv sync --all-extras
+          cache-dependency-glob: services/ai-worker/uv.lock
+      - run: uv sync --all-extras --locked
       - name: pytest (exit 5 = chua co test nao, khong tinh la loi)
         run: |
           set +e
@@ -375,10 +384,12 @@ jobs:
       - uses: astral-sh/setup-uv@v3
         if: needs.changes.outputs.python == 'true'
         with:
+          version: "0.9.30"
           enable-cache: true
+          cache-dependency-glob: services/ai-worker/uv.lock
       - name: build (kiem tra import) ai-worker
         if: needs.changes.outputs.python == 'true'
         working-directory: services/ai-worker
         run: |
-          uv sync --all-extras
+          uv sync --all-extras --locked
           uv run python -c "import app.main"
