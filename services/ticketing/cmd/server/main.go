@@ -14,6 +14,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
 
+	"github.com/eventflow/eventflow/libs/go/httpx"
 	httpadapter "github.com/eventflow/eventflow/services/ticketing/internal/adapter/http"
 	postgresadapter "github.com/eventflow/eventflow/services/ticketing/internal/adapter/postgres"
 	redisadapter "github.com/eventflow/eventflow/services/ticketing/internal/adapter/redis"
@@ -75,38 +76,18 @@ func run(log *slog.Logger) error {
 
 	mux := http.NewServeMux()
 	h.Routes(mux)
-	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, _ *http.Request) {
-		w.WriteHeader(http.StatusOK)
-	})
-	mux.HandleFunc("GET /readyz", func(w http.ResponseWriter, r *http.Request) {
-		if err := pool.Ping(r.Context()); err != nil {
-			w.WriteHeader(http.StatusServiceUnavailable)
-			return
-		}
-		if err := rdb.Ping(r.Context()).Err(); err != nil {
-			w.WriteHeader(http.StatusServiceUnavailable)
-			return
-		}
-		w.WriteHeader(http.StatusOK)
-	})
+	httpx.Health(mux,
+		pool.Ping,
+		func(ctx context.Context) error { return rdb.Ping(ctx).Err() },
+	)
 
-	srv := &http.Server{
-		Addr:              env("HTTP_ADDR", ":8082"),
-		Handler:           mux,
-		ReadHeaderTimeout: 5 * time.Second,
-	}
-
-	go func() {
-		<-ctx.Done()
-		// 20 giay de cac transaction dang dang duoc commit xong. Cat ngang giua
-		// mot transaction tao hold la cach nhanh nhat de tao ra ve bi khoa.
-		sh, cancel := context.WithTimeout(context.Background(), 20*time.Second)
-		defer cancel()
-		_ = srv.Shutdown(sh)
-	}()
+	srv := httpx.NewServer(env("HTTP_ADDR", ":8082"),
+		httpx.Chain(mux, httpx.RequestID(), httpx.AccessLog(log), httpx.Recover(log)))
 
 	log.Info("ticketing dang lang nghe", "addr", srv.Addr)
-	return srv.ListenAndServe()
+	// 20 giay de cac transaction dang duoc commit xong. Cat ngang giua mot
+	// transaction tao hold la cach nhanh nhat de tao ra ve bi khoa.
+	return httpx.Run(ctx, srv, 20*time.Second)
 }
 
 func env(k, def string) string {

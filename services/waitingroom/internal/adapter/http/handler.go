@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/eventflow/eventflow/libs/go/httpx"
 	"github.com/eventflow/eventflow/services/waitingroom/internal/domain"
 )
 
@@ -57,7 +58,7 @@ func (h *Handler) join(w http.ResponseWriter, r *http.Request) {
 	eventID := r.PathValue("eventID")
 	identityID, ok := identityFrom(r)
 	if !ok {
-		problem(w, http.StatusUnauthorized, "can dang nhap va xac thuc OTP truoc khi xep hang")
+		httpx.WriteProblem(w, http.StatusUnauthorized, "can dang nhap va xac thuc OTP truoc khi xep hang")
 		return
 	}
 
@@ -73,10 +74,10 @@ func (h *Handler) join(w http.ResponseWriter, r *http.Request) {
 			// de lot vai bot trong vai phut.
 			h.log.Error("antibot loi, tam thoi cho qua", "err", err)
 		case challenge:
-			problem(w, http.StatusForbidden, "can xac minh them truoc khi vao hang cho")
+			httpx.WriteProblem(w, http.StatusForbidden, "can xac minh them truoc khi vao hang cho")
 			return
 		case !allow:
-			problem(w, http.StatusForbidden, "yeu cau bi tu choi")
+			httpx.WriteProblem(w, http.StatusForbidden, "yeu cau bi tu choi")
 			return
 		}
 	}
@@ -84,11 +85,11 @@ func (h *Handler) join(w http.ResponseWriter, r *http.Request) {
 	res, err := h.store.Join(r.Context(), eventID, identityID, newToken())
 	if err != nil {
 		h.log.Error("join that bai", "event", eventID, "err", err)
-		problem(w, http.StatusServiceUnavailable, "phong cho dang qua tai, vui long thu lai")
+		httpx.WriteProblem(w, http.StatusServiceUnavailable, "phong cho dang qua tai, vui long thu lai")
 		return
 	}
 
-	writeJSON(w, http.StatusOK, map[string]any{
+	httpx.WriteJSON(w, http.StatusOK, map[string]any{
 		"state":         res.State,
 		"queue_token":   res.Token,
 		"rank":          res.Rank,
@@ -101,13 +102,13 @@ func (h *Handler) status(w http.ResponseWriter, r *http.Request) {
 	eventID := r.PathValue("eventID")
 	token := r.Header.Get("X-Queue-Token")
 	if token == "" {
-		problem(w, http.StatusBadRequest, "thieu X-Queue-Token")
+		httpx.WriteProblem(w, http.StatusBadRequest, "thieu X-Queue-Token")
 		return
 	}
 
 	pos, err := h.store.Status(r.Context(), eventID, token)
 	if err != nil {
-		problem(w, http.StatusServiceUnavailable, "khong doc duoc trang thai hang cho")
+		httpx.WriteProblem(w, http.StatusServiceUnavailable, "khong doc duoc trang thai hang cho")
 		return
 	}
 
@@ -122,7 +123,7 @@ func (h *Handler) status(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("ETag", etag)
 	w.Header().Set("Cache-Control", "no-store")
-	writeJSON(w, http.StatusOK, pos)
+	httpx.WriteJSON(w, http.StatusOK, pos)
 }
 
 // stream day trang thai qua SSE cho nhom SAP toi luot.
@@ -134,12 +135,12 @@ func (h *Handler) stream(w http.ResponseWriter, r *http.Request) {
 	eventID := r.PathValue("eventID")
 	token := r.Header.Get("X-Queue-Token")
 	if token == "" {
-		problem(w, http.StatusBadRequest, "thieu X-Queue-Token")
+		httpx.WriteProblem(w, http.StatusBadRequest, "thieu X-Queue-Token")
 		return
 	}
 	flusher, ok := w.(http.Flusher)
 	if !ok {
-		problem(w, http.StatusInternalServerError, "streaming khong duoc ho tro")
+		httpx.WriteProblem(w, http.StatusInternalServerError, "streaming khong duoc ho tro")
 		return
 	}
 
@@ -197,21 +198,3 @@ func identityFrom(r *http.Request) (string, bool) {
 type ctxKey string
 
 const ctxKeyIdentity ctxKey = "identity_id"
-
-func writeJSON(w http.ResponseWriter, code int, v any) {
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.WriteHeader(code)
-	_ = json.NewEncoder(w).Encode(v)
-}
-
-// problem tra loi theo RFC 7807.
-func problem(w http.ResponseWriter, code int, detail string) {
-	w.Header().Set("Content-Type", "application/problem+json")
-	w.WriteHeader(code)
-	_ = json.NewEncoder(w).Encode(map[string]any{
-		"type":   "about:blank",
-		"title":  http.StatusText(code),
-		"status": code,
-		"detail": detail,
-	})
-}
