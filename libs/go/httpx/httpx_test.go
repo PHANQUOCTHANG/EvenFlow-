@@ -213,20 +213,25 @@ func TestAccessLog_GhiRouteMauVaMaTrangThai(t *testing.T) {
 	}
 }
 
-func TestAccessLog_ProbeSucKhoeGhiODebug(t *testing.T) {
-	log, buf := newLogger()
-	mux := http.NewServeMux()
-	httpx.Health(mux)
-	h := httpx.Chain(mux, httpx.AccessLog(log))
+func TestAccessLog_ProbeVaMetricsGhiODebug(t *testing.T) {
+	for _, path := range []string{"/healthz", "/readyz", "/metrics"} {
+		t.Run(path, func(t *testing.T) {
+			log, buf := newLogger()
+			mux := http.NewServeMux()
+			httpx.Health(mux)
+			mux.HandleFunc("GET /metrics", func(http.ResponseWriter, *http.Request) {})
+			h := httpx.Chain(mux, httpx.AccessLog(log))
 
-	h.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest("GET", "/readyz", nil))
+			h.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest("GET", path, nil))
 
-	var line map[string]any
-	if err := json.Unmarshal(buf.Bytes(), &line); err != nil {
-		t.Fatalf("khong co log: %v", err)
-	}
-	if line["level"] != "DEBUG" {
-		t.Errorf("level = %v, probe phai o DEBUG", line["level"])
+			var line map[string]any
+			if err := json.Unmarshal(buf.Bytes(), &line); err != nil {
+				t.Fatalf("khong co log: %v", err)
+			}
+			if line["level"] != "DEBUG" {
+				t.Errorf("level = %v, %s lap lai lien tuc nen phai o DEBUG", line["level"], path)
+			}
+		})
 	}
 }
 
