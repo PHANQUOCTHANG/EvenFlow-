@@ -92,6 +92,26 @@ type Repository interface {
 	ReleaseHold(ctx context.Context, holdID string) (released bool, err error)
 }
 
+// ===================== Nap ton kho =====================
+
+// InventoryRow la ton kho cua mot bucket, doc tu Postgres.
+type InventoryRow struct {
+	TicketTypeID string
+	Bucket       int
+	Available    int
+}
+
+// InventorySource doc ton kho cua mot su kien tu nguon su that (Postgres).
+type InventorySource interface {
+	ListInventory(ctx context.Context, eventID string) ([]InventoryRow, error)
+}
+
+// InventorySeeder nap ton kho vao Redis. Chi DIEN vao bucket chua co, khong
+// bao gio ghi de so dang bi cac hold tru di.
+type InventorySeeder interface {
+	SeedInventory(ctx context.Context, eventID, ticketTypeID string, perBucket map[int]int) error
+}
+
 // ===================== Su kien ra ngoai =====================
 
 type Publisher interface {

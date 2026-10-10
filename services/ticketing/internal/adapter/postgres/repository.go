@@ -42,6 +42,33 @@ func (r *Repository) GetSaleConfig(ctx context.Context, eventID, ticketTypeID st
 	return c, err
 }
 
+// ListInventory tra ve ton kho tung bucket cua cac hang ve thuoc su kien dang
+// duoc ban (hoac sap ban). Dung de nap Redis; Postgres la nguon su that.
+func (r *Repository) ListInventory(ctx context.Context, eventID string) ([]port.InventoryRow, error) {
+	const q = `
+		SELECT inv.ticket_type_id::text, inv.bucket, inv.available
+		  FROM ticket_inventory inv
+		  JOIN ticket_types tt ON tt.id = inv.ticket_type_id
+		  JOIN events e ON e.id = tt.event_id
+		 WHERE e.id = $1::uuid AND e.status IN ('SCHEDULED','ON_SALE')
+		 ORDER BY inv.ticket_type_id, inv.bucket`
+	rows, err := r.pool.Query(ctx, q, eventID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var out []port.InventoryRow
+	for rows.Next() {
+		var row port.InventoryRow
+		if err := rows.Scan(&row.TicketTypeID, &row.Bucket, &row.Available); err != nil {
+			return nil, err
+		}
+		out = append(out, row)
+	}
+	return out, rows.Err()
+}
+
 // CountPurchased dem so ve da mua thanh cong cua mot nguoi (BR-O4).
 // Chi tinh cac don da thanh toan hoac dang giu -- don da huy/het han khong tinh.
 func (r *Repository) CountPurchased(ctx context.Context, eventID, identityID string) (int, error) {
@@ -236,3 +263,8 @@ func toUUID(s string) string {
 	}
 	return s
 }
+
+var (
+	_ port.Repository      = (*Repository)(nil)
+	_ port.InventorySource = (*Repository)(nil)
+)
