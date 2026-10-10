@@ -29,7 +29,7 @@ down: ## Dung va xoa volume
 
 .PHONY: logs
 logs: ## Theo doi log cac service ung dung
-	$(COMPOSE) logs -f waitingroom ticketing ai-worker
+	$(COMPOSE) logs -f waitingroom waitingroom-controller ticketing ticketing-worker ai-worker
 
 ## ---------- Co so du lieu ----------
 
@@ -39,7 +39,7 @@ migrate: ## Chay migration
 
 .PHONY: seed
 seed: ## Tao du lieu mau: 1 su kien ON_SALE, 20.000 ve
-	./deploy/scripts/seed.sh
+	bash deploy/scripts/seed.sh
 
 ## ---------- Chat luong ----------
 
@@ -84,8 +84,8 @@ load: ## Mo phong gio mo ban (can k6)
 	k6 run -e BASE=http://localhost:8080 -e EVENT=$(EVENT) tests/load/opening-spike.js
 
 .PHONY: smoke
-smoke: ## Chay tron mot luong mua ve de kiem tra moi truong
-	./deploy/scripts/smoke.sh
+smoke: ## Chay tron mot luong mua ve (xep hang -> admit -> giu ghe -> tra kho)
+	bash deploy/scripts/smoke.sh
 
 .PHONY: test-e2e
 test-e2e: ## E2E Playwright (can make up truoc)
