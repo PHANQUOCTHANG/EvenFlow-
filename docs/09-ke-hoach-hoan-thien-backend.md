@@ -20,7 +20,7 @@ Nên thứ tự ở đây là: nối cho chạy → dựng nền → hoàn thi�
 | GĐ | Tên | Việc chính | Loại | Phụ thuộc | Trạng thái |
 |---|---|---|---|---|---|
 | 0 | Nối dây | Seed, nạp tồn kho Redis, chạy worker + admit controller, smoke | Nối dây | — | **Xong** (nhánh `feat/phase-0-wiring`) |
-| 1 | Thư viện dùng chung | HTTP, quan trắc, test tích hợp, idempotency, message queue, outbox | Nền | 0 | Đã lập kế hoạch chi tiết |
+| 1 | Thư viện dùng chung | HTTP, quan trắc, test tích hợp, idempotency, message queue, outbox | Nền | 0 | **Đang làm** — PR A (`go.sum` + `httpx`) xong, chờ review |
 | 2 | Ticketing hoàn chỉnh | Đối soát tồn kho, giới hạn mua, API đơn hàng / huỷ hold / tình trạng vé | Nghiệp vụ + hệ thống | 1 | Chưa làm |
 | 3 | Identity + Gateway | Đăng ký/đăng nhập, OTP, JWT, RBAC, queue token có ký, gateway | Nghiệp vụ | 1 | Chưa làm |
 | 4 | Event | CRUD sự kiện, state machine, lịch mở bán, khoá quota | Nghiệp vụ | 3 | Chưa làm |
