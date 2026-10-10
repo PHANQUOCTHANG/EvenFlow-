@@ -10,6 +10,8 @@ func RegisterRoutes(mux *http.ServeMux, authHandler *AuthHandler) {
 	mux.HandleFunc("POST /api/v1/auth/register/request-otp", authHandler.RequestOTP)
 	mux.HandleFunc("POST /api/v1/auth/register/verify", authHandler.VerifyOTP)
 	mux.HandleFunc("POST /api/v1/auth/login", authHandler.Login)
+	mux.HandleFunc("POST /api/v1/auth/forgot-password/request-otp", authHandler.RequestResetOTP)
+	mux.HandleFunc("POST /api/v1/auth/forgot-password/reset", authHandler.ResetPassword)
 	mux.HandleFunc("POST /api/v1/auth/vneid/callback", authHandler.VNeIDCallback)
 	mux.HandleFunc("GET /api/v1/auth/vneid/sse", authHandler.VNeIDListenSSE)
 }

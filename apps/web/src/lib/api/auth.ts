@@ -53,3 +53,29 @@ export async function loginUser(identifier: string, password: string): Promise<I
   }
   return data as IdentityResponse;
 }
+
+export async function requestResetPasswordOTP(identifier: string): Promise<void> {
+  const res = await fetch(`${API_BASE_URL}/auth/forgot-password/request-otp`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ identifier }),
+  });
+
+  if (!res.ok) {
+    const data = await res.json();
+    throw data as ApiError;
+  }
+}
+
+export async function resetPassword(identifier: string, otp: string, newPassword: string): Promise<void> {
+  const res = await fetch(`${API_BASE_URL}/auth/forgot-password/reset`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ identifier, otp, newPassword }),
+  });
+
+  if (!res.ok) {
+    const data = await res.json();
+    throw data as ApiError;
+  }
+}

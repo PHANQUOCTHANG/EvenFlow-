@@ -38,6 +38,7 @@ type Identity struct {
 type IdentityRepository interface {
 	Save(ctx context.Context, identity *Identity) error
 	FindByEmailOrPhone(ctx context.Context, identifier string) (*Identity, error)
+	UpdatePassword(ctx context.Context, id uuid.UUID, newHash string) error
 }
 
 // PasswordHasher defines how passwords should be hashed and verified.

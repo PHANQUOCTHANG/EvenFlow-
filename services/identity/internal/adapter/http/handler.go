@@ -14,14 +14,16 @@ type AuthHandler struct {
 	registerUC  app.RegisterUseCase
 	loginUC     app.LoginUseCase
 	vneidUC     app.VNeIDUseCase
+	forgotPwdUC app.ForgotPasswordUseCase
 	redisClient *redis.Client
 }
 
-func NewAuthHandler(registerUC app.RegisterUseCase, loginUC app.LoginUseCase, vneidUC app.VNeIDUseCase, redisClient *redis.Client) *AuthHandler {
+func NewAuthHandler(registerUC app.RegisterUseCase, loginUC app.LoginUseCase, vneidUC app.VNeIDUseCase, forgotPwdUC app.ForgotPasswordUseCase, redisClient *redis.Client) *AuthHandler {
 	return &AuthHandler{
 		registerUC:  registerUC,
 		loginUC:     loginUC,
 		vneidUC:     vneidUC,
+		forgotPwdUC: forgotPwdUC,
 		redisClient: redisClient,
 	}
 }
@@ -90,7 +92,11 @@ func (h *AuthHandler) VerifyOTP(w http.ResponseWriter, r *http.Request) {
 		case errors.Is(err, domain.ErrIdentityExists):
 			writeError(w, http.StatusConflict, "Conflict", "Tài khoản này đã tồn tại")
 		default:
-			writeError(w, http.StatusInternalServerError, "Server Error", "Lỗi hệ thống nội bộ")
+			if err.Error() == "nhập sai quá nhiều lần, mã OTP đã bị vô hiệu hóa. Vui lòng lấy mã mới" {
+				writeError(w, http.StatusTooManyRequests, "Rate Limited", err.Error())
+			} else {
+				writeError(w, http.StatusInternalServerError, "Server Error", "Lỗi hệ thống nội bộ")
+			}
 		}
 		return
 	}
@@ -141,6 +147,66 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		CreatedAt: output.Identity.CreatedAt,
 	}
 	writeJSON(w, http.StatusOK, resp)
+}
+
+// ---- FORGOT PASSWORD ----
+
+func (h *AuthHandler) RequestResetOTP(w http.ResponseWriter, r *http.Request) {
+	var req RequestResetOTPRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "Invalid Request", "Dữ liệu JSON không hợp lệ")
+		return
+	}
+
+	err := h.forgotPwdUC.RequestResetOTP(r.Context(), req.Identifier)
+
+	if err != nil {
+		switch {
+		case errors.Is(err, app.ErrInvalidIdentifier):
+			writeError(w, http.StatusBadRequest, "Validation Error", err.Error())
+		case errors.Is(err, app.ErrRateLimited):
+			writeError(w, http.StatusTooManyRequests, "Rate Limited", err.Error())
+		default:
+			if err.Error() == "tài khoản không tồn tại" {
+				writeError(w, http.StatusNotFound, "Not Found", err.Error())
+			} else {
+				writeError(w, http.StatusInternalServerError, "Server Error", "Lỗi hệ thống nội bộ")
+			}
+		}
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
+func (h *AuthHandler) ResetPassword(w http.ResponseWriter, r *http.Request) {
+	var req ResetPasswordRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "Invalid Request", "Dữ liệu JSON không hợp lệ")
+		return
+	}
+
+	err := h.forgotPwdUC.ResetPassword(r.Context(), app.ResetPasswordInput{
+		Identifier:  req.Identifier,
+		OTP:         req.OTP,
+		NewPassword: req.NewPassword,
+	})
+
+	if err != nil {
+		switch {
+		case errors.Is(err, app.ErrInvalidOTP), errors.Is(err, app.ErrPasswordTooShort):
+			writeError(w, http.StatusBadRequest, "Validation Error", err.Error())
+		default:
+			if err.Error() == "nhập sai quá nhiều lần, mã OTP đã bị vô hiệu hóa. Vui lòng lấy mã mới" {
+				writeError(w, http.StatusTooManyRequests, "Rate Limited", err.Error())
+			} else {
+				writeError(w, http.StatusInternalServerError, "Server Error", "Lỗi hệ thống nội bộ")
+			}
+		}
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }
 
 // ---- VNEID MOCK ----

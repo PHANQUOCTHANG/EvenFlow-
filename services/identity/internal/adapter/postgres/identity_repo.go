@@ -6,6 +6,7 @@ import (
 	"errors"
 
 	"github.com/eventflow/eventflow/services/identity/internal/domain"
+	"github.com/google/uuid"
 	"github.com/lib/pq"
 )
 
@@ -75,4 +76,10 @@ func (r *identityRepo) FindByEmailOrPhone(ctx context.Context, identifier string
 
 	i.Role = domain.Role(role)
 	return &i, nil
+}
+
+func (r *identityRepo) UpdatePassword(ctx context.Context, id uuid.UUID, newHash string) error {
+	query := `UPDATE identities SET password_hash = $1 WHERE id = $2`
+	_, err := r.db.ExecContext(ctx, query, newHash, id)
+	return err
 }

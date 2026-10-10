@@ -24,6 +24,16 @@ type LoginRequest struct {
 	Password   string `json:"password"`
 }
 
+type RequestResetOTPRequest struct {
+	Identifier string `json:"identifier"`
+}
+
+type ResetPasswordRequest struct {
+	Identifier  string `json:"identifier"`
+	OTP         string `json:"otp"`
+	NewPassword string `json:"newPassword"`
+}
+
 // DTO trả về thông tin người dùng
 type IdentityResponse struct {
 	ID        uuid.UUID  `json:"id"`

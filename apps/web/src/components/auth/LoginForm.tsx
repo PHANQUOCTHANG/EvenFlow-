@@ -199,7 +199,7 @@ export default function LoginForm() {
               <label htmlFor="login-password" className="text-[13.5px] font-bold text-fg">
                 Mật khẩu
               </label>
-              <Link href="#" className="ef-focus-ring rounded-xs text-[12.5px] font-semibold text-indigo-600 hover:text-indigo-700 hover:underline">
+              <Link href="/auth/forgot-password" className="ef-focus-ring rounded-xs text-[12.5px] font-semibold text-indigo-600 hover:text-indigo-700 hover:underline">
                 Quên mật khẩu?
               </Link>
             </div>

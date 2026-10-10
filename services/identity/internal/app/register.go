@@ -105,6 +105,14 @@ func (uc *registerUseCase) RequestOTP(ctx context.Context, input RequestOTPInput
 }
 
 func (uc *registerUseCase) VerifyOTP(ctx context.Context, input VerifyOTPInput) (*domain.Identity, error) {
+	// 0. Anti Brute-force OTP
+	verifyRateKey := fmt.Sprintf("rate:verify_otp:%s", input.Identifier)
+	count, _ := uc.redis.IncrementRateLimit(ctx, verifyRateKey, 5*time.Minute)
+	if count > 5 {
+		_ = uc.redis.DeleteOTP(ctx, input.Identifier)
+		return nil, fmt.Errorf("nhập sai quá nhiều lần, mã OTP đã bị vô hiệu hóa. Vui lòng lấy mã mới")
+	}
+
 	// 1. Get OTP from Redis
 	storedOTP, err := uc.redis.GetOTP(ctx, input.Identifier)
 	if err != nil || storedOTP != input.OTP {

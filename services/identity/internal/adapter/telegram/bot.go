@@ -72,9 +72,18 @@ func (b *Bot) Start() {
 		ctx := context.Background()
 
 		for _, p := range possibleKeys {
+			// Check Registration OTP
 			otp, err := b.redis.GetOTP(ctx, p)
 			if err == nil && otp != "" {
 				foundOTP = otp
+				matchedPhone = p
+				break
+			}
+			
+			// Check Reset Password OTP
+			resetOtp, err := b.redis.GetOTP(ctx, "reset_"+p)
+			if err == nil && resetOtp != "" {
+				foundOTP = resetOtp
 				matchedPhone = p
 				break
 			}
@@ -82,7 +91,7 @@ func (b *Bot) Start() {
 
 		if foundOTP != "" {
 			// Reply with OTP
-			msg := fmt.Sprintf("✅ Xác thực thành công!\n\nMã OTP đăng ký EventFlow cho số %s của bạn là: **%s**\n\nVui lòng quay lại web và nhập mã này.", matchedPhone, foundOTP)
+			msg := fmt.Sprintf("✅ Xác thực thành công!\n\nMã OTP của bạn cho số %s là: **%s**\n\nVui lòng quay lại web và nhập mã này.", matchedPhone, foundOTP)
 			return c.Send(msg, tele.ModeMarkdown)
 		}
 
