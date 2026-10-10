@@ -11,6 +11,7 @@ import (
 	"github.com/eventflow/eventflow/services/identity/internal/adapter/postgres"
 	"github.com/eventflow/eventflow/services/identity/internal/adapter/redis"
 	"github.com/eventflow/eventflow/services/identity/internal/adapter/smtp"
+	"github.com/eventflow/eventflow/services/identity/internal/adapter/telegram"
 	"github.com/eventflow/eventflow/services/identity/internal/app"
 	"github.com/eventflow/eventflow/services/identity/internal/config"
 	"github.com/eventflow/eventflow/services/identity/internal/domain"
@@ -76,6 +77,20 @@ func main() {
 	registerUC := app.NewRegisterUseCase(identityRepo, hasher, redisAdapterClient, notifier)
 	loginUC := app.NewLoginUseCase(identityRepo, hasher, tokenGen)
 	vneidUC := app.NewVNeIDUseCase(identityRepo, rawRedis, tokenGen)
+
+	// - Telegram Bot
+	telegramToken := os.Getenv("TELEGRAM_BOT_TOKEN")
+	if telegramToken != "" {
+		bot, err := telegram.NewBot(telegramToken, redisAdapterClient)
+		if err != nil {
+			log.Error("khong the khoi tao telegram bot", "err", err)
+		} else {
+			go bot.Start()
+			defer bot.Stop()
+		}
+	} else {
+		log.Warn("TELEGRAM_BOT_TOKEN chua duoc cau hinh, bot Telegram se khong chay.")
+	}
 
 	// - Adapter (HTTP)
 	authHandler := identityHttp.NewAuthHandler(registerUC, loginUC, vneidUC, rawRedis)

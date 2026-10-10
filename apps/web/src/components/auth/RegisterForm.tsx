@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useForm } from "react-hook-form";
@@ -86,12 +86,232 @@ function CheckCircleIcon({ className = "size-6" }: { className?: string }) {
   );
 }
 
+function TelegramIcon({ className = "size-5" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.892-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
+    </svg>
+  );
+}
 
+function TelegramOTPVerification({ 
+  identifier, 
+  onVerify, 
+  onCancel 
+}: { 
+  identifier: string; 
+  onVerify: (otp: string) => Promise<void>; 
+  onCancel: () => void; 
+}) {
+  const { toast } = useToast();
+  const [otp, setOtp] = useState<string[]>(Array(6).fill(""));
+  const [loading, setLoading] = useState(false);
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-export default function RegisterForm() {
+  useEffect(() => {
+    if (inputRefs.current[0]) {
+      inputRefs.current[0].focus();
+    }
+  }, []);
+
+  const handleChange = (index: number, value: string) => {
+    const cleaned = value.replace(/[^0-9]/g, "");
+    
+    if (!cleaned) {
+      setOtp(prev => {
+        const newOtp = [...prev];
+        newOtp[index] = "";
+        return newOtp;
+      });
+      return;
+    }
+
+    // Handle multiple digits (fast typing or copy-paste without trigger paste event)
+    if (cleaned.length > 1) {
+      setOtp(prev => {
+        const newOtp = [...prev];
+        let currIdx = index;
+        for (let i = 0; i < cleaned.length && currIdx < 6; i++) {
+          newOtp[currIdx] = cleaned[i];
+          currIdx++;
+        }
+        
+        // Focus next box
+        setTimeout(() => {
+          const focusIndex = Math.min(index + cleaned.length, 5);
+          inputRefs.current[focusIndex]?.focus();
+        }, 10);
+        
+        return newOtp;
+      });
+      return;
+    }
+    
+    // Normal single character
+    setOtp(prev => {
+      const newOtp = [...prev];
+      newOtp[index] = cleaned;
+      return newOtp;
+    });
+
+    if (index < 5 && inputRefs.current[index + 1]) {
+      setTimeout(() => {
+        inputRefs.current[index + 1]?.focus();
+      }, 10);
+    }
+  };
+
+  const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Backspace" && !otp[index] && index > 0) {
+      inputRefs.current[index - 1]?.focus();
+    } else if (e.key === "Enter") {
+      handleSubmit();
+    }
+  };
+
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    const pastedData = e.clipboardData.getData("text/plain").slice(0, 6).replace(/[^0-9]/g, "");
+    if (!pastedData) return;
+    
+    const newOtp = [...otp];
+    for (let i = 0; i < pastedData.length; i++) {
+      newOtp[i] = pastedData[i];
+    }
+    setOtp(newOtp);
+    
+    const focusIndex = Math.min(pastedData.length, 5);
+    inputRefs.current[focusIndex]?.focus();
+  };
+
+  const handleSubmit = async () => {
+    const otpValue = otp.join("");
+    if (otpValue.length < 6) {
+      toast({
+        variant: "warning",
+        title: "Thiếu thông tin",
+        description: "Vui lòng nhập đủ 6 số OTP"
+      });
+      return;
+    }
+    setLoading(true);
+    try {
+      await onVerify(otpValue);
+    } catch (err: any) {
+      toast({
+        variant: "error",
+        title: "Lỗi xác thực",
+        description: err.message || "Xác thực thất bại"
+      });
+      setOtp(Array(6).fill(""));
+      inputRefs.current[0]?.focus();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-col w-full">
+      <div className="bg-white rounded-[24px] p-6 sm:p-8 shadow-xl shadow-black/5 border border-border-subtle flex flex-col gap-6 relative overflow-hidden items-center text-center">
+        <div className="absolute top-0 left-0 right-0 h-1 bg-[#0088cc]" />
+        
+        <div className="flex size-16 mx-auto items-center justify-center rounded-full bg-[#0088cc]/10 animate-pulse">
+          <TelegramIcon className="size-8 text-[#0088cc]" />
+        </div>
+        
+        <div>
+          <h1 className="text-xl font-extrabold text-fg tracking-tight mb-2">Xác thực qua Telegram</h1>
+          <p className="text-[13.5px] leading-relaxed text-fg-muted px-4">
+            Hệ thống đã chuẩn bị mã xác thực cho số <span className="font-bold text-fg">{identifier}</span>. Vui lòng bấm vào nút dưới đây để mở Telegram và nhận mã.
+          </p>
+        </div>
+
+        <div className="flex flex-col items-center gap-3 my-2">
+          {/* QR Code */}
+          <div className="p-3 bg-white border border-border-subtle rounded-xl shadow-sm">
+            <img 
+              src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://t.me/EventFlowAuth_bot" 
+              alt="Telegram Bot QR Code" 
+              className="w-[120px] h-[120px]"
+            />
+          </div>
+          
+          <div className="text-left text-[13px] text-fg-muted space-y-1.5 w-full bg-slate-50 p-3 rounded-lg border border-border-subtle">
+            <p className="font-bold text-fg mb-1">Hướng dẫn nhận mã:</p>
+            <p>1. Dùng điện thoại quét mã QR ở trên (Hoặc tìm <span className="font-semibold text-[#0088cc]">@EventFlowAuth_bot</span>).</p>
+            <p>2. Nhấn nút <b>Start</b> (Hoặc gõ <code className="bg-slate-200 px-1 py-0.5 rounded text-[#0088cc]">/start</code> nếu đã từng chat với Bot).</p>
+            <p>3. Bấm nút <b>Chia sẻ Số điện thoại</b> ở bàn phím chat.</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3 w-full">
+          <div className="h-px bg-border-subtle flex-1"></div>
+          <span className="text-[12px] text-fg-muted/60 font-semibold uppercase tracking-wider">HOẶC</span>
+          <div className="h-px bg-border-subtle flex-1"></div>
+        </div>
+
+        <a 
+          href={`https://t.me/EventFlowAuth_bot`} 
+          target="_blank"
+          rel="noopener noreferrer"
+          className="w-full"
+        >
+          <Button className="h-[44px] w-full rounded-[10px] bg-[#0088cc] hover:bg-[#0077b3] text-white text-[14px] font-bold shadow-sm transition-all active:scale-[0.98]">
+            <span className="inline-flex items-center justify-center gap-2">
+              <TelegramIcon className="size-4" />
+              <span>Mở nhanh Telegram (Nếu có App)</span>
+            </span>
+          </Button>
+        </a>
+
+        <div className="w-full mt-2">
+          <label className="text-[13px] font-bold text-fg mb-3 block text-left">Nhập 6 số OTP từ Bot</label>
+          <div className="flex justify-between gap-2 max-w-[300px] mx-auto">
+            {otp.map((digit, index) => (
+              <input
+                key={index}
+                ref={(el) => { inputRefs.current[index] = el; }}
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                value={digit}
+                onChange={(e) => handleChange(index, e.target.value)}
+                onKeyDown={(e) => handleKeyDown(index, e)}
+                onPaste={handlePaste}
+                disabled={loading}
+                className="w-10 h-12 text-center text-lg font-bold border-2 border-border-strong rounded-lg focus:border-[#0088cc] focus:ring-1 focus:ring-[#0088cc] outline-none transition-all"
+              />
+            ))}
+          </div>
+          
+          <Button
+            type="button"
+            loading={loading}
+            disabled={otp.join("").length < 6}
+            className="mt-6 h-[48px] w-full rounded-[12px] bg-indigo-600 hover:bg-indigo-700 text-white font-bold"
+            onClick={handleSubmit}
+          >
+            Xác nhận
+          </Button>
+        </div>
+
+        <div className="mt-2 flex flex-col gap-2 w-full text-[13.5px]">
+          <button 
+            type="button"
+            onClick={onCancel}
+            disabled={loading}
+            className="text-fg-muted hover:text-indigo-600 font-medium transition-colors"
+          >
+            Bạn không sử dụng Telegram? Quay lại
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}export default function RegisterForm() {
   const { toast } = useToast();
   
-  const [step, setStep] = useState<"REGISTER" | "OTP" | "SUCCESS">("REGISTER");
+  const [step, setStep] = useState<"REGISTER" | "OTP" | "TELEGRAM_OTP" | "SUCCESS">("REGISTER");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [registeredPassword, setRegisteredPassword] = useState(""); // Cached for OTP step
@@ -108,6 +328,8 @@ export default function RegisterForm() {
   });
 
   const currentIdentifier = watch("identifier");
+  
+  const isPhoneNumber = currentIdentifier && /^(84|0[3|5|7|8|9])+([0-9]{8})\b$/.test(currentIdentifier);
 
   // Step 1: Submit Form to send OTP
   const onSubmitRegister = async (data: RegisterFormValues) => {
@@ -119,10 +341,12 @@ export default function RegisterForm() {
       
       toast({
         variant: "default",
-        title: "Đã gửi mã OTP",
-        description: `Mã xác thực đã được gửi tới ${data.identifier}`,
+        title: "Đã gửi mã xác thực",
+        description: isPhoneNumber 
+          ? `Vui lòng mở Telegram để nhận mã.` 
+          : `Mã xác thực đã được gửi tới ${data.identifier}`,
       });
-      setStep("OTP");
+      setStep(isPhoneNumber ? "TELEGRAM_OTP" : "OTP");
     } catch (err: any) {
       toast({
         variant: "error",
@@ -198,6 +422,15 @@ export default function RegisterForm() {
     );
   }
 
+  if (step === "TELEGRAM_OTP") {
+    return (
+      <TelegramOTPVerification 
+        identifier={currentIdentifier}
+        onVerify={handleVerifyOTP}
+        onCancel={() => setStep("REGISTER")}
+      />
+    );
+  }
   return (
     <div className="flex flex-col w-full">
       <div className="bg-white rounded-[24px] p-6 sm:p-7 shadow-xl shadow-black/5 border border-border-subtle flex flex-col gap-5 relative overflow-hidden">
@@ -232,6 +465,7 @@ export default function RegisterForm() {
               <input
                 id="register-identifier"
                 type="text"
+                suppressHydrationWarning
                 disabled={isSubmitting}
                 {...register("identifier")}
                 placeholder="Nhập email hoặc SĐT"
@@ -239,6 +473,16 @@ export default function RegisterForm() {
               />
             </div>
             {errors.identifier && <span className="text-red-500 text-[12.5px] font-medium">{errors.identifier.message}</span>}
+            
+            {/* Inline warning cho Telegram */}
+            {isPhoneNumber && !errors.identifier && (
+              <div className="mt-1 flex items-start gap-2 bg-[#0088cc]/10 text-[#0088cc] p-2.5 rounded-[10px] text-[13px] leading-relaxed animate-in fade-in slide-in-from-top-1">
+                <TelegramIcon className="size-[18px] shrink-0 mt-[1px]" />
+                <p>
+                  Mã OTP sẽ được gửi qua ứng dụng <b>Telegram</b> để bảo mật. Hãy chắc chắn bạn đã cài đặt Telegram.
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Field 2: Mật khẩu */}
@@ -255,6 +499,7 @@ export default function RegisterForm() {
               <input
                 id="register-password"
                 type={showPassword ? "text" : "password"}
+                suppressHydrationWarning
                 disabled={isSubmitting}
                 {...register("password")}
                 placeholder="Tối thiểu 8 ký tự"
@@ -262,6 +507,7 @@ export default function RegisterForm() {
               />
               <button
                 type="button"
+                suppressHydrationWarning
                 onClick={() => setShowPassword(!showPassword)}
                 className="ef-focus-ring absolute inset-y-0 right-0 flex items-center pr-4 text-fg-muted transition-colors hover:text-fg"
               >
@@ -285,6 +531,7 @@ export default function RegisterForm() {
               <input
                 id="register-confirm"
                 type={showConfirm ? "text" : "password"}
+                suppressHydrationWarning
                 disabled={isSubmitting}
                 {...register("confirmPassword")}
                 placeholder="Nhập lại mật khẩu"
@@ -292,6 +539,7 @@ export default function RegisterForm() {
               />
               <button
                 type="button"
+                suppressHydrationWarning
                 onClick={() => setShowConfirm(!showConfirm)}
                 className="ef-focus-ring absolute inset-y-0 right-0 flex items-center pr-4 text-fg-muted transition-colors hover:text-fg"
               >
@@ -328,6 +576,7 @@ export default function RegisterForm() {
           {/* Primary Action */}
           <Button
             type="submit"
+            suppressHydrationWarning
             loading={isSubmitting}
             className="mt-1 h-[48px] w-full rounded-[12px] bg-indigo-600 hover:bg-indigo-700 text-white text-[15px] font-bold shadow-md shadow-indigo-600/20 hover:shadow-indigo-600/30 transition-all active:scale-[0.98]"
           >
