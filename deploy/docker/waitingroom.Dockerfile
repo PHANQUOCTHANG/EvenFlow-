@@ -28,10 +28,12 @@ COPY services/waitingroom ./services/waitingroom
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
     cd services/waitingroom && \
-    CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/server ./cmd/server
+    CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/server ./cmd/server && \
+    CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/controller ./cmd/controller
 
 FROM gcr.io/distroless/static-debian12:nonroot
 COPY --from=build /out/server /server
+COPY --from=build /out/controller /controller
 USER nonroot:nonroot
 EXPOSE 8081
 ENTRYPOINT ["/server"]

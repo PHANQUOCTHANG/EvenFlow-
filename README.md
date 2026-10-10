@@ -104,10 +104,14 @@ Redis lệch số **không thể** gây oversell — chỉ có thể gây "báo 
 |---|---|
 | Schema đầy đủ + mọi bất biến chống oversell | Các service `gateway`, `identity`, `event`, `payment`, `antibot`, `notification` mới có thư mục |
 | 4 Lua script phòng chờ + 2 script ticketing | `apps/web` mới có khung |
-| Admit controller AIMD | Helper testcontainers cho EVF-39 |
-| Postgres repo (hold + release idempotent) | K8s manifest |
-| Hold sweeper | Gemini client thật, FAQ matcher, semantic cache |
+| Admit controller AIMD, chạy được (`cmd/controller`) | Helper testcontainers cho EVF-39 |
+| Postgres repo (hold + release idempotent) | K8s manifest cho service ngoài `web` |
+| Hold sweeper + seeder nạp tồn kho Redis (`cmd/worker`) | Gemini client thật, FAQ matcher, semantic cache |
+| Luồng xếp hàng → admit → giữ ghế → trả kho chạy qua `make smoke` | Outbox relay, đối soát tồn kho, bầu leader cho controller |
 | Limiter Gemini + suy biến 4 nấc | |
 | Compose, Dockerfile, RabbitMQ topology, k6, alert | |
+
+Chạy không cần `make` (Windows): `bash deploy/scripts/seed.sh` rồi `bash deploy/scripts/smoke.sh`.
+Cần Docker; không cần `psql` hay `redis-cli` trên máy host.
 
 Backlog đầy đủ với thứ tự ưu tiên: [docs/04-jira-backlog.md](docs/04-jira-backlog.md).

@@ -1,5 +1,6 @@
 // Command worker chay cac tien trinh nen cua ticketing:
 //   - hold sweeper: nha lenh giu ghe het han, tra ve vao kho (BR-O2, BR-O7)
+//   - inventory seeder: nap ton kho tu Postgres vao Redis (ban toi thieu cua EVF-37)
 //   - TODO(EVF-36): outbox relay
 //   - TODO(EVF-37): inventory reconciler
 //
@@ -61,16 +62,32 @@ func run(log *slog.Logger) error {
 		log.Warn("khong co su kien nao de quet; dat ACTIVE_EVENT_IDS")
 	}
 
+	repo := postgresadapter.NewRepository(pool)
+
 	sweeper := worker.NewHoldSweeper(
 		gate,
-		postgresadapter.NewRepository(pool),
+		repo,
 		logPublisher{log}, // TODO(EVF-36): thay bang publisher RabbitMQ
 		worker.DefaultSweeperConfig(eventIDs),
 		log,
 	)
+	seeder := worker.NewInventorySeeder(
+		repo, gate, worker.DefaultSeederConfig(eventIDs), log,
+	)
 
-	log.Info("hold sweeper bat dau", "so_su_kien", len(eventIDs), "chu_ky", time.Second)
-	return sweeper.Run(ctx)
+	log.Info("worker bat dau", "so_su_kien", len(eventIDs),
+		"chu_ky_quet", time.Second, "chu_ky_nap_kho", worker.DefaultSeederConfig(nil).Interval)
+
+	// Hai tien trinh nen doc lap: loi o mot ben khong duoc dung ben kia, nhung
+	// khi ctx bi huy (SIGTERM) ca hai deu phai dung.
+	errs := make(chan error, 2)
+	go func() { errs <- sweeper.Run(ctx) }()
+	go func() { errs <- seeder.Run(ctx) }()
+
+	err = <-errs
+	stop()
+	<-errs
+	return err
 }
 
 // logPublisher la publisher tam thoi cho local dev.
