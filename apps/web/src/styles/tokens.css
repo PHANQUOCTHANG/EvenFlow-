@@ -17,7 +17,8 @@
  * Palette dark la GIA TRI DE XUAT do EVF-1801 dan xuat, Design chua xac nhan.
  */
 
-:root {
+:root,
+[data-theme="light"] {
   color-scheme: light;
 
   /* --- be mat & chu --- */
