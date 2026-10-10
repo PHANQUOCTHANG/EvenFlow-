@@ -12,17 +12,20 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/redis/go-redis/v9"
 
 	"github.com/eventflow/eventflow/libs/go/httpx"
+	"github.com/eventflow/eventflow/libs/go/otelx"
 	httpadapter "github.com/eventflow/eventflow/services/ticketing/internal/adapter/http"
+	metricsadapter "github.com/eventflow/eventflow/services/ticketing/internal/adapter/metrics"
 	postgresadapter "github.com/eventflow/eventflow/services/ticketing/internal/adapter/postgres"
 	redisadapter "github.com/eventflow/eventflow/services/ticketing/internal/adapter/redis"
 	"github.com/eventflow/eventflow/services/ticketing/internal/app"
 )
 
 func main() {
-	log := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
+	log := slog.New(otelx.LogHandler(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo})))
 	if err := run(log); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		log.Error("server dung bat thuong", "err", err)
 		os.Exit(1)
@@ -32,6 +35,19 @@ func main() {
 func run(log *slog.Logger) error {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
+
+	shutdownTrace, err := otelx.Init(ctx, "ticketing")
+	if err != nil {
+		return err
+	}
+	defer func() {
+		// Xa not span con dem; khong de Jaeger cham lam treo luc tat.
+		sh, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if err := shutdownTrace(sh); err != nil {
+			log.Warn("tat trace loi", "err", err)
+		}
+	}()
 
 	cfg, err := pgxpool.ParseConfig(env("DATABASE_URL", ""))
 	if err != nil {
@@ -72,17 +88,30 @@ func run(log *slog.Logger) error {
 	}
 	repo := postgresadapter.NewRepository(pool)
 
-	h := httpadapter.New(app.NewCreateHold(gate, repo, log), log)
+	prom := metricsadapter.New(prometheus.DefaultRegisterer)
+	// Muc dung pool la tin hieu backpressure cho admit controller: pool can thi
+	// Postgres dang qua tai.
+	prom.RegisterPoolUsage(func() float64 {
+		st := pool.Stat()
+		if st.MaxConns() == 0 {
+			return 0
+		}
+		return float64(st.AcquiredConns()) / float64(st.MaxConns())
+	})
+
+	h := httpadapter.New(app.NewCreateHold(gate, repo, log).WithMetrics(prom), log)
 
 	mux := http.NewServeMux()
 	h.Routes(mux)
+	// Cong khai tren cong dich vu: gateway KHONG duoc route /metrics ra ngoai.
+	mux.Handle("GET /metrics", otelx.MetricsHandler())
 	httpx.Health(mux,
 		pool.Ping,
 		func(ctx context.Context) error { return rdb.Ping(ctx).Err() },
 	)
 
 	srv := httpx.NewServer(env("HTTP_ADDR", ":8082"),
-		httpx.Chain(mux, httpx.RequestID(), httpx.AccessLog(log), httpx.Recover(log)))
+		httpx.Chain(mux, httpx.RequestID(), otelx.HTTP("ticketing"), httpx.AccessLog(log), httpx.Recover(log)))
 
 	log.Info("ticketing dang lang nghe", "addr", srv.Addr)
 	// 20 giay de cac transaction dang duoc commit xong. Cat ngang giua mot
