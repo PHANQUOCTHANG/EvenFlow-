@@ -12,13 +12,13 @@ WORKDIR /src
 # sua bat ky service nao cung lam mat cache cua image nay. Danh sach phai khop `go.work`:
 # them module vao go.work thi them mot dong o day.
 #
-# Khong dung GOWORK=off de ne: repo khong track go.sum nao, nen o che do module `go build`
-# doi checksum ma khong co (`missing go.sum entry`, da thu).
+# Phai copy ca go.sum cua module con lai: workspace gop go.sum cua moi module, thieu thi
+# `go build` bao `missing go.sum entry for go.mod file` du khong dung dependency do.
 COPY go.work ./
 COPY services/gateway/go.mod services/gateway/
 COPY services/identity/go.mod services/identity/
 COPY services/event/go.mod services/event/
-COPY services/waitingroom/go.mod services/waitingroom/
+COPY services/waitingroom/go.mod services/waitingroom/go.sum services/waitingroom/
 COPY services/payment/go.mod services/payment/
 COPY services/antibot/go.mod services/antibot/
 COPY services/notification/go.mod services/notification/

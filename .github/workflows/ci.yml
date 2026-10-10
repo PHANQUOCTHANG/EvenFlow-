@@ -87,7 +87,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
-          cache-dependency-path: '**/go.mod'
+          cache-dependency-path: '**/go.sum'
       - name: go vet moi module
         run: |
           set -e
@@ -170,7 +170,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
-          cache-dependency-path: '**/go.mod'
+          cache-dependency-path: '**/go.sum'
       - name: unit test moi module (khong can ha tang)
         run: |
           set -e
@@ -358,7 +358,7 @@ jobs:
         if: needs.changes.outputs.go == 'true'
         with:
           go-version: ${{ env.GO_VERSION }}
-          cache-dependency-path: '**/go.mod'
+          cache-dependency-path: '**/go.sum'
       - name: build tat ca binary Go
         if: needs.changes.outputs.go == 'true'
         run: |
