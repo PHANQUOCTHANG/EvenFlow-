@@ -6,10 +6,16 @@ import (
 	"github.com/google/uuid"
 )
 
-// DTO cho yêu cầu Đăng ký
-type RegisterRequest struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
+// DTO cho yêu cầu lấy OTP
+type RequestOTPRequest struct {
+	Identifier string `json:"identifier"`
+}
+
+// DTO cho yêu cầu xác nhận OTP và tạo tài khoản
+type VerifyOTPRequest struct {
+	Identifier string `json:"identifier"`
+	Password   string `json:"password"`
+	OTP        string `json:"otp"`
 }
 
 // DTO cho yêu cầu Đăng nhập
@@ -23,6 +29,7 @@ type IdentityResponse struct {
 	ID        uuid.UUID  `json:"id"`
 	Email     *string    `json:"email,omitempty"`
 	Role      string     `json:"role"`
+	Token     string     `json:"token,omitempty"`
 	CreatedAt time.Time  `json:"created_at"`
 }
 

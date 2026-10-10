@@ -17,23 +17,30 @@ type LoginInput struct {
 	Password   string
 }
 
+type LoginOutput struct {
+	Identity *domain.Identity
+	Token    string
+}
+
 type LoginUseCase interface {
-	Execute(ctx context.Context, input LoginInput) (*domain.Identity, error)
+	Execute(ctx context.Context, input LoginInput) (*LoginOutput, error)
 }
 
 type loginUseCase struct {
-	repo   domain.IdentityRepository
-	hasher domain.PasswordHasher
+	repo         domain.IdentityRepository
+	hasher       domain.PasswordHasher
+	tokenGen     domain.TokenGenerator
 }
 
-func NewLoginUseCase(repo domain.IdentityRepository, hasher domain.PasswordHasher) LoginUseCase {
+func NewLoginUseCase(repo domain.IdentityRepository, hasher domain.PasswordHasher, tokenGen domain.TokenGenerator) LoginUseCase {
 	return &loginUseCase{
-		repo:   repo,
-		hasher: hasher,
+		repo:         repo,
+		hasher:       hasher,
+		tokenGen:     tokenGen,
 	}
 }
 
-func (uc *loginUseCase) Execute(ctx context.Context, input LoginInput) (*domain.Identity, error) {
+func (uc *loginUseCase) Execute(ctx context.Context, input LoginInput) (*LoginOutput, error) {
 	if input.Identifier == "" || input.Password == "" {
 		return nil, ErrInvalidInput
 	}
@@ -43,8 +50,6 @@ func (uc *loginUseCase) Execute(ctx context.Context, input LoginInput) (*domain.
 	if err != nil {
 		if errors.Is(err, domain.ErrIdentityNotFound) {
 			// BẢO MẬT: Chống dò quét tài khoản (User Enumeration).
-			// Dù không tìm thấy email, ta vẫn trả về lỗi chung là "Sai thông tin đăng nhập".
-			// Không bao giờ báo cho hacker biết là "email này không tồn tại".
 			return nil, ErrInvalidCredentials
 		}
 		return nil, err
@@ -57,11 +62,17 @@ func (uc *loginUseCase) Execute(ctx context.Context, input LoginInput) (*domain.
 	}
 
 	if !match {
-		// BẢO MẬT: Lỗi chung, giống hệt lỗi không tìm thấy email
 		return nil, ErrInvalidCredentials
 	}
 
-	// Thành công
-	// (Ghi chú: Tại task EV-110 chỉ trả về Identity. Việc cấp JWT Token sẽ làm ở task EV-112).
-	return identity, nil
+	// 3. Tạo JWT Token
+	token, err := uc.tokenGen.GenerateToken(identity)
+	if err != nil {
+		return nil, err
+	}
+
+	return &LoginOutput{
+		Identity: identity,
+		Token:    token,
+	}, nil
 }

@@ -7,17 +7,22 @@ import (
 
 	"github.com/eventflow/eventflow/services/identity/internal/app"
 	"github.com/eventflow/eventflow/services/identity/internal/domain"
+	"github.com/redis/go-redis/v9"
 )
 
 type AuthHandler struct {
-	registerUC app.RegisterUseCase
-	loginUC    app.LoginUseCase
+	registerUC  app.RegisterUseCase
+	loginUC     app.LoginUseCase
+	vneidUC     app.VNeIDUseCase
+	redisClient *redis.Client
 }
 
-func NewAuthHandler(registerUC app.RegisterUseCase, loginUC app.LoginUseCase) *AuthHandler {
+func NewAuthHandler(registerUC app.RegisterUseCase, loginUC app.LoginUseCase, vneidUC app.VNeIDUseCase, redisClient *redis.Client) *AuthHandler {
 	return &AuthHandler{
-		registerUC: registerUC,
-		loginUC:    loginUC,
+		registerUC:  registerUC,
+		loginUC:     loginUC,
+		vneidUC:     vneidUC,
+		redisClient: redisClient,
 	}
 }
 
@@ -37,33 +42,67 @@ func writeError(w http.ResponseWriter, status int, title string, detail string) 
 	writeJSON(w, status, errResp)
 }
 
-func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
-	var req RegisterRequest
+func (h *AuthHandler) RequestOTP(w http.ResponseWriter, r *http.Request) {
+	var req RequestOTPRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "Invalid Request", "Dữ liệu JSON không hợp lệ")
 		return
 	}
 
-	identity, err := h.registerUC.Execute(r.Context(), app.RegisterInput{
-		Email:    req.Email,
-		Password: req.Password,
+	err := h.registerUC.RequestOTP(r.Context(), app.RequestOTPInput{
+		Identifier: req.Identifier,
 	})
 
 	if err != nil {
 		switch {
-		case errors.Is(err, app.ErrInvalidEmail), errors.Is(err, app.ErrPasswordTooShort):
+		case errors.Is(err, app.ErrInvalidIdentifier):
 			writeError(w, http.StatusBadRequest, "Validation Error", err.Error())
+		case errors.Is(err, app.ErrRateLimited):
+			writeError(w, http.StatusTooManyRequests, "Rate Limited", err.Error())
 		case errors.Is(err, domain.ErrIdentityExists):
-			writeError(w, http.StatusConflict, "Conflict", "Email này đã được sử dụng")
+			writeError(w, http.StatusConflict, "Conflict", "Email hoặc số điện thoại này đã được đăng ký.")
 		default:
 			writeError(w, http.StatusInternalServerError, "Server Error", "Lỗi hệ thống nội bộ")
 		}
 		return
 	}
 
+	w.WriteHeader(http.StatusOK)
+}
+
+func (h *AuthHandler) VerifyOTP(w http.ResponseWriter, r *http.Request) {
+	var req VerifyOTPRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "Invalid Request", "Dữ liệu JSON không hợp lệ")
+		return
+	}
+
+	identity, err := h.registerUC.VerifyOTP(r.Context(), app.VerifyOTPInput{
+		Identifier: req.Identifier,
+		Password:   req.Password,
+		OTP:        req.OTP,
+	})
+
+	if err != nil {
+		switch {
+		case errors.Is(err, app.ErrInvalidOTP), errors.Is(err, app.ErrPasswordTooShort):
+			writeError(w, http.StatusBadRequest, "Validation Error", err.Error())
+		case errors.Is(err, domain.ErrIdentityExists):
+			writeError(w, http.StatusConflict, "Conflict", "Tài khoản này đã tồn tại")
+		default:
+			writeError(w, http.StatusInternalServerError, "Server Error", "Lỗi hệ thống nội bộ")
+		}
+		return
+	}
+
+	var email *string
+	if identity.Email != nil {
+		email = identity.Email
+	}
+
 	resp := IdentityResponse{
 		ID:        identity.ID,
-		Email:     identity.Email,
+		Email:     email,
 		Role:      string(identity.Role),
 		CreatedAt: identity.CreatedAt,
 	}
@@ -77,7 +116,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	identity, err := h.loginUC.Execute(r.Context(), app.LoginInput{
+	output, err := h.loginUC.Execute(r.Context(), app.LoginInput{
 		Identifier: req.Identifier,
 		Password:   req.Password,
 	})
@@ -87,7 +126,6 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		case errors.Is(err, app.ErrInvalidInput):
 			writeError(w, http.StatusBadRequest, "Validation Error", err.Error())
 		case errors.Is(err, app.ErrInvalidCredentials):
-			// 401 Unauthorized cho mọi trường hợp sai thông tin
 			writeError(w, http.StatusUnauthorized, "Unauthorized", "Email/Số điện thoại hoặc mật khẩu không chính xác")
 		default:
 			writeError(w, http.StatusInternalServerError, "Server Error", "Lỗi hệ thống nội bộ")
@@ -96,10 +134,63 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	resp := IdentityResponse{
-		ID:        identity.ID,
-		Email:     identity.Email,
-		Role:      string(identity.Role),
-		CreatedAt: identity.CreatedAt,
+		ID:        output.Identity.ID,
+		Email:     output.Identity.Email,
+		Role:      string(output.Identity.Role),
+		Token:     output.Token,
+		CreatedAt: output.Identity.CreatedAt,
 	}
 	writeJSON(w, http.StatusOK, resp)
+}
+
+// ---- VNEID MOCK ----
+
+func (h *AuthHandler) VNeIDCallback(w http.ResponseWriter, r *http.Request) {
+	var input app.VNeIDCallbackInput
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		writeError(w, http.StatusBadRequest, "Invalid Request", "Dữ liệu JSON không hợp lệ")
+		return
+	}
+
+	if err := h.vneidUC.HandleCallback(r.Context(), input); err != nil {
+		writeError(w, http.StatusInternalServerError, "Callback Error", err.Error())
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
+}
+
+func (h *AuthHandler) VNeIDListenSSE(w http.ResponseWriter, r *http.Request) {
+	sessionID := r.URL.Query().Get("session_id")
+	if sessionID == "" {
+		http.Error(w, "session_id required", http.StatusBadRequest)
+		return
+	}
+
+	// Set headers for SSE
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+
+	rc := w.(http.Flusher)
+
+	// Subscribe to Redis channel
+	ctx := r.Context()
+	sub := h.redisClient.Subscribe(ctx, "vneid_session:"+sessionID)
+	defer sub.Close()
+
+	ch := sub.Channel()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case msg := <-ch:
+			// Push to client
+			data := "data: " + msg.Payload + "\n\n"
+			w.Write([]byte(data))
+			rc.Flush()
+			return // Kết thúc stream sau khi có phản hồi
+		}
+	}
 }

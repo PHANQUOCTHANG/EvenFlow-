@@ -19,12 +19,13 @@ func NewIdentityRepo(db *sql.DB) domain.IdentityRepository {
 
 func (r *identityRepo) Save(ctx context.Context, identity *domain.Identity) error {
 	query := `
-		INSERT INTO identities (id, email, password_hash, role, created_at)
-		VALUES ($1, $2, $3, $4, $5)
+		INSERT INTO identities (id, email, phone_hash, password_hash, role, created_at)
+		VALUES ($1, $2, $3, $4, $5, $6)
 	`
 	_, err := r.db.ExecContext(ctx, query,
 		identity.ID,
 		identity.Email,
+		identity.PhoneHash,
 		identity.PasswordHash,
 		string(identity.Role),
 		identity.CreatedAt,
