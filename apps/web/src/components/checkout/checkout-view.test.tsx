@@ -106,6 +106,43 @@ describe("CheckoutView (EVF-113, EV-183)", () => {
     );
   });
 
+  it("bấm đặt nhiều lần nhanh trên UI không tạo hold trùng (BR-O5)", async () => {
+    let resolvePromise: (value: holdClient.HoldResult) => void;
+    const pendingPromise = new Promise<holdClient.HoldResult>((resolve) => {
+      resolvePromise = resolve;
+    });
+
+    const requestHoldSpy = vi.spyOn(holdClient, "requestHold").mockImplementation(() => pendingPromise);
+
+    await act(async () => {
+      render(<CheckoutView event={mockEvent} />);
+    });
+
+    const submitBtn = screen.getByRole("button", { name: "Giữ vé và thanh toán" });
+
+    // Bấm liên tiếp nhiều lần nhanh
+    await act(async () => {
+      fireEvent.click(submitBtn);
+      fireEvent.click(submitBtn);
+      fireEvent.click(submitBtn);
+    });
+
+    // Chỉ gọi duy nhất 1 lần
+    expect(requestHoldSpy).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      resolvePromise!({
+        orderId: "ord-ui-once",
+        holdId: "hold-ui-once",
+        expiresAt: new Date(Date.now() + 600_000).toISOString(),
+        ticketTypeId: "tier-ga",
+        quantity: 1,
+      });
+    });
+
+    expect(requestHoldSpy).toHaveBeenCalledTimes(1);
+  });
+
   it("khi có active hold, hiển thị cảnh báo ở hạng vé khác (BR-O3)", async () => {
     const futureExpiresAt = new Date(Date.now() + 600_000).toISOString();
     holdClient.saveActiveHold("evt-test-1", {

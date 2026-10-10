@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useServerCountdown } from "@/hooks/use-server-countdown";
 import {
@@ -60,6 +60,7 @@ export function useHoldTimer({
   const [hold, setHold] = useState<HoldResult | null>(null);
   const [holdState, setHoldState] = useState<HoldState>("idle");
   const [error, setError] = useState<HoldClientError | null>(null);
+  const isCreatingRef = useRef(false);
 
   // Khoi phuc hold tu sessionStorage khi mount
   useEffect(() => {
@@ -92,7 +93,7 @@ export function useHoldTimer({
   const createHold = useCallback(
     async (ticketTypeId: string, quantity: number): Promise<boolean> => {
       // Chặn duplicate click khi đang tạo (BR-O5)
-      if (holdState === "creating") {
+      if (holdState === "creating" || isCreatingRef.current) {
         return false;
       }
 
@@ -107,6 +108,7 @@ export function useHoldTimer({
         return false;
       }
 
+      isCreatingRef.current = true;
       setHoldState("creating");
       setError(null);
 
@@ -141,6 +143,8 @@ export function useHoldTimer({
           setHoldState("idle");
         }
         return false;
+      } finally {
+        isCreatingRef.current = false;
       }
     },
     [holdState, propQueueToken, eventId, identityId, apiBaseUrl],
