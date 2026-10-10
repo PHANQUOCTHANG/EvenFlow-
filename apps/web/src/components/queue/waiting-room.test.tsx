@@ -129,4 +129,32 @@ describe("WaitingRoom container (EV-182 AC-6, AC-8)", () => {
 
     expect(screen.getByText(/Bạn cần đăng nhập và xác thực OTP/)).toBeInTheDocument();
   });
+
+  it("render nút hỗ trợ AI và mở được ChatPanel khi click (EV-185, EVF-115)", async () => {
+    window.sessionStorage.setItem("ef:queue:token:evt-1", "saved-token-456");
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      jsonResponse({
+        state: "QUEUED",
+        rank: 50,
+        poll_after_ms: 5000,
+      })
+    );
+
+    render(<WaitingRoom eventId="evt-1" eventTitle="Sự kiện Tri Âm" />);
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0);
+    });
+
+    const aiBtn = screen.getByRole("button", { name: /Mở trợ lý ảo AI/ });
+    expect(aiBtn).toBeInTheDocument();
+
+    // Click mở panel
+    await act(async () => {
+      aiBtn.click();
+    });
+
+    expect(screen.getByRole("region", { name: "Bảng điều khiển trợ lý AI" })).toBeInTheDocument();
+    expect(screen.getByText("Trợ lý EventFlow")).toBeInTheDocument();
+  });
 });
