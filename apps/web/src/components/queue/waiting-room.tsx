@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { AdmitBanner } from "@/components/queue/admit-banner";
 import { QueuePosition } from "@/components/queue/queue-position";
+import { ChatPanel } from "@/components/assistant/chat-panel";
 import { Badge, Button, Spinner } from "@/components/ui";
 import { useQueueStatus } from "@/hooks/use-queue-status";
 import { useServerTimeSync } from "@/hooks/use-server-time-sync";
@@ -32,6 +33,7 @@ export function WaitingRoom({
   const [token, setToken] = useState<string | null>(null);
   const [isJoining, setIsJoining] = useState(false);
   const [joinError, setJoinError] = useState<string | null>(null);
+  const [isAssistantOpen, setIsAssistantOpen] = useState(false);
   const redirectedRef = useRef(false);
 
   // 1. Quản lý khôi phục hoặc cấp mới queue token từ sessionStorage
@@ -173,6 +175,17 @@ export function WaitingRoom({
         </div>
 
         <div className="flex items-center gap-sm">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setIsAssistantOpen(true)}
+            className="flex items-center gap-xs"
+            aria-label="Mở trợ lý ảo AI"
+          >
+            <span aria-hidden="true">💬</span>
+            <span>Hỏi trợ lý AI</span>
+          </Button>
+
           {connection === "reconnecting" && (
             <Badge variant="pending">Đang kết nối lại...</Badge>
           )}
@@ -224,6 +237,14 @@ export function WaitingRoom({
           <li>Mỗi suất mua vé có thời hạn tối đa 15 phút.</li>
         </ul>
       </footer>
+
+      {/* Drawer Trợ lý AI (EV-185, EVF-115) */}
+      <ChatPanel
+        eventId={eventId}
+        eventTitle={eventTitle}
+        isOpen={isAssistantOpen}
+        onClose={() => setIsAssistantOpen(false)}
+      />
     </div>
   );
 }
