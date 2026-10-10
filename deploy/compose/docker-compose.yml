@@ -35,6 +35,10 @@ services:
       # Transaction pooling: 2000 ket noi tu app -> 100 ket noi that toi Postgres.
       # Khong co lop nay, dinh tai se lam can sach connection slot.
       POOL_MODE: transaction
+      # Postgres 16 mac dinh SCRAM. Voi AUTH_TYPE mac dinh (md5) entrypoint ghi hash md5
+      # vao userlist, PgBouncer khong dung duoc de lam SCRAM toi server va moi ket noi
+      # that bai voi "cannot do SCRAM authentication: wrong password type".
+      AUTH_TYPE: scram-sha-256
       MAX_CLIENT_CONN: "2000"
       DEFAULT_POOL_SIZE: "100"
     ports: ["6432:5432"]
