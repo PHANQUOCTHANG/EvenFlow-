@@ -92,6 +92,28 @@ type Repository interface {
 	ReleaseHold(ctx context.Context, holdID string) (released bool, err error)
 }
 
+// ===================== So lieu nghiep vu =====================
+
+// Ket qua cua mot lan tao hold, dung lam nhan metric. Chi vai gia tri co dinh de
+// khong lam no so luong chuoi.
+const (
+	OutcomeOK          = "ok"
+	OutcomeSoldOut     = "sold_out"
+	OutcomeNotAdmitted = "not_admitted"
+	OutcomeLimit       = "limit"
+	OutcomeError       = "error"
+)
+
+// HoldMetrics nhan so lieu nghiep vu cua use case giu ghe.
+type HoldMetrics interface {
+	// HoldAttempt ghi mot lan tao hold voi ket qua va thoi gian xu ly.
+	HoldAttempt(outcome string, d time.Duration)
+	// OversellGuardRejected ghi khi Postgres chan mot hold ma Redis da cho qua:
+	// Redis dang lech so voi su that. Khong phai oversell (Postgres da chan), nhung
+	// la dau hieu tang chan nhanh sai -- dung dieu alert nghiem trong can biet.
+	OversellGuardRejected()
+}
+
 // ===================== Nap ton kho =====================
 
 // InventoryRow la ton kho cua mot bucket, doc tu Postgres.
