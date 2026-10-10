@@ -94,7 +94,11 @@ services:
 
   prometheus:
     image: prom/prometheus:latest
-    volumes: ["../observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro"]
+    # alerts.yml duoc rule_files tham chieu trong prometheus.yml; thieu mount nay thi
+    # Prometheus khong nap duoc luat va alert im lang.
+    volumes:
+      - "../observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro"
+      - "../observability/alerts.yml:/etc/prometheus/alerts.yml:ro"
     ports: ["9090:9090"]
 
   grafana:
@@ -137,6 +141,7 @@ services:
     entrypoint: ["/controller"]
     environment:
       REDIS_ADDR: "redis:6379"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://jaeger:4318"
       ACTIVE_EVENT_IDS: "${ACTIVE_EVENT_IDS:-11111111-1111-4111-8111-111111111111,22222222-2222-4222-8222-222222222222}"
       # Tran thap cho local: HealthProbe hien la ban tinh nen rate se leo toi tran.
       ADMIT_MIN_RATE: "${ADMIT_MIN_RATE:-5}"
@@ -155,6 +160,7 @@ services:
     environment:
       HTTP_ADDR: ":8082"
       REDIS_ADDR: "redis:6379"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://jaeger:4318"
       # Qua PgBouncer, khong noi thang Postgres -- giong production.
       DATABASE_URL: "postgres://eventflow:eventflow@pgbouncer:5432/eventflow?sslmode=disable"
       AMQP_URL: "amqp://eventflow:eventflow@rabbitmq:5672/"
@@ -174,6 +180,7 @@ services:
     entrypoint: ["/worker"]
     environment:
       REDIS_ADDR: "redis:6379"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://jaeger:4318"
       DATABASE_URL: "postgres://eventflow:eventflow@pgbouncer:5432/eventflow?sslmode=disable"
       ACTIVE_EVENT_IDS: "${ACTIVE_EVENT_IDS:-11111111-1111-4111-8111-111111111111,22222222-2222-4222-8222-222222222222}"
     depends_on:
