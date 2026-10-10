@@ -115,7 +115,7 @@ export default function ForgotPasswordForm() {
       await requestResetPasswordOTP(data.identifier);
       setIdentifier(data.identifier);
       toast({
-        variant: "default",
+        variant: "info",
         title: "Đã gửi mã xác thực",
         description: isPhoneNumber 
           ? `Vui lòng mở Telegram để nhận mã OTP.` 

@@ -341,7 +341,7 @@ function TelegramOTPVerification({
       setRegisteredPassword(data.password);
       
       toast({
-        variant: "default",
+        variant: "info",
         title: "Đã gửi mã xác thực",
         description: isPhoneNumber 
           ? `Vui lòng mở Telegram để nhận mã.` 
@@ -372,13 +372,13 @@ function TelegramOTPVerification({
     try {
       await requestRegistrationOTP(currentIdentifier);
       toast({
-        variant: "default",
+        variant: "info",
         title: "Gửi lại thành công",
         description: `Mã OTP mới đã được gửi tới ${currentIdentifier}`,
       });
     } catch (err: any) {
       toast({
-        variant: "destructive",
+        variant: "error",
         title: "Không thể gửi lại",
         description: err?.detail || "Quá nhiều yêu cầu. Hãy đợi thêm 5 phút.",
       });
