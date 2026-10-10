@@ -79,6 +79,9 @@ func main() {
 	vneidUC := app.NewVNeIDUseCase(identityRepo, rawRedis, tokenGen)
 	forgotPwdUC := app.NewForgotPasswordUseCase(identityRepo, hasher, redisAdapterClient, notifier)
 
+	googleClientID := os.Getenv("GOOGLE_CLIENT_ID")
+	googleLoginUC := app.NewGoogleLoginUseCase(identityRepo, hasher, tokenGen, googleClientID)
+
 	// - Telegram Bot
 	telegramToken := os.Getenv("TELEGRAM_BOT_TOKEN")
 	if telegramToken != "" {
@@ -94,7 +97,7 @@ func main() {
 	}
 
 	// - Adapter (HTTP)
-	authHandler := identityHttp.NewAuthHandler(registerUC, loginUC, vneidUC, forgotPwdUC, rawRedis)
+	authHandler := identityHttp.NewAuthHandler(registerUC, loginUC, vneidUC, forgotPwdUC, googleLoginUC, rawRedis)
 
 	// 4. Khởi tạo Router và đăng ký API
 	mux := http.NewServeMux()

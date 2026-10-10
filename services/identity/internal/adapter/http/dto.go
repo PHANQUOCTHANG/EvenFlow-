@@ -24,6 +24,10 @@ type LoginRequest struct {
 	Password   string `json:"password"`
 }
 
+type GoogleLoginRequest struct {
+	Credential string `json:"credential"` // id_token do Google cấp
+}
+
 type RequestResetOTPRequest struct {
 	Identifier string `json:"identifier"`
 }

@@ -6,7 +6,8 @@ import Image from "next/image";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { requestRegistrationOTP, verifyRegistrationOTP } from "@/lib/api/auth";
+import { requestRegistrationOTP, verifyRegistrationOTP, loginWithGoogle } from "@/lib/api/auth";
+import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
 import { Alert, Button, useToast } from "@/components/ui";
 import OTPVerification from "./OTPVerification";
 
@@ -590,6 +591,53 @@ function TelegramOTPVerification({
             )}
           </Button>
         </form>
+
+        {/* Divider */}
+        <div className="relative flex items-center py-1">
+          <div className="flex-grow border-t border-border-subtle"></div>
+          <span className="flex-shrink-0 mx-4 text-fg-muted text-[12px] font-semibold tracking-wider uppercase">Hoặc</span>
+          <div className="flex-grow border-t border-border-subtle"></div>
+        </div>
+
+        {/* Alternative Action (Google) */}
+        <div className="w-full flex justify-center">
+          <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ""}>
+            <GoogleLogin
+              onSuccess={async (credentialResponse) => {
+                if (credentialResponse.credential) {
+                  try {
+                    const res = await loginWithGoogle(credentialResponse.credential);
+                    if (res.token) {
+                      localStorage.setItem("ef_token", res.token);
+                    }
+                    toast({
+                      variant: "success",
+                      title: "Đăng nhập thành công!",
+                      description: "Đang tự động chuyển tiếp...",
+                    });
+                    setTimeout(() => {
+                      window.location.href = "/events";
+                    }, 1000);
+                  } catch (err: any) {
+                    toast({
+                      variant: "error",
+                      title: "Lỗi đăng nhập",
+                      description: err?.detail || 'Không thể đăng nhập bằng Google.',
+                    });
+                  }
+                }
+              }}
+              onError={() => {
+                toast({
+                  variant: "error",
+                  title: "Lỗi đăng nhập",
+                  description: "Đăng nhập Google bị hủy hoặc thất bại.",
+                });
+              }}
+              width="100%"
+            />
+          </GoogleOAuthProvider>
+        </div>
 
         <div className="mt-0.5 text-center text-[13.5px] text-fg-muted pt-4">
            Đã có tài khoản?{" "}

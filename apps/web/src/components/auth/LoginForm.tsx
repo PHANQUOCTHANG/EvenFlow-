@@ -3,7 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { loginUser } from "@/lib/api/auth";
+import { loginUser, loginWithGoogle } from "@/lib/api/auth";
+import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
 import { Alert, Button, useToast } from "@/components/ui";
 
 
@@ -270,14 +271,47 @@ export default function LoginForm() {
         </div>
 
         {/* Alternative Action (Google) */}
-        <button
-          type="button"
-          onClick={handleGoogleLogin}
-          className="ef-focus-ring h-[48px] w-full rounded-[12px] bg-white border border-border-strong text-fg text-[14px] font-bold flex items-center justify-center gap-2 hover:bg-slate-50 transition-colors active:scale-[0.98]"
-        >
-          <GoogleIcon className="size-[20px]" />
-          <span>Tiếp tục với Google</span>
-        </button>
+        <div className="w-full flex justify-center">
+          <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ""}>
+            <GoogleLogin
+              onSuccess={async (credentialResponse) => {
+                if (credentialResponse.credential) {
+                  try {
+                    setLoading(true);
+                    const res = await loginWithGoogle(credentialResponse.credential);
+                    if (res.token) {
+                      localStorage.setItem("ef_token", res.token);
+                    }
+                    toast({
+                      variant: "success",
+                      title: "Đăng nhập thành công!",
+                      description: "Đang tự động chuyển tiếp...",
+                    });
+                    setTimeout(() => {
+                      window.location.href = "/events";
+                    }, 1000);
+                  } catch (err: any) {
+                    toast({
+                      variant: "error",
+                      title: "Lỗi đăng nhập",
+                      description: err?.detail || 'Không thể đăng nhập bằng Google.',
+                    });
+                  } finally {
+                    setLoading(false);
+                  }
+                }
+              }}
+              onError={() => {
+                toast({
+                  variant: "error",
+                  title: "Lỗi đăng nhập",
+                  description: "Đăng nhập Google bị hủy hoặc thất bại.",
+                });
+              }}
+              width="100%"
+            />
+          </GoogleOAuthProvider>
+        </div>
 
         <div className="mt-1 text-center text-[13.5px] text-fg-muted border-t border-border-subtle pt-4">
           Chưa có tài khoản EventFlow?{" "}

@@ -11,20 +11,22 @@ import (
 )
 
 type AuthHandler struct {
-	registerUC  app.RegisterUseCase
-	loginUC     app.LoginUseCase
-	vneidUC     app.VNeIDUseCase
-	forgotPwdUC app.ForgotPasswordUseCase
-	redisClient *redis.Client
+	registerUC    app.RegisterUseCase
+	loginUC       app.LoginUseCase
+	vneidUC       app.VNeIDUseCase
+	forgotPwdUC   app.ForgotPasswordUseCase
+	googleLoginUC app.GoogleLoginUseCase
+	redisClient   *redis.Client
 }
 
-func NewAuthHandler(registerUC app.RegisterUseCase, loginUC app.LoginUseCase, vneidUC app.VNeIDUseCase, forgotPwdUC app.ForgotPasswordUseCase, redisClient *redis.Client) *AuthHandler {
+func NewAuthHandler(registerUC app.RegisterUseCase, loginUC app.LoginUseCase, vneidUC app.VNeIDUseCase, forgotPwdUC app.ForgotPasswordUseCase, googleLoginUC app.GoogleLoginUseCase, redisClient *redis.Client) *AuthHandler {
 	return &AuthHandler{
-		registerUC:  registerUC,
-		loginUC:     loginUC,
-		vneidUC:     vneidUC,
-		forgotPwdUC: forgotPwdUC,
-		redisClient: redisClient,
+		registerUC:    registerUC,
+		loginUC:       loginUC,
+		vneidUC:       vneidUC,
+		forgotPwdUC:   forgotPwdUC,
+		googleLoginUC: googleLoginUC,
+		redisClient:   redisClient,
 	}
 }
 
@@ -135,6 +137,37 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 			writeError(w, http.StatusUnauthorized, "Unauthorized", "Email/Số điện thoại hoặc mật khẩu không chính xác")
 		default:
 			writeError(w, http.StatusInternalServerError, "Server Error", "Lỗi hệ thống nội bộ")
+		}
+		return
+	}
+
+	resp := IdentityResponse{
+		ID:        output.Identity.ID,
+		Email:     output.Identity.Email,
+		Role:      string(output.Identity.Role),
+		Token:     output.Token,
+		CreatedAt: output.Identity.CreatedAt,
+	}
+	writeJSON(w, http.StatusOK, resp)
+}
+
+func (h *AuthHandler) GoogleLogin(w http.ResponseWriter, r *http.Request) {
+	var req GoogleLoginRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "Invalid Request", "Dữ liệu JSON không hợp lệ")
+		return
+	}
+
+	output, err := h.googleLoginUC.Execute(r.Context(), app.GoogleLoginInput{
+		IDToken: req.Credential,
+	})
+
+	if err != nil {
+		switch {
+		case errors.Is(err, app.ErrInvalidGoogleToken):
+			writeError(w, http.StatusUnauthorized, "Unauthorized", "Google Token không hợp lệ hoặc đã hết hạn")
+		default:
+			writeError(w, http.StatusInternalServerError, "Server Error", err.Error())
 		}
 		return
 	}

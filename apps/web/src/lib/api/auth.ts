@@ -79,3 +79,17 @@ export async function resetPassword(identifier: string, otp: string, newPassword
     throw data as ApiError;
   }
 }
+
+export async function loginWithGoogle(credential: string): Promise<IdentityResponse> {
+  const res = await fetch(`${API_BASE_URL}/auth/google`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ credential }),
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    throw data as ApiError;
+  }
+  return data as IdentityResponse;
+}
