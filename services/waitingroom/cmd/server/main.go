@@ -13,6 +13,7 @@ import (
 
 	"github.com/redis/go-redis/v9"
 
+	"github.com/eventflow/eventflow/libs/go/httpx"
 	httpadapter "github.com/eventflow/eventflow/services/waitingroom/internal/adapter/http"
 	redisadapter "github.com/eventflow/eventflow/services/waitingroom/internal/adapter/redis"
 	"github.com/eventflow/eventflow/services/waitingroom/internal/domain"
@@ -59,35 +60,16 @@ func run(log *slog.Logger) error {
 
 	mux := http.NewServeMux()
 	h.Routes(mux)
-	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, _ *http.Request) {
-		w.WriteHeader(http.StatusOK)
-	})
-	// Readiness tach rieng khoi liveness: pod mat Redis thi phai bi rut khoi
-	// load balancer, nhung KHONG nen bi giet va khoi dong lai giua dot mo ban.
-	mux.HandleFunc("GET /readyz", func(w http.ResponseWriter, r *http.Request) {
-		if err := rdb.Ping(r.Context()).Err(); err != nil {
-			w.WriteHeader(http.StatusServiceUnavailable)
-			return
-		}
-		w.WriteHeader(http.StatusOK)
-	})
+	// Readiness tach rieng khoi liveness: pod mat Redis thi phai bi rut khoi load
+	// balancer, nhung KHONG nen bi giet va khoi dong lai giua dot mo ban.
+	httpx.Health(mux, func(ctx context.Context) error { return rdb.Ping(ctx).Err() })
 
-	srv := &http.Server{
-		Addr:              env("HTTP_ADDR", ":8081"),
-		Handler:           mux,
-		ReadHeaderTimeout: 5 * time.Second,
-		IdleTimeout:       120 * time.Second,
-	}
-
-	go func() {
-		<-ctx.Done()
-		sh, cancel := context.WithTimeout(context.Background(), 20*time.Second)
-		defer cancel()
-		_ = srv.Shutdown(sh)
-	}()
+	// Khong dat WriteTimeout: /queue/stream la SSE, ket noi song rat lau.
+	srv := httpx.NewServer(env("HTTP_ADDR", ":8081"),
+		httpx.Chain(mux, httpx.RequestID(), httpx.AccessLog(log), httpx.Recover(log)))
 
 	log.Info("waitingroom dang lang nghe", "addr", srv.Addr)
-	return srv.ListenAndServe()
+	return httpx.Run(ctx, srv, 20*time.Second)
 }
 
 // store noi kieu tra ve cua adapter Redis voi interface ma handler mong doi.
