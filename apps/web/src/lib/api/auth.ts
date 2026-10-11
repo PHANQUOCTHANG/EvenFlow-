@@ -3,6 +3,7 @@ export interface IdentityResponse {
   email?: string;
   role: string;
   created_at: string;
+  token?: string;
 }
 
 export interface ApiError {

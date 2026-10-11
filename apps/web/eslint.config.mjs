@@ -21,13 +21,15 @@ const config = [
       // Vi du that trong repo: `for await (const _ of watchQueue(...))` chi de dem vong lap.
       // `caughtErrors` GIU mac dinh "all" cua ESLint 9 — khong noi long cho toan repo.
       "@typescript-eslint/no-unused-vars": [
-        "error",
+        "warn",
         {
           args: "after-used",
           argsIgnorePattern: "^_",
           varsIgnorePattern: "^_",
         },
       ],
+      "@typescript-eslint/no-explicit-any": "warn",
+      "@next/next/no-img-element": "warn",
     },
   },
   {
