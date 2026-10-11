@@ -11,8 +11,8 @@ Project key: **EVF**. File import: [`jira-import.csv`](jira-import.csv) — sinh
 | SP | Story point, thang Fibonacci (1, 2, 3, 5, 8). Hạng mục > 8 SP phải tách nhỏ trước khi vào sprint. |
 | Độ ưu tiên | **P0** → Highest: chặn đường tới hạn · **P1** → High: cần cho MVP · **P2** → Medium: hoàn thiện |
 | Loại issue | **Epic** · **Story** (có giá trị với người dùng, viết dạng *Là… tôi muốn… để…*) · **Task** (kỹ thuật/kiểm thử) |
-| Mã backlog | `EVF-n` trong tài liệu là mã tham chiếu cố định, ghi ở cuối mô tả mỗi issue. Key thật do Jira cấp khi import có thể khác. |
-| Nhánh / commit | `feat/EVF-123-mo-ta` · `feat(ticketing): EVF-123 ...` (dùng key Jira thật) |
+| Mã backlog | `EVF-n` trong tài liệu là mã tham chiếu cố định, ghi ở cuối mô tả mỗi issue. **Key thật trên Jira là `EV-n`** — xem bảng đối chiếu ở Phụ lục. |
+| Nhánh / commit | `feature/EV-123-mo-ta` · `feat(ticketing): mo ta thay doi (EV-123)` — dùng key Jira thật `EV-n` |
 | Tiêu chí nghiệm thu | Mỗi issue có AC đo được — không dùng các cụm mơ hồ như "hoạt động tốt". |
 
 Mỗi issue trong Jira có mô tả đầy đủ các mục: *User story* (với Story) · *Bối cảnh* · *Phạm vi công việc* · *Tiêu chí nghiệm thu* · *Phụ thuộc* · *Hiện trạng mã nguồn* (nếu đã có khung) · *Tham chiếu* (BR, tài liệu).
@@ -369,3 +369,154 @@ Ba hạng mục quyết định thành bại của cả dự án — cần làm 
 | Blocked By (nhiều cột) | Linked Issues → loại liên kết *is blocked by* (tuỳ chọn) |
 
 6. Sau import: kiểm tra 10 epic, mỗi epic có đủ issue con, tổng SP = 461.
+
+---
+
+## Phụ lục — đối chiếu mã backlog với key Jira
+
+Mã `EVF-n` trong tài liệu này chỉ là mã tham chiếu. **Key thật trên Jira là `EV-n`** (project key `EV`), và
+đó là mã dùng trong tên nhánh, commit và PR.
+
+Quy luật quan sát được: **key Jira = số thứ tự dòng trong `jira-import.csv` (tính từ 0) + 100**. Epic cũng
+chiếm một dòng nên có key riêng. Đã kiểm với các key nhóm đang dùng: `EV-110` (đăng nhập/đăng ký = EVF-10),
+`EV-182..184` (EVF-112..114), `EV-185` (panel chat = EVF-115). Bảng dưới được sinh từ quy luật đó; nếu một
+dòng lệch với board Jira thì **board là nguồn đúng**, hãy sửa bảng.
+
+**E1 – Nền móng & Hạ tầng** — Jira `EV-100`
+
+| Mã backlog | Key Jira | Tiêu đề |
+|---|---|---|
+| EVF-1 | EV-101 | Khởi tạo monorepo: go.work, pnpm workspace, uv, Makefile |
+| EVF-2 | EV-102 | libs/go/httpx: router, middleware và lỗi chuẩn RFC 7807 |
+| EVF-3 | EV-103 | libs/go/otelx: OpenTelemetry trace + Prometheus metric, lan truyền qua AMQP header |
+| EVF-4 | EV-104 | docker-compose local đầy đủ hạ tầng và service |
+| EVF-5 | EV-105 | Khung migration goose + schema khởi tạo |
+| EVF-6 | EV-106 | CI pipeline: lint → unit → integration → build → Trivy scan |
+| EVF-7 | EV-107 | libs/go/mq: publisher + consumer có retry/DLQ, khai báo topology |
+| EVF-8 | EV-108 | Template service Go (hexagonal) + generator tạo service mới |
+
+**E2 – Định danh & Bảo mật** — Jira `EV-109`
+
+| Mã backlog | Key Jira | Tiêu đề |
+|---|---|---|
+| EVF-10 | EV-110 | Đăng ký / đăng nhập, băm mật khẩu argon2id |
+| EVF-11 | EV-111 | Xác thực OTP qua SMS/email trước khi xếp hàng |
+| EVF-12 | EV-112 | JWT ngắn hạn + refresh token xoay vòng, thu hồi được |
+| EVF-13 | EV-113 | Đăng ký device fingerprint, liên kết identity ↔ device |
+| EVF-14 | EV-114 | Phân quyền RBAC: Buyer / Organizer / Moderator / Ops |
+| EVF-15 | EV-115 | Mã hoá PII ở tầng cột + lọc PII khỏi log |
+
+**E3 – Sự kiện & Kiểm duyệt** — Jira `EV-116`
+
+| Mã backlog | Key Jira | Tiêu đề |
+|---|---|---|
+| EVF-20 | EV-117 | CRUD sự kiện + hạng vé, state machine DRAFT → … → COMPLETED |
+| EVF-21 | EV-118 | Cấu hình lịch mở bán, ràng buộc T0 ≥ thời điểm duyệt + 30 phút |
+| EVF-22 | EV-119 | Khoá không cho giảm quota sau khi ON_SALE |
+| EVF-23 | EV-120 | Đẩy job kiểm duyệt AI khi submit, nhận kết quả bất đồng bộ |
+| EVF-24 | EV-121 | Hàng đợi việc cho Moderator: duyệt / từ chối / lật ngược quyết định AI |
+| EVF-25 | EV-122 | Trang sự kiện công khai render ISR, phục vụ từ CDN |
+| EVF-26 | EV-123 | Upload ảnh sự kiện lên object storage + sinh biến thể |
+
+**E4 – Ticketing & Chống oversell** — Jira `EV-124`
+
+| Mã backlog | Key Jira | Tiêu đề |
+|---|---|---|
+| EVF-30 | EV-125 | Schema tồn kho phân mảnh 32 bucket/hạng vé + CHECK (available >= 0) |
+| EVF-31 | EV-126 | Redis Lua inventory gate: hold atomic, giảm tồn, ghi ZSET hết hạn |
+| EVF-32 | EV-127 | Ghi hold vào Postgres trong transaction, chọn bucket ngẫu nhiên + fallback vòng tròn |
+| EVF-33 | EV-128 | Middleware Idempotency-Key (libs/go/idem) cho mọi API ghi |
+| EVF-34 | EV-129 | Hold sweeper: quét ZSET mỗi 1s, trả kho idempotent |
+| EVF-35 | EV-130 | Giới hạn mua: max_per_order và max_per_identity gộp mọi đơn |
+| EVF-36 | EV-131 | Transactional outbox + relay ra RabbitMQ |
+| EVF-37 | EV-132 | Job đối soát tồn kho Redis ↔ Postgres mỗi 10s, export metric inventory_drift |
+| EVF-38 | EV-133 | Phát hành vé + QR ký HMAC có jti |
+| EVF-39 | EV-134 | Test đồng thời: 10.000 goroutine mua 100 vé → đúng 100 đơn, 0 oversell |
+| EVF-40 | EV-135 | API check-in: đổi ISSUED → CHECKED_IN đúng một lần |
+
+**E5 – Phòng chờ ảo** — Jira `EV-136`
+
+| Mã backlog | Key Jira | Tiêu đề |
+|---|---|---|
+| EVF-50 | EV-137 | Queue token ký, gắn identity + device + event, join idempotent |
+| EVF-51 | EV-138 | join.lua: O(1), một round-trip Redis, shard theo event |
+| EVF-52 | EV-139 | LOBBY trước T0 + lottery xáo trộn công bằng tại T0 |
+| EVF-53 | EV-140 | Nối đuôi FIFO sau T0 |
+| EVF-54 | EV-141 | GET /queue/status: rank, ETA, poll_after_ms thích nghi + ETag |
+| EVF-55 | EV-142 | Admit controller AIMD, bầu leader qua Redis lock có fencing |
+| EVF-56 | EV-143 | admit.lua: ZPOPMIN theo lô → tập admitted, TTL 15 phút |
+| EVF-57 | EV-144 | SSE push "tới lượt bạn" + fallback polling |
+| EVF-58 | EV-145 | Heartbeat + giữ chỗ 5 phút khi rớt kết nối |
+| EVF-59 | EV-146 | Xử lý SOLD_OUT: thông báo hàng chờ, chuyển sang waitlist |
+| EVF-60 | EV-147 | Ops API + UI: xem/ghi đè admit_rate, tạm dừng khẩn cấp |
+| EVF-61 | EV-148 | Jitter phía client 0..5s tại T0 |
+
+**E6 – Thanh toán** — Jira `EV-149`
+
+| Mã backlog | Key Jira | Tiêu đề |
+|---|---|---|
+| EVF-70 | EV-150 | Adapter cổng thanh toán (VNPay/Momo/Stripe) + sandbox mock |
+| EVF-71 | EV-151 | Webhook exactly-once: UNIQUE provider_txn_id, xác minh chữ ký, chống replay |
+| EVF-72 | EV-152 | payment_inbox cho webhook đến sớm + replay |
+| EVF-73 | EV-153 | Job đối soát: đơn quá 15 phút không có webhook → hỏi cổng thanh toán, tự chữa |
+| EVF-74 | EV-154 | Luồng hoàn tiền khi sự kiện bị huỷ |
+| EVF-75 | EV-155 | Email/SMS xác nhận + đính kèm vé qua notification-svc |
+
+**E7 – AI (Gemini)** — Jira `EV-156`
+
+| Mã backlog | Key Jira | Tiêu đề |
+|---|---|---|
+| EVF-80 | EV-157 | Khung ai-worker: FastAPI + 4 consumer RabbitMQ tách biệt |
+| EVF-81 | EV-158 | Global token-bucket limiter RPM + TPM trên Redis Lua, đặt chỗ token trước khi gọi |
+| EVF-82 | EV-159 | Retry backoff qua delay-queue 5s/30s/2m + DLQ |
+| EVF-83 | EV-160 | Tầng FAQ/intent trả lời 0 token (~50 mẫu) |
+| EVF-84 | EV-161 | Cache ngữ nghĩa bằng embedding trên Redis, ngưỡng 0.93, scope theo sự kiện |
+| EVF-85 | EV-162 | Singleflight gộp câu hỏi trùng đang in-flight |
+| EVF-86 | EV-163 | Tool-call lấy số liệu thật (vị trí, ETA, tình trạng vé) — cấm bịa số |
+| EVF-87 | EV-164 | 4 nấc suy biến NORMAL / SAVING / FAQ_ONLY / OFF + công tắc cho Ops |
+| EVF-88 | EV-165 | Ngân sách token theo sự kiện: cảnh báo 80%, tự khoá 100% |
+| EVF-89 | EV-166 | Kiểm duyệt sự kiện: structured JSON output, chấm 4 trục, ngưỡng định tuyến |
+| EVF-90 | EV-167 | Phát hiện bất thường: gom cụm thống kê trước, LLM chỉ diễn giải và đề xuất rule |
+| EVF-91 | EV-168 | Báo cáo sau bán 6 phần: SQL tính số, LLM viết |
+| EVF-92 | EV-169 | Chống prompt injection + lọc đầu ra |
+| EVF-93 | EV-170 | Bộ eval prompt: gold set 200 câu, chạy khi đổi prompt/model |
+| EVF-94 | EV-171 | API trợ lý phía user: 202 + job_id, SSE trả kết quả, quota 10 câu / 15 phút |
+
+**E8 – Anti-bot** — Jira `EV-172`
+
+| Mã backlog | Key Jira | Tiêu đề |
+|---|---|---|
+| EVF-100 | EV-173 | Thu thập tín hiệu client (nhịp, tương tác, fingerprint) gửi kèm request |
+| EVF-101 | EV-174 | Rule engine R1–R7 chạy in-path < 5 ms |
+| EVF-102 | EV-175 | Chấm điểm rủi ro + 4 tầng hành động (qua / thử thách / làn chậm / chặn) |
+| EVF-103 | EV-176 | Tích hợp Turnstile ở bước join và bước thử thách nâng cao |
+| EVF-104 | EV-177 | bot_decisions giải thích được + UI khiếu nại/gỡ chặn |
+| EVF-105 | EV-178 | Quy trình duyệt rule do AI đề xuất |
+
+**E9 – Frontend** — Jira `EV-179`
+
+| Mã backlog | Key Jira | Tiêu đề |
+|---|---|---|
+| EVF-110 | EV-180 | Khung Next.js App Router + design system + dark mode |
+| EVF-111 | EV-181 | Trang sự kiện ISR + đồng hồ đếm ngược theo giờ server |
+| EVF-112 | EV-182 | UI phòng chờ: vị trí, ETA, tiến trình, polling thích nghi + SSE |
+| EVF-113 | EV-183 | Chọn vé + đồng hồ giữ ghế 10:00 theo expires_at của server |
+| EVF-114 | EV-184 | Luồng thanh toán + trang kết quả (kể cả hold hết hạn giữa chừng) |
+| EVF-115 | EV-185 | Panel chat trợ lý: streaming, FAQ chips, trạng thái suy biến |
+| EVF-116 | EV-186 | Console Organizer: tạo sự kiện, trạng thái duyệt, doanh số realtime |
+| EVF-117 | EV-187 | War room cho Ops: phễu realtime, admit rate, tồn kho, AI lag |
+| EVF-118 | EV-188 | Accessibility (WCAG AA) + i18n vi/en |
+
+**E10 – Vận hành, chịu tải & phát hành** — Jira `EV-189`
+
+| Mã backlog | Key Jira | Tiêu đề |
+|---|---|---|
+| EVF-120 | EV-190 | K8s manifest mọi service: probe, resource, PDB, anti-affinity |
+| EVF-121 | EV-191 | HPA theo custom metric (rps, queue_depth) qua Prometheus adapter |
+| EVF-122 | EV-192 | CronJob pre-warm: scale lên mức đỉnh tại T0 − 30 phút |
+| EVF-123 | EV-193 | Load shedding có phân lớp ưu tiên + circuit breaker giữa service |
+| EVF-124 | EV-194 | Bộ k6: 100k VU join trong 5s, 30 phút chờ, đợt checkout |
+| EVF-125 | EV-195 | Dashboard Grafana + alert rule cho 9 metric nghiệp vụ |
+| EVF-126 | EV-196 | Chaos drill: giết Redis primary, Gemini 429 100%, Postgres failover |
+| EVF-127 | EV-197 | Runbook trực sự kiện + checklist đóng băng deploy |
+| EVF-128 | EV-198 | E2E Playwright luồng đầy đủ |
