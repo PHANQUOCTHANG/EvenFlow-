@@ -91,7 +91,7 @@ export default function LoginForm() {
 
   const handleGoogleLogin = () => {
     toast({
-      variant: "default",
+      variant: "info",
       title: "Google Login",
       description: "Hệ thống đang kết nối với Google OAuth...",
     });
