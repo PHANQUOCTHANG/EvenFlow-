@@ -1,5 +1,7 @@
 import { formatVnd } from "./format";
 
+export { formatVnd, formatVnd as formatVND };
+
 /** Nhom chu so khong phu thuoc ICU, giong formatVnd. */
 function group(amount: number): string {
   const sign = amount < 0 ? "-" : "";
