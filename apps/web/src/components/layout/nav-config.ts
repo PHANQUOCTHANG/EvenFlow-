@@ -23,8 +23,8 @@ export const PUBLIC_NAV: NavItem[] = [
 ];
 
 export const ORGANIZER_NAV: NavItem[] = [
-  { href: "/organizer/events", label: "Sự kiện của tôi", ready: false },
-  { href: "/organizer/events/new", label: "Tạo sự kiện", ready: false },
+  { href: "/organizer/events", label: "Sự kiện của tôi", ready: true },
+  { href: "/organizer/events/new", label: "Tạo sự kiện", ready: true },
 ];
 
 /** `/ops/events` la route index DE XUAT, chua co trong handoff muc 4 — o do Ops chi co
