@@ -97,3 +97,10 @@ func TestIsValidRole(t *testing.T) {
 		}
 	}
 }
+
+func TestAllRoles(t *testing.T) {
+	roles := domain.AllRoles()
+	if len(roles) != 4 {
+		t.Fatalf("expected 4 roles, got %d", len(roles))
+	}
+}

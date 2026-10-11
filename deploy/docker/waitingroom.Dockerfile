@@ -17,7 +17,7 @@ WORKDIR /src
 # `go build` bao `missing go.sum entry for go.mod file` du khong dung dependency do.
 COPY go.work go.work.sum ./
 COPY services/gateway/go.mod services/gateway/
-COPY services/identity/go.mod services/identity/
+COPY services/identity/go.mod services/identity/go.sum services/identity/
 COPY services/event/go.mod services/event/
 COPY services/ticketing/go.mod services/ticketing/go.sum services/ticketing/
 COPY services/payment/go.mod services/payment/
