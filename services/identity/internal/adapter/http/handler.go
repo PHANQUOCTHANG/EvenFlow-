@@ -293,3 +293,18 @@ func (h *AuthHandler) VNeIDListenSSE(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 }
+
+// Me trả về thông tin định danh và vai trò của người dùng hiện tại từ context
+func (h *AuthHandler) Me(w http.ResponseWriter, r *http.Request) {
+	caller, ok := CallerFromContext(r.Context())
+	if !ok {
+		writeError(w, http.StatusUnauthorized, "Unauthorized", "Chưa đăng nhập")
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"id":   caller.ID.String(),
+		"role": string(caller.Role),
+	})
+}
+
