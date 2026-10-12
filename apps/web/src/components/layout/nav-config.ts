@@ -5,7 +5,7 @@
  * an mot muc nav khong he ngan duoc request toi route do.
  * (handoff muc 11.1: "Do not invent permission links; annotate role-specific nav as configurable")
  *
- * `ready` phan anh hien trang THAT cua repo: ngoai trang chu, chua route nao ton tai.
+ * `ready` phan anh hien trang THAT cua repo: true = route da ton tai, false = chua co route.
  * Item `ready: false` khong duoc render thanh <a> — bam vao se ra 404, te hon la noi thang
  * "Sap co" (handoff muc 5 nguyen tac 3: No fake certainty). */
 
@@ -29,9 +29,10 @@ export const ORGANIZER_NAV: NavItem[] = [
 
 /** `/ops/events` la route index DE XUAT, chua co trong handoff muc 4 — o do Ops chi co
  *  `/ops/events/[eventId]` (war room) va `/ops/ai`. Mot muc nav khong the tro vao route co
- *  tham so, nen can mot trang danh sach. Giu `ready: false` cho den khi Product chot. */
+ *  tham so, nen can mot trang danh sach (EV-187: trang do da co, nen `ready: true`).
+ *  `/ops/ai` chua co route nen van `ready: false`. */
 export const OPS_NAV: NavItem[] = [
-  { href: "/ops/events", label: "War room", ready: false },
+  { href: "/ops/events", label: "War room", ready: true },
   { href: "/ops/ai", label: "Hạ tầng AI", ready: false },
 ];
 
