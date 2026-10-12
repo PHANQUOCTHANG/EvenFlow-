@@ -1609,6 +1609,16 @@ describe("AssistantPanel — IME dang ghep chu (Telex/VNI) (AC-3b, AC-9b)", () =
     fireEvent.keyDown(textarea(container) as HTMLTextAreaElement, { key: "Escape", isComposing: true });
     expect(onClose).not.toHaveBeenCalled();
   });
+
+  it("Escape da bi preventDefault o phan tu con -> KHONG dong panel (AC-9b)", () => {
+    const onClose = vi.fn();
+    const { container } = renderPanel({ mode: "NORMAL", onClose, onSend: vi.fn() });
+    const input = textarea(container) as HTMLTextAreaElement;
+    input.addEventListener("keydown", (event) => event.preventDefault());
+
+    fireEvent.keyDown(input, { key: "Escape" });
+    expect(onClose).not.toHaveBeenCalled();
+  });
 });
 
 describe("AssistantPanel — du lieu bien (challenge C-1, C-5..C-7, C-10, C-11)", () => {
