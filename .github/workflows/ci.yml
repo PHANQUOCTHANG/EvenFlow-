@@ -23,7 +23,9 @@ permissions:
   pull-requests: read
 
 env:
-  GO_VERSION: "1.25"
+  # Phai >= `go` trong go.work (1.26.0, do services/identity can x/crypto v0.57 doi Go 1.26).
+  # Dockerfile Go va integration.yml, oversell-gate.yml ghim cung ban nay.
+  GO_VERSION: "1.26"
   # Trung voi runtime that: deploy/docker/web.Dockerfile chay `node:22-alpine`.
   # Test tren Node 20 la test mot moi truong ma production khong bao gio chay.
   NODE_VERSION: "22"
