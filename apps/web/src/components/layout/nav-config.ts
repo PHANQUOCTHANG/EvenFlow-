@@ -19,12 +19,12 @@ export interface NavItem {
 /** Nguon: docs/08-stitch-ui-ux-handoff.md muc 4 (Information architecture). */
 export const PUBLIC_NAV: NavItem[] = [
   { href: "/", label: "Trang chủ", ready: true },
-  { href: "/events", label: "Sự kiện", ready: false },
+  { href: "/events", label: "Sự kiện", ready: true },
 ];
 
 export const ORGANIZER_NAV: NavItem[] = [
-  { href: "/organizer/events", label: "Sự kiện của tôi", ready: false },
-  { href: "/organizer/events/new", label: "Tạo sự kiện", ready: false },
+  { href: "/organizer/events", label: "Sự kiện của tôi", ready: true },
+  { href: "/organizer/events/new", label: "Tạo sự kiện", ready: true },
 ];
 
 /** `/ops/events` la route index DE XUAT, chua co trong handoff muc 4 — o do Ops chi co

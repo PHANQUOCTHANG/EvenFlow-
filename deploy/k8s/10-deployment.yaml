@@ -85,10 +85,20 @@ spec:
           # khong co health endpoint nao, tuc tag noi sai nguon goc image -- dung thu
           # ma ly le "tag bat bien de truy nguoc image <-> commit" dua vao.
           #
+          # Lan sua thu hai, cung loi do: `sha-60b4930` (commit tich hop) van con
+          # `USER node` -- cac fix USER 1000 / SIGINT / Next 15.5 deu vao SAU no.
+          # Image local mang tag do duoc build tu working tree da co fix, nen chay
+          # dung; nhung ai build lai tu DUNG commit theo tag se ra image lam pod fail
+          # 100% (CreateContainerConfigError). Tag phai la commit ma image THUC SU
+          # duoc build tu do, nen nay la `c848afa` (merge PR #26 vao develop).
+          #
+          # Quy tac: chi doi tag nay khi da build image tu dung commit do -- ban
+          # export sach bang `git archive <sha>`, khong phai working tree.
+          #
           # Image nay CHUA ton tai tren GHCR (cd-web.yml chi build tu `main`). Tren
           # cluster local thi `IfNotPresent` dung image build tay voi dung tag nay.
           # Doi tag: kubectl -n eventflow set image deployment/eventflow-web web=<image>
-          image: ghcr.io/phanquocthang/eventflow-web:sha-60b4930
+          image: ghcr.io/phanquocthang/eventflow-web:sha-c848afa
           imagePullPolicy: IfNotPresent
           ports:
             - name: http

@@ -88,6 +88,10 @@ class SemanticCache:
         try:
             vec = await self._embedder.embed(question)
         except Exception:
+            # Embed hong thi bo qua lop cache ngu nghia (cau tra loi van da nam o cache khoa
+            # chinh xac phia tren) -- nhung KHONG duoc nuot loi im lang: truoc day loi
+            # embedder bien mat hoan toan, khong ai biet cache ngu nghia da ngung hoat dong.
+            log.warning("embed that bai, bo qua ghi vector", exc_info=True)
             return
         await self._redis.execute_command(
             "HSET", f"ai:vec:{{{event_id}}}", self.key(event_id, question),

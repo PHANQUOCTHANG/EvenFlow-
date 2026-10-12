@@ -109,7 +109,7 @@ Trạng thái mọi dòng là `chưa chạy`: test được viết song song v�
 | AC-5 | `disabled` → không điều khiển, không callback | `apps/web/src/components/checkout/ticket-tier-card.test.tsx` | `disabled -> khong render dieu khien, khong goi onQuantityChange` | chưa chạy |
 | AC-5 | `sold_out` + `maxSelectable` lớn vẫn không mở đường | `apps/web/src/components/checkout/ticket-tier-card.test.tsx` | `sold_out co maxSelectable lon van khong mo duong chon` | chưa chạy |
 | AC-5 | `sold_out` vẫn hiện tên + giá | `apps/web/src/components/checkout/ticket-tier-card.test.tsx` | `sold_out van hien ten hang va gia (giu bo cuc, khong an the)` | chưa chạy |
-| AC-6 | cảnh báo hold hiện tại sẽ bị huỷ (BR-O3) | `apps/web/src/components/checkout/ticket-tier-card.test.tsx` | `hasActiveHoldElsewhere -> co canh bao bang CHU rang hold hien tai se bi huy` | chưa chạy |
+| AC-6 | cảnh báo không đổi được hạng cho tới khi thanh toán / hết hạn, **không** nói huỷ (BR-O3, sửa 2026-10-08) | `apps/web/src/components/checkout/ticket-tier-card.test.tsx` | `hasActiveHoldElsewhere -> canh bao bang CHU noi cach doi duoc hang: thanh toan hoac het han` + `canh bao KHONG duoc noi hold dang co se bi huy` | chưa chạy |
 | AC-6 | cảnh báo nói rõ liên quan vé đang giữ | `apps/web/src/components/checkout/ticket-tier-card.test.tsx` | `canh bao noi ro la lien quan den ve dang giu` | chưa chạy |
 | AC-6 | không có hold khác thì không cảnh báo | `apps/web/src/components/checkout/ticket-tier-card.test.tsx` | `KHONG hasActiveHoldElsewhere -> khong co canh bao do (test phan biet duoc hai nhanh)` | chưa chạy |
 | AC-6 | cảnh báo là **text**, không chỉ màu | `apps/web/src/components/checkout/ticket-tier-card.test.tsx` | `canh bao la text thuc su, khong phai chi mot thuoc tinh mau/data` | chưa chạy |
@@ -212,7 +212,7 @@ Tổng: `money.test.ts` 24 test · `event-card.test.tsx` 39 test · `ticket-tier
 | **AC-10 "trên mobile"** | Không có viewport thật trong jsdom; test phủ cơ chế `aria-expanded`/`aria-controls` và sự hiện diện của nút chính, không phủ breakpoint nào kích hoạt dạng thu gọn. |
 | **AC-4 "component không có prop số vé còn lại"** | Không tồn tại prop là điều `tsc` kiểm, không phải vitest kiểm. Test chỉ dựng được phiên bản đối kháng: truyền prop lạ qua cast rồi bắt buộc con số không được xuất hiện. Hàng rào thật là `TicketTierCardProps` + `npm run typecheck` (AC-11). |
 | **AC-11** | Là gate chạy bằng command (`lint`, `typecheck`, `build`, `test:coverage`, `git grep`), không có test file. Hai dòng cuối bảng ghi đúng command. |
-| **BR-O3 "hold cũ bị huỷ và trả kho ngay"** | Hành vi backend. UI chỉ phủ được phần cảnh báo (AC-6). Việc hold cũ có thực sự được trả kho thuộc test của Ticketing service. |
+| **BR-O3** (bản cũ: "hold cũ bị huỷ và trả kho ngay"; sửa 2026-10-08: "trả về đúng hold đang có") | Hành vi backend. UI chỉ phủ được phần cảnh báo (AC-6). Việc hold cũ có thực sự được trả kho thuộc test của Ticketing service. |
 | **BR-O5 `Idempotency-Key`** | Slice này không gọi API (spec §1 "Ngoài phạm vi"). Test chỉ phủ được *hệ quả UI* của việc không biết kết quả (trạng thái `ambiguous`), không phủ được header nào được gửi. |
 
 ## Khớp lỏng (loose match) — thất bại ở đây nghĩa là **kiểm lại câu chữ trước khi nới regex**

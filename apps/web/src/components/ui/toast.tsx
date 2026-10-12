@@ -85,7 +85,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       <div
         aria-live="polite"
         data-slot="toast-region"
-        className="pointer-events-none fixed inset-x-0 bottom-0 z-50 flex flex-col items-center gap-sm p-md"
+        className="pointer-events-none fixed top-6 right-6 z-50 flex flex-col items-end gap-sm"
       >
         {items.map((item) => (
           <Alert
@@ -93,7 +93,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             variant={item.variant}
             title={item.title}
             onDismiss={() => dismiss(item.id)}
-            className="pointer-events-auto w-full max-w-md shadow-float"
+            className="pointer-events-auto w-[380px] max-w-[90vw] shadow-float ef-toast-enter"
           >
             {item.description}
           </Alert>

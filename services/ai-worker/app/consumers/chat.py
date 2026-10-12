@@ -101,11 +101,11 @@ class ChatConsumer:
         # lan goi Gemini. Nhung nguoi con lai doi ket qua cua lan goi do.
         key = self._cache.key(job.event_id, job.question)
         leader = await self._flight.acquire(key)
-        if not leader:
-            if (shared := await self._flight.wait(key, timeout=8.0)):
-                await self._emit(job, shared, source="singleflight", mode=mode)
-                return
-            # Nguoi dan dau that bai hoac qua lau -> tu minh lam tiep.
+        # `and` doan mach: chi doi khi KHONG phai nguoi dan dau.
+        if not leader and (shared := await self._flight.wait(key, timeout=8.0)):
+            await self._emit(job, shared, source="singleflight", mode=mode)
+            return
+        # Nguoi dan dau that bai hoac qua lau -> tu minh lam tiep.
 
         try:
             answer = await self._call_gemini(job, policy)

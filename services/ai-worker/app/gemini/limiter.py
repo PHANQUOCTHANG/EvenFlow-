@@ -48,7 +48,7 @@ class LimiterConfig:
 class Permit:
     """Ket qua xin phep."""
 
-    __slots__ = ("granted", "wait_ms", "reserved_tokens")
+    __slots__ = ("granted", "reserved_tokens", "wait_ms")
 
     def __init__(self, granted: bool, wait_ms: int = 0, reserved_tokens: int = 0) -> None:
         self.granted = granted

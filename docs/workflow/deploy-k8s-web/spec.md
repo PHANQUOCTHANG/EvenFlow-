@@ -65,7 +65,10 @@ trả về một kết quả **đóng băng từ lúc build** — probe luôn xa
 **3.4 Không có `resources` thì HPA vô nghĩa.** HPA theo CPU tính theo phần trăm của `requests`. Thiếu
 `requests` thì HPA không có mẫu số và không scale.
 
-**3.5 Container chạy non-root.** `web.Dockerfile` đã có `USER node`. Manifest phải khẳng định lại bằng
+**3.5 Container chạy non-root.** `web.Dockerfile` có `USER 1000` — phải là **dạng số**: với
+`runAsNonRoot: true` kubelet chỉ đọc `Config.User` của image, không resolve tên, nên `USER node` bị từ
+chối bằng `CreateContainerConfigError` và pod fail 100% (phát hiện S1 ở P5, sửa ở `6264c60`; bản đầu
+của spec này ghi `USER node` là sai). Manifest phải khẳng định lại bằng
 `securityContext` (`runAsNonRoot`, `allowPrivilegeEscalation: false`, drop ALL capabilities), nếu không
 một lần sửa Dockerfile là mất tính chất đó mà không ai biết.
 

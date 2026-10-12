@@ -17,7 +17,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8.3", "pytest-asyncio>=0.24", "ruff>=0.7", "testcontainers>=4.8"]
+# ruff pin CUNG mot ban: khong co uv.lock, nen `ruff>=0.7` cho CI cai ban moi nhat moi lan
+# chay -- ban moi them luat va CI do ma khong ai doi dong code nao. Nang ban la viec co chu y.
+dev = ["pytest>=8.3", "pytest-asyncio>=0.24", "ruff==0.16.10", "testcontainers>=4.8"]
 
 [tool.ruff]
 line-length = 100

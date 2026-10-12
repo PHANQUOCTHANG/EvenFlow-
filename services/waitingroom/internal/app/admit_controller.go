@@ -24,10 +24,15 @@ import (
 type AdmitController struct {
 	queue   Admitter
 	metrics HealthProbe
+	obs     AdmitMetrics // nil = khong xuat metric
 	log     *slog.Logger
 	cfg     AdmitConfig
 
 	rate atomic.Uint64 // nguoi/giay * 1000, de luu float trong atomic
+
+	// override bat khi Ops ghi de thu cong (BR-Q5). Trong luc bat, tick KHONG chay AIMD:
+	// gia tri Ops dat duoc giu nguyen cho toi khi ClearRateOverride.
+	override atomic.Bool
 }
 
 // Admitter la phan hang cho ma controller can (DIP -- khong phu thuoc Redis).
@@ -85,6 +90,19 @@ func DefaultAdmitConfig(eventID string, saleStart time.Time) AdmitConfig {
 	}
 }
 
+// AdmitMetrics nhan so lieu moi tick cua controller (cho dashboard va alert
+// "admit_rate = 0 trong khi hang cho con nguoi").
+type AdmitMetrics interface {
+	AdmitState(eventID string, ratePerSec float64, queueDepth int64)
+}
+
+// WithMetrics gan noi nhan so lieu. Khong goi thi controller khong doc them gi tu
+// Redis moi tick.
+func (c *AdmitController) WithMetrics(m AdmitMetrics) *AdmitController {
+	c.obs = m
+	return c
+}
+
 func NewAdmitController(q Admitter, m HealthProbe, cfg AdmitConfig, log *slog.Logger) *AdmitController {
 	c := &AdmitController{queue: q, metrics: m, cfg: cfg, log: log}
 	c.setRate(cfg.MinRate)
@@ -137,19 +155,25 @@ func (c *AdmitController) waitForSaleStart(ctx context.Context) error {
 }
 
 func (c *AdmitController) tick(ctx context.Context) error {
-	h, err := c.metrics.Health(ctx, c.cfg.EventID)
-	if err != nil {
-		// Khong do duoc suc khoe tang duoi -> lui ve mot cach than trong.
-		// Mu ma van tha nguoi voi nhip cu la cach nhanh nhat de lam sap he thong.
-		c.adjust(false)
-	} else {
-		c.adjust(c.healthy(h))
+	// Ops dang ghi de (BR-Q5): giu nguyen rate cua Ops, khong tu chinh. Ban cu van chay
+	// AIMD tu gia tri ghi de, nen 1 giay sau no da bi thay: Ops dat 0 de dung khan cap ma
+	// 3 tick sau van tha 60 nguoi.
+	if !c.override.Load() {
+		h, err := c.metrics.Health(ctx, c.cfg.EventID)
+		if err != nil {
+			// Khong do duoc suc khoe tang duoi -> lui ve mot cach than trong.
+			// Mu ma van tha nguoi voi nhip cu la cach nhanh nhat de lam sap he thong.
+			c.adjust(false)
+		} else {
+			c.adjust(c.healthy(h))
+		}
 	}
 
 	rate := c.Rate()
 	if err := c.queue.SetAdmitRate(ctx, c.cfg.EventID, rate); err != nil {
 		return err
 	}
+	c.observe(ctx, rate)
 
 	batch := int(math.Round(rate * c.cfg.Tick.Seconds()))
 	if batch <= 0 {
@@ -166,6 +190,19 @@ func (c *AdmitController) tick(ctx context.Context) error {
 	return nil
 }
 
+// observe xuat metric; loi doc do sau hang cho khong duoc lam hong vong admit.
+func (c *AdmitController) observe(ctx context.Context, rate float64) {
+	if c.obs == nil {
+		return
+	}
+	depth, err := c.queue.QueueDepth(ctx, c.cfg.EventID)
+	if err != nil {
+		c.log.Debug("khong doc duoc do sau hang cho", "event", c.cfg.EventID, "err", err)
+		return
+	}
+	c.obs.AdmitState(c.cfg.EventID, rate, depth)
+}
+
 func (c *AdmitController) healthy(h Health) bool {
 	return h.CheckoutP99 <= c.cfg.P99Budget &&
 		h.ErrorRate <= c.cfg.ErrorBudget &&
@@ -179,24 +216,43 @@ func (c *AdmitController) healthy(h Health) bool {
 // trong vai tick thay vi vai chuc tick -- vi khi tang duoi da qua tai thi moi
 // giay cham tre deu lam hang doi don them.
 func (c *AdmitController) adjust(healthy bool) {
-	cur := c.Rate()
+	old := c.rate.Load()
+	cur := float64(old) / 1000.0
 	var next float64
 	if healthy {
 		next = cur + c.cfg.StepUp
 	} else {
 		next = cur * c.cfg.Backoff
 	}
-	c.setRate(clamp(next, c.cfg.MinRate, c.cfg.MaxRate))
+	// Ops co the ghi de GIUA luc doc `old` va luc ghi ket qua. Khong duoc de AIMD de len
+	// gia tri cua Ops: kiem co override lan nua, va chi ghi neu rate chua doi tu luc doc
+	// (CompareAndSwap). SetRateOverride bat co TRUOC khi ghi rate, nen moi thu tu xen ke
+	// deu ket thuc bang gia tri cua Ops.
+	if c.override.Load() {
+		return
+	}
+	c.rate.CompareAndSwap(old, uint64(clamp(next, c.cfg.MinRate, c.cfg.MaxRate)*1000))
 }
 
 func (c *AdmitController) Rate() float64 {
 	return float64(c.rate.Load()) / 1000.0
 }
 
-// SetRateOverride cho Ops ghi de thu cong (BR-Q5).
+// SetRateOverride cho Ops ghi de thu cong (BR-Q5). Gia tri duoc GIU o moi tick sau do --
+// ke ca 0 de tam dung khan cap -- cho toi khi ClearRateOverride. Van bi chan duoi 0 va
+// tren MaxRate: Ops khong duoc vuot tran bao ve tang duoi.
 func (c *AdmitController) SetRateOverride(r float64) {
+	c.override.Store(true)
 	c.setRate(clamp(r, 0, c.cfg.MaxRate))
 	c.log.Warn("admit_rate bi ghi de thu cong", "event", c.cfg.EventID, "rate", r)
+}
+
+// ClearRateOverride tra quyen lai cho AIMD. Tick ke tiep tu chinh tiep tu rate hien tai
+// (va bi keo ve [MinRate, MaxRate] -- nen sau mot lan tam dung 0/s, AIMD bat dau lai tu
+// san MinRate chu khong dung im o 0).
+func (c *AdmitController) ClearRateOverride() {
+	c.override.Store(false)
+	c.log.Warn("bo ghi de admit_rate, tra ve tu dieu chinh", "event", c.cfg.EventID, "rate", c.Rate())
 }
 
 func (c *AdmitController) setRate(r float64) { c.rate.Store(uint64(r * 1000)) }

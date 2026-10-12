@@ -29,7 +29,7 @@ down: ## Dung va xoa volume
 
 .PHONY: logs
 logs: ## Theo doi log cac service ung dung
-	$(COMPOSE) logs -f waitingroom ticketing ai-worker
+	$(COMPOSE) logs -f waitingroom waitingroom-controller ticketing ticketing-worker ai-worker
 
 ## ---------- Co so du lieu ----------
 
@@ -39,7 +39,7 @@ migrate: ## Chay migration
 
 .PHONY: seed
 seed: ## Tao du lieu mau: 1 su kien ON_SALE, 20.000 ve
-	./deploy/scripts/seed.sh
+	bash deploy/scripts/seed.sh
 
 ## ---------- Chat luong ----------
 
@@ -65,9 +65,15 @@ gates: ## Cong chat luong cuc bo cho apps/web (lint, typecheck, coverage, build 
 test-integration: ## Integration test (testcontainers -- can Docker)
 	go test -tags=integration ./... -count=1 -timeout=10m
 
+# TESTFLAGS: co them cho `go test`, mac dinh rong (chay tay khong doi hanh vi). CI
+# truyen `TESTFLAGS=-v` de .github/scripts/run-and-report-tests.sh dem duoc so lan
+# PASS/SKIP -- `go test` coi SKIP la thanh cong, nen khong co -v thi mot gate skip
+# toan bo van xanh ma khong ai biet.
+TESTFLAGS ?=
+
 .PHONY: test-oversell
 test-oversell: ## EVF-39 -- cong chat luong. Fail thi KHONG duoc release.
-	go test -tags=integration -run TestNoOversell \
+	go test $(TESTFLAGS) -tags=integration -run TestNoOversell \
 		./services/ticketing/test/concurrency/... -count=200 -timeout=30m
 
 ## ---------- Chiu tai ----------
@@ -78,8 +84,8 @@ load: ## Mo phong gio mo ban (can k6)
 	k6 run -e BASE=http://localhost:8080 -e EVENT=$(EVENT) tests/load/opening-spike.js
 
 .PHONY: smoke
-smoke: ## Chay tron mot luong mua ve de kiem tra moi truong
-	./deploy/scripts/smoke.sh
+smoke: ## Chay tron mot luong mua ve (xep hang -> admit -> giu ghe -> tra kho)
+	bash deploy/scripts/smoke.sh
 
 .PHONY: test-e2e
 test-e2e: ## E2E Playwright (can make up truoc)

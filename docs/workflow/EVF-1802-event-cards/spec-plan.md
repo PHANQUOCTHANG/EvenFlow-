@@ -50,9 +50,11 @@ nhận `maxSelectable` đã được server tính sẵn = `min(max_per_order, ma
 **Không có giá trị mặc định 4 trong component**: "mặc định 4" là default của *hệ thống*, không phải
 thứ UI được phép đoán. Thiếu prop → không cho chọn số lượng.
 
-**2.3 BR-O3 — một khách chỉ có 1 hold đang hoạt động mỗi sự kiện.** "Tạo hold mới → hold cũ bị huỷ và
-trả kho ngay." Hệ quả cho UI: khi đang có hold hoạt động, chọn hạng vé khác **phải** cảnh báo rằng
-hold hiện tại sẽ bị huỷ. Không cảnh báo thì khách mất chỗ đang giữ mà không hiểu vì sao.
+**2.3 BR-O3 — một khách chỉ có 1 hold đang hoạt động mỗi sự kiện.** Gọi tạo hold khi đã có hold còn
+hạn → trả về **đúng hold đang có** (hạng vé, số lượng, `expires_at` cũ). Hệ quả cho UI: khi đang có
+hold hoạt động, chọn hạng vé khác **phải** cảnh báo rằng không đổi được cho tới khi thanh toán xong
+hoặc hold hết hạn. Không cảnh báo thì khách chọn hạng mới rồi nhận lại hạng cũ mà không hiểu vì sao.
+ *(Sửa 2026-10-08: BR-O3 trong `docs/01-nghiep-vu.md` được đổi cho khớp backend — xem `docs/workflow/business-bugs/fix-report.md` §4.)*
 
 **2.4 Không bịa tiền tệ.** DESIGN.md chốt định dạng `1.250.000 đ`, nhưng `formatVnd` hard-code hậu tố
 `đ`. Nếu server trả `currency: "USD"` mà vẫn in `đ` thì đó là **sai số tiền**. `formatMoney` vì vậy:
@@ -128,7 +130,7 @@ route group cho Moderator). Nên coi là vấn đề hệ thống của bộ tà
 - **Then** mọi lần đổi gọi `onQuantityChange` với số mới
 
 ### AC-6 — `TicketTierCard`: chọn khi đang có hold khác (BR-O3)
-- **Given** `hasActiveHoldElsewhere`, **Then** trước khi đổi lựa chọn phải có cảnh báo rằng hold hiện tại sẽ bị huỷ và trả kho
+- **Given** `hasActiveHoldElsewhere`, **Then** trước khi đổi lựa chọn phải có cảnh báo rằng không đổi được hạng vé cho tới khi thanh toán xong hoặc hold hết hạn, và **không** được nói hold hiện tại bị huỷ *(Sửa 2026-10-08: BR-O3 trong `docs/01-nghiep-vu.md` được đổi cho khớp backend — xem `docs/workflow/business-bugs/fix-report.md` §4.)*
 - **Then** cảnh báo là **text**, không chỉ màu
 
 ### AC-7 — `TicketTierCard`: trạng thái chọn
@@ -193,7 +195,7 @@ export interface TicketTierCardProps {
   onQuantityChange?: (next: number) => void
   selected?: boolean
   disabled?: boolean
-  /** BR-O3: dang co hold o hang ve khac -> phai canh bao hold cu se bi huy. */
+  /** BR-O3: dang co hold o hang ve khac -> phai canh bao khong doi duoc cho toi khi thanh toan / het han. */
   hasActiveHoldElsewhere?: boolean
   className?: string
 }

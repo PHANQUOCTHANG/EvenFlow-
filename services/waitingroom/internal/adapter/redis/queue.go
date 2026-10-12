@@ -129,6 +129,20 @@ func (q *Queue) QueueDepth(ctx context.Context, eventID string) (int64, error) {
 	return q.rdb.ZCard(ctx, k(eventID, "queue")).Result()
 }
 
+// SaleStart doc thoi diem mo ban (T0) cua su kien tu meta. ok=false khi chua co ai
+// ghi -- caller phai cho chu KHONG duoc coi la "da qua T0": join.lua doc thieu
+// sale_start_ms la 0 va se bo qua LOBBY.
+func (q *Queue) SaleStart(ctx context.Context, eventID string) (t time.Time, ok bool, err error) {
+	v, err := q.rdb.HGet(ctx, k(eventID, "meta"), "sale_start_ms").Int64()
+	if errors.Is(err, redis.Nil) {
+		return time.Time{}, false, nil
+	}
+	if err != nil {
+		return time.Time{}, false, fmt.Errorf("doc sale_start_ms: %w", err)
+	}
+	return time.UnixMilli(v), true, nil
+}
+
 // MarkSoldOut dung viec tha them nguoi vao checkout (BR-Q6).
 func (q *Queue) MarkSoldOut(ctx context.Context, eventID string) error {
 	return q.rdb.HSet(ctx, k(eventID, "meta"), "sold_out", "1").Err()

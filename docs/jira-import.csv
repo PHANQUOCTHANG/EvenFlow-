@@ -599,7 +599,7 @@ h3. Phạm vi công việc
 * Use case create_hold: Redis gate → transaction Postgres
 * Chọn bucket ngẫu nhiên, hết thì thử bucket kế tiếp (vòng tròn, tối đa 3 lần)
 * Hoàn Redis khi Postgres từ chối
-* BR-O3: tạo hold mới huỷ hold cũ
+* BR-O3: đã có hold còn hạn thì trả về đúng hold đó (sửa 2026-10-08; bản cũ: tạo hold mới huỷ hold cũ)
 
 h3. Tiêu chí nghiệm thu (AC)
 # Bucket hết thì thử bucket kế tiếp tối đa 3 lần rồi mới báo SOLD_OUT

@@ -50,29 +50,54 @@ jobs:
           sha="${{ github.event.workflow_run.head_sha || github.sha }}"
           owner="${{ github.repository_owner }}"
           # GHCR chi nhan ten image chu thuong; owner cua repo nay dang chu hoa.
-          echo "sha=$sha" >> "$GITHUB_OUTPUT"
-          echo "short=${sha:0:7}" >> "$GITHUB_OUTPUT"
-          echo "image=ghcr.io/${owner,,}/eventflow-web" >> "$GITHUB_OUTPUT"
+          {
+            echo "sha=$sha"
+            echo "short=${sha:0:7}"
+            echo "image=ghcr.io/${owner,,}/eventflow-web"
+          } >> "$GITHUB_OUTPUT"
+
+      # Next INLINE moi NEXT_PUBLIC_* vao bundle luc build. Thieu bien nay thi image goi URL
+      # tuong doi tren chinh origin cua pod web -- noi chi co /api/healthz va /api/readyz --
+      # nen moi call queue/ticketing tra 404 trong khi ca hai probe van xanh. Khong chan
+      # publish (chua co gateway nao de tro toi), nhung KHONG duoc im lang.
+      - name: kiem NEXT_PUBLIC_API_BASE
+        env:
+          API_BASE: ${{ vars.NEXT_PUBLIC_API_BASE }}
+        # Ghi summary NGAY o day, khong doi step cuoi: Trivy fail thi step cuoi khong chay,
+        # va thong tin nay se chi con trong annotation.
+        run: |
+          if [ -z "$API_BASE" ]; then
+            echo "::warning title=NEXT_PUBLIC_API_BASE chua dat::repo variable NEXT_PUBLIC_API_BASE rong -- image se goi API bang URL tuong doi tren origin cua web va khong toi duoc backend."
+            echo "**NEXT_PUBLIC_API_BASE: CHUA DAT** -- frontend goi API bang URL tuong doi." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "NEXT_PUBLIC_API_BASE: \`$API_BASE\`" >> "$GITHUB_STEP_SUMMARY"
+          fi
 
       # workflow_run mac dinh checkout HEAD cua nhanh mac dinh, khong phai commit da
       # chay CI -> phai chi ro ref, neu khong se publish image cua commit khac.
+      # `persist-credentials: false`: job nay khong push git, nen khong de GITHUB_TOKEN nam
+      # lai trong .git/config trong luc chay cac binary tai ve luc chay (Trivy).
       - uses: actions/checkout@v4
         with:
           ref: ${{ steps.src.outputs.sha }}
+          persist-credentials: false
 
-      - uses: docker/setup-buildx-action@v3
+      # Action ben thu ba trong job co `packages: write` duoc pin bang SHA commit, khong
+      # bang tag: tag ghi de duoc, va mot tag bi ghi de o day la code la chay voi quyen
+      # push len GHCR. Comment ghi ban ma tag tro toi tai ngay pin (2026-10-06).
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
 
-      - uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - uses: docker/build-push-action@v6
+      # Build vao daemon local, CHUA push. Truoc day image duoc push thang ma khong qua
+      # Trivy: trivy.yml la workflow rieng va khong chan workflow nay, nen CD van publish
+      # ca khi Trivy cung commit do do (da xay ra 3 lan tren main). Build khong can dang
+      # nhap GHCR: cache o `type=gha`, base image lay tu Docker Hub.
+      - uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
         with:
           context: .
           file: deploy/docker/web.Dockerfile
-          push: true
+          load: true
+          build-args: |
+            NEXT_PUBLIC_API_BASE=${{ vars.NEXT_PUBLIC_API_BASE }}
           # `if` cua job da bao dam chi chay tu main, nen :latest khong the bi dich sang
           # nhanh khac. Tag sha- la tag bat bien de truy nguoc image <-> commit.
           tags: |
@@ -80,6 +105,44 @@ jobs:
             ${{ steps.src.outputs.image }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      # Cung chinh sach voi trivy.yml. Fail o day => cac step sau khong chay => khong tag
+      # nao duoc push, ke ca :latest.
+      # `TRIVY_IMAGE_SRC: docker`: chi quet image trong daemon local. Mac dinh Trivy thu
+      # nhieu nguon va co the lui sang registry -- tuc quet `:sha-<short>` cu tren GHCR
+      # thay vi image vua build.
+      - name: trivy scan truoc khi push
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        env:
+          TRIVY_IMAGE_SRC: docker
+        with:
+          image-ref: ${{ steps.src.outputs.image }}:sha-${{ steps.src.outputs.short }}
+          severity: CRITICAL
+          exit-code: '1'
+          ignore-unfixed: true
+          format: table
+
+      # Push CHINH image da quet, khong build lai: build lai co the ra image khac image
+      # vua duoc Trivy cho qua. Doi lai mat provenance attestation ma build-push-action
+      # gan khi tu push -- danh doi co chu y, xem docs/workflow/ci-cd-review/spec.md §3.
+      #
+      # Dang nhap GHCR ngay TRUOC khi push, khong o dau job: token `packages: write` chi
+      # nen nam trong ~/.docker/config.json sau khi binary Trivy (tai ve luc chay, khong
+      # pin hash) da chay xong.
+      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: push image da quet
+        env:
+          IMAGE: ${{ steps.src.outputs.image }}
+          SHORT: ${{ steps.src.outputs.short }}
+        run: |
+          set -euo pipefail
+          docker push "$IMAGE:sha-$SHORT"
+          docker push "$IMAGE:latest"
 
       - name: tom tat
         run: |
@@ -90,4 +153,6 @@ jobs:
             echo "- \`${{ steps.src.outputs.image }}:latest\`"
             echo
             echo "Commit: \`${{ steps.src.outputs.sha }}\`"
+            echo
+            echo "Trivy (CRITICAL, ignore-unfixed): sach truoc khi push."
           } >> "$GITHUB_STEP_SUMMARY"
