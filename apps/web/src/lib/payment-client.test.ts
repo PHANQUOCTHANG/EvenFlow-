@@ -221,3 +221,111 @@ describe("payment-client (EVF-114, BR-O2, BR-O5, BR-O6)", () => {
     });
   });
 });
+
+/** EV-198 B2: initiatePayment / getOrderDetails khong truyen apiBaseUrl phai goi
+ *  `${NEXT_PUBLIC_API_BASE}/v1/...`. Nap lai module sau khi stub env. */
+describe("payment-client — mặc định apiBaseUrl theo NEXT_PUBLIC_API_BASE (EV-198, B2)", () => {
+  const originalFetch = globalThis.fetch;
+
+  beforeEach(() => {
+    sessionStorage.clear();
+  });
+
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
+    vi.unstubAllEnvs();
+    vi.resetModules();
+    vi.restoreAllMocks();
+    sessionStorage.clear();
+  });
+
+  async function loadFresh() {
+    vi.resetModules();
+    return import("./payment-client");
+  }
+
+  const paymentParams = {
+    eventId: "evt-tech-summit-2026",
+    orderId: "ord-b2",
+    holdId: "hold-b2",
+    amount: 5_000_000,
+    method: "vnpay" as const,
+    buyerName: "Nguyen Van A",
+    buyerEmail: "a@example.com",
+    buyerPhone: "0901234567",
+  };
+
+  it("initiatePayment không truyền apiBaseUrl gọi ${NEXT_PUBLIC_API_BASE}/v1/events/{id}/payments", async () => {
+    vi.stubEnv("NEXT_PUBLIC_API_BASE", "http://localhost:8080");
+    const fresh = await loadFresh();
+
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ payment_id: "pay-b2", order_id: "ord-b2", status: "PENDING" }),
+    });
+    globalThis.fetch = mockFetch;
+
+    await fresh.initiatePayment(paymentParams);
+
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    expect(mockFetch.mock.calls[0][0]).toBe(
+      "http://localhost:8080/v1/events/evt-tech-summit-2026/payments",
+    );
+  });
+
+  it("initiatePayment: apiBaseUrl truyền tường minh vẫn thắng biến môi trường", async () => {
+    vi.stubEnv("NEXT_PUBLIC_API_BASE", "http://localhost:8080");
+    const fresh = await loadFresh();
+
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ payment_id: "pay-b2", order_id: "ord-b2", status: "PENDING" }),
+    });
+    globalThis.fetch = mockFetch;
+
+    await fresh.initiatePayment({ ...paymentParams, apiBaseUrl: "https://explicit.example" });
+
+    expect(mockFetch.mock.calls[0][0]).toBe(
+      "https://explicit.example/v1/events/evt-tech-summit-2026/payments",
+    );
+  });
+
+  it("getOrderDetails không truyền apiBaseUrl gọi ${NEXT_PUBLIC_API_BASE}/v1/events/{id}/orders/{orderId}", async () => {
+    vi.stubEnv("NEXT_PUBLIC_API_BASE", "http://localhost:8080");
+    const fresh = await loadFresh();
+
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ order_id: "ord-b2", status: "PAID" }),
+    });
+    globalThis.fetch = mockFetch;
+
+    await fresh.getOrderDetails("ord-b2", "evt-tech-summit-2026");
+
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    expect(mockFetch.mock.calls[0][0]).toBe(
+      "http://localhost:8080/v1/events/evt-tech-summit-2026/orders/ord-b2",
+    );
+  });
+
+  it("getOrderDetails: apiBaseUrl truyền tường minh vẫn thắng biến môi trường", async () => {
+    vi.stubEnv("NEXT_PUBLIC_API_BASE", "http://localhost:8080");
+    const fresh = await loadFresh();
+
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ order_id: "ord-b2", status: "PAID" }),
+    });
+    globalThis.fetch = mockFetch;
+
+    await fresh.getOrderDetails("ord-b2", "evt-1", "https://explicit.example");
+
+    expect(mockFetch.mock.calls[0][0]).toBe(
+      "https://explicit.example/v1/events/evt-1/orders/ord-b2",
+    );
+  });
+});
