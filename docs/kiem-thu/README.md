@@ -18,7 +18,7 @@ Kiểm thử đang tập trung vào **frontend `apps/web`**. Backend Go và Pyth
 | Tầng | Công cụ | Trạng thái |
 |---|---|---|
 | Unit + Component (frontend) | Vitest 2.1.8 + React Testing Library + jsdom | **Đang chạy, 1564 test** |
-| E2E | Playwright (`tests/e2e`), backend **giả lập** bằng `page.route` | **Đã viết, chờ lần chạy CI đầu tiên** (`e2e-web.yml`, mỗi PR đụng `apps/web` / `tests/e2e`): luồng mua vé đầy đủ + 2 ca lỗi. Trên máy: 120/120 khi lặp 20 lần, 0 flaky. Chạy trên compose thật **chưa đạt** (thiếu gateway, payment, order) — xem `docs/workflow/EV-198-e2e-playwright/spec.md` §1 |
+| E2E | Playwright (`tests/e2e`), backend **giả lập** bằng `page.route` | **Đang chạy mỗi PR** đụng `apps/web` / `tests/e2e` (`e2e-web.yml`): luồng mua vé đầy đủ + 2 ca lỗi. Lặp 20 lần trong CI: 120/120, 0 flaky (run 38299195317). Chạy trên compose thật **chưa đạt** (thiếu gateway, payment, order) — xem `docs/workflow/EV-198-e2e-playwright/spec.md` §1 |
 | Unit (Go) | `go test` | CI có job `test-go`, code phần lớn là stub |
 | Unit (Python) | pytest | CI có job `test-python`, chưa có test |
 | Integration | testcontainers | `make test-integration`, cần Docker |

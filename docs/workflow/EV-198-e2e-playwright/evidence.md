@@ -156,3 +156,12 @@ grep -rnE '\.[[:space:]]*waitForTimeout[[:space:]]*\(|\b(test|it|describe)([[:sp
 2. Sửa dòng E2E trong `docs/kiem-thu/README.md`: chưa khẳng định "Đang chạy mỗi PR" cho tới khi có run CI xanh.
 3. Sau khi push: ghi link run PR và link run `workflow_dispatch repeat_each=20` vào file này → đóng AC-8 (CI), AC-9.
 4. (Không bắt buộc) dòng 1 và 3 của `traceability.md` vẫn ghi "bản đầu … chưa chạy trên code mới" — lỗi thời.
+
+## 8. Bằng chứng trong CI (sau khi push, 2026-10-13)
+
+| AC | Run | Kết quả |
+|---|---|---|
+| AC-9 — chạy cho PR | PR #50, workflow `E2E web`, run https://github.com/PHANQUOCTHANG/EvenFlow-/actions/runs/38299181319 | success (job `e2e-web` 1m45s); mọi check khác của PR cũng xanh |
+| AC-8 — 20 lần liên tiếp trong CI | `workflow_dispatch` `repeat_each=20`, run https://github.com/PHANQUOCTHANG/EvenFlow-/actions/runs/38299195317 | `120 passed (2.3m)`, retries 0, 0 flaky |
+
+Với hai run này, AC-8 và AC-9 chuyển từ "chờ chạy CI" sang **ĐẠT**.
