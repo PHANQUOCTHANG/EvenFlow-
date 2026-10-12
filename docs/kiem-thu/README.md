@@ -17,7 +17,7 @@ Kiểm thử đang tập trung vào **frontend `apps/web`**. Backend Go và Pyth
 
 | Tầng | Công cụ | Trạng thái |
 |---|---|---|
-| Unit + Component (frontend) | Vitest 2.1.8 + React Testing Library + jsdom | **Đang chạy, 1533 test** |
+| Unit + Component (frontend) | Vitest 2.1.8 + React Testing Library + jsdom | **Đang chạy, 1528 test** |
 | E2E | Playwright (`tests/e2e`) | Khung đã dựng, chưa có kịch bản thật |
 | Unit (Go) | `go test` | CI có job `test-go`, code phần lớn là stub |
 | Unit (Python) | pytest | CI có job `test-python`, chưa có test |
@@ -48,8 +48,8 @@ branches **60%**.
 
 ## 3. Thống kê hiện tại
 
-Chạy ngày **2026-10-12** trên nhánh `feature/EVF-1806-assistant-panel` (đã merge `develop` @ `ad09bf3`).
-**1533 test / 93 file**, 0 fail. Số đo bằng `npx vitest run --reporter=json`, không chép tay.
+Chạy ngày **2026-10-13** trên nhánh `chore/remove-watch-queue` (từ `develop` @ `c5d5fa8`).
+**1528 test / 93 file**, 0 fail. Số đo bằng `npx vitest run --reporter=json`, không chép tay.
 Mốc trước đó: 1086 test / 44 file (2026-10-05); 1345 test / 91 file trên `develop` @ `ad09bf3`
 (đo ở `docs/workflow/EVF-1806-assistant-panel/baseline.md`).
 
@@ -63,13 +63,13 @@ Mốc trước đó: 1086 test / 44 file (2026-10-05); 1345 test / 91 file trên
 |  | `lib/readiness.test.ts` | 19 |
 |  | `lib/sse.test.ts` | 17 |
 |  | `lib/assistant-client.test.ts` | 13 |
-|  | `lib/queue-client.test.ts` | 11 |
 |  | `lib/theme.test.ts` | 11 |
 |  | `lib/hold-client.test.ts` | 9 |
 |  | `lib/backoff.test.ts` | 7 |
 |  | `lib/cn.test.ts` | 7 |
 |  | `lib/jitter.test.ts` | 7 |
 |  | `lib/payment-client.test.ts` | 7 |
+|  | `lib/queue-client.test.ts` | 6 |
 |  | `lib/event-service.test.ts` | 5 |
 | **Hook** | `hooks/use-server-countdown.test.tsx` | 48 |
 |  | `hooks/use-theme.test.tsx` | 13 |
@@ -149,7 +149,7 @@ Mốc trước đó: 1086 test / 44 file (2026-10-05); 1345 test / 91 file trên
 |  | `app/api/time/route.test.ts` | 1 |
 | **Tắt êm (graceful shutdown)** | `instrumentation.test.ts` | 19 |
 
-Tổng theo nhóm: thư viện 286, hook 106, trợ lý AI 196, component miền 337, component dùng chung 240, bố cục 198, theme 20, showcase 8, route group 64, trang (page) 26, API route 33, tắt êm (graceful shutdown) 19 — cộng lại đúng **1533**.
+Tổng theo nhóm: thư viện 281, hook 106, trợ lý AI 196, component miền 337, component dùng chung 240, bố cục 198, theme 20, showcase 8, route group 64, trang (page) 26, API route 33, tắt êm (graceful shutdown) 19 — cộng lại đúng **1528**.
 
 ## 4. Quy trình sinh ra bộ test này
 
@@ -276,7 +276,7 @@ Ba tầng, mỗi tầng thấy thứ tầng dưới không thấy:
 
 | Tầng | Công cụ | Thấy được gì |
 |---|---|---|
-| Mã nguồn | Vitest (1533 test) | logic, hợp đồng hàm, hành vi component |
+| Mã nguồn | Vitest (1528 test) | logic, hợp đồng hàm, hành vi component |
 | Hiện vật build | `gates.sh` C4.3 + C4.5 | hệ quả của bundling/minify: nhánh bị xoá, module bị nhân bản, route bị prerender |
 | Môi trường chạy | container + `docker kill -s`, `kubectl` | giao nhận signal, thứ tự tắt, probe qua kubelet |
 
