@@ -17,8 +17,8 @@ Kiểm thử đang tập trung vào **frontend `apps/web`**. Backend Go và Pyth
 
 | Tầng | Công cụ | Trạng thái |
 |---|---|---|
-| Unit + Component (frontend) | Vitest 2.1.8 + React Testing Library + jsdom | **Đang chạy, 1528 test** |
-| E2E | Playwright (`tests/e2e`) | Khung đã dựng, chưa có kịch bản thật |
+| Unit + Component (frontend) | Vitest 2.1.8 + React Testing Library + jsdom | **Đang chạy, 1564 test** |
+| E2E | Playwright (`tests/e2e`), backend **giả lập** bằng `page.route` | **Đã viết, chờ lần chạy CI đầu tiên** (`e2e-web.yml`, mỗi PR đụng `apps/web` / `tests/e2e`): luồng mua vé đầy đủ + 2 ca lỗi. Trên máy: 120/120 khi lặp 20 lần, 0 flaky. Chạy trên compose thật **chưa đạt** (thiếu gateway, payment, order) — xem `docs/workflow/EV-198-e2e-playwright/spec.md` §1 |
 | Unit (Go) | `go test` | CI có job `test-go`, code phần lớn là stub |
 | Unit (Python) | pytest | CI có job `test-python`, chưa có test |
 | Integration | testcontainers | `make test-integration`, cần Docker |
@@ -48,8 +48,8 @@ branches **60%**.
 
 ## 3. Thống kê hiện tại
 
-Chạy ngày **2026-10-13** trên nhánh `chore/remove-watch-queue` (từ `develop` @ `c5d5fa8`).
-**1528 test / 93 file**, 0 fail. Số đo bằng `npx vitest run --reporter=json`, không chép tay.
+Chạy ngày **2026-10-13** trên nhánh `feature/EV-198-e2e-playwright` (từ `develop` @ `51c4729`).
+**1564 test / 95 file**, 0 fail. Số đo bằng `npx vitest run --reporter=json`, không chép tay.
 Mốc trước đó: 1086 test / 44 file (2026-10-05); 1345 test / 91 file trên `develop` @ `ad09bf3`
 (đo ở `docs/workflow/EVF-1806-assistant-panel/baseline.md`).
 
@@ -62,18 +62,20 @@ Mốc trước đó: 1086 test / 44 file (2026-10-05); 1345 test / 91 file trên
 |  | `lib/queue-status.test.ts` | 22 |
 |  | `lib/readiness.test.ts` | 19 |
 |  | `lib/sse.test.ts` | 17 |
+|  | `lib/queue-token.test.ts` | 16 |
 |  | `lib/assistant-client.test.ts` | 13 |
+|  | `lib/hold-client.test.ts` | 12 |
+|  | `lib/payment-client.test.ts` | 11 |
 |  | `lib/theme.test.ts` | 11 |
-|  | `lib/hold-client.test.ts` | 9 |
+|  | `lib/api-base.test.ts` | 7 |
 |  | `lib/backoff.test.ts` | 7 |
 |  | `lib/cn.test.ts` | 7 |
 |  | `lib/jitter.test.ts` | 7 |
-|  | `lib/payment-client.test.ts` | 7 |
 |  | `lib/queue-client.test.ts` | 6 |
 |  | `lib/event-service.test.ts` | 5 |
 | **Hook** | `hooks/use-server-countdown.test.tsx` | 48 |
 |  | `hooks/use-theme.test.tsx` | 13 |
-|  | `hooks/use-hold-timer.test.tsx` | 10 |
+|  | `hooks/use-hold-timer.test.tsx` | 12 |
 |  | `hooks/use-queue-status.test.tsx` | 10 |
 |  | `hooks/use-assistant.test.tsx` | 7 |
 |  | `hooks/use-organizer-sales.test.tsx` | 6 |
@@ -89,7 +91,7 @@ Mốc trước đó: 1086 test / 44 file (2026-10-05); 1345 test / 91 file trên
 |  | `components/checkout/order-summary.test.tsx` | 74 |
 |  | `components/checkout/ticket-tier-card.test.tsx` | 50 |
 |  | `components/event/event-card.test.tsx` | 39 |
-|  | `components/checkout/checkout-view.test.tsx` | 7 |
+|  | `components/checkout/checkout-view.test.tsx` | 11 |
 |  | `components/event/event-action-panel.test.tsx` | 6 |
 |  | `components/queue/progress-ring.test.tsx` | 6 |
 |  | `components/checkout/order-result-view.test.tsx` | 5 |
@@ -149,7 +151,7 @@ Mốc trước đó: 1086 test / 44 file (2026-10-05); 1345 test / 91 file trên
 |  | `app/api/time/route.test.ts` | 1 |
 | **Tắt êm (graceful shutdown)** | `instrumentation.test.ts` | 19 |
 
-Tổng theo nhóm: thư viện 281, hook 106, trợ lý AI 196, component miền 337, component dùng chung 240, bố cục 198, theme 20, showcase 8, route group 64, trang (page) 26, API route 33, tắt êm (graceful shutdown) 19 — cộng lại đúng **1528**.
+Tổng theo nhóm: thư viện 311, hook 108, trợ lý AI 196, component miền 341, component dùng chung 240, bố cục 198, theme 20, showcase 8, route group 64, trang (page) 26, API route 33, tắt êm (graceful shutdown) 19 — cộng lại đúng **1564**.
 
 ## 4. Quy trình sinh ra bộ test này
 
@@ -164,11 +166,10 @@ từng task.
 
 **Không được sửa, xoá, skip test để cho qua.** Khi test đỏ, phải xác định test sai hay mã sai rồi
 mới xử lý, và ghi lại kết luận. Trong `apps/web` hiện **không có** `.skip` / `.only` / `it.todo` nào.
-Toàn repo có **đúng một** chỗ: `tests/e2e/specs/smoke.spec.ts:9` là `test.skip` cho kịch bản E2E mua
-vé **chưa viết** (chờ trang phòng chờ / checkout), không phải test đỏ bị tắt đi. Gate C4.2 soi cả
-`tests/e2e/**` nhưng chỉ chặn dòng **mới thêm**, nên dòng có sẵn này không làm gate đỏ — và một
-`.skip` mới thêm ở đó thì bị chặn. (Bản trước của câu này ghi "toàn bộ repo không có" là **sai**;
-phát hiện ở bước xác minh độc lập P6.)
+`tests/e2e` cũng không còn: `test.skip` cuối cùng (`smoke.spec.ts:9`, kịch bản mua vé chờ viết) đã được
+thay bằng `specs/buy-flow.spec.ts` ở EV-198. `e2e-web.yml` chặn mọi lời gọi `waitForTimeout(`,
+`.skip(` / `.only(` / `.todo(` / `.fixme(` trong `tests/e2e` trước khi build; gate C4.2 vẫn chặn dòng
+mới thêm như cũ.
 
 ## 5. Ma trận truy vết theo từng tính năng
 
@@ -181,6 +182,7 @@ phát hiện ở bước xác minh độc lập P6.)
 | Health endpoint + tắt êm + deploy k8s | `docs/workflow/deploy-k8s-web/traceability.md` | `.../spec.md`, `.../contracts.md` |
 | Panel chat trợ lý trong phòng chờ (`ChatPanel`, EV-185) | `docs/workflow/EV-185/traceability.md` | `docs/workflow/EV-185/spec.md` |
 | Panel trợ lý AI dạng thuần hiển thị (`AssistantPanel`) | `docs/workflow/EVF-1806-assistant-panel/traceability.md` | `.../spec-plan.md` |
+| E2E luồng mua vé + sửa 3 lỗi nối trang (EV-198) | `docs/workflow/EV-198-e2e-playwright/traceability.md` | `.../spec.md`, `.../plan.md` |
 
 Riêng slice deploy còn có `docs/workflow/deploy-k8s-web/integration-report.md` (bằng chứng thô của
 từng lần chạy, kể cả các lần **chưa** chạy được) và `runbook.md` (§6 liệt kê từng thứ chưa verify
@@ -276,7 +278,8 @@ Ba tầng, mỗi tầng thấy thứ tầng dưới không thấy:
 
 | Tầng | Công cụ | Thấy được gì |
 |---|---|---|
-| Mã nguồn | Vitest (1528 test) | logic, hợp đồng hàm, hành vi component |
+| Mã nguồn | Vitest (1564 test) | logic, hợp đồng hàm, hành vi component |
+| Luồng người dùng qua nhiều trang | Playwright trên bản build production, backend giả lập (EV-198) | lỗi **nối giữa các trang**: khoá sessionStorage lệch, gọi sai origin, mất tham số URL — cả ba lọt qua unit test vì mỗi module đúng khi đứng riêng |
 | Hiện vật build | `gates.sh` C4.3 + C4.5 | hệ quả của bundling/minify: nhánh bị xoá, module bị nhân bản, route bị prerender |
 | Môi trường chạy | container + `docker kill -s`, `kubectl` | giao nhận signal, thứ tự tắt, probe qua kubelet |
 
@@ -289,8 +292,9 @@ fail đúng lúc cần fail**.
 - [ ] Nhận **mẫu tài liệu** của môn học rồi chuyển toàn bộ nội dung sang đúng mẫu
 - [ ] Viết test plan tổng theo mẫu (phạm vi, chiến lược, tiêu chí vào/ra, rủi ro)
 - [ ] Bảng test case dạng nộp được (ID, tiền điều kiện, bước, kết quả mong đợi, kết quả thực tế)
-- [ ] Kịch bản E2E thật trong `tests/e2e` cho luồng mua vé
+- [x] Kịch bản E2E trong `tests/e2e` cho luồng mua vé (EV-198, backend giả lập)
+- [ ] Chạy cùng kịch bản đó trên compose thật khi có gateway + payment + order backend
 - [ ] Test cho backend Go/Python khi các service hết là stub
-- [ ] Sửa `coverage.exclude` rồi báo lại số coverage **thật** của mã nguồn
+- [x] Sửa `coverage.exclude` (commit `a8fb8c9`); còn phải báo lại số coverage **thật** của mã nguồn
 - [ ] Bật Kubernetes trong Docker Desktop rồi chạy nốt phần cluster (`runbook.md` §3–§5): đây là
       **ô duy nhất còn “chưa chạy”** trong bảng ở §1
