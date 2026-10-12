@@ -11,6 +11,7 @@ import { useQueueStatus } from "@/hooks/use-queue-status";
 import { useServerTimeSync } from "@/hooks/use-server-time-sync";
 import { joinQueue, QueueError } from "@/lib/queue-client";
 import { cn } from "@/lib/cn";
+import { clearQueueToken, readQueueToken, saveQueueToken } from "@/lib/queue-token";
 
 export interface WaitingRoomProps {
   eventId: string;
@@ -18,8 +19,6 @@ export interface WaitingRoomProps {
   autoRedirect?: boolean;
   className?: string;
 }
-
-const tokenKey = (eventId: string) => `ef:queue:token:${eventId}`;
 
 export function WaitingRoom({
   eventId,
@@ -42,7 +41,7 @@ export function WaitingRoom({
 
     async function initQueueToken() {
       try {
-        const savedToken = window.sessionStorage.getItem(tokenKey(eventId));
+        const savedToken = readQueueToken(eventId);
         if (savedToken) {
           setToken(savedToken);
           return;
@@ -54,7 +53,7 @@ export function WaitingRoom({
 
         const res = await joinQueue(eventId, {}, { jitter: false });
         if (!cancelled) {
-          window.sessionStorage.setItem(tokenKey(eventId), res.queue_token);
+          saveQueueToken(eventId, res.queue_token);
           setToken(res.queue_token);
         }
       } catch (err) {
@@ -126,7 +125,7 @@ export function WaitingRoom({
         <Button
           variant="secondary"
           onClick={() => {
-            window.sessionStorage.removeItem(tokenKey(eventId));
+            clearQueueToken(eventId);
             window.location.reload();
           }}
         >
@@ -153,7 +152,7 @@ export function WaitingRoom({
         <Button
           variant="secondary"
           onClick={() => {
-            window.sessionStorage.removeItem(tokenKey(eventId));
+            clearQueueToken(eventId);
             window.location.reload();
           }}
         >
