@@ -17,7 +17,7 @@ Kiểm thử đang tập trung vào **frontend `apps/web`**. Backend Go và Pyth
 
 | Tầng | Công cụ | Trạng thái |
 |---|---|---|
-| Unit + Component (frontend) | Vitest 2.1.8 + React Testing Library + jsdom | **Đang chạy, 1564 test** |
+| Unit + Component (frontend) | Vitest 2.1.8 + React Testing Library + jsdom | **Đang chạy, 1767 test** |
 | E2E | Playwright (`tests/e2e`), backend **giả lập** bằng `page.route` | **Đang chạy mỗi PR** đụng `apps/web` / `tests/e2e` (`e2e-web.yml`): luồng mua vé đầy đủ + 2 ca lỗi. Lặp 20 lần trong CI: 120/120, 0 flaky (run 38299195317). Chạy trên compose thật **chưa đạt** (thiếu gateway, payment, order) — xem `docs/workflow/EV-198-e2e-playwright/spec.md` §1 |
 | Unit (Go) | `go test` | CI có job `test-go`, code phần lớn là stub |
 | Unit (Python) | pytest | CI có job `test-python`, chưa có test |
@@ -48,14 +48,15 @@ branches **60%**.
 
 ## 3. Thống kê hiện tại
 
-Chạy ngày **2026-10-13** trên nhánh `feature/EV-198-e2e-playwright` (từ `develop` @ `51c4729`).
-**1564 test / 95 file**, 0 fail. Số đo bằng `npx vitest run --reporter=json`, không chép tay.
+Chạy ngày **2026-10-13** trên nhánh `feature/EV-187-ops-war-room` (xếp trên `feature/EV-198-e2e-playwright`, gốc `develop` @ `51c4729`).
+**1767 test / 101 file**, 0 fail. Số đo bằng `npx vitest run --reporter=json`, không chép tay.
 Mốc trước đó: 1086 test / 44 file (2026-10-05); 1345 test / 91 file trên `develop` @ `ad09bf3`
 (đo ở `docs/workflow/EVF-1806-assistant-panel/baseline.md`).
 
 | Nhóm | File | Số test |
 |---|---|---|
-| **Thư viện** | `lib/format.test.ts` | 66 |
+| **Thư viện** | `lib/format.test.ts` | 94 |
+|  | `lib/ops-service.test.ts` | 53 |
 |  | `lib/server-time.test.ts` | 39 |
 |  | `lib/money.test.ts` | 24 |
 |  | `lib/organizer-service.test.ts` | 22 |
@@ -74,6 +75,7 @@ Mốc trước đó: 1086 test / 44 file (2026-10-05); 1345 test / 91 file trên
 |  | `lib/queue-client.test.ts` | 6 |
 |  | `lib/event-service.test.ts` | 5 |
 | **Hook** | `hooks/use-server-countdown.test.tsx` | 48 |
+|  | `hooks/use-ops-war-room.test.tsx` | 34 |
 |  | `hooks/use-theme.test.tsx` | 13 |
 |  | `hooks/use-hold-timer.test.tsx` | 12 |
 |  | `hooks/use-queue-status.test.tsx` | 10 |
@@ -128,16 +130,20 @@ Mốc trước đó: 1086 test / 44 file (2026-10-05); 1345 test / 91 file trên
 | **Theme** | `components/theme/theme-script.test.tsx` | 13 |
 |  | `components/theme/theme-toggle.test.tsx` | 7 |
 | **Showcase** | `components/showcase/domain-gallery.test.tsx` | 8 |
+| **War room Ops** | `components/ops/ops-war-room.test.tsx` | 74 |
 | **Route group** | `app/(ops)/layout.test.tsx` | 15 |
 |  | `app/(organizer)/layout.test.tsx` | 14 |
 |  | `app/(marketing)/layout.test.tsx` | 13 |
 |  | `app/(checkout)/layout.test.tsx` | 11 |
 |  | `app/(queue)/layout.test.tsx` | 11 |
-| **Trang (page)** | `app/(marketing)/events/[slug]/page.test.tsx` | 5 |
+| **Trang (page)** | `app/(ops)/ops/events/[eventId]/page.test.tsx` | 7 |
+|  | `app/(marketing)/events/[slug]/page.test.tsx` | 5 |
+|  | `app/(ops)/ops/events/page.test.tsx` | 5 |
 |  | `app/(checkout)/checkout/[eventId]/page.test.tsx` | 4 |
 |  | `app/(queue)/waiting/[eventId]/page.test.tsx` | 3 |
 |  | `app/(checkout)/checkout/[eventId]/payment/page.test.tsx` | 2 |
 |  | `app/(checkout)/checkout/[eventId]/result/page.test.tsx` | 2 |
+|  | `app/(ops)/ops/events/[eventId]/not-found.test.tsx` | 2 |
 |  | `app/(organizer)/organizer/events/[eventId]/review-status/page.test.tsx` | 2 |
 |  | `app/(organizer)/organizer/events/[eventId]/sales/page.test.tsx` | 2 |
 |  | `app/(marketing)/events/page.test.tsx` | 1 |
@@ -151,7 +157,7 @@ Mốc trước đó: 1086 test / 44 file (2026-10-05); 1345 test / 91 file trên
 |  | `app/api/time/route.test.ts` | 1 |
 | **Tắt êm (graceful shutdown)** | `instrumentation.test.ts` | 19 |
 
-Tổng theo nhóm: thư viện 311, hook 108, trợ lý AI 196, component miền 341, component dùng chung 240, bố cục 198, theme 20, showcase 8, route group 64, trang (page) 26, API route 33, tắt êm (graceful shutdown) 19 — cộng lại đúng **1564**.
+Tổng theo nhóm: thư viện 392, hook 142, trợ lý AI 196, component miền 341, component dùng chung 240, bố cục 198, theme 20, showcase 8, war room Ops 74, route group 64, trang (page) 40, API route 33, tắt êm (graceful shutdown) 19 — cộng lại đúng **1767**.
 
 ## 4. Quy trình sinh ra bộ test này
 
@@ -183,6 +189,7 @@ mới thêm như cũ.
 | Panel chat trợ lý trong phòng chờ (`ChatPanel`, EV-185) | `docs/workflow/EV-185/traceability.md` | `docs/workflow/EV-185/spec.md` |
 | Panel trợ lý AI dạng thuần hiển thị (`AssistantPanel`) | `docs/workflow/EVF-1806-assistant-panel/traceability.md` | `.../spec-plan.md` |
 | E2E luồng mua vé + sửa 3 lỗi nối trang (EV-198) | `docs/workflow/EV-198-e2e-playwright/traceability.md` | `.../spec.md`, `.../plan.md` |
+| War room cho Ops (EV-187, dữ liệu mẫu) | `docs/workflow/EV-187-ops-war-room/traceability.md` | `.../spec.md`, `.../plan.md` |
 
 Riêng slice deploy còn có `docs/workflow/deploy-k8s-web/integration-report.md` (bằng chứng thô của
 từng lần chạy, kể cả các lần **chưa** chạy được) và `runbook.md` (§6 liệt kê từng thứ chưa verify
@@ -278,7 +285,7 @@ Ba tầng, mỗi tầng thấy thứ tầng dưới không thấy:
 
 | Tầng | Công cụ | Thấy được gì |
 |---|---|---|
-| Mã nguồn | Vitest (1564 test) | logic, hợp đồng hàm, hành vi component |
+| Mã nguồn | Vitest (1767 test) | logic, hợp đồng hàm, hành vi component |
 | Luồng người dùng qua nhiều trang | Playwright trên bản build production, backend giả lập (EV-198) | lỗi **nối giữa các trang**: khoá sessionStorage lệch, gọi sai origin, mất tham số URL — cả ba lọt qua unit test vì mỗi module đúng khi đứng riêng |
 | Hiện vật build | `gates.sh` C4.3 + C4.5 | hệ quả của bundling/minify: nhánh bị xoá, module bị nhân bản, route bị prerender |
 | Môi trường chạy | container + `docker kill -s`, `kubectl` | giao nhận signal, thứ tự tắt, probe qua kubelet |
