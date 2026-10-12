@@ -4,7 +4,7 @@
  * chon nhip rieng thi khi mang chap chon, 300.000 tab se dong loat retry theo nhieu nhip
  * khac nhau va tao thanh nhung con song request chong len nhau.
  *
- * Gia tri mac dinh khop voi `watchQueue` trong queue-client.ts: 1s, 2s, 4s ... tran 30s,
+ * Gia tri mac dinh: 1s, 2s, 4s ... tran 30s,
  * cong jitter 0..500ms de cac client khong retry cung mot mili giay sau khi mang co lai. */
 
 export interface BackoffOptions {

@@ -18,7 +18,6 @@ const config = [
   {
     rules: {
       // Quy uoc chung: bien/tham so co tien to `_` la co y khong dung.
-      // Vi du that trong repo: `for await (const _ of watchQueue(...))` chi de dem vong lap.
       // `caughtErrors` GIU mac dinh "all" cua ESLint 9 — khong noi long cho toan repo.
       "@typescript-eslint/no-unused-vars": [
         "warn",
@@ -30,26 +29,6 @@ const config = [
       ],
       "@typescript-eslint/no-explicit-any": "warn",
       "@next/next/no-img-element": "warn",
-    },
-  },
-  {
-    // Ngoai le thu hep dung MOT file. `src/lib/queue-client.ts:127` co `} catch (err) {` co y
-    // khong dung `err` (chi lui dan roi thu lai). ESLint 9 doi mac dinh thanh
-    // `caughtErrors: "all"` nen ma viet theo ESLint 8 bi bao loi.
-    //
-    // Cach dung la doi thanh `} catch {` (optional catch binding, ES2019; target la ES2022) —
-    // 6 ky tu, behavior-identical. Nhung plan.md muc 2 liet queue-client.ts vao nhom
-    // "KHONG duoc sua" va muc 6 yeu cau dung-va-bao, nen khoanh vung o day thay vi sua file.
-    // Code MOI van bi check day du.
-    //
-    // Can mo ticket rieng: catch block do nuot ca QueueError, nen 403/410 bi retry vo han
-    // voi backoff thay vi fail nhanh. Do la bug that, khong phai chuyen lint.
-    files: ["src/lib/queue-client.ts"],
-    rules: {
-      "@typescript-eslint/no-unused-vars": [
-        "error",
-        { args: "after-used", argsIgnorePattern: "^_", varsIgnorePattern: "^_", caughtErrors: "none" },
-      ],
     },
   },
 ];
