@@ -24,6 +24,7 @@ import (
 type AdmitController struct {
 	queue   Admitter
 	metrics HealthProbe
+	obs     AdmitMetrics // nil = khong xuat metric
 	log     *slog.Logger
 	cfg     AdmitConfig
 
@@ -87,6 +88,19 @@ func DefaultAdmitConfig(eventID string, saleStart time.Time) AdmitConfig {
 		ErrorBudget: 0.02,
 		PoolBudget:  0.80,
 	}
+}
+
+// AdmitMetrics nhan so lieu moi tick cua controller (cho dashboard va alert
+// "admit_rate = 0 trong khi hang cho con nguoi").
+type AdmitMetrics interface {
+	AdmitState(eventID string, ratePerSec float64, queueDepth int64)
+}
+
+// WithMetrics gan noi nhan so lieu. Khong goi thi controller khong doc them gi tu
+// Redis moi tick.
+func (c *AdmitController) WithMetrics(m AdmitMetrics) *AdmitController {
+	c.obs = m
+	return c
 }
 
 func NewAdmitController(q Admitter, m HealthProbe, cfg AdmitConfig, log *slog.Logger) *AdmitController {
@@ -159,6 +173,7 @@ func (c *AdmitController) tick(ctx context.Context) error {
 	if err := c.queue.SetAdmitRate(ctx, c.cfg.EventID, rate); err != nil {
 		return err
 	}
+	c.observe(ctx, rate)
 
 	batch := int(math.Round(rate * c.cfg.Tick.Seconds()))
 	if batch <= 0 {
@@ -173,6 +188,19 @@ func (c *AdmitController) tick(ctx context.Context) error {
 		c.log.Debug("da admit", "event", c.cfg.EventID, "so_luong", len(tokens), "rate", rate)
 	}
 	return nil
+}
+
+// observe xuat metric; loi doc do sau hang cho khong duoc lam hong vong admit.
+func (c *AdmitController) observe(ctx context.Context, rate float64) {
+	if c.obs == nil {
+		return
+	}
+	depth, err := c.queue.QueueDepth(ctx, c.cfg.EventID)
+	if err != nil {
+		c.log.Debug("khong doc duoc do sau hang cho", "event", c.cfg.EventID, "err", err)
+		return
+	}
+	c.obs.AdmitState(c.cfg.EventID, rate, depth)
 }
 
 func (c *AdmitController) healthy(h Health) bool {

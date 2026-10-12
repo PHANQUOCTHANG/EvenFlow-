@@ -15,6 +15,7 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"github.com/eventflow/eventflow/libs/go/otelx"
 	"github.com/eventflow/eventflow/services/ticketing/internal/domain"
 	"github.com/eventflow/eventflow/services/ticketing/internal/port"
 )
@@ -40,6 +41,33 @@ func (r *Repository) GetSaleConfig(ctx context.Context, eventID, ticketTypeID st
 		return c, fmt.Errorf("su kien khong o trang thai dang ban: %w", domain.ErrSoldOut)
 	}
 	return c, err
+}
+
+// ListInventory tra ve ton kho tung bucket cua cac hang ve thuoc su kien dang
+// duoc ban (hoac sap ban). Dung de nap Redis; Postgres la nguon su that.
+func (r *Repository) ListInventory(ctx context.Context, eventID string) ([]port.InventoryRow, error) {
+	const q = `
+		SELECT inv.ticket_type_id::text, inv.bucket, inv.available
+		  FROM ticket_inventory inv
+		  JOIN ticket_types tt ON tt.id = inv.ticket_type_id
+		  JOIN events e ON e.id = tt.event_id
+		 WHERE e.id = $1::uuid AND e.status IN ('SCHEDULED','ON_SALE')
+		 ORDER BY inv.ticket_type_id, inv.bucket`
+	rows, err := r.pool.Query(ctx, q, eventID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var out []port.InventoryRow
+	for rows.Next() {
+		var row port.InventoryRow
+		if err := rows.Scan(&row.TicketTypeID, &row.Bucket, &row.Available); err != nil {
+			return nil, err
+		}
+		out = append(out, row)
+	}
+	return out, rows.Err()
 }
 
 // CountPurchased dem so ve da mua thanh cong cua mot nguoi (BR-O4).
@@ -85,6 +113,13 @@ func (r *Repository) GetActiveHold(ctx context.Context, eventID, identityID stri
 //
 // Neu bat ky buoc nao hong, ca bon bi rollback. Khong co trang thai nua voi.
 func (r *Repository) PersistHold(ctx context.Context, p port.PersistHoldParams) (port.HoldView, error) {
+	ctx, end := otelx.StartSpan(ctx, "postgres.persist_hold")
+	out, err := r.persistHold(ctx, p)
+	end(err)
+	return out, err
+}
+
+func (r *Repository) persistHold(ctx context.Context, p port.PersistHoldParams) (port.HoldView, error) {
 	var out port.HoldView
 
 	tx, err := r.pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.ReadCommitted})
@@ -171,6 +206,13 @@ func (r *Repository) PersistHold(ctx context.Context, p port.PersistHoldParams) 
 // cap nhat dong nao, nen kho khong bi cong hai lan. Neu mat dieu kien nay, mot
 // hold bi quet hai lan se lam kho phong len va he thong se oversell.
 func (r *Repository) ReleaseHold(ctx context.Context, holdID string) (bool, error) {
+	ctx, end := otelx.StartSpan(ctx, "postgres.release_hold")
+	released, err := r.releaseHold(ctx, holdID)
+	end(err)
+	return released, err
+}
+
+func (r *Repository) releaseHold(ctx context.Context, holdID string) (bool, error) {
 	tx, err := r.pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.ReadCommitted})
 	if err != nil {
 		return false, err
@@ -236,3 +278,8 @@ func toUUID(s string) string {
 	}
 	return s
 }
+
+var (
+	_ port.Repository      = (*Repository)(nil)
+	_ port.InventorySource = (*Repository)(nil)
+)

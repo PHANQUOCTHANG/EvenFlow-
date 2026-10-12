@@ -1,0 +1,11 @@
+# EV-184 — Ma trận truy vết AC ↔ Test
+
+| AC | Nội dung yêu cầu | Test File | Test Case Name | Trạng thái |
+|---|---|---|---|---|
+| **AC-1** | Màn hình thanh toán: hiển thị đơn hàng, đồng hồ giữ vé `ServerExpiryCountdown`, chọn cổng MoMo/VNPay/Sandbox, form khách mua | `apps/web/src/components/checkout/payment-handoff-view.test.tsx` | `PaymentHandoffView > render đầy đủ thông tin vé, đồng hồ và các phương thức thanh toán` | **PASS** |
+| **AC-2** | Bắt buộc đính kèm `Idempotency-Key` (UUID) khi thanh toán (BR-O5) và khoá submit chống click trùng | `apps/web/src/lib/payment-client.test.ts`, `apps/web/src/hooks/use-payment-session.test.tsx` | `initiatePayment > gửi Idempotency-Key header`, `chống double submit khi đang xử lý` | **PASS** |
+| **AC-3** | Xử lý hold hết hạn ngay giữa lúc thanh toán: khoá nút, báo lỗi `Đã hết thời gian giữ vé`, xoá storage, nút chọn lại vé (BR-O2) | `apps/web/src/components/checkout/payment-handoff-view.test.tsx`, `apps/web/src/hooks/use-payment-session.test.tsx` | `khi hold hết hạn tự động khoá form và hiển thị cảnh báo hết hạn` | **PASS** |
+| **AC-4** | Trang kết quả: Webhook chậm hiển thị `PENDING` ("Đang xác nhận"), polling thích nghi tới server, không báo lỗi | `apps/web/src/hooks/use-order-status.test.tsx`, `apps/web/src/components/checkout/order-result-view.test.tsx` | `trạng thái PENDING polling tự động khi webhook chậm` | **PASS** |
+| **AC-5** | Trạng thái `PAID`: Thông báo thành công, mã đơn, danh sách vé phát hành kèm QR demo visual an toàn (BR-O8), nút in vé | `apps/web/src/components/checkout/order-result-view.test.tsx` | `trạng thái PAID hiển thị vé điện tử và QR demo an toàn` | **PASS** |
+| **AC-6** | Trạng thái `FAILED` / `EXPIRED`: Hiển thị rõ lý do thất bại hoặc hết hạn vé, hướng dẫn thử lại hoặc chọn lại vé | `apps/web/src/components/checkout/order-result-view.test.tsx` | `trạng thái FAILED và EXPIRED hiển thị đúng thông điệp và hành động phục hồi` | **PASS** |
+| **AC-7** | Next.js Page routes: `/payment` và `/result` render đúng theo params / eventId | `apps/web/src/app/(checkout)/checkout/[eventId]/payment/page.test.tsx`, `apps/web/src/app/(checkout)/checkout/[eventId]/result/page.test.tsx` | `PaymentPage & OrderResultPage integration tests` | **PASS** |

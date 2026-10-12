@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/eventflow/eventflow/libs/go/httpx"
 	"github.com/eventflow/eventflow/services/ticketing/internal/app"
 	"github.com/eventflow/eventflow/services/ticketing/internal/domain"
 )
@@ -38,13 +39,13 @@ func (h *Handler) createHold(w http.ResponseWriter, r *http.Request) {
 	// BR-O5: khong co Idempotency-Key thi khong duoc ghi. Mang di dong chap chon
 	// khien client retry rat thuong xuyen; thieu khoa nay la tao don trung.
 	if r.Header.Get("Idempotency-Key") == "" {
-		problem(w, http.StatusBadRequest, "thieu header Idempotency-Key")
+		httpx.WriteProblem(w, http.StatusBadRequest, "thieu header Idempotency-Key")
 		return
 	}
 
 	var req createHoldRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		problem(w, http.StatusBadRequest, "body khong hop le")
+		httpx.WriteProblem(w, http.StatusBadRequest, "body khong hop le")
 		return
 	}
 
@@ -58,34 +59,17 @@ func (h *Handler) createHold(w http.ResponseWriter, r *http.Request) {
 
 	switch {
 	case err == nil:
-		writeJSON(w, http.StatusOK, out)
+		httpx.WriteJSON(w, http.StatusOK, out)
 	case errors.Is(err, domain.ErrNotAdmitted):
-		problem(w, http.StatusForbidden, "ban chua duoc vao mua ve, vui long quay lai phong cho")
+		httpx.WriteProblem(w, http.StatusForbidden, "ban chua duoc vao mua ve, vui long quay lai phong cho")
 	case errors.Is(err, domain.ErrSoldOut):
 		// 409 chu khong phai 500: het ve la ket qua nghiep vu binh thuong, va
 		// day la ma trang thai ma client dua vao de hien dung thong bao.
-		problem(w, http.StatusConflict, "rat tiec, hang ve nay da het")
+		httpx.WriteProblem(w, http.StatusConflict, "rat tiec, hang ve nay da het")
 	case errors.Is(err, domain.ErrPerIdentityLimit), errors.Is(err, domain.ErrQuantityNotAllowed):
-		problem(w, http.StatusUnprocessableEntity, "so luong vuot gioi han cho phep")
+		httpx.WriteProblem(w, http.StatusUnprocessableEntity, "so luong vuot gioi han cho phep")
 	default:
 		h.log.Error("tao hold that bai", "err", err)
-		problem(w, http.StatusServiceUnavailable, "he thong dang ban, vui long thu lai")
+		httpx.WriteProblem(w, http.StatusServiceUnavailable, "he thong dang ban, vui long thu lai")
 	}
-}
-
-func writeJSON(w http.ResponseWriter, code int, v any) {
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.WriteHeader(code)
-	_ = json.NewEncoder(w).Encode(v)
-}
-
-func problem(w http.ResponseWriter, code int, detail string) {
-	w.Header().Set("Content-Type", "application/problem+json")
-	w.WriteHeader(code)
-	_ = json.NewEncoder(w).Encode(map[string]any{
-		"type":   "about:blank",
-		"title":  http.StatusText(code),
-		"status": code,
-		"detail": detail,
-	})
 }

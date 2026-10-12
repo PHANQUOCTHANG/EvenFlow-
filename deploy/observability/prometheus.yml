@@ -7,6 +7,11 @@ scrape_configs:
     static_configs: [{ targets: ["waitingroom:8081"] }]
   - job_name: ticketing
     static_configs: [{ targets: ["ticketing:8082"] }]
+  # Hai process khong co HTTP API nen mo cong metrics rieng.
+  - job_name: waitingroom-controller
+    static_configs: [{ targets: ["waitingroom-controller:9091"] }]
+  - job_name: ticketing-worker
+    static_configs: [{ targets: ["ticketing-worker:9092"] }]
   - job_name: ai-worker
     static_configs: [{ targets: ["ai-worker:8090"] }]
 

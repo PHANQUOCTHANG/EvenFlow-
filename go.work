@@ -1,13 +1,13 @@
-go 1.25.0
+go 1.26.0
 
 use (
 	./libs/go
+	./services/antibot
+	./services/event
 	./services/gateway
 	./services/identity
-	./services/event
-	./services/waitingroom
-	./services/ticketing
-	./services/payment
-	./services/antibot
 	./services/notification
+	./services/payment
+	./services/ticketing
+	./services/waitingroom
 )

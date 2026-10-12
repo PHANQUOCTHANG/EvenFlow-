@@ -13,6 +13,7 @@ import (
 
 	"github.com/redis/go-redis/v9"
 
+	"github.com/eventflow/eventflow/libs/go/otelx"
 	"github.com/eventflow/eventflow/libs/go/redisx"
 	"github.com/eventflow/eventflow/services/ticketing/internal/port"
 )
@@ -48,6 +49,13 @@ func userHoldKey(eventID string) string { return fmt.Sprintf("uhold:{%s}", event
 func admittedKey(eventID string) string { return fmt.Sprintf("wr:{%s}:admitted", eventID) }
 
 func (g *Gate) Hold(ctx context.Context, req port.HoldRequest) (port.HoldResult, error) {
+	ctx, end := otelx.StartSpan(ctx, "redis.hold")
+	res, err := g.hold(ctx, req)
+	end(err)
+	return res, err
+}
+
+func (g *Gate) hold(ctx context.Context, req port.HoldRequest) (port.HoldResult, error) {
 	keys := []string{
 		invKey(req.EventID, req.TicketTypeID),
 		holdZKey(req.EventID),
@@ -91,6 +99,13 @@ func (g *Gate) Hold(ctx context.Context, req port.HoldRequest) (port.HoldResult,
 // Release tra ve vao kho. IDEMPOTENT -- script xoa hold TRUOC roi moi cong kho,
 // nen lan goi thu hai khong lam gi (BR-O7).
 func (g *Gate) Release(ctx context.Context, eventID, holdID string) error {
+	ctx, end := otelx.StartSpan(ctx, "redis.release")
+	err := g.release(ctx, eventID, holdID)
+	end(err)
+	return err
+}
+
+func (g *Gate) release(ctx context.Context, eventID, holdID string) error {
 	keys := []string{
 		holdHKey(eventID), holdZKey(eventID), userHoldKey(eventID), invPrefix(eventID),
 	}
@@ -133,13 +148,21 @@ func (g *Gate) ExpiredHolds(ctx context.Context, eventID string, limit int) ([]s
 	}).Result()
 }
 
-// SeedInventory nap ton kho tu Postgres vao Redis (luc khoi dong va khi doi soat).
+// SeedInventory nap ton kho tu Postgres vao Redis.
+//
+// Dung HSETNX chu khong phai HSET: chi dien vao bucket CHUA CO. HSET se ghi de so
+// dang bi cac hold tru di va lam Redis phong len so voi thuc te -- tuc la hai tang
+// dung nhau ve so ve con lai trong khi Postgres da giu cho nhung ve do. Chay lap
+// lai nhieu lan van an toan.
 func (g *Gate) SeedInventory(ctx context.Context, eventID, ticketTypeID string, perBucket map[int]int) error {
-	vals := make(map[string]any, len(perBucket))
-	for bucket, avail := range perBucket {
-		vals[fmt.Sprintf("%d", bucket)] = avail
-	}
-	return g.rdb.HSet(ctx, invKey(eventID, ticketTypeID), vals).Err()
+	key := invKey(eventID, ticketTypeID)
+	_, err := g.rdb.Pipelined(ctx, func(p redis.Pipeliner) error {
+		for bucket, avail := range perBucket {
+			p.HSetNX(ctx, key, fmt.Sprintf("%d", bucket), avail)
+		}
+		return nil
+	})
+	return err
 }
 
 func asString(v any) string {
@@ -160,4 +183,7 @@ func asInt64(v any) int64 {
 	}
 }
 
-var _ port.InventoryGate = (*Gate)(nil)
+var (
+	_ port.InventoryGate   = (*Gate)(nil)
+	_ port.InventorySeeder = (*Gate)(nil)
+)

@@ -8,7 +8,7 @@ const nextConfig = {
   // standalone: image nho, khoi dong nhanh. Quan trong vi pre-warm truoc gio mo
   // ban khong duoc phu thuoc vao pod khoi dong cham.
   output: "standalone",
-  outputFileTracingRoot: path.join(__dirname, "../.."),
+  // outputFileTracingRoot: path.join(__dirname, "../.."),
   reactStrictMode: true,
   poweredByHeader: false,
 };

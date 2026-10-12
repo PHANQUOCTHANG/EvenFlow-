@@ -21,11 +21,28 @@ import (
 //   - An toan khi chay nhieu instance song song: viec tra kho la idempotent o
 //     CA HAI tang (Lua xoa-truoc-cong-sau, va SQL co dieu kien released_at IS NULL).
 type HoldSweeper struct {
-	gate port.InventoryGate
-	repo port.Repository
-	pub  port.Publisher
-	log  *slog.Logger
-	cfg  SweeperConfig
+	gate    port.InventoryGate
+	repo    port.Repository
+	pub     port.Publisher
+	log     *slog.Logger
+	cfg     SweeperConfig
+	metrics SweeperMetrics
+}
+
+// SweeperMetrics nhan so lieu cua sweeper.
+type SweeperMetrics interface {
+	// HoldsReleased ghi so hold vua duoc tra kho trong mot vong quet.
+	HoldsReleased(n int)
+}
+
+type noopSweeperMetrics struct{}
+
+func (noopSweeperMetrics) HoldsReleased(int) {}
+
+// WithMetrics gan noi nhan so lieu; mac dinh la no-op.
+func (s *HoldSweeper) WithMetrics(m SweeperMetrics) *HoldSweeper {
+	s.metrics = m
+	return s
 }
 
 type SweeperConfig struct {
@@ -41,7 +58,8 @@ func DefaultSweeperConfig(eventIDs []string) SweeperConfig {
 
 func NewHoldSweeper(gate port.InventoryGate, repo port.Repository, pub port.Publisher,
 	cfg SweeperConfig, log *slog.Logger) *HoldSweeper {
-	return &HoldSweeper{gate: gate, repo: repo, pub: pub, cfg: cfg, log: log}
+	return &HoldSweeper{gate: gate, repo: repo, pub: pub, cfg: cfg, log: log,
+		metrics: noopSweeperMetrics{}}
 }
 
 func (s *HoldSweeper) Run(ctx context.Context) error {
@@ -101,6 +119,7 @@ func (s *HoldSweeper) sweep(ctx context.Context, eventID string) error {
 	}
 
 	if released > 0 {
+		s.metrics.HoldsReleased(released)
 		s.log.Info("da nha hold het han", "event", eventID,
 			"so_luong", released, "da_quet", len(holdIDs))
 	}

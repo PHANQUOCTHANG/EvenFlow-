@@ -66,3 +66,20 @@
     opacity: 0.45;
   }
 }
+
+@keyframes ef-toast-slide-in {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@layer utilities {
+  .ef-toast-enter {
+    animation: ef-toast-slide-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+}

@@ -125,7 +125,14 @@ export async function getAllEventSlugs(): Promise<string[]> {
   return MOCK_EVENTS.map((e) => e.slug);
 }
 
+/** Lay snapshot su kien theo id. */
+export async function getEventById(id: string): Promise<EventDetailSnapshot | null> {
+  const event = MOCK_EVENTS.find((e) => e.id === id || e.slug === id);
+  return event ?? null;
+}
+
 /** Lay toan bo su kien cong khai. */
 export async function getAllPublicEvents(): Promise<EventDetailSnapshot[]> {
   return [...MOCK_EVENTS];
 }
+

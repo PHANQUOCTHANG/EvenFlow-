@@ -26,18 +26,32 @@ import (
 // Neu lop 2 that bai sau khi lop 1 da thanh cong, phai tra lai kho cho Redis --
 // neu khong, ve se "bien mat" (bi giu vinh vien ma khong ai mua duoc).
 type CreateHold struct {
-	gate port.InventoryGate // Redis
-	repo port.Repository    // Postgres
-	log  *slog.Logger
+	gate    port.InventoryGate // Redis
+	repo    port.Repository    // Postgres
+	log     *slog.Logger
+	metrics port.HoldMetrics
 }
 
 func NewCreateHold(gate port.InventoryGate, repo port.Repository, log *slog.Logger) *CreateHold {
 	return &CreateHold{
-		gate: gate,
-		repo: repo,
-		log:  log,
+		gate:    gate,
+		repo:    repo,
+		log:     log,
+		metrics: noopMetrics{},
 	}
 }
+
+// WithMetrics gan noi nhan so lieu nghiep vu. Mac dinh la no-op nen test va nhung
+// noi khong can quan trac khong phai truyen gi.
+func (uc *CreateHold) WithMetrics(m port.HoldMetrics) *CreateHold {
+	uc.metrics = m
+	return uc
+}
+
+type noopMetrics struct{}
+
+func (noopMetrics) HoldAttempt(string, time.Duration) {}
+func (noopMetrics) OversellGuardRejected()            {}
 
 type CreateHoldInput struct {
 	EventID      string
@@ -53,6 +67,29 @@ type CreateHoldInput struct {
 type CreateHoldOutput = port.HoldView
 
 func (uc *CreateHold) Execute(ctx context.Context, in CreateHoldInput) (CreateHoldOutput, error) {
+	start := time.Now()
+	out, err := uc.execute(ctx, in)
+	uc.metrics.HoldAttempt(outcomeOf(err), time.Since(start))
+	return out, err
+}
+
+// outcomeOf gom loi nghiep vu thanh vai nhom co dinh de lam nhan metric.
+func outcomeOf(err error) string {
+	switch {
+	case err == nil:
+		return port.OutcomeOK
+	case errors.Is(err, domain.ErrSoldOut):
+		return port.OutcomeSoldOut
+	case errors.Is(err, domain.ErrNotAdmitted):
+		return port.OutcomeNotAdmitted
+	case errors.Is(err, domain.ErrQuantityNotAllowed), errors.Is(err, domain.ErrPerIdentityLimit):
+		return port.OutcomeLimit
+	default:
+		return port.OutcomeError
+	}
+}
+
+func (uc *CreateHold) execute(ctx context.Context, in CreateHoldInput) (CreateHoldOutput, error) {
 	// 0. Chi nguoi da duoc phong cho tha vao moi duoc mua. Day la cach tai xuong
 	//    Postgres bi ghim o muc hang so du co bao nhieu nguoi dang xep hang.
 	admitted, err := uc.gate.IsAdmitted(ctx, in.EventID, in.QueueToken)
@@ -141,6 +178,7 @@ func (uc *CreateHold) Execute(ctx context.Context, in CreateHoldInput) (CreateHo
 		if errors.Is(err, domain.ErrInventoryExhausted) {
 			// Postgres noi het ve trong khi Redis noi con -> Redis dang lech.
 			// Tin Postgres. Day chinh la ly do he thong khong the oversell.
+			uc.metrics.OversellGuardRejected()
 			uc.log.Warn("redis lech so voi postgres, tin postgres",
 				"event", in.EventID, "ticket_type", in.TicketTypeID, "bucket", res.Bucket)
 			return CreateHoldOutput{}, domain.ErrSoldOut

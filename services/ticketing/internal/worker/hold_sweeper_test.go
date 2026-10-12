@@ -273,3 +273,37 @@ func TestHoldSweeper_LoiMotSuKienKhongChanSuKienKhac(t *testing.T) {
 		t.Errorf("su kien con lai van phai duoc tra kho, nhan %v", msgs)
 	}
 }
+
+type spySweeperMetrics struct {
+	mu       sync.Mutex
+	released int
+}
+
+func (s *spySweeperMetrics) HoldsReleased(n int) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.released += n
+}
+
+func (s *spySweeperMetrics) total() int {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.released
+}
+
+// Metric chi dem hold THUC SU duoc tra: hold ma Postgres noi da xu ly truoc do
+// (released=false) khong duoc tinh, neu khong so tra kho bi phong len.
+func TestHoldSweeper_Metrics_ChiDemHoldThucSuDuocTra(t *testing.T) {
+	gate, repo, pub, _ := moiSweeper(
+		map[string][]string{"ev-1": {"h1", "h2", "h3"}},
+		map[string]ketQuaRelease{"h1": {released: true}, "h2": {released: false}, "h3": {released: true}},
+	)
+	spy := &spySweeperMetrics{}
+	s := dungSweeper(gate, repo, pub, []string{"ev-1"}).WithMetrics(spy)
+
+	chayToiKhi(t, s, func() bool { return gate.soLanQuet("ev-1") >= 3 })
+
+	if got := spy.total(); got != 2 {
+		t.Fatalf("so hold da tra = %d, muon 2 (h2 da duoc xu ly truoc do)", got)
+	}
+}

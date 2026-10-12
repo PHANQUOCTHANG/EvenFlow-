@@ -22,6 +22,11 @@ jobs:
         run: make up
       - name: make migrate
         run: make migrate
+      # smoke.sh tu tao su kien rieng bang seed.sh, nen khong can `make seed` truoc.
+      # Chay truoc Playwright de loi ha tang/noi day hien ra voi thong bao ro rang
+      # thay vi thanh mot test UI do.
+      - name: make smoke
+        run: make smoke
       - name: cho web san sang
         run: |
           for _ in $(seq 1 30); do
