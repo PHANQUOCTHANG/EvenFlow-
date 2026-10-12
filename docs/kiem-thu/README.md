@@ -17,7 +17,7 @@ Kiểm thử đang tập trung vào **frontend `apps/web`**. Backend Go và Pyth
 
 | Tầng | Công cụ | Trạng thái |
 |---|---|---|
-| Unit + Component (frontend) | Vitest 2.1.8 + React Testing Library + jsdom | **Đang chạy, 1086 test** |
+| Unit + Component (frontend) | Vitest 2.1.8 + React Testing Library + jsdom | **Đang chạy, 1533 test** |
 | E2E | Playwright (`tests/e2e`) | Khung đã dựng, chưa có kịch bản thật |
 | Unit (Go) | `go test` | CI có job `test-go`, code phần lớn là stub |
 | Unit (Python) | pytest | CI có job `test-python`, chưa có test |
@@ -42,66 +42,114 @@ npm run build
 Ngưỡng coverage cấu hình tại `apps/web/vitest.config.ts`: lines / functions / statements **70%**,
 branches **60%**.
 
-> **Cảnh báo khi đọc số coverage.** `coverage.include` đang là `src/**/*.{ts,tsx}` và **không**
-> loại trừ `*.test.*`, nên **file test cũng được tính như mã nguồn**. File test gần như luôn 100%
-> covered theo định nghĩa, nên con số tổng bị đẩy lên và ngưỡng 70% thực chất dễ hơn ý định ban
-> đầu. Con số vẫn tái lập được, nhưng **không nên dùng nó làm bằng chứng chất lượng**. Đã có ticket
-> riêng để thêm `src/**/*.{test,spec}.{ts,tsx}` vào `coverage.exclude`.
+> **Về số coverage.** `coverage.include` là `src/**/*.{ts,tsx}`; từ commit `a8fb8c9`,
+> `coverage.exclude` có thêm `src/**/*.{test,spec}.{ts,tsx}`, nên file test **không còn** được tính như mã
+> nguồn. Trước commit đó, file test (gần như luôn 100%) đẩy con số tổng lên giả tạo.
 
 ## 3. Thống kê hiện tại
 
-Chạy ngày **2026-10-05**. **1086 test / 44 file.** Số đo bằng
-`npx vitest run --reporter=json`, không chép tay.
+Chạy ngày **2026-10-12** trên nhánh `feature/EVF-1806-assistant-panel` (đã merge `develop` @ `ad09bf3`).
+**1533 test / 93 file**, 0 fail. Số đo bằng `npx vitest run --reporter=json`, không chép tay.
+Mốc trước đó: 1086 test / 44 file (2026-10-05); 1345 test / 91 file trên `develop` @ `ad09bf3`
+(đo ở `docs/workflow/EVF-1806-assistant-panel/baseline.md`).
 
 | Nhóm | File | Số test |
 |---|---|---|
 | **Thư viện** | `lib/format.test.ts` | 66 |
-| | `lib/server-time.test.ts` | 39 |
-| | `lib/money.test.ts` | 24 |
-| | `lib/readiness.test.ts` | 19 |
-| | `lib/queue-client.test.ts` | 11 |
-| | `lib/theme.test.ts` | 11 |
-| | `lib/cn.test.ts` | 7 |
+|  | `lib/server-time.test.ts` | 39 |
+|  | `lib/money.test.ts` | 24 |
+|  | `lib/organizer-service.test.ts` | 22 |
+|  | `lib/queue-status.test.ts` | 22 |
+|  | `lib/readiness.test.ts` | 19 |
+|  | `lib/sse.test.ts` | 17 |
+|  | `lib/assistant-client.test.ts` | 13 |
+|  | `lib/queue-client.test.ts` | 11 |
+|  | `lib/theme.test.ts` | 11 |
+|  | `lib/hold-client.test.ts` | 9 |
+|  | `lib/backoff.test.ts` | 7 |
+|  | `lib/cn.test.ts` | 7 |
+|  | `lib/jitter.test.ts` | 7 |
+|  | `lib/payment-client.test.ts` | 7 |
+|  | `lib/event-service.test.ts` | 5 |
 | **Hook** | `hooks/use-server-countdown.test.tsx` | 48 |
-| | `hooks/use-theme.test.tsx` | 13 |
+|  | `hooks/use-theme.test.tsx` | 13 |
+|  | `hooks/use-hold-timer.test.tsx` | 10 |
+|  | `hooks/use-queue-status.test.tsx` | 10 |
+|  | `hooks/use-assistant.test.tsx` | 7 |
+|  | `hooks/use-organizer-sales.test.tsx` | 6 |
+|  | `hooks/use-payment-session.test.tsx` | 4 |
+|  | `hooks/use-order-status.test.tsx` | 3 |
+|  | `hooks/use-server-time-sync.test.tsx` | 3 |
+|  | `hooks/use-auth.test.ts` | 2 |
+| **Trợ lý AI** | `components/assistant/assistant-panel.test.tsx` | 180 |
+|  | `components/assistant/chat-panel.test.tsx` | 8 |
+|  | `components/assistant/faq-chips.test.tsx` | 4 |
+|  | `components/assistant/streaming-message.test.tsx` | 4 |
 | **Component miền** | `components/queue/queue-status-panel.test.tsx` | 112 |
-| | `components/checkout/order-summary.test.tsx` | 74 |
-| | `components/checkout/ticket-tier-card.test.tsx` | 49 |
-| | `components/event/event-card.test.tsx` | 39 |
+|  | `components/checkout/order-summary.test.tsx` | 74 |
+|  | `components/checkout/ticket-tier-card.test.tsx` | 50 |
+|  | `components/event/event-card.test.tsx` | 39 |
+|  | `components/checkout/checkout-view.test.tsx` | 7 |
+|  | `components/event/event-action-panel.test.tsx` | 6 |
+|  | `components/queue/progress-ring.test.tsx` | 6 |
+|  | `components/checkout/order-result-view.test.tsx` | 5 |
+|  | `components/organizer/event-list.test.tsx` | 5 |
+|  | `components/organizer/event-wizard.test.tsx` | 5 |
+|  | `components/queue/waiting-room.test.tsx` | 5 |
+|  | `components/checkout/payment-handoff-view.test.tsx` | 4 |
+|  | `components/organizer/sales-dashboard.test.tsx` | 4 |
+|  | `components/queue/admit-banner.test.tsx` | 4 |
+|  | `components/queue/queue-position.test.tsx` | 4 |
+|  | `components/event/ticket-tier-list.test.tsx` | 3 |
+|  | `components/organizer/moderation-status-card.test.tsx` | 3 |
+|  | `components/event/lobby-notice.test.tsx` | 1 |
 | **Component dùng chung** | `components/ui/server-expiry-countdown.test.tsx` | 43 |
-| | `components/ui/button.test.tsx` | 32 |
-| | `components/ui/input.test.tsx` | 23 |
-| | `components/ui/checkbox.test.tsx` | 20 |
-| | `components/ui/radio.test.tsx` | 18 |
-| | `components/ui/spinner.test.tsx` | 17 |
-| | `components/ui/toast.test.tsx` | 17 |
-| | `components/ui/field.test.tsx` | 16 |
-| | `components/ui/badge.test.tsx` | 15 |
-| | `components/ui/alert.test.tsx` | 14 |
-| | `components/ui/select.test.tsx` | 14 |
-| | `components/ui/card.test.tsx` | 11 |
+|  | `components/ui/button.test.tsx` | 32 |
+|  | `components/ui/input.test.tsx` | 23 |
+|  | `components/ui/checkbox.test.tsx` | 20 |
+|  | `components/ui/radio.test.tsx` | 18 |
+|  | `components/ui/spinner.test.tsx` | 17 |
+|  | `components/ui/toast.test.tsx` | 17 |
+|  | `components/ui/field.test.tsx` | 16 |
+|  | `components/ui/badge.test.tsx` | 15 |
+|  | `components/ui/alert.test.tsx` | 14 |
+|  | `components/ui/select.test.tsx` | 14 |
+|  | `components/ui/card.test.tsx` | 11 |
 | **Bố cục** | `components/layout/nav-config.test.ts` | 45 |
-| | `components/layout/workspace-shell.test.tsx` | 44 |
-| | `components/layout/public-header.test.tsx` | 36 |
-| | `components/layout/nav-link.test.tsx` | 30 |
-| | `components/layout/container.test.tsx` | 13 |
-| | `components/layout/public-shell.test.tsx` | 12 |
-| | `components/layout/skip-link.test.tsx` | 11 |
-| | `components/layout/public-footer.test.tsx` | 7 |
+|  | `components/layout/workspace-shell.test.tsx` | 44 |
+|  | `components/layout/public-header.test.tsx` | 36 |
+|  | `components/layout/nav-link.test.tsx` | 30 |
+|  | `components/layout/container.test.tsx` | 13 |
+|  | `components/layout/public-shell.test.tsx` | 12 |
+|  | `components/layout/skip-link.test.tsx` | 11 |
+|  | `components/layout/public-footer.test.tsx` | 7 |
 | **Theme** | `components/theme/theme-script.test.tsx` | 13 |
-| | `components/theme/theme-toggle.test.tsx` | 7 |
+|  | `components/theme/theme-toggle.test.tsx` | 7 |
+| **Showcase** | `components/showcase/domain-gallery.test.tsx` | 8 |
 | **Route group** | `app/(ops)/layout.test.tsx` | 15 |
-| | `app/(organizer)/layout.test.tsx` | 14 |
-| | `app/(marketing)/layout.test.tsx` | 13 |
-| | `app/(checkout)/layout.test.tsx` | 11 |
-| | `app/(queue)/layout.test.tsx` | 11 |
-| | `app/(marketing)/page.test.tsx` | 1 |
-| **Health endpoint** | `app/api/readyz/route.test.ts` | 19 |
-| | `app/api/healthz/route.test.ts` | 13 |
+|  | `app/(organizer)/layout.test.tsx` | 14 |
+|  | `app/(marketing)/layout.test.tsx` | 13 |
+|  | `app/(checkout)/layout.test.tsx` | 11 |
+|  | `app/(queue)/layout.test.tsx` | 11 |
+| **Trang (page)** | `app/(marketing)/events/[slug]/page.test.tsx` | 5 |
+|  | `app/(checkout)/checkout/[eventId]/page.test.tsx` | 4 |
+|  | `app/(queue)/waiting/[eventId]/page.test.tsx` | 3 |
+|  | `app/(checkout)/checkout/[eventId]/payment/page.test.tsx` | 2 |
+|  | `app/(checkout)/checkout/[eventId]/result/page.test.tsx` | 2 |
+|  | `app/(organizer)/organizer/events/[eventId]/review-status/page.test.tsx` | 2 |
+|  | `app/(organizer)/organizer/events/[eventId]/sales/page.test.tsx` | 2 |
+|  | `app/(marketing)/events/page.test.tsx` | 1 |
+|  | `app/(marketing)/page.test.tsx` | 1 |
+|  | `app/(organizer)/organizer/events/[eventId]/edit/page.test.tsx` | 1 |
+|  | `app/(organizer)/organizer/events/new/page.test.tsx` | 1 |
+|  | `app/(organizer)/organizer/events/page.test.tsx` | 1 |
+|  | `app/(organizer)/organizer/page.test.tsx` | 1 |
+| **API route** | `app/api/readyz/route.test.ts` | 19 |
+|  | `app/api/healthz/route.test.ts` | 13 |
+|  | `app/api/time/route.test.ts` | 1 |
 | **Tắt êm (graceful shutdown)** | `instrumentation.test.ts` | 19 |
 
-Tổng theo nhóm: thư viện 177, hook 61, component miền 274, component dùng chung 240, bố cục 198,
-theme 20, route group 65, health endpoint 32, tắt êm 19 — cộng lại đúng **1086**.
+Tổng theo nhóm: thư viện 286, hook 106, trợ lý AI 196, component miền 337, component dùng chung 240, bố cục 198, theme 20, showcase 8, route group 64, trang (page) 26, API route 33, tắt êm (graceful shutdown) 19 — cộng lại đúng **1533**.
 
 ## 4. Quy trình sinh ra bộ test này
 
@@ -131,6 +179,8 @@ phát hiện ở bước xác minh độc lập P6.)
 | Đồng hồ theo giờ server + panel hàng chờ | `docs/workflow/EVF-1803-queue-countdown/traceability.md` | `.../spec-plan.md` |
 | Thẻ sự kiện, hạng vé, tóm tắt đơn | `docs/workflow/EVF-1802-event-cards/traceability.md` | `.../spec-plan.md` |
 | Health endpoint + tắt êm + deploy k8s | `docs/workflow/deploy-k8s-web/traceability.md` | `.../spec.md`, `.../contracts.md` |
+| Panel chat trợ lý trong phòng chờ (`ChatPanel`, EV-185) | `docs/workflow/EV-185/traceability.md` | `docs/workflow/EV-185/spec.md` |
+| Panel trợ lý AI dạng thuần hiển thị (`AssistantPanel`) | `docs/workflow/EVF-1806-assistant-panel/traceability.md` | `.../spec-plan.md` |
 
 Riêng slice deploy còn có `docs/workflow/deploy-k8s-web/integration-report.md` (bằng chứng thô của
 từng lần chạy, kể cả các lần **chưa** chạy được) và `runbook.md` (§6 liệt kê từng thứ chưa verify
@@ -152,7 +202,7 @@ Ghi lại để không ai tưởng là đã phủ:
 | Tiết lưu `setInterval` ở tab background thật | Chỉ mô phỏng được bằng fake timer | Kiểm thủ công trên browser thật |
 | `make test`, test Go/Python | Máy dev không có `make` và Go toolchain | CI (`ci.yml` chạy `test-go` / `test-python`) |
 | Giao nhận **signal POSIX** (SIGTERM/SIGINT) | Windows không có signal POSIX: `child.kill('SIGTERM')` của Node thực chất gọi `TerminateProcess`, tiến trình chết ngay, không có handler nào chạy | Chạy container Linux rồi `docker kill -s SIGTERM` — **đã làm**, xem §7.2 |
-| Hành vi của **mã sau khi bundle/minify** | Vitest không bundle: nó nạp đúng một module instance. Mọi lỗi chỉ xuất hiện khi webpack nhân bản module hoặc terser xoá nhánh đều **vô hình** với cả 1086 test | Grep marker trong `.next/server/**` — gate C4.5, xem §7.1 |
+| Hành vi của **mã sau khi bundle/minify** | Vitest không bundle: nó nạp đúng một module instance. Mọi lỗi chỉ xuất hiện khi webpack nhân bản module hoặc terser xoá nhánh đều **vô hình** với toàn bộ test unit | Grep marker trong `.next/server/**` — gate C4.5, xem §7.1 |
 | Kubernetes: pod Ready, probe qua kubelet, HPA, Ingress, rolling update | Chưa bật Kubernetes trong Docker Desktop; Docker Desktop cũng không có metrics-server và ingress controller | `docs/workflow/deploy-k8s-web/runbook.md` §3–§5; phần chưa chạy liệt kê ở §6.2 của runbook đó |
 
 ## 7. Hai mức kiểm thử mà unit test không với tới
@@ -226,7 +276,7 @@ Ba tầng, mỗi tầng thấy thứ tầng dưới không thấy:
 
 | Tầng | Công cụ | Thấy được gì |
 |---|---|---|
-| Mã nguồn | Vitest (1086 test) | logic, hợp đồng hàm, hành vi component |
+| Mã nguồn | Vitest (1533 test) | logic, hợp đồng hàm, hành vi component |
 | Hiện vật build | `gates.sh` C4.3 + C4.5 | hệ quả của bundling/minify: nhánh bị xoá, module bị nhân bản, route bị prerender |
 | Môi trường chạy | container + `docker kill -s`, `kubectl` | giao nhận signal, thứ tự tắt, probe qua kubelet |
 
