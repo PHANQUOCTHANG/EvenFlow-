@@ -19,7 +19,8 @@ export function FocusShell({ children }: { children: ReactNode }) {
           <span className="text-headline-md text-fg">EventFlow</span>
         </Container>
       </header>
-      <Container as="main" id="main" tabIndex={-1} className="py-lg">
+      {/* lang="vi": noi dung chua dich la tieng Viet du <html lang> la en (WCAG 3.1.2). */}
+      <Container as="main" id="main" lang="vi" tabIndex={-1} className="py-lg">
         {children}
       </Container>
     </>

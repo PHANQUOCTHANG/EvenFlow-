@@ -6,9 +6,12 @@
  * boc them Container as="main". AC-2 doi DUNG MOT <main> nen kiem truc tiep bang
  * querySelectorAll.
  */
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+import * as i18nProvider from "@/components/i18n/locale-provider";
+import * as i18nMessages from "@/lib/i18n/messages";
 
 import { PublicShell } from "./public-shell";
 
@@ -169,5 +172,65 @@ describe("PublicShell — AC-3 SkipLink va muc tieu #main", () => {
     await user.tab();
 
     expect(screen.getByRole("link", { name: SKIP_LABEL })).toHaveFocus();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// EV-188 (plan §6 M2): <main lang="vi"> vi noi dung chua dich la tieng Viet, ke ca khi html lang = en.
+// ---------------------------------------------------------------------------
+const LOCALE_KEY = "eventflow-locale";
+
+/** Tu dien + provider gop lai cho cac helper ben duoi. */
+const i18n = { ...i18nMessages, ...i18nProvider };
+
+type I18n = typeof i18n;
+
+/** Ban dich en cua chuoi vi (tim khoa theo gia tri). */
+function enFor(m: I18n, viText: string): string {
+  const keys = (Object.keys(m.vi) as Array<keyof typeof m.vi>).filter((k) => m.vi[k] === viText);
+  expect(keys.length, `khong co khoa vi = ${viText}`).toBeGreaterThan(0);
+  const values = new Set(keys.map((k) => m.en[k]));
+  expect(values.size, `cac khoa vi = ${viText} co ban dich en khac nhau`).toBe(1);
+  const [english] = Array.from(values);
+  expect(english).not.toBe(viText);
+  return english;
+}
+
+/** Render trong LocaleProvider voi "en" da luu; cho toi khi locale da ap dung sau mount. */
+async function renderEn(m: I18n, ui: React.ReactElement) {
+  window.localStorage.setItem(LOCALE_KEY, "en");
+  const result = render(<m.LocaleProvider>{ui}</m.LocaleProvider>);
+  await waitFor(() => expect(document.documentElement.lang).toBe("en"));
+  return result;
+}
+
+function resetLocale(): void {
+  window.localStorage.removeItem(LOCALE_KEY);
+  document.documentElement.setAttribute("lang", "vi");
+}
+
+describe("PublicShell — lang cua noi dung (EV-188 M2)", () => {
+  afterEach(resetLocale);
+
+  it('<main> co lang="vi"', () => {
+    render(
+      <PublicShell>
+        <p>{CHILD}</p>
+      </PublicShell>,
+    );
+    expect(screen.getByRole("main")).toHaveAttribute("lang", "vi");
+  });
+
+  it('locale en: html lang = "en" nhung <main> van lang="vi"; skip link dich sang en', async () => {
+    const m = i18n;
+    await renderEn(
+      m,
+      <PublicShell>
+        <p>{CHILD}</p>
+      </PublicShell>,
+    );
+    expect(document.documentElement.lang).toBe("en");
+    expect(screen.getByRole("main")).toHaveAttribute("lang", "vi");
+    expect(await screen.findByRole("link", { name: enFor(m, SKIP_LABEL) })).toHaveAttribute("href", "#main");
   });
 });

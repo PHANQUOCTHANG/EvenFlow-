@@ -22,7 +22,8 @@ interface StateCopy {
   badge: BadgeVariant;
   badgeText: string;
   note: string;
-  /** Giam nhan thi giac nhung VAN hien thi — DESIGN.md: giu bo cuc trang, khong an the. */
+  /** Giam nhan thi giac nhung VAN hien thi — DESIGN.md: giu bo cuc trang, khong an the.
+   *  Chi lam mo ANH + vien net dut, KHONG ha opacity ca the: opacity lam chu mat tuong phan WCAG AA. */
   dimmed: boolean;
 }
 
@@ -138,13 +139,17 @@ export function EventCard({
   const image = typeof imageUrl === "string" && imageUrl.trim() !== "" ? imageUrl.trim() : null;
 
   return (
-    <div data-state={state} className={cn(SHELL, copy.dimmed && "opacity-70", className)}>
+    <div data-state={state} className={cn(SHELL, copy.dimmed && "border-dashed", className)}>
       {image ? (
         /* Anh poster do organizer upload nen domain khong biet truoc; `next/image` can khai bao
            `images.remotePatterns`, ma backend chua chot nguon luu anh. Doi sang next/image khi
            co quyet dinh do. `alt=""` vi anh la trang tri — ten su kien da o <h3> ngay duoi. */
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={image} alt="" className="aspect-[16/9] w-full object-cover" />
+        <img
+          src={image}
+          alt=""
+          className={cn("aspect-[16/9] w-full object-cover", copy.dimmed && "opacity-60 grayscale")}
+        />
       ) : (
         // Khong render <img src=""> khi thieu anh: browser se gui mot request rong va bao loi.
         <div aria-hidden="true" className="aspect-[16/9] w-full bg-neutral-soft" />

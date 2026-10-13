@@ -473,3 +473,39 @@ describe("EventCard — skeleton khi `loading` (AC-3)", () => {
     expect(container.querySelector('[aria-busy="true"]')).toBeNull();
   });
 });
+
+// ---------------------------------------------------------------------------
+// EV-188 AC-3 (axe V1 `color-contrast`): the "khong ban duoc nua" truoc day dat `opacity-70`
+// tren CA the -> chu muted / badge / link "Xem chi tiết" tut duoi 4.5:1. Tuong phan that chi do
+// duoc bang axe (jsdom khong tinh mau); o day giu lai GOC LOI: khong phan tu chua chu nao bi ha
+// opacity — chi anh trang tri (img alt="") duoc lam mo — va trang thai van noi bang CHU.
+// ---------------------------------------------------------------------------
+function opacityClassesOutsideImages(container: HTMLElement): string[] {
+  return Array.from(container.querySelectorAll("*"))
+    .filter((el) => el.tagName !== "IMG")
+    .flatMap((el) =>
+      (el.getAttribute("class") ?? "")
+        .split(/\s+/)
+        .filter((token) => /(^|:)opacity-/.test(token) && !/^(disabled|hover|focus|group-hover):/.test(token))
+        .map((token) => `${el.tagName.toLowerCase()}.${token}`),
+    );
+}
+
+describe("EventCard — the bi chan khong ha opacity phan chu (EV-188 V1)", () => {
+  it("SOLD_OUT / CLOSED / COMPLETED / CANCELLED: goc the va phan tu chua chu KHONG co lop opacity-*", () => {
+    for (const state of BLOCKED_STATES) {
+      const { container, unmount } = render(
+        <EventCard {...BASE} state={state} href="/events/x" imageUrl="https://example.test/poster.jpg" />,
+      );
+      expect(opacityClassesOutsideImages(container), `trang thai ${state}`).toEqual([]);
+      unmount();
+    }
+  });
+
+  it("SOLD_OUT van noi bang chu: badge 'Hết vé' va ghi chu 'Mọi hạng vé đã bán hết.'", () => {
+    const { container } = render(<EventCard {...BASE} state="SOLD_OUT" />);
+    expect(allText(container)).toContain("Hết vé");
+    expect(allText(container)).toContain("Mọi hạng vé đã bán hết.");
+    expect(container.firstElementChild).toHaveAttribute("data-state", "SOLD_OUT");
+  });
+});

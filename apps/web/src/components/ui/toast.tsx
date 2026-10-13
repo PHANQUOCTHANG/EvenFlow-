@@ -84,6 +84,8 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       {children}
       <div
         aria-live="polite"
+        // Noi dung toast chua dich (tieng Viet) nen khai bao lang="vi" du <html lang> la en.
+        lang="vi"
         data-slot="toast-region"
         className="pointer-events-none fixed top-6 right-6 z-50 flex flex-col items-end gap-sm"
       >

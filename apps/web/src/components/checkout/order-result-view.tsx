@@ -150,7 +150,9 @@ export function OrderResultView({
 
                   {/* Khung mã QR demo an toàn (BR-O8, Stitch 10.10: visual placeholder, no PII) */}
                   <div className="mt-md flex flex-col items-center justify-center rounded-control border border-dashed border-border bg-surface-subtle p-md text-center">
+                    {/* role="img": aria-label tren div khong co role bi axe bao aria-prohibited-attr. */}
                     <div
+                      role="img"
                       aria-label={`Mã QR vé ${ticket.ticketCode}`}
                       className="mb-xs flex size-32 items-center justify-center rounded-card border border-border bg-surface shadow-sm"
                     >

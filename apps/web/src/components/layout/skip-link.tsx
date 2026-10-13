@@ -1,3 +1,5 @@
+import { T } from "@/components/i18n/t";
+
 /** Link bo qua nav. Phai la phan tu focus duoc DAU TIEN trong trang.
  *
  * Khong duoc an bang `display: none` hay `visibility: hidden` — nhu vay ban phim khong
@@ -9,7 +11,7 @@ export function SkipLink({ targetId = "main" }: { targetId?: string }) {
       href={`#${targetId}`}
       className="sr-only focus:not-sr-only focus:absolute focus:left-gutter focus:top-gutter focus:z-50 focus:rounded-control focus:border focus:border-border-strong focus:bg-surface focus:px-md focus:py-sm focus:text-label-lg focus:text-fg focus:shadow-float"
     >
-      Bỏ qua điều hướng, tới nội dung chính
+      <T k="skipLink.label" />
     </a>
   );
 }

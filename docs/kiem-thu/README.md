@@ -17,7 +17,7 @@ Kiểm thử đang tập trung vào **frontend `apps/web`**. Backend Go và Pyth
 
 | Tầng | Công cụ | Trạng thái |
 |---|---|---|
-| Unit + Component (frontend) | Vitest 2.1.8 + React Testing Library + jsdom | **Đang chạy, 1767 test** |
+| Unit + Component (frontend) | Vitest 2.1.8 + React Testing Library + jsdom | **Đang chạy, 1936 test** |
 | E2E | Playwright (`tests/e2e`), backend **giả lập** bằng `page.route` | **Đang chạy mỗi PR** đụng `apps/web` / `tests/e2e` (`e2e-web.yml`): luồng mua vé đầy đủ + 2 ca lỗi. Lặp 20 lần trong CI: 120/120, 0 flaky (run 38299195317). Chạy trên compose thật **chưa đạt** (thiếu gateway, payment, order) — xem `docs/workflow/EV-198-e2e-playwright/spec.md` §1 |
 | Unit (Go) | `go test` | CI có job `test-go`, code phần lớn là stub |
 | Unit (Python) | pytest | CI có job `test-python`, chưa có test |
@@ -48,14 +48,15 @@ branches **60%**.
 
 ## 3. Thống kê hiện tại
 
-Chạy ngày **2026-10-13** trên nhánh `feature/EV-187-ops-war-room` (xếp trên `feature/EV-198-e2e-playwright`, gốc `develop` @ `51c4729`).
-**1767 test / 101 file**, 0 fail. Số đo bằng `npx vitest run --reporter=json`, không chép tay.
+Chạy ngày **2026-10-13** trên nhánh `feature/EV-188-a11y-i18n` (xếp trên EV-187 → EV-198, gốc `develop` @ `51c4729`).
+**1936 test / 108 file**, 0 fail. Số đo bằng `npx vitest run --reporter=json`, không chép tay.
 Mốc trước đó: 1086 test / 44 file (2026-10-05); 1345 test / 91 file trên `develop` @ `ad09bf3`
 (đo ở `docs/workflow/EVF-1806-assistant-panel/baseline.md`).
 
 | Nhóm | File | Số test |
 |---|---|---|
 | **Thư viện** | `lib/format.test.ts` | 94 |
+|  | `lib/i18n/messages.test.ts` | 55 |
 |  | `lib/ops-service.test.ts` | 53 |
 |  | `lib/server-time.test.ts` | 39 |
 |  | `lib/money.test.ts` | 24 |
@@ -91,12 +92,13 @@ Mốc trước đó: 1086 test / 44 file (2026-10-05); 1345 test / 91 file trên
 |  | `components/assistant/streaming-message.test.tsx` | 4 |
 | **Component miền** | `components/queue/queue-status-panel.test.tsx` | 112 |
 |  | `components/checkout/order-summary.test.tsx` | 74 |
-|  | `components/checkout/ticket-tier-card.test.tsx` | 50 |
-|  | `components/event/event-card.test.tsx` | 39 |
+|  | `components/checkout/ticket-tier-card.test.tsx` | 52 |
+|  | `components/event/event-card.test.tsx` | 41 |
+|  | `components/event/event-action-panel.test.tsx` | 21 |
 |  | `components/checkout/checkout-view.test.tsx` | 11 |
-|  | `components/event/event-action-panel.test.tsx` | 6 |
+|  | `components/event/ticket-tier-list.test.tsx` | 8 |
+|  | `components/checkout/order-result-view.test.tsx` | 7 |
 |  | `components/queue/progress-ring.test.tsx` | 6 |
-|  | `components/checkout/order-result-view.test.tsx` | 5 |
 |  | `components/organizer/event-list.test.tsx` | 5 |
 |  | `components/organizer/event-wizard.test.tsx` | 5 |
 |  | `components/queue/waiting-room.test.tsx` | 5 |
@@ -104,7 +106,6 @@ Mốc trước đó: 1086 test / 44 file (2026-10-05); 1345 test / 91 file trên
 |  | `components/organizer/sales-dashboard.test.tsx` | 4 |
 |  | `components/queue/admit-banner.test.tsx` | 4 |
 |  | `components/queue/queue-position.test.tsx` | 4 |
-|  | `components/event/ticket-tier-list.test.tsx` | 3 |
 |  | `components/organizer/moderation-status-card.test.tsx` | 3 |
 |  | `components/event/lobby-notice.test.tsx` | 1 |
 | **Component dùng chung** | `components/ui/server-expiry-countdown.test.tsx` | 43 |
@@ -112,32 +113,37 @@ Mốc trước đó: 1086 test / 44 file (2026-10-05); 1345 test / 91 file trên
 |  | `components/ui/input.test.tsx` | 23 |
 |  | `components/ui/checkbox.test.tsx` | 20 |
 |  | `components/ui/radio.test.tsx` | 18 |
+|  | `components/ui/toast.test.tsx` | 18 |
 |  | `components/ui/spinner.test.tsx` | 17 |
-|  | `components/ui/toast.test.tsx` | 17 |
 |  | `components/ui/field.test.tsx` | 16 |
 |  | `components/ui/badge.test.tsx` | 15 |
 |  | `components/ui/alert.test.tsx` | 14 |
 |  | `components/ui/select.test.tsx` | 14 |
 |  | `components/ui/card.test.tsx` | 11 |
-| **Bố cục** | `components/layout/nav-config.test.ts` | 45 |
-|  | `components/layout/workspace-shell.test.tsx` | 44 |
-|  | `components/layout/public-header.test.tsx` | 36 |
-|  | `components/layout/nav-link.test.tsx` | 30 |
+| **Bố cục** | `components/layout/nav-config.test.ts` | 48 |
+|  | `components/layout/workspace-shell.test.tsx` | 47 |
+|  | `components/layout/public-header.test.tsx` | 43 |
+|  | `components/layout/nav-link.test.tsx` | 37 |
+|  | `components/layout/public-shell.test.tsx` | 14 |
 |  | `components/layout/container.test.tsx` | 13 |
-|  | `components/layout/public-shell.test.tsx` | 12 |
-|  | `components/layout/skip-link.test.tsx` | 11 |
-|  | `components/layout/public-footer.test.tsx` | 7 |
+|  | `components/layout/skip-link.test.tsx` | 13 |
+|  | `components/layout/public-footer.test.tsx` | 9 |
+|  | `components/layout/focus-shell.test.tsx` | 4 |
 | **Theme** | `components/theme/theme-script.test.tsx` | 13 |
-|  | `components/theme/theme-toggle.test.tsx` | 7 |
+|  | `components/theme/theme-toggle.test.tsx` | 10 |
 | **Showcase** | `components/showcase/domain-gallery.test.tsx` | 8 |
 | **War room Ops** | `components/ops/ops-war-room.test.tsx` | 74 |
+| **Đa ngôn ngữ (i18n)** | `components/i18n/locale-provider.test.tsx` | 23 |
+|  | `components/i18n/language-toggle.test.tsx` | 19 |
+|  | `components/i18n/t.test.tsx` | 6 |
 | **Route group** | `app/(ops)/layout.test.tsx` | 15 |
 |  | `app/(organizer)/layout.test.tsx` | 14 |
 |  | `app/(marketing)/layout.test.tsx` | 13 |
 |  | `app/(checkout)/layout.test.tsx` | 11 |
 |  | `app/(queue)/layout.test.tsx` | 11 |
-| **Trang (page)** | `app/(ops)/ops/events/[eventId]/page.test.tsx` | 7 |
-|  | `app/(marketing)/events/[slug]/page.test.tsx` | 5 |
+|  | `app/auth/layout.test.tsx` | 2 |
+| **Trang (page)** | `app/(marketing)/events/[slug]/page.test.tsx` | 7 |
+|  | `app/(ops)/ops/events/[eventId]/page.test.tsx` | 7 |
 |  | `app/(ops)/ops/events/page.test.tsx` | 5 |
 |  | `app/(checkout)/checkout/[eventId]/page.test.tsx` | 4 |
 |  | `app/(queue)/waiting/[eventId]/page.test.tsx` | 3 |
@@ -146,6 +152,7 @@ Mốc trước đó: 1086 test / 44 file (2026-10-05); 1345 test / 91 file trên
 |  | `app/(ops)/ops/events/[eventId]/not-found.test.tsx` | 2 |
 |  | `app/(organizer)/organizer/events/[eventId]/review-status/page.test.tsx` | 2 |
 |  | `app/(organizer)/organizer/events/[eventId]/sales/page.test.tsx` | 2 |
+|  | `app/unauthorized/page.test.tsx` | 2 |
 |  | `app/(marketing)/events/page.test.tsx` | 1 |
 |  | `app/(marketing)/page.test.tsx` | 1 |
 |  | `app/(organizer)/organizer/events/[eventId]/edit/page.test.tsx` | 1 |
@@ -157,7 +164,7 @@ Mốc trước đó: 1086 test / 44 file (2026-10-05); 1345 test / 91 file trên
 |  | `app/api/time/route.test.ts` | 1 |
 | **Tắt êm (graceful shutdown)** | `instrumentation.test.ts` | 19 |
 
-Tổng theo nhóm: thư viện 392, hook 142, trợ lý AI 196, component miền 341, component dùng chung 240, bố cục 198, theme 20, showcase 8, war room Ops 74, route group 64, trang (page) 40, API route 33, tắt êm (graceful shutdown) 19 — cộng lại đúng **1767**.
+Tổng theo nhóm: thư viện 447, hook 142, trợ lý AI 196, component miền 367, component dùng chung 241, bố cục 228, theme 23, showcase 8, war room Ops 74, i18n 48, route group 66, trang (page) 44, API route 33, tắt êm (graceful shutdown) 19 — cộng lại đúng **1936**.
 
 ## 4. Quy trình sinh ra bộ test này
 
@@ -190,6 +197,7 @@ mới thêm như cũ.
 | Panel trợ lý AI dạng thuần hiển thị (`AssistantPanel`) | `docs/workflow/EVF-1806-assistant-panel/traceability.md` | `.../spec-plan.md` |
 | E2E luồng mua vé + sửa 3 lỗi nối trang (EV-198) | `docs/workflow/EV-198-e2e-playwright/traceability.md` | `.../spec.md`, `.../plan.md` |
 | War room cho Ops (EV-187, dữ liệu mẫu) | `docs/workflow/EV-187-ops-war-room/traceability.md` | `.../spec.md`, `.../plan.md` |
+| WCAG AA (quét axe) + i18n vi/en (EV-188) | `docs/workflow/EV-188-a11y-i18n/traceability.md` | `.../spec.md`, `.../plan.md` |
 
 Riêng slice deploy còn có `docs/workflow/deploy-k8s-web/integration-report.md` (bằng chứng thô của
 từng lần chạy, kể cả các lần **chưa** chạy được) và `runbook.md` (§6 liệt kê từng thứ chưa verify
@@ -285,7 +293,7 @@ Ba tầng, mỗi tầng thấy thứ tầng dưới không thấy:
 
 | Tầng | Công cụ | Thấy được gì |
 |---|---|---|
-| Mã nguồn | Vitest (1767 test) | logic, hợp đồng hàm, hành vi component |
+| Mã nguồn | Vitest (1936 test) | logic, hợp đồng hàm, hành vi component |
 | Luồng người dùng qua nhiều trang | Playwright trên bản build production, backend giả lập (EV-198) | lỗi **nối giữa các trang**: khoá sessionStorage lệch, gọi sai origin, mất tham số URL — cả ba lọt qua unit test vì mỗi module đúng khi đứng riêng |
 | Hiện vật build | `gates.sh` C4.3 + C4.5 | hệ quả của bundling/minify: nhánh bị xoá, module bị nhân bản, route bị prerender |
 | Môi trường chạy | container + `docker kill -s`, `kubectl` | giao nhận signal, thứ tự tắt, probe qua kubelet |

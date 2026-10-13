@@ -9,17 +9,21 @@
  * Item `ready: false` khong duoc render thanh <a> — bam vao se ra 404, te hon la noi thang
  * "Sap co" (handoff muc 5 nguyen tac 3: No fake certainty). */
 
+import type { MessageKey } from "@/lib/i18n/messages";
+
 export interface NavItem {
   href: string;
   label: string;
+  /** Khoa i18n cua nhan. Chi PUBLIC_NAV dat; menu khac van dung `label` (tieng Viet). */
+  labelKey?: MessageKey;
   /** false = route chua ton tai trong repo -> KHONG render <a>. */
   ready: boolean;
 }
 
 /** Nguon: docs/08-stitch-ui-ux-handoff.md muc 4 (Information architecture). */
 export const PUBLIC_NAV: NavItem[] = [
-  { href: "/", label: "Trang chủ", ready: true },
-  { href: "/events", label: "Sự kiện", ready: true },
+  { href: "/", label: "Trang chủ", labelKey: "nav.home", ready: true },
+  { href: "/events", label: "Sự kiện", labelKey: "nav.events", ready: true },
 ];
 
 export const ORGANIZER_NAV: NavItem[] = [
