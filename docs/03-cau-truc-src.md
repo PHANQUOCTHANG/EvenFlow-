@@ -95,7 +95,7 @@ adapter ──> app ──> domain
 libs/go/
 ├── httpx/          # router, middleware (auth, idempotency, ratelimit, recover), loi chuan RFC7807
 ├── redisx/         # client, helper nap va chay Lua script co SHA cache
-├── mq/             # bao boc AMQP: publisher co outbox, consumer co retry/DLQ
+├── mq/             # bao boc AMQP: publisher co confirm, consumer co retry/DLQ, topology bang code (outbox nam o service)
 ├── authx/          # ky & xac minh JWT, queue token, QR HMAC
 ├── otelx/          # khoi tao trace + metric + log, propagate qua AMQP header
 ├── idem/           # idempotency store tren Postgres

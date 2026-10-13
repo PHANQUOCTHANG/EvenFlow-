@@ -239,7 +239,7 @@ Không được cắt: giai đoạn 1 (W3, W4, W6), giai đoạn 2, giai đoạn
 | # | Câu hỏi | Đề xuất |
 |---|---|---|
 | 1 | Metric dùng thẳng thư viện Prometheus hay qua OpenTelemetry metrics? | Prometheus — khớp tên trong `alerts.yml`, ít dependency |
-| 2 | Topology RabbitMQ: `definitions.json` là nguồn duy nhất hay code Go tự khai báo? | `definitions.json` — ai-worker Python dùng chung |
+| 2 | Topology RabbitMQ: `definitions.json` là nguồn duy nhất hay code Go tự khai báo? | Code Go (`libs/go/mq`) là nguồn chuẩn; `definitions.json` là bản sao dùng chung cho ai-worker Python, được unit test so khớp với code (EVF-7) |
 | 3 | EVF-39 làm ở giai đoạn 1 hay 2? | Giai đoạn 1 — vừa là bất biến quan trọng nhất, vừa chứng minh `testx` dùng được |
 | 4 | EVF-8 (generator service) làm khi nào? | Giai đoạn 3, rút từ `identity` |
 | 5 | BR-O4: giới hạn mua tính cả đơn đang giữ hay chỉ đơn đã trả tiền? | Chốt ở đầu giai đoạn 2 |
