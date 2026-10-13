@@ -485,7 +485,7 @@ mk_recipe() { # mk_recipe <gia-tri-TESTFLAGS|__UNSET__>
     | awk -v v="$val" '{ gsub(/\$\(TESTFLAGS\)|\$\{TESTFLAGS\}/, v); print }' \
     | norm_cmd
 }
-ORIG_OVERSELL='go test -tags=integration -run TestNoOversell ./services/ticketing/test/concurrency/... -count=200 -timeout=30m'
+ORIG_OVERSELL='go test -tags=integration -run TestNoOversell_UnderExtremeConcurrency ./services/ticketing/test/concurrency/... -count=200 -timeout=30m'
 ac4_mk_uses_testflags() {
   tr -d '\r' <"$MK" | awk '/^test-oversell[ \t]*:/{f=1;next} f&&/^\t/{print} f&&!/^\t/{exit}' | grep -Eq '\$\(TESTFLAGS\)|\$\{TESTFLAGS\}' \
     || { why "recipe test-oversell khong dung \$(TESTFLAGS)"; return 1; }; }
@@ -513,6 +513,40 @@ check AC-4 "integration: exit code cua run-and-report-tests.sh khong bi nuot (||
 check AC-4 "Makefile: recipe test-oversell dung \$(TESTFLAGS) (K2)" ac4_mk_uses_testflags
 check AC-4 "Makefile: khong truyen TESTFLAGS => lenh y het hien tai (K2, khong hoi quy)" ac4_mk_unchanged
 check AC-4 "Makefile: TESTFLAGS=-v => them dung token -v, phan con lai giu nguyen (K2)" ac4_mk_with_v
+
+# ---- EV-134: cong oversell chay test that nen 0 PASS la do (REQUIRE_PASS), va hold het han tach rieng
+ac4_require_pass() { # ac4_require_pass <file> <ten-job>: moi step goi wrapper deu dat REQUIRE_PASS=1
+  local j s n=0; j="$(job_by_name "$1" "$2")" || { why "khong co job $2"; return 1; }
+  for s in $(steps_matching "$1" "$j" 'run-and-report-tests\.sh'); do
+    n=$((n + 1))
+    step_key_text "$1" "$j" "$s" env | grep -Eq '^REQUIRE_PASS:[ ]*["'"'"']?1["'"'"']?[ ]*$'       || why "step $s goi run-and-report-tests.sh nhung khong dat env REQUIRE_PASS=1"
+  done
+  [ "$n" -gt 0 ] || why "khong co step nao goi run-and-report-tests.sh"
+  [ -z "$REASON" ]; }
+check AC-4 "oversell-gate: moi step wrapper dat REQUIRE_PASS=1 (0 PASS la do, khong chi canh bao)" ac4_require_pass "$OVERSELL" oversell-gate
+check AC-4 "integration: moi step wrapper dat REQUIRE_PASS=1" ac4_require_pass "$INTEG" integration
+ac4_expiry_step() {
+  local j s r; j="$(job_by_name "$OVERSELL" oversell-gate)" || { why "khong co job oversell-gate"; return 1; }
+  s="$(steps_matching "$OVERSELL" "$j" 'make[ ]+test-oversell-expiry' | head -1)"
+  [ -n "$s" ] || { why "oversell-gate khong chay 'make test-oversell-expiry'"; return 1; }
+  r="$(step_key_text "$OVERSELL" "$j" "$s" run | joined)"
+  printf '%s
+' "$r" | grep -Eq 'run-and-report-tests\.sh["'"'"']?[ ]+["'"'"']?TestNoOversell[ ]+make[ ]+test-oversell-expiry'     || why "step hold het han khong boc make test-oversell-expiry bang run-and-report-tests.sh TestNoOversell"
+  printf '%s
+' "$r" | grep -Eq 'TESTFLAGS=["'"'"']?([^"'"'"' ]* )*-v([ "'"'"']|$)' || why "khong truyen TESTFLAGS co -v"
+  [ -z "$REASON" ]; }
+check AC-4 "oversell-gate: co step rieng cho hold het han (make test-oversell-expiry, qua wrapper, -v)" ac4_expiry_step
+ac4_mk_expiry_target() {
+  tr -d '' <"$MK" | awk '/^test-oversell-expiry[ 	]*:/{f=1;next} f&&/^	/{print} f&&!/^	/{exit}'     | tr -d '\' | tr -s ' 	' '  ' >"$T/expiry.recipe"
+  grep -q -- '-run TestNoOversell_WithConcurrentExpiry' "$T/expiry.recipe" || { why "target test-oversell-expiry khong -run TestNoOversell_WithConcurrentExpiry"; return 1; }
+  grep -Eq -- '\$\(TESTFLAGS\)' "$T/expiry.recipe" || { why "target test-oversell-expiry khong dung \$(TESTFLAGS)"; return 1; }
+  grep -Eq -- '-count=20( |$)' "$T/expiry.recipe" || { why "target test-oversell-expiry khong -count=20"; return 1; }
+}
+check AC-4 "Makefile: test-oversell-expiry chay dung test het han, dung TESTFLAGS, -count=20" ac4_mk_expiry_target
+ac4_main_excludes_expiry() {
+  grep -q -- 'WithConcurrentExpiry' <(printf '%s' "$(mk_recipe __UNSET__)") && { why "test-oversell van chay ca test hold het han (x200 se qua thoi gian)"; return 1; }
+  return 0; }
+check AC-4 "Makefile: test-oversell (x200) khong chay test hold het han" ac4_main_excludes_expiry
 
 # ================================================================== AC-5
 # Bo loc dorny/paths-filter cua job detect-changes: in "nhom<TAB>pattern"

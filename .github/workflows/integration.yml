@@ -35,6 +35,8 @@ jobs:
       # oversell-gate.yml). Duong dan tuyet doi vi step chay trong services/ticketing.
       - name: oversell smoke (20 lan, gate day du 200 lan nam o oversell-gate.yml)
         working-directory: services/ticketing
+        env:
+          REQUIRE_PASS: "1"
         run: |
           bash "$GITHUB_WORKSPACE/.github/scripts/run-and-report-tests.sh" TestNoOversell \
             go test -v -tags=integration -run TestNoOversell \
