@@ -837,11 +837,11 @@ func snapshot(t *testing.T, pool *pgxpool.Pool) schemaSnap {
 		return out
 	}
 	return schemaSnap{
-		cols: q(`SELECT column_name || ' ' || data_type || ' ' || is_nullable || ' ' || coalesce(column_default, '-')
+		cols: q(`SELECT column_name::text || ' ' || data_type::text || ' ' || is_nullable::text || ' ' || coalesce(column_default::text, '-')
 			FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'outbox_events'`),
-		indexes: q(`SELECT indexname || ' ' || indexdef FROM pg_indexes
+		indexes: q(`SELECT indexname::text || ' ' || indexdef FROM pg_indexes
 			WHERE schemaname = 'public' AND tablename = 'outbox_events'`),
-		constraints: q(`SELECT conname || ' ' || contype || ' ' || pg_get_constraintdef(oid) FROM pg_constraint
+		constraints: q(`SELECT conname::text || ' ' || contype::text || ' ' || pg_get_constraintdef(oid) FROM pg_constraint
 			WHERE conrelid = 'public.outbox_events'::regclass`),
 	}
 }
