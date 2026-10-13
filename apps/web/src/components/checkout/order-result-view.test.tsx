@@ -156,3 +156,48 @@ describe("OrderResultView component (EVF-114, BR-O2, BR-O6, BR-O8)", () => {
     expect(screen.getByRole("link", { name: /Về trang chủ/i })).toBeDefined();
   });
 });
+
+// ---------------------------------------------------------------------------
+// EV-188 AC-3 (axe V4 `aria-prohibited-attr`): khoi QR co `aria-label` phai mang role hop le
+// (role="img"), neu khong axe bao serious va screen reader bo qua ten.
+// ---------------------------------------------------------------------------
+describe("OrderResultView — khoi ma QR truy cap duoc (EV-188 V4)", () => {
+  const paidWithTwoTickets: OrderDetails = {
+    orderId: "ord-a11y-1",
+    eventId: "evt-1",
+    eventTitle: "Concert Đêm Nhạc",
+    venue: "Nhà Hát Lớn",
+    tierName: "Vé VIP",
+    quantity: 2,
+    totalAmount: 1000000,
+    status: "PAID",
+    paidAt: "2026-10-10T21:00:00Z",
+    issuedTickets: ["EF-A11Y-001", "EF-A11Y-002"].map((code, i) => ({
+      ticketId: `tkt-a11y-${i + 1}`,
+      ticketCode: code,
+      tierName: "Vé VIP",
+      attendeeName: "Nguyễn Văn A",
+      qrPayload: `DEMO-${code}`,
+    })),
+  };
+
+  it("moi ve co mot khoi QR role img, ten 'Mã QR vé <mã vé>'", () => {
+    render(<OrderResultView eventId="evt-1" orderId="ord-a11y-1" initialOrder={paidWithTwoTickets} />);
+
+    const qrs = screen.getAllByRole("img", { name: /Mã QR vé/ });
+    expect(qrs).toHaveLength(2);
+    expect(screen.getByRole("img", { name: "Mã QR vé EF-A11Y-001" })).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "Mã QR vé EF-A11Y-002" })).toBeInTheDocument();
+  });
+
+  it("khong con aria-label tren div/span khong co role (aria-prohibited-attr)", () => {
+    const { container } = render(
+      <OrderResultView eventId="evt-1" orderId="ord-a11y-1" initialOrder={paidWithTwoTickets} />,
+    );
+
+    const offenders = Array.from(container.querySelectorAll("div[aria-label], span[aria-label]")).filter(
+      (el) => !el.hasAttribute("role"),
+    );
+    expect(offenders.map((el) => el.outerHTML.slice(0, 80))).toEqual([]);
+  });
+});

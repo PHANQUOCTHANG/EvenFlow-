@@ -15,7 +15,9 @@ export default defineConfig({
       provider: "v8",
       reporter: ["text", "html", "lcov"],
       include: ["src/**/*.{ts,tsx}"],
-      exclude: ["src/**/*.d.ts", "src/app/layout.tsx"],
+      // File test khong phai ma nguon: tinh chung vao thi con so coverage bi day len gia tao
+      // (docs/kiem-thu/README.md muc 2).
+      exclude: ["src/**/*.d.ts", "src/app/layout.tsx", "src/**/*.{test,spec}.{ts,tsx}"],
       // Cung nguong voi backend (issue 1006): duoi 70% thi CI chan PR.
       thresholds: { lines: 70, functions: 70, branches: 60, statements: 70 },
     },

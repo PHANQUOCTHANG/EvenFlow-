@@ -4,9 +4,12 @@
  * Nut toggle la cach duy nhat nguoi dung chon theme thu cong, nen aria-pressed
  * phai phan anh dung theme hien tai (screen reader doc "da bam"/"chua bam").
  */
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+import * as i18nProvider from "@/components/i18n/locale-provider";
+import * as i18nMessages from "@/lib/i18n/messages";
 
 import { THEME_STORAGE_KEY } from "../../lib/theme";
 import { ThemeToggle } from "./theme-toggle";
@@ -103,5 +106,73 @@ describe("ThemeToggle", () => {
 
     expect(btn).toHaveClass("lop-rieng-cua-toi");
     expect(btn.className.trim().split(/\s+/).length).toBeGreaterThan(1);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// EV-188 (AC-8): ThemeToggle dich; ten truy cap chua chu hien thi o ca hai ngon ngu (WCAG 2.5.3).
+// ---------------------------------------------------------------------------
+const LOCALE_KEY = "eventflow-locale";
+
+/** Tu dien + provider gop lai cho cac helper ben duoi. */
+const i18n = { ...i18nMessages, ...i18nProvider };
+
+type I18n = typeof i18n;
+
+/** Ban dich en cua chuoi vi (tim khoa theo gia tri). */
+function enFor(m: I18n, viText: string): string {
+  const keys = (Object.keys(m.vi) as Array<keyof typeof m.vi>).filter((k) => m.vi[k] === viText);
+  expect(keys.length, `khong co khoa vi = ${viText}`).toBeGreaterThan(0);
+  const values = new Set(keys.map((k) => m.en[k]));
+  expect(values.size, `cac khoa vi = ${viText} co ban dich en khac nhau`).toBe(1);
+  const [english] = Array.from(values);
+  expect(english).not.toBe(viText);
+  return english;
+}
+
+/** Render trong LocaleProvider voi "en" da luu; cho toi khi locale da ap dung sau mount. */
+async function renderEn(m: I18n, ui: React.ReactElement) {
+  window.localStorage.setItem(LOCALE_KEY, "en");
+  const result = render(<m.LocaleProvider>{ui}</m.LocaleProvider>);
+  await waitFor(() => expect(document.documentElement.lang).toBe("en"));
+  return result;
+}
+
+function resetLocale(): void {
+  window.localStorage.removeItem(LOCALE_KEY);
+  document.documentElement.setAttribute("lang", "vi");
+}
+
+describe("ThemeToggle — i18n (EV-188 AC-8)", () => {
+  afterEach(resetLocale);
+
+  it("ten truy cap chua chu hien thi (khong phan biet hoa thuong) o vi", () => {
+    document.documentElement.setAttribute("data-theme", "light");
+    render(<ThemeToggle />);
+    const visible = (toggleButton().textContent ?? "").replace(/[☀☾]/g, "").trim();
+    expect(TOGGLE_LABEL.toLowerCase()).toContain(visible.toLowerCase());
+  });
+
+  it("locale en + light: aria-label va chu hien thi la ban dich en", async () => {
+    const m = i18n;
+    document.documentElement.setAttribute("data-theme", "light");
+    await renderEn(m, <ThemeToggle />);
+
+    const btn = await screen.findByRole("button", { name: enFor(m, TOGGLE_LABEL) });
+    expect(btn).toHaveTextContent(enFor(m, "Sáng"));
+    expect(btn).not.toHaveTextContent("Sáng");
+    expect(btn).toHaveAttribute("aria-pressed", "false");
+    expect(enFor(m, TOGGLE_LABEL).toLowerCase()).toContain(enFor(m, "Sáng").toLowerCase());
+  });
+
+  it("locale en + dark: chu hien thi la ban dich en cua Tối", async () => {
+    const m = i18n;
+    document.documentElement.setAttribute("data-theme", "dark");
+    await renderEn(m, <ThemeToggle />);
+
+    const btn = await screen.findByRole("button", { name: enFor(m, TOGGLE_LABEL) });
+    await waitFor(() => expect(btn).toHaveAttribute("aria-pressed", "true"));
+    expect(btn).toHaveTextContent(enFor(m, "Tối"));
+    expect(enFor(m, TOGGLE_LABEL).toLowerCase()).toContain(enFor(m, "Tối").toLowerCase());
   });
 });

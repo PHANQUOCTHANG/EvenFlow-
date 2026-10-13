@@ -26,8 +26,10 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version: "1.25"
-          cache-dependency-path: services/ticketing/go.sum
+          go-version: "1.26"
+          cache-dependency-path: |
+            libs/go/go.sum
+            services/ticketing/go.sum
       - name: go test -tags=integration (ticketing)
         working-directory: services/ticketing
         run: go test -tags=integration ./... -count=1 -timeout=10m
@@ -41,3 +43,12 @@ jobs:
           bash "$GITHUB_WORKSPACE/.github/scripts/run-and-report-tests.sh" TestNoOversell \
             go test -v -tags=integration -run TestNoOversell \
             ./test/concurrency/... -count=20 -timeout=15m
+      # libs/go/mq: test tich hop voi RabbitMQ that (testcontainers). Fail (khong skip) khi khong co Docker.
+      - name: go vet -tags=integration (libs/go/mq)
+        working-directory: libs/go
+        run: go vet -tags=integration ./mq/...
+      - name: go test -tags=integration (libs/go/mq)
+        working-directory: libs/go
+        run: |
+          bash "$GITHUB_WORKSPACE/.github/scripts/run-and-report-tests.sh" TestTichHop \
+            go test -v -tags=integration ./mq/... -count=1 -timeout=10m

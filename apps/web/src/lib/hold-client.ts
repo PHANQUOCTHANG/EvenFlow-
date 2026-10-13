@@ -7,6 +7,8 @@
  * 4. Error mapping dung ma loi backend Go.
  */
 
+import { apiBase } from "@/lib/api-base";
+
 export interface CreateHoldParams {
   eventId: string;
   ticketTypeId: string;
@@ -105,7 +107,7 @@ export async function requestHold(params: CreateHoldParams): Promise<HoldResult>
     queueToken,
     identityId = "guest-user",
     idempotencyKey = generateIdempotencyKey(),
-    apiBaseUrl = "",
+    apiBaseUrl = apiBase(),
   } = params;
 
   if (!idempotencyKey) {

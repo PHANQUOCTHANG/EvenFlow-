@@ -4,11 +4,23 @@
     "Ly do tach: mot job bao cao chay 2 phut khong duoc phep lam khach trong",
     "phong cho phai cho them 2 phut cho cau tra loi cua minh.",
     "",
-    "Chuoi retry: ai.retry -> delay.5s / delay.30s / delay.2m -> quay lai hang",
-    "doi goc. Het 3 lan -> ai.dlq (co alert).",
+    "NGUON CHUAN la code: libs/go/mq/topology.go (AITopology). File nay phai khop;",
+    "unit test libs/go/mq doi chieu tung exchange/queue/binding/arguments.",
+    "",
+    "Giao thuc retry (do consumer dieu khien, header x-ef-attempt bat dau tu 1):",
+    "- Loi lan n < 3: publish ban sao (x-ef-attempt = n+1) vao ai.retry voi key = ten",
+    "  cong viec -> ai.<job>.retry (hang cho rieng cho tung cong viec: chat 5s,",
+    "  moderation 30s, anomaly 30s, report 2m). Het TTL, hang cho dead-letter ve",
+    "  ai.direct voi x-dead-letter-routing-key = chinh ten cong viec -> quay lai",
+    "  ai.<job>.q. Hang cho dung quorum at-least-once + reject-publish.",
+    "- Loi lan 3 hoac loi vinh vien: publish vao ai.dlx voi key = ten cong viec;",
+    "  ai.dlq bind tung key (exchange direct, KHONG dung wildcard #).",
+    "- Hang goc ai.<job>.q KHONG co x-dead-letter-* va khong co x-max-priority",
+    "  (quorum queue khong ho tro priority).",
     "",
     "x-message-ttl cua ai.chat.q la 60s va la CO Y: cau tra loi den sau khi",
-    "khach da duoc admit vao mua ve thi khong con gia tri gi."
+    "khach da duoc admit vao mua ve thi khong con gia tri gi. Het TTL thi message",
+    "bi BO, khong di retry."
   ],
   "vhosts": [{ "name": "/" }],
   "exchanges": [
@@ -23,58 +35,72 @@
       "name": "ai.chat.q", "vhost": "/", "durable": true,
       "arguments": {
         "x-queue-type": "quorum",
-        "x-message-ttl": 60000,
-        "x-max-priority": 5,
-        "x-dead-letter-exchange": "ai.retry",
-        "x-dead-letter-routing-key": "delay.5s"
+        "x-message-ttl": 60000
+      }
+    },
+    {
+      "name": "ai.chat.retry", "vhost": "/", "durable": true,
+      "arguments": {
+        "x-queue-type": "quorum",
+        "x-message-ttl": 5000,
+        "x-dead-letter-exchange": "ai.direct",
+        "x-dead-letter-routing-key": "chat",
+        "x-dead-letter-strategy": "at-least-once",
+        "x-overflow": "reject-publish"
       }
     },
     {
       "name": "ai.moderation.q", "vhost": "/", "durable": true,
       "arguments": {
         "x-queue-type": "quorum",
-        "x-message-ttl": 600000,
-        "x-dead-letter-exchange": "ai.retry",
-        "x-dead-letter-routing-key": "delay.30s"
+        "x-message-ttl": 600000
+      }
+    },
+    {
+      "name": "ai.moderation.retry", "vhost": "/", "durable": true,
+      "arguments": {
+        "x-queue-type": "quorum",
+        "x-message-ttl": 30000,
+        "x-dead-letter-exchange": "ai.direct",
+        "x-dead-letter-routing-key": "moderation",
+        "x-dead-letter-strategy": "at-least-once",
+        "x-overflow": "reject-publish"
       }
     },
     {
       "name": "ai.anomaly.q", "vhost": "/", "durable": true,
       "arguments": {
         "x-queue-type": "quorum",
-        "x-message-ttl": 1800000,
-        "x-dead-letter-exchange": "ai.retry",
-        "x-dead-letter-routing-key": "delay.30s"
+        "x-message-ttl": 1800000
+      }
+    },
+    {
+      "name": "ai.anomaly.retry", "vhost": "/", "durable": true,
+      "arguments": {
+        "x-queue-type": "quorum",
+        "x-message-ttl": 30000,
+        "x-dead-letter-exchange": "ai.direct",
+        "x-dead-letter-routing-key": "anomaly",
+        "x-dead-letter-strategy": "at-least-once",
+        "x-overflow": "reject-publish"
       }
     },
     {
       "name": "ai.report.q", "vhost": "/", "durable": true,
       "arguments": {
         "x-queue-type": "quorum",
-        "x-message-ttl": 7200000,
-        "x-dead-letter-exchange": "ai.retry",
-        "x-dead-letter-routing-key": "delay.2m"
+        "x-message-ttl": 7200000
       }
     },
     {
-      "name": "ai.delay.5s", "vhost": "/", "durable": true,
+      "name": "ai.report.retry", "vhost": "/", "durable": true,
       "arguments": {
-        "x-queue-type": "quorum", "x-message-ttl": 5000,
-        "x-dead-letter-exchange": "ai.direct"
-      }
-    },
-    {
-      "name": "ai.delay.30s", "vhost": "/", "durable": true,
-      "arguments": {
-        "x-queue-type": "quorum", "x-message-ttl": 30000,
-        "x-dead-letter-exchange": "ai.direct"
-      }
-    },
-    {
-      "name": "ai.delay.2m", "vhost": "/", "durable": true,
-      "arguments": {
-        "x-queue-type": "quorum", "x-message-ttl": 120000,
-        "x-dead-letter-exchange": "ai.direct"
+        "x-queue-type": "quorum",
+        "x-message-ttl": 120000,
+        "x-dead-letter-exchange": "ai.direct",
+        "x-dead-letter-routing-key": "report",
+        "x-dead-letter-strategy": "at-least-once",
+        "x-overflow": "reject-publish"
       }
     },
     {
@@ -92,13 +118,17 @@
   ],
   "bindings": [
     { "source": "ai.direct", "vhost": "/", "destination": "ai.chat.q", "destination_type": "queue", "routing_key": "chat" },
+    { "source": "ai.retry", "vhost": "/", "destination": "ai.chat.retry", "destination_type": "queue", "routing_key": "chat" },
+    { "source": "ai.dlx", "vhost": "/", "destination": "ai.dlq", "destination_type": "queue", "routing_key": "chat" },
     { "source": "ai.direct", "vhost": "/", "destination": "ai.moderation.q", "destination_type": "queue", "routing_key": "moderation" },
+    { "source": "ai.retry", "vhost": "/", "destination": "ai.moderation.retry", "destination_type": "queue", "routing_key": "moderation" },
+    { "source": "ai.dlx", "vhost": "/", "destination": "ai.dlq", "destination_type": "queue", "routing_key": "moderation" },
     { "source": "ai.direct", "vhost": "/", "destination": "ai.anomaly.q", "destination_type": "queue", "routing_key": "anomaly" },
+    { "source": "ai.retry", "vhost": "/", "destination": "ai.anomaly.retry", "destination_type": "queue", "routing_key": "anomaly" },
+    { "source": "ai.dlx", "vhost": "/", "destination": "ai.dlq", "destination_type": "queue", "routing_key": "anomaly" },
     { "source": "ai.direct", "vhost": "/", "destination": "ai.report.q", "destination_type": "queue", "routing_key": "report" },
-    { "source": "ai.retry", "vhost": "/", "destination": "ai.delay.5s", "destination_type": "queue", "routing_key": "delay.5s" },
-    { "source": "ai.retry", "vhost": "/", "destination": "ai.delay.30s", "destination_type": "queue", "routing_key": "delay.30s" },
-    { "source": "ai.retry", "vhost": "/", "destination": "ai.delay.2m", "destination_type": "queue", "routing_key": "delay.2m" },
-    { "source": "ai.dlx", "vhost": "/", "destination": "ai.dlq", "destination_type": "queue", "routing_key": "#" },
+    { "source": "ai.retry", "vhost": "/", "destination": "ai.report.retry", "destination_type": "queue", "routing_key": "report" },
+    { "source": "ai.dlx", "vhost": "/", "destination": "ai.dlq", "destination_type": "queue", "routing_key": "report" },
     { "source": "ticketing.events", "vhost": "/", "destination": "ticketing.hold.released.q", "destination_type": "queue", "routing_key": "ticketing.hold.released" },
     { "source": "notification.direct", "vhost": "/", "destination": "notification.email.q", "destination_type": "queue", "routing_key": "email" }
   ],

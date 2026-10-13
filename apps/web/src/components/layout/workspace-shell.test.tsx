@@ -485,3 +485,45 @@ describe("WorkspaceShell — m4 bam link trong nav thi dong menu", () => {
     expect(nav()).toHaveAttribute("data-state", "closed");
   });
 });
+
+// ---------------------------------------------------------------------------
+// EV-188 (plan §6 M2): <main lang="vi"> vi noi dung workspace chua dich la tieng Viet.
+// ---------------------------------------------------------------------------
+describe("WorkspaceShell — lang cua noi dung (EV-188 M2)", () => {
+  it('<main> co lang="vi"', () => {
+    renderShell();
+    expect(screen.getByRole("main")).toHaveAttribute("lang", "vi");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// EV-188 code review M1 (plan §7): khung WorkspaceShell (tieu de, nav, nut menu) chua dich va nam
+// NGOAI <main lang="vi"> -> phai co ngon ngu hieu luc vi ngay ca khi <html lang="en">.
+// ---------------------------------------------------------------------------
+describe("WorkspaceShell — khung chua dich khai bao lang='vi' (EV-188 M1)", () => {
+  afterEach(() => {
+    document.documentElement.setAttribute("lang", "vi");
+  });
+
+  function effectiveLang(el: Element | null): string | null {
+    return el?.closest("[lang]")?.getAttribute("lang") ?? null;
+  }
+
+  it("html lang = en: tieu de, <nav> va nut menu deu co ngon ngu hieu luc la vi", () => {
+    document.documentElement.setAttribute("lang", "en");
+    renderShell();
+
+    expect(effectiveLang(screen.getByText(TITLE))).toBe("vi");
+    expect(effectiveLang(nav())).toBe("vi");
+    expect(effectiveLang(toggle())).toBe("vi");
+    expect(effectiveLang(screen.getByRole("main"))).toBe("vi");
+  });
+
+  it("cac link trong nav co ngon ngu hieu luc la vi", () => {
+    document.documentElement.setAttribute("lang", "en");
+    renderShell();
+    for (const link of screen.getAllByRole("link").filter((a) => nav().contains(a))) {
+      expect(effectiveLang(link), link.textContent ?? "").toBe("vi");
+    }
+  });
+});

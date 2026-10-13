@@ -2,9 +2,13 @@ import { Badge, type BadgeVariant } from "@/components/ui";
 import { formatVnd } from "@/lib/format";
 import type { TicketTierSnapshot, TierAvailability } from "@/lib/event-service";
 
+/** id mac dinh cua heading; trang chi tiet su kien dung chung hang nay cho aria-labelledby. */
+export const TICKET_TIERS_HEADING_ID = "ticket-tiers-heading";
+
 export interface TicketTierListProps {
   tiers: TicketTierSnapshot[];
   className?: string;
+  headingId?: string;
 }
 
 const AVAILABILITY_COPY: Record<
@@ -29,7 +33,7 @@ const AVAILABILITY_COPY: Record<
  *
  * Tuyet doi khong hien thi so luong ton kho con lai chinh xac.
  * Chi hien thi dang khoang (Con ve, Sap het ve, Het ve) de bao ve he thong truoc bot. */
-export function TicketTierList({ tiers, className }: TicketTierListProps) {
+export function TicketTierList({ tiers, className, headingId = TICKET_TIERS_HEADING_ID }: TicketTierListProps) {
   if (!tiers || tiers.length === 0) {
     return (
       <p className="text-body-md text-fg-muted italic">
@@ -40,7 +44,9 @@ export function TicketTierList({ tiers, className }: TicketTierListProps) {
 
   return (
     <div className={className}>
-      <h2 className="text-heading-md font-semibold text-fg mb-md">
+      {/* id nay duoc <section aria-labelledby> cua trang chi tiet su kien tham chieu (EV-188: truoc day
+        * id khong ton tai nen section khong co ten). */}
+      <h2 id={headingId} className="text-heading-md font-semibold text-fg mb-md">
         Các hạng vé
       </h2>
       <ul className="space-y-md list-none p-0 m-0" aria-label="Danh sách hạng vé">

@@ -2,6 +2,11 @@
 
 import { useEffect, useState } from "react";
 
+import {
+  AssistantPanel,
+  type AssistantMessage,
+  type AssistantMode,
+} from "@/components/assistant";
 import { OrderSummary, type HoldState } from "@/components/checkout/order-summary";
 import { TicketTierCard } from "@/components/checkout/ticket-tier-card";
 import { EventCard, type EventPublicState } from "@/components/event/event-card";
@@ -42,6 +47,91 @@ const HOLD_STATES: HoldState[] = [
 const DEMO_ITEMS = [
   { tierName: "Vé thường (mẫu)", quantity: 2, unitAmount: 650_000, currency: "VND" },
   { tierName: "Vé VIP (mẫu)", quantity: 1, unitAmount: 1_250_000, currency: "VND" },
+];
+
+const noop = () => {};
+
+const DEMO_FAQS = [
+  { id: "f1", label: "Tôi cần chuẩn bị gì trong lúc chờ?" },
+  { id: "f2", label: "Thời gian giữ vé là bao lâu?" },
+  { id: "f3", label: "Thanh toán được bằng cách nào?" },
+];
+
+const DEMO_ASKED: AssistantMessage = {
+  id: "u1",
+  role: "user",
+  text: "Thời gian giữ vé là bao lâu?",
+  sentAt: "2026-01-15T10:14:00+07:00",
+};
+
+interface AssistantDemo {
+  label: string;
+  mode: AssistantMode;
+  messages: AssistantMessage[];
+  quotaRemaining: number;
+}
+
+/** Moi muc la mot trang thai can nhin thay; nhan chi de lam key. */
+const ASSISTANT_DEMOS: AssistantDemo[] = [
+  { label: "welcome", mode: "NORMAL", messages: [], quotaRemaining: 10 },
+  {
+    label: "answered",
+    mode: "NORMAL",
+    messages: [
+      DEMO_ASKED,
+      {
+        id: "a1",
+        role: "assistant",
+        kind: "faq",
+        text: "Vé được giữ trong 10 phút kể từ khi giữ thành công. Đồng hồ ở bảng trạng thái là mốc chính thức.",
+        sentAt: "2026-01-15T10:14:05+07:00",
+      },
+    ],
+    quotaRemaining: 9,
+  },
+  {
+    label: "pending",
+    mode: "NORMAL",
+    messages: [{ ...DEMO_ASKED, id: "u2", status: "pending" }],
+    quotaRemaining: 8,
+  },
+  {
+    label: "out-of-scope",
+    mode: "NORMAL",
+    messages: [
+      { id: "u3", role: "user", text: "Giữ giúp tôi 2 vé VIP được không?" },
+      {
+        id: "a3",
+        role: "assistant",
+        kind: "out_of_scope",
+        text: "Mình không thể giữ vé hay can thiệp vào đơn hàng. Khi tới lượt, bạn chọn vé trực tiếp trên trang chọn vé nhé.",
+      },
+    ],
+    quotaRemaining: 7,
+  },
+  {
+    label: "failed",
+    mode: "NORMAL",
+    messages: [{ ...DEMO_ASKED, id: "u4", status: "failed" }],
+    quotaRemaining: 7,
+  },
+  { label: "quota-exhausted", mode: "NORMAL", messages: [], quotaRemaining: 0 },
+  { label: "saving", mode: "SAVING", messages: [], quotaRemaining: 6 },
+  {
+    label: "faq-only",
+    mode: "FAQ_ONLY",
+    messages: [
+      DEMO_ASKED,
+      {
+        id: "a5",
+        role: "assistant",
+        kind: "fallback",
+        text: "Hiện trợ lý chỉ trả lời câu hỏi thường gặp. Vé được giữ trong 10 phút kể từ khi giữ thành công.",
+      },
+    ],
+    quotaRemaining: 6,
+  },
+  { label: "off", mode: "OFF", messages: [], quotaRemaining: 6 },
 ];
 
 interface Deadlines {
@@ -219,6 +309,29 @@ export function DomainGallery() {
         ) : (
           <Pending label="Đang khởi tạo mốc thời gian mẫu…" />
         )}
+      </Section>
+
+      <Section
+        title="Trợ lý AI"
+        description="AssistantPanel, 4 nấc suy biến NORMAL / SAVING / FAQ_ONLY / OFF cộng các trạng thái tin nhắn. Panel cố ý KHÔNG có prop số thứ tự, thời gian chờ hay tồn kho: trợ lý không có thẩm quyền, số liệu chính thức chỉ ở bảng trạng thái. Câu hỏi thường gặp vẫn dùng được khi hết lượt hoặc đang suy biến vì không tốn tài nguyên AI. Mọi hội thoại là dữ liệu mẫu, các nút không gửi đi đâu."
+      >
+        <div className="grid gap-md md:grid-cols-2">
+          {ASSISTANT_DEMOS.map((demo) => (
+            <AssistantPanel
+              key={demo.label}
+              mode={demo.mode}
+              messages={demo.messages}
+              faqs={DEMO_FAQS}
+              quotaRemaining={demo.quotaRemaining}
+              quotaLimit={10}
+              onSend={noop}
+              onSelectFaq={noop}
+              onRetry={noop}
+              // Neo khong ton tai: link mau khong nhay ve dau trang.
+              supportHref="#cskh-mau"
+            />
+          ))}
+        </div>
       </Section>
     </>
   );

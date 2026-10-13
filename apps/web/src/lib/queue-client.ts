@@ -14,19 +14,11 @@
  *    Moi phan hoi deu kem poll_after_ms, va client tuan thu. Neu de client tu
  *    chon, moi tab se poll moi giay va 300.000 nguoi cho se tao ra 300k rps
  *    lien tuc suot 30 phut — gap nhieu lan chinh cai dinh tai luc mo ban.
+ *    Phan poll nam o `lib/queue-status.ts` (mot request) + `hooks/use-queue-status.ts`
+ *    (vong lap, backoff, dung han khi gap 4xx).
  */
 
 export type QueueState = "LOBBY" | "QUEUED" | "ADMITTED" | "EXPIRED" | "UNKNOWN";
-
-export interface QueuePosition {
-  state: QueueState;
-  rank: number;
-  queue_depth: number;
-  admit_rate: number;
-  eta_seconds: number;
-  poll_after_ms: number;
-  expires_at?: number;
-}
 
 export interface JoinResponse {
   state: QueueState;
@@ -73,67 +65,6 @@ export async function joinQueue(
     throw new QueueError(res.status, await safeDetail(res));
   }
   return res.json();
-}
-
-/**
- * Theo doi vi tri trong hang cho.
- *
- * Tra ve mot async iterator de UI chi viec `for await`. Vong lap tu no ton
- * trong poll_after_ms va tu lui khi gap loi.
- */
-export async function* watchQueue(
-  eventId: string,
-  token: string,
-  signal?: AbortSignal,
-): AsyncGenerator<QueuePosition> {
-  let etag: string | null = null;
-  let backoffMs = 0;
-
-  while (!signal?.aborted) {
-    try {
-      const headers: Record<string, string> = { "X-Queue-Token": token };
-      if (etag) headers["If-None-Match"] = etag;
-
-      const res = await fetch(`${API_BASE}/v1/events/${eventId}/queue/status`, {
-        headers,
-        credentials: "include",
-        signal,
-      });
-
-      etag = res.headers.get("ETag") ?? etag;
-      backoffMs = 0;
-
-      if (res.status === 304) {
-        // Khong co gi doi. Server van noi cho biet khi nao hoi lai.
-        await sleep(Number(res.headers.get("X-Poll-After-Ms") ?? 10000));
-        continue;
-      }
-
-      if (res.status === 503) {
-        // He thong dang xa tai co kiem soat. Ton trong Retry-After thay vi
-        // dap lien tuc — khach nao cung retry ngay se keo dai chinh su co do.
-        await sleep(Number(res.headers.get("Retry-After") ?? 5) * 1000);
-        continue;
-      }
-
-      if (!res.ok) throw new QueueError(res.status, await safeDetail(res));
-
-      const pos: QueuePosition = await res.json();
-      yield pos;
-
-      if (pos.state === "ADMITTED" || pos.state === "EXPIRED") return;
-
-      await sleep(pos.poll_after_ms || 10000);
-    } catch (err) {
-      if (signal?.aborted) return;
-
-      // Mat mang khong dong nghia voi mat cho: server giu cho 5 phut (BR-Q7).
-      // Nen cu lui dan roi thu lai, dung bao khach la ho da mat luot.
-      backoffMs = Math.min(backoffMs === 0 ? 1000 : backoffMs * 2, 30000);
-      await sleep(backoffMs + Math.random() * 500); // them jitter de tranh
-                                                     // dong bo hoa dan retry
-    }
-  }
 }
 
 export class QueueError extends Error {

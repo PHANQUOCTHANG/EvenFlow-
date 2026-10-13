@@ -11,6 +11,7 @@ import {
   saveActiveHold,
   type HoldResult,
 } from "@/lib/hold-client";
+import { readQueueToken } from "@/lib/queue-token";
 import { serverNow, toEpochMs } from "@/lib/server-time";
 import type { HoldState } from "@/components/checkout/order-summary";
 
@@ -31,17 +32,6 @@ export interface UseHoldTimerReturn {
   error: HoldClientError | null;
   createHold: (ticketTypeId: string, quantity: number) => Promise<boolean>;
   resetHold: () => void;
-}
-
-const QUEUE_STORAGE_PREFIX = "evenflow_queue_token_";
-
-function getStoredQueueToken(eventId: string): string | null {
-  if (typeof window === "undefined" || !window.sessionStorage) return null;
-  try {
-    return sessionStorage.getItem(`${QUEUE_STORAGE_PREFIX}${eventId}`);
-  } catch {
-    return null;
-  }
 }
 
 /** Hook quản lý vòng đời giữ vé và đồng hồ 10:00 theo expires_at của server (EVF-113, BR-O2, BR-O5).
@@ -97,7 +87,7 @@ export function useHoldTimer({
         return false;
       }
 
-      const effectiveToken = propQueueToken || getStoredQueueToken(eventId);
+      const effectiveToken = propQueueToken || readQueueToken(eventId);
       if (!effectiveToken) {
         const notAdmittedErr = new HoldClientError(
           "Bạn chưa được cấp quyền mua vé, vui lòng quay lại phòng chờ",

@@ -11,9 +11,12 @@
  * Vi vay o day KHONG assert "nav xuat hien / bien mat" theo queryByRole —
  * assert nhu vay se luon pass va khong bat duoc bug nao.
  */
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+import * as i18nProvider from "@/components/i18n/locale-provider";
+import * as i18nMessages from "@/lib/i18n/messages";
 
 import type { NavItem } from "./nav-config";
 import { PublicHeader } from "./public-header";
@@ -389,5 +392,124 @@ describe("PublicHeader — m4 bam link trong nav thi dong menu", () => {
 
     expect(toggle()).toHaveAttribute("aria-expanded", "false");
     expect(nav()).toHaveAttribute("data-state", "closed");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// EV-188 (AC-6, AC-8, AC-9; plan §6 M1): nhom nut ngon ngu canh ThemeToggle; header dich sang en.
+// ---------------------------------------------------------------------------
+const LOCALE_KEY = "eventflow-locale";
+
+/** Tu dien + provider gop lai cho cac helper ben duoi. */
+const i18n = { ...i18nMessages, ...i18nProvider };
+
+type I18n = typeof i18n;
+
+/** Ban dich en cua chuoi vi (tim khoa theo gia tri). */
+function enFor(m: I18n, viText: string): string {
+  const keys = (Object.keys(m.vi) as Array<keyof typeof m.vi>).filter((k) => m.vi[k] === viText);
+  expect(keys.length, `khong co khoa vi = ${viText}`).toBeGreaterThan(0);
+  const values = new Set(keys.map((k) => m.en[k]));
+  expect(values.size, `cac khoa vi = ${viText} co ban dich en khac nhau`).toBe(1);
+  const [english] = Array.from(values);
+  expect(english).not.toBe(viText);
+  return english;
+}
+
+/** Render trong LocaleProvider voi "en" da luu; cho toi khi locale da ap dung sau mount. */
+async function renderEn(m: I18n, ui: React.ReactElement) {
+  window.localStorage.setItem(LOCALE_KEY, "en");
+  const result = render(<m.LocaleProvider>{ui}</m.LocaleProvider>);
+  await waitFor(() => expect(document.documentElement.lang).toBe("en"));
+  return result;
+}
+
+function resetLocale(): void {
+  window.localStorage.removeItem(LOCALE_KEY);
+  document.documentElement.setAttribute("lang", "vi");
+}
+
+function languageGroup(name = "Ngôn ngữ"): HTMLElement {
+  return screen.getByRole("group", { name });
+}
+
+describe("PublicHeader — nut ngon ngu (EV-188 AC-6, AC-9)", () => {
+  afterEach(resetLocale);
+
+  it('co nhom "Ngôn ngữ" voi hai nut "Tiếng Việt" va "English", nam trong banner', () => {
+    render(<PublicHeader items={ITEMS} />);
+    const group = languageGroup();
+    expect(screen.getByRole("banner")).toContainElement(group);
+    expect(screen.getByRole("button", { name: /Tiếng Việt/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /English/ })).toBeInTheDocument();
+    expect(group).toContainElement(screen.getByRole("button", { name: /English/ }));
+  });
+
+  it("nhom ngon ngu nam CANH ThemeToggle (cung cum phan tu cha)", () => {
+    render(<PublicHeader items={ITEMS} />);
+    const themeButton = screen.getByRole("button", { name: THEME_TOGGLE_LABEL });
+    const group = languageGroup();
+    expect(group.parentElement).not.toBeNull();
+    expect(group.parentElement).toBe(themeButton.parentElement);
+  });
+
+  it("thu tu DOM: nhom ngon ngu dung TRUOC <nav>", () => {
+    render(<PublicHeader items={ITEMS} />);
+    const group = languageGroup();
+    expect(group.compareDocumentPosition(nav()) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("chi co MOT nhom ngon ngu trong header", () => {
+    render(<PublicHeader items={ITEMS} />);
+    expect(screen.getAllByRole("group", { name: "Ngôn ngữ" })).toHaveLength(1);
+  });
+});
+
+describe("PublicHeader — i18n (EV-188 AC-8)", () => {
+  afterEach(resetLocale);
+
+  it("locale en: nav, nut menu, ThemeToggle, nhom ngon ngu va link PUBLIC_NAV hien ban dich en", async () => {
+    const m = i18n;
+    pathnameMock.mockReturnValue("/");
+    await renderEn(m, <PublicHeader />);
+
+    expect(await screen.findByRole("navigation", { name: enFor(m, NAV_LABEL) })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: enFor(m, TOGGLE_LABEL) })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: enFor(m, THEME_TOGGLE_LABEL) })).toBeInTheDocument();
+    expect(screen.getByRole("group", { name: "Language" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: enFor(m, "Trang chủ") })).toHaveAttribute("href", "/");
+    expect(screen.getByRole("link", { name: enFor(m, "Sự kiện") })).toHaveAttribute("href", "/events");
+
+    expect(screen.queryByRole("navigation", { name: NAV_LABEL })).toBeNull();
+    expect(screen.queryByRole("button", { name: TOGGLE_LABEL })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Trang chủ" })).toBeNull();
+  });
+
+  it("bam English trong header: chu doi ngay, khong can reload", async () => {
+    const m = i18n;
+    const user = userEvent.setup();
+    pathnameMock.mockReturnValue("/");
+    render(
+      <m.LocaleProvider>
+        <PublicHeader />
+      </m.LocaleProvider>,
+    );
+    expect(nav()).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /English/ }));
+
+    expect(screen.getByRole("navigation", { name: enFor(m, NAV_LABEL) })).toBeInTheDocument();
+    expect(document.documentElement.lang).toBe("en");
+    expect(screen.getByRole("button", { name: /English/ })).toHaveFocus();
+  });
+
+  it("menu mobile van dung sau khi doi ngon ngu (aria-expanded)", async () => {
+    const m = i18n;
+    const user = userEvent.setup();
+    await renderEn(m, <PublicHeader items={ITEMS} />);
+    const menu = await screen.findByRole("button", { name: enFor(m, TOGGLE_LABEL) });
+    expect(menu).toHaveAttribute("aria-expanded", "false");
+    await user.click(menu);
+    expect(menu).toHaveAttribute("aria-expanded", "true");
   });
 });
