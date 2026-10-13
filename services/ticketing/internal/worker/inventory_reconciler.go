@@ -88,7 +88,7 @@ func DefaultReconcilerConfig(eventIDs []string) ReconcilerConfig {
 
 type noopReconcilerMetrics struct{}
 
-func (noopReconcilerMetrics) InventoryDrift(string, int)  {}
+func (noopReconcilerMetrics) InventoryDrift(string, int) {}
 func (noopReconcilerMetrics) DriftCorrected(string, int) {}
 
 // NewInventoryReconciler tao job doi soat.
