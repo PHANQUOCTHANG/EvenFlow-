@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -39,19 +40,44 @@ import (
 
 const hdrPublishID = "x-ef-publish-id"
 
-// fakeConfirm gia lap DeferredConfirmation.
+// fakeConfirm gia lap DeferredConfirmation (WaitContext, Done, Acked nhu amqp091) de hien thuc
+// chon cach cho nao (WaitContext hay select tren Done) cung chay dung.
 type fakeConfirm struct {
 	ack   bool
 	err   error
-	block bool // cho toi khi ctx huy
+	block bool          // confirm khong bao gio toi; chi tra khi ctx huy
+	done  chan struct{} // khac nil: confirm toi khi kenh nay dong
 }
 
-func (c fakeConfirm) WaitContext(ctx context.Context) (bool, error) {
-	if c.block {
-		<-ctx.Done()
-		return false, ctx.Err()
+var closedDone = func() chan struct{} {
+	c := make(chan struct{})
+	close(c)
+	return c
+}()
+
+func (c fakeConfirm) Done() <-chan struct{} {
+	switch {
+	case c.done != nil:
+		return c.done
+	case c.block:
+		return nil // nil channel: khong bao gio san sang
+	default:
+		return closedDone
 	}
-	return c.ack, c.err
+}
+
+func (c fakeConfirm) Acked() bool { return c.ack }
+
+func (c fakeConfirm) WaitContext(ctx context.Context) (bool, error) {
+	if c.err != nil {
+		return false, c.err
+	}
+	select {
+	case <-ctx.Done():
+		return false, ctx.Err()
+	case <-c.Done():
+		return c.ack, nil
+	}
 }
 
 // fakePubChannel gia lap kenh publish. onPublish quyet dinh confirm va co the day return / dong kenh.
@@ -62,6 +88,7 @@ type fakePubChannel struct {
 	returns   chan amqp.Return
 	published []amqp.Publishing
 	mandatory []bool
+	targets   []string // "exchange/key" cua tung lan publish
 	onPublish func(f *fakePubChannel, exchange, key string, msg amqp.Publishing) (confirmation, error)
 }
 
@@ -92,6 +119,7 @@ func (f *fakePubChannel) publish(_ context.Context, exchange, key string, mandat
 	f.mu.Lock()
 	f.published = append(f.published, msg)
 	f.mandatory = append(f.mandatory, mandatory)
+	f.targets = append(f.targets, exchange+"/"+key)
 	on := f.onPublish
 	f.mu.Unlock()
 	if on == nil {
@@ -279,5 +307,198 @@ func TestPublisher_HuyCtxKhiDangChoConfirm(t *testing.T) {
 	f.onPublish = nil // lan sau ack binh thuong; mutex phai da nha
 	if err := within(t, 2*time.Second, func() error { return p.Publish(context.Background(), "ex", "k", Message{}) }); err != nil {
 		t.Fatalf("Publish sau khi huy: %v", err)
+	}
+}
+
+// notifyAllSim mo phong notifyAll cua amqp091 v1.15.0: gui return cho listener, cho toi da timeout
+// roi BO gia tri neu bo dem day (tra false khi bi bo).
+func notifyAllSim(ch chan amqp.Return, r amqp.Return, timeout time.Duration) bool {
+	select {
+	case ch <- r:
+		return true
+	case <-time.After(timeout):
+		return false
+	}
+}
+
+// F1 (challenge): >16 publish bi huy ctx khi dang cho; return cua chung toi muon, trong luc mot publish
+// unroutable moi dang cho confirm. Publish phai doc returns DONG THOI khi cho, nen bo dem 16 khong day,
+// return cua chinh no khong bi bo va khong co lan ket 5s nao.
+func TestPublisher_NhieuReturnCuKhongLamMatReturnMoi(t *testing.T) {
+	f := newFakePubChannel()
+	p := newPublisherWith(f, f.returns)
+
+	// Giai doan 1: 20 publish bi huy giua luc cho confirm.
+	f.onPublish = func(*fakePubChannel, string, string, amqp.Publishing) (confirmation, error) {
+		return fakeConfirm{block: true}, nil
+	}
+	const stale = 20
+	for i := 0; i < stale; i++ {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Millisecond)
+		err := within(t, 2*time.Second, func() error { return p.Publish(ctx, "ai.retry", "khong-co-binding", Message{}) })
+		cancel()
+		if !errors.Is(err, context.DeadlineExceeded) {
+			t.Fatalf("publish bi huy %d: err = %v, muon DeadlineExceeded", i, err)
+		}
+	}
+	f.mu.Lock()
+	var staleIDs []any
+	for _, m := range f.published {
+		staleIDs = append(staleIDs, m.Headers[hdrPublishID])
+	}
+	f.mu.Unlock()
+
+	// Giai doan 2: publish moi; "goroutine doc cua connection" day 20 return cu roi return cua lan nay,
+	// sau do moi ack (return di truoc ack). Moi lan gui cho toi 5s nhu notifyAll that.
+	var dropped atomic.Bool
+	f.onPublish = func(f *fakePubChannel, ex, key string, msg amqp.Publishing) (confirmation, error) {
+		done := make(chan struct{})
+		go func() {
+			defer close(done)
+			for _, id := range staleIDs {
+				if !notifyAllSim(f.returns, amqp.Return{Exchange: ex, RoutingKey: key, ReplyCode: 312,
+					Headers: amqp.Table{hdrPublishID: id}}, 5*time.Second) {
+					dropped.Store(true)
+				}
+			}
+			if !notifyAllSim(f.returns, amqp.Return{Exchange: ex, RoutingKey: key, ReplyCode: 312,
+				Headers: amqp.Table{hdrPublishID: msg.Headers[hdrPublishID]}}, 5*time.Second) {
+				dropped.Store(true)
+			}
+		}()
+		return fakeConfirm{ack: true, done: done}, nil
+	}
+	start := time.Now()
+	err := within(t, 3*time.Second, func() error {
+		return p.Publish(context.Background(), "ai.retry", "khong-co-binding", Message{})
+	})
+	if !errors.Is(err, ErrUnroutable) {
+		t.Fatalf("err = %v, muon ErrUnroutable (return cua lan nay bi bo?)", err)
+	}
+	if dropped.Load() {
+		t.Error("co return bi bo vi bo dem day (Publish khong doc returns khi dang cho)")
+	}
+	if d := time.Since(start); d > 2*time.Second {
+		t.Errorf("Publish mat %v — co lan ket cho bo dem", d)
+	}
+}
+
+// F2 (challenge): Publish gui DU property AMQP cua Message len kenh.
+func TestPublisher_GuiDuThuocTinhAMQP(t *testing.T) {
+	f := newFakePubChannel()
+	p := newPublisherWith(f, f.returns)
+	ts := time.Date(2026, 10, 13, 9, 30, 0, 0, time.UTC)
+	msg := Message{
+		Body:            []byte("noi-dung"),
+		ContentType:     "application/json",
+		ContentEncoding: "gzip",
+		Headers:         map[string]any{"tenant": "evt-1"},
+		MessageID:       "m-1",
+		CorrelationID:   "corr-1",
+		ReplyTo:         "amq.rabbitmq.reply-to",
+		Type:            "chat.ask",
+		AppID:           "gateway",
+		Priority:        4,
+		Timestamp:       ts,
+	}
+	if err := within(t, 2*time.Second, func() error { return p.Publish(context.Background(), "ex", "k", msg) }); err != nil {
+		t.Fatalf("Publish: %v", err)
+	}
+	m := f.lastPublished(t)
+	if string(m.Body) != "noi-dung" || m.ContentType != msg.ContentType || m.ContentEncoding != msg.ContentEncoding ||
+		m.MessageId != msg.MessageID || m.CorrelationId != msg.CorrelationID || m.ReplyTo != msg.ReplyTo ||
+		m.Type != msg.Type || m.AppId != msg.AppID || m.Priority != msg.Priority || !m.Timestamp.Equal(ts) ||
+		m.DeliveryMode != amqp.Persistent {
+		t.Fatalf("publishing thieu/sai property: %+v", m)
+	}
+	if m.Headers["tenant"] != "evt-1" {
+		t.Errorf("mat header: %v", m.Headers)
+	}
+}
+
+// F3 (challenge): hai Publish dong thoi tren mot Publisher; chi lan unroutable nhan ErrUnroutable.
+// A bat dau truoc va cho confirm 80ms; B bat dau o 20ms. Neu khong co mutex, B publish va cho cung luc voi A
+// nen mot ben doc mat return cua ben kia:
+//   - "A unroutable": return cua A toi o 40ms; B (doc sau khi cho, hoac pre-drain) co the nuot no.
+//   - "B unroutable": return cua B toi 20ms sau khi B gui; A dang cho tu truoc (nguoi nhan cho lau nhat
+//     cua kenh Go) se doc va bo no, B nhan nil.
+//
+// Moi kich ban lap 5 lan.
+func TestPublisher_PublishDongThoiChiLanUnroutableLoi(t *testing.T) {
+	for _, aUnroutable := range []bool{true, false} {
+		for i := 0; i < 5; i++ {
+			runConcurrentPair(t, aUnroutable, i)
+		}
+	}
+}
+
+func runConcurrentPair(t *testing.T, aUnroutable bool, iter int) {
+	t.Helper()
+	keyA, keyB := "chat", "khong-co-binding"
+	if aUnroutable {
+		keyA, keyB = keyB, keyA
+	}
+	f := newFakePubChannel()
+	f.onPublish = func(f *fakePubChannel, ex, key string, msg amqp.Publishing) (confirmation, error) {
+		done := make(chan struct{})
+		id := msg.Headers[hdrPublishID]
+		isA := key == keyA
+		go func() {
+			if key == "khong-co-binding" {
+				if isA {
+					time.Sleep(40 * time.Millisecond)
+				} else {
+					time.Sleep(20 * time.Millisecond)
+				}
+				f.returns <- amqp.Return{Exchange: ex, RoutingKey: key, ReplyCode: 312, Headers: amqp.Table{hdrPublishID: id}}
+			}
+			if isA {
+				time.Sleep(80 * time.Millisecond)
+			} else {
+				time.Sleep(60 * time.Millisecond)
+			}
+			close(done)
+		}()
+		return fakeConfirm{ack: true, done: done}, nil
+	}
+	p := newPublisherWith(f, f.returns)
+
+	errA, errB := make(chan error, 1), make(chan error, 1)
+	go func() { errA <- p.Publish(context.Background(), "ai.retry", keyA, Message{}) }()
+	time.Sleep(20 * time.Millisecond)
+	go func() { errB <- p.Publish(context.Background(), "ai.retry", keyB, Message{}) }()
+
+	for _, side := range []struct {
+		name string
+		ch   chan error
+		key  string
+	}{{"A", errA, keyA}, {"B", errB, keyB}} {
+		select {
+		case err := <-side.ch:
+			if side.key == "khong-co-binding" && !errors.Is(err, ErrUnroutable) {
+				t.Fatalf("A unroutable=%v lan %d: %s = %v, muon ErrUnroutable (return bi publish khac nuot)",
+					aUnroutable, iter, side.name, err)
+			}
+			if side.key != "khong-co-binding" && err != nil {
+				t.Fatalf("A unroutable=%v lan %d: %s = %v, muon nil", aUnroutable, iter, side.name, err)
+			}
+		case <-time.After(3 * time.Second):
+			t.Fatalf("A unroutable=%v lan %d: %s khong tra ve", aUnroutable, iter, side.name)
+		}
+	}
+}
+
+// P6 (challenge): kenh dong dung luc gui (publish tra amqp091.ErrClosed, sau do IsClosed = true)
+// -> loi boc ErrClosed cua thu vien.
+func TestPublisher_LoiGuiKhiKenhVuaDongThanhErrClosed(t *testing.T) {
+	f := newFakePubChannel()
+	f.closedSeq = []bool{false, true}
+	f.onPublish = func(*fakePubChannel, string, string, amqp.Publishing) (confirmation, error) {
+		return nil, amqp.ErrClosed
+	}
+	p := newPublisherWith(f, f.returns)
+	err := within(t, 2*time.Second, func() error { return p.Publish(context.Background(), "ex", "k", Message{}) })
+	if !errors.Is(err, ErrClosed) || !errors.Is(err, amqp.ErrClosed) {
+		t.Fatalf("err = %v, muon boc ErrClosed va amqp091.ErrClosed", err)
 	}
 }

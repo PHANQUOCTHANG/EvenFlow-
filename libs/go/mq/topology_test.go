@@ -1,8 +1,10 @@
 package mq
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"math"
 	"os"
 	"path/filepath"
@@ -362,12 +364,25 @@ type declCall struct {
 type fakeDeclarer struct {
 	calls  []declCall
 	failOn string // ten doi tuong se tra loi
+	failOp string // rong: moi thao tac cham failOn deu loi; "exchange" | "queue" | "bind": chi thao tac do
 	err    error
+}
+
+func (f *fakeDeclarer) fails(op string, names ...string) bool {
+	if f.failOp != "" && f.failOp != op {
+		return false
+	}
+	for _, n := range names {
+		if n == f.failOn {
+			return true
+		}
+	}
+	return false
 }
 
 func (f *fakeDeclarer) ExchangeDeclare(name, kind string, durable, autoDelete, internal, noWait bool, args amqp.Table) error {
 	f.calls = append(f.calls, declCall{op: "exchange", name: name, kind: kind, durable: durable, autoDelete: autoDelete, internal: internal, noWait: noWait, args: args})
-	if name == f.failOn {
+	if f.fails("exchange", name) {
 		return f.err
 	}
 	return nil
@@ -375,7 +390,7 @@ func (f *fakeDeclarer) ExchangeDeclare(name, kind string, durable, autoDelete, i
 
 func (f *fakeDeclarer) QueueDeclare(name string, durable, autoDelete, exclusive, noWait bool, args amqp.Table) (amqp.Queue, error) {
 	f.calls = append(f.calls, declCall{op: "queue", name: name, durable: durable, autoDelete: autoDelete, exclusive: exclusive, noWait: noWait, args: args})
-	if name == f.failOn {
+	if f.fails("queue", name) {
 		return amqp.Queue{}, f.err
 	}
 	return amqp.Queue{Name: name}, nil
@@ -383,10 +398,29 @@ func (f *fakeDeclarer) QueueDeclare(name string, durable, autoDelete, exclusive,
 
 func (f *fakeDeclarer) QueueBind(name, key, exchange string, noWait bool, args amqp.Table) error {
 	f.calls = append(f.calls, declCall{op: "bind", name: name, kind: exchange, key: key, noWait: noWait, args: args})
-	if name == f.failOn || exchange == f.failOn {
+	if f.fails("bind", name, exchange) {
 		return f.err
 	}
 	return nil
+}
+
+// F5 (challenge): chi QueueDeclare loi, cac binding sau do (neu duoc goi) deu thanh cong ->
+// Declare van phai tra loi va dung ngay o queue do.
+func TestDeclare_LoiChiOQueueDeclareKhongBiNuot(t *testing.T) {
+	sentinel := errors.New("PRECONDITION_FAILED")
+	for _, target := range []string{"ai.chat.q", "ai.dlq", "ai.report.retry"} {
+		t.Run(target, func(t *testing.T) {
+			f := &fakeDeclarer{failOn: target, failOp: "queue", err: sentinel}
+			err := Declare(f, AITopology())
+			if !errors.Is(err, sentinel) || !strings.Contains(err.Error(), target) {
+				t.Fatalf("err = %v, muon boc %v va nhac %q", err, sentinel, target)
+			}
+			last := f.calls[len(f.calls)-1]
+			if last.op != "queue" || last.name != target {
+				t.Errorf("Declare khong dung o queue loi: lan goi cuoi %+v", last)
+			}
+		})
+	}
 }
 
 // *amqp091.Channel phai thoa Declarer (chu ky chinh xac).
@@ -481,8 +515,18 @@ func TestDeclare_GoiHaiLanKhongLoi(t *testing.T) {
 // Phan tu trung ten (exchange, queue) hoac trung (source, destination, key) o file hay o code deu la loi.
 // Exchange so ca auto_delete/internal/arguments; binding so ca arguments (code luon false/rong).
 
+// defsFile liet ke DU cac khoa duoc phep (DisallowUnknownFields: khoa la o goc hay phan tu la loi, F6).
 type defsFile struct {
-	Exchanges []struct {
+	Comment []string `json:"_comment"`
+	Vhosts  []struct {
+		Name string `json:"name"`
+	} `json:"vhosts"`
+	Users            []json.RawMessage `json:"users"`
+	Permissions      []json.RawMessage `json:"permissions"`
+	Policies         []json.RawMessage `json:"policies"`
+	Parameters       []json.RawMessage `json:"parameters"`
+	GlobalParameters []json.RawMessage `json:"global_parameters"`
+	Exchanges        []struct {
 		Name       string         `json:"name"`
 		Vhost      string         `json:"vhost"`
 		Type       string         `json:"type"`
@@ -590,11 +634,9 @@ func TestDefinitionsJSON_KhopTopologyCode(t *testing.T) {
 	if err != nil {
 		t.Fatalf("doc definitions.json: %v", err)
 	}
-	var defs defsFile
-	dec := json.NewDecoder(strings.NewReader(string(raw)))
-	dec.UseNumber()
-	if err := dec.Decode(&defs); err != nil {
-		t.Fatalf("parse definitions.json: %v", err)
+	defs, err := parseDefinitions(raw)
+	if err != nil {
+		t.Fatalf("definitions.json: %v", err)
 	}
 	code := Merge(AITopology(), TicketingTopology(), NotificationTopology())
 
@@ -707,5 +749,114 @@ func TestUniqueIndex_BaoTrung(t *testing.T) {
 	}
 	if u.items["ai.chat.q"] != 1 {
 		t.Errorf("phan tu dau tien phai duoc giu: %v", u.items)
+	}
+}
+
+// parseDefinitions doc definitions.json mot cach chat (F6): khoa JSON trung, khoa la, va policy/parameter
+// (co the gan lai DLX/delivery-limit ngoai code) deu la loi.
+func parseDefinitions(raw []byte) (defsFile, error) {
+	var defs defsFile
+	if dups, err := findDuplicateKeys(raw); err != nil {
+		return defs, fmt.Errorf("quet token: %w", err)
+	} else if len(dups) > 0 {
+		return defs, fmt.Errorf("khoa JSON trung: %v", dups)
+	}
+	dec := json.NewDecoder(bytes.NewReader(raw))
+	dec.UseNumber()
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(&defs); err != nil {
+		return defs, fmt.Errorf("parse: %w", err)
+	}
+	if len(defs.Policies)+len(defs.Parameters)+len(defs.GlobalParameters) > 0 {
+		return defs, fmt.Errorf("policies/parameters/global_parameters phai rong (topology chi do code quyet dinh): %d/%d/%d",
+			len(defs.Policies), len(defs.Parameters), len(defs.GlobalParameters))
+	}
+	return defs, nil
+}
+
+// findDuplicateKeys duyet JSON theo token va tra ve duong dan cac khoa bi lap trong cung mot object.
+func findDuplicateKeys(raw []byte) ([]string, error) {
+	dec := json.NewDecoder(bytes.NewReader(raw))
+	dec.UseNumber()
+	var dups []string
+	var walk func(path string) error
+	walk = func(path string) error {
+		tok, err := dec.Token()
+		if err != nil {
+			return err
+		}
+		switch tok {
+		case json.Delim('{'):
+			seen := map[string]bool{}
+			for dec.More() {
+				kt, err := dec.Token()
+				if err != nil {
+					return err
+				}
+				k, _ := kt.(string)
+				if seen[k] {
+					dups = append(dups, path+"."+k)
+				}
+				seen[k] = true
+				if err := walk(path + "." + k); err != nil {
+					return err
+				}
+			}
+			_, err = dec.Token() // '}'
+			return err
+		case json.Delim('['):
+			for i := 0; dec.More(); i++ {
+				if err := walk(fmt.Sprintf("%s[%d]", path, i)); err != nil {
+					return err
+				}
+			}
+			_, err = dec.Token() // ']'
+			return err
+		}
+		return nil
+	}
+	if err := walk("$"); err != nil {
+		return nil, err
+	}
+	return dups, nil
+}
+
+// F6: bo doc chat bat duoc khoa trung, khoa la, va policy.
+func TestParseDefinitions_TuChoiFileSai(t *testing.T) {
+	base := `{"vhosts":[{"name":"/"}],"exchanges":[],"bindings":[],"policies":[],"parameters":[],
+"queues":[{"name":"q","vhost":"/","durable":true,"arguments":{"x-queue-type":"quorum"%s}%s}]%s}`
+	cases := map[string]struct {
+		json string
+		want string // rong: hop le; khac rong: loi phai chua chuoi nay
+	}{
+		"hop le":           {fmt.Sprintf(base, "", "", ""), ""},
+		"khoa trung":       {fmt.Sprintf(base, `,"x-message-ttl":1,"x-message-ttl":60000`, "", ""), "khoa JSON trung"},
+		"khoa la o queue":  {fmt.Sprintf(base, "", `,"type":"classic"`, ""), "unknown field"},
+		"khoa la o goc":    {fmt.Sprintf(base, "", "", `,"rabbit_version":"3.13"`), "unknown field"},
+		"co policy":        {strings.Replace(fmt.Sprintf(base, "", "", ""), `"policies":[]`, `"policies":[{"name":"p","pattern":"^ai\\.chat\\.q$","definition":{"dead-letter-exchange":"ai.retry"}}]`, 1), "policies"},
+		"co parameter":     {strings.Replace(fmt.Sprintf(base, "", "", ""), `"parameters":[]`, `"parameters":[{"name":"x"}]`, 1), "policies"},
+		"global parameter": {fmt.Sprintf(base, "", "", `,"global_parameters":[{"name":"cluster_name"}]`), "policies"},
+	}
+	for name, c := range cases {
+		t.Run(name, func(t *testing.T) {
+			_, err := parseDefinitions([]byte(c.json))
+			switch {
+			case c.want == "" && err != nil:
+				t.Fatalf("err = %v, muon hop le\n%s", err, c.json)
+			case c.want != "" && (err == nil || !strings.Contains(err.Error(), c.want)):
+				t.Fatalf("err = %v, muon loi chua %q\n%s", err, c.want, c.json)
+			}
+		})
+	}
+}
+
+func TestFindDuplicateKeys_LongNhau(t *testing.T) {
+	dups, err := findDuplicateKeys([]byte(`{"a":1,"b":{"c":1,"c":2},"d":[{"e":1},{"e":1,"e":2}],"a":3}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []string{"$.b.c", "$.d[1].e", "$.a"}
+	if !reflect.DeepEqual(dups, want) {
+		t.Fatalf("dups = %v, muon %v", dups, want)
 	}
 }

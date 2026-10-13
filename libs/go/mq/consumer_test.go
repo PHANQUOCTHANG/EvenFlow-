@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"sync"
 	"testing"
 	"time"
 
@@ -368,5 +369,191 @@ func TestForwardMessage_GiuThuocTinh(t *testing.T) {
 		fm.ReplyTo != d.ReplyTo || fm.Type != d.Type || fm.AppID != d.AppId || fm.Priority != d.Priority ||
 		!fm.Timestamp.Equal(ts) || fm.MessageID != d.MessageId || string(fm.Body) != "b" {
 		t.Fatalf("forwardMessage mat property: %+v", fm)
+	}
+}
+
+// --- F4 (challenge): phan noi day cua Consume, qua seam cua implementer ---
+//
+// Seam KHONG EXPORT dang co trong consumer.go (test dung dung ten nay):
+//
+//	type consumeChannel interface {
+//		Qos(prefetchCount, prefetchSize int, global bool) error
+//		Consume(queue, consumer string, autoAck, exclusive, noLocal, noWait bool, args amqp091.Table) (<-chan amqp091.Delivery, error)
+//		Cancel(consumer string, noWait bool) error
+//	}
+//	func consume(ctx context.Context, ch consumeChannel, pub *Publisher, cfg ConsumerConfig, h Handler) error
+
+type fakeConsumeChannel struct {
+	mu         sync.Mutex
+	qos        []int
+	consumeTag string
+	cancelTags []string
+	deliveries chan amqp.Delivery
+}
+
+func (f *fakeConsumeChannel) Qos(prefetchCount, _ int, _ bool) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.qos = append(f.qos, prefetchCount)
+	return nil
+}
+
+func (f *fakeConsumeChannel) Consume(_, consumer string, autoAck, _, _, _ bool, _ amqp.Table) (<-chan amqp.Delivery, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if autoAck {
+		return nil, errors.New("consumer phai ack tay")
+	}
+	f.consumeTag = consumer
+	return f.deliveries, nil
+}
+
+func (f *fakeConsumeChannel) Cancel(consumer string, _ bool) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.cancelTags = append(f.cancelTags, consumer)
+	return nil
+}
+
+// fakeAck ghi lai ack/nack cua delivery.
+type fakeAck struct {
+	mu                    sync.Mutex
+	acks, nacks, requeued int
+}
+
+func (a *fakeAck) Ack(uint64, bool) error {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	a.acks++
+	return nil
+}
+
+func (a *fakeAck) Nack(_ uint64, _ bool, requeue bool) error {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	a.nacks++
+	if requeue {
+		a.requeued++
+	}
+	return nil
+}
+
+func (a *fakeAck) Reject(_ uint64, requeue bool) error { return a.Nack(0, false, requeue) }
+
+func wiringConfig() ConsumerConfig {
+	return ConsumerConfig{Queue: "ai.chat.q", RetryExchange: "ai.retry", RetryKey: "chat",
+		DeadLetterExchange: "ai.dlx", DeadLetterKey: "chat"}
+}
+
+// runConsume chay consume va bat buoc tra ve trong 2s.
+func runConsume(ctx context.Context, t *testing.T, ch *fakeConsumeChannel, pub *Publisher, cfg ConsumerConfig, h Handler) error {
+	t.Helper()
+	return within(t, 2*time.Second, func() error { return consume(ctx, ch, pub, cfg, h) })
+}
+
+// C27 + C25 + C26: kenh deliveries dong (basic.cancel) -> loi (khong nil); Qos(prefetch); Cancel(tag) khi thoat.
+func TestConsumeWiring_DeliveriesDongTraLoiQosVaCancel(t *testing.T) {
+	for _, c := range []struct {
+		name     string
+		prefetch int
+		want     int
+	}{{"prefetch tuong minh", 7, 7}, {"prefetch mac dinh", 0, 10}} {
+		t.Run(c.name, func(t *testing.T) {
+			ch := &fakeConsumeChannel{deliveries: make(chan amqp.Delivery)}
+			close(ch.deliveries)
+			pf := newFakePubChannel()
+			cfg := wiringConfig()
+			cfg.Prefetch = c.prefetch
+			err := runConsume(context.Background(), t, ch, newPublisherWith(pf, pf.returns), cfg,
+				func(context.Context, Delivery) error { return nil })
+			if err == nil {
+				t.Fatal("deliveries dong -> consume phai tra loi (de supervisor khoi dong lai), khong nil")
+			}
+			if errors.Is(err, context.Canceled) {
+				t.Errorf("err = %v, khong duoc la context.Canceled", err)
+			}
+			ch.mu.Lock()
+			defer ch.mu.Unlock()
+			if len(ch.qos) != 1 || ch.qos[0] != c.want {
+				t.Errorf("Qos goi voi %v, muon [%d]", ch.qos, c.want)
+			}
+			if ch.consumeTag == "" {
+				t.Error("consume tag rong — khong Cancel duoc dung consumer")
+			}
+			if len(ch.cancelTags) != 1 || ch.cancelTags[0] != ch.consumeTag {
+				t.Errorf("Cancel goi voi %v, muon [%q]", ch.cancelTags, ch.consumeTag)
+			}
+		})
+	}
+}
+
+// C26: thoat vi ctx huy cung Cancel(tag) va tra loi boc context.Canceled.
+func TestConsumeWiring_HuyCtxCancelConsumer(t *testing.T) {
+	ch := &fakeConsumeChannel{deliveries: make(chan amqp.Delivery)}
+	pf := newFakePubChannel()
+	ctx, cancel := context.WithCancel(context.Background())
+	time.AfterFunc(20*time.Millisecond, cancel)
+	err := runConsume(ctx, t, ch, newPublisherWith(pf, pf.returns), wiringConfig(),
+		func(context.Context, Delivery) error { return nil })
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("err = %v, muon boc context.Canceled", err)
+	}
+	ch.mu.Lock()
+	defer ch.mu.Unlock()
+	if len(ch.cancelTags) != 1 || ch.cancelTags[0] != ch.consumeTag || ch.consumeTag == "" {
+		t.Errorf("Cancel goi voi %v, consume tag %q", ch.cancelTags, ch.consumeTag)
+	}
+}
+
+// C20: RetryExchange rong -> loi dau tien di thang DLX (x-ef-attempt = 1) roi ack, khong publish retry.
+func TestConsumeWiring_KhongRetryExchangeLoiDauVaoDLQ(t *testing.T) {
+	ack := &fakeAck{}
+	ch := &fakeConsumeChannel{deliveries: make(chan amqp.Delivery, 1)}
+	ch.deliveries <- amqp.Delivery{Acknowledger: ack, DeliveryTag: 1, Body: []byte("x"), RoutingKey: "chat"}
+	close(ch.deliveries)
+	pf := newFakePubChannel()
+	cfg := wiringConfig()
+	cfg.RetryExchange, cfg.RetryKey = "", ""
+	var calls int
+	_ = runConsume(context.Background(), t, ch, newPublisherWith(pf, pf.returns), cfg,
+		func(context.Context, Delivery) error { calls++; return errors.New("loi tam thoi") })
+
+	if calls != 1 {
+		t.Fatalf("handler goi %d lan, muon 1", calls)
+	}
+	pf.mu.Lock()
+	targets := append([]string(nil), pf.targets...)
+	pf.mu.Unlock()
+	if len(targets) != 1 || targets[0] != "ai.dlx/chat" {
+		t.Fatalf("publish toi %v, muon [ai.dlx/chat]", targets)
+	}
+	m := pf.lastPublished(t)
+	if n, ok := asInt64(m.Headers[AttemptHeader]); !ok || n != 1 {
+		t.Errorf("%s = %v, muon 1", AttemptHeader, m.Headers[AttemptHeader])
+	}
+	ack.mu.Lock()
+	defer ack.mu.Unlock()
+	if ack.acks != 1 || ack.nacks != 0 {
+		t.Errorf("acks=%d nacks=%d, muon 1 va 0", ack.acks, ack.nacks)
+	}
+}
+
+// Doi chieu: co RetryExchange thi loi dau di retry voi x-ef-attempt = 2.
+func TestConsumeWiring_CoRetryExchangeLoiDauDiRetry(t *testing.T) {
+	ack := &fakeAck{}
+	ch := &fakeConsumeChannel{deliveries: make(chan amqp.Delivery, 1)}
+	ch.deliveries <- amqp.Delivery{Acknowledger: ack, DeliveryTag: 1, Body: []byte("x")}
+	close(ch.deliveries)
+	pf := newFakePubChannel()
+	_ = runConsume(context.Background(), t, ch, newPublisherWith(pf, pf.returns), wiringConfig(),
+		func(context.Context, Delivery) error { return errors.New("loi tam thoi") })
+	pf.mu.Lock()
+	targets := append([]string(nil), pf.targets...)
+	pf.mu.Unlock()
+	if len(targets) != 1 || targets[0] != "ai.retry/chat" {
+		t.Fatalf("publish toi %v, muon [ai.retry/chat]", targets)
+	}
+	if n, ok := asInt64(pf.lastPublished(t).Headers[AttemptHeader]); !ok || n != 2 {
+		t.Errorf("%s = %v, muon 2", AttemptHeader, pf.lastPublished(t).Headers[AttemptHeader])
 	}
 }
