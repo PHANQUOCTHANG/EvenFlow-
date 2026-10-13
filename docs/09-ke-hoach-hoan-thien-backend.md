@@ -77,7 +77,7 @@ Nợ để lại: xem [workflow/phase-0/report.md](workflow/phase-0/report.md).
 | W3 | `libs/go/testx` + test oversell thật | EVF-39 | Testcontainers Postgres / Redis / RabbitMQ; bỏ `t.Skip` trong `helpers.go` |
 | W4 | `libs/go/idem` | EVF-33 | Middleware `Idempotency-Key`: trả lại response cũ, 409 khi đang xử lý, 422 khi body khác |
 | W5 | `libs/go/mq` | EVF-7 | Publisher có confirm, consumer có retry / DLQ, lan truyền trace qua header |
-| W6 | `libs/go/outbox` + relay | EVF-36 | Relay `FOR UPDATE SKIP LOCKED`; `hold.released` đi qua outbox thay vì publish thẳng |
+| W6 | `libs/go/outbox` + relay | EVF-36 | Relay `FOR UPDATE SKIP LOCKED`; `hold.released` đi qua outbox thay vì publish thẳng — **xong** (code + test; chờ CI và người dùng duyệt migration 0002) |
 
 Chia 3 PR: **A** = W0 + W1 · **B** = W2 · **C** = W3 → W6.
 

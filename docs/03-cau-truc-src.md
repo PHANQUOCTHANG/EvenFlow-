@@ -68,7 +68,7 @@ services/ticketing/
 │   │   ├── postgres/              #   repo (sqlc generated) + queries/*.sql
 │   │   ├── redis/                 #   gate + script/*.lua
 │   │   └── rabbitmq/              #   publisher, consumer
-│   ├── worker/                    # hold_sweeper.go, outbox_relay.go, reconciler.go
+│   ├── worker/                    # hold_sweeper.go, reconciler.go (relay: libs/go/outbox, noi trong cmd/worker/main.go)
 │   └── observability/             # metric, trace, log rieng cua service
 ├── test/
 │   ├── integration/               # testcontainers
@@ -95,11 +95,11 @@ adapter ──> app ──> domain
 libs/go/
 ├── httpx/          # router, middleware (auth, idempotency, ratelimit, recover), loi chuan RFC7807
 ├── redisx/         # client, helper nap va chay Lua script co SHA cache
-├── mq/             # bao boc AMQP: publisher co confirm, consumer co retry/DLQ, topology bang code (outbox nam o service)
+├── mq/             # bao boc AMQP: publisher co confirm, consumer co retry/DLQ, topology bang code
 ├── authx/          # ky & xac minh JWT, queue token, QR HMAC
 ├── otelx/          # khoi tao trace + metric + log, propagate qua AMQP header
 ├── idem/           # idempotency store tren Postgres
-├── outbox/         # transactional outbox pattern
+├── outbox/         # transactional outbox: Write (cung tx nghiep vu) + Relay (poll, lease, publish qua mq)
 ├── leader/         # bau leader qua Redis lock co fencing token
 └── testx/          # helper testcontainers
 ```
@@ -211,7 +211,8 @@ apps/web/src/
 | Nhánh Git | `main` (bảo vệ) ← `develop` ← `feat/EVF-123-mo-ta` |
 | Commit | Conventional Commits, kèm mã Jira: `feat(ticketing): EVF-123 them redis hold gate` |
 | API | REST + OpenAPI 3.1 ra ngoài; gRPC giữa các service; lỗi theo RFC 7807 |
-| Event MQ | `<domain>.<entity>.<action>` — vd `ticketing.hold.released`; payload có `event_id`, `occurred_at`, `trace_id`, `schema_version` |
+| Event MQ | `<domain>.<entity>.<action>` — vd `ticketing.hold.released`; phong bì có `event_id` (id message, UUID v4), `occurred_at`, `trace_id`, `schema_version`, `type`, `data` |
+| Outbox | Ghi event bằng `libs/go/outbox.Write` **trong cùng transaction** nghiệp vụ; relay (`outbox.Relay`, nối trong `cmd/worker`) poll và publish. At-least-once, **không bảo đảm thứ tự**: consumer khử trùng theo `event_id` **lấy từ phong bì** (không lấy từ `data`; `data` của row cũ có `event_id` = id sự kiện hoà nhạc), không đưa PII vào `data`. Migration `0002_outbox_relay.sql` thêm `event_id`, `headers`, `attempts`, `last_error`, `next_attempt_at` |
 | Migration | `goose`, chỉ tiến (forward-only) trên production; đặt tên `NNNN_mo_ta.sql` |
 | Cấu hình | 12-factor, toàn bộ qua env; validate lúc khởi động, sai thì **fail fast** |
 | Redis key | `<domain>:{<shard-tag>}:<entity>:<id>` — hash tag để cùng sự kiện nằm cùng shard |

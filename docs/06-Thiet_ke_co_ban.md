@@ -183,9 +183,17 @@ erDiagram
     %% Audit & System Tables
     outbox_events {
         bigserial id PK
+        uuid event_id UK "id message, sinh o Go (UUID v4)"
         text aggregate_type
         uuid aggregate_id
-        jsonb payload
+        text routing_key
+        jsonb payload "chi phan data"
+        jsonb headers "trace W3C (traceparent...)"
+        text trace_id
+        int attempts "chi tang khi loi tam (nack, unroutable, het timeout)"
+        text last_error "<= 1 KiB; unroutable neu bi bo"
+        timestamptz next_attempt_at "lease / backoff; infinity = bi do"
+        timestamptz created_at
         timestamptz published_at
     }
 
