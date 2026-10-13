@@ -43,6 +43,19 @@ Ký hiệu: **U** = unit (không DB/broker), **I** = tích hợp (`//go:build in
 | AC-8 / M7 | `lock_timeout` ⇒ migration bỏ cuộc (`55P03`) khi bảng đang bị khoá | `TestTichHop_AC8_Migration0002BoCuocKhiBangDangBiKhoa` | I |
 | AC-9 | `go vet`, `-race`, lint, CI xanh | Gate của bước verify (không phải test riêng); xem `baseline.md` §3 | — |
 
+### Bổ sung sau code review (plan §8)
+
+| Finding | Yêu cầu | Test | Loại |
+|---|---|---|---|
+| m1 | `NewRelay` từ chối `BatchDeadline + PublishTimeout + 2×5s >= Lease` | `TestNewRelay_KiemTraCauHinh` (4 case mới; `testConfig` Lease 15s, `itConfig` Lease 14s, test hạn lô Lease 11s) | U |
+| m1 | Publish bị cắt tại hạn chót lô (ctx publish không vượt `BatchDeadline`) | `TestRunOnce_PublishBiCatTaiHanChotLo` | U |
+| m1 | Trả lease không gỡ đỗ row `'infinity'` (`AND next_attempt_at <> 'infinity'`) | `TestRunOnce_TraLeaseKhongGoDoRowDaDo`; `assertMarksGuarded` kiểm mọi câu trả lease | U |
+| m3 | Lỗi publish không phân loại ⇒ `attempts + 1`, ghi `last_error` | `TestRunOnce_LoiKhongPhanLoaiTangAttempts` | U |
+| m4 | Kết nối báo `IsClosed()` trước claim ⇒ đóng, gauge 0, không claim/publish trên kết nối chết, dial lại | `TestRunOnce_KetNoiDaDongTruocClaimThiKhongClaimVaDialLai` | U |
+| m5 | Chỉ cắt TCP (không huỷ ctx) ⇒ nhánh `ErrClosed`, relay tự dial lại, mọi event tới | `TestTichHop_AC4_ChiCatTCPRelayTuDialLaiGuiHet` | I |
+| m8 | Metric published/lag không tăng khi UPDATE đánh dấu lỗi | `TestRunOnce_DanhDauLoiThiKhongTangMetricPublished` | U |
+| m8 | `data.released_at` của `hold.released` = `seat_holds.released_at` (giờ DB) | `TestTichHop_ReleaseHoldGhiOutboxHoldReleasedMotLan` | I |
+
 ## Chưa phủ / ghi chú
 
 - Metric `outbox_pending`, `outbox_dead`, `outbox_publish_lag_seconds` chỉ được kiểm gián tiếp (không test tên/giá trị).

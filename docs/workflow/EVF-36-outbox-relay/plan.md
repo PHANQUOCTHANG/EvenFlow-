@@ -251,3 +251,17 @@ Mỗi lô gồm ba bước, không bước nào giữ transaction trong lúc g�
 | r9 | Ghi rủi ro: CI không chạy binary goose thật; 0002 chỉ gồm câu lệnh thường, test áp SQL trực tiếp. |
 | r10 | Sự duyệt migration của người dùng (ai, khi nào, SHA commit) được ghi vào `docs/workflow/EVF-36-outbox-relay/approval.md` khi người dùng duyệt. |
 | r11 | Docs: consumer đọc `event_id` **chỉ** từ phong bì; trong `data` của row cũ `event_id` là id sự kiện hoà nhạc. |
+
+## 8. Sửa sau code review (`code-review.md`: PASS, chỉ minor)
+
+| Finding | Quyết định |
+|---|---|
+| m1 | ctx của mỗi lần publish bị chặn bởi hạn chót lô (không vượt `BatchDeadline` tính từ lúc claim). `NewRelay` kiểm `BatchDeadline + PublishTimeout + 2×markTimeout < Lease` (markTimeout = 5s). Trả lease và đánh dấu đỗ đều có `AND published_at IS NULL AND next_attempt_at <> 'infinity'` khi trả lease, để không gỡ đỗ nhầm. |
+| m2 | **Nợ, không sửa ở slice này:** broker chặn kết nối (cảnh báo bộ nhớ/đĩa) làm publish hết hạn và bị tính là lần thử; cảnh báo kéo dài ~1 giờ có thể đỗ `hold.released`. Ghi trong `doc.go`, `docs/02` (runbook gỡ đỗ) và đề xuất ticket vận hành theo dõi `NotifyBlocked`. |
+| m3 | Sửa tài liệu cho khớp code (đã chấp nhận): lỗi publish **không phân loại** cũng tính là lần thử (chống row độc thử mãi); `ErrClosed`, dial lỗi, `ctx` huỷ, row chưa xử lý thì không. Cập nhật `doc.go`, `docs/02`, §7 R1 → trỏ sang mục này. Unit test cho lỗi không phân loại. |
+| m4 | Trước mỗi lần claim, relay kiểm kết nối còn sống (closer/publisher hỗ trợ `IsClosed()` hoặc theo dõi `NotifyClose`); chết ⇒ gauge `outbox_relay_connected` = 0, đóng và dial lại, không claim. Unit test. |
+| m5 | Test tích hợp thêm biến thể **chỉ** cắt TCP (không huỷ ctx) để đi đúng nhánh `ErrClosed`. |
+| m6 | Bước tích hợp của ticketing trong `integration.yml` chạy với `-v` qua `run-and-report-tests.sh` (bắt trường hợp toàn bộ test bị skip). |
+| m7 | Không đổi (tuỳ chọn). |
+| m8 | Metric published/lag chỉ ghi **sau** khi đánh dấu thành công. `released_at` của `hold.released` lấy từ DB (`now()` trong `RETURNING`) thay vì đồng hồ Go. |
+| m9 | Ghi rủi ro: CI không chạy goose thật; pool của `cmd/server` vẫn dùng exec mode mặc định (có từ trước, ngoài phạm vi) — kiểm ở smoke compose. |
