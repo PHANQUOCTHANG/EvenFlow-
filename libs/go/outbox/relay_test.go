@@ -8,6 +8,7 @@ import (
 	"io"
 	"math"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 	"unicode/utf8"
@@ -866,6 +867,10 @@ func TestRunOnce_PublishBiCatTaiHanChotLo(t *testing.T) {
 	if st := db.state(b.ID); st.published || st.parked {
 		t.Errorf("row b bi cat tai han chot: %+v, muon chua gui va khong do", st)
 	}
+	// plan §9 M23/M47: het han lo giua publish khong tinh attempts va tra lease ngay.
+	if st := db.state(b.ID); st.retries != 0 || st.releases != 1 {
+		t.Errorf("row b het han lo: %+v, muon attempts khong doi va lease duoc tra (releases=1)", st)
+	}
 	assertMarksGuarded(t, db)
 }
 
@@ -1005,5 +1010,253 @@ func TestRunOnce_DanhDauLoiThiKhongTangMetricPublished(t *testing.T) {
 	}
 	if v, _ := metricValue(t, g, "outbox_publish_lag_seconds", nil); v != 0 {
 		t.Errorf("outbox_publish_lag_seconds co %v mau, muon 0 khi danh dau loi", v)
+	}
+}
+
+// --- plan §9 (challenge vong 2) ---
+
+// F1: cau thu lai / do khong duoc dung vao row ma relay khac da do trong luc relay nay publish (lease cu het han).
+func TestRunOnce_ThuLaiVaDoKhongDungRowDaBiRelayKhacDo(t *testing.T) {
+	retry := mkRow(1, "ticketing.hold.released")
+	park := mkRow(2, "ticketing.hold.released")
+	park.Attempts = 4 // MaxAttempts 5: lan that bai nay se do
+	db := newFakeDB(t, retry, park)
+	d := newFakeDialer()
+	for _, row := range []fakeRow{retry, park} {
+		id := row.ID
+		d.pub.on[row.EventID] = func(context.Context) error {
+			db.setParked(id) // relay khac vua do row nay
+			return fmt.Errorf("x: %w", mq.ErrNacked)
+		}
+	}
+	r := newTestRelay(t, db, d, testConfig())
+
+	if _, err := r.RunOnce(context.Background()); err != nil {
+		t.Fatalf("RunOnce: %v", err)
+	}
+	for _, row := range []fakeRow{retry, park} {
+		st := db.state(row.ID)
+		if st.unparkedOrTouched || st.retries != 0 || !st.parked {
+			t.Errorf("row %d da bi relay khac do nhung bi cau thu lai/do dung vao: %+v", row.ID, st)
+		}
+	}
+	assertMarksGuarded(t, db)
+}
+
+// F3 + M42: lag tinh theo dong ho DB tra ve tu claim (khong theo dong ho Go).
+func TestRunOnce_LagTheoDongHoDB(t *testing.T) {
+	a := mkRow(1, "ticketing.hold.released")
+	db := newFakeDB(t, a)
+	db.dbClock = func() time.Time { return a.CreatedAt.Add(7 * time.Second) }
+	d := newFakeDialer()
+	cfg := testConfig()
+	r := newTestRelay(t, db, d, cfg)
+
+	if _, err := r.RunOnce(context.Background()); err != nil {
+		t.Fatalf("RunOnce: %v", err)
+	}
+	sum, n := histSum(t, gatherer(t, cfg), "outbox_publish_lag_seconds")
+	if n != 1 {
+		t.Fatalf("outbox_publish_lag_seconds co %d mau, muon 1", n)
+	}
+	if sum < 7 || sum > 8 {
+		t.Errorf("lag = %.3fs, muon ~7s (db_now luc claim - created_at, cong thoi gian troi trong Go)", sum)
+	}
+}
+
+// F3: dong ho DB lech lam lag am -> kep ve 0.
+func TestRunOnce_LagAmKepVe0(t *testing.T) {
+	a := mkRow(1, "ticketing.hold.released")
+	db := newFakeDB(t, a)
+	db.dbClock = func() time.Time { return a.CreatedAt.Add(-5 * time.Second) }
+	d := newFakeDialer()
+	cfg := testConfig()
+	r := newTestRelay(t, db, d, cfg)
+
+	if _, err := r.RunOnce(context.Background()); err != nil {
+		t.Fatalf("RunOnce: %v", err)
+	}
+	sum, n := histSum(t, gatherer(t, cfg), "outbox_publish_lag_seconds")
+	if n != 1 || sum != 0 {
+		t.Errorf("lag am: tong %.3f, %d mau — muon 1 mau gia tri 0", sum, n)
+	}
+}
+
+// M22 + M48: ctx huy trong luc publish (publish tra loi ctx) -> khong tinh attempts, tra lease ca row do.
+func TestRunOnce_HuyCtxGiuaPublishKhongTinhAttempts(t *testing.T) {
+	rows := []fakeRow{mkRow(1, "ticketing.hold.released"), mkRow(2, "ticketing.hold.released"), mkRow(3, "ticketing.hold.released")}
+	db := newFakeDB(t, rows...)
+	d := newFakeDialer()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	d.pub.on[rows[1].EventID] = func(pctx context.Context) error {
+		cancel()
+		<-pctx.Done()
+		return fmt.Errorf("mq: cho confirm: %w", pctx.Err())
+	}
+	cfg := testConfig()
+	r := newTestRelay(t, db, d, cfg)
+
+	if _, err := r.RunOnce(ctx); !errors.Is(err, context.Canceled) {
+		t.Errorf("RunOnce = %v, muon boc context.Canceled", err)
+	}
+	if st := db.state(rows[0].ID); !st.published {
+		t.Errorf("row 1: %+v, muon da gui", st)
+	}
+	for _, row := range rows[1:] {
+		st := db.state(row.ID)
+		if st.retries != 0 || st.published || st.parked {
+			t.Errorf("row %d: %+v — huy ctx giua publish khong duoc tinh attempts", row.ID, st)
+		}
+		if st.releases != 1 {
+			t.Errorf("row %d: lease phai duoc tra (releases=%d)", row.ID, st.releases)
+		}
+	}
+	if v, _ := metricValue(t, gatherer(t, cfg), "outbox_publish_errors_total", nil); v != 0 {
+		t.Errorf("outbox_publish_errors_total = %v, muon 0 khi ctx huy", v)
+	}
+}
+
+// M43: loi tam tang outbox_publish_errors_total{routing_key}.
+func TestRunOnce_LoiTamTangPublishErrorsTotal(t *testing.T) {
+	a := mkRow(1, "ticketing.hold.released")
+	db := newFakeDB(t, a)
+	d := newFakeDialer()
+	d.pub.on[a.EventID] = func(context.Context) error { return fmt.Errorf("x: %w", mq.ErrNacked) }
+	cfg := testConfig()
+	r := newTestRelay(t, db, d, cfg)
+	if _, err := r.RunOnce(context.Background()); err != nil {
+		t.Fatalf("RunOnce: %v", err)
+	}
+	v, ok := metricValue(t, gatherer(t, cfg), "outbox_publish_errors_total", map[string]string{"routing_key": a.RoutingKey})
+	if !ok || v != 1 {
+		t.Errorf("outbox_publish_errors_total{routing_key=%s} = %v (co %v), muon 1", a.RoutingKey, v, ok)
+	}
+}
+
+// M36: claim chay trong transaction co SET LOCAL statement_timeout truoc cau claim.
+func TestRunOnce_ClaimCoStatementTimeoutTrongTx(t *testing.T) {
+	db := newFakeDB(t, mkRow(1, "ticketing.hold.released"))
+	r := newTestRelay(t, db, newFakeDialer(), testConfig())
+	if _, err := r.RunOnce(context.Background()); err != nil {
+		t.Fatalf("RunOnce: %v", err)
+	}
+	seenTimeout := false
+	for _, s := range db.all() {
+		if s.inTx && strings.HasPrefix(s.sql, "set local statement_timeout") {
+			seenTimeout = true
+		}
+		if s.kind == kindClaim {
+			if !s.inTx {
+				t.Error("claim phai chay trong transaction (Begin)")
+			}
+			if !seenTimeout {
+				t.Error("thieu SET LOCAL statement_timeout trong transaction truoc cau claim")
+			}
+			return
+		}
+	}
+	t.Fatal("khong co cau claim")
+}
+
+// M29: SQL dem gauge: outbox_pending khong tinh row do, outbox_dead dem row 'infinity'.
+func TestRun_GaugePendingKhongTinhRowDo(t *testing.T) {
+	db := newFakeDB(t)
+	r := newTestRelay(t, db, newFakeDialer(), testConfig())
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan error, 1)
+	go func() { done <- r.Run(ctx) }()
+	time.Sleep(200 * time.Millisecond)
+	cancel()
+	<-done
+
+	var gauge string
+	for _, s := range db.all() {
+		if strings.Contains(s.sql, "count(") {
+			gauge = s.sql
+		}
+	}
+	if gauge == "" {
+		t.Fatal("Run khong chay cau dem gauge (outbox_pending/outbox_dead) luc khoi dong")
+	}
+	if !strings.Contains(gauge, "published_at is null") {
+		t.Errorf("gauge phai chi dem row chua gui: %s", gauge)
+	}
+	if !strings.Contains(gauge, "next_attempt_at<>'infinity'") || !strings.Contains(gauge, "next_attempt_at='infinity'") {
+		t.Errorf("gauge phai tach row do ('infinity') khoi outbox_pending: %s", gauge)
+	}
+}
+
+// M30: backoff dial lai tang dan (base, 2*base, 4*base, ... co jitter), khong co dinh.
+//
+// SEAM (do implementer dat o dau relay.go, khong export): Relay.redialBase, Relay.redialMax. Test dat base 100ms:
+// dial o t=0, ~0.1s (0.08-0.12), ~0.3s (0.24-0.36), ~0.7s (0.56-0.84), lan thu 5 >= 1.2s -> 4 lan trong 1s;
+// backoff co dinh 100ms se cho ~9-10 lan.
+func TestRun_BackoffDialLaiTangDan(t *testing.T) {
+	db := newFakeDB(t)
+	d := newFakeDialer()
+	d.err = errors.New("dial tcp: connection refused")
+	r := newTestRelay(t, db, d, testConfig())
+	r.redialBase, r.redialMax = 100*time.Millisecond, 10*time.Second
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan error, 1)
+	go func() { done <- r.Run(ctx) }()
+	time.Sleep(time.Second)
+	n := d.dialCount()
+	cancel()
+	<-done
+	if n < 3 || n > 5 {
+		t.Errorf("dial %d lan trong 1s voi base 100ms, muon 3-5 (lui 0.1s, 0.2s, 0.4s, ...); co dinh se cho ~10", n)
+	}
+}
+
+// M31: so lan that bai lien tiep duoc dat lai sau mot lo thanh cong (ke ca lo rong): loi sau do chi lui ~base.
+// Dung seam Relay.redialBase = 200ms: dung thi lui 160-240ms, neu khong dat lai (fails = 2) se lui 320-480ms.
+func TestRun_LoThanhCongDatLaiBackoff(t *testing.T) {
+	db := newFakeDB(t)
+	db.failClaim = func(n int) error {
+		if n == 3 {
+			return errTest
+		}
+		return nil
+	}
+	d := newFakeDialer()
+	var dialN int
+	var mu sync.Mutex
+	inner := d.dial
+	failingFirst := func(ctx context.Context) (Publisher, io.Closer, error) {
+		mu.Lock()
+		dialN++
+		first := dialN == 1
+		mu.Unlock()
+		if first {
+			return nil, nil, errors.New("dial tcp: connection refused") // fails = 1
+		}
+		return inner(ctx)
+	}
+	r, err := NewRelay(db, failingFirst, testConfig())
+	if err != nil {
+		t.Fatalf("NewRelay: %v", err)
+	}
+	r.redialBase, r.redialMax = 200*time.Millisecond, 10*time.Second
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan error, 1)
+	go func() { done <- r.Run(ctx) }()
+	deadline := time.Now().Add(5 * time.Second)
+	for len(db.claimTimesSnap()) < 4 && time.Now().Before(deadline) {
+		time.Sleep(5 * time.Millisecond)
+	}
+	cancel()
+	<-done
+	ts := db.claimTimesSnap()
+	if len(ts) < 4 {
+		t.Fatalf("chi %d lan claim trong 5s", len(ts))
+	}
+	gap := ts[3].Sub(ts[2])
+	if gap > 290*time.Millisecond {
+		t.Errorf("sau loi claim (sau cac lo rong thanh cong) relay lui %v, muon ~200ms (fails phai duoc dat lai)", gap)
+	}
+	if gap < 100*time.Millisecond {
+		t.Errorf("sau loi claim relay chi lui %v, muon ~200ms", gap)
 	}
 }

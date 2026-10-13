@@ -14,6 +14,9 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/baggage"
+	"go.opentelemetry.io/otel/propagation"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // Unit test cho Write (spec AC-1, AC-2, AC-5; plan §1.2, §6.4) voi Execer gia.
@@ -309,6 +312,13 @@ func TestWrite_KiemTraDauVao(t *testing.T) {
 		{"key wildcard", func(e *Event) { e.RoutingKey = "ticketing.hold.*" }, true},
 		{"key xuong dong", func(e *Event) { e.RoutingKey = "ticketing.hold.created\n" }, true},
 		{"aggregate rong", func(e *Event) { e.AggregateID = "" }, true},
+		{"aggregate type rong (W6)", func(e *Event) { e.AggregateType = "" }, true},
+		// W1: bien dung 64 KiB = 65536 byte JSON (chuoi n ky tu -> n+2 byte).
+		{"data dung 65536 byte duoc", func(e *Event) { e.Data = strings.Repeat("a", 65534) }, false},
+		{"data 65537 byte", func(e *Event) { e.Data = strings.Repeat("a", 65535) }, true},
+		// F2: jsonb cua PostgreSQL khong nhan \u0000.
+		{"data chua NUL (F2)", func(e *Event) { e.Data = map[string]string{"x": "a\x00b"} }, true},
+		{"data RawMessage chua \\u0000 (F2)", func(e *Event) { e.Data = json.RawMessage(`{"x":"a\u0000b"}`) }, true},
 		{"aggregate khong phai UUID", func(e *Event) { e.AggregateID = "h1" }, true},
 		{"aggregate UUID cat cut", func(e *Event) { e.AggregateID = "5f0c3a52-8a8e-4c1e-9f57" }, true},
 		{"data qua 64 KiB", func(e *Event) { e.Data = map[string]string{"x": lon} }, true},
@@ -371,3 +381,54 @@ func mustJSON(t *testing.T, v any) []byte {
 	}
 	return b
 }
+
+// W7: headers chi giu khoa trace W3C (traceparent, tracestate, baggage) — giu du ca ba, bo khoa khac.
+func TestWrite_HeadersGiuDuBaKhoaW3CVaBoKhoaKhac(t *testing.T) {
+	newRecorder(t)
+	prev := otel.GetTextMapPropagator()
+	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(
+		propagation.TraceContext{}, propagation.Baggage{}, khoaLaPropagator{}))
+	t.Cleanup(func() { otel.SetTextMapPropagator(prev) })
+
+	ts, err := trace.ParseTraceState("vendor=abc")
+	if err != nil {
+		t.Fatal(err)
+	}
+	tid, _ := trace.TraceIDFromHex("4bf92f3577b34da6a3ce929d0e0e4736")
+	sid, _ := trace.SpanIDFromHex("00f067aa0ba902b7")
+	sc := trace.NewSpanContext(trace.SpanContextConfig{TraceID: tid, SpanID: sid,
+		TraceFlags: trace.FlagsSampled, TraceState: ts, Remote: true})
+	ctx := trace.ContextWithRemoteSpanContext(context.Background(), sc)
+	m, err := baggage.NewMember("tenant", "evt1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	bg, err := baggage.New(m)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx = baggage.ContextWithBaggage(ctx, bg)
+
+	ex := &fakeExecer{}
+	if _, err := Write(ctx, ex, suKienMau()); err != nil {
+		t.Fatalf("Write: %v", err)
+	}
+	h := headersArg(t, insertCols(t, ex.calls[0])["headers"])
+	for _, k := range []string{"traceparent", "tracestate", "baggage"} {
+		if h[k] == "" {
+			t.Errorf("headers thieu %s: %v", k, h)
+		}
+	}
+	if _, ok := h["x-la"]; ok {
+		t.Errorf("headers chua khoa ngoai danh sach W3C: %v", h)
+	}
+}
+
+// khoaLaPropagator ghi them mot khoa khong phai W3C (mo phong propagator khac duoc cai toan cuc).
+type khoaLaPropagator struct{}
+
+func (khoaLaPropagator) Inject(_ context.Context, c propagation.TextMapCarrier) { c.Set("x-la", "1") }
+func (khoaLaPropagator) Extract(ctx context.Context, _ propagation.TextMapCarrier) context.Context {
+	return ctx
+}
+func (khoaLaPropagator) Fields() []string { return []string{"x-la"} }

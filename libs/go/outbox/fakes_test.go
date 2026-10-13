@@ -43,6 +43,8 @@ import (
 //     SQL hoac trong tham so)
 //   - thu lai:       SET attempts = attempts + 1, last_error = $x, next_attempt_at = now() + ...
 //   - do (park):     SET ... next_attempt_at = 'infinity' ... (hang so trong SQL; quyet dinh do nam o Go)
+//   - thu lai va do deu co them `AND next_attempt_at <> 'infinity'` (plan §9 F1).
+//   - claim co the RETURNING them now() (dong ho DB, plan §9 F3); fake tra db.dbClock().
 //   - tra lease:     SET next_attempt_at = now() WHERE id = ANY($1) AND published_at IS NULL
 //     AND next_attempt_at <> 'infinity' (plan §8 m1: tra lease khong duoc go do row da bi relay khac do)
 //   - Cau doc so lieu (count(*)) di qua QueryRow; fake tra 0.
@@ -177,6 +179,7 @@ type fakeRow struct {
 	TraceID       *string
 	CreatedAt     time.Time
 	Attempts      int
+	dbNow         time.Time // now() cua DB luc claim (fake dien)
 }
 
 type rowState struct {
@@ -187,6 +190,8 @@ type rowState struct {
 	retries    int
 	releases   int
 	errs       []string
+	// unparkedOrTouched: mot cau thu lai/do da dung vao row dang do (thieu dieu kien <> 'infinity').
+	unparkedOrTouched bool
 }
 
 type fakeDB struct {
@@ -198,6 +203,12 @@ type fakeDB struct {
 	claims   int
 	commits  int
 	failMark func(kind stmtKind, ids []int64) error // khac nil: tiem loi cho cau danh dau
+	// failClaim khac nil: tiem loi cho lan claim thu n (dem tu 1).
+	failClaim func(n int) error
+	// claimTimes: thoi diem moi lan claim (ke ca lan bi tiem loi).
+	claimTimes []time.Time
+	// dbClock khac nil: gia tri now() cua DB tra trong RETURNING cua claim (plan §9 F3); mac dinh time.Now().
+	dbClock func() time.Time
 }
 
 func newFakeDB(t *testing.T, rows ...fakeRow) *fakeDB {
@@ -270,9 +281,20 @@ func (db *fakeDB) exec(ctx context.Context, inTx bool, sql string, args []any) (
 		case kindPublished:
 			r.published = true
 			r.unroutable = strings.Contains(s.sql, "'unroutable'") || contains(errs, "unroutable")
-		case kindRetry:
-			r.retries++
-		case kindPark:
+		case kindRetry, kindPark:
+			// plan §9 F1: row relay khac da do khong duoc bi dem lan thu / ghi de.
+			if r.parked {
+				if strings.Contains(s.sql, "next_attempt_at<>'infinity'") {
+					affected--
+					continue
+				}
+				r.unparkedOrTouched = true
+			}
+			if s.kind == kindRetry {
+				r.retries++
+				r.parked = false // next_attempt_at bi dat lai: go do
+				break
+			}
 			r.parked = true
 			if strings.Contains(s.sql, "attempts=attempts+1") {
 				r.retries++
@@ -314,6 +336,16 @@ func (db *fakeDB) query(ctx context.Context, inTx bool, sql string, args []any) 
 		return &fakeRows{}, nil
 	}
 	db.claims++
+	db.claimTimes = append(db.claimTimes, time.Now())
+	if db.failClaim != nil {
+		if err := db.failClaim(db.claims); err != nil {
+			return nil, err
+		}
+	}
+	now := time.Now()
+	if db.dbClock != nil {
+		now = db.dbClock()
+	}
 	limit := -1
 	if m := limitRe.FindStringSubmatch(s.sql); m != nil {
 		i, _ := strconv.Atoi(m[1])
@@ -337,6 +369,7 @@ func (db *fakeDB) query(ctx context.Context, inTx bool, sql string, args []any) 
 			break
 		}
 		st.due = false
+		r.dbNow = now
 		out.data = append(out.data, r)
 	}
 	return out, nil
@@ -409,8 +442,8 @@ func assertMarksGuarded(t *testing.T, db *fakeDB) {
 			if !strings.Contains(where, "published_at is null") {
 				t.Errorf("cau %s thieu `AND published_at IS NULL` trong WHERE: %s", s.kind, s.sql)
 			}
-			if s.kind == kindRelease && !strings.Contains(where, "next_attempt_at<>'infinity'") {
-				t.Errorf("cau tra lease thieu `AND next_attempt_at <> 'infinity'` (plan §8 m1): %s", s.sql)
+			if s.kind != kindPublished && !strings.Contains(where, "next_attempt_at<>'infinity'") {
+				t.Errorf("cau %s thieu `AND next_attempt_at <> 'infinity'` (plan §8 m1, §9 F1): %s", s.kind, s.sql)
 			}
 		}
 	}
@@ -527,6 +560,8 @@ func cell(r fakeRow, col string) (uint32, []byte, string) {
 		}
 	case "next_attempt_at":
 		oid, val = pgtype.TimestamptzOID, []byte(pgTime(time.Now()))
+	case "now()", "transaction_timestamp()", "statement_timestamp()", "clock_timestamp()", "current_timestamp":
+		oid, val = pgtype.TimestamptzOID, []byte(pgTime(r.dbNow))
 	default:
 		oid = pgtype.TextOID
 		val = []byte("?" + base)
@@ -788,6 +823,34 @@ func mkRow(id int64, key string) fakeRow {
 		Headers:       `{}`,
 		CreatedAt:     baseTime.Add(time.Duration(id) * time.Second),
 	}
+}
+
+// histSum tra tong va so mau cua histogram name.
+func histSum(t *testing.T, g prometheus.Gatherer, name string) (sum float64, count uint64) {
+	t.Helper()
+	mfs, err := g.Gather()
+	if err != nil {
+		t.Fatalf("gather: %v", err)
+	}
+	for _, mf := range mfs {
+		if mf.GetName() != name {
+			continue
+		}
+		for _, m := range mf.GetMetric() {
+			if h := m.GetHistogram(); h != nil {
+				sum += h.GetSampleSum()
+				count += h.GetSampleCount()
+			}
+		}
+	}
+	return sum, count
+}
+
+// claimTimesSnap tra ban sao thoi diem cac lan claim.
+func (db *fakeDB) claimTimesSnap() []time.Time {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+	return append([]time.Time(nil), db.claimTimes...)
 }
 
 func metricValue(t *testing.T, g prometheus.Gatherer, name string, labels map[string]string) (float64, bool) {
