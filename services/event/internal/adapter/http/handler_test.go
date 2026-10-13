@@ -202,3 +202,234 @@ func TestHTTP_Healthz(t *testing.T) {
 		t.Errorf("expected 200, got %d", rec.Code)
 	}
 }
+
+type fakeModRepo struct {
+	reviews map[uuid.UUID]*domain.ModerationReview
+	byEvent map[uuid.UUID]*domain.ModerationReview
+}
+
+func (r *fakeModRepo) Create(ctx context.Context, review *domain.ModerationReview) error {
+	r.reviews[review.ID] = review
+	r.byEvent[review.EventID] = review
+	return nil
+}
+
+func (r *fakeModRepo) GetLatestByEventID(ctx context.Context, eventID uuid.UUID) (*domain.ModerationReview, error) {
+	rev, ok := r.byEvent[eventID]
+	if !ok {
+		return nil, domain.ErrModReviewNotFound
+	}
+	return rev, nil
+}
+
+func (r *fakeModRepo) ListNeedsHuman(ctx context.Context) ([]*domain.ModerationReview, error) {
+	var list []*domain.ModerationReview
+	for _, rev := range r.reviews {
+		if rev.AiVerdict == domain.VerdictNeedsHuman && rev.HumanVerdict == nil {
+			list = append(list, rev)
+		}
+	}
+	return list, nil
+}
+
+func (r *fakeModRepo) SetHumanDecision(ctx context.Context, reviewID uuid.UUID, humanID uuid.UUID, verdict, note string, decidedAt time.Time) error {
+	rev, ok := r.reviews[reviewID]
+	if !ok {
+		return domain.ErrModReviewNotFound
+	}
+	rev.HumanID = &humanID
+	rev.HumanVerdict = &verdict
+	rev.HumanNote = &note
+	rev.DecidedAt = &decidedAt
+	return nil
+}
+
+type fakeAuditRepo struct {
+	logs []*domain.AuditLog
+}
+
+func (r *fakeAuditRepo) Create(ctx context.Context, log *domain.AuditLog) error {
+	r.logs = append(r.logs, log)
+	return nil
+}
+
+func (r *fakeAuditRepo) ListBySubject(ctx context.Context, subject string) ([]*domain.AuditLog, error) {
+	var list []*domain.AuditLog
+	for _, l := range r.logs {
+		if l.Subject == subject {
+			list = append(list, l)
+		}
+	}
+	return list, nil
+}
+
+type fakeOutboxRepo struct {
+	messages []any
+}
+
+func (r *fakeOutboxRepo) Publish(ctx context.Context, aggregateType string, aggregateID uuid.UUID, routingKey string, payload any) error {
+	r.messages = append(r.messages, payload)
+	return nil
+}
+
+func setupModerationTestServer() (http.Handler, *fakeRepo, *fakeModRepo, *fakeAuditRepo) {
+	repo := newTestRepo()
+	modRepo := &fakeModRepo{
+		reviews: make(map[uuid.UUID]*domain.ModerationReview),
+		byEvent: make(map[uuid.UUID]*domain.ModerationReview),
+	}
+	auditRepo := &fakeAuditRepo{logs: make([]*domain.AuditLog, 0)}
+	outboxRepo := &fakeOutboxRepo{messages: make([]any, 0)}
+
+	createUC := app.NewCreateEventUseCase(repo)
+	updateUC := app.NewUpdateEventUseCase(repo)
+	tiersUC := app.NewManageTiersUseCase(repo)
+	transitionUC := app.NewTransitionStateUseCase(repo)
+	getUC := app.NewGetEventUseCase(repo)
+
+	enqueueModUC := app.NewEnqueueModerationUseCase(outboxRepo)
+	aiVerdictUC := app.NewHandleAiVerdictUseCase(repo, modRepo, auditRepo)
+	modQueueUC := app.NewListModerationQueueUseCase(repo, modRepo)
+	modActionUC := app.NewModeratorActionUseCase(repo, modRepo, auditRepo)
+
+	h := adapterHTTP.NewEventHandler(createUC, updateUC, tiersUC, transitionUC, getUC).
+		WithModeration(enqueueModUC, aiVerdictUC, modQueueUC, modActionUC)
+
+	return adapterHTTP.NewRouter(h), repo, modRepo, auditRepo
+}
+
+func TestHTTP_AiVerdict_Callback(t *testing.T) {
+	router, repo, _, _ := setupModerationTestServer()
+	now := time.Now().UTC()
+
+	evt, _ := domain.NewEvent(
+		uuid.New(), "rock-concert", "Rock Concert", "desc", "hall",
+		now.Add(24*time.Hour), now.Add(2*time.Hour), nil,
+	)
+	tier, _ := domain.NewTicketTier(evt.ID, "VIP", 200000, 50)
+	_ = evt.AddTier(*tier)
+	_ = evt.SubmitForReview()
+	_ = repo.Create(context.Background(), evt)
+
+	body, _ := json.Marshal(adapterHTTP.AiVerdictRequest{
+		Score:   0.1,
+		Verdict: domain.VerdictAutoApproved,
+		Reasons: []string{"all clean"},
+	})
+	req := httptest.NewRequest("PATCH", "/internal/v1/events/"+evt.ID.String()+"/ai-verdict", bytes.NewReader(body))
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+
+	var resp map[string]string
+	_ = json.NewDecoder(rec.Body).Decode(&resp)
+	if resp["status"] != "SCHEDULED" {
+		t.Errorf("expected SCHEDULED, got %s", resp["status"])
+	}
+}
+
+func TestHTTP_ModerationQueue(t *testing.T) {
+	router, repo, modRepo, _ := setupModerationTestServer()
+	now := time.Now().UTC()
+
+	evt, _ := domain.NewEvent(
+		uuid.New(), "indie-gig", "Indie Gig", "desc", "bar",
+		now.Add(24*time.Hour), now.Add(2*time.Hour), nil,
+	)
+	_ = evt.SubmitForReview()
+	_ = repo.Create(context.Background(), evt)
+
+	_ = modRepo.Create(context.Background(), &domain.ModerationReview{
+		ID:        uuid.New(),
+		EventID:   evt.ID,
+		AiScore:   0.5,
+		AiVerdict: domain.VerdictNeedsHuman,
+		CreatedAt: now,
+	})
+
+	req := httptest.NewRequest("GET", "/api/v1/moderation/queue", nil)
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", rec.Code)
+	}
+
+	var items []adapterHTTP.ModerationQueueItemResponse
+	_ = json.NewDecoder(rec.Body).Decode(&items)
+	if len(items) != 1 {
+		t.Fatalf("expected 1 item in queue, got %d", len(items))
+	}
+	if items[0].EventID != evt.ID {
+		t.Errorf("expected event id %s, got %s", evt.ID, items[0].EventID)
+	}
+}
+
+func TestHTTP_ModeratorApprove_And_Reject(t *testing.T) {
+	router, repo, modRepo, auditRepo := setupModerationTestServer()
+	now := time.Now().UTC()
+
+	evt, _ := domain.NewEvent(
+		uuid.New(), "festival", "Festival", "desc", "park",
+		now.Add(24*time.Hour), now.Add(2*time.Hour), nil,
+	)
+	tier, _ := domain.NewTicketTier(evt.ID, "General", 50000, 100)
+	_ = evt.AddTier(*tier)
+	_ = evt.SubmitForReview()
+	_ = repo.Create(context.Background(), evt)
+
+	_ = modRepo.Create(context.Background(), &domain.ModerationReview{
+		ID:        uuid.New(),
+		EventID:   evt.ID,
+		AiScore:   0.6,
+		AiVerdict: domain.VerdictNeedsHuman,
+		CreatedAt: now,
+	})
+
+	// 1. Moderator Reject without reason -> 422 (BR-E5)
+	modID := uuid.New().String()
+	rejectNoReasonBody, _ := json.Marshal(adapterHTTP.ModeratorRejectRequest{
+		ModeratorID: modID,
+		Reason:      "   ",
+	})
+	rejReq1 := httptest.NewRequest("POST", "/api/v1/events/"+evt.ID.String()+"/reject", bytes.NewReader(rejectNoReasonBody))
+	rejRec1 := httptest.NewRecorder()
+	router.ServeHTTP(rejRec1, rejReq1)
+	if rejRec1.Code != http.StatusUnprocessableEntity {
+		t.Errorf("expected 422 when rejecting without reason, got %d", rejRec1.Code)
+	}
+
+	// 2. Moderator Reject with valid reason -> 200 OK
+	rejectValidBody, _ := json.Marshal(adapterHTTP.ModeratorRejectRequest{
+		ModeratorID: modID,
+		Reason:      "Permit not submitted",
+	})
+	rejReq2 := httptest.NewRequest("POST", "/api/v1/events/"+evt.ID.String()+"/reject", bytes.NewReader(rejectValidBody))
+	rejRec2 := httptest.NewRecorder()
+	router.ServeHTTP(rejRec2, rejReq2)
+	if rejRec2.Code != http.StatusOK {
+		t.Errorf("expected 200 on valid reject, got %d", rejRec2.Code)
+	}
+
+	// 3. Moderator Override: Approve previously REJECTED event -> 200 OK
+	approveBody, _ := json.Marshal(adapterHTTP.ModeratorApproveRequest{
+		ModeratorID: modID,
+		Note:        "Organizer submitted permit later, approved override",
+	})
+	appReq := httptest.NewRequest("POST", "/api/v1/events/"+evt.ID.String()+"/approve", bytes.NewReader(approveBody))
+	appRec := httptest.NewRecorder()
+	router.ServeHTTP(appRec, appReq)
+	if appRec.Code != http.StatusOK {
+		t.Errorf("expected 200 on moderator approve override, got %d", appRec.Code)
+	}
+
+	// Verify audit logs were written for both actions
+	logs, _ := auditRepo.ListBySubject(context.Background(), "event:"+evt.ID.String())
+	if len(logs) < 2 {
+		t.Errorf("expected at least 2 audit logs recorded, got %d", len(logs))
+	}
+}
+

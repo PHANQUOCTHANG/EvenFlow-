@@ -24,5 +24,11 @@ func NewRouter(h *EventHandler) http.Handler {
 	mux.HandleFunc("POST /api/v1/events/{id}/publish", h.PublishEvent)
 	mux.HandleFunc("POST /api/v1/events/{id}/cancel", h.CancelEvent)
 
+	// EV-120: AI moderation callback noi bo
+	mux.HandleFunc("PATCH /internal/v1/events/{id}/ai-verdict", h.HandleAiVerdict)
+
+	// EV-121: Hang doi moderation cho Moderator
+	mux.HandleFunc("GET /api/v1/moderation/queue", h.GetModerationQueue)
+
 	return mux
 }

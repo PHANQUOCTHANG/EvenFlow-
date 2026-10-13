@@ -59,6 +59,35 @@ type EventResponse struct {
 	Tiers          []domain.TicketTier `json:"tiers,omitempty"`
 }
 
+// EV-120: DTO cho internal AI verdict callback
+type AiVerdictRequest struct {
+	Score   float64            `json:"score"`
+	Verdict domain.AiVerdict   `json:"verdict"`
+	Reasons []string           `json:"reasons"`
+	Axes    map[string]float64 `json:"axes,omitempty"`
+}
+
+// EV-121: DTO cho Moderator thao tac
+type ModeratorApproveRequest struct {
+	ModeratorID string `json:"moderator_id"`
+	Note        string `json:"note"`
+}
+
+type ModeratorRejectRequest struct {
+	ModeratorID string `json:"moderator_id"`
+	Reason      string `json:"reason"`
+}
+
+type ModerationQueueItemResponse struct {
+	EventID     uuid.UUID                `json:"event_id"`
+	EventTitle  string                   `json:"event_title"`
+	EventStatus domain.EventStatus       `json:"event_status"`
+	Venue       string                   `json:"venue"`
+	StartsAt    time.Time                `json:"starts_at"`
+	SaleStartAt time.Time                `json:"sale_start_at"`
+	Review      *domain.ModerationReview `json:"review,omitempty"`
+}
+
 func ToEventResponse(e *domain.Event) EventResponse {
 	return EventResponse{
 		ID:             e.ID,

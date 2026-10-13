@@ -37,13 +37,23 @@ func main() {
 	}
 
 	repo := postgres.NewEventRepository(db)
+	modRepo := postgres.NewModerationRepository(db)
+	auditRepo := postgres.NewAuditLogRepository(db)
+	outboxRepo := postgres.NewOutboxRepository(db)
+
 	createUC := app.NewCreateEventUseCase(repo)
 	updateUC := app.NewUpdateEventUseCase(repo)
 	tiersUC := app.NewManageTiersUseCase(repo)
 	transitionUC := app.NewTransitionStateUseCase(repo)
 	getUC := app.NewGetEventUseCase(repo)
 
-	handler := adapterHTTP.NewEventHandler(createUC, updateUC, tiersUC, transitionUC, getUC)
+	enqueueModUC := app.NewEnqueueModerationUseCase(outboxRepo)
+	aiVerdictUC := app.NewHandleAiVerdictUseCase(repo, modRepo, auditRepo)
+	modQueueUC := app.NewListModerationQueueUseCase(repo, modRepo)
+	modActionUC := app.NewModeratorActionUseCase(repo, modRepo, auditRepo)
+
+	handler := adapterHTTP.NewEventHandler(createUC, updateUC, tiersUC, transitionUC, getUC).
+		WithModeration(enqueueModUC, aiVerdictUC, modQueueUC, modActionUC)
 	router := adapterHTTP.NewRouter(handler)
 
 	addr := os.Getenv("HTTP_ADDR")

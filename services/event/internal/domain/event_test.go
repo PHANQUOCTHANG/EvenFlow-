@@ -318,3 +318,54 @@ func TestTicketTier_UpdateValidation(t *testing.T) {
 		t.Errorf("expected ErrInvalidQuota, got %v", err)
 	}
 }
+
+func TestApproveOverride(t *testing.T) {
+	evt := createValidBaseEvent(t)
+	tier, _ := domain.NewTicketTier(evt.ID, "Standard", 300000, 200)
+	_ = evt.AddTier(*tier)
+	_ = evt.SubmitForReview()
+
+	// 1. ApproveOverride from PENDING_REVIEW -> SCHEDULED
+	now := evt.SaleStartAt.Add(-1 * time.Hour)
+	err := evt.ApproveOverride(now)
+	if err != nil {
+		t.Fatalf("unexpected error on ApproveOverride from PENDING_REVIEW: %v", err)
+	}
+	if evt.Status != domain.StatusScheduled {
+		t.Errorf("expected status SCHEDULED, got %s", evt.Status)
+	}
+
+	// 2. Reject then ApproveOverride from REJECTED -> SCHEDULED
+	evt2 := createValidBaseEvent(t)
+	_ = evt2.AddTier(*tier)
+	_ = evt2.SubmitForReview()
+	_ = evt2.Reject()
+	if evt2.Status != domain.StatusRejected {
+		t.Fatalf("expected REJECTED, got %s", evt2.Status)
+	}
+
+	err = evt2.ApproveOverride(now)
+	if err != nil {
+		t.Fatalf("unexpected error on ApproveOverride from REJECTED: %v", err)
+	}
+	if evt2.Status != domain.StatusScheduled {
+		t.Errorf("expected status SCHEDULED, got %s", evt2.Status)
+	}
+
+	// 3. Fails if sale_start_at < now + 30 min (BR-E2)
+	evt3 := createValidBaseEvent(t)
+	_ = evt3.AddTier(*tier)
+	_ = evt3.SubmitForReview()
+	lateApproval := evt3.SaleStartAt.Add(-10 * time.Minute)
+	err = evt3.ApproveOverride(lateApproval)
+	if err != domain.ErrSaleStartTimeTooEarly {
+		t.Errorf("expected ErrSaleStartTimeTooEarly, got %v", err)
+	}
+
+	// 4. Fails from invalid status (e.g. DRAFT)
+	draftEvt := createValidBaseEvent(t)
+	err = draftEvt.ApproveOverride(now)
+	if err != domain.ErrInvalidStateTransition {
+		t.Errorf("expected ErrInvalidStateTransition, got %v", err)
+	}
+}

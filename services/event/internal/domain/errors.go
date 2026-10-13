@@ -16,4 +16,7 @@ var (
 	ErrInvalidEventDates       = errors.New("event starts_at must be after sale_start_at")
 	ErrInvalidTitle            = errors.New("event title cannot be empty")
 	ErrUnauthorizedOrganizer   = errors.New("unauthorized organizer for this event")
+	ErrModReviewNotFound       = errors.New("moderation review not found")
+	ErrRejectReasonRequired    = errors.New("reject reason is required")
+	ErrInvalidAiScore          = errors.New("ai score must be between 0.0 and 1.0")
 )

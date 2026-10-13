@@ -211,6 +211,23 @@ func (e *Event) Approve(now time.Time) error {
 	return nil
 }
 
+// ApproveOverride cho phép Moderator lật ngược quyết định REJECTED hoặc duyệt từ PENDING_REVIEW sang SCHEDULED (EV-121).
+// BR-E2: sale_start_at phải cách thời điểm duyệt >= 30 phút để kịp pre-warm hạ tầng.
+func (e *Event) ApproveOverride(now time.Time) error {
+	if e.Status != StatusPendingReview && e.Status != StatusRejected {
+		return ErrInvalidStateTransition
+	}
+
+	earliestAllowedSaleStart := now.Add(30 * time.Minute)
+	if e.SaleStartAt.Before(earliestAllowedSaleStart) {
+		return ErrSaleStartTimeTooEarly
+	}
+
+	e.Status = StatusScheduled
+	e.UpdatedAt = time.Now().UTC()
+	return nil
+}
+
 // Reject từ chối sự kiện (PENDING_REVIEW -> REJECTED).
 func (e *Event) Reject() error {
 	if e.Status != StatusPendingReview {

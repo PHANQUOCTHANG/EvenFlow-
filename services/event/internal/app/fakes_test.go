@@ -2,6 +2,7 @@ package app_test
 
 import (
 	"context"
+	"time"
 
 	"github.com/eventflow/eventflow/services/event/internal/domain"
 	"github.com/google/uuid"
@@ -90,4 +91,107 @@ func (r *fakeEventRepo) UpdateTier(ctx context.Context, tier *domain.TicketTier)
 
 func (r *fakeEventRepo) GetTiersByEventID(ctx context.Context, eventID uuid.UUID) ([]domain.TicketTier, error) {
 	return r.tiers[eventID], nil
+}
+
+type fakeModerationRepo struct {
+	reviews   map[uuid.UUID]*domain.ModerationReview
+	byEvent   map[uuid.UUID]*domain.ModerationReview
+	createErr error
+}
+
+func newFakeModerationRepo() *fakeModerationRepo {
+	return &fakeModerationRepo{
+		reviews: make(map[uuid.UUID]*domain.ModerationReview),
+		byEvent: make(map[uuid.UUID]*domain.ModerationReview),
+	}
+}
+
+func (r *fakeModerationRepo) Create(ctx context.Context, review *domain.ModerationReview) error {
+	if r.createErr != nil {
+		return r.createErr
+	}
+	r.reviews[review.ID] = review
+	r.byEvent[review.EventID] = review
+	return nil
+}
+
+func (r *fakeModerationRepo) GetLatestByEventID(ctx context.Context, eventID uuid.UUID) (*domain.ModerationReview, error) {
+	rev, ok := r.byEvent[eventID]
+	if !ok {
+		return nil, domain.ErrModReviewNotFound
+	}
+	return rev, nil
+}
+
+func (r *fakeModerationRepo) ListNeedsHuman(ctx context.Context) ([]*domain.ModerationReview, error) {
+	var list []*domain.ModerationReview
+	for _, rev := range r.reviews {
+		if rev.AiVerdict == domain.VerdictNeedsHuman && rev.HumanVerdict == nil {
+			list = append(list, rev)
+		}
+	}
+	return list, nil
+}
+
+func (r *fakeModerationRepo) SetHumanDecision(ctx context.Context, reviewID uuid.UUID, humanID uuid.UUID, verdict, note string, decidedAt time.Time) error {
+	rev, ok := r.reviews[reviewID]
+	if !ok {
+		return domain.ErrModReviewNotFound
+	}
+	rev.HumanID = &humanID
+	rev.HumanVerdict = &verdict
+	rev.HumanNote = &note
+	rev.DecidedAt = &decidedAt
+	return nil
+}
+
+type fakeAuditRepo struct {
+	logs []*domain.AuditLog
+}
+
+func newFakeAuditRepo() *fakeAuditRepo {
+	return &fakeAuditRepo{logs: make([]*domain.AuditLog, 0)}
+}
+
+func (r *fakeAuditRepo) Create(ctx context.Context, log *domain.AuditLog) error {
+	r.logs = append(r.logs, log)
+	return nil
+}
+
+func (r *fakeAuditRepo) ListBySubject(ctx context.Context, subject string) ([]*domain.AuditLog, error) {
+	var list []*domain.AuditLog
+	for _, l := range r.logs {
+		if l.Subject == subject {
+			list = append(list, l)
+		}
+	}
+	return list, nil
+}
+
+type fakeOutboxRepo struct {
+	messages []struct {
+		aggregateType string
+		aggregateID   uuid.UUID
+		routingKey    string
+		payload       any
+	}
+}
+
+func newFakeOutboxRepo() *fakeOutboxRepo {
+	return &fakeOutboxRepo{}
+}
+
+func (r *fakeOutboxRepo) Publish(ctx context.Context, aggregateType string, aggregateID uuid.UUID, routingKey string, payload any) error {
+	r.messages = append(r.messages, struct {
+		aggregateType string
+		aggregateID   uuid.UUID
+		routingKey    string
+		payload       any
+	}{
+		aggregateType: aggregateType,
+		aggregateID:   aggregateID,
+		routingKey:    routingKey,
+		payload:       payload,
+	})
+	return nil
 }
