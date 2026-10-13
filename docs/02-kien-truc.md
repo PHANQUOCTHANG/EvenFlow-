@@ -169,11 +169,47 @@ sweeper (moi 1s):
         WHERE id = $1 AND released_at IS NULL     -- idempotent, tra 0 row neu da release
        (neu 1 row) UPDATE ticket_inventory SET available = available + qty ...
        UPDATE orders SET status = 'EXPIRED' WHERE ...
+       INSERT INTO outbox_events (ticketing.hold.released)   -- CUNG transaction (libs/go/outbox.Write)
      COMMIT
-     -> phat outbox `hold.released` -> Redis tra kho -> thong bao hang cho
+     -> Redis tra kho (neu buoc nay loi, event van di vi da nam trong outbox)
+     outbox relay (worker, poll): claim lease -> publish ra RabbitMQ (confirm) -> danh dau published_at
 ```
 
 Không dùng Redis keyspace notification (không đảm bảo giao nhận). Sweeper quét ZSET là nguồn duy nhất, có thể chạy lại an toàn.
+
+**`hold.released` được phát sau khi Postgres commit, kể cả khi bước giải phóng Redis lỗi.** Sweeper không còn publish thẳng: event là một row `outbox_events` ghi cùng transaction với `ReleaseHold`. Cửa sổ crash đã phân tích: chết trước commit thì không có hold nào được trả và không có event (sweeper quét lại); chết sau commit thì event đã nằm trong outbox và relay sẽ gửi; Redis lỗi sau commit thì kho Postgres đã đúng, Redis được sửa ở vòng quét sau / reconciler, event vẫn đi.
+
+### Transactional outbox và relay (EVF-36)
+
+```
+nghiep vu (cung transaction)         relay (cmd/worker, libs/go/outbox)                  RabbitMQ
+PersistHold  -> outbox_events        1. claim lo: UPDATE next_attempt_at = now()+lease
+ReleaseHold  -> outbox_events           ... WHERE id IN (SELECT ... FOR UPDATE SKIP LOCKED) RETURNING   (tx ngan)
+                                     2. publish tung row NGOAI transaction (confirm) --> ticketing.events
+                                     3. UPDATE published_at = now() ... AND published_at IS NULL (autocommit)
+```
+
+- **Giao hàng at-least-once, không bảo đảm thứ tự.** Chết giữa publish và đánh dấu thì row được gửi lại sau khi lease hết hạn (số bản trùng tối đa bằng kích thước lô). Consumer **phải khử trùng theo `event_id` lấy từ phong bì** (cũng là AMQP `MessageId`) và dựa vào `occurred_at`, không dựa vào thứ tự đến. Trong `data` của row cũ (trước migration 0002) khoá `event_id` là id sự kiện hoà nhạc, không phải id message; dữ liệu mới dùng `sale_event_id`.
+- **Phong bì** dựng từ các cột lúc publish: `event_id`, `occurred_at` (= `created_at`), `trace_id`, `schema_version` (= 1), `type` (= routing key), `data` (= cột `payload`). Không đưa PII vào `data`.
+- **Relay tự quản lý kết nối RabbitMQ**: broker sập thì relay dial lại (lùi 1s → 30s, có jitter), chỉ claim khi đang kết nối, worker và sweeper không dừng; event tích lại trong outbox (gauge `outbox_relay_connected` = 0).
+- **Lỗi và đỗ row:** nack, unroutable (routing key ngoài `DropUnroutable`), hết `PublishTimeout` khi kênh còn mở, lỗi dựng message và **mọi lỗi publish không phân loại khác** (chống row độc thử mãi) đều làm tăng `attempts`; lùi `min(1s·2^(n-1), 5m)` ±20%. Quá `MaxAttempts` (20) thì row bị đỗ: `next_attempt_at = 'infinity'`, giữ `last_error`. Mất kết nối, dial lỗi, huỷ ctx, hết hạn lô thì chỉ trả lease (không bao giờ gỡ đỗ một row đã đỗ). Trước mỗi lần claim relay kiểm tra kết nối còn sống và dial lại nếu chết. `ticketing.hold.created` chưa có consumer nên unroutable được đánh dấu `published_at` + `last_error = 'unroutable'`; `ticketing.hold.released` thì không bao giờ bị bỏ.
+- **Nợ đã biết:** khi broker chặn kết nối (cảnh báo bộ nhớ/đĩa) publish hết hạn và bị tính là lần thử; cảnh báo kéo dài khoảng 1 giờ có thể đỗ `hold.released`. Chưa xử lý ở slice này; đề xuất ticket vận hành theo dõi `NotifyBlocked` và cảnh báo `outbox_dead > 0`, gỡ đỗ theo runbook dưới đây.
+- **Metric:** `outbox_relay_connected`, `outbox_published_total`, `outbox_unroutable_total`, `outbox_publish_errors_total` (nhãn `routing_key`), `outbox_publish_lag_seconds`, `outbox_pending`, `outbox_dead` (hai gauge cập nhật mỗi 15s). Nên cảnh báo khi `outbox_dead > 0` hoặc `outbox_pending` tăng liên tục.
+
+**Runbook — gỡ đỗ row** (sau khi đã sửa nguyên nhân, xem `last_error`):
+
+```sql
+-- xem cac row dang do
+SELECT id, event_id, routing_key, attempts, last_error, created_at
+  FROM outbox_events WHERE published_at IS NULL AND next_attempt_at = 'infinity' ORDER BY id;
+
+-- gui lai: dua ve hang doi va dat lai so lan thu
+UPDATE outbox_events SET next_attempt_at = now(), attempts = 0
+ WHERE published_at IS NULL AND next_attempt_at = 'infinity'
+   AND id IN (...);   -- hoac theo routing_key / khoang thoi gian
+```
+
+**Triển khai migration `0002_outbox_relay.sql`:** chạy migration trước, deploy worker/server mới sau. Trước khi migrate kiểm `SELECT count(*) FROM outbox_events` — bảng nhỏ thì thêm cột có default (volatile `gen_random_uuid()` làm rewrite bảng) chấp nhận được; bảng lớn (hàng triệu row) thì thêm cột nullable, backfill theo lô rồi `SET NOT NULL`. Migration có `SET LOCAL lock_timeout = '5s'` để bỏ cuộc thay vì xếp hàng chặn ghi. Mọi cột mới có default nên INSERT kiểu cũ vẫn chạy: rollback trên production chỉ là rollback ứng dụng (giữ schema 0002); Down chỉ dùng ở dev/test.
 
 ---
 

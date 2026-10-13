@@ -15,6 +15,13 @@ import (
 
 // Test sweeper viet tu nghiep vu: hold het 10:00 phai duoc tra kho (BR-O2), moi
 // hold chi duoc tra dung mot lan (BR-O7), Postgres la nguon su that (BR-O1).
+//
+// EVF-36 (spec AC-1, O2): sweeper KHONG con publish thang. Event ticketing.hold.released duoc ghi vao
+// outbox trong cung transaction cua repo.ReleaseHold (xem test tich hop o adapter/postgres). Chu ky gia dinh:
+//
+//	func NewHoldSweeper(gate port.InventoryGate, repo port.Repository, cfg SweeperConfig, log *slog.Logger) *HoldSweeper
+//
+// (port.Publisher bi xoa neu khong con ai dung.)
 
 type nhatKy struct {
 	mu  sync.Mutex
@@ -100,27 +107,6 @@ func (r *sweepRepo) ReleaseHold(_ context.Context, holdID string) (bool, error) 
 	return kq.released, kq.err
 }
 
-type sweepPub struct {
-	mu   sync.Mutex
-	msgs []map[string]any
-	keys []string
-}
-
-func (p *sweepPub) Publish(_ context.Context, key string, payload any) error {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	p.keys = append(p.keys, key)
-	m, _ := payload.(map[string]any)
-	p.msgs = append(p.msgs, m)
-	return nil
-}
-
-func (p *sweepPub) daPhat() ([]string, []map[string]any) {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	return append([]string(nil), p.keys...), append([]map[string]any(nil), p.msgs...)
-}
-
 // chayToiKhi chay sweeper cho toi khi dk() dung (hoac het 2s) roi dung lai.
 func chayToiKhi(t *testing.T, s *worker.HoldSweeper, dk func() bool) {
 	t.Helper()
@@ -148,16 +134,26 @@ func chayToiKhi(t *testing.T, s *worker.HoldSweeper, dk func() bool) {
 	}
 }
 
-func dungSweeper(gate *sweepGate, repo *sweepRepo, pub *sweepPub, events []string) *worker.HoldSweeper {
+func dungSweeper(gate *sweepGate, repo *sweepRepo, events []string) *worker.HoldSweeper {
 	cfg := worker.DefaultSweeperConfig(events)
 	cfg.Interval = time.Millisecond
-	return worker.NewHoldSweeper(gate, repo, pub, cfg, slog.New(slog.NewTextHandler(io.Discard, nil)))
+	return worker.NewHoldSweeper(gate, repo, cfg, slog.New(slog.NewTextHandler(io.Discard, nil)))
 }
 
-func moiSweeper(expired map[string][]string, res map[string]ketQuaRelease) (*sweepGate, *sweepRepo, *sweepPub, *nhatKy) {
+func moiSweeper(expired map[string][]string, res map[string]ketQuaRelease) (*sweepGate, *sweepRepo, *nhatKy) {
 	nk := &nhatKy{}
 	gate := &sweepGate{log: nk, expired: expired, expiredErr: map[string]error{}, scans: map[string]int{}}
-	return gate, &sweepRepo{log: nk, res: res}, &sweepPub{}, nk
+	return gate, &sweepRepo{log: nk, res: res}, nk
+}
+
+func demOp(ops []string, op string) int {
+	n := 0
+	for _, o := range ops {
+		if o == op {
+			n++
+		}
+	}
+	return n
 }
 
 // Cau hinh mac dinh: quet moi giay (khach da doi du 10 phut, khong bat doi them)
@@ -175,36 +171,23 @@ func TestDefaultSweeperConfig_QuetMoiGiayTheoLo(t *testing.T) {
 	}
 }
 
-// BR-O7: hold het han duoc tra kho va bao ra ngoai DUNG MOT LAN. Hold ma Postgres
-// noi da xu ly truoc do (released=false) thi khong duoc bao "da tra" lan nua.
+// BR-O7: hold het han duoc tra kho DUNG MOT LAN. Hold ma Postgres noi da xu ly truoc do
+// (released=false) thi khong duoc dem la "da tra" lan nua.
 func TestHoldSweeper_BRO7_MoiHoldHetHanChiTraKhoDungMotLan(t *testing.T) {
-	gate, repo, pub, nk := moiSweeper(
+	gate, repo, nk := moiSweeper(
 		map[string][]string{"ev-1": {"h1", "h2"}},
 		map[string]ketQuaRelease{"h1": {released: true}, "h2": {released: false}},
 	)
-	s := dungSweeper(gate, repo, pub, []string{"ev-1"})
+	spy := &spySweeperMetrics{}
+	s := dungSweeper(gate, repo, []string{"ev-1"}).WithMetrics(spy)
 
 	// Cho them vai vong quet de chac chan khong tra lap o vong sau.
 	chayToiKhi(t, s, func() bool { return gate.soLanQuet("ev-1") >= 3 })
 
-	keys, msgs := pub.daPhat()
-	if len(keys) != 1 {
-		t.Fatalf("chi hold thuc su duoc tra (h1) moi duoc bao, dung 1 lan; nhan %d: %v", len(keys), msgs)
+	if got := spy.total(); got != 1 {
+		t.Fatalf("chi hold thuc su duoc tra (h1) moi duoc dem, dung 1 lan; nhan %d", got)
 	}
-	if keys[0] != "ticketing.hold.released" {
-		t.Errorf("routing key sai: %s", keys[0])
-	}
-	if msgs[0]["hold_id"] != "h1" || msgs[0]["event_id"] != "ev-1" {
-		t.Errorf("su kien phai mang dung hold/su kien, nhan %v", msgs[0])
-	}
-
-	pgCount := 0
-	for _, op := range nk.chup() {
-		if op == "pg:h1" {
-			pgCount++
-		}
-	}
-	if pgCount != 1 {
+	if pgCount := demOp(nk.chup(), "pg:h1"); pgCount != 1 {
 		t.Errorf("h1 chi duoc tra o Postgres mot lan, nhan %d", pgCount)
 	}
 	for _, b := range gate.batch {
@@ -219,14 +202,14 @@ func TestHoldSweeper_BRO7_MoiHoldHetHanChiTraKhoDungMotLan(t *testing.T) {
 // se phong len trong khi Postgres van coi la dang giu). Mot hold loi khong duoc
 // chan cac hold khac -- ngung tra dong nghia ve bi khoa vinh vien.
 func TestHoldSweeper_BRO1_PostgresTruocRedisSau(t *testing.T) {
-	gate, repo, pub, nk := moiSweeper(
+	gate, repo, nk := moiSweeper(
 		map[string][]string{"ev-1": {"h-loi", "h-ok"}},
 		map[string]ketQuaRelease{
 			"h-loi": {err: errors.New("postgres: deadlock")},
 			"h-ok":  {released: true},
 		},
 	)
-	s := dungSweeper(gate, repo, pub, []string{"ev-1"})
+	s := dungSweeper(gate, repo, []string{"ev-1"})
 	chayToiKhi(t, s, func() bool { return gate.soLanQuet("ev-1") >= 2 })
 
 	ops := nk.chup()
@@ -247,30 +230,23 @@ func TestHoldSweeper_BRO1_PostgresTruocRedisSau(t *testing.T) {
 	if pg > rd {
 		t.Errorf("phai tra Postgres truoc Redis; thao tac: %v", ops)
 	}
-
-	keys, msgs := pub.daPhat()
-	if len(keys) != 1 || msgs[0]["hold_id"] != "h-ok" {
-		t.Errorf("chi h-ok duoc bao da tra, nhan %v", msgs)
-	}
 }
 
 // Mot su kien quet loi khong duoc lam chet sweeper hay chan su kien khac.
 func TestHoldSweeper_LoiMotSuKienKhongChanSuKienKhac(t *testing.T) {
-	gate, repo, pub, _ := moiSweeper(
+	gate, repo, nk := moiSweeper(
 		map[string][]string{"ev-ok": {"h1"}},
 		map[string]ketQuaRelease{"h1": {released: true}},
 	)
 	gate.expiredErr["ev-loi"] = errors.New("redis: timeout")
-	s := dungSweeper(gate, repo, pub, []string{"ev-loi", "ev-ok"})
+	s := dungSweeper(gate, repo, []string{"ev-loi", "ev-ok"})
 
 	chayToiKhi(t, s, func() bool {
-		keys, _ := pub.daPhat()
-		return gate.soLanQuet("ev-loi") >= 3 && len(keys) == 1
+		return gate.soLanQuet("ev-loi") >= 3 && demOp(nk.chup(), "redis:ev-ok:h1") == 1
 	})
 
-	_, msgs := pub.daPhat()
-	if msgs[0]["event_id"] != "ev-ok" || msgs[0]["hold_id"] != "h1" {
-		t.Errorf("su kien con lai van phai duoc tra kho, nhan %v", msgs)
+	if demOp(nk.chup(), "pg:h1") != 1 {
+		t.Errorf("su kien con lai van phai duoc tra kho, thao tac: %v", nk.chup())
 	}
 }
 
@@ -294,12 +270,12 @@ func (s *spySweeperMetrics) total() int {
 // Metric chi dem hold THUC SU duoc tra: hold ma Postgres noi da xu ly truoc do
 // (released=false) khong duoc tinh, neu khong so tra kho bi phong len.
 func TestHoldSweeper_Metrics_ChiDemHoldThucSuDuocTra(t *testing.T) {
-	gate, repo, pub, _ := moiSweeper(
+	gate, repo, _ := moiSweeper(
 		map[string][]string{"ev-1": {"h1", "h2", "h3"}},
 		map[string]ketQuaRelease{"h1": {released: true}, "h2": {released: false}, "h3": {released: true}},
 	)
 	spy := &spySweeperMetrics{}
-	s := dungSweeper(gate, repo, pub, []string{"ev-1"}).WithMetrics(spy)
+	s := dungSweeper(gate, repo, []string{"ev-1"}).WithMetrics(spy)
 
 	chayToiKhi(t, s, func() bool { return gate.soLanQuet("ev-1") >= 3 })
 

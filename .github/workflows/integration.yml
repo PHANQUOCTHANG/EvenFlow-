@@ -30,17 +30,24 @@ jobs:
           cache-dependency-path: |
             libs/go/go.sum
             services/ticketing/go.sum
-      - name: go test -tags=integration (ticketing)
-        working-directory: services/ticketing
-        run: go test -tags=integration ./... -count=1 -timeout=10m
       # Bao qua run-and-report-tests.sh de mot smoke skip toan bo khong con xanh cam (xem
       # oversell-gate.yml). Duong dan tuyet doi vi step chay trong services/ticketing.
+      # Giu step nay la step DAU TIEN goi run-and-report-tests.sh: test-workflows.sh (AC-4) doc step do.
       - name: oversell smoke (20 lan, gate day du 200 lan nam o oversell-gate.yml)
         working-directory: services/ticketing
         run: |
           bash "$GITHUB_WORKSPACE/.github/scripts/run-and-report-tests.sh" TestNoOversell \
             go test -v -tags=integration -run TestNoOversell \
             ./test/concurrency/... -count=20 -timeout=15m
+      # Bao gom adapter/postgres/repository_integration_test.go (EVF-36: PersistHold/ReleaseHold ghi outbox).
+      - name: go vet -tags=integration (ticketing)
+        working-directory: services/ticketing
+        run: go vet -tags=integration ./...
+      - name: go test -tags=integration (ticketing)
+        working-directory: services/ticketing
+        run: |
+          bash "$GITHUB_WORKSPACE/.github/scripts/run-and-report-tests.sh" TestTichHop \
+            go test -v -tags=integration ./... -count=1 -timeout=10m
       # libs/go/mq: test tich hop voi RabbitMQ that (testcontainers). Fail (khong skip) khi khong co Docker.
       - name: go vet -tags=integration (libs/go/mq)
         working-directory: libs/go
@@ -50,3 +57,13 @@ jobs:
         run: |
           bash "$GITHUB_WORKSPACE/.github/scripts/run-and-report-tests.sh" TestTichHop \
             go test -v -tags=integration ./mq/... -count=1 -timeout=10m
+      # libs/go/outbox (EVF-36): relay + outbox voi Postgres 16 va RabbitMQ 3.13 that (kill-restart, broker stop/start,
+      # migration Up/Down/Up). Fail (khong skip) khi khong co Docker.
+      - name: go vet -tags=integration (libs/go/outbox)
+        working-directory: libs/go
+        run: go vet -tags=integration ./outbox/...
+      - name: go test -tags=integration (libs/go/outbox)
+        working-directory: libs/go
+        run: |
+          bash "$GITHUB_WORKSPACE/.github/scripts/run-and-report-tests.sh" TestTichHop \
+            go test -v -tags=integration ./outbox/... -count=1 -timeout=15m

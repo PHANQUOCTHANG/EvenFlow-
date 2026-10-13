@@ -7,15 +7,16 @@ package postgresadapter
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/eventflow/eventflow/libs/go/otelx"
+	"github.com/eventflow/eventflow/libs/go/outbox"
 	"github.com/eventflow/eventflow/services/ticketing/internal/domain"
 	"github.com/eventflow/eventflow/services/ticketing/internal/port"
 )
@@ -178,16 +179,19 @@ func (r *Repository) persistHold(ctx context.Context, p port.PersistHoldParams) 
 
 	// (4) Outbox: ghi CUNG transaction voi nghiep vu. Day la ly do khong bao gio
 	// xay ra chuyen "don da tao nhung khong ai duoc bao" hay nguoc lai.
-	payload, _ := json.Marshal(map[string]any{
-		"order_id":   out.OrderID,
-		"event_id":   p.EventID,
-		"expires_at": p.ExpiresAt,
-		"quantity":   p.Quantity,
-	})
-	const insertOutbox = `
-		INSERT INTO outbox_events (aggregate_type, aggregate_id, routing_key, payload)
-		VALUES ('order', $1::uuid, 'ticketing.hold.created', $2)`
-	if _, err := tx.Exec(ctx, insertOutbox, out.OrderID, payload); err != nil {
+	// Khong dua PII (identity_id, email...) vao data.
+	if _, err := outbox.Write(ctx, tx, outbox.Event{
+		AggregateType: "order",
+		AggregateID:   out.OrderID,
+		RoutingKey:    "ticketing.hold.created",
+		Data: map[string]any{
+			"order_id":      out.OrderID,
+			"hold_id":       out.HoldID,
+			"sale_event_id": p.EventID,
+			"expires_at":    p.ExpiresAt,
+			"quantity":      p.Quantity,
+		},
+	}); err != nil {
 		return out, err
 	}
 
@@ -220,14 +224,17 @@ func (r *Repository) releaseHold(ctx context.Context, holdID string) (bool, erro
 	defer func() { _ = tx.Rollback(ctx) }()
 
 	const claim = `
-		UPDATE seat_holds
+		UPDATE seat_holds h
 		   SET released_at = now()
-		 WHERE id = $1::uuid AND released_at IS NULL AND consumed_at IS NULL
-		RETURNING order_id::text, ticket_type_id::text, bucket, quantity`
+		  FROM orders o
+		 WHERE h.id = $1::uuid AND h.released_at IS NULL AND h.consumed_at IS NULL
+		   AND o.id = h.order_id
+		RETURNING h.id::text, h.order_id::text, h.ticket_type_id::text, h.bucket, h.quantity, o.event_id::text, h.released_at`
 
-	var orderID, ticketTypeID string
+	var canonicalID, orderID, ticketTypeID, saleEventID string
 	var bucket, qty int
-	err = tx.QueryRow(ctx, claim, toUUID(holdID)).Scan(&orderID, &ticketTypeID, &bucket, &qty)
+	var releasedAt time.Time // now() cua DB, khong dung dong ho Go
+	err = tx.QueryRow(ctx, claim, toUUID(holdID)).Scan(&canonicalID, &orderID, &ticketTypeID, &bucket, &qty, &saleEventID, &releasedAt)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return false, nil // da xu ly truoc do -- khong phai loi
 	}
@@ -247,6 +254,22 @@ func (r *Repository) releaseHold(ctx context.Context, holdID string) (bool, erro
 		UPDATE orders SET status = 'EXPIRED', updated_at = now()
 		 WHERE id = $1::uuid AND status = 'HELD'`
 	if _, err := tx.Exec(ctx, expire, orderID); err != nil {
+		return false, err
+	}
+
+	// Outbox: hold.released ghi CUNG transaction -> chi phat sau khi Postgres commit,
+	// ke ca khi buoc tra kho Redis cua sweeper loi sau do. aggregate_id va hold_id
+	// dung dang chuan (co gach), khong phai 32 hex cua Redis.
+	if _, err := outbox.Write(ctx, tx, outbox.Event{
+		AggregateType: "hold",
+		AggregateID:   canonicalID,
+		RoutingKey:    "ticketing.hold.released",
+		Data: map[string]any{
+			"hold_id":       canonicalID,
+			"sale_event_id": saleEventID,
+			"released_at":   releasedAt.UTC(),
+		},
+	}); err != nil {
 		return false, err
 	}
 
