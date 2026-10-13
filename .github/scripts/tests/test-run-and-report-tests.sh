@@ -535,6 +535,37 @@ unset SUT_TMPDIR
 if [ "$RC" -eq 2 ] && [ -n "$ERR" ]; then ok "T35 TMPDIR=/nonexistent/x (khong tao duoc file tam) => exit 2 + loi ra stderr"
 else bad "T35 TMPDIR=/nonexistent/x (khong tao duoc file tam) => exit 2 + loi ra stderr" "exit=$RC" "stderr=$(printf '%s' "$ERR" | head -3)"; fi
 
+# ---------------------------------------------------------------- REQUIRE_PASS (EV-134, D2)
+# Bien tuy chon: cong oversell bat no de "0 PASS" la do thay vi chi canh bao.
+SF="$T/summary-require.md"; : >"$SF"
+REQUIRE_PASS=1 run_sut "$SF" "$R" bash "$T/fake.sh" "$F_SKIP" 0
+ge="$(summary_value exit "$SF")"
+if [ "$RC" -eq 1 ] && [ "$(count_warning_lines "$OUT")" -eq 1 ] && { [ -z "$ge" ] || [ "$ge" = 1 ]; }; then
+  ok "T36 REQUIRE_PASS=1 + toan SKIP + lenh exit 0 => script exit 1 (van canh bao, summary khong ghi exit 0)"
+else
+  bad "T36 REQUIRE_PASS=1 + toan SKIP + lenh exit 0 => script exit 1 (van canh bao, summary khong ghi exit 0)" \
+      "exit=$RC so dong ::warning=$(count_warning_lines "$OUT") exit trong summary='$ge'"
+fi
+
+REQUIRE_PASS=1 run_sut "" "$R" bash "$T/fake.sh" "$F_NONE" 0
+if [ "$RC" -eq 1 ]; then ok "T37 REQUIRE_PASS=1 + regex khong khop test nao (0/0/0) => exit 1"
+else bad "T37 REQUIRE_PASS=1 + regex khong khop test nao (0/0/0) => exit 1" "exit=$RC"; fi
+
+REQUIRE_PASS=1 run_sut "" 'TestX' bash "$T/fake.sh" "$F_X" 0
+if [ "$RC" -eq 0 ] && [ "$(count_warning_lines "$OUT")" -eq 0 ]; then
+  ok "T38 REQUIRE_PASS=1 + co PASS => exit 0, khong canh bao"
+else
+  bad "T38 REQUIRE_PASS=1 + co PASS => exit 0, khong canh bao" "exit=$RC so dong ::warning=$(count_warning_lines "$OUT")"
+fi
+
+REQUIRE_PASS=1 run_sut "" 'TestX' bash "$T/fake.sh" "$F_X" 3
+if [ "$RC" -eq 3 ]; then ok "T39 REQUIRE_PASS=1 + lenh that bai exit 3 => van giu nguyen exit 3"
+else bad "T39 REQUIRE_PASS=1 + lenh that bai exit 3 => van giu nguyen exit 3" "exit=$RC"; fi
+
+run_sut "" "$R" bash "$T/fake.sh" "$F_SKIP" 0
+if [ "$RC" -eq 0 ]; then ok "T40 khong dat REQUIRE_PASS + toan SKIP => van exit 0 (hanh vi cu giu nguyen)"
+else bad "T40 khong dat REQUIRE_PASS + toan SKIP => van exit 0 (hanh vi cu giu nguyen)" "exit=$RC"; fi
+
 # ---------------------------------------------------------------- ket qua
 echo
 echo "== Ket qua: $PASSED PASS, $FAILED FAIL =="

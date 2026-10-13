@@ -5,9 +5,11 @@ name: Oversell Gate (EVF-39)
 # release. Chi bat buoc truoc khi vao main (nang, ~30 phut) -- PR vao develop
 # va cac nhanh feature dung gate nhe hon trong integration.yml.
 #
-# LUU Y cho doi: test that (setupEnv) hien con la TODO (xem
-# services/ticketing/test/concurrency/helpers.go). Workflow nay da san sang
-# chay ngay khi EVF-39 duoc hien thuc, khong can sua CI.
+# Hai bai kiem, chay tren Postgres + Redis THAT (libs/go/testx):
+#   - TestNoOversell_UnderExtremeConcurrency: 10.000 goroutine mua 100 ve, x200
+#   - TestNoOversell_WithConcurrentExpiry:    sweeper song song voi viec mua, x20
+#     (tach rieng: moi lan ngu >= 15 giay nen x200 la hon mot gio)
+# REQUIRE_PASS=1: cong khong chay duoc lan PASS nao la DO (khong chi canh bao).
 
 on:
   pull_request:
@@ -23,7 +25,7 @@ jobs:
   oversell-gate:
     name: oversell-gate
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
@@ -33,7 +35,13 @@ jobs:
       # `go test` coi SKIP la thanh cong. Khi `setupEnv` con `t.Skip` thi gate nay xanh voi
       # 0 lan kiem that -- trong y het mot gate dang bao ve bat bien "khong ban qua so ve".
       # Script dem PASS/FAIL/SKIP, giu nguyen exit code, va canh bao khi 0 lan PASS.
-      # (Bien skip thanh fail cung la quyet dinh cua truong nhom: no se chan moi PR vao main
-      # cho toi khi EVF-39 xong. Xem docs/workflow/ci-cd-review/spec.md §3.)
+      # (Skip thanh fail la quyet dinh cua truong nhom, nay bat nho REQUIRE_PASS vi test that da
+      # co. Xem docs/workflow/ci-cd-review/spec.md §3 va docs/workflow/EV-134-testx-oversell-gate.)
       - name: TestNoOversell x200 (make test-oversell)
+        env:
+          REQUIRE_PASS: "1"
         run: bash .github/scripts/run-and-report-tests.sh TestNoOversell make test-oversell TESTFLAGS=-v
+      - name: TestNoOversell hold het han x20 (make test-oversell-expiry)
+        env:
+          REQUIRE_PASS: "1"
+        run: bash .github/scripts/run-and-report-tests.sh TestNoOversell make test-oversell-expiry TESTFLAGS=-v

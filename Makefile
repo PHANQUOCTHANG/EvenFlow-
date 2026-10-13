@@ -72,9 +72,15 @@ test-integration: ## Integration test (testcontainers -- can Docker)
 TESTFLAGS ?=
 
 .PHONY: test-oversell
-test-oversell: ## EVF-39 -- cong chat luong. Fail thi KHONG duoc release.
-	go test $(TESTFLAGS) -tags=integration -run TestNoOversell \
+test-oversell: ## EVF-39 -- cong chat luong: 10.000 goroutine mua 100 ve, 200 lan. Fail thi KHONG duoc release.
+	go test $(TESTFLAGS) -tags=integration -run TestNoOversell_UnderExtremeConcurrency \
 		./services/ticketing/test/concurrency/... -count=200 -timeout=30m
+
+# Tach rieng vi moi lan chay ngu >= 15 giay (5 vong cho hold het han): 200 lan la hon mot gio.
+.PHONY: test-oversell-expiry
+test-oversell-expiry: ## EVF-39 -- sweeper tra kho song song voi viec mua (20 lan)
+	go test $(TESTFLAGS) -tags=integration -run TestNoOversell_WithConcurrentExpiry \
+		./services/ticketing/test/concurrency/... -count=20 -timeout=20m
 
 ## ---------- Chiu tai ----------
 
