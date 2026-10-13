@@ -324,7 +324,9 @@ func itConfig(exchange string) RelayConfig {
 	cfg.Exchange = exchange
 	cfg.BatchSize = 10
 	cfg.Interval = 50 * time.Millisecond
-	cfg.Lease = 3 * time.Second
+	// plan §8 m1: Lease > BatchDeadline + PublishTimeout + 2*5s (13s). Lease ngan nhat hop le de test R2
+	// (row da publish nhung chua danh dau) khong phai cho lau.
+	cfg.Lease = 14 * time.Second
 	cfg.BatchDeadline = 2 * time.Second
 	cfg.PublishTimeout = time.Second
 	cfg.BaseBackoff = 50 * time.Millisecond
@@ -459,6 +461,55 @@ func TestTichHop_AC4_DongCungAMQPGiuaLoRoiKhoiDongLai(t *testing.T) {
 		return countWhere(t, pool, "published_at IS NULL") == 0
 	})
 	stop()
+	assertAtLeastOnce(t, ids, countByEventID(t, drain(t, tt.queue)), cfg.BatchSize)
+}
+
+// --- AC-4 + m5 (plan §8): CHI cat TCP (khong huy ctx) -> di dung nhanh ErrClosed, relay tu dial lai ---
+
+func TestTichHop_AC4_ChiCatTCPRelayTuDialLaiGuiHet(t *testing.T) {
+	ctx := context.Background()
+	pool := pgtest.New(t)
+	tt := newTopo("ticketing.hold.released")
+	declare(t, tt)
+	ids := writeEvents(t, ctx, pool, 30, "ticketing.hold.released")
+
+	var ok atomic.Int32
+	var killed atomic.Bool
+	d := &brokerDialer{url: broker(t), topo: tt.top}
+	d.wrap = func(p Publisher) Publisher {
+		return pubFunc(func(c context.Context, ex, key string, msg mq.Message) error {
+			err := p.Publish(c, ex, key, msg)
+			if err == nil && ok.Add(1) == 5 && killed.CompareAndSwap(false, true) {
+				d.killTCP() // giua lo 1; tien trinh relay van song
+			}
+			return err
+		})
+	}
+	cfg := itConfig(tt.exchange)
+	r, err := NewRelay(pool, d.dial, cfg)
+	if err != nil {
+		t.Fatalf("NewRelay: %v", err)
+	}
+	stop := runRelay(t, r)
+	eventually(t, 90*time.Second, "relay tu dial lai va moi row co published_at", func() bool {
+		return countWhere(t, pool, "published_at IS NULL") == 0
+	})
+	stop()
+	if !killed.Load() {
+		t.Fatal("tien de sai: chua cat TCP")
+	}
+	d.mu.Lock()
+	dials := d.dials
+	d.mu.Unlock()
+	if dials < 2 {
+		t.Errorf("relay dial %d lan, muon >= 2 (phai dial lai sau khi TCP bi cat)", dials)
+	}
+	if n := countWhere(t, pool, "next_attempt_at = 'infinity'"); n != 0 {
+		t.Errorf("%d row bi do vi mat ket noi", n)
+	}
+	if n := countWhere(t, pool, "attempts > 0"); n != 0 {
+		t.Logf("ghi nhan: %d row co attempts > 0 (publish dang bay khi socket bi cat)", n)
+	}
 	assertAtLeastOnce(t, ids, countByEventID(t, drain(t, tt.queue)), cfg.BatchSize)
 }
 

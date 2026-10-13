@@ -41,7 +41,8 @@ import (
 //		Interval       time.Duration         // 0 -> 500ms
 //		Lease          time.Duration         // 0 -> 60s
 //		BatchDeadline  time.Duration         // 0 -> 30s
-//		PublishTimeout time.Duration         // 0 -> 10s; PublishTimeout <= BatchDeadline < Lease
+//		PublishTimeout time.Duration         // 0 -> 10s; PublishTimeout <= BatchDeadline va
+//		                                     // BatchDeadline + PublishTimeout + 2*5s (markTimeout) < Lease (plan §8 m1)
 //		BaseBackoff    time.Duration         // 0 -> 1s
 //		MaxBackoff     time.Duration         // 0 -> 5m; 0 < Base <= Max <= 1h
 //		MaxAttempts    int                   // 0 -> 20; < 0 loi
@@ -91,6 +92,17 @@ func TestNewRelay_KiemTraCauHinh(t *testing.T) {
 		{"MaxBackoff 1h duoc", func(c *RelayConfig) { c.MaxBackoff = time.Hour }, false},
 		{"MaxBackoff qua 1h", func(c *RelayConfig) { c.MaxBackoff = time.Hour + time.Nanosecond }, true},
 		{"MaxAttempts am", func(c *RelayConfig) { c.MaxAttempts = -1 }, true},
+		// plan §8 m1: lease phai bao ca lo, mot publish va hai cau danh dau (2 x 5s).
+		{"Lease bang BatchDeadline + PublishTimeout + 10s", func(c *RelayConfig) {
+			c.Lease = c.BatchDeadline + c.PublishTimeout + 10*time.Second
+		}, true},
+		{"Lease lon hon BatchDeadline + PublishTimeout + 10s duoc", func(c *RelayConfig) {
+			c.Lease = c.BatchDeadline + c.PublishTimeout + 10*time.Second + time.Millisecond
+		}, false},
+		{"Lease 5s voi lo 1s (cu hop le, nay thieu cho danh dau)", func(c *RelayConfig) { c.Lease = 5 * time.Second }, true},
+		{"chi dat Lease 45s, con lai mac dinh 30s + 10s + 10s", func(c *RelayConfig) {
+			*c = RelayConfig{Exchange: "x", Registerer: prometheus.NewRegistry(), Lease: 45 * time.Second}
+		}, true},
 	}
 	for _, tc := range cases {
 		t.Run(tc.ten, func(t *testing.T) {
@@ -588,7 +600,7 @@ func TestRunOnce_HetBatchDeadlineTraLeasePhanCon(t *testing.T) {
 	cfg := testConfig()
 	cfg.PublishTimeout = 100 * time.Millisecond
 	cfg.BatchDeadline = 150 * time.Millisecond
-	cfg.Lease = time.Second
+	cfg.Lease = 11 * time.Second // > 150ms + 100ms + 2*5s (plan §8 m1)
 	r := newTestRelay(t, db, d, cfg)
 
 	_, _ = r.RunOnce(context.Background())
@@ -812,3 +824,186 @@ var (
 	_ Publisher = (*mq.Publisher)(nil)
 	_ Dialer    = func(context.Context) (Publisher, io.Closer, error) { return nil, nil, nil }
 )
+
+// --- plan §8 (code review) ---
+
+// m1: ctx cua lan publish bi chan boi han chot lo — PublishTimeout khong duoc keo dai qua BatchDeadline.
+func TestRunOnce_PublishBiCatTaiHanChotLo(t *testing.T) {
+	a, b := mkRow(1, "ticketing.hold.released"), mkRow(2, "ticketing.hold.released")
+	db := newFakeDB(t, a, b)
+	d := newFakeDialer()
+	d.pub.on[a.EventID] = func(context.Context) error { // cham nhung thanh cong, khong theo ctx
+		time.Sleep(300 * time.Millisecond)
+		return nil
+	}
+	var deadline time.Time
+	var hasDeadline bool
+	d.pub.on[b.EventID] = func(ctx context.Context) error {
+		deadline, hasDeadline = ctx.Deadline()
+		<-ctx.Done()
+		return fmt.Errorf("mq: cho confirm: %w", ctx.Err())
+	}
+	cfg := testConfig()
+	cfg.BatchDeadline = 400 * time.Millisecond
+	cfg.PublishTimeout = 400 * time.Millisecond // row b bat dau ~300ms: tu han cua no la ~700ms
+	r := newTestRelay(t, db, d, cfg)
+
+	start := time.Now()
+	_, _ = r.RunOnce(context.Background())
+	el := time.Since(start)
+	if !hasDeadline {
+		t.Fatal("ctx publish khong co han chot")
+	}
+	if lim := start.Add(cfg.BatchDeadline + 100*time.Millisecond); deadline.After(lim) {
+		t.Errorf("han ctx publish = start+%v, muon <= start+%v (han chot lo)", deadline.Sub(start), cfg.BatchDeadline)
+	}
+	if el > 650*time.Millisecond {
+		t.Errorf("RunOnce mat %v; publish cuoi vuot han chot lo 400ms", el)
+	}
+	if st := db.state(a.ID); !st.published {
+		t.Errorf("row a da gui truoc han chot phai duoc danh dau: %+v", st)
+	}
+	if st := db.state(b.ID); st.published || st.parked {
+		t.Errorf("row b bi cat tai han chot: %+v, muon chua gui va khong do", st)
+	}
+	assertMarksGuarded(t, db)
+}
+
+// m1: tra lease khong duoc go do mot row ma relay khac vua do (next_attempt_at = 'infinity').
+func TestRunOnce_TraLeaseKhongGoDoRowDaDo(t *testing.T) {
+	rows := []fakeRow{mkRow(1, "ticketing.hold.released"), mkRow(2, "ticketing.hold.released"), mkRow(3, "ticketing.hold.released")}
+	db := newFakeDB(t, rows...)
+	d := newFakeDialer()
+	d.pub.on[rows[0].EventID] = func(context.Context) error {
+		db.setParked(rows[2].ID) // relay khac (lease cu het han) da claim lai row 3 va do no
+		return fmt.Errorf("publish: %w", mq.ErrClosed)
+	}
+	r := newTestRelay(t, db, d, testConfig())
+
+	if _, err := r.RunOnce(context.Background()); !errors.Is(err, mq.ErrClosed) {
+		t.Fatalf("RunOnce = %v, muon ErrClosed", err)
+	}
+	if st := db.state(rows[2].ID); !st.parked || st.due {
+		t.Errorf("row da do bi tra lease lam song lai: %+v", st)
+	}
+	for _, row := range rows[:2] {
+		if st := db.state(row.ID); st.releases != 1 {
+			t.Errorf("row %d chua do phai duoc tra lease: %+v", row.ID, st)
+		}
+	}
+	assertMarksGuarded(t, db)
+}
+
+// m3: loi publish khong phan loai (khong phai ErrClosed/ctx) tinh la mot lan thu, ghi last_error.
+func TestRunOnce_LoiKhongPhanLoaiTangAttempts(t *testing.T) {
+	a, b := mkRow(1, "ticketing.hold.released"), mkRow(2, "ticketing.hold.released")
+	db := newFakeDB(t, a, b)
+	d := newFakeDialer()
+	d.pub.on[a.EventID] = func(context.Context) error { return errors.New("loi la chua tung gap") }
+	r := newTestRelay(t, db, d, testConfig())
+
+	if _, err := r.RunOnce(context.Background()); err != nil {
+		t.Fatalf("loi cua mot row khong duoc lam RunOnce tra loi: %v", err)
+	}
+	sa := db.state(a.ID)
+	if sa.retries != 1 || sa.published || sa.releases != 0 {
+		t.Errorf("row loi khong phan loai: %+v, muon attempts+1", sa)
+	}
+	if !contains(sa.errs, "loi la chua tung gap") {
+		t.Errorf("last_error = %q, muon chua loi goc", sa.errs)
+	}
+	if d.closer.count() != 0 {
+		t.Error("loi khong phan loai khong duoc dong ket noi")
+	}
+	if sb := db.state(b.ID); !sb.published {
+		t.Errorf("row khac bi chan: %+v", sb)
+	}
+	assertMarksGuarded(t, db)
+}
+
+// m4: ket noi bao da dong (Closer co IsClosed() bool) truoc khi claim -> khong claim, gauge 0, lan sau dial lai.
+//
+// SEAM gia dinh: io.Closer (hoac Publisher) ma Dialer tra ve co the hien thuc them `IsClosed() bool`
+// (*amqp091.Connection co san); relay kiem truoc moi lan claim, neu true thi dong ket noi va dat
+// outbox_relay_connected = 0. Chap nhan hai cach: (a) khong claim trong lan RunOnce do, lan sau dial lai;
+// (b) dial lai ngay trong cung lan RunOnce roi moi claim. Bat bien chung: KHONG claim/publish tren ket noi chet.
+func TestRunOnce_KetNoiDaDongTruocClaimThiKhongClaimVaDialLai(t *testing.T) {
+	a := mkRow(1, "ticketing.hold.released")
+	db := newFakeDB(t, a)
+	d := newFakeDialer()
+	cfg := testConfig()
+	r := newTestRelay(t, db, d, cfg)
+	g := gatherer(t, cfg)
+
+	if _, err := r.RunOnce(context.Background()); err != nil {
+		t.Fatalf("RunOnce 1: %v", err)
+	}
+	claims := db.claimCount()
+	b := mkRow(2, "ticketing.hold.released")
+	db.add(b)
+	d.closer.kill() // broker dong ket noi khi relay dang ranh
+
+	_, _ = r.RunOnce(context.Background())
+	if d.closer.count() != 1 {
+		t.Errorf("ket noi chet phai duoc dong (Close %d lan)", d.closer.count())
+	}
+	switch d.dialCount() {
+	case 1: // (a) chua dial lai: khong duoc claim, gauge 0
+		if db.claimCount() != claims {
+			t.Errorf("claim khi ket noi da chet (%d -> %d lan)", claims, db.claimCount())
+		}
+		if v, _ := metricValue(t, g, "outbox_relay_connected", nil); v != 0 {
+			t.Errorf("outbox_relay_connected = %v, muon 0 khi ket noi da dong", v)
+		}
+		if _, err := r.RunOnce(context.Background()); err != nil {
+			t.Fatalf("RunOnce 3: %v", err)
+		}
+	case 2: // (b) da dial lai ngay trong lan nay
+	default:
+		t.Errorf("dial %d lan sau khi ket noi chet, muon 1 hoac 2", d.dialCount())
+	}
+	for _, c := range d.pub.snapshot() {
+		if c.deadConn {
+			t.Errorf("publish %s tren ket noi da chet", c.msg.MessageID)
+		}
+	}
+	if d.dialCount() != 2 {
+		t.Errorf("lan sau phai dial lai: dial %d lan, muon 2", d.dialCount())
+	}
+	if st := db.state(b.ID); !st.published {
+		t.Errorf("row moi phai duoc gui sau khi dial lai: %+v", st)
+	}
+	if v, _ := metricValue(t, g, "outbox_relay_connected", nil); v != 1 {
+		t.Errorf("outbox_relay_connected = %v sau khi dial lai, muon 1", v)
+	}
+}
+
+// m8: metric published/lag chi ghi SAU khi danh dau thanh cong.
+func TestRunOnce_DanhDauLoiThiKhongTangMetricPublished(t *testing.T) {
+	a := mkRow(1, "ticketing.hold.released")
+	db := newFakeDB(t, a)
+	db.failMark = func(kind stmtKind, _ []int64) error {
+		if kind == kindPublished {
+			return errTest
+		}
+		return nil
+	}
+	d := newFakeDialer()
+	cfg := testConfig()
+	r := newTestRelay(t, db, d, cfg)
+
+	n, err := r.RunOnce(context.Background())
+	if err == nil {
+		t.Error("danh dau loi phai lam RunOnce tra loi")
+	}
+	if n != 0 {
+		t.Errorf("published = %d, muon 0 (chua danh dau duoc)", n)
+	}
+	g := gatherer(t, cfg)
+	if v, _ := metricValue(t, g, "outbox_published_total", nil); v != 0 {
+		t.Errorf("outbox_published_total = %v, muon 0 khi danh dau loi", v)
+	}
+	if v, _ := metricValue(t, g, "outbox_publish_lag_seconds", nil); v != 0 {
+		t.Errorf("outbox_publish_lag_seconds co %v mau, muon 0 khi danh dau loi", v)
+	}
+}

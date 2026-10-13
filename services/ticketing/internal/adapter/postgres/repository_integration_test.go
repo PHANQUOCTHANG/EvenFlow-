@@ -291,6 +291,18 @@ func TestTichHop_ReleaseHoldGhiOutboxHoldReleasedMotLan(t *testing.T) {
 	if r.Payload["sale_event_id"] != f.eventID {
 		t.Errorf("data.sale_event_id = %v, muon %s", r.Payload["sale_event_id"], f.eventID)
 	}
+	// plan §8 m8: released_at lay tu DB (now() cua transaction, cung gia tri voi seat_holds.released_at),
+	// khong phai dong ho Go — so khop toi micro giay.
+	var dbReleased time.Time
+	if err := f.pool.QueryRow(ctx, `SELECT released_at FROM seat_holds WHERE id = $1::uuid`, hv.HoldID).Scan(&dbReleased); err != nil {
+		t.Fatalf("doc seat_holds.released_at: %v", err)
+	}
+	ra, _ := r.Payload["released_at"].(string)
+	if got, err := time.Parse(time.RFC3339Nano, ra); err != nil {
+		t.Errorf("data.released_at = %q khong phai RFC3339: %v", ra, err)
+	} else if !got.Truncate(time.Microsecond).Equal(dbReleased.Truncate(time.Microsecond)) {
+		t.Errorf("data.released_at = %v, muon dung seat_holds.released_at %v (thoi gian DB)", got, dbReleased)
+	}
 	for _, cam := range []string{"event_id", "identity_id"} {
 		if _, ok := r.Payload[cam]; ok {
 			t.Errorf("data hold.released khong duoc co %s: %v", cam, r.Payload)

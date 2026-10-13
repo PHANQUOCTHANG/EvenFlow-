@@ -44,6 +44,7 @@ import (
 //   - thu lai:       SET attempts = attempts + 1, last_error = $x, next_attempt_at = now() + ...
 //   - do (park):     SET ... next_attempt_at = 'infinity' ... (hang so trong SQL; quyet dinh do nam o Go)
 //   - tra lease:     SET next_attempt_at = now() WHERE id = ANY($1) AND published_at IS NULL
+//     AND next_attempt_at <> 'infinity' (plan §8 m1: tra lease khong duoc go do row da bi relay khac do)
 //   - Cau doc so lieu (count(*)) di qua QueryRow; fake tra 0.
 //   - Moi cau dung ctx da huy thi fake tra ctx.Err() (nhu pgx) — nen danh dau phai chay duoi
 //     context.WithoutCancel.
@@ -82,7 +83,7 @@ func classify(n string) stmtKind {
 		return kindOther
 	case strings.Contains(n, "published_at=now()"):
 		return kindPublished
-	case strings.Contains(n, "'infinity'"):
+	case strings.Contains(n, "next_attempt_at='infinity'"):
 		return kindPark
 	case strings.Contains(n, "attempts=attempts+1"):
 		return kindRetry
@@ -277,6 +278,13 @@ func (db *fakeDB) exec(ctx context.Context, inTx bool, sql string, args []any) (
 				r.retries++
 			}
 		case kindRelease:
+			if r.parked {
+				if strings.Contains(s.sql, "next_attempt_at<>'infinity'") {
+					affected--
+					continue // dieu kien SQL loai row da do
+				}
+				r.parked = false // SQL thieu dieu kien: go do nham
+			}
 			r.releases++
 			r.due = true
 		}
@@ -354,6 +362,22 @@ func (db *fakeDB) queryRow(ctx context.Context, inTx bool, sql string, args []an
 
 // --- truy van trang thai cho test ---
 
+// setParked gia lap mot relay khac vua do row id (next_attempt_at = 'infinity').
+func (db *fakeDB) setParked(id int64) {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+	db.st[id].parked = true
+	db.st[id].due = false
+}
+
+// add them row vao fake (vd. event moi duoc ghi giua hai lo).
+func (db *fakeDB) add(r fakeRow) {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+	db.rows = append(db.rows, r)
+	db.st[r.ID] = &rowState{due: true}
+}
+
 func (db *fakeDB) state(id int64) rowState {
 	db.mu.Lock()
 	defer db.mu.Unlock()
@@ -384,6 +408,9 @@ func assertMarksGuarded(t *testing.T, db *fakeDB) {
 			}
 			if !strings.Contains(where, "published_at is null") {
 				t.Errorf("cau %s thieu `AND published_at IS NULL` trong WHERE: %s", s.kind, s.sql)
+			}
+			if s.kind == kindRelease && !strings.Contains(where, "next_attempt_at<>'infinity'") {
+				t.Errorf("cau tra lease thieu `AND next_attempt_at <> 'infinity'` (plan §8 m1): %s", s.sql)
 			}
 		}
 	}
@@ -611,19 +638,22 @@ type pubCall struct {
 	exchange, key string
 	msg           mq.Message
 	traceID       trace.TraceID
+	deadConn      bool // ket noi (closer) da bao IsClosed() luc publish
 }
 
 // fakePublisher ghi lai moi lan Publish; hanh vi theo MessageID (event_id) qua `on`.
 type fakePublisher struct {
-	mu    sync.Mutex
-	calls []pubCall
-	on    map[string]func(ctx context.Context) error
+	mu     sync.Mutex
+	calls  []pubCall
+	on     map[string]func(ctx context.Context) error
+	closer *fakeCloser // ket noi hien tai (de ghi deadConn)
 }
 
 func (p *fakePublisher) Publish(ctx context.Context, exchange, key string, msg mq.Message) error {
 	p.mu.Lock()
+	dead := p.closer != nil && p.closer.IsClosed()
 	p.calls = append(p.calls, pubCall{exchange: exchange, key: key, msg: msg,
-		traceID: trace.SpanContextFromContext(ctx).TraceID()})
+		traceID: trace.SpanContextFromContext(ctx).TraceID(), deadConn: dead})
 	f := p.on[msg.MessageID]
 	p.mu.Unlock()
 	if f != nil {
@@ -648,9 +678,25 @@ func (p *fakePublisher) published(eventID string) int {
 	return n
 }
 
+// fakeCloser la io.Closer cua ket noi gia; hien thuc them IsClosed() bool (seam plan §8 m4: relay hoi
+// closer ket noi con song truoc moi lan claim).
 type fakeCloser struct {
 	mu     sync.Mutex
 	closes int
+	dead   bool
+}
+
+func (c *fakeCloser) IsClosed() bool {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.dead
+}
+
+// kill danh dau ket noi da chet (broker dong ma relay chua publish gi).
+func (c *fakeCloser) kill() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.dead = true
 }
 
 func (c *fakeCloser) Close() error {
@@ -675,7 +721,8 @@ type fakeDialer struct {
 }
 
 func newFakeDialer() *fakeDialer {
-	return &fakeDialer{pub: &fakePublisher{on: map[string]func(context.Context) error{}}, closer: &fakeCloser{}}
+	c := &fakeCloser{}
+	return &fakeDialer{pub: &fakePublisher{on: map[string]func(context.Context) error{}, closer: c}, closer: c}
 }
 
 func (d *fakeDialer) dial(ctx context.Context) (Publisher, io.Closer, error) {
@@ -688,6 +735,9 @@ func (d *fakeDialer) dial(ctx context.Context) (Publisher, io.Closer, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, nil, err
 	}
+	d.closer.mu.Lock()
+	d.closer.dead = false // ket noi moi
+	d.closer.mu.Unlock()
 	return d.pub, d.closer, nil
 }
 
@@ -704,7 +754,7 @@ func testConfig() RelayConfig {
 		Exchange:       "ticketing.events",
 		BatchSize:      100,
 		Interval:       10 * time.Millisecond,
-		Lease:          2 * time.Second,
+		Lease:          15 * time.Second, // plan §8 m1: BatchDeadline + PublishTimeout + 2*5s < Lease
 		BatchDeadline:  time.Second,
 		PublishTimeout: 200 * time.Millisecond,
 		BaseBackoff:    10 * time.Millisecond,
