@@ -49,6 +49,8 @@ jobs:
         run: go vet -tags=integration ./mq/...
       - name: go test -tags=integration (libs/go/mq)
         working-directory: libs/go
+        env:
+          REQUIRE_PASS: "1"
         run: |
           bash "$GITHUB_WORKSPACE/.github/scripts/run-and-report-tests.sh" TestTichHop \
             go test -v -tags=integration ./mq/... -count=1 -timeout=10m
