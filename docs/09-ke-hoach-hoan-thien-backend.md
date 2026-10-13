@@ -20,8 +20,8 @@ Nên thứ tự ở đây là: nối cho chạy → dựng nền → hoàn thi�
 | GĐ | Tên | Việc chính | Loại | Phụ thuộc | Trạng thái |
 |---|---|---|---|---|---|
 | 0 | Nối dây | Seed, nạp tồn kho Redis, chạy worker + admit controller, smoke | Nối dây | — | **Xong** (nhánh `feat/phase-0-wiring`) |
-| 1 | Thư viện dùng chung | HTTP, quan trắc, test tích hợp, idempotency, message queue, outbox | Nền | 0 | **Đang làm** — PR A (`httpx`), PR B (`otelx`), W3 (`testx` + cổng oversell, EV-134) và W5 (`mq`) đã merge; W4 (`idem`, EV-128) đã code ở nhánh `feature/EV-128-idempotency-key`, chờ review; W6 (`outbox`) là PR #55 draft, chờ duyệt migration |
-| 2 | Ticketing hoàn chỉnh | Đối soát tồn kho, giới hạn mua, API đơn hàng / huỷ hold / tình trạng vé | Nghiệp vụ + hệ thống | 1 | Chưa làm |
+| 1 | Thư viện dùng chung | HTTP, quan trắc, test tích hợp, idempotency, message queue, outbox | Nền | 0 | **Đang làm** — PR A (`httpx`), PR B (`otelx`), W3 (`testx` + cổng oversell, EV-134), W4 (`idem`, EV-128) và W5 (`mq`) đã merge; còn W6 (`outbox`) là PR #55 draft, chờ duyệt migration |
+| 2 | Ticketing hoàn chỉnh | Đối soát tồn kho, giới hạn mua, API đơn hàng / huỷ hold / tình trạng vé | Nghiệp vụ + hệ thống | 1 | **Đang làm** — đối soát tồn kho (EV-132) đã code ở nhánh `feature/EV-132-inventory-reconciler`, chờ review; các việc còn lại chưa làm |
 | 3 | Identity + Gateway | Đăng ký/đăng nhập, OTP, JWT, RBAC, queue token có ký, gateway | Nghiệp vụ | 1 | Chưa làm |
 | 4 | Event | CRUD sự kiện, state machine, lịch mở bán, khoá quota | Nghiệp vụ | 3 | Chưa làm |
 | 5 | Phòng chờ hoàn chỉnh | Bầu leader, đo sức khoẻ thật, lottery, heartbeat, hết vé, API Ops | Hệ thống | 3, 4 | Chưa làm |
@@ -92,7 +92,7 @@ Chia 3 PR: **A** = W0 + W1 · **B** = W2 · **C** = W3 → W6.
 
 | Việc | Issue | Nội dung |
 |---|---|---|
-| Đối soát tồn kho | EVF-37 | So Redis ↔ Postgres mỗi 10 giây, sửa lệch, metric `inventory_drift`; thay seeder tối thiểu của GĐ 0 |
+| Đối soát tồn kho | EVF-37 (EV-132) | So Redis ↔ Postgres mỗi 10 giây, sửa lệch, metric `inventory_drift`. Seeder của GĐ 0 **giữ lại** để nạp nhanh sau khi mất dữ liệu hoàn toàn; job đối soát lo phần còn lại |
 | Giới hạn mua | EVF-35 | Chốt `CountPurchased` theo BR-O4 (tính đơn đang giữ hay chỉ đơn đã trả tiền) và viết test |
 | API đơn hàng | — | `GET /v1/orders/{id}` cho trang giữ ghế và trang kết quả |
 | Huỷ hold | — | Khách chủ động huỷ → trả kho ngay (dùng lại `ReleaseHold`) |
