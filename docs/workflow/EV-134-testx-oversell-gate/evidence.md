@@ -58,7 +58,8 @@ M7 sống sót là hợp lý: đảo thứ tự chỉ nguy hiểm khi tiến tr�
 | `go build -mod=readonly ./...` ở cả 9 module | PASS |
 | `test-run-and-report-tests.sh` | 40 PASS (5 ca mới T36–T40) |
 | `test-workflows.sh` | 133 PASS; bỏ `REQUIRE_PASS` hoặc đổi tên target thì 2 check mới FAIL |
-| Build image `ticketing` | xem mục 5 |
+| Build image `ticketing` với Dockerfile hiện tại | **FAIL** `go.work requires go >= 1.26.0 (running go 1.25.14; GOTOOLCHAIN=local)`. Có sẵn trên `develop`, không do EV-134: `go.work` lên 1.26.0 ở commit `95650da` (EV-110) còn Dockerfile vẫn `golang:1.25-alpine`; PR #52 đổi sang `golang:1.26-alpine` |
+| Build image `ticketing` với base `golang:1.26-alpine` (Dockerfile tạm ngoài repo) | PASS, 69,3 MB — thay đổi `go.mod`/`go.sum` không làm hỏng image |
 | Trivy | chưa chạy cục bộ; `testcontainers` chỉ được import từ file gắn tag `integration`, không vào binary |
 
 ## 4. Thay đổi phụ cần biết
@@ -72,6 +73,7 @@ M7 sống sót là hợp lý: đảo thứ tự chỉ nguy hiểm khi tiến tr�
 
 | Việc | Ai | Trạng thái |
 |---|---|---|
+| Merge PR #52 trước (hoặc rebase lên nó): Trivy/build image của nhánh này đỏ vì lỗi Dockerfile có sẵn ở trên | Nhóm | Chờ |
 | Mở PR vào `develop`, đọc kết quả job `integration` trên Linux | Người có quyền (token phiên này bị 403) | Chờ — nhánh đã đẩy; nội dung PR để sẵn |
 | Quyết định nếu test 1 đỏ trên CI: sửa hệ thống (timeout 200 ms / hàng đợi đường hold) hay đổi mô hình tải của test | Trưởng nhóm | Chờ số liệu CI |
 | Chạy `oversell-gate` đủ 200 lần, ghi PASS/FAIL/SKIP và thời lượng; chỉnh `timeout-minutes` | Người có quyền dispatch | Chờ |
