@@ -1,6 +1,7 @@
 package outbox
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
 	"encoding/hex"
@@ -68,6 +69,10 @@ func Write(ctx context.Context, tx Execer, e Event) (string, error) {
 	payload, err := json.Marshal(e.Data)
 	if err != nil {
 		return "", fmt.Errorf("outbox: ma hoa data: %w", err)
+	}
+	// jsonb cua PostgreSQL khong nhan u0000 (ke ca trong chuoi): bao loi som, truoc khi cham DB.
+	if bytes.Contains(payload, []byte(`\u0000`)) {
+		return "", errors.New("outbox: data chua ky tu NUL (\\u0000), PostgreSQL jsonb khong nhan")
 	}
 	if len(payload) > maxDataBytes {
 		return "", fmt.Errorf("outbox: data %d byte vuot gioi han %d", len(payload), maxDataBytes)

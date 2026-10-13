@@ -23,6 +23,9 @@ import (
 	"github.com/eventflow/eventflow/libs/go/otelx"
 )
 
+// Seam cho test (khong export): Relay.redialBase va Relay.redialMax (mac dinh redialBase/redialMax o duoi)
+// la backoff dial lai cua Run; test gan truc tiep sau NewRelay de rut ngan thoi gian cho.
+
 const (
 	markTimeout     = 5 * time.Second  // moi cau danh dau / tra lease / dem gauge
 	gaugeRefresh    = 15 * time.Second // chu ky cap nhat outbox_pending / outbox_dead
@@ -119,6 +122,9 @@ type Relay struct {
 	m    *metrics
 	drop map[string]struct{}
 
+	redialBase time.Duration // seam test, xem dau file
+	redialMax  time.Duration
+
 	mu     sync.Mutex // mot lo tai mot thoi diem
 	pub    Publisher
 	closer io.Closer
@@ -147,7 +153,7 @@ func NewRelay(db DB, dial Dialer, cfg RelayConfig) (*Relay, error) {
 	for _, k := range cfg.DropUnroutable {
 		drop[k] = struct{}{}
 	}
-	return &Relay{db: db, dial: dial, cfg: cfg, log: log, m: m, drop: drop}, nil
+	return &Relay{db: db, dial: dial, cfg: cfg, log: log, m: m, drop: drop, redialBase: redialBase, redialMax: redialMax}, nil
 }
 
 // Run chay vong lap cho toi khi ctx bi huy, roi tra nil. Loi broker / DB khong lam Run thoat:
@@ -178,7 +184,7 @@ func (r *Relay) Run(ctx context.Context) error {
 			}
 			fails++
 			r.log.Warn("outbox relay: lo that bai, thu lai sau", "error", sanitizeErr(err), "fails", fails)
-			sleep(ctx, backoff(fails, redialBase, redialMax))
+			sleep(ctx, backoff(fails, r.redialBase, r.redialMax))
 		case claimed < r.cfg.BatchSize:
 			fails = 0
 			sleep(ctx, r.cfg.Interval)
@@ -206,6 +212,8 @@ type outboxRow struct {
 	traceID    *string
 	createdAt  time.Time
 	attempts   int
+	dbNow      time.Time // now() cua DB luc claim
+	claimedAt  time.Time // dong ho Go luc claim
 }
 
 const claimSQL = `UPDATE outbox_events SET next_attempt_at = now() + make_interval(secs => $1)
@@ -215,14 +223,14 @@ WHERE id IN (
   ORDER BY next_attempt_at, id
   LIMIT $2
   FOR UPDATE SKIP LOCKED)
-RETURNING id, event_id::text, routing_key, payload, headers, trace_id, created_at, attempts`
+RETURNING id, event_id::text, routing_key, payload, headers, trace_id, created_at, attempts, now()`
 
 const (
 	setStatementTimeoutSQL = `SET LOCAL statement_timeout = '5s'`
 	markPublishedSQL       = `UPDATE outbox_events SET published_at = now(), last_error = NULL WHERE id = $1 AND published_at IS NULL`
 	markUnroutableSQL      = `UPDATE outbox_events SET published_at = now(), last_error = 'unroutable' WHERE id = $1 AND published_at IS NULL`
-	markRetrySQL           = `UPDATE outbox_events SET attempts = attempts + 1, last_error = $2, next_attempt_at = now() + make_interval(secs => $3) WHERE id = $1 AND published_at IS NULL`
-	markParkSQL            = `UPDATE outbox_events SET attempts = attempts + 1, last_error = $2, next_attempt_at = 'infinity' WHERE id = $1 AND published_at IS NULL`
+	markRetrySQL           = `UPDATE outbox_events SET attempts = attempts + 1, last_error = $2, next_attempt_at = now() + make_interval(secs => $3) WHERE id = $1 AND published_at IS NULL AND next_attempt_at <> 'infinity'`
+	markParkSQL            = `UPDATE outbox_events SET attempts = attempts + 1, last_error = $2, next_attempt_at = 'infinity' WHERE id = $1 AND published_at IS NULL AND next_attempt_at <> 'infinity'`
 	releaseSQL             = `UPDATE outbox_events SET next_attempt_at = now() WHERE id = ANY($1) AND published_at IS NULL AND next_attempt_at <> 'infinity'`
 	gaugeSQL               = `SELECT count(*) FILTER (WHERE next_attempt_at <> 'infinity'), count(*) FILTER (WHERE next_attempt_at = 'infinity') FROM outbox_events WHERE published_at IS NULL`
 )
@@ -268,7 +276,7 @@ func (r *Relay) runBatch(ctx context.Context) (claimed, published int, err error
 			if markErr = r.exec(ctx, markPublishedSQL, row.id); markErr == nil {
 				published++
 				r.m.published.WithLabelValues(row.routingKey).Inc()
-				r.m.lag.Observe(time.Since(row.createdAt).Seconds())
+				r.m.lag.Observe(publishLag(row))
 			}
 		case resUnroutable:
 			if markErr = r.exec(ctx, markUnroutableSQL, row.id); markErr == nil {
@@ -351,10 +359,11 @@ func (r *Relay) claim(ctx context.Context) ([]outboxRow, error) {
 	var rows []outboxRow
 	for q.Next() {
 		var o outboxRow
-		if err := q.Scan(&o.id, &o.eventID, &o.routingKey, &o.payload, &o.headers, &o.traceID, &o.createdAt, &o.attempts); err != nil {
+		if err := q.Scan(&o.id, &o.eventID, &o.routingKey, &o.payload, &o.headers, &o.traceID, &o.createdAt, &o.attempts, &o.dbNow); err != nil {
 			q.Close()
 			return nil, fmt.Errorf("outbox: doc row claim: %w", err)
 		}
+		o.claimedAt = time.Now()
 		rows = append(rows, o)
 	}
 	q.Close()
@@ -535,6 +544,13 @@ func (r *Relay) refreshGauges(ctx context.Context) {
 	}
 	r.m.pending.Set(float64(pending))
 	r.m.dead.Set(float64(dead))
+}
+
+// publishLag do tre ghi->publish theo dong ho DB (khong lech theo dong ho may chay relay):
+// db_now luc claim - created_at + thoi gian troi qua trong Go tu luc claim; am thi kep ve 0.
+func publishLag(row outboxRow) float64 {
+	lag := row.dbNow.Sub(row.createdAt) + time.Since(row.claimedAt)
+	return max(lag.Seconds(), 0)
 }
 
 func sleep(ctx context.Context, d time.Duration) {
