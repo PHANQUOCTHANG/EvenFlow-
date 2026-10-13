@@ -6,7 +6,8 @@ import { useHoldTimer } from "./use-hold-timer";
 
 describe("useHoldTimer (EVF-113, BR-O2, BR-O5)", () => {
   const eventId = "evt-grand-concert";
-  const queueTokenKey = `evenflow_queue_token_${eventId}`;
+  // EV-198 (plan-review F1): khoa thong nhat voi phong cho (lib/queue-token.ts).
+  const queueTokenKey = `ef:queue:token:${eventId}`;
 
   beforeEach(() => {
     sessionStorage.clear();
@@ -241,3 +242,78 @@ describe("useHoldTimer (EVF-113, BR-O2, BR-O5)", () => {
   });
 });
 
+
+/** EV-198 B1: token phong cho ghi (khoa `ef:queue:token:{eventId}`, xem waiting-room.tsx va
+ *  lib/queue-token.ts) phai duoc createHold doc ra va gui di trong header X-Queue-Token.
+ *  Ghi bang khoa thuan (khong import queue-token.ts) de file nay van bien dich tren code cu. */
+describe("useHoldTimer — đọc token phòng chờ (EV-198, B1)", () => {
+  const eventId = "evt-tech-summit-2026";
+  const originalFetch = globalThis.fetch;
+
+  beforeEach(() => {
+    sessionStorage.clear();
+    vi.restoreAllMocks();
+  });
+
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
+    sessionStorage.clear();
+    vi.restoreAllMocks();
+  });
+
+  it("token phòng chờ lưu ở khoá ef:queue:token:{eventId} được createHold gửi trong X-Queue-Token", async () => {
+    // Dung y nhu phong cho ghi sau khi join thanh cong.
+    sessionStorage.setItem(`ef:queue:token:${eventId}`, "tok-from-waiting-room");
+
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 201,
+      json: async () => ({
+        order_id: "ord-b1",
+        hold_id: "hold-b1",
+        expires_at: new Date(Date.now() + 600_000).toISOString(),
+      }),
+    });
+    globalThis.fetch = mockFetch;
+
+    const { result } = renderHook(() => useHoldTimer({ eventId }));
+
+    let success = false;
+    await act(async () => {
+      success = await result.current.createHold("tier-all-access", 2);
+    });
+
+    expect(result.current.error?.type).not.toBe("NOT_ADMITTED");
+    expect(success).toBe(true);
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    const [url, init] = mockFetch.mock.calls[0];
+    expect(String(url)).toMatch(/\/v1\/events\/evt-tech-summit-2026\/holds$/);
+    expect(init.headers["X-Queue-Token"]).toBe("tok-from-waiting-room");
+    expect(result.current.holdState).toBe("active");
+    expect(result.current.hold?.holdId).toBe("hold-b1");
+  });
+
+  it("queueToken truyền qua prop vẫn được ưu tiên hơn token trong storage", async () => {
+    sessionStorage.setItem(`ef:queue:token:${eventId}`, "tok-from-waiting-room");
+
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 201,
+      json: async () => ({
+        order_id: "ord-b1p",
+        hold_id: "hold-b1p",
+        expires_at: new Date(Date.now() + 600_000).toISOString(),
+      }),
+    });
+    globalThis.fetch = mockFetch;
+
+    const { result } = renderHook(() => useHoldTimer({ eventId, queueToken: "tok-from-prop" }));
+
+    await act(async () => {
+      await result.current.createHold("tier-all-access", 1);
+    });
+
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    expect(mockFetch.mock.calls[0][1].headers["X-Queue-Token"]).toBe("tok-from-prop");
+  });
+});

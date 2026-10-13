@@ -22,6 +22,23 @@ export interface CheckoutViewProps {
   className?: string;
 }
 
+/** URL sang trang thanh toan cho mot hold dang active (EV-198, B3).
+ *
+ * Phai mang theo hang ve va so luong: trang thanh toan (server component) lay gia tu
+ * `tierId` + `quantity` tren URL, thieu thi no roi ve hang ve dau tien x 1 va hien sai so tien. */
+export function buildPaymentUrl(
+  eventId: string,
+  hold: { orderId: string; holdId: string; ticketTypeId: string; quantity: number },
+): string {
+  const query = new URLSearchParams({
+    orderId: hold.orderId,
+    holdId: hold.holdId,
+    tierId: hold.ticketTypeId,
+    quantity: String(hold.quantity),
+  });
+  return `/checkout/${encodeURIComponent(eventId)}/payment?${query.toString()}`;
+}
+
 function mapTierAvailability(availability: string): TierAvailability {
   switch (availability) {
     case "FEW_LEFT":
@@ -86,7 +103,7 @@ export function CheckoutView({
         onProceedToPayment(hold.orderId, hold.holdId);
       } else {
         // Mac dinh chuyen huong sang trang thanh toan (EVF-114)
-        window.location.href = `/checkout/${event.id}/payment?orderId=${hold.orderId}&holdId=${hold.holdId}`;
+        window.location.href = buildPaymentUrl(event.id, hold);
       }
     } else if (holdState === "expired") {
       resetHold();

@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import * as holdClient from "@/lib/hold-client";
 import type { EventDetailSnapshot } from "@/lib/event-service";
-import { CheckoutView } from "./checkout-view";
+import { buildPaymentUrl, CheckoutView } from "./checkout-view";
 
 const mockEvent: EventDetailSnapshot = {
   id: "evt-test-1",
@@ -39,7 +39,8 @@ const mockEvent: EventDetailSnapshot = {
 describe("CheckoutView (EVF-113, EV-183)", () => {
   beforeEach(() => {
     sessionStorage.clear();
-    sessionStorage.setItem("evenflow_queue_token_evt-test-1", "mock-queue-token");
+    // EV-198 (plan-review F1): khoa thong nhat voi phong cho (lib/queue-token.ts).
+    sessionStorage.setItem("ef:queue:token:evt-test-1", "mock-queue-token");
     vi.restoreAllMocks();
   });
 
@@ -205,5 +206,136 @@ describe("CheckoutView (EVF-113, EV-183)", () => {
       "href",
       "/waiting/evt-test-1",
     );
+  });
+});
+
+/** EV-198 B3: khi da co hold active va khong co onProceedToPayment, CheckoutView phai dua khach
+ *  sang trang thanh toan voi URL kem tierId + quantity cua hold (payment/page.tsx doc 2 tham so
+ *  nay). Assert theo search params, khong phu thuoc thu tu tham so hay cach ma hoa. */
+describe("CheckoutView — URL sang thanh toán mang tierId và quantity của hold (EV-198, B3)", () => {
+  let navigatedTo: string[] = [];
+
+  function stubLocation() {
+    navigatedTo = [];
+    const loc = {
+      origin: "http://localhost:3000",
+      protocol: "http:",
+      host: "localhost:3000",
+      hostname: "localhost",
+      port: "3000",
+      pathname: "/checkout/evt-test-1",
+      search: "",
+      hash: "",
+      reload: vi.fn(),
+      assign: vi.fn((url: string) => {
+        navigatedTo.push(String(url));
+      }),
+      replace: vi.fn((url: string) => {
+        navigatedTo.push(String(url));
+      }),
+      toString: () => "http://localhost:3000/checkout/evt-test-1",
+    } as Record<string, unknown>;
+    let href = "http://localhost:3000/checkout/evt-test-1";
+    Object.defineProperty(loc, "href", {
+      get: () => href,
+      set: (value: string) => {
+        href = String(value);
+        navigatedTo.push(String(value));
+      },
+      enumerable: true,
+    });
+    vi.stubGlobal("location", loc);
+  }
+
+  beforeEach(() => {
+    sessionStorage.clear();
+    vi.restoreAllMocks();
+    stubLocation();
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+    sessionStorage.clear();
+  });
+
+  it("bấm 'Tiếp tục thanh toán' chuyển sang /checkout/{id}/payment kèm orderId, holdId, tierId, quantity của hold", async () => {
+    holdClient.saveActiveHold("evt-test-1", {
+      orderId: "ord-b3",
+      holdId: "hold-b3",
+      expiresAt: new Date(Date.now() + 600_000).toISOString(),
+      ticketTypeId: "tier-vip",
+      quantity: 3,
+    });
+
+    await act(async () => {
+      render(<CheckoutView event={mockEvent} />);
+    });
+
+    const continueBtn = screen.getByRole("button", { name: "Tiếp tục thanh toán" });
+    await act(async () => {
+      fireEvent.click(continueBtn);
+    });
+
+    expect(navigatedTo).toHaveLength(1);
+    const url = new URL(navigatedTo[0], "http://localhost:3000");
+    expect(url.pathname).toBe("/checkout/evt-test-1/payment");
+    expect(url.searchParams.get("orderId")).toBe("ord-b3");
+    expect(url.searchParams.get("holdId")).toBe("hold-b3");
+    expect(url.searchParams.get("tierId")).toBe("tier-vip");
+    expect(url.searchParams.get("quantity")).toBe("3");
+  });
+});
+
+/** EV-198 B3 (plan-review F13): helper thuan `buildPaymentUrl` tra ve URL tuong doi sang trang
+ *  thanh toan kem orderId, holdId, tierId, quantity. */
+describe("buildPaymentUrl (EV-198, B3)", () => {
+  it("trả về /checkout/{eventId}/payment kèm orderId, holdId, tierId, quantity", () => {
+    const url = new URL(
+      buildPaymentUrl("evt-tech-summit-2026", {
+        orderId: "ord-1",
+        holdId: "hold-1",
+        ticketTypeId: "tier-all-access",
+        quantity: 2,
+      }),
+      "http://localhost:3000",
+    );
+
+    expect(url.origin).toBe("http://localhost:3000");
+    expect(url.pathname).toBe("/checkout/evt-tech-summit-2026/payment");
+    expect(url.searchParams.get("orderId")).toBe("ord-1");
+    expect(url.searchParams.get("holdId")).toBe("hold-1");
+    expect(url.searchParams.get("tierId")).toBe("tier-all-access");
+    expect(url.searchParams.get("quantity")).toBe("2");
+  });
+
+  it("là URL tương đối (bắt đầu bằng /checkout/), không gắn origin", () => {
+    const raw = buildPaymentUrl("evt-1", {
+      orderId: "o",
+      holdId: "h",
+      ticketTypeId: "t",
+      quantity: 1,
+    });
+    expect(raw.startsWith("/checkout/evt-1/payment?")).toBe(true);
+  });
+
+  it("mã hoá an toàn giá trị có ký tự đặc biệt (đọc lại đúng, không chèn thêm tham số)", () => {
+    const url = new URL(
+      buildPaymentUrl("evt-1", {
+        orderId: "ord b3&x=1",
+        holdId: "hold/b3?#",
+        ticketTypeId: "tier-ga",
+        quantity: 3,
+      }),
+      "http://localhost:3000",
+    );
+
+    expect(url.pathname).toBe("/checkout/evt-1/payment");
+    expect(url.searchParams.get("orderId")).toBe("ord b3&x=1");
+    expect(url.searchParams.get("holdId")).toBe("hold/b3?#");
+    expect(url.searchParams.get("tierId")).toBe("tier-ga");
+    expect(url.searchParams.get("quantity")).toBe("3");
+    expect(url.searchParams.get("x")).toBeNull();
+    expect(url.hash).toBe("");
   });
 });
