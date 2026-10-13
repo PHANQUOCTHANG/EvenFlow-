@@ -193,7 +193,8 @@ apps/web/src/
 ├── lib/
 │   ├── api/                       # client sinh tu OpenAPI
 │   ├── sse.ts                     # SSE co reconnect + backoff
-│   ├── queue-client.ts            # polling thich nghi theo poll_after_ms cua server
+│   ├── queue-client.ts            # joinQueue (jitter 0..5s) + QueueError
+│   ├── queue-status.ts            # MOT lan hoi trang thai, lam sach poll_after_ms / Retry-After
 │   ├── jitter.ts                  # hoan ngau nhien 0..5s tai T0 (Tang 2)
 │   └── fingerprint.ts             # tin hieu thiet bi cho anti-bot
 ├── hooks/
