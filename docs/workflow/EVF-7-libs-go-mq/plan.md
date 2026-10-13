@@ -139,3 +139,17 @@ Giả định môi trường: **RabbitMQ 3.13** (ảnh compose). Thiết kế gh
 | m9 | Test tích hợp thêm: nack thật → `ErrNacked` (hàng `x-max-length: 0` + `x-overflow: reject-publish`); kênh đóng giữa chừng → `errors.Is(err, ErrClosed)`; ctx huỷ khi đang chờ confirm → lỗi bọc `context.Canceled`. |
 | m10 | `integration_test.go`: kiểm lỗi `ch.Close()` (errcheck). CI `lint-go` không dùng tag integration — chạy golangci với `--build-tags integration` ở máy trong bước gates. |
 | File được phép thêm | `docs/09-*.md`, `docs/03-cau-truc-src.md` (chỉ mô tả `mq`). |
+
+## 9. Sửa sau challenge (vòng 2; `challenge.md`: PASS, F1 là lỗi thật mức thấp)
+
+| Finding | Quyết định |
+|---|---|
+| F1 | Trong lúc chờ confirm, `Publish` **đọc returns đồng thời** (`select` trên `returns`, `dc.Done()`, `ctx.Done()`), không chỉ sau khi confirm xong; return khác `x-ef-publish-id` bị bỏ ngay, nên bộ đệm `NotifyReturn` không đầy và `notifyAll` của amqp091 không phải chờ 5s. Khi `Publish` trả vì `ctx` huỷ, không để lại return chưa đọc của chính nó gây đầy bộ đệm cho lần sau (return đến muộn bị bỏ qua ở lần publish kế tiếp — đã có test M1). Unit test: >16 publish bị huỷ giữa chừng rồi một publish unroutable vẫn nhận `ErrUnroutable`, không treo. |
+| F2 | Test (unit, fake channel): `Publish` chuyển đủ `CorrelationId`, `ReplyTo`, `Type`, `AppId`, `Timestamp`, `Priority`, `ContentEncoding`, `ContentType`, `MessageId`, persistent. |
+| F3 | Test: hai `Publish` đồng thời trên một `Publisher`, một unroutable → đúng lần đó nhận `ErrUnroutable`, lần kia `nil` (giết mutant bỏ mutex). |
+| F4 | Tách phần nối dây của `Consume` để test được bằng fake (vd. interface `consumeChannel` với `Qos`, `Consume`, `Cancel`): deliveries đóng → `Consume` trả **lỗi** (không `nil`); `Qos(prefetch)` được gọi; `Cancel(tag)` khi thoát; `RetryExchange` rỗng → lỗi đầu tiên đi thẳng DLQ. |
+| F5 | Fake `Declarer` cho phép lỗi chỉ ở `QueueDeclare` mà bind sau đó vẫn thành công → `Declare` phải trả lỗi. |
+| F6 | Test sync JSON: `policies` phải rỗng (một policy có thể gắn lại DLX), từ chối khoá lạ ở mức gốc/phần tử, phát hiện khoá JSON trùng (decoder dạng token). |
+| F7 | `doc.go`: không bật `amqp091.Config.Recovery` (đổi ngữ nghĩa lỗi); supervisor khởi động lại khi `Consume` trả lỗi. |
+| F8 | Ghi nhận: bước "oversell smoke" của ticketing trong `integration.yml` 0 PASS / 40 SKIP — có từ trước (EVF-39), không thuộc slice này. |
+| F9 | Doc: `x-ef-publish-id` có thể thấy trong `Delivery.Headers`; `attemptOf` coi float là 1 (an toàn: thư viện ghi lại int32). |

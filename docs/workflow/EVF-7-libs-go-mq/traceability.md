@@ -55,3 +55,21 @@ File test nằm trong `libs/go/mq/`. "Unit" chạy bằng `go test ./...` (CI `t
 | m10 | `depth` trong `integration_test.go` kiểm lỗi `ch.Close()` | Lint |
 
 Các khoảng trống "nack thật", "kênh đóng giữa lúc chờ", "huỷ ctx khi đang chờ" ở trên nay đã có test.
+
+## Vòng 3 (challenge → plan §9)
+
+| Finding | Test | Mutant bị giết |
+|---|---|---|
+| F1 | `TestPublisher_NhieuReturnCuKhongLamMatReturnMoi`: 20 publish bị huỷ ctx khi đang chờ, rồi một publish không định tuyến được; "goroutine đọc" mô phỏng `notifyAll` (chờ tối đa 5 s rồi bỏ) đẩy 20 return cũ + return của lần này trước ack → phải `ErrUnroutable` trong < 2 s, không return nào bị bỏ | F1-cũ (không đọc returns khi đang chờ) |
+| F2 | `TestPublisher_GuiDuThuocTinhAMQP`: mọi property của `Message` đi lên kênh (`ContentEncoding`, `CorrelationId`, `ReplyTo`, `Type`, `AppId`, `Priority`, `Timestamp`, persistent…) | P9–P13 |
+| F3 | `TestPublisher_PublishDongThoiChiLanUnroutableLoi`: hai kịch bản (A hoặc B không định tuyến được), mỗi kịch bản 5 lần; chỉ lần không định tuyến được nhận `ErrUnroutable` | P14 (bỏ mutex) |
+| F4 | `TestConsumeWiring_DeliveriesDongTraLoiQosVaCancel` (deliveries đóng → lỗi, `Qos(prefetch)` 7/mặc định 10, `Cancel(tag)` đúng tag), `TestConsumeWiring_HuyCtxCancelConsumer`, `TestConsumeWiring_KhongRetryExchangeLoiDauVaoDLQ`, `TestConsumeWiring_CoRetryExchangeLoiDauDiRetry` — qua seam `consumeChannel` + `consume(...)` | C20, C25, C26, C27 |
+| F5 | `TestDeclare_LoiChiOQueueDeclareKhongBiNuot` (fake chỉ lỗi ở `QueueDeclare`, có `failOp`) | T3 |
+| F6 | `parseDefinitions` (khoá JSON trùng qua decoder token, `DisallowUnknownFields` ở gốc và phần tử, `policies`/`parameters`/`global_parameters` phải rỗng) dùng trong `TestDefinitionsJSON_KhopTopologyCode`; `TestParseDefinitions_TuChoiFileSai`, `TestFindDuplicateKeys_LongNhau` | D5, D6, D7 |
+| P6 | `TestPublisher_LoiGuiKhiKenhVuaDongThanhErrClosed` (gửi lỗi `amqp091.ErrClosed` rồi `IsClosed` = true → bọc `ErrClosed`) | P6 |
+
+Chạy lại 16 mutant còn sống ở `challenge.md` (P6, P9–P14, C20, C25–C27, T3, D5–D7, và F1-cũ) trên **bản sao trong
+scratchpad** (implementer đang sửa source song song), chỉ unit test `go test ./mq/`: **16/16 bị giết**. File bị mutate
+được ghi lại nội dung gốc sau mỗi mutant (kiểm byte), và so khớp với worktree sau khi chạy. Ghi chú P14: với cách chờ
+mới (đọc returns đồng thời), kênh Go giao giá trị cho người nhận chờ lâu nhất, nên kịch bản "A unroutable" một mình
+không giết được P14; kịch bản "B unroutable" (A đang chờ nuốt return của B) giết được một cách tất định.
