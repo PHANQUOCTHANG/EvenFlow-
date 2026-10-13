@@ -235,6 +235,9 @@ func getOne(t *testing.T, conn *amqp.Connection, queue string) (amqp.Delivery, b
 // --- AC-1: publisher confirm ---
 
 func TestTichHop_PublishDuocAckVaVaoQueue(t *testing.T) {
+	// Dat TracerProvider + propagator TraceContext (co cleanup) de traceparent duoc inject,
+	// khong phu thuoc thu tu chay test.
+	newRecorder(t)
 	conn := dial(t)
 	tt := newTestTopo(t, conn, 200*time.Millisecond)
 	pub := newPublisher(t, conn)
