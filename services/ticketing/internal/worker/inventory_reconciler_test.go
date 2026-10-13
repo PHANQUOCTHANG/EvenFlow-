@@ -55,11 +55,18 @@ type fakeLedger struct {
 	snapErr  error
 	adjErr   error
 	adjusted []adjustCall
+	snaps    int
+	// afterSnap chay sau moi lan Snapshot (n tinh tu 1): de mo phong do lech thay doi giua hai luot.
+	afterSnap func(n int)
 }
 
 func (f *fakeLedger) Snapshot(_ context.Context, _ string, tts []string) (port.RedisSnapshot, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
+	f.snaps++
+	if f.afterSnap != nil {
+		defer f.afterSnap(f.snaps)
+	}
 	if f.snapErr != nil {
 		return port.RedisSnapshot{}, f.snapErr
 	}
@@ -147,7 +154,10 @@ func newRig() *rig {
 		},
 		spy: newSpyReconMetrics(),
 	}
-	r.rec = NewInventoryReconciler(r.src, r.states, r.led, DefaultReconcilerConfig([]string{ev}),
+	// Mac dinh tat luot xac nhan trong chu ky: moi lan goi la mot luot, de test dieu khien tung chu ky.
+	cfg := DefaultReconcilerConfig([]string{ev})
+	cfg.ConfirmDelay = 0
+	r.rec = NewInventoryReconciler(r.src, r.states, r.led, cfg,
 		slog.New(slog.NewTextHandler(io.Discard, nil))).WithMetrics(r.spy)
 	return r
 }
@@ -368,6 +378,74 @@ func TestReconciler_LechTangDan_ChiSuaGiaTriNhoHon_PhanThuaDeChuKySau(t *testing
 	r.cycle(t) // phan thua da hien o chu ky truoc nen duoc sua o chu ky nay
 	if got := r.redis(0); got != 50 {
 		t.Fatalf("redis = %d sau chu ky 3, muon 50", got)
+	}
+}
+
+// --- luot xac nhan trong chu ky (ConfirmDelay) ---
+
+func TestReconciler_LuotXacNhan_SuaNgayTrongMotChuKy(t *testing.T) {
+	r := newRig()
+	r.rec.cfg.ConfirmDelay = time.Millisecond
+	r.led.inv[tt][0] = 43 // -7
+
+	r.cycle(t) // MOT lan goi: thay lech, xac nhan lai sau ConfirmDelay, roi sua
+
+	if r.redis(0) != 50 {
+		t.Fatalf("redis = %d, muon 50 ngay sau mot chu ky", r.redis(0))
+	}
+	if r.led.snaps != 2 {
+		t.Fatalf("so luot doc = %d, muon 2 (luot dau + xac nhan)", r.led.snaps)
+	}
+	if r.spy.drift[tt] != 0 {
+		t.Fatalf("metric = %d, muon 0", r.spy.drift[tt])
+	}
+}
+
+func TestReconciler_LuotXacNhan_NhieuThoangQuaBienMat_KhongSua(t *testing.T) {
+	r := newRig()
+	r.rec.cfg.ConfirmDelay = time.Millisecond
+	r.led.inv[tt][0] = 49 // -1 o luot dau
+	r.led.afterSnap = func(n int) {
+		if n == 1 {
+			r.led.inv[tt][0] = 50 // luot xac nhan thay da khop
+		}
+	}
+
+	r.cycle(t)
+
+	if len(r.led.adjusted) != 0 {
+		t.Fatalf("nhieu thoang qua bi sua: %v", r.led.adjusted)
+	}
+}
+
+func TestReconciler_LuotXacNhan_KhongCoLechThiKhongDocLanHai(t *testing.T) {
+	r := newRig()
+	r.rec.cfg.ConfirmDelay = time.Hour // neu bi goi se treo test
+
+	r.cycle(t)
+
+	if r.led.snaps != 1 {
+		t.Fatalf("so luot doc = %d, muon 1", r.led.snaps)
+	}
+}
+
+func TestReconciler_LuotXacNhan_HuyCtxThiThoat(t *testing.T) {
+	r := newRig()
+	r.rec.cfg.ConfirmDelay = time.Hour
+	r.led.inv[tt][0] = 40
+	ctx, cancel := context.WithCancel(context.Background())
+	go func() { time.Sleep(20 * time.Millisecond); cancel() }()
+
+	done := make(chan error, 1)
+	go func() { done <- r.rec.Reconcile(ctx, ev) }()
+
+	select {
+	case err := <-done:
+		if !errors.Is(err, context.Canceled) {
+			t.Fatalf("err = %v, muon context.Canceled", err)
+		}
+	case <-time.After(3 * time.Second):
+		t.Fatal("Reconcile khong thoat khi ctx bi huy trong luc cho xac nhan")
 	}
 }
 

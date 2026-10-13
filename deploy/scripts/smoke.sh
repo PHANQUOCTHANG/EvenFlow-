@@ -175,4 +175,13 @@ st="$(pg "SELECT status FROM orders WHERE event_id = '$EVENT_ID' AND identity_id
 [[ "$st" == "EXPIRED" ]] || die "don phai o trang thai EXPIRED, nhan '$st'"
 ok "don -> EXPIRED"
 
+step "9. Lam lech Redis -> job doi soat tu sua (EV-132)"
+# Tru 2 ve khoi bucket 0 o Redis ma khong dong vao Postgres: "mat mot lan tra kho".
+rd HINCRBY "inv:{${EVENT_ID}}:tt:${TT}" 0 -2 >/dev/null
+[[ "$(redis_available)" == "$((QUOTA - 2))" ]] || die "khong lam lech duoc Redis, con $(redis_available)"
+ok "Redis lech: Postgres=$(pg_available)  Redis=$(redis_available)"
+# Chu ky 10 giay, can thay do lech o hai chu ky lien tiep nen toi da ~20 giay (+ du phong).
+wait_for "job doi soat sua Redis ve $QUOTA" 40 redis_is "$QUOTA"
+ok "da tu sua: Postgres=$(pg_available)  Redis=$(redis_available)"
+
 printf '\n[smoke] DAT: %d buoc.\n' "$PASS"

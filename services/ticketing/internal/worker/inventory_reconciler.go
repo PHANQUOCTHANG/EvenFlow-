@@ -68,13 +68,22 @@ type ReconcilerConfig struct {
 	EventIDs []string
 	// Interval la chu ky doi soat (10 giay). Mot do lech that duoc sua sau toi da 2 chu ky.
 	Interval time.Duration
-	// LockTTL phai nho hon Interval de instance giu khoa o chu ky nay khong chan chu ky sau.
+	// LockTTL phai nho hon Interval de instance giu khoa o chu ky nay khong chan chu ky sau, va
+	// lon hon ConfirmDelay cong thoi gian mot luot doi soat.
 	LockTTL time.Duration
+	// ConfirmDelay: khi mot luot thay do lech MOI, cho khoang nay roi doi soat lai ngay trong chu
+	// ky de xac nhan. Nhieu do doc Redis va Postgres lech nhau chi keo dai vai ms; hold dang bay
+	// da duoc tinh rieng. 0 tat buoc nay (mot luot moi lan goi, xac nhan o chu ky sau).
+	ConfirmDelay time.Duration
 }
 
-// DefaultReconcilerConfig dung chu ky 10 giay cua EVF-37.
+// DefaultReconcilerConfig dung chu ky 10 giay cua EVF-37. Voi ConfirmDelay 2 giay, mot do lech that
+// duoc sua sau khoang 12 giay (toi da 10 giay de thay + 2 giay xac nhan), du bien so voi yeu cau 20 giay.
 func DefaultReconcilerConfig(eventIDs []string) ReconcilerConfig {
-	return ReconcilerConfig{EventIDs: eventIDs, Interval: 10 * time.Second, LockTTL: 8 * time.Second}
+	return ReconcilerConfig{
+		EventIDs: eventIDs, Interval: 10 * time.Second, LockTTL: 8 * time.Second,
+		ConfirmDelay: 2 * time.Second,
+	}
 }
 
 type noopReconcilerMetrics struct{}
@@ -125,7 +134,8 @@ func (r *InventoryReconciler) ReconcileAll(ctx context.Context) {
 	}
 }
 
-// Reconcile chay MOT chu ky doi soat cho mot su kien.
+// Reconcile chay MOT chu ky doi soat cho mot su kien: mot luot, va them mot luot xac nhan sau
+// ConfirmDelay neu luot dau thay do lech moi.
 func (r *InventoryReconciler) Reconcile(ctx context.Context, eventID string) error {
 	held, err := r.ledger.TryReconcileLock(ctx, eventID, r.cfg.LockTTL)
 	if err != nil {
@@ -135,13 +145,29 @@ func (r *InventoryReconciler) Reconcile(ctx context.Context, eventID string) err
 		return nil // instance khac dang doi soat chu ky nay
 	}
 
+	fresh, err := r.pass(ctx, eventID)
+	if err != nil || !fresh || r.cfg.ConfirmDelay <= 0 {
+		return err
+	}
+
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-time.After(r.cfg.ConfirmDelay):
+	}
+	_, err = r.pass(ctx, eventID)
+	return err
+}
+
+// pass doi soat mot luot. fresh=true khi co bucket vua lech lan dau (can xac nhan them).
+func (r *InventoryReconciler) pass(ctx context.Context, eventID string) (fresh bool, err error) {
 	rows, err := r.src.ListInventory(ctx, eventID)
 	if err != nil {
-		return err
+		return false, err
 	}
 	if len(rows) == 0 {
 		r.forget(eventID)
-		return nil // su kien chua ton tai hoac khong o trang thai dang ban
+		return false, nil // su kien chua ton tai hoac khong o trang thai dang ban
 	}
 
 	ticketTypes := make([]string, 0, 4)
@@ -157,7 +183,7 @@ func (r *InventoryReconciler) Reconcile(ctx context.Context, eventID string) err
 	// (hoac sap) ghi, nen "chua ghi" chi co the la dang bay chu khong phai da mat.
 	snap, err := r.ledger.Snapshot(ctx, eventID, ticketTypes)
 	if err != nil {
-		return err
+		return false, err
 	}
 	holdIDs := make([]string, 0, len(snap.Holds))
 	for id := range snap.Holds {
@@ -165,7 +191,7 @@ func (r *InventoryReconciler) Reconcile(ctx context.Context, eventID string) err
 	}
 	states, err := r.states.HoldStates(ctx, holdIDs)
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	// Phan Redis da tru nhung Postgres chua co (bay) hoac da tra (cho release).
@@ -190,6 +216,8 @@ func (r *InventoryReconciler) Reconcile(ctx context.Context, eventID string) err
 		if drift != 0 {
 			if prev := r.seen[k]; sameSign(prev, drift) {
 				drift = r.correct(ctx, k, prev, drift)
+			} else {
+				fresh = true
 			}
 		}
 		if drift != 0 {
@@ -205,7 +233,7 @@ func (r *InventoryReconciler) Reconcile(ctx context.Context, eventID string) err
 	for _, tt := range ticketTypes {
 		r.metrics.InventoryDrift(tt, driftByType[tt])
 	}
-	return nil
+	return fresh, nil
 }
 
 // correct sua do lech da duoc xac nhan o hai chu ky va tra ve phan con lai sau khi sua.

@@ -303,3 +303,23 @@ func TestReconciler_ScriptKhongDeTonKhoXuongAm(t *testing.T) {
 		t.Fatalf("cong lai: got=%d err=%v", got, err)
 	}
 }
+
+func TestReconciler_MotChuKyVoiLuotXacNhan_SuaNgayKhongCanChuKySau(t *testing.T) {
+	env := setupEnv(t)
+	eventID, tt := env.SeedEvent(t, 100)
+	cfg := worker.ReconcilerConfig{
+		EventIDs: []string{eventID}, Interval: 5 * time.Second,
+		LockTTL: 3 * time.Second, ConfirmDelay: 100 * time.Millisecond,
+	}
+	rec := worker.NewInventoryReconciler(env.repo, env.repo, env.gate, cfg, env.Logger)
+
+	if err := env.admin.HIncrBy(context.Background(), env.invKey(eventID, tt), "5", -4).Err(); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := rec.Reconcile(context.Background(), eventID); err != nil {
+		t.Fatal(err)
+	}
+
+	requireBucketsEqual(t, env.redisBuckets(t, eventID, tt), env.pgBuckets(t, eventID))
+}
