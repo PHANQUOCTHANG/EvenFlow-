@@ -89,3 +89,28 @@ Xếp chồng lên PR A (chưa merge lúc làm). Rebase lên `develop` khi A mer
 - `/metrics` mở trên cổng dịch vụ: gateway (giai đoạn 3) không được route ra ngoài.
 - Metric `ticketing_holds_released_total` xuất hiện ở cả `ticketing` (luôn 0) lẫn `ticketing-worker`; khi vẽ dashboard hãy `sum()` hoặc lọc theo job.
 - `HealthProbe` thật cho controller (giai đoạn 5) sẽ đọc p99 từ histogram và pool từ gauge ở trên; chưa nối.
+
+## W3 — `libs/go/testx` + cổng oversell thật (nhánh `feature/EV-134-testx-oversell-gate`)
+
+Chi tiết: [../EV-134-testx-oversell-gate/](../EV-134-testx-oversell-gate/) (`spec`, `plan`, `evidence`, `traceability`).
+
+### Đã làm
+
+| Việc | Thay đổi |
+|---|---|
+| `testx` | `Postgres` (chạy phần `Up` của `migrations/`), `Redis`; container dùng chung một tiến trình; thiếu Docker thì fail |
+| `helpers.go` | Hiện thực bằng adapter thật và cấu hình pool như `cmd/server`; nạp sẵn 10.000 identity + token để helper không I/O trong goroutine |
+| CI | `REQUIRE_PASS=1`: 0 PASS là lỗi; test hold hết hạn tách thành `make test-oversell-expiry` (×20) |
+
+### Phát hiện
+
+- Cổng cũ **không thể xanh** dù code đúng: lệnh khớp cả hai test, test hết hạn ngủ ≥ 15 giây mỗi lần nên ×200 vượt `timeout=30m`.
+- Dưới đợt 10.000 request đồng thời với Redis timeout 200 ms, 450–870 request nhận `i/o timeout` thay vì `ErrSoldOut`
+  (bất biến 4). Bất biến 1–3 luôn giữ. Nới timeout lên 5 s thì 5/5 xanh. **Chưa kiểm trên Linux CI.**
+- Test hết hạn không kiểm Redis (đột biến M5 sống sót).
+
+### Nợ / chưa làm
+
+- Bằng chứng CI và 200 lần chạy đủ — token phiên làm việc không có quyền dispatch/tạo PR.
+- `testx.RabbitMQ` — chờ PR #52, làm cùng EV-131.
+- Quyết định về timeout 200 ms nếu CI tái hiện (xem `evidence.md` §5).
