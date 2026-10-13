@@ -26,8 +26,10 @@ func New(holds HoldCreator, log *slog.Logger) *Handler {
 	return &Handler{holds: holds, log: log}
 }
 
-func (h *Handler) Routes(mux *http.ServeMux) {
-	mux.HandleFunc("POST /v1/events/{eventID}/holds", h.createHold)
+// Routes dang ky route. idempotency BAT BUOC: BR-O5 yeu cau moi API ghi co Idempotency-Key, nen
+// khong cho phep dang ky route ghi ma khong truyen middleware nay (truyen idem.Middleware(...)).
+func (h *Handler) Routes(mux *http.ServeMux, idempotency httpx.Middleware) {
+	mux.Handle("POST /v1/events/{eventID}/holds", idempotency(http.HandlerFunc(h.createHold)))
 }
 
 type createHoldRequest struct {
@@ -36,13 +38,7 @@ type createHoldRequest struct {
 }
 
 func (h *Handler) createHold(w http.ResponseWriter, r *http.Request) {
-	// BR-O5: khong co Idempotency-Key thi khong duoc ghi. Mang di dong chap chon
-	// khien client retry rat thuong xuyen; thieu khoa nay la tao don trung.
-	if r.Header.Get("Idempotency-Key") == "" {
-		httpx.WriteProblem(w, http.StatusBadRequest, "thieu header Idempotency-Key")
-		return
-	}
-
+	// BR-O5 (bat buoc Idempotency-Key, phat lai response cu) do middleware idem lo, xem Routes.
 	var req createHoldRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		httpx.WriteProblem(w, http.StatusBadRequest, "body khong hop le")

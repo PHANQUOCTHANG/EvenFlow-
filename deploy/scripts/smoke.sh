@@ -140,6 +140,20 @@ HOLD_ID="$(echo "$r" | body_of | json_field hold_id)"
 EXPIRES="$(echo "$r" | body_of | json_field expires_at)"
 [[ -n "$HOLD_ID" && -n "$EXPIRES" ]] || die "phan hoi thieu hold_id/expires_at: $(echo "$r" | body_of)"
 ok "giu 2 ve -> hold $HOLD_ID, het han $EXPIRES"
+FIRST_BODY="$(echo "$r" | body_of)"
+
+# BR-O5: cung key + cung noi dung -> DUNG response cu (khong phai chi "cung hold" nho BR-O3).
+r="$(hold "smoke-hold-$$" 2)"
+[[ "$(echo "$r" | status_of)" == "200" && "$(echo "$r" | body_of)" == "$FIRST_BODY" ]]   || die "goi lai cung Idempotency-Key phai tra dung response cu (BR-O5), nhan $(echo "$r" | status_of): $(echo "$r" | body_of)"
+ok "goi lai cung key -> dung response cu (BR-O5)"
+
+r="$(hold "smoke-hold-$$" 3)"
+[[ "$(echo "$r" | status_of)" == "422" ]]   || die "cung key khac noi dung phai bi 422 (BR-O5), nhan $(echo "$r" | status_of)"
+ok "cung key khac noi dung -> 422 (BR-O5)"
+
+kst="$(pg "SELECT status_code FROM idempotency_keys WHERE key = 'smoke-hold-$$'")"
+[[ "$kst" == "200" ]] || die "idempotency_keys phai luu status 200, nhan '$kst'"
+ok "idempotency_keys da luu response"
 
 r="$(hold "smoke-hold-again-$$" 2)"
 [[ "$(echo "$r" | body_of | json_field hold_id)" == "$HOLD_ID" ]] \

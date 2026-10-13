@@ -54,3 +54,13 @@ jobs:
         run: |
           bash "$GITHUB_WORKSPACE/.github/scripts/run-and-report-tests.sh" TestTichHop \
             go test -v -tags=integration ./mq/... -count=1 -timeout=10m
+      # libs/go/idem: middleware Idempotency-Key tren Postgres that (BR-O5). Cung quy tac fail-khong-skip.
+      - name: go vet -tags=integration (libs/go/idem)
+        working-directory: libs/go
+        run: go vet -tags=integration ./idem/...
+      - name: go test -tags=integration (libs/go/idem)
+        working-directory: libs/go
+        env:
+          REQUIRE_PASS: "1"
+        run: |
+          bash "$GITHUB_WORKSPACE/.github/scripts/run-and-report-tests.sh" TestTichHop             go test -v -tags=integration ./idem/... -count=1 -timeout=10m

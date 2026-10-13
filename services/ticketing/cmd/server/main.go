@@ -16,6 +16,7 @@ import (
 	"github.com/redis/go-redis/v9"
 
 	"github.com/eventflow/eventflow/libs/go/httpx"
+	"github.com/eventflow/eventflow/libs/go/idem"
 	"github.com/eventflow/eventflow/libs/go/otelx"
 	httpadapter "github.com/eventflow/eventflow/services/ticketing/internal/adapter/http"
 	metricsadapter "github.com/eventflow/eventflow/services/ticketing/internal/adapter/metrics"
@@ -101,8 +102,14 @@ func run(log *slog.Logger) error {
 
 	h := httpadapter.New(app.NewCreateHold(gate, repo, log).WithMetrics(prom), log)
 
+	// BR-O5. Dinh danh lay tu X-Identity-Id cho toi khi gateway cap JWT (giai doan 3); no nam
+	// trong hash cua request nen nguoi khac dung trung key khong nhan duoc response cua nhau.
+	idempotency := idem.Middleware(idem.NewPostgresStore(pool),
+		idem.WithIdentity(func(r *http.Request) string { return r.Header.Get("X-Identity-Id") }),
+		idem.WithLogger(log))
+
 	mux := http.NewServeMux()
-	h.Routes(mux)
+	h.Routes(mux, idempotency)
 	// Cong khai tren cong dich vu: gateway KHONG duoc route /metrics ra ngoai.
 	mux.Handle("GET /metrics", otelx.MetricsHandler())
 	httpx.Health(mux,
