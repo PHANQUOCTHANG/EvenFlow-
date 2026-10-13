@@ -349,6 +349,28 @@ func TestReconciler_HaiLanLechKhacNhau_SuaPhanChacChan(t *testing.T) {
 	}
 }
 
+func TestReconciler_LechTangDan_ChiSuaGiaTriNhoHon_PhanThuaDeChuKySau(t *testing.T) {
+	r := newRig()
+
+	r.led.inv[tt][0] = 43 // -7
+	r.cycle(t)
+	r.led.inv[tt][0] = 42 // -8: lech tang them 1 giua hai chu ky (co the la nhieu thoang qua)
+	r.cycle(t)
+
+	// Chi phan chac chan (7) duoc sua: Redis 42 -> 49, con thieu 1 va van duoc bao cao.
+	if got := r.redis(0); got != 49 {
+		t.Fatalf("redis = %d, muon 49 (chi sua 7, khong phai 8)", got)
+	}
+	if r.spy.drift[tt] != 1 {
+		t.Fatalf("metric = %d, muon 1 (phan thua chua sua)", r.spy.drift[tt])
+	}
+
+	r.cycle(t) // phan thua da hien o chu ky truoc nen duoc sua o chu ky nay
+	if got := r.redis(0); got != 50 {
+		t.Fatalf("redis = %d sau chu ky 3, muon 50", got)
+	}
+}
+
 // --- an toan van hanh ---
 
 func TestReconciler_KhoaDoiSoatDoInstanceKhac_BoQua(t *testing.T) {
