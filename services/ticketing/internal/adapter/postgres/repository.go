@@ -229,11 +229,12 @@ func (r *Repository) releaseHold(ctx context.Context, holdID string) (bool, erro
 		  FROM orders o
 		 WHERE h.id = $1::uuid AND h.released_at IS NULL AND h.consumed_at IS NULL
 		   AND o.id = h.order_id
-		RETURNING h.id::text, h.order_id::text, h.ticket_type_id::text, h.bucket, h.quantity, o.event_id::text`
+		RETURNING h.id::text, h.order_id::text, h.ticket_type_id::text, h.bucket, h.quantity, o.event_id::text, h.released_at`
 
 	var canonicalID, orderID, ticketTypeID, saleEventID string
 	var bucket, qty int
-	err = tx.QueryRow(ctx, claim, toUUID(holdID)).Scan(&canonicalID, &orderID, &ticketTypeID, &bucket, &qty, &saleEventID)
+	var releasedAt time.Time // now() cua DB, khong dung dong ho Go
+	err = tx.QueryRow(ctx, claim, toUUID(holdID)).Scan(&canonicalID, &orderID, &ticketTypeID, &bucket, &qty, &saleEventID, &releasedAt)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return false, nil // da xu ly truoc do -- khong phai loi
 	}
@@ -266,7 +267,7 @@ func (r *Repository) releaseHold(ctx context.Context, holdID string) (bool, erro
 		Data: map[string]any{
 			"hold_id":       canonicalID,
 			"sale_event_id": saleEventID,
-			"released_at":   time.Now().UTC(),
+			"released_at":   releasedAt.UTC(),
 		},
 	}); err != nil {
 		return false, err

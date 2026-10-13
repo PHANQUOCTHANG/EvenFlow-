@@ -58,7 +58,7 @@ type RelayConfig struct {
 	Interval       time.Duration // 0 -> 500ms: cho giua hai lo khi hang doi trong
 	Lease          time.Duration // 0 -> 60s: thoi gian row bi claim truoc khi relay khac duoc lay lai
 	BatchDeadline  time.Duration // 0 -> 30s: han chot cua mot lo
-	PublishTimeout time.Duration // 0 -> 10s: han chot moi message; PublishTimeout <= BatchDeadline < Lease
+	PublishTimeout time.Duration // 0 -> 10s: han chot moi message; PublishTimeout <= BatchDeadline, BatchDeadline + PublishTimeout + 10s < Lease
 	BaseBackoff    time.Duration // 0 -> 1s
 	MaxBackoff     time.Duration // 0 -> 5m; 0 < BaseBackoff <= MaxBackoff <= 1h
 	MaxAttempts    int           // 0 -> 20; vuot thi row bi do
@@ -101,8 +101,8 @@ func (c *RelayConfig) applyDefaults() error {
 	def(&c.PublishTimeout, 10*time.Second)
 	def(&c.BaseBackoff, time.Second)
 	def(&c.MaxBackoff, 5*time.Minute)
-	if c.PublishTimeout > c.BatchDeadline || c.BatchDeadline >= c.Lease {
-		return errors.New("outbox: can PublishTimeout <= BatchDeadline < Lease")
+	if c.PublishTimeout > c.BatchDeadline || c.BatchDeadline+c.PublishTimeout+2*markTimeout >= c.Lease {
+		return errors.New("outbox: can PublishTimeout <= BatchDeadline va BatchDeadline + PublishTimeout + 2*5s < Lease")
 	}
 	if c.BaseBackoff > c.MaxBackoff || c.MaxBackoff > maxAllowedBack {
 		return errors.New("outbox: can 0 < BaseBackoff <= MaxBackoff <= 1h")
@@ -223,7 +223,7 @@ const (
 	markUnroutableSQL      = `UPDATE outbox_events SET published_at = now(), last_error = 'unroutable' WHERE id = $1 AND published_at IS NULL`
 	markRetrySQL           = `UPDATE outbox_events SET attempts = attempts + 1, last_error = $2, next_attempt_at = now() + make_interval(secs => $3) WHERE id = $1 AND published_at IS NULL`
 	markParkSQL            = `UPDATE outbox_events SET attempts = attempts + 1, last_error = $2, next_attempt_at = 'infinity' WHERE id = $1 AND published_at IS NULL`
-	releaseSQL             = `UPDATE outbox_events SET next_attempt_at = now() WHERE id = ANY($1) AND published_at IS NULL`
+	releaseSQL             = `UPDATE outbox_events SET next_attempt_at = now() WHERE id = ANY($1) AND published_at IS NULL AND next_attempt_at <> 'infinity'`
 	gaugeSQL               = `SELECT count(*) FILTER (WHERE next_attempt_at <> 'infinity'), count(*) FILTER (WHERE next_attempt_at = 'infinity') FROM outbox_events WHERE published_at IS NULL`
 )
 
@@ -231,6 +231,11 @@ const (
 func (r *Relay) runBatch(ctx context.Context) (claimed, published int, err error) {
 	if err := ctx.Err(); err != nil {
 		return 0, 0, fmt.Errorf("outbox: %w", err)
+	}
+	if r.pub != nil && r.connDead() {
+		r.log.Warn("outbox relay: ket noi broker da chet, dial lai")
+		r.closeConn()    // gauge outbox_relay_connected = 0
+		return 0, 0, nil // khong claim trong lan nay; lan sau dial lai
 	}
 	if r.pub == nil {
 		if err := r.connect(ctx); err != nil {
@@ -256,18 +261,23 @@ func (r *Relay) runBatch(ctx context.Context) (claimed, published int, err error
 			r.release(ctx, rows[i:])
 			return claimed, published, nil
 		}
-		res := r.publishRow(ctx, row)
+		res := r.publishRow(ctx, row, deadline)
 		var markErr error
 		switch res.kind {
 		case resPublished:
-			published++
-			r.m.published.WithLabelValues(row.routingKey).Inc()
-			r.m.lag.Observe(time.Since(row.createdAt).Seconds())
-			markErr = r.exec(ctx, markPublishedSQL, row.id)
+			if markErr = r.exec(ctx, markPublishedSQL, row.id); markErr == nil {
+				published++
+				r.m.published.WithLabelValues(row.routingKey).Inc()
+				r.m.lag.Observe(time.Since(row.createdAt).Seconds())
+			}
 		case resUnroutable:
-			r.m.unroutable.WithLabelValues(row.routingKey).Inc()
-			r.log.Warn("outbox relay: event khong co queue nhan, bo qua", "routing_key", row.routingKey, "event_id", row.eventID)
-			markErr = r.exec(ctx, markUnroutableSQL, row.id)
+			if markErr = r.exec(ctx, markUnroutableSQL, row.id); markErr == nil {
+				r.m.unroutable.WithLabelValues(row.routingKey).Inc()
+				r.log.Warn("outbox relay: event khong co queue nhan, bo qua", "routing_key", row.routingKey, "event_id", row.eventID)
+			}
+		case resBatchEnd:
+			r.release(ctx, rows[i:])
+			return claimed, published, nil
 		case resRetry:
 			markErr = r.markFailure(ctx, row, res.err)
 		case resClosed:
@@ -302,6 +312,18 @@ func (r *Relay) connect(ctx context.Context) error {
 	r.pub, r.closer = pub, closer
 	r.m.connected.Set(1)
 	return nil
+}
+
+// connDead tra true neu closer hoac publisher (neu ho tro IsClosed, vd *amqp091.Connection) bao da dong.
+func (r *Relay) connDead() bool {
+	type closedChecker interface{ IsClosed() bool }
+	if c, ok := r.closer.(closedChecker); ok && c.IsClosed() {
+		return true
+	}
+	if c, ok := r.pub.(closedChecker); ok && c.IsClosed() {
+		return true
+	}
+	return false
 }
 
 func (r *Relay) closeConn() {
@@ -362,6 +384,7 @@ const (
 	resRetry    // tang attempts
 	resClosed   // kenh dong: dong ket noi, tra lease
 	resCanceled // ctx huy: tra lease
+	resBatchEnd // het han lo giua luc publish: tra lease, khong tinh attempts
 )
 
 type result struct {
@@ -370,7 +393,7 @@ type result struct {
 }
 
 // publishRow dung message tu cot, publish, phan loai ket qua (plan §7 R1). Panic duoc bat va tinh la loi dung message.
-func (r *Relay) publishRow(ctx context.Context, row outboxRow) (res result) {
+func (r *Relay) publishRow(ctx context.Context, row outboxRow, batchDeadline time.Time) (res result) {
 	defer func() {
 		if p := recover(); p != nil {
 			res = result{resRetry, fmt.Errorf("panic khi xu ly row: %v", p)}
@@ -381,7 +404,13 @@ func (r *Relay) publishRow(ctx context.Context, row outboxRow) (res result) {
 		return result{resRetry, err}
 	}
 	pctx := otelx.ExtractAMQP(ctx, otelx.AMQPHeaders(msg.Headers))
-	pctx, cancel := context.WithTimeout(pctx, r.cfg.PublishTimeout)
+	// Han chot moi lan publish khong vuot han chot cua lo.
+	limit := time.Now().Add(r.cfg.PublishTimeout)
+	cappedByBatch := batchDeadline.Before(limit)
+	if cappedByBatch {
+		limit = batchDeadline
+	}
+	pctx, cancel := context.WithDeadline(pctx, limit)
 	defer cancel()
 
 	err = r.pub.Publish(pctx, r.cfg.Exchange, row.routingKey, msg)
@@ -399,6 +428,8 @@ func (r *Relay) publishRow(ctx context.Context, row outboxRow) (res result) {
 		return result{resRetry, err}
 	case ctx.Err() != nil:
 		return result{resCanceled, err}
+	case cappedByBatch && errors.Is(err, context.DeadlineExceeded):
+		return result{resBatchEnd, err}
 	default: // het PublishTimeout khi kenh con mo, hoac loi khac cua mot message
 		return result{resRetry, err}
 	}
@@ -473,6 +504,7 @@ func (r *Relay) release(ctx context.Context, rows []outboxRow) {
 	for i, row := range rows {
 		ids[i] = row.id
 	}
+	// Cau SQL loai row 'infinity': khong bao gio gan lai (go do) mot row da bi do.
 	if err := r.exec(ctx, releaseSQL, ids); err != nil {
 		r.log.Warn("outbox relay: khong tra duoc lease, se het han tu nhien", "rows", len(ids), "error", sanitizeErr(err))
 	}
