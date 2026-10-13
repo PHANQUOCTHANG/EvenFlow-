@@ -16,6 +16,11 @@
 //     hoac DLQ that bai -> nack requeue va Consume tra loi (khong mat message).
 //   - Trace context di theo header (otelx.InjectAMQP/ExtractAMQP) va giu nguyen
 //     qua cac lan retry.
+//   - Header x-ef-publish-id (do Publisher gan de gan dung basic.return) co the
+//     thay trong Delivery.Headers cua handler; no khong duoc chep sang retry/DLQ.
+//     AttemptHeader kieu float bi coi la 1 (thu vien luon ghi lai int32).
+//   - KHONG bat amqp091 Config.Recovery (doi ngu nghia loi cua kenh/ket noi);
+//     supervisor khoi dong lai process khi Consume tra loi.
 //   - Khong tu reconnect: khi mat ket noi Consume tra loi de process supervisor
 //     khoi dong lai.
 //

@@ -148,13 +148,48 @@ func (p *Publisher) Publish(ctx context.Context, exchange, routingKey string, ms
 		}
 		return fmt.Errorf("mq: publish %s/%s: %w", exchange, routingKey, err)
 	}
-	// WaitContext tra khi co confirm, ctx het han, hoac kenh dong (acked=false).
-	acked, err := dc.WaitContext(ctx)
-	if err != nil {
-		return fmt.Errorf("mq: cho confirm %s/%s: %w", exchange, routingKey, err)
+	// Cho confirm DONG THOI doc returns: return co id khac bi bo ngay nen bo dem
+	// NotifyReturn khong day (amqp091 se khong bi chan o notifyAll). WaitContext
+	// tra khi co confirm, ctx het han, hoac kenh dong (acked=false).
+	type waitResult struct {
+		acked bool
+		err   error
 	}
+	resCh := make(chan waitResult, 1)
+	go func() {
+		a, e := dc.WaitContext(ctx)
+		resCh <- waitResult{a, e}
+	}()
+	var (
+		returned, closed bool
+		res              waitResult
+		returns          = p.returns
+	)
+wait:
+	for {
+		select {
+		case r, ok := <-returns:
+			if !ok {
+				closed = true
+				returns = nil // dung doc kenh da dong, khong quay vong
+				continue
+			}
+			if r.Headers[publishIDHeader] == id {
+				returned = true
+			}
+		case res = <-resCh:
+			break wait
+		}
+	}
+	if res.err != nil {
+		return fmt.Errorf("mq: cho confirm %s/%s: %w", exchange, routingKey, res.err)
+	}
+	acked := res.acked
 	// basic.return di truoc basic.ack nen da nam trong bo dem neu co.
-	returned, closed := p.collect(id)
+	if found, c := p.collect(id); found || c {
+		returned = returned || found
+		closed = closed || c
+	}
 	if returned {
 		return fmt.Errorf("mq: publish %s/%s: %w", exchange, routingKey, ErrUnroutable)
 	}

@@ -1,5 +1,17 @@
 package mq
 
+// SEAM KHONG EXPORT cho test (Consume chi la lop mong goi consume):
+//
+//	// consumeChannel la phan cua *amqp091.Channel ma consume dung.
+//	type consumeChannel interface {
+//		Qos(prefetchCount, prefetchSize int, global bool) error
+//		Consume(queue, consumer string, autoAck, exclusive, noLocal, noWait bool, args amqp091.Table) (<-chan amqp091.Delivery, error)
+//		Cancel(consumer string, noWait bool) error
+//	}
+//	// consume validate cfg, goi Qos(Prefetch,0,false), Consume, defer Cancel(tag,false), roi vong lap.
+//	// Kenh deliveries dong -> tra loi khac nil. Publisher dung newPublisherWith + kenh publish gia.
+//	func consume(ctx context.Context, ch consumeChannel, pub *Publisher, cfg ConsumerConfig, h Handler) error
+
 import (
 	"context"
 	"errors"
@@ -165,6 +177,13 @@ func cloneHeaders(in amqp.Table) map[string]any {
 	return out
 }
 
+// consumeChannel la phan cua *amqp091.Channel ma consume dung.
+type consumeChannel interface {
+	Qos(prefetchCount, prefetchSize int, global bool) error
+	Consume(queue, consumer string, autoAck, exclusive, noLocal, noWait bool, args amqp.Table) (<-chan amqp.Delivery, error)
+	Cancel(consumer string, noWait bool) error
+}
+
 // callHandler goi h; panic duoc recover thanh loi thuong (di retry/DLQ).
 func callHandler(ctx context.Context, h Handler, d Delivery) (err error) {
 	defer func() {
@@ -187,6 +206,15 @@ func Consume(ctx context.Context, ch *amqp.Channel, pub *Publisher, cfg Consumer
 	}
 	if ch == nil || pub == nil || h == nil {
 		return errors.New("mq: Consume can kenh, publisher va handler")
+	}
+	return consume(ctx, ch, pub, cfg, h)
+}
+
+// consume la phan noi day cua Consume, nhan consumeChannel de test bang kenh gia.
+func consume(ctx context.Context, ch consumeChannel, pub *Publisher, cfg ConsumerConfig, h Handler) error {
+	cfg, err := cfg.validate()
+	if err != nil {
+		return err
 	}
 	if err := ch.Qos(cfg.Prefetch, 0, false); err != nil {
 		return fmt.Errorf("mq: qos %s: %w", cfg.Queue, err)
