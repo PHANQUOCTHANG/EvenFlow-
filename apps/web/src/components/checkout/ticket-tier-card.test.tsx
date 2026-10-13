@@ -920,3 +920,45 @@ describe("TicketTierCard — trang thai duoc chon phai den duoc screen reader (A
     expect(accName(marker as Element).length).toBeGreaterThan(0);
   });
 });
+
+// ---------------------------------------------------------------------------
+// EV-188 AC-3 (axe V2 `color-contrast`): the bi khoa truoc day dat `opacity-60` tren CA the ->
+// ten hang, badge va CA Alert "Bạn đang giữ vé ở hạng khác" tut duoi 4.5:1. Tuong phan that chi
+// do duoc bang axe; o day giu GOC LOI: khong phan tu nao trong the mang lop opacity-* (tru bien the
+// disabled:/hover: cua nut), va trang thai khoa van noi bang CHU.
+// ---------------------------------------------------------------------------
+function opacityClasses(container: HTMLElement): string[] {
+  return Array.from(container.querySelectorAll("*")).flatMap((el) =>
+    (el.getAttribute("class") ?? "")
+      .split(/\s+/)
+      .filter((token) => /(^|:)opacity-/.test(token) && !/^(disabled|hover|focus|group-hover):/.test(token))
+      .map((token) => `${el.tagName.toLowerCase()}.${token}`),
+  );
+}
+
+describe("TicketTierCard — the bi khoa khong ha opacity (EV-188 V2)", () => {
+  it("sold_out: khong co lop opacity-*; van noi 'het ve' bang chu", () => {
+    const { container } = render(
+      <TicketTierCard {...BASE} availability="sold_out" maxSelectable={3} quantity={0} onQuantityChange={vi.fn()} />,
+    );
+    expect(opacityClasses(container)).toEqual([]);
+    expect(allText(container)).toMatch(/h[ếe]t v[ée]/i);
+  });
+
+  it("disabled + dang giu ve o hang khac: khong co lop opacity-*; Alert canh bao hien du chu", () => {
+    const { container } = render(
+      <TicketTierCard
+        {...BASE}
+        availability="available"
+        disabled
+        hasActiveHoldElsewhere
+        maxSelectable={3}
+        quantity={0}
+        onQuantityChange={vi.fn()}
+      />,
+    );
+    expect(opacityClasses(container)).toEqual([]);
+    expect(allText(container)).toContain("Bạn đang giữ vé ở hạng khác");
+    expect(container.firstElementChild).toHaveAttribute("data-state", "disabled");
+  });
+});

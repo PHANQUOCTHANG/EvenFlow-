@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import type { TicketTierSnapshot } from "@/lib/event-service";
-import { TicketTierList } from "./ticket-tier-list";
+import { TICKET_TIERS_HEADING_ID, TicketTierList } from "./ticket-tier-list";
 
 describe("TicketTierList (BR-A4, EVF-111)", () => {
   const sampleTiers: TicketTierSnapshot[] = [
@@ -55,5 +55,53 @@ describe("TicketTierList (BR-A4, EVF-111)", () => {
     expect(
       screen.getByText(/Chưa có thông tin hạng vé cho sự kiện này/i),
     ).toBeInTheDocument();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// EV-188 AC-3 (axe incomplete `aria-valid-attr-value`): trang chi tiet su kien dat
+// <section aria-labelledby="ticket-tiers-heading">; id do phai nam tren heading cua danh sach.
+// ---------------------------------------------------------------------------
+describe("TicketTierList — heading lam ten cho section (EV-188 I1)", () => {
+  const tiers: TicketTierSnapshot[] = [
+    { id: "t1", name: "Standard Ticket", price: 500000, availability: "AVAILABLE" },
+  ];
+
+  it('co hang ve: heading cap 2 "Các hạng vé" mang id="ticket-tiers-heading"', () => {
+    render(<TicketTierList tiers={tiers} />);
+    const heading = screen.getByRole("heading", { level: 2, name: "Các hạng vé" });
+    expect(heading).toHaveAttribute("id", "ticket-tiers-heading");
+  });
+
+  it("khong co hang ve: khong render id ticket-tiers-heading (section khong duoc tro toi no)", () => {
+    const { container } = render(<TicketTierList tiers={[]} />);
+    expect(container.querySelector("#ticket-tiers-heading")).toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// EV-188 code review m3 (plan §7): TicketTierList nhan `headingId` (mac dinh
+// TICKET_TIERS_HEADING_ID = "ticket-tiers-heading"); trang [slug] dung chung hang so.
+// ---------------------------------------------------------------------------
+describe("TicketTierList — prop headingId (EV-188 m3)", () => {
+  const tiers: TicketTierSnapshot[] = [
+    { id: "t1", name: "Standard Ticket", price: 500000, availability: "AVAILABLE" },
+  ];
+
+  it('hang so TICKET_TIERS_HEADING_ID = "ticket-tiers-heading" va la gia tri mac dinh', () => {
+    expect(TICKET_TIERS_HEADING_ID).toBe("ticket-tiers-heading");
+    render(<TicketTierList tiers={tiers} />);
+    expect(screen.getByRole("heading", { level: 2 })).toHaveAttribute("id", TICKET_TIERS_HEADING_ID);
+  });
+
+  it("headingId tuy chinh duoc dat len heading, khong con id mac dinh", () => {
+    const { container } = render(<TicketTierList tiers={tiers} headingId="hang-ve-rieng" />);
+    expect(screen.getByRole("heading", { level: 2, name: "Các hạng vé" })).toHaveAttribute("id", "hang-ve-rieng");
+    expect(container.querySelector(`#${TICKET_TIERS_HEADING_ID}`)).toBeNull();
+  });
+
+  it("khong co hang ve: khong render id tuy chinh", () => {
+    const { container } = render(<TicketTierList tiers={[]} headingId="hang-ve-rieng" />);
+    expect(container.querySelector("#hang-ve-rieng")).toBeNull();
   });
 });

@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 
 import { EventActionPanel } from "@/components/event/event-action-panel";
 import { LobbyNotice } from "@/components/event/lobby-notice";
-import { TicketTierList } from "@/components/event/ticket-tier-list";
+import { TICKET_TIERS_HEADING_ID, TicketTierList } from "@/components/event/ticket-tier-list";
 import { Badge, type BadgeVariant } from "@/components/ui";
 import {
   getAllEventSlugs,
@@ -75,6 +75,9 @@ export default async function EventDetailPage({ params }: PageProps) {
     variant: "neutral" as BadgeVariant,
   };
 
+  // Cung dieu kien voi TicketTierList (khong co hang ve thi khong render h2).
+  const hasTiers = Array.isArray(event.tiers) && event.tiers.length > 0;
+
   return (
     <article className="py-xl">
       {/* Event Header Banner */}
@@ -121,8 +124,10 @@ export default async function EventDetailPage({ params }: PageProps) {
       </div>
 
       {/* Ticket Tiers (BR-A4) */}
-      <section aria-labelledby="ticket-tiers-heading">
-        <TicketTierList tiers={event.tiers} />
+      {/* Chi tro aria-labelledby khi TicketTierList that su render h2#ticket-tiers-heading (co hang ve);
+        * neu khong id khong ton tai va axe bao aria-valid-attr-value. */}
+      <section aria-labelledby={hasTiers ? TICKET_TIERS_HEADING_ID : undefined}>
+        <TicketTierList tiers={event.tiers} headingId={TICKET_TIERS_HEADING_ID} />
       </section>
     </article>
   );
