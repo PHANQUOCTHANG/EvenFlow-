@@ -10,6 +10,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"regexp"
+	"strings"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -253,6 +255,56 @@ func (r *Repository) releaseHold(ctx context.Context, holdID string) (bool, erro
 	return true, tx.Commit(ctx)
 }
 
+var uuidRE = regexp.MustCompile(`^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$`)
+
+// holdStatesBatch chia nho de mang UUID khong qua lon cho mot cau lenh.
+const holdStatesBatch = 1000
+
+// HoldStates tra trang thai cac hold theo id Redis (co the la hex 32 ky tu). Hold Postgres chua
+// ghi khong co trong ket qua. Id khong phai UUID duoc coi nhu chua ghi thay vi lam hong ca lo.
+func (r *Repository) HoldStates(ctx context.Context, holdIDs []string) (map[string]port.HoldState, error) {
+	out := make(map[string]port.HoldState, len(holdIDs))
+	byUUID := make(map[string]string, len(holdIDs)) // uuid co gach -> id goc
+	uuids := make([]string, 0, len(holdIDs))
+	for _, id := range holdIDs {
+		u := toUUID(id)
+		if !uuidRE.MatchString(u) {
+			continue
+		}
+		u = strings.ToLower(u)
+		byUUID[u] = id
+		uuids = append(uuids, u)
+	}
+
+	const q = `
+		SELECT id::text, released_at IS NOT NULL, consumed_at IS NOT NULL
+		  FROM seat_holds
+		 WHERE id = ANY($1::uuid[])`
+	for start := 0; start < len(uuids); start += holdStatesBatch {
+		end := min(start+holdStatesBatch, len(uuids))
+		rows, err := r.pool.Query(ctx, q, uuids[start:end])
+		if err != nil {
+			return nil, err
+		}
+		for rows.Next() {
+			var id string
+			var st port.HoldState
+			if err := rows.Scan(&id, &st.Released, &st.Consumed); err != nil {
+				rows.Close()
+				return nil, err
+			}
+			if orig, ok := byUUID[id]; ok {
+				out[orig] = st
+			}
+		}
+		rows.Close()
+		if err := rows.Err(); err != nil {
+			return nil, err
+		}
+	}
+	return out, nil
+}
+
 // wrapConstraint dich loi constraint cua Postgres sang loi nghiep vu.
 //
 // Vi pham inv_available_le_capacity nghia la co cho nao do da tra kho hai lan --
@@ -282,4 +334,5 @@ func toUUID(s string) string {
 var (
 	_ port.Repository      = (*Repository)(nil)
 	_ port.InventorySource = (*Repository)(nil)
+	_ port.HoldStateSource = (*Repository)(nil)
 )
