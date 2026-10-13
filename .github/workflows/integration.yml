@@ -36,7 +36,9 @@ jobs:
         run: go vet -tags=integration ./...
       - name: go test -tags=integration (ticketing)
         working-directory: services/ticketing
-        run: go test -tags=integration ./... -count=1 -timeout=10m
+        run: |
+          bash "$GITHUB_WORKSPACE/.github/scripts/run-and-report-tests.sh" TestTichHop \
+            go test -v -tags=integration ./... -count=1 -timeout=10m
       # Bao qua run-and-report-tests.sh de mot smoke skip toan bo khong con xanh cam (xem
       # oversell-gate.yml). Duong dan tuyet doi vi step chay trong services/ticketing.
       - name: oversell smoke (20 lan, gate day du 200 lan nam o oversell-gate.yml)
