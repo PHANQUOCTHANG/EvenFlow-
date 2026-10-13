@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import type { EventPublicState } from "@/components/event/event-card";
+import { useLocale, useT } from "@/components/i18n/locale-provider";
 import { Button, ServerExpiryCountdown, Spinner } from "@/components/ui";
 import { useServerCountdown } from "@/hooks/use-server-countdown";
 import { useServerTimeSync } from "@/hooks/use-server-time-sync";
@@ -37,6 +38,8 @@ export function EventActionPanel({
   className,
 }: EventActionPanelProps) {
   const router = useRouter();
+  const t = useT();
+  const { locale } = useLocale();
   const { offsetMs } = useServerTimeSync();
   const { expired, ready } = useServerCountdown(saleStartAt, offsetMs);
 
@@ -65,9 +68,9 @@ export function EventActionPanel({
   // 1. Cac trang thai dong/huy/het ve
   if (state === "SOLD_OUT") {
     return (
-      <div className={className}>
+      <div className={className} lang={locale}>
         <Button variant="secondary" disabled className="w-full">
-          Đã hết vé
+          {t("eventAction.soldOut")}
         </Button>
       </div>
     );
@@ -75,9 +78,9 @@ export function EventActionPanel({
 
   if (state === "CANCELLED") {
     return (
-      <div className={className}>
+      <div className={className} lang={locale}>
         <Button variant="secondary" disabled className="w-full">
-          Sự kiện đã huỷ
+          {t("eventAction.cancelled")}
         </Button>
       </div>
     );
@@ -85,9 +88,9 @@ export function EventActionPanel({
 
   if (state === "CLOSED" || state === "COMPLETED") {
     return (
-      <div className={className}>
+      <div className={className} lang={locale}>
         <Button variant="secondary" disabled className="w-full">
-          Đã đóng bán
+          {t("eventAction.closed")}
         </Button>
       </div>
     );
@@ -98,19 +101,23 @@ export function EventActionPanel({
     return (
       <div
         className={className}
+        lang={locale}
         aria-busy="true"
         aria-live="polite"
         data-testid="jitter-state"
       >
         <div className="flex flex-col items-center justify-center p-md rounded-container border border-border bg-surface text-center gap-sm">
-          <Spinner size="md" />
+          {/* Nhan mac dinh cua Spinner la tieng Viet ("Dang tai"), chua dich. */}
+          <Spinner size="md" lang="vi" />
           <p className="text-body-md font-medium text-fg">
-            Đang điều phối lượt vào phòng chờ...
+            {t("eventAction.dispatching")}
           </p>
           <p className="text-body-xs text-fg-muted">
             {jitterProgress
-              ? `Còn ${((jitterProgress.remainingMs || 0) / 1000).toFixed(1)}s (giảm tải đột biến)`
-              : "Vui lòng giữ nguyên màn hình..."}
+              ? t("eventAction.jitterRemaining", {
+                  seconds: ((jitterProgress.remainingMs || 0) / 1000).toFixed(1),
+                })
+              : t("eventAction.keepScreen")}
           </p>
         </div>
       </div>
@@ -120,21 +127,24 @@ export function EventActionPanel({
   // 3. Su kien SCHEDULED va chua toi gio mo ban
   if (!isTimeForSale) {
     return (
-      <div className={className}>
+      <div className={className} lang={locale}>
         <div className="flex flex-col sm:flex-row items-center justify-between gap-md p-md rounded-container border border-border bg-surface">
           <div>
             <span className="text-label-md text-fg-muted block mb-xs">
-              Thời gian mở bán
+              {t("eventAction.saleStartsAt")}
             </span>
-            <ServerExpiryCountdown
-              variant="sale-start"
-              expiresAt={saleStartAt}
-              offsetMs={offsetMs}
-            />
+            {/* Dong ho dem nguoc chua dich (chu tieng Viet cung) nen khai bao lang="vi" trong goc lang={locale}. */}
+            <div lang="vi">
+              <ServerExpiryCountdown
+                variant="sale-start"
+                expiresAt={saleStartAt}
+                offsetMs={offsetMs}
+              />
+            </div>
           </div>
 
           <Button variant="secondary" disabled className="w-full sm:w-auto">
-            Chưa tới giờ mở bán
+            {t("eventAction.notYetOpen")}
           </Button>
         </div>
       </div>
@@ -143,14 +153,14 @@ export function EventActionPanel({
 
   // 4. Su kien da toi gio mo ban (ON_SALE hoac SCHEDULED da qua T0)
   return (
-    <div className={className}>
+    <div className={className} lang={locale}>
       <Button
         variant="primary"
         size="lg"
         onClick={handleAction}
         className="w-full font-bold shadow-md"
       >
-        Vào phòng chờ mua vé
+        {t("eventAction.joinQueue")}
       </Button>
     </div>
   );

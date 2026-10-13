@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { useAuth } from "@/hooks/use-auth";
 
+// lang="vi" o goc: trang chua dich, tranh bi doc nhu tieng Anh khi <html lang> la en (WCAG 3.1.2).
 export default function UnauthorizedPage() {
   const { user, logout } = useAuth();
 
   return (
-    <div className="flex min-h-[80vh] flex-col items-center justify-center px-4 text-center">
+    <div lang="vi" className="flex min-h-[80vh] flex-col items-center justify-center px-4 text-center">
       <div className="mx-auto max-w-md rounded-2xl border border-red-500/20 bg-slate-900/60 p-8 shadow-2xl backdrop-blur-xl">
         <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-red-500/10 text-red-500 ring-8 ring-red-500/5">
           <svg

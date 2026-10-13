@@ -62,7 +62,7 @@ export function WorkspaceShell({ children, title, items }: WorkspaceShellProps) 
               * route trong group. <h1> thuoc ve page — neu shell chiem <h1> thi moi trang
               * organizer/ops deu co cung mot heading vo nghia, va page nao tu dat <h1> theo
               * dung pattern cua repo se tao ra <h1> thu hai. */}
-            <p className="text-headline-md text-fg">{title}</p>
+            <p lang="vi" className="text-headline-md text-fg">{title}</p>
             <div className="flex items-center gap-sm">
               <ThemeToggle />
               <button
@@ -70,6 +70,7 @@ export function WorkspaceShell({ children, title, items }: WorkspaceShellProps) 
                 type="button"
                 aria-expanded={open}
                 aria-controls={navId}
+                lang="vi"
                 onClick={() => setOpen((value) => !value)}
                 className="ef-focus-ring h-11 rounded-control border border-border-strong bg-surface px-md text-label-lg text-fg md:hidden"
               >
@@ -87,6 +88,7 @@ export function WorkspaceShell({ children, title, items }: WorkspaceShellProps) 
         <nav
           id={navId}
           aria-label="Điều hướng workspace"
+          lang="vi"
           data-state={open ? "open" : "closed"}
           // Bam vao mot link trung route hien tai thi pathname khong doi, nen effect theo
           // pathname khong chay va menu se nam do che trang. Dong ngay tai day.
@@ -107,6 +109,7 @@ export function WorkspaceShell({ children, title, items }: WorkspaceShellProps) 
           as="main"
           variant="workspace"
           id="main"
+          lang="vi"
           tabIndex={-1}
           className="py-lg md:col-start-2 md:row-start-2"
         >
