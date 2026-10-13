@@ -56,6 +56,24 @@ Ký hiệu: **U** = unit (không DB/broker), **I** = tích hợp (`//go:build in
 | m8 | Metric published/lag không tăng khi UPDATE đánh dấu lỗi | `TestRunOnce_DanhDauLoiThiKhongTangMetricPublished` | U |
 | m8 | `data.released_at` của `hold.released` = `seat_holds.released_at` (giờ DB) | `TestTichHop_ReleaseHoldGhiOutboxHoldReleasedMotLan` | I |
 
+### Bổ sung sau challenge (plan §9)
+
+| Finding / mutant | Yêu cầu | Test | Loại |
+|---|---|---|---|
+| F1 | Câu thử lại / đỗ không đụng row relay khác đã đỗ (`AND next_attempt_at <> 'infinity'`) | `TestRunOnce_ThuLaiVaDoKhongDungRowDaBiRelayKhacDo`; `assertMarksGuarded` đòi guard ở thử lại, đỗ, trả lease | U |
+| F2 | `Write` từ chối data có `\u0000` | `TestWrite_KiemTraDauVao` (2 case F2) | U |
+| F3, M42 | Lag theo đồng hồ DB trả từ claim; âm kẹp về 0 | `TestRunOnce_LagTheoDongHoDB`, `TestRunOnce_LagAmKepVe0` | U |
+| M22, M48 | Huỷ ctx giữa publish: không tính attempts, trả lease cả row đó | `TestRunOnce_HuyCtxGiuaPublishKhongTinhAttempts` | U |
+| M23, M47 | Hết hạn lô giữa publish: không tính attempts, trả lease | `TestRunOnce_PublishBiCatTaiHanChotLo` (thêm khẳng định) | U |
+| M29 | SQL gauge tách row đỗ khỏi `outbox_pending` | `TestRun_GaugePendingKhongTinhRowDo` | U |
+| M30 | Backoff dial lại tăng dần (seam `Relay.redialBase/redialMax`) | `TestRun_BackoffDialLaiTangDan` | U |
+| M31 | Lô thành công (kể cả rỗng) đặt lại số lần thất bại | `TestRun_LoThanhCongDatLaiBackoff` | U |
+| M36 | `SET LOCAL statement_timeout` trong tx trước claim | `TestRunOnce_ClaimCoStatementTimeoutTrongTx` | U |
+| M43 | Lỗi tạm tăng `outbox_publish_errors_total{routing_key}`; huỷ ctx thì không | `TestRunOnce_LoiTamTangPublishErrorsTotal`, `TestRunOnce_HuyCtxGiuaPublishKhongTinhAttempts` | U |
+| W1 | Biên đúng 64 KiB: 65536 byte được, 65537 bị từ chối | `TestWrite_KiemTraDauVao` | U |
+| W6 | `AggregateType` rỗng bị từ chối | `TestWrite_KiemTraDauVao` | U |
+| W7 | Headers giữ đủ `traceparent`, `tracestate`, `baggage`, bỏ khoá khác | `TestWrite_HeadersGiuDuBaKhoaW3CVaBoKhoaKhac` | U |
+
 ## Chưa phủ / ghi chú
 
 - Metric `outbox_pending`, `outbox_dead`, `outbox_publish_lag_seconds` chỉ được kiểm gián tiếp (không test tên/giá trị).

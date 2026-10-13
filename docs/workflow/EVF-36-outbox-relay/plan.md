@@ -265,3 +265,12 @@ Mỗi lô gồm ba bước, không bước nào giữ transaction trong lúc g�
 | m7 | Không đổi (tuỳ chọn). |
 | m8 | Metric published/lag chỉ ghi **sau** khi đánh dấu thành công. `released_at` của `hold.released` lấy từ DB (`now()` trong `RETURNING`) thay vì đồng hồ Go. |
 | m9 | Ghi rủi ro: CI không chạy goose thật; pool của `cmd/server` vẫn dùng exec mode mặc định (có từ trước, ngoài phạm vi) — kiểm ở smoke compose. |
+
+## 9. Sửa sau challenge (vòng 2; `challenge.md`: PASS, chỉ minor)
+
+| Finding | Quyết định |
+|---|---|
+| F1 | `markRetrySQL` và `markParkSQL` thêm `AND next_attempt_at <> 'infinity'` (giống `releaseSQL`): relay đã quá lease không được gỡ đỗ hay đếm lần thử hai lần cho row mà relay khác đã đỗ. Unit test với fake: row đã đỗ không bị các UPDATE này đụng tới. |
+| F2 | `Write` từ chối `data` mà JSON sau khi marshal chứa `\u0000` (jsonb của PostgreSQL không nhận) — trả lỗi validation trước khi chạm DB. Unit test. |
+| F3 | Độ trễ publish tính theo đồng hồ DB: câu claim trả thêm `now()` của DB; lag = `db_now_at_claim - created_at` + thời gian trôi trong Go từ lúc claim; giá trị âm bị kẹp về 0. Unit test. |
+| F4 | Bổ sung test giết các mutant còn sống: trả lease khi lô kết thúc/ctx huỷ (M47, M48); huỷ ctx / hết hạn lô không tính lần thử (M22, M23); backoff dial lại (M30, M31 — có thể qua seam cấu hình được trong test); biên đúng 64 KiB (W1); `AggregateType` rỗng (W6); danh sách khoá header cho phép (W7); SQL gauge và `statement_timeout` (M29, M36); metric lag và `publish_errors_total` (M42, M43). |
