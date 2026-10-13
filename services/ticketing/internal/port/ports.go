@@ -133,9 +133,3 @@ type InventorySource interface {
 type InventorySeeder interface {
 	SeedInventory(ctx context.Context, eventID, ticketTypeID string, perBucket map[int]int) error
 }
-
-// ===================== Su kien ra ngoai =====================
-
-type Publisher interface {
-	Publish(ctx context.Context, routingKey string, payload any) error
-}

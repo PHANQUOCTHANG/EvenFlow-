@@ -23,7 +23,6 @@ import (
 type HoldSweeper struct {
 	gate    port.InventoryGate
 	repo    port.Repository
-	pub     port.Publisher
 	log     *slog.Logger
 	cfg     SweeperConfig
 	metrics SweeperMetrics
@@ -56,9 +55,9 @@ func DefaultSweeperConfig(eventIDs []string) SweeperConfig {
 	return SweeperConfig{EventIDs: eventIDs, Interval: time.Second, Batch: 500}
 }
 
-func NewHoldSweeper(gate port.InventoryGate, repo port.Repository, pub port.Publisher,
+func NewHoldSweeper(gate port.InventoryGate, repo port.Repository,
 	cfg SweeperConfig, log *slog.Logger) *HoldSweeper {
-	return &HoldSweeper{gate: gate, repo: repo, pub: pub, cfg: cfg, log: log,
+	return &HoldSweeper{gate: gate, repo: repo, cfg: cfg, log: log,
 		metrics: noopSweeperMetrics{}}
 }
 
@@ -109,12 +108,9 @@ func (s *HoldSweeper) sweep(ctx context.Context, eventID string) error {
 			continue
 		}
 		if ok {
+			// Event ticketing.hold.released da nam trong outbox, ghi cung transaction
+			// voi repo.ReleaseHold; relay (libs/go/outbox) se publish.
 			released++
-			_ = s.pub.Publish(ctx, "ticketing.hold.released", map[string]any{
-				"event_id":    eventID,
-				"hold_id":     id,
-				"released_at": time.Now().UTC(),
-			})
 		}
 	}
 
