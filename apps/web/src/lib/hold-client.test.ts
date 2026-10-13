@@ -166,6 +166,47 @@ describe("hold-client (EVF-113, BR-O2, BR-O5)", () => {
       );
     });
 
+    it("409 do cùng Idempotency-Key đang xử lý là AMBIGUOUS, không phải SOLD_OUT (BR-O5)", async () => {
+      globalThis.fetch = vi.fn().mockResolvedValue({
+        ok: false,
+        status: 409,
+        json: async () => ({
+          type: "urn:eventflow:problem:idempotency-in-progress",
+          status: 409,
+        }),
+      });
+
+      await expect(
+        requestHold({
+          eventId: "evt-1",
+          ticketTypeId: "tier-1",
+          quantity: 1,
+          queueToken: "token-valid",
+        }),
+      ).rejects.toThrowError(
+        expect.objectContaining({ type: "AMBIGUOUS", status: 409 }),
+      );
+    });
+
+    it("409 hết vé có body problem+json khác vẫn là SOLD_OUT", async () => {
+      globalThis.fetch = vi.fn().mockResolvedValue({
+        ok: false,
+        status: 409,
+        json: async () => ({ type: "about:blank", status: 409 }),
+      });
+
+      await expect(
+        requestHold({
+          eventId: "evt-1",
+          ticketTypeId: "tier-1",
+          quantity: 1,
+          queueToken: "token-valid",
+        }),
+      ).rejects.toThrowError(
+        expect.objectContaining({ type: "SOLD_OUT", status: 409 }),
+      );
+    });
+
     it("chuyển lỗi 422 thành LIMIT_EXCEEDED", async () => {
       globalThis.fetch = vi.fn().mockResolvedValue({
         ok: false,
