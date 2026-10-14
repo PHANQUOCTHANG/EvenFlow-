@@ -663,3 +663,33 @@ func TestCreateHold_BRO3_KhongBaoGioCoHaiHoldCungHoatDong(t *testing.T) {
 		}
 	}
 }
+
+// EV-127: Bucket bat dau phai duoc chon ngau nhien (rand.IntN(BucketCount)) de
+// trai deu contention tren 32 dong ton kho thay vi luon co dinh o bucket 0.
+func TestCreateHold_RandomBucket_KhongLuonBucketZero(t *testing.T) {
+	gate := &fakeGate{admitted: true}
+	repo := &fakeRepo{cfg: cauHinhMacDinh()}
+	uc := app.NewCreateHold(gate, repo, loggerBo())
+
+	seenBuckets := make(map[int]bool)
+	const runs = 200
+	for i := 0; i < runs; i++ {
+		_, err := uc.Execute(context.Background(), dauVaoHopLe(1))
+		if err != nil {
+			t.Fatalf("run %d failed: %v", i, err)
+		}
+	}
+
+	gate.mu.Lock()
+	for _, call := range gate.holdCalls {
+		seenBuckets[call.StartBucket] = true
+	}
+	gate.mu.Unlock()
+
+	// Voi 200 lan chay va 32 buckets, so bucket xuat hien phai > 10.
+	// Neu luon dung bucket 0, seenBuckets se chi co 1 phan tu.
+	if len(seenBuckets) <= 10 {
+		t.Fatalf("StartBucket phai duoc phan bo ngau nhien tren 32 bucket, nhung chi thay %d bucket: %v",
+			len(seenBuckets), seenBuckets)
+	}
+}
