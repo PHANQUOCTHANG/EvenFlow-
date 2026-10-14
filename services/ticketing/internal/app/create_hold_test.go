@@ -189,6 +189,10 @@ func (r *fakeRepo) ReleaseHold(_ context.Context, holdID string) (bool, error) {
 	return true, nil
 }
 
+func (r *fakeRepo) InitInventory(context.Context, string, int, int) error {
+	return nil
+}
+
 // ===================== Tien ich =====================
 
 func loggerBo() *slog.Logger { return slog.New(slog.NewTextHandler(io.Discard, nil)) }
@@ -662,4 +666,99 @@ func TestCreateHold_BRO3_KhongBaoGioCoHaiHoldCungHoatDong(t *testing.T) {
 				holdCu, events)
 		}
 	}
+}
+
+// EV-127: Bucket bat dau phai duoc chon ngau nhien (rand.IntN(BucketCount)) de
+// trai deu contention tren 32 dong ton kho thay vi luon co dinh o bucket 0.
+func TestCreateHold_RandomBucket_KhongLuonBucketZero(t *testing.T) {
+	gate := &fakeGate{admitted: true}
+	repo := &fakeRepo{cfg: cauHinhMacDinh()}
+	uc := app.NewCreateHold(gate, repo, loggerBo())
+
+	seenBuckets := make(map[int]bool)
+	const runs = 200
+	for i := 0; i < runs; i++ {
+		_, err := uc.Execute(context.Background(), dauVaoHopLe(1))
+		if err != nil {
+			t.Fatalf("run %d failed: %v", i, err)
+		}
+	}
+
+	gate.mu.Lock()
+	for _, call := range gate.holdCalls {
+		seenBuckets[call.StartBucket] = true
+	}
+	gate.mu.Unlock()
+
+	// Voi 200 lan chay va 32 buckets, so bucket xuat hien phai > 10.
+	// Neu luon dung bucket 0, seenBuckets se chi co 1 phan tu.
+	if len(seenBuckets) <= 10 {
+		t.Fatalf("StartBucket phai duoc phan bo ngau nhien tren 32 bucket, nhung chi thay %d bucket: %v",
+			len(seenBuckets), seenBuckets)
+	}
+}
+
+// EV-130: Kiem tra gioi han mua ve (BR-O4) o cac bien tren va ket hop
+func TestCreateHold_PurchaseLimits_Boundaries(t *testing.T) {
+	t.Run("ChinhXacBienTren_MaxPerOrder", func(t *testing.T) {
+		gate := &fakeGate{admitted: true}
+		repo := &fakeRepo{cfg: cauHinhMacDinh()} // MaxPerOrder = 4, MaxPerIdentity = 4
+		uc := app.NewCreateHold(gate, repo, loggerBo())
+
+		// Quantity = 4 (dung bang MaxPerOrder) -> thanh cong
+		out, err := uc.Execute(context.Background(), dauVaoHopLe(4))
+		if err != nil {
+			t.Fatalf("quantity == max_per_order phai thanh cong, nhan %v", err)
+		}
+		if out.HoldID == "" {
+			t.Fatalf("expected hold id, got empty")
+		}
+	})
+
+	t.Run("ChinhXacBienTren_MaxPerIdentity", func(t *testing.T) {
+		gate := &fakeGate{admitted: true}
+		repo := &fakeRepo{
+			cfg:       cauHinhMacDinh(), // MaxPerIdentity = 4
+			purchased: 3,                // Da mua 3
+		}
+		uc := app.NewCreateHold(gate, repo, loggerBo())
+
+		// Mua them 1 -> tong = 4 (dung bang MaxPerIdentity) -> thanh cong
+		out, err := uc.Execute(context.Background(), dauVaoHopLe(1))
+		if err != nil {
+			t.Fatalf("purchased + qty == max_per_identity phai thanh cong, nhan %v", err)
+		}
+		if out.HoldID == "" {
+			t.Fatalf("expected hold id, got empty")
+		}
+	})
+
+	t.Run("VuotBienTren_MaxPerIdentity_DuSoLuongDonHopLe", func(t *testing.T) {
+		gate := &fakeGate{admitted: true}
+		repo := &fakeRepo{
+			cfg:       cauHinhMacDinh(), // MaxPerOrder = 4, MaxPerIdentity = 4
+			purchased: 3,                // Da mua 3
+		}
+		uc := app.NewCreateHold(gate, repo, loggerBo())
+
+		// Mua them 2 -> tong = 5 > 4 -> ErrPerIdentityLimit du qty=2 <= MaxPerOrder
+		_, err := uc.Execute(context.Background(), dauVaoHopLe(2))
+		if !errors.Is(err, domain.ErrPerIdentityLimit) {
+			t.Fatalf("expected ErrPerIdentityLimit, got %v", err)
+		}
+	})
+
+	t.Run("DaDatGioiHan_KhongChoMuaThemDu1Ve", func(t *testing.T) {
+		gate := &fakeGate{admitted: true}
+		repo := &fakeRepo{
+			cfg:       cauHinhMacDinh(), // MaxPerIdentity = 4
+			purchased: 4,                // Da mua du 4
+		}
+		uc := app.NewCreateHold(gate, repo, loggerBo())
+
+		_, err := uc.Execute(context.Background(), dauVaoHopLe(1))
+		if !errors.Is(err, domain.ErrPerIdentityLimit) {
+			t.Fatalf("expected ErrPerIdentityLimit, got %v", err)
+		}
+	})
 }

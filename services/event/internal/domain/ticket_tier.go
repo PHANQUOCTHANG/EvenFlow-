@@ -62,3 +62,52 @@ func (t *TicketTier) Update(name string, priceCents int64, newQuota int) error {
 	t.Quota = newQuota
 	return nil
 }
+
+// DistributeQuota chia đều quota của một hạng vé ra số lượng bucket (mặc định 32).
+// Phần dư (quota % bucketCount) được dồn lần lượt vào các bucket đầu tiên.
+// Bất biến: Tổng kết quả luôn bằng đúng quota ban đầu (BR-O1).
+func (t *TicketTier) DistributeQuota() []int {
+	bucketCount := t.BucketCount
+	if bucketCount <= 0 {
+		bucketCount = 32
+	}
+	buckets := make([]int, bucketCount)
+	if t.Quota <= 0 {
+		return buckets
+	}
+
+	base := t.Quota / bucketCount
+	rem := t.Quota % bucketCount
+
+	for i := 0; i < bucketCount; i++ {
+		buckets[i] = base
+		if i < rem {
+			buckets[i]++
+		}
+	}
+	return buckets
+}
+
+// DistributeAdditionalQuota phân bổ thêm quota khi ban tổ chức tăng số lượng vé (BR-E3).
+func (t *TicketTier) DistributeAdditionalQuota(deltaQuota int) []int {
+	bucketCount := t.BucketCount
+	if bucketCount <= 0 {
+		bucketCount = 32
+	}
+	buckets := make([]int, bucketCount)
+	if deltaQuota <= 0 {
+		return buckets
+	}
+
+	base := deltaQuota / bucketCount
+	rem := deltaQuota % bucketCount
+
+	for i := 0; i < bucketCount; i++ {
+		buckets[i] = base
+		if i < rem {
+			buckets[i]++
+		}
+	}
+	return buckets
+}
+

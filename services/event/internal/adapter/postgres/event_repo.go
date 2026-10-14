@@ -194,6 +194,12 @@ func (r *eventRepository) Update(ctx context.Context, e *domain.Event) error {
 }
 
 func (r *eventRepository) AddTier(ctx context.Context, tier *domain.TicketTier) error {
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = tx.Rollback() }()
+
 	query := `
 		INSERT INTO ticket_types (
 			id, event_id, name, price_cents, currency, quota, bucket_count, created_at
@@ -201,15 +207,44 @@ func (r *eventRepository) AddTier(ctx context.Context, tier *domain.TicketTier) 
 			$1, $2, $3, $4, $5, $6, $7, $8
 		)
 	`
-	_, err := r.db.ExecContext(
+	_, err = tx.ExecContext(
 		ctx, query,
 		tier.ID, tier.EventID, tier.Name, tier.PriceCents,
 		tier.Currency, tier.Quota, tier.BucketCount, tier.CreatedAt,
 	)
-	return err
+	if err != nil {
+		return err
+	}
+
+	// EV-125: Khởi tạo 32 bucket trong ticket_inventory
+	buckets := tier.DistributeQuota()
+	invQuery := `
+		INSERT INTO ticket_inventory (ticket_type_id, bucket, capacity, available)
+		VALUES ($1, $2, $3, $4)
+		ON CONFLICT (ticket_type_id, bucket) DO NOTHING
+	`
+	for b, qty := range buckets {
+		if _, err := tx.ExecContext(ctx, invQuery, tier.ID, b, qty, qty); err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit()
 }
 
 func (r *eventRepository) UpdateTier(ctx context.Context, tier *domain.TicketTier) error {
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	var oldQuota, bucketCount int
+	err = tx.QueryRowContext(ctx, "SELECT quota, bucket_count FROM ticket_types WHERE id = $1 FOR UPDATE", tier.ID).Scan(&oldQuota, &bucketCount)
+	if err != nil {
+		return err
+	}
+
 	query := `
 		UPDATE ticket_types SET
 			name = $1,
@@ -217,8 +252,43 @@ func (r *eventRepository) UpdateTier(ctx context.Context, tier *domain.TicketTie
 			quota = $3
 		WHERE id = $4
 	`
-	_, err := r.db.ExecContext(ctx, query, tier.Name, tier.PriceCents, tier.Quota, tier.ID)
-	return err
+	_, err = tx.ExecContext(ctx, query, tier.Name, tier.PriceCents, tier.Quota, tier.ID)
+	if err != nil {
+		return err
+	}
+
+	delta := tier.Quota - oldQuota
+	if delta > 0 {
+		tier.BucketCount = bucketCount
+		addBuckets := tier.DistributeAdditionalQuota(delta)
+		updateInv := `
+			UPDATE ticket_inventory
+			   SET capacity = capacity + $3,
+			       available = available + $3
+			 WHERE ticket_type_id = $1 AND bucket = $2
+		`
+		for b, add := range addBuckets {
+			if _, err := tx.ExecContext(ctx, updateInv, tier.ID, b, add); err != nil {
+				return err
+			}
+		}
+	} else if delta < 0 {
+		tier.BucketCount = bucketCount
+		newBuckets := tier.DistributeQuota()
+		updateInv := `
+			UPDATE ticket_inventory
+			   SET capacity = $3,
+			       available = $3
+			 WHERE ticket_type_id = $1 AND bucket = $2
+		`
+		for b, qty := range newBuckets {
+			if _, err := tx.ExecContext(ctx, updateInv, tier.ID, b, qty); err != nil {
+				return err
+			}
+		}
+	}
+
+	return tx.Commit()
 }
 
 func (r *eventRepository) GetTiersByEventID(ctx context.Context, eventID uuid.UUID) ([]domain.TicketTier, error) {
