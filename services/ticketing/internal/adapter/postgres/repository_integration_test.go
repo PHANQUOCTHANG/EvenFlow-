@@ -124,14 +124,15 @@ func TestPersistHold_TruKhoDungBucket(t *testing.T) {
 
 	// 2. PersistHold
 	out, err := repo.PersistHold(ctx, port.PersistHoldParams{
-		EventID:      fix.EventID,
-		TicketTypeID: fix.TicketTypeID,
-		IdentityID:   fix.IdentityID,
-		HoldID:       holdID,
-		Bucket:       targetBucket,
-		Quantity:     holdQty,
-		UnitCents:    500000,
-		ExpiresAt:    expiresAt,
+		EventID:        fix.EventID,
+		TicketTypeID:   fix.TicketTypeID,
+		IdentityID:     fix.IdentityID,
+		HoldID:         holdID,
+		Bucket:         targetBucket,
+		Quantity:       holdQty,
+		UnitCents:      500000,
+		ExpiresAt:      expiresAt,
+		MaxPerIdentity: 4,
 	})
 	if err != nil {
 		t.Fatalf("PersistHold failed: %v", err)
@@ -189,14 +190,15 @@ func TestPersistHold_InventoryExhausted_CheckConstraint(t *testing.T) {
 
 	// Bucket 2 chỉ có 1 vé, thử hold 2 vé
 	_, err := repo.PersistHold(ctx, port.PersistHoldParams{
-		EventID:      fix.EventID,
-		TicketTypeID: fix.TicketTypeID,
-		IdentityID:   fix.IdentityID,
-		HoldID:       holdID,
-		Bucket:       2,
-		Quantity:     2,
-		UnitCents:    500000,
-		ExpiresAt:    expiresAt,
+		EventID:        fix.EventID,
+		TicketTypeID:   fix.TicketTypeID,
+		IdentityID:     fix.IdentityID,
+		HoldID:         holdID,
+		Bucket:         2,
+		Quantity:       2,
+		UnitCents:      500000,
+		ExpiresAt:      expiresAt,
+		MaxPerIdentity: 4,
 	})
 	if !errors.Is(err, domain.ErrInventoryExhausted) {
 		t.Fatalf("expected ErrInventoryExhausted, got %v", err)
@@ -219,14 +221,15 @@ func TestPersistHold_BR_O3_DupIdentity(t *testing.T) {
 
 	// Hold 1 thành công
 	_, err := repo.PersistHold(ctx, port.PersistHoldParams{
-		EventID:      fix.EventID,
-		TicketTypeID: fix.TicketTypeID,
-		IdentityID:   fix.IdentityID,
-		HoldID:       domain.NewID(),
-		Bucket:       0,
-		Quantity:     1,
-		UnitCents:    500000,
-		ExpiresAt:    expiresAt,
+		EventID:        fix.EventID,
+		TicketTypeID:   fix.TicketTypeID,
+		IdentityID:     fix.IdentityID,
+		HoldID:         domain.NewID(),
+		Bucket:         0,
+		Quantity:       1,
+		UnitCents:      500000,
+		ExpiresAt:      expiresAt,
+		MaxPerIdentity: 4,
 	})
 	if err != nil {
 		t.Fatalf("first hold failed: %v", err)
@@ -234,14 +237,15 @@ func TestPersistHold_BR_O3_DupIdentity(t *testing.T) {
 
 	// Hold 2 cùng identity + event khi hold 1 còn HELD -> phải vi phạm uq_active_order_per_identity_event
 	_, err = repo.PersistHold(ctx, port.PersistHoldParams{
-		EventID:      fix.EventID,
-		TicketTypeID: fix.TicketTypeID,
-		IdentityID:   fix.IdentityID,
-		HoldID:       domain.NewID(),
-		Bucket:       1,
-		Quantity:     1,
-		UnitCents:    500000,
-		ExpiresAt:    expiresAt,
+		EventID:        fix.EventID,
+		TicketTypeID:   fix.TicketTypeID,
+		IdentityID:     fix.IdentityID,
+		HoldID:         domain.NewID(),
+		Bucket:         1,
+		Quantity:       1,
+		UnitCents:      500000,
+		ExpiresAt:      expiresAt,
+		MaxPerIdentity: 4,
 	})
 	if !errors.Is(err, domain.ErrPerIdentityLimit) {
 		t.Fatalf("expected ErrPerIdentityLimit for duplicate active hold, got %v", err)
@@ -257,14 +261,15 @@ func TestPersistHold_Outbox_GhiCungTransaction(t *testing.T) {
 	expiresAt := time.Now().Add(10 * time.Minute)
 
 	out, err := repo.PersistHold(ctx, port.PersistHoldParams{
-		EventID:      fix.EventID,
-		TicketTypeID: fix.TicketTypeID,
-		IdentityID:   fix.IdentityID,
-		HoldID:       holdID,
-		Bucket:       3,
-		Quantity:     2,
-		UnitCents:    500000,
-		ExpiresAt:    expiresAt,
+		EventID:        fix.EventID,
+		TicketTypeID:   fix.TicketTypeID,
+		IdentityID:     fix.IdentityID,
+		HoldID:         holdID,
+		Bucket:         3,
+		Quantity:       2,
+		UnitCents:      500000,
+		ExpiresAt:      expiresAt,
+		MaxPerIdentity: 4,
 	})
 	if err != nil {
 		t.Fatalf("PersistHold failed: %v", err)
@@ -311,14 +316,15 @@ func TestReleaseHold_IdempotentBRO7(t *testing.T) {
 
 	// Tạo hold
 	out, err := repo.PersistHold(ctx, port.PersistHoldParams{
-		EventID:      fix.EventID,
-		TicketTypeID: fix.TicketTypeID,
-		IdentityID:   fix.IdentityID,
-		HoldID:       holdID,
-		Bucket:       targetBucket,
-		Quantity:     holdQty,
-		UnitCents:    500000,
-		ExpiresAt:    expiresAt,
+		EventID:        fix.EventID,
+		TicketTypeID:   fix.TicketTypeID,
+		IdentityID:     fix.IdentityID,
+		HoldID:         holdID,
+		Bucket:         targetBucket,
+		Quantity:       holdQty,
+		UnitCents:      500000,
+		ExpiresAt:      expiresAt,
+		MaxPerIdentity: 4,
 	})
 	if err != nil {
 		t.Fatalf("PersistHold failed: %v", err)

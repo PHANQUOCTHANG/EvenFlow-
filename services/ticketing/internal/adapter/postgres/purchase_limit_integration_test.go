@@ -74,9 +74,10 @@ func TestCountPurchased_ChiDemDonHoatDong(t *testing.T) {
 	}
 
 	// 1. Buyer A trên eventID:
-	// Các trạng thái ĐƯỢC TÍNH: HELD (2), PAYMENT_PENDING (1), PAID (3), ISSUED (1) -> Tổng = 7
+	// Các trạng thái ĐƯỢC TÍNH: HELD (2), PAID (3), ISSUED (1) -> Tổng = 6
+	// (Lưu ý: Không thể cùng có HELD và PAYMENT_PENDING trên cùng 1 buyer vì ràng buộc BR-O3:
+	// uq_active_order_per_identity_event chỉ cho phép tối đa 1 đơn HELD hoặc PAYMENT_PENDING).
 	insertOrder(eventID, buyerA, ticketTypeID, "HELD", 2)
-	insertOrder(eventID, buyerA, ticketTypeID, "PAYMENT_PENDING", 1)
 	insertOrder(eventID, buyerA, ticketTypeID, "PAID", 3)
 	insertOrder(eventID, buyerA, ticketTypeID, "ISSUED", 1)
 
@@ -85,28 +86,29 @@ func TestCountPurchased_ChiDemDonHoatDong(t *testing.T) {
 	insertOrder(eventID, buyerA, ticketTypeID, "CANCELLED", 4)
 	insertOrder(eventID, buyerA, ticketTypeID, "REFUNDED", 5)
 
-	// 2. Buyer B trên eventID (không được cộng vào Buyer A)
-	insertOrder(eventID, buyerB, ticketTypeID, "PAID", 10)
+	// 2. Buyer B trên eventID: kiểm tra PAYMENT_PENDING (1) + PAID (9) -> Tổng = 10
+	insertOrder(eventID, buyerB, ticketTypeID, "PAYMENT_PENDING", 1)
+	insertOrder(eventID, buyerB, ticketTypeID, "PAID", 9)
 
 	// 3. Buyer A trên otherEventID (không được cộng vào eventID)
 	insertOrder(otherEventID, buyerA, otherTicketTypeID, "PAID", 6)
 
-	// Kiểm tra CountPurchased cho Buyer A
+	// Kiểm tra CountPurchased cho Buyer A: 2 (HELD) + 3 (PAID) + 1 (ISSUED) = 6
 	countA, err := repo.CountPurchased(ctx, eventID, buyerA)
 	if err != nil {
 		t.Fatalf("CountPurchased failed: %v", err)
 	}
-	if countA != 7 {
-		t.Fatalf("CountPurchased for Buyer A = %d, expected 7 (2 HELD + 1 PAYMENT_PENDING + 3 PAID + 1 ISSUED)", countA)
+	if countA != 6 {
+		t.Fatalf("CountPurchased for Buyer A = %d, expected 6 (2 HELD + 3 PAID + 1 ISSUED)", countA)
 	}
 
-	// Kiểm tra CountPurchased cho Buyer B
+	// Kiểm tra CountPurchased cho Buyer B: 1 (PAYMENT_PENDING) + 9 (PAID) = 10
 	countB, err := repo.CountPurchased(ctx, eventID, buyerB)
 	if err != nil {
 		t.Fatalf("CountPurchased for Buyer B failed: %v", err)
 	}
 	if countB != 10 {
-		t.Fatalf("CountPurchased for Buyer B = %d, expected 10", countB)
+		t.Fatalf("CountPurchased for Buyer B = %d, expected 10 (1 PAYMENT_PENDING + 9 PAID)", countB)
 	}
 
 	// Kiểm tra Buyer mới chưa có đơn nào

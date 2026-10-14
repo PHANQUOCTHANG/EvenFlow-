@@ -181,14 +181,15 @@ func TestHoldSweeper_Integration_EndToEnd(t *testing.T) {
 	// Persist vào Postgres
 	expiresAt := time.Now().Add(shortTTL)
 	out, err := env.repo.PersistHold(ctx, port.PersistHoldParams{
-		EventID:      fix.EventID,
-		TicketTypeID: fix.TicketTypeID,
-		IdentityID:   fix.IdentityIDs[0],
-		HoldID:       holdID,
-		Bucket:       holdRes.Bucket,
-		Quantity:     2,
-		UnitCents:    100000,
-		ExpiresAt:    expiresAt,
+		EventID:        fix.EventID,
+		TicketTypeID:   fix.TicketTypeID,
+		IdentityID:     fix.IdentityIDs[0],
+		HoldID:         holdID,
+		Bucket:         holdRes.Bucket,
+		Quantity:       2,
+		UnitCents:      100000,
+		ExpiresAt:      expiresAt,
+		MaxPerIdentity: 4,
 	})
 	if err != nil {
 		t.Fatalf("PersistHold failed: %v", err)
@@ -282,14 +283,15 @@ func TestHoldSweeper_Integration_Idempotent_BRO7(t *testing.T) {
 	}
 
 	_, err = env.repo.PersistHold(ctx, port.PersistHoldParams{
-		EventID:      fix.EventID,
-		TicketTypeID: fix.TicketTypeID,
-		IdentityID:   fix.IdentityIDs[0],
-		HoldID:       holdID,
-		Bucket:       holdRes.Bucket,
-		Quantity:     3,
-		UnitCents:    100000,
-		ExpiresAt:    time.Now().Add(shortTTL),
+		EventID:        fix.EventID,
+		TicketTypeID:   fix.TicketTypeID,
+		IdentityID:     fix.IdentityIDs[0],
+		HoldID:         holdID,
+		Bucket:         holdRes.Bucket,
+		Quantity:       3,
+		UnitCents:      100000,
+		ExpiresAt:      time.Now().Add(shortTTL),
+		MaxPerIdentity: 4,
 	})
 	if err != nil {
 		t.Fatalf("PersistHold failed: %v", err)
@@ -354,14 +356,15 @@ func TestHoldSweeper_Integration_ConcurrentSweepers(t *testing.T) {
 			t.Fatalf("hold %d failed: %v", i, err)
 		}
 		_, err = env.repo.PersistHold(ctx, port.PersistHoldParams{
-			EventID:      fix.EventID,
-			TicketTypeID: fix.TicketTypeID,
-			IdentityID:   fix.IdentityIDs[i],
-			HoldID:       hID,
-			Bucket:       hRes.Bucket,
-			Quantity:     1,
-			UnitCents:    100000,
-			ExpiresAt:    time.Now().Add(shortTTL),
+			EventID:        fix.EventID,
+			TicketTypeID:   fix.TicketTypeID,
+			IdentityID:     fix.IdentityIDs[i],
+			HoldID:         hID,
+			Bucket:         hRes.Bucket,
+			Quantity:       1,
+			UnitCents:      100000,
+			ExpiresAt:      time.Now().Add(shortTTL),
+			MaxPerIdentity: 4,
 		})
 		if err != nil {
 			t.Fatalf("persist %d failed: %v", i, err)

@@ -44,10 +44,10 @@ type EventPublisher interface {
 // OutboxRelay quét bảng outbox_events và phát các sự kiện chưa gửi sang RabbitMQ (EV-131 / EVF-36).
 //
 // Đảm bảo at-least-once:
-// 1. Chỉ cập nhật published_at sau khi RabbitMQ broker confirm ack.
-// 2. Sử dụng SELECT ... FOR UPDATE SKIP LOCKED để nhiều instance relay chạy song song
-//    an toàn, không tranh chấp và không xung đột khoá dòng.
-// 3. Mỗi message mang MessageID = ID của outbox event để phía consumer khử trùng lặp (idempotent).
+//  1. Chỉ cập nhật published_at sau khi RabbitMQ broker confirm ack.
+//  2. Sử dụng SELECT ... FOR UPDATE SKIP LOCKED để nhiều instance relay chạy song song
+//     an toàn, không tranh chấp và không xung đột khoá dòng.
+//  3. Mỗi message mang MessageID = ID của outbox event để phía consumer khử trùng lặp (idempotent).
 type OutboxRelay struct {
 	pool     *pgxpool.Pool
 	pub      EventPublisher
