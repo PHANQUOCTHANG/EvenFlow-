@@ -69,6 +69,8 @@ type PersistHoldParams struct {
 	Quantity     int
 	UnitCents    int64
 	ExpiresAt    time.Time
+	// MaxPerIdentity la han muc ve/nguoi/su kien (BR-O4), kiem lai trong transaction.
+	MaxPerIdentity int
 }
 
 type HoldView struct {
@@ -90,6 +92,25 @@ type Repository interface {
 	// ReleaseHold tra kho, IDEMPOTENT theo dieu kien released_at IS NULL.
 	// Tra ve released=false neu hold da duoc xu ly truoc do.
 	ReleaseHold(ctx context.Context, holdID string) (released bool, err error)
+}
+
+// ===================== Han muc mua (EV-130) =====================
+
+// PurchaseLimit la han muc mua cua mot khach tren mot su kien (BR-O4). UI dung MaxSelectable lam
+// so luong toi da cho chon: so nay phu thuoc lich su mua ma UI khong biet, nen SERVER phai tinh.
+type PurchaseLimit struct {
+	MaxPerOrder    int `json:"max_per_order"`
+	MaxPerIdentity int `json:"max_per_identity"`
+	// Used la so ve dang chiem han muc (domain.QuotaOrderStatuses), ke ca hold dang giu.
+	Used          int  `json:"used"`
+	MaxSelectable int  `json:"max_selectable"`
+	HasActiveHold bool `json:"has_active_hold"`
+}
+
+// PurchaseLimitSource doc han muc va so ve dang chiem han muc tu nguon su that. MaxSelectable do
+// tang app tinh.
+type PurchaseLimitSource interface {
+	GetPurchaseLimit(ctx context.Context, eventID, identityID string) (PurchaseLimit, error)
 }
 
 // ===================== So lieu nghiep vu =====================

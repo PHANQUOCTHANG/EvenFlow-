@@ -22,6 +22,7 @@ var (
 	ErrPerIdentityLimit   = errors.New("vuot gioi han moi nguoi") // BR-O4
 	ErrHoldExpired        = errors.New("lenh giu ghe da het han") // BR-O2
 	ErrOrderNotFound      = errors.New("khong tim thay don hang")
+	ErrEventNotFound      = errors.New("khong tim thay su kien dang ban")
 )
 
 // NewID sinh dinh danh ngau nhien 128-bit.
