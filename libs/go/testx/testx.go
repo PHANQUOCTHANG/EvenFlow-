@@ -33,6 +33,7 @@ const startTimeout = 3 * time.Minute
 const (
 	PostgresImage = "postgres:16-alpine"
 	RedisImage    = "redis:7-alpine"
+	RabbitMQImage = "rabbitmq:3.13-management-alpine"
 )
 
 // started nho ket qua khoi dong cua mot loai container, ke ca loi: mot lan khoi dong that bai
