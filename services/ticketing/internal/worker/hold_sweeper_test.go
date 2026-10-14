@@ -310,3 +310,28 @@ func TestHoldSweeper_Metrics_ChiDemHoldThucSuDuocTra(t *testing.T) {
 		t.Fatalf("so hold da tra = %d, muon 2 (h2 da duoc xu ly truoc do)", got)
 	}
 }
+
+// Graceful shutdown: khi context bi huy (SIGTERM / SIGINT), sweeper phai dung ngay
+// va tra ve context.Canceled ma khong gay leak hay panic.
+func TestHoldSweeper_GracefulShutdown_DungNgayKhiContextHuy(t *testing.T) {
+	gate, repo, pub, _ := moiSweeper(nil, nil)
+	s := dungSweeper(gate, repo, pub, []string{"ev-1"})
+
+	ctx, cancel := context.WithCancel(context.Background())
+	errCh := make(chan error, 1)
+	go func() {
+		errCh <- s.Run(ctx)
+	}()
+
+	time.Sleep(10 * time.Millisecond)
+	cancel()
+
+	select {
+	case err := <-errCh:
+		if !errors.Is(err, context.Canceled) {
+			t.Fatalf("ky vong context.Canceled, nhan: %v", err)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("sweeper khong dung kip thoi sau khi context bi cancel")
+	}
+}
