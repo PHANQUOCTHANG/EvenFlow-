@@ -693,3 +693,68 @@ func TestCreateHold_RandomBucket_KhongLuonBucketZero(t *testing.T) {
 			len(seenBuckets), seenBuckets)
 	}
 }
+
+// EV-130: Kiem tra gioi han mua ve (BR-O4) o cac bien tren va ket hop
+func TestCreateHold_PurchaseLimits_Boundaries(t *testing.T) {
+	t.Run("ChinhXacBienTren_MaxPerOrder", func(t *testing.T) {
+		gate := &fakeGate{admitted: true}
+		repo := &fakeRepo{cfg: cauHinhMacDinh()} // MaxPerOrder = 4, MaxPerIdentity = 4
+		uc := app.NewCreateHold(gate, repo, loggerBo())
+
+		// Quantity = 4 (dung bang MaxPerOrder) -> thanh cong
+		out, err := uc.Execute(context.Background(), dauVaoHopLe(4))
+		if err != nil {
+			t.Fatalf("quantity == max_per_order phai thanh cong, nhan %v", err)
+		}
+		if out.HoldID == "" {
+			t.Fatalf("expected hold id, got empty")
+		}
+	})
+
+	t.Run("ChinhXacBienTren_MaxPerIdentity", func(t *testing.T) {
+		gate := &fakeGate{admitted: true}
+		repo := &fakeRepo{
+			cfg:       cauHinhMacDinh(), // MaxPerIdentity = 4
+			purchased: 3,                // Da mua 3
+		}
+		uc := app.NewCreateHold(gate, repo, loggerBo())
+
+		// Mua them 1 -> tong = 4 (dung bang MaxPerIdentity) -> thanh cong
+		out, err := uc.Execute(context.Background(), dauVaoHopLe(1))
+		if err != nil {
+			t.Fatalf("purchased + qty == max_per_identity phai thanh cong, nhan %v", err)
+		}
+		if out.HoldID == "" {
+			t.Fatalf("expected hold id, got empty")
+		}
+	})
+
+	t.Run("VuotBienTren_MaxPerIdentity_DuSoLuongDonHopLe", func(t *testing.T) {
+		gate := &fakeGate{admitted: true}
+		repo := &fakeRepo{
+			cfg:       cauHinhMacDinh(), // MaxPerOrder = 4, MaxPerIdentity = 4
+			purchased: 3,                // Da mua 3
+		}
+		uc := app.NewCreateHold(gate, repo, loggerBo())
+
+		// Mua them 2 -> tong = 5 > 4 -> ErrPerIdentityLimit du qty=2 <= MaxPerOrder
+		_, err := uc.Execute(context.Background(), dauVaoHopLe(2))
+		if !errors.Is(err, domain.ErrPerIdentityLimit) {
+			t.Fatalf("expected ErrPerIdentityLimit, got %v", err)
+		}
+	})
+
+	t.Run("DaDatGioiHan_KhongChoMuaThemDu1Ve", func(t *testing.T) {
+		gate := &fakeGate{admitted: true}
+		repo := &fakeRepo{
+			cfg:       cauHinhMacDinh(), // MaxPerIdentity = 4
+			purchased: 4,                // Da mua du 4
+		}
+		uc := app.NewCreateHold(gate, repo, loggerBo())
+
+		_, err := uc.Execute(context.Background(), dauVaoHopLe(1))
+		if !errors.Is(err, domain.ErrPerIdentityLimit) {
+			t.Fatalf("expected ErrPerIdentityLimit, got %v", err)
+		}
+	})
+}
