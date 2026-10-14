@@ -52,6 +52,29 @@ func TestWriteProblem_DungDinhDangRFC7807(t *testing.T) {
 	}
 }
 
+// Hai loi cung 422 phai phan biet duoc bang "type" -- client khong duoc doan tu cau detail.
+func TestWriteProblemType_GhiDungType(t *testing.T) {
+	rec := httptest.NewRecorder()
+	httpx.WriteProblemType(rec, http.StatusUnprocessableEntity, "/problems/per-identity-limit", "vuot han muc")
+
+	if got := rec.Header().Get("Content-Type"); got != "application/problem+json" {
+		t.Errorf("Content-Type = %q", got)
+	}
+	var body map[string]any
+	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
+		t.Fatalf("body khong phai JSON: %v", err)
+	}
+	want := map[string]any{
+		"type": "/problems/per-identity-limit", "title": "Unprocessable Entity",
+		"status": float64(422), "detail": "vuot han muc",
+	}
+	for k, v := range want {
+		if body[k] != v {
+			t.Errorf("%s = %v, muon %v", k, body[k], v)
+		}
+	}
+}
+
 func TestWriteJSON(t *testing.T) {
 	rec := httptest.NewRecorder()
 	httpx.WriteJSON(rec, http.StatusCreated, map[string]int{"n": 1})

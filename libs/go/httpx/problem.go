@@ -23,10 +23,17 @@ func WriteJSON(w http.ResponseWriter, code int, v any) {
 // detail di thang toi nguoi dung: KHONG dua loi noi bo (cau SQL, stack, ten host)
 // vao day. Chi tiet do chi duoc ghi vao log.
 func WriteProblem(w http.ResponseWriter, code int, detail string) {
+	WriteProblemType(w, code, "about:blank", detail)
+}
+
+// WriteProblemType nhu WriteProblem nhung voi "type" rieng (URI tuong doi, vd
+// "/problems/per-identity-limit"). Dung khi client phai phan biet hai loi cung ma trang thai:
+// detail la cau cho nguoi doc va co the doi, type moi la hop dong de may dua vao.
+func WriteProblemType(w http.ResponseWriter, code int, problemType, detail string) {
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(code)
 	_ = json.NewEncoder(w).Encode(map[string]any{
-		"type":   "about:blank",
+		"type":   problemType,
 		"title":  http.StatusText(code),
 		"status": code,
 		"detail": detail,
