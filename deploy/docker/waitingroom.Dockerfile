@@ -18,7 +18,7 @@ WORKDIR /src
 COPY go.work go.work.sum ./
 COPY services/gateway/go.mod services/gateway/
 COPY services/identity/go.mod services/identity/go.sum services/identity/
-COPY services/event/go.mod services/event/
+COPY services/event/go.mod services/event/go.sum services/event/
 COPY services/ticketing/go.mod services/ticketing/go.sum services/ticketing/
 COPY services/payment/go.mod services/payment/
 COPY services/antibot/go.mod services/antibot/
