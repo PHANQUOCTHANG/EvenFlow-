@@ -114,7 +114,13 @@ SET  wr:{ev}:token:{identity} <token> EX 86400
 
 Nhờ vậy **tải xuống Postgres bị ghim ở mức hằng số** (~200 rps) bất kể có 30k hay 3 triệu người xếp hàng. Đây là lý do hệ thống không cần scale DB theo lượng khách.
 
-Chọn leader qua Redis lock (`SET NX PX` + fencing token) để chỉ một pod chạy controller mỗi sự kiện.
+Chọn leader qua Redis lease (`libs/go/leader`: `SET NX PX` + **fencing token**) để chỉ một pod chạy controller mỗi sự kiện.
+
+- **Lease** `wr:{ev}:leader`, TTL 5 giây, gia hạn mỗi giây. Leader chết thì nhường sau ≤ 5 giây; tắt êm thì nhả khoá, failover ≈ 1 giây.
+- **Epoch** `wr:{ev}:leader_epoch` tăng đơn điệu mỗi lần đổi leader (`max(epoch + 1, thời gian Redis ms)` nên không quay lại số nhỏ kể cả khi mất key). Mọi script ghi của controller (`admit.lua`, `shuffle.lua`, `set_rate.lua`) kiểm epoch **trong cùng lệnh nguyên tử** với lệnh ghi và trả `FENCED` nếu cũ. Leader cũ "đứng hình" (GC, throttle CPU) rồi tỉnh lại sẽ bị chặn ở lần ghi đầu tiên và tự thoái vị.
+- **Trạng thái bền** ở `wr:{ev}:meta`: `admit_rate` (leader mới tiếp tục từ đó) và `override` / `override_rate` (ghi đè của Ops).
+- **Sức khoẻ** không hỏi Prometheus (scrape 15 giây + cửa sổ `rate()` > 20 giây, trượt mục tiêu ≤ 10 giây): mỗi pod ticketing tự ghi ảnh chụp cửa sổ 5 giây vào hash `loadsignal:ticketing` mỗi giây (`libs/go/loadsignal`); controller gộp pod tệ nhất. Không pod nào báo cáo = không biết = coi như quá tải.
+- Giới hạn: lease nằm trên một Redis; nếu primary sập trước khi bản sao nhận khoá/epoch có thể có vài giây hai leader (nhịp tạm gấp đôi, không thả trùng người, không oversell). Fencing vẫn chặn leader cũ ngay khi nó chạm epoch mới.
 
 ### Tầng 6 — Chuẩn bị hạ tầng & xả tải có kiểm soát
 
