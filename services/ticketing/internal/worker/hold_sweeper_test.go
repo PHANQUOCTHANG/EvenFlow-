@@ -99,6 +99,9 @@ func (r *sweepRepo) ReleaseHold(_ context.Context, holdID string) (bool, error) 
 	kq := r.res[holdID]
 	return kq.released, kq.err
 }
+func (r *sweepRepo) InitInventory(context.Context, string, int, int) error {
+	return nil
+}
 
 type sweepPub struct {
 	mu   sync.Mutex

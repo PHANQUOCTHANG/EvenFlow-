@@ -90,6 +90,9 @@ type Repository interface {
 	// ReleaseHold tra kho, IDEMPOTENT theo dieu kien released_at IS NULL.
 	// Tra ve released=false neu hold da duoc xu ly truoc do.
 	ReleaseHold(ctx context.Context, holdID string) (released bool, err error)
+
+	// InitInventory khoi tao 32 bucket trong ticket_inventory cho hang ve (EV-125).
+	InitInventory(ctx context.Context, ticketTypeID string, quota, bucketCount int) error
 }
 
 // ===================== So lieu nghiep vu =====================

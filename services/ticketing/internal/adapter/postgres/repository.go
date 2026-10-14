@@ -253,6 +253,43 @@ func (r *Repository) releaseHold(ctx context.Context, holdID string) (bool, erro
 	return true, tx.Commit(ctx)
 }
 
+// InitInventory khoi tao cac bucket trong ticket_inventory cho mot hang ve (EV-125).
+// Su dung domain.DistributeQuota de phan bo deu quota ra cac bucket.
+// An toan voi ON CONFLICT DO NOTHING neu da duoc khoi tao truoc do.
+func (r *Repository) InitInventory(ctx context.Context, ticketTypeID string, quota, bucketCount int) error {
+	ctx, end := otelx.StartSpan(ctx, "postgres.init_inventory")
+	err := r.initInventory(ctx, ticketTypeID, quota, bucketCount)
+	end(err)
+	return err
+}
+
+func (r *Repository) initInventory(ctx context.Context, ticketTypeID string, quota, bucketCount int) error {
+	buckets, err := domain.DistributeQuota(quota, bucketCount)
+	if err != nil {
+		return err
+	}
+
+	tx, err := r.pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.ReadCommitted})
+	if err != nil {
+		return err
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+
+	const q = `
+		INSERT INTO ticket_inventory (ticket_type_id, bucket, capacity, available)
+		VALUES ($1::uuid, $2, $3, $4)
+		ON CONFLICT (ticket_type_id, bucket) DO NOTHING
+	`
+	for b, qty := range buckets {
+		if _, err := tx.Exec(ctx, q, ticketTypeID, b, qty, qty); err != nil {
+			return wrapConstraint(err)
+		}
+	}
+
+	return tx.Commit(ctx)
+}
+
+
 // wrapConstraint dich loi constraint cua Postgres sang loi nghiep vu.
 //
 // Vi pham inv_available_le_capacity nghia la co cho nao do da tra kho hai lan --

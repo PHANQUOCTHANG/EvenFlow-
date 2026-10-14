@@ -185,6 +185,10 @@ func (r *fakeRepo) ReleaseHold(_ context.Context, holdID string) (bool, error) {
 	return true, nil
 }
 
+func (r *fakeRepo) InitInventory(context.Context, string, int, int) error {
+	return nil
+}
+
 // ===================== Tien ich =====================
 
 func loggerBo() *slog.Logger { return slog.New(slog.NewTextHandler(io.Discard, nil)) }
