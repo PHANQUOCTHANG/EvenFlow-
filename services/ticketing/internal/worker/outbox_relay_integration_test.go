@@ -52,6 +52,10 @@ func setupOutboxIntegrationTest(t *testing.T) *pgxpool.Pool {
 		t.Fatalf("connect postgres: %v", err)
 	}
 	t.Cleanup(pool.Close)
+
+	// Dọn dẹp outbox_events để các test trước (hold sweeper, v.v.) không làm nhiễm bẩn bảng outbox
+	_, _ = pool.Exec(ctx, "DELETE FROM outbox_events")
+
 	return pool
 }
 
@@ -85,16 +89,31 @@ func TestOutboxRelay_Integration_RelayAndMarkPublished(t *testing.T) {
 
 	ctxRelay, cancelRelay := context.WithCancel(context.Background())
 	defer cancelRelay()
-	go func() { _ = relay.Run(ctxRelay) }()
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		_ = relay.Run(ctxRelay)
+	}()
 
-	deadline := time.Now().Add(2 * time.Second)
-	for pub.count() < 3 {
+	deadline := time.Now().Add(3 * time.Second)
+	for {
+		var pubCount int
+		_ = pool.QueryRow(ctx,
+			"SELECT count(*) FROM outbox_events WHERE id IN ($1, $2, $3) AND published_at IS NOT NULL",
+			id1, id2, id3).Scan(&pubCount)
+		if pubCount == 3 && pub.count() == 3 {
+			break
+		}
 		if time.Now().After(deadline) {
-			t.Fatalf("timed out waiting for 3 events to be relayed, got %d", pub.count())
+			t.Fatalf("timed out waiting for 3 events to be relayed and marked published, got pubCount=%d, messages=%d", pubCount, pub.count())
 		}
 		time.Sleep(10 * time.Millisecond)
 	}
 	cancelRelay()
+	select {
+	case <-done:
+	case <-time.After(2 * time.Second):
+	}
 
 	// Kiểm tra publisher đã nhận đúng 3 messages mới (không nhận event đã published từ trước)
 	pub.mu.Lock()
@@ -105,15 +124,6 @@ func TestOutboxRelay_Integration_RelayAndMarkPublished(t *testing.T) {
 		t.Errorf("invalid message metadata: %+v", pub.messages[0])
 	}
 	pub.mu.Unlock()
-
-	// Kiểm tra trong DB: 3 events này đã có published_at IS NOT NULL
-	var pubCount int
-	_ = pool.QueryRow(ctx,
-		"SELECT count(*) FROM outbox_events WHERE id IN ($1, $2, $3) AND published_at IS NOT NULL",
-		id1, id2, id3).Scan(&pubCount)
-	if pubCount != 3 {
-		t.Fatalf("expected 3 events marked published, got %d", pubCount)
-	}
 }
 
 func TestOutboxRelay_Integration_BrokerFailure_AtLeastOnce(t *testing.T) {
@@ -137,17 +147,30 @@ func TestOutboxRelay_Integration_BrokerFailure_AtLeastOnce(t *testing.T) {
 
 	ctxRelay, cancelRelay := context.WithCancel(context.Background())
 	defer cancelRelay()
-	go func() { _ = relay.Run(ctxRelay) }()
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		_ = relay.Run(ctxRelay)
+	}()
 
 	// Cho chạy qua vòng 1 (bị fail) và vòng 2 (thành công)
-	deadline := time.Now().Add(2 * time.Second)
-	for pub.count() < 1 {
+	deadline := time.Now().Add(3 * time.Second)
+	for {
+		var publishedAt *time.Time
+		_ = pool.QueryRow(ctx, "SELECT published_at FROM outbox_events WHERE id = $1", id).Scan(&publishedAt)
+		if publishedAt != nil && pub.count() >= 1 {
+			break
+		}
 		if time.Now().After(deadline) {
-			t.Fatalf("event was not retried and published successfully within 2s")
+			t.Fatalf("event was not retried and published successfully within 3s")
 		}
 		time.Sleep(10 * time.Millisecond)
 	}
 	cancelRelay()
+	select {
+	case <-done:
+	case <-time.After(2 * time.Second):
+	}
 
 	// Event cuối cùng phải được đánh dấu published_at
 	var publishedAt *time.Time

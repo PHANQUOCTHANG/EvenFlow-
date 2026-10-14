@@ -175,7 +175,9 @@ func (r *OutboxRelay) relay(ctx context.Context) error {
 	}
 
 	if relayed > 0 {
-		if err := tx.Commit(ctx); err != nil {
+		commitCtx, commitCancel := context.WithTimeout(context.WithoutCancel(ctx), 5*time.Second)
+		defer commitCancel()
+		if err := tx.Commit(commitCtx); err != nil {
 			return err
 		}
 		r.metrics.EventsRelayed(relayed)

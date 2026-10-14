@@ -28,7 +28,7 @@ func setupPurchaseLimitTest(t *testing.T) (*postgresadapter.Repository, *pgxpool
 	return postgresadapter.NewRepository(pool), pool
 }
 
-func TestCountPurchased_ChiDemDonHoatDong(t *testing.T) {
+func TestCountPurchased_ChiDemDonDaChot(t *testing.T) {
 	repo, pool := setupPurchaseLimitTest(t)
 	ctx := context.Background()
 
@@ -74,41 +74,40 @@ func TestCountPurchased_ChiDemDonHoatDong(t *testing.T) {
 	}
 
 	// 1. Buyer A trên eventID:
-	// Các trạng thái ĐƯỢC TÍNH: HELD (2), PAID (3), ISSUED (1) -> Tổng = 6
-	// (Lưu ý: Không thể cùng có HELD và PAYMENT_PENDING trên cùng 1 buyer vì ràng buộc BR-O3:
-	// uq_active_order_per_identity_event chỉ cho phép tối đa 1 đơn HELD hoặc PAYMENT_PENDING).
-	insertOrder(eventID, buyerA, ticketTypeID, "HELD", 2)
+	// Các trạng thái ĐÃ CHỐT ĐƯỢC TÍNH: PAID (3), ISSUED (1), REFUNDING (2) -> Tổng = 6
 	insertOrder(eventID, buyerA, ticketTypeID, "PAID", 3)
 	insertOrder(eventID, buyerA, ticketTypeID, "ISSUED", 1)
+	insertOrder(eventID, buyerA, ticketTypeID, "REFUNDING", 2)
 
-	// Các trạng thái KHÔNG ĐƯỢC TÍNH: EXPIRED (2), CANCELLED (4), REFUNDED (5)
+	// Các trạng thái KHÔNG ĐƯỢC TÍNH vào CountPurchased: HELD (2), EXPIRED (2), CANCELLED (4), REFUNDED (5)
+	insertOrder(eventID, buyerA, ticketTypeID, "HELD", 2)
 	insertOrder(eventID, buyerA, ticketTypeID, "EXPIRED", 2)
 	insertOrder(eventID, buyerA, ticketTypeID, "CANCELLED", 4)
 	insertOrder(eventID, buyerA, ticketTypeID, "REFUNDED", 5)
 
-	// 2. Buyer B trên eventID: kiểm tra PAYMENT_PENDING (1) + PAID (9) -> Tổng = 10
+	// 2. Buyer B trên eventID: PAYMENT_PENDING (1 - không tính vào CountPurchased) + PAID (10 - tính) -> Tổng = 10
 	insertOrder(eventID, buyerB, ticketTypeID, "PAYMENT_PENDING", 1)
-	insertOrder(eventID, buyerB, ticketTypeID, "PAID", 9)
+	insertOrder(eventID, buyerB, ticketTypeID, "PAID", 10)
 
 	// 3. Buyer A trên otherEventID (không được cộng vào eventID)
 	insertOrder(otherEventID, buyerA, otherTicketTypeID, "PAID", 6)
 
-	// Kiểm tra CountPurchased cho Buyer A: 2 (HELD) + 3 (PAID) + 1 (ISSUED) = 6
+	// Kiểm tra CountPurchased cho Buyer A: 3 (PAID) + 1 (ISSUED) + 2 (REFUNDING) = 6
 	countA, err := repo.CountPurchased(ctx, eventID, buyerA)
 	if err != nil {
 		t.Fatalf("CountPurchased failed: %v", err)
 	}
 	if countA != 6 {
-		t.Fatalf("CountPurchased for Buyer A = %d, expected 6 (2 HELD + 3 PAID + 1 ISSUED)", countA)
+		t.Fatalf("CountPurchased for Buyer A = %d, expected 6 (3 PAID + 1 ISSUED + 2 REFUNDING)", countA)
 	}
 
-	// Kiểm tra CountPurchased cho Buyer B: 1 (PAYMENT_PENDING) + 9 (PAID) = 10
+	// Kiểm tra CountPurchased cho Buyer B: chỉ tính 10 (PAID), bỏ qua PAYMENT_PENDING = 10
 	countB, err := repo.CountPurchased(ctx, eventID, buyerB)
 	if err != nil {
 		t.Fatalf("CountPurchased for Buyer B failed: %v", err)
 	}
 	if countB != 10 {
-		t.Fatalf("CountPurchased for Buyer B = %d, expected 10 (1 PAYMENT_PENDING + 9 PAID)", countB)
+		t.Fatalf("CountPurchased for Buyer B = %d, expected 10 (PAID only)", countB)
 	}
 
 	// Kiểm tra Buyer mới chưa có đơn nào
@@ -120,5 +119,17 @@ func TestCountPurchased_ChiDemDonHoatDong(t *testing.T) {
 	}
 	if countC != 0 {
 		t.Fatalf("CountPurchased for Buyer C = %d, expected 0", countC)
+	}
+
+	// Kiểm tra GetPurchaseLimit: QuotaOrderStatuses bao gồm cả HELD (2) + PAID (3) + ISSUED (1) + REFUNDING (2) = 8
+	limitA, err := repo.GetPurchaseLimit(ctx, eventID, buyerA)
+	if err != nil {
+		t.Fatalf("GetPurchaseLimit for Buyer A failed: %v", err)
+	}
+	if limitA.Used != 8 {
+		t.Fatalf("GetPurchaseLimit Used for Buyer A = %d, expected 8", limitA.Used)
+	}
+	if !limitA.HasActiveHold {
+		t.Fatalf("GetPurchaseLimit HasActiveHold for Buyer A = false, expected true (đang có đơn HELD)")
 	}
 }
