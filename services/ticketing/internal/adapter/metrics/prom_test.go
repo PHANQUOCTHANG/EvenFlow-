@@ -79,3 +79,25 @@ func TestProm_HoldDuration_TachTheoKetQua(t *testing.T) {
 		t.Errorf("theo ket qua = %v", byOutcome)
 	}
 }
+
+func TestProm_MetricDoiSoat_DungTenVaVeKhong(t *testing.T) {
+	reg := prometheus.NewRegistry()
+	m := metricsadapter.New(reg)
+
+	// alerts.yml: abs(ticketing_inventory_drift) > 0 -- ten phai khop va gia tri phai ve 0 duoc.
+	m.InventoryDrift("tt-1", 7)
+	m.InventoryDrift("tt-2", 0)
+	if got := gather(t, reg)["ticketing_inventory_drift"]; got != 7 {
+		t.Fatalf("ticketing_inventory_drift = %v, muon 7", got)
+	}
+	m.InventoryDrift("tt-1", 0)
+	if got := gather(t, reg)["ticketing_inventory_drift"]; got != 0 {
+		t.Fatalf("sau khi sua ticketing_inventory_drift = %v, muon 0", got)
+	}
+
+	m.DriftCorrected("refill", 5)
+	m.DriftCorrected("drain", 2)
+	if got := gather(t, reg)["ticketing_inventory_drift_corrected_total"]; got != 7 {
+		t.Fatalf("ticketing_inventory_drift_corrected_total = %v, muon 7", got)
+	}
+}

@@ -134,6 +134,56 @@ type InventorySeeder interface {
 	SeedInventory(ctx context.Context, eventID, ticketTypeID string, perBucket map[int]int) error
 }
 
+// ===================== Doi soat ton kho (EV-132) =====================
+
+// RedisHold la mot hold dang nam trong hash hold:{ev}:h cua Redis.
+type RedisHold struct {
+	TicketTypeID string
+	Bucket       int
+	Quantity     int
+}
+
+// RedisSnapshot la anh chup NGUYEN TU (mot MULTI) ton kho va cac hold cua mot su kien.
+type RedisSnapshot struct {
+	// Inventory: hang ve -> bucket -> so ve con. Bucket thieu nghia la 0.
+	Inventory map[string]map[int]int
+	// Holds: hold_id -> hold dang duoc Redis ghi nhan (chua release/consume).
+	Holds map[string]RedisHold
+}
+
+// InventoryLedger la phan cua tang chan Redis ma job doi soat can.
+type InventoryLedger interface {
+	// Snapshot doc ton kho cac hang ve va hash hold cua su kien trong mot giao dich.
+	Snapshot(ctx context.Context, eventID string, ticketTypeIDs []string) (RedisSnapshot, error)
+	// AdjustInventory cong delta (am hoac duong) vao mot bucket, khong de ket qua < 0.
+	// Dung delta thay vi SET de khong de len mot hold dang bay.
+	AdjustInventory(ctx context.Context, eventID, ticketTypeID string, bucket, delta int) (int, error)
+	// TryReconcileLock giu khoa doi soat cua su kien trong ttl; false neu instance khac dang giu.
+	TryReconcileLock(ctx context.Context, eventID string, ttl time.Duration) (bool, error)
+}
+
+// HoldState la trang thai cua mot hold trong Postgres.
+type HoldState struct {
+	Released bool
+	Consumed bool
+}
+
+// HoldStateSource tra trang thai hold trong Postgres. Hold khong co trong ket qua nghia la
+// Postgres chua (hoac khong bao gio) ghi no.
+type HoldStateSource interface {
+	HoldStates(ctx context.Context, holdIDs []string) (map[string]HoldState, error)
+}
+
+// ReconcilerMetrics nhan so lieu cua job doi soat.
+type ReconcilerMetrics interface {
+	// InventoryDrift dat do lech chua giai thich duoc (tong gia tri tuyet doi theo bucket) cua
+	// mot hang ve sau vong doi soat gan nhat. 0 nghia la hai tang khop nhau.
+	InventoryDrift(ticketTypeID string, drift int)
+	// DriftCorrected cong so ve da duoc sua trong Redis; direction la "refill" (Redis thieu)
+	// hoac "drain" (Redis phong).
+	DriftCorrected(direction string, tickets int)
+}
+
 // ===================== Su kien ra ngoai =====================
 
 type Publisher interface {

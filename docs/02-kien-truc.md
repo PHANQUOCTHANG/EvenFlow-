@@ -324,7 +324,8 @@ bot_decisions        -- diem rui ro + rule kich hoat (giai thich duoc, BR-B1)
 | `waitingroom_admit_rate{event}` | = 0 trong > 60s dù queue còn người |
 | `ticketing_oversell_guard_rejections` | **> 0 → cảnh báo nghiêm trọng** (bất biến bị đe doạ) |
 | `ticketing_hold_conversion_ratio` | < 40% |
-| `ticketing_inventory_drift{ticket_type}` | ≠ 0 kéo dài > 30s |
+| `ticketing_inventory_drift{ticket_type}` | ≠ 0 kéo dài > 30s (tổng \|lệch\| theo bucket, đã trừ hold đang bay) |
+| `ticketing_inventory_drift_corrected_total{direction}` | tăng liên tục → Redis hay mất kho, tìm nguyên nhân (không phải bình thường) |
 | `ai_queue_lag_seconds{queue}` | > 30s |
 | `ai_gemini_429_total` | > 0 (chứng tỏ limiter sai) |
 | `ai_semantic_cache_hit_ratio` | < 70% |
