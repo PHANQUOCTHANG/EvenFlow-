@@ -78,7 +78,7 @@ class GeminiClient:
         if self._mock:
             await asyncio.sleep(0.05)
             text_lower = f"{job.event_title} {job.event_description}".lower()
-            if any(w in text_lower for w in ["cam", "forbidden", "vu khi", "ma tuy"]):
+            if any(w in text_lower for w in ["cam", "cấm", "forbidden", "vu khi", "vũ khí", "ma tuy", "ma túy"]):
                 return ModerationResult(
                     score=0.9,
                     verdict=AiVerdict.AUTO_REJECTED,
@@ -90,7 +90,7 @@ class GeminiClient:
                     },
                     reasons=["Phát hiện từ khóa nội dung cấm trong thông tin sự kiện"],
                 )
-            if any(w in text_lower for w in ["nghi van", "suspicious", "incomplete"]):
+            if any(w in text_lower for w in ["nghi van", "nghi vấn", "suspicious", "incomplete"]):
                 return ModerationResult(
                     score=0.55,
                     verdict=AiVerdict.NEEDS_HUMAN,
@@ -131,7 +131,7 @@ class GeminiClient:
                 axes=data.get("axes", {}),
                 reasons=data.get("reasons", []),
             )
-        except Exception:
+        except (json.JSONDecodeError, ValueError, KeyError):
             return ModerationResult(
                 score=0.5,
                 verdict=AiVerdict.NEEDS_HUMAN,

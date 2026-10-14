@@ -8,8 +8,6 @@ import pytest
 from app.consumers.moderation import ModerationConsumer
 from app.domain.moderation import (
     AiVerdict,
-    ModerationJob,
-    ModerationResult,
     calculate_verdict,
 )
 from app.gemini.client import GeminiClient
