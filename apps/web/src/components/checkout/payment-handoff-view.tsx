@@ -219,7 +219,8 @@ export function PaymentHandoffView({
               </div>
               <div className="flex justify-between border-t border-border pt-sm text-headline-sm">
                 <span className="text-fg">Tổng thanh toán</span>
-                <span className="font-bold text-accent">
+                {/* Khong dung text-accent: --ef-accent chi 2.18:1 tren nen trang (tokens.css cam dung lam mau chu). */}
+                <span className="font-bold text-warning-fg">
                   {formatMoney(totalAmount, "VND")}
                 </span>
               </div>

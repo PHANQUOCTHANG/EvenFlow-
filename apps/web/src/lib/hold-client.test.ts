@@ -166,6 +166,47 @@ describe("hold-client (EVF-113, BR-O2, BR-O5)", () => {
       );
     });
 
+    it("409 do cùng Idempotency-Key đang xử lý là AMBIGUOUS, không phải SOLD_OUT (BR-O5)", async () => {
+      globalThis.fetch = vi.fn().mockResolvedValue({
+        ok: false,
+        status: 409,
+        json: async () => ({
+          type: "urn:eventflow:problem:idempotency-in-progress",
+          status: 409,
+        }),
+      });
+
+      await expect(
+        requestHold({
+          eventId: "evt-1",
+          ticketTypeId: "tier-1",
+          quantity: 1,
+          queueToken: "token-valid",
+        }),
+      ).rejects.toThrowError(
+        expect.objectContaining({ type: "AMBIGUOUS", status: 409 }),
+      );
+    });
+
+    it("409 hết vé có body problem+json khác vẫn là SOLD_OUT", async () => {
+      globalThis.fetch = vi.fn().mockResolvedValue({
+        ok: false,
+        status: 409,
+        json: async () => ({ type: "about:blank", status: 409 }),
+      });
+
+      await expect(
+        requestHold({
+          eventId: "evt-1",
+          ticketTypeId: "tier-1",
+          quantity: 1,
+          queueToken: "token-valid",
+        }),
+      ).rejects.toThrowError(
+        expect.objectContaining({ type: "SOLD_OUT", status: 409 }),
+      );
+    });
+
     it("chuyển lỗi 422 thành LIMIT_EXCEEDED", async () => {
       globalThis.fetch = vi.fn().mockResolvedValue({
         ok: false,
@@ -203,5 +244,89 @@ describe("hold-client (EVF-113, BR-O2, BR-O5)", () => {
         }),
       );
     });
+  });
+});
+
+/** EV-198 B2: requestHold khong truyen apiBaseUrl phai goi `${NEXT_PUBLIC_API_BASE}/v1/...`
+ *  (giong join/status), khong goi URL tuong doi vao chinh server web.
+ *  Nap lai module sau khi stub env de khong phu thuoc env duoc doc luc goi hay luc nap module. */
+describe("hold-client — mặc định apiBaseUrl theo NEXT_PUBLIC_API_BASE (EV-198, B2)", () => {
+  const originalFetch = globalThis.fetch;
+
+  function okFetch() {
+    return vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        order_id: "ord-b2",
+        hold_id: "hold-b2",
+        expires_at: "2026-10-13T10:10:00Z",
+      }),
+    });
+  }
+
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
+    vi.unstubAllEnvs();
+    vi.resetModules();
+    vi.restoreAllMocks();
+  });
+
+  it("requestHold không truyền apiBaseUrl gọi ${NEXT_PUBLIC_API_BASE}/v1/events/{id}/holds", async () => {
+    vi.stubEnv("NEXT_PUBLIC_API_BASE", "http://localhost:8080");
+    vi.resetModules();
+    const { requestHold: requestHoldFresh } = await import("./hold-client");
+
+    const mockFetch = okFetch();
+    globalThis.fetch = mockFetch;
+
+    await requestHoldFresh({
+      eventId: "evt-tech-summit-2026",
+      ticketTypeId: "tier-all-access",
+      quantity: 2,
+      queueToken: "tok-b2",
+    });
+
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    expect(mockFetch.mock.calls[0][0]).toBe(
+      "http://localhost:8080/v1/events/evt-tech-summit-2026/holds",
+    );
+  });
+
+  it("apiBaseUrl truyền tường minh vẫn thắng biến môi trường", async () => {
+    vi.stubEnv("NEXT_PUBLIC_API_BASE", "http://localhost:8080");
+    vi.resetModules();
+    const { requestHold: requestHoldFresh } = await import("./hold-client");
+
+    const mockFetch = okFetch();
+    globalThis.fetch = mockFetch;
+
+    await requestHoldFresh({
+      eventId: "evt-1",
+      ticketTypeId: "tier-1",
+      quantity: 1,
+      queueToken: "tok",
+      apiBaseUrl: "https://explicit.example",
+    });
+
+    expect(mockFetch.mock.calls[0][0]).toBe("https://explicit.example/v1/events/evt-1/holds");
+  });
+
+  it("không đặt NEXT_PUBLIC_API_BASE thì vẫn gọi URL tương đối như cũ", async () => {
+    vi.stubEnv("NEXT_PUBLIC_API_BASE", undefined);
+    vi.resetModules();
+    const { requestHold: requestHoldFresh } = await import("./hold-client");
+
+    const mockFetch = okFetch();
+    globalThis.fetch = mockFetch;
+
+    await requestHoldFresh({
+      eventId: "evt-1",
+      ticketTypeId: "tier-1",
+      quantity: 1,
+      queueToken: "tok",
+    });
+
+    expect(mockFetch.mock.calls[0][0]).toBe("/v1/events/evt-1/holds");
   });
 });

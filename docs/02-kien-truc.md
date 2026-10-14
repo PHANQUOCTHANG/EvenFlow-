@@ -221,7 +221,13 @@ Bối cảnh: 30.000 người trong phòng chờ, ~5.000 câu hỏi/phút. Gemin
 | `ai.anomaly.q` | thấp | 30 phút | 2 | Gemini Flash |
 | `ai.report.q` | thấp nhất | 2 giờ | 1 | Gemini Pro |
 
-Topology: `ai.direct` exchange → 4 queue; mỗi queue có `x-dead-letter-exchange` trỏ `ai.retry` với các delay-queue 5s / 30s / 2m; hết 3 lần → `ai.dlq`.
+Topology (nguồn chuẩn là code: `libs/go/mq/topology.go`; `deploy/rabbitmq/definitions.json` phải khớp): `ai.direct` exchange → 4 queue gốc `ai.<job>.q` (`chat`, `moderation`, `anomaly`, `report`). Queue gốc **không** có `x-dead-letter-*`: hết TTL thì message bị bỏ, không retry.
+
+Retry do **consumer** điều khiển (thư viện `libs/go/mq`; worker Python EVF-80/82 phải theo cùng giao thức). Header `x-ef-attempt` bắt đầu từ 1:
+
+- Lỗi lần `n < 3`: publish bản sao (giữ body, header và các property `ContentType`, `ContentEncoding`, `CorrelationId`, `ReplyTo`, `Type`, `Timestamp`, `MessageId`, `Priority`, `AppId`, persistent; bỏ `x-death`/`x-delivery-count`; `x-ef-attempt = n+1`, kiểu int32 có dấu) vào `ai.retry` với routing key = tên công việc → hàng chờ trễ **riêng** `ai.<job>.retry` (chat 5s, moderation 30s, anomaly 30s, report 2m). Hết TTL, hàng chờ dead-letter về `ai.direct` với `x-dead-letter-routing-key` = chính tên công việc nên quay lại đúng `ai.<job>.q`. Hàng chờ trễ dùng quorum `x-dead-letter-strategy: at-least-once` và `x-overflow: reject-publish`.
+- Lỗi lần 3 hoặc lỗi vĩnh viễn: publish vào `ai.dlx` (direct) với key = tên công việc → `ai.dlq` (bind từng key, không dùng wildcard), rồi ack bản gốc. Publish retry/DLQ lỗi thì nack requeue, không mất message.
+- Giao hàng at-least-once: handler phải idempotent. Giả định RabbitMQ 3.13.
 
 Message `ai.chat.q` quá 60s bị TTL loại bỏ — **cố ý**: câu trả lời tới sau khi khách đã được admit là vô giá trị, giữ lại chỉ tốn quota.
 
@@ -318,7 +324,8 @@ bot_decisions        -- diem rui ro + rule kich hoat (giai thich duoc, BR-B1)
 | `waitingroom_admit_rate{event}` | = 0 trong > 60s dù queue còn người |
 | `ticketing_oversell_guard_rejections` | **> 0 → cảnh báo nghiêm trọng** (bất biến bị đe doạ) |
 | `ticketing_hold_conversion_ratio` | < 40% |
-| `ticketing_inventory_drift{ticket_type}` | ≠ 0 kéo dài > 30s |
+| `ticketing_inventory_drift{ticket_type}` | ≠ 0 kéo dài > 30s (tổng \|lệch\| theo bucket, đã trừ hold đang bay) |
+| `ticketing_inventory_drift_corrected_total{direction}` | tăng liên tục → Redis hay mất kho, tìm nguyên nhân (không phải bình thường) |
 | `ai_queue_lag_seconds{queue}` | > 30s |
 | `ai_gemini_429_total` | > 0 (chứng tỏ limiter sai) |
 | `ai_semantic_cache_hit_ratio` | < 70% |

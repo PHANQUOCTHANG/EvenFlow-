@@ -8,6 +8,7 @@
     "install-browsers": "playwright install --with-deps chromium"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.10.2",
     "@playwright/test": "1.49.1",
     "@types/node": "22.9.0"
   }

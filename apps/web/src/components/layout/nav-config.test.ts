@@ -16,6 +16,8 @@
  */
 import { describe, expect, it } from "vitest";
 
+import { translate } from "@/lib/i18n/messages";
+
 import {
   OPS_NAV,
   ORGANIZER_NAV,
@@ -237,5 +239,33 @@ describe("activeHref — ghi lai bug M4: isActive mot minh KHONG du", () => {
 
   it("route con sau cung khong lam sang 2 item: /organizer/events/new/abc chon /organizer/events/new", () => {
     expect(activeHref(ORGANIZER_NAV, "/organizer/events/new/abc")).toBe("/organizer/events/new");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// EV-188 (AC-8, plan §1.3 + §6 m5): PUBLIC_NAV co labelKey, va ban dich vi TRUNG label
+// (test layout/header hien co khang dinh theo `label`).
+// ---------------------------------------------------------------------------
+describe("PUBLIC_NAV — labelKey (EV-188 AC-8)", () => {
+  it("moi muc PUBLIC_NAV deu co labelKey", () => {
+    for (const item of PUBLIC_NAV) {
+      expect((item as { labelKey?: string }).labelKey, `muc ${item.href} thieu labelKey`).toBeTruthy();
+    }
+  });
+
+  it('translate("vi", labelKey) === label cho moi muc PUBLIC_NAV', () => {
+    for (const item of PUBLIC_NAV) {
+      const key = (item as { labelKey?: string }).labelKey as Parameters<typeof translate>[1];
+      expect(translate("vi", key)).toBe(item.label);
+    }
+  });
+
+  it("labelKey co ban dich en khac label tieng Viet", () => {
+    for (const item of PUBLIC_NAV) {
+      const key = (item as { labelKey?: string }).labelKey as Parameters<typeof translate>[1];
+      const english = translate("en", key);
+      expect(english.trim().length).toBeGreaterThan(0);
+      expect(english).not.toBe(item.label);
+    }
   });
 });

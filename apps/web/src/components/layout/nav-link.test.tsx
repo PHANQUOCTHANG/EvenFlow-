@@ -12,8 +12,11 @@
  *
  * `usePathname` duoc mock qua vi.hoisted de doi gia tri giua cac test.
  */
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+import * as i18nProvider from "@/components/i18n/locale-provider";
+import * as i18nMessages from "@/lib/i18n/messages";
 
 import type { NavItem } from "./nav-config";
 import { NavLink } from "./nav-link";
@@ -336,5 +339,125 @@ describe("NavLink — prop `active` ghi de ket qua tu tinh", () => {
     expect(linkNamed("Báo cáo")).toHaveAttribute("aria-current", "page");
     expect(linkNamed("Sự kiện")).not.toHaveAttribute("aria-current");
     expect(container.querySelectorAll('[aria-current="page"]')).toHaveLength(1);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// EV-188 (AC-8, plan §1.3 + §6 m5): NavLink hien t(labelKey) neu co, nguoc lai `label`;
+// badge "Sắp có" vao tu dien.
+// ---------------------------------------------------------------------------
+const LOCALE_KEY = "eventflow-locale";
+
+/** Tu dien + provider gop lai cho cac helper ben duoi. */
+const i18n = { ...i18nMessages, ...i18nProvider };
+
+type I18n = typeof i18n;
+
+/** Ban dich en cua chuoi vi (tim khoa theo gia tri). */
+function enFor(m: I18n, viText: string): string {
+  const keys = (Object.keys(m.vi) as Array<keyof typeof m.vi>).filter((k) => m.vi[k] === viText);
+  expect(keys.length, `khong co khoa vi = ${viText}`).toBeGreaterThan(0);
+  const values = new Set(keys.map((k) => m.en[k]));
+  expect(values.size, `cac khoa vi = ${viText} co ban dich en khac nhau`).toBe(1);
+  const [english] = Array.from(values);
+  expect(english).not.toBe(viText);
+  return english;
+}
+
+async function renderEn(m: I18n, ui: React.ReactElement) {
+  window.localStorage.setItem(LOCALE_KEY, "en");
+  const result = render(<m.LocaleProvider>{ui}</m.LocaleProvider>);
+  await waitFor(() => expect(document.documentElement.lang).toBe("en"));
+  return result;
+}
+
+function itemWithKey(m: I18n, href: string, viLabel: string, ready: boolean): NavItem {
+  const key = (Object.keys(m.vi) as Array<keyof typeof m.vi>).find((k) => m.vi[k] === viLabel);
+  expect(key, `khong co khoa vi = ${viLabel}`).toBeDefined();
+  return { href, label: viLabel, labelKey: key, ready } as NavItem;
+}
+
+describe("NavLink — i18n (EV-188 AC-8)", () => {
+  afterEach(() => {
+    window.localStorage.removeItem(LOCALE_KEY);
+    document.documentElement.setAttribute("lang", "vi");
+  });
+
+  it("co labelKey + locale en: hien ban dich en", async () => {
+    const m = i18n;
+    pathnameMock.mockReturnValue("/");
+    await renderEn(m, <NavLink item={itemWithKey(m, "/events", "Sự kiện", true)} />);
+
+    const english = enFor(m, "Sự kiện");
+    expect(await screen.findByRole("link", { name: english })).toHaveAttribute("href", "/events");
+    expect(screen.queryByRole("link", { name: "Sự kiện" })).toBeNull();
+  });
+
+  it("co labelKey + locale vi (mac dinh): van la label tieng Viet", async () => {
+    const m = i18n;
+    pathnameMock.mockReturnValue("/");
+    render(
+      <m.LocaleProvider>
+        <NavLink item={itemWithKey(m, "/events", "Sự kiện", true)} />
+      </m.LocaleProvider>,
+    );
+    expect(linkNamed("Sự kiện")).toHaveAttribute("href", "/events");
+  });
+
+  it("KHONG co labelKey: hien label du dang o en", async () => {
+    const m = i18n;
+    pathnameMock.mockReturnValue("/");
+    await renderEn(m, <NavLink item={REPORTS} />);
+    expect(linkNamed("Báo cáo")).toHaveAttribute("href", "/organizer/reports");
+  });
+
+  it('badge "Sắp có" dich sang en khi locale en', async () => {
+    const m = i18n;
+    await renderEn(m, <NavLink item={SOON} />);
+    expect(await screen.findByText(enFor(m, "Sắp có"))).toBeInTheDocument();
+    expect(screen.queryByText("Sắp có")).toBeNull();
+    expect(screen.queryByRole("link")).toBeNull();
+  });
+
+  it('badge "Sắp có" giu nguyen khi chua doi locale', () => {
+    render(<NavLink item={SOON} />);
+    expect(screen.getByText("Sắp có")).toBeInTheDocument();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// EV-188 challenge F2 (minor): badge "Sắp có" duoc dich theo locale cho MOI nav, nhung nav workspace mang
+// lang="vi" -> khi en, chu "Coming soon" bi khai bao la tieng Viet. Badge phai mang lang = locale
+// (hoac ngon ngu hieu luc cua badge phai khop ngon ngu cua chu ben trong).
+// ---------------------------------------------------------------------------
+describe("NavLink — badge 'Sắp có' khai bao dung ngon ngu trong nav lang='vi' (EV-188 challenge F2)", () => {
+  afterEach(() => {
+    window.localStorage.removeItem(LOCALE_KEY);
+    document.documentElement.setAttribute("lang", "vi");
+  });
+
+  it("locale en: chu badge la ban dich en va ngon ngu hieu luc cua badge la 'en'", async () => {
+    const m = i18n;
+    await renderEn(
+      m,
+      <nav lang="vi" aria-label="Điều hướng workspace">
+        <NavLink item={SOON} />
+      </nav>,
+    );
+    const badge = await screen.findByText(enFor(m, "Sắp có"));
+    expect(badge.closest("[lang]")?.getAttribute("lang")).toBe("en");
+    // Nhan muc nav chua dich van la tieng Viet.
+    expect(screen.getByText(SOON.label).closest("[lang]")?.getAttribute("lang")).toBe("vi");
+  });
+
+  it("locale vi: badge 'Sắp có' co ngon ngu hieu luc 'vi'", () => {
+    render(
+      <i18n.LocaleProvider>
+        <nav lang="vi" aria-label="Điều hướng workspace">
+          <NavLink item={SOON} />
+        </nav>
+      </i18n.LocaleProvider>,
+    );
+    expect(screen.getByText("Sắp có").closest("[lang]")?.getAttribute("lang")).toBe("vi");
   });
 });

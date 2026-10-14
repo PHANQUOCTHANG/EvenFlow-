@@ -7,6 +7,8 @@
  * 4. Error mapping dung ma loi backend Go.
  */
 
+import { apiBase } from "@/lib/api-base";
+
 export interface CreateHoldParams {
   eventId: string;
   ticketTypeId: string;
@@ -96,6 +98,21 @@ export function clearActiveHold(eventId: string): void {
   }
 }
 
+/** RFC 7807 `type` ma middleware idempotency cua ticketing tra khi cung Idempotency-Key dang duoc xu ly. */
+const IDEMPOTENCY_IN_PROGRESS = "urn:eventflow:problem:idempotency-in-progress";
+
+/** Doc `type` cua loi problem+json; khong co body hoac body khong phai JSON thi tra undefined. */
+async function problemType(response: Response): Promise<string | undefined> {
+  try {
+    if (typeof response.json !== "function") return undefined;
+    const body: unknown = await response.json();
+    const type = (body as { type?: unknown } | null)?.type;
+    return typeof type === "string" ? type : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 /** Goi API backend POST /v1/events/{id}/holds. */
 export async function requestHold(params: CreateHoldParams): Promise<HoldResult> {
   const {
@@ -105,7 +122,7 @@ export async function requestHold(params: CreateHoldParams): Promise<HoldResult>
     queueToken,
     identityId = "guest-user",
     idempotencyKey = generateIdempotencyKey(),
-    apiBaseUrl = "",
+    apiBaseUrl = apiBase(),
   } = params;
 
   if (!idempotencyKey) {
@@ -161,12 +178,22 @@ export async function requestHold(params: CreateHoldParams): Promise<HoldResult>
         "NOT_ADMITTED",
         403,
       );
-    case 409:
+    case 409: {
+      // Hai loai 409: "het ve" (nghiep vu) va "cung Idempotency-Key dang duoc xu ly" (BR-O5, vd khach
+      // bam dup). Loai sau KHONG phai het ve: yeu cau dau co the van thanh cong.
+      if ((await problemType(response)) === IDEMPOTENCY_IN_PROGRESS) {
+        throw new HoldClientError(
+          "Yêu cầu giữ vé đang được xử lý, vui lòng chờ giây lát",
+          "AMBIGUOUS",
+          409,
+        );
+      }
       throw new HoldClientError(
         "Rất tiếc, hạng vé này vừa hết",
         "SOLD_OUT",
         409,
       );
+    }
     case 422:
       throw new HoldClientError(
         "Số lượng vé vượt quá giới hạn cho phép",

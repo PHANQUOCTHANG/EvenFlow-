@@ -80,12 +80,14 @@ export function TicketTierCard({
       className={cn(
         "flex flex-col gap-sm rounded-card border bg-surface p-md shadow-card",
         selected ? "border-primary" : "border-border",
-        blocked && "opacity-60",
+        // Khong ha opacity ca the: opacity keo chu (ten, badge, Alert canh bao) xuong duoi 4.5:1 (axe color-contrast).
+        // The bi khoa duoc bao hieu bang vien net dut + ten dung text-fg-muted, van doc ro o ca light/dark.
+        blocked && "border-dashed",
         className,
       )}
     >
       <div className="flex flex-wrap items-center justify-between gap-sm">
-        <h3 className="text-headline-sm text-fg">{name}</h3>
+        <h3 className={cn("text-headline-sm", blocked ? "text-fg-muted" : "text-fg")}>{name}</h3>
         {availability ? (
           <Badge variant={AVAILABILITY[availability].badge}>{AVAILABILITY[availability].text}</Badge>
         ) : (

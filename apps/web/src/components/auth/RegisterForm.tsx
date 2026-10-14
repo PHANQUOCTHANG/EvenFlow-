@@ -50,7 +50,7 @@ function LockIcon({ className = "size-5" }: { className?: string }) {
 function EyeIcon({ className = "size-5" }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 .696 10.75 10.75 0 0 1-19.876 0" />
+      <path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" />
       <circle cx="12" cy="12" r="3" />
     </svg>
   );
@@ -341,7 +341,7 @@ function TelegramOTPVerification({
       setRegisteredPassword(data.password);
       
       toast({
-        variant: "default",
+        variant: "info",
         title: "Đã gửi mã xác thực",
         description: isPhoneNumber 
           ? `Vui lòng mở Telegram để nhận mã.` 
@@ -372,13 +372,13 @@ function TelegramOTPVerification({
     try {
       await requestRegistrationOTP(currentIdentifier);
       toast({
-        variant: "default",
+        variant: "info",
         title: "Gửi lại thành công",
         description: `Mã OTP mới đã được gửi tới ${currentIdentifier}`,
       });
     } catch (err: any) {
       toast({
-        variant: "destructive",
+        variant: "error",
         title: "Không thể gửi lại",
         description: err?.detail || "Quá nhiều yêu cầu. Hãy đợi thêm 5 phút.",
       });

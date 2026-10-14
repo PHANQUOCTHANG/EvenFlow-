@@ -16,14 +16,28 @@ type Prom struct {
 	holdDuration *prometheus.HistogramVec
 	guard        prometheus.Counter
 	released     prometheus.Counter
+	drift        *prometheus.GaugeVec
+	corrected    *prometheus.CounterVec
 	reg          prometheus.Registerer
 }
 
 // New dang ky metric len reg. Chi goi mot lan cho moi registry.
 func New(reg prometheus.Registerer) *Prom {
 	f := promauto.With(reg)
+	corrected := f.NewCounterVec(prometheus.CounterOpts{
+		Name: "ticketing_inventory_drift_corrected_total",
+		Help: "So ve ma job doi soat da sua trong Redis, theo huong (refill: Redis thieu, drain: Redis phong).",
+	}, []string{"direction"})
+	// Khoi tao ca hai nhan de rate() co chuoi tu dau thay vi chi xuat hien sau lan sua dau tien.
+	corrected.WithLabelValues("refill").Add(0)
+	corrected.WithLabelValues("drain").Add(0)
 	return &Prom{
-		reg: reg,
+		reg:       reg,
+		corrected: corrected,
+		drift: f.NewGaugeVec(prometheus.GaugeOpts{
+			Name: "ticketing_inventory_drift",
+			Help: "Do lech chua giai thich duoc giua ton kho Redis va Postgres (tong gia tri tuyet doi theo bucket). 0 la khop.",
+		}, []string{"ticket_type"}),
 		holdDuration: f.NewHistogramVec(prometheus.HistogramOpts{
 			Name: "ticketing_hold_duration_seconds",
 			Help: "Thoi gian tao hold, theo ket qua nghiep vu.",
@@ -51,6 +65,16 @@ func (p *Prom) OversellGuardRejected() { p.guard.Inc() }
 
 // HoldsReleased cong so hold vua tra kho.
 func (p *Prom) HoldsReleased(n int) { p.released.Add(float64(n)) }
+
+// InventoryDrift dat do lech chua giai thich duoc cua mot hang ve (0 = khop).
+func (p *Prom) InventoryDrift(ticketTypeID string, drift int) {
+	p.drift.WithLabelValues(ticketTypeID).Set(float64(drift))
+}
+
+// DriftCorrected cong so ve da duoc job doi soat sua trong Redis.
+func (p *Prom) DriftCorrected(direction string, tickets int) {
+	p.corrected.WithLabelValues(direction).Add(float64(tickets))
+}
 
 // RegisterPoolUsage dang ky gauge muc dung pool Postgres (0..1), doc luc scrape.
 // Day la mot trong ba tin hieu backpressure cua admit controller.

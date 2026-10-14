@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-FROM golang:1.25-alpine AS build
+FROM golang:1.26-alpine AS build
 WORKDIR /src
 # `go.work` khai `use` CA 9 module. O che do workspace Go phai doc duoc go.mod cua TAT CA
 # module do, nen ban cu -- chi copy libs/go va waitingroom -- fail ngay o lenh dau voi
@@ -17,8 +17,8 @@ WORKDIR /src
 # `go build` bao `missing go.sum entry for go.mod file` du khong dung dependency do.
 COPY go.work go.work.sum ./
 COPY services/gateway/go.mod services/gateway/
-COPY services/identity/go.mod services/identity/
-COPY services/event/go.mod services/event/
+COPY services/identity/go.mod services/identity/go.sum services/identity/
+COPY services/event/go.mod services/event/go.sum services/event/
 COPY services/ticketing/go.mod services/ticketing/go.sum services/ticketing/
 COPY services/payment/go.mod services/payment/
 COPY services/antibot/go.mod services/antibot/

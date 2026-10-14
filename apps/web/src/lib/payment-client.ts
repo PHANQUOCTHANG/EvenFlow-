@@ -7,6 +7,8 @@
  * 4. BR-O8: Don PAID tra ve danh sach ve phat hanh (IssuedTicket) co ma QR demo an toan.
  */
 
+import { apiBase } from "@/lib/api-base";
+
 export type PaymentMethod = "vnpay" | "momo" | "sandbox";
 
 export type OrderStatus = "PENDING" | "PAID" | "FAILED" | "EXPIRED" | "CANCELLED";
@@ -137,7 +139,7 @@ export async function initiatePayment(
     buyerEmail,
     buyerPhone,
     idempotencyKey = generateIdempotencyKey(),
-    apiBaseUrl = "",
+    apiBaseUrl = apiBase(),
     returnUrl,
   } = params;
 
@@ -242,7 +244,7 @@ export async function initiatePayment(
 export async function getOrderDetails(
   orderId: string,
   eventId: string,
-  apiBaseUrl = "",
+  apiBaseUrl = apiBase(),
 ): Promise<OrderDetails> {
   const url = `${apiBaseUrl}/v1/events/${encodeURIComponent(eventId)}/orders/${encodeURIComponent(orderId)}`;
 

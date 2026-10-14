@@ -11,9 +11,12 @@
  * Lop ao `sr-only`/`focus:not-sr-only` cua Tailwind khong chay trong jsdom nen
  * khong kiem duoc bang getComputedStyle — xem traceability.md.
  */
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
+
+import * as i18nProvider from "@/components/i18n/locale-provider";
+import * as i18nMessages from "@/lib/i18n/messages";
 
 import { SkipLink } from "./skip-link";
 
@@ -103,5 +106,61 @@ describe("SkipLink — AC-3 ban phim toi duoc", () => {
     const link = skipLink();
     link.focus();
     expect(link).toHaveFocus();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// EV-188 (AC-8): SkipLink dich qua <T>, van la server component.
+// ---------------------------------------------------------------------------
+const LOCALE_KEY = "eventflow-locale";
+
+/** Tu dien + provider gop lai cho cac helper ben duoi. */
+const i18n = { ...i18nMessages, ...i18nProvider };
+
+type I18n = typeof i18n;
+
+/** Ban dich en cua chuoi vi (tim khoa theo gia tri). */
+function enFor(m: I18n, viText: string): string {
+  const keys = (Object.keys(m.vi) as Array<keyof typeof m.vi>).filter((k) => m.vi[k] === viText);
+  expect(keys.length, `khong co khoa vi = ${viText}`).toBeGreaterThan(0);
+  const values = new Set(keys.map((k) => m.en[k]));
+  expect(values.size, `cac khoa vi = ${viText} co ban dich en khac nhau`).toBe(1);
+  const [english] = Array.from(values);
+  expect(english).not.toBe(viText);
+  return english;
+}
+
+/** Render trong LocaleProvider voi "en" da luu; cho toi khi locale da ap dung sau mount. */
+async function renderEn(m: I18n, ui: React.ReactElement) {
+  window.localStorage.setItem(LOCALE_KEY, "en");
+  const result = render(<m.LocaleProvider>{ui}</m.LocaleProvider>);
+  await waitFor(() => expect(document.documentElement.lang).toBe("en"));
+  return result;
+}
+
+function resetLocale(): void {
+  window.localStorage.removeItem(LOCALE_KEY);
+  document.documentElement.setAttribute("lang", "vi");
+}
+
+describe("SkipLink — i18n (EV-188 AC-8)", () => {
+  afterEach(resetLocale);
+
+  it("locale en: link hien ban dich en, href giu nguyen", async () => {
+    const m = i18n;
+    await renderEn(m, <SkipLink />);
+    const link = await screen.findByRole("link", { name: enFor(m, SKIP_LABEL) });
+    expect(link).toHaveAttribute("href", "#main");
+    expect(screen.queryByRole("link", { name: SKIP_LABEL })).toBeNull();
+  });
+
+  it("trong provider, chua doi locale: van la chuoi tieng Viet", async () => {
+    const m = i18n;
+    render(
+      <m.LocaleProvider>
+        <SkipLink />
+      </m.LocaleProvider>,
+    );
+    expect(skipLink()).toHaveAccessibleName(SKIP_LABEL);
   });
 });

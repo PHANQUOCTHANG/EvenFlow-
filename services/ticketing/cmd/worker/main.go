@@ -1,8 +1,8 @@
 // Command worker chay cac tien trinh nen cua ticketing:
 //   - hold sweeper: nha lenh giu ghe het han, tra ve vao kho (BR-O2, BR-O7)
-//   - inventory seeder: nap ton kho tu Postgres vao Redis (ban toi thieu cua EVF-37)
+//   - inventory seeder: nap ton kho tu Postgres vao Redis vao bucket con thieu (nhanh, 5 giay)
+//   - inventory reconciler: so Redis voi Postgres moi 10 giay va sua lech (EV-132)
 //   - TODO(EVF-36): outbox relay
-//   - TODO(EVF-37): inventory reconciler
 //
 // Tach khoi server la co y: mot dot tra kho lon khong duoc phep lam cham
 // duong di nong cua khach dang mua ve.
@@ -90,21 +90,28 @@ func run(log *slog.Logger) error {
 	seeder := worker.NewInventorySeeder(
 		repo, gate, worker.DefaultSeederConfig(eventIDs), log,
 	)
+	reconciler := worker.NewInventoryReconciler(
+		repo, repo, gate, worker.DefaultReconcilerConfig(eventIDs), log,
+	).WithMetrics(prom)
 
 	log.Info("worker bat dau", "so_su_kien", len(eventIDs),
-		"chu_ky_quet", time.Second, "chu_ky_nap_kho", worker.DefaultSeederConfig(nil).Interval)
+		"chu_ky_quet", time.Second, "chu_ky_nap_kho", worker.DefaultSeederConfig(nil).Interval,
+		"chu_ky_doi_soat", worker.DefaultReconcilerConfig(nil).Interval)
 
-	// Hai tien trinh nen doc lap: loi o mot ben khong duoc dung ben kia, nhung
-	// khi ctx bi huy (SIGTERM) ca hai deu phai dung.
-	errs := make(chan error, 3)
+	// Cac tien trinh nen doc lap: loi o mot ben khong duoc dung ben kia, nhung
+	// khi ctx bi huy (SIGTERM) tat ca deu phai dung.
+	const procs = 4
+	errs := make(chan error, procs)
 	go func() { errs <- sweeper.Run(ctx) }()
 	go func() { errs <- seeder.Run(ctx) }()
+	go func() { errs <- reconciler.Run(ctx) }()
 	go func() { errs <- otelx.ServeMetrics(ctx, env("METRICS_ADDR", ":9092"), log) }()
 
 	err = <-errs
 	stop()
-	<-errs
-	<-errs
+	for range procs - 1 {
+		<-errs
+	}
 	return err
 }
 

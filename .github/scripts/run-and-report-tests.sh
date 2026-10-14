@@ -70,6 +70,12 @@ if [ "$rc" -eq 0 ] && [ "$n_fail" -gt 0 ]; then
   # Lenh exit 0 ma van co dong FAIL: khong tin exit code, tin output.
   rc=1
 fi
+# REQUIRE_PASS=1: mot cong chat luong khong chay duoc lan PASS nao la DO, khong chi canh bao.
+# Mac dinh tat de cac cho dung script nay chi de bao cao khong doi hanh vi; cong oversell
+# (EVF-39) bat no vi test that da co, nen 0 PASS nghia la ai do da skip hoac doi ten test.
+if [ "${REQUIRE_PASS:-0}" = "1" ] && [ "$rc" -eq 0 ] && [ "$n_pass" -eq 0 ]; then
+  rc=1
+fi
 
 if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
   {

@@ -1,7 +1,6 @@
 /** Mot lan hoi trang thai hang cho (EV-182, BR-Q4).
  *
- * Khac `watchQueue` trong queue-client.ts (mot vong lap kin), module nay chi lam MOT request va
- * tra ve ket qua da phan loai. Vong lap, SSE va trang thai ket noi do hook `use-queue-status`
+ * Module nay chi lam MOT request va tra ve ket qua da phan loai. Vong lap, SSE va trang thai ket noi do hook `use-queue-status`
  * dieu phoi — tach ra de UI biet duoc ETag, nhip poll va loi ma khong phai doan.
  *
  * Nguyen tac: nhip poll la cua SERVER. Module nay chi lam sach gia tri server gui ve sao cho
@@ -15,7 +14,7 @@ export const DEFAULT_POLL_MS = 10_000;
 /** San an toan: mot bug phia server tra `poll_after_ms: 1` khong duoc phep bien 300.000 tab
  *  thanh mot cuoc DDoS tu gay. */
 export const MIN_POLL_MS = 1_000;
-/** 503 khong co Retry-After: lui 5s, khop queue-client.ts. */
+/** 503 khong co Retry-After: lui 5s. */
 export const DEFAULT_RETRY_AFTER_MS = 5_000;
 
 export interface QueueSnapshot {

@@ -61,6 +61,7 @@ func main() {
 
 	// - Domain / Port
 	identityRepo := postgres.NewIdentityRepo(db)
+	auditRepo := postgres.NewAuditRepo(db)
 	hasher := domain.NewArgon2idHasher()
 	tokenGen := domain.NewJWTTokenGenerator(cfg.JWTSecret)
 
@@ -107,8 +108,8 @@ func main() {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	// Đăng ký API Đăng nhập / Đăng ký
-	identityHttp.RegisterRoutes(mux, authHandler)
+	// Đăng ký API Đăng nhập / Đăng ký & RBAC
+	identityHttp.RegisterRoutes(mux, authHandler, cfg.JWTSecret, auditRepo)
 
 	// Middleware CORS
 	corsMiddleware := func(next http.Handler) http.Handler {

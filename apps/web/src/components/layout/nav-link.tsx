@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { useLocale, useT } from "@/components/i18n/locale-provider";
 import { Badge } from "@/components/ui";
 import { cn } from "@/lib/cn";
 
@@ -20,14 +21,20 @@ const BASE = "ef-focus-ring flex items-center gap-sm rounded-control px-sm py-sm
 
 export function NavLink({ item, className, active: activeProp }: NavLinkProps) {
   const pathname = usePathname();
+  const t = useT();
+  const { locale } = useLocale();
+  const label = item.labelKey ? t(item.labelKey) : item.label;
 
   // Route chua ton tai: KHONG render <a>. Mot link dan toi 404 te hon mot nhan noi
   // thang la chua co (handoff muc 5 nguyen tac 3).
   if (!item.ready) {
     return (
       <span aria-disabled="true" className={cn(BASE, "cursor-not-allowed text-fg-muted", className)}>
-        {item.label}
-        <Badge variant="neutral">Sắp có</Badge>
+        {label}
+        {/* lang={locale}: badge da dich, nhung co the nam trong <nav lang="vi"> cua WorkspaceShell. */}
+        <Badge variant="neutral" lang={locale}>
+          {t("nav.comingSoon")}
+        </Badge>
       </span>
     );
   }
@@ -44,7 +51,7 @@ export function NavLink({ item, className, active: activeProp }: NavLinkProps) {
         className,
       )}
     >
-      {item.label}
+      {label}
     </Link>
   );
 }

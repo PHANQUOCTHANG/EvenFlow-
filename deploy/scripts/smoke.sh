@@ -140,6 +140,20 @@ HOLD_ID="$(echo "$r" | body_of | json_field hold_id)"
 EXPIRES="$(echo "$r" | body_of | json_field expires_at)"
 [[ -n "$HOLD_ID" && -n "$EXPIRES" ]] || die "phan hoi thieu hold_id/expires_at: $(echo "$r" | body_of)"
 ok "giu 2 ve -> hold $HOLD_ID, het han $EXPIRES"
+FIRST_BODY="$(echo "$r" | body_of)"
+
+# BR-O5: cung key + cung noi dung -> DUNG response cu (khong phai chi "cung hold" nho BR-O3).
+r="$(hold "smoke-hold-$$" 2)"
+[[ "$(echo "$r" | status_of)" == "200" && "$(echo "$r" | body_of)" == "$FIRST_BODY" ]]   || die "goi lai cung Idempotency-Key phai tra dung response cu (BR-O5), nhan $(echo "$r" | status_of): $(echo "$r" | body_of)"
+ok "goi lai cung key -> dung response cu (BR-O5)"
+
+r="$(hold "smoke-hold-$$" 3)"
+[[ "$(echo "$r" | status_of)" == "422" ]]   || die "cung key khac noi dung phai bi 422 (BR-O5), nhan $(echo "$r" | status_of)"
+ok "cung key khac noi dung -> 422 (BR-O5)"
+
+kst="$(pg "SELECT status_code FROM idempotency_keys WHERE key = 'smoke-hold-$$'")"
+[[ "$kst" == "200" ]] || die "idempotency_keys phai luu status 200, nhan '$kst'"
+ok "idempotency_keys da luu response"
 
 r="$(hold "smoke-hold-again-$$" 2)"
 [[ "$(echo "$r" | body_of | json_field hold_id)" == "$HOLD_ID" ]] \
@@ -160,5 +174,14 @@ ok "Postgres=$(pg_available)  Redis=$(redis_available)"
 st="$(pg "SELECT status FROM orders WHERE event_id = '$EVENT_ID' AND identity_id = '$BUYER' ORDER BY created_at DESC LIMIT 1")"
 [[ "$st" == "EXPIRED" ]] || die "don phai o trang thai EXPIRED, nhan '$st'"
 ok "don -> EXPIRED"
+
+step "9. Lam lech Redis -> job doi soat tu sua (EV-132)"
+# Tru 2 ve khoi bucket 0 o Redis ma khong dong vao Postgres: "mat mot lan tra kho".
+rd HINCRBY "inv:{${EVENT_ID}}:tt:${TT}" 0 -2 >/dev/null
+[[ "$(redis_available)" == "$((QUOTA - 2))" ]] || die "khong lam lech duoc Redis, con $(redis_available)"
+ok "Redis lech: Postgres=$(pg_available)  Redis=$(redis_available)"
+# Chu ky 10 giay, can thay do lech o hai chu ky lien tiep nen toi da ~20 giay (+ du phong).
+wait_for "job doi soat sua Redis ve $QUOTA" 40 redis_is "$QUOTA"
+ok "da tu sua: Postgres=$(pg_available)  Redis=$(redis_available)"
 
 printf '\n[smoke] DAT: %d buoc.\n' "$PASS"

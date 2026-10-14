@@ -89,3 +89,53 @@ Xếp chồng lên PR A (chưa merge lúc làm). Rebase lên `develop` khi A mer
 - `/metrics` mở trên cổng dịch vụ: gateway (giai đoạn 3) không được route ra ngoài.
 - Metric `ticketing_holds_released_total` xuất hiện ở cả `ticketing` (luôn 0) lẫn `ticketing-worker`; khi vẽ dashboard hãy `sum()` hoặc lọc theo job.
 - `HealthProbe` thật cho controller (giai đoạn 5) sẽ đọc p99 từ histogram và pool từ gauge ở trên; chưa nối.
+
+## W3 — `libs/go/testx` + cổng oversell thật (nhánh `feature/EV-134-testx-oversell-gate`)
+
+Chi tiết: [../EV-134-testx-oversell-gate/](../EV-134-testx-oversell-gate/) (`spec`, `plan`, `evidence`, `traceability`).
+
+### Đã làm
+
+| Việc | Thay đổi |
+|---|---|
+| `testx` | `Postgres` (chạy phần `Up` của `migrations/`), `Redis`; container dùng chung một tiến trình; thiếu Docker thì fail |
+| `helpers.go` | Hiện thực bằng adapter thật và cấu hình pool như `cmd/server`; nạp sẵn 10.000 identity + token để helper không I/O trong goroutine |
+| CI | `REQUIRE_PASS=1`: 0 PASS là lỗi; test hold hết hạn tách thành `make test-oversell-expiry` (×20) |
+
+### Phát hiện
+
+- Cổng cũ **không thể xanh** dù code đúng: lệnh khớp cả hai test, test hết hạn ngủ ≥ 15 giây mỗi lần nên ×200 vượt `timeout=30m`.
+- Dưới đợt 10.000 request đồng thời với Redis timeout 200 ms, 450–870 request nhận `i/o timeout` thay vì `ErrSoldOut`
+  (bất biến 4). Bất biến 1–3 luôn giữ. Nới timeout lên 5 s thì 5/5 xanh. **Chưa kiểm trên Linux CI.**
+- Test hết hạn không kiểm Redis (đột biến M5 sống sót).
+
+### Nợ / chưa làm
+
+- Bằng chứng CI và 200 lần chạy đủ — token phiên làm việc không có quyền dispatch/tạo PR.
+- `testx.RabbitMQ` — chờ PR #52, làm cùng EV-131.
+- Quyết định về timeout 200 ms nếu CI tái hiện (xem `evidence.md` §5).
+
+## W4 — `libs/go/idem` (nhánh `feature/EV-128-idempotency-key`)
+
+Chi tiết: [../EV-128-idempotency-key/](../EV-128-idempotency-key/) (`spec`, `evidence`, `traceability`).
+
+### Đã làm
+
+| Việc | Thay đổi |
+|---|---|
+| `idem` | `Middleware`, `Store`, `PostgresStore` trên bảng `idempotency_keys` có sẵn ở `0001` (không migration mới) |
+| Nối vào ticketing | `Routes` nhận middleware bắt buộc; bỏ đoạn kiểm header cũ ở handler |
+| Smoke | Thêm 3 bước: gửi lại cùng key, cùng key khác nội dung, hàng có trong `idempotency_keys` |
+| CI | Job `integration` chạy thêm `./idem/...` với `REQUIRE_PASS=1` |
+
+### Quyết định đáng ghi
+
+- Đồng thời cùng key: request thua nhận **409** kèm `Retry-After` và `type` riêng, không chờ. 5xx và panic **không** được nhớ.
+- Định danh người gọi nằm trong hash của request: cùng key do người khác dùng nhận 422, không lộ response.
+- Response lưu dạng base64 trong JSONB để phát lại đúng từng byte.
+
+### Nợ / chưa làm
+
+- Dọn key hết hạn (giai đoạn 2). Định danh lấy từ JWT (giai đoạn 3).
+- Frontend coi mọi 409 là "hết vé": cần phân biệt theo `type` (xem `evidence.md` §4).
+- Chưa có bằng chứng CI trên Linux cho job `integration` mới.

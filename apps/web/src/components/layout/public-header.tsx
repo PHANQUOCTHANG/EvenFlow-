@@ -4,6 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
 
+import { LanguageToggle } from "@/components/i18n/language-toggle";
+import { useT } from "@/components/i18n/locale-provider";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { cn } from "@/lib/cn";
 
@@ -13,6 +15,7 @@ import { NavLink } from "./nav-link";
 
 export function PublicHeader({ items = PUBLIC_NAV }: { items?: NavItem[] }) {
   const pathname = usePathname();
+  const t = useT();
   const [open, setOpen] = useState(false);
   const toggleRef = useRef<HTMLButtonElement>(null);
   const navId = useId();
@@ -39,12 +42,15 @@ export function PublicHeader({ items = PUBLIC_NAV }: { items?: NavItem[] }) {
 
   return (
     <header className="border-b border-border bg-surface">
-      <Container className="flex h-16 items-center justify-between gap-md">
+      {/* flex-wrap + min-h: o 320px logo + nhom ngon ngu + theme + nut menu khong vua mot hang; cho xuong dong
+          * thay vi tran ngang (WCAG 1.4.10 Reflow). */}
+      <Container className="flex min-h-16 flex-wrap items-center justify-between gap-x-md gap-y-sm py-sm">
         <Link href="/" className="ef-focus-ring rounded-control text-headline-md text-fg">
           EventFlow
         </Link>
 
-        <div className="flex items-center gap-sm">
+        <div className="flex flex-wrap items-center gap-sm">
+          <LanguageToggle />
           <ThemeToggle />
           <button
             ref={toggleRef}
@@ -55,7 +61,7 @@ export function PublicHeader({ items = PUBLIC_NAV }: { items?: NavItem[] }) {
             className="ef-focus-ring h-11 rounded-control border border-border-strong bg-surface px-md text-label-lg text-fg md:hidden"
           >
             {/* Ten giu nguyen o ca 2 trang thai — aria-expanded da truyen trang thai roi. */}
-            Mở menu điều hướng
+            {t("header.menuToggle")}
           </button>
         </div>
       </Container>
@@ -68,7 +74,7 @@ export function PublicHeader({ items = PUBLIC_NAV }: { items?: NavItem[] }) {
         * aria-expanded cua nut toggle. */}
       <nav
         id={navId}
-        aria-label="Điều hướng chính"
+        aria-label={t("header.navLabel")}
         data-state={open ? "open" : "closed"}
         // Bam vao link trung route hien tai thi pathname khong doi -> effect theo pathname
         // khong chay -> menu nam do che trang. Dong ngay tai day.

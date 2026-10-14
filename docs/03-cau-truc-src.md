@@ -95,7 +95,7 @@ adapter ──> app ──> domain
 libs/go/
 ├── httpx/          # router, middleware (auth, idempotency, ratelimit, recover), loi chuan RFC7807
 ├── redisx/         # client, helper nap va chay Lua script co SHA cache
-├── mq/             # bao boc AMQP: publisher co outbox, consumer co retry/DLQ
+├── mq/             # bao boc AMQP: publisher co confirm, consumer co retry/DLQ, topology bang code (outbox nam o service)
 ├── authx/          # ky & xac minh JWT, queue token, QR HMAC
 ├── otelx/          # khoi tao trace + metric + log, propagate qua AMQP header
 ├── idem/           # idempotency store tren Postgres
@@ -193,7 +193,8 @@ apps/web/src/
 ├── lib/
 │   ├── api/                       # client sinh tu OpenAPI
 │   ├── sse.ts                     # SSE co reconnect + backoff
-│   ├── queue-client.ts            # polling thich nghi theo poll_after_ms cua server
+│   ├── queue-client.ts            # joinQueue (jitter 0..5s) + QueueError
+│   ├── queue-status.ts            # MOT lan hoi trang thai, lam sach poll_after_ms / Retry-After
 │   ├── jitter.ts                  # hoan ngau nhien 0..5s tai T0 (Tang 2)
 │   └── fingerprint.ts             # tin hieu thiet bi cho anti-bot
 ├── hooks/

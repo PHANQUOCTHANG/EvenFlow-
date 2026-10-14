@@ -11,7 +11,8 @@ export function PublicShell({ children }: { children: ReactNode }) {
     <>
       <SkipLink />
       <PublicHeader />
-      <Container as="main" id="main" tabIndex={-1} className="py-xl">
+      {/* lang="vi": noi dung chua dich la tieng Viet du <html lang> la en (WCAG 3.1.2). */}
+      <Container as="main" id="main" lang="vi" tabIndex={-1} className="py-xl">
         {children}
       </Container>
       <PublicFooter />

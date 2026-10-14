@@ -273,3 +273,29 @@ describe("ToastProvider — auto-dismiss (fake timer, AC-6)", () => {
     expect(screen.queryByText("Tắt muộn")).not.toBeInTheDocument();
   });
 });
+
+// ---------------------------------------------------------------------------
+// EV-188 code review M1 (plan §7): noi dung toast chua dich (tieng Viet) nam NGOAI <main lang="vi">
+// nen vung toast phai tu khai bao lang="vi" — neu khong, khi <html lang="en"> screen reader doc
+// tieng Viet bang giong Anh (WCAG 3.1.2). <html lang="en"> duoc dat de loai tru truong hop
+// `closest("[lang]")` tim thay chinh the <html>.
+// ---------------------------------------------------------------------------
+describe("ToastProvider — vung toast khai bao lang='vi' (EV-188 M1)", () => {
+  afterEach(() => {
+    document.documentElement.setAttribute("lang", "vi");
+  });
+
+  it("html lang = en: vung aria-live va toast ben trong co ngon ngu hieu luc la vi", () => {
+    document.documentElement.setAttribute("lang", "en");
+    const { result } = mountToast();
+
+    act(() => {
+      result.current.toast({ title: "Bạn đã được vào hàng chờ" });
+    });
+
+    const region = document.querySelector('[data-slot="toast-region"]');
+    expect(region).not.toBeNull();
+    expect(region?.closest("[lang]")?.getAttribute("lang")).toBe("vi");
+    expect(screen.getByText("Bạn đã được vào hàng chờ").closest("[lang]")?.getAttribute("lang")).toBe("vi");
+  });
+});
