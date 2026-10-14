@@ -1,8 +1,8 @@
 // Command worker chay cac tien trinh nen cua ticketing:
 //   - hold sweeper: nha lenh giu ghe het han, tra ve vao kho (BR-O2, BR-O7)
-//   - inventory seeder: nap ton kho tu Postgres vao Redis (ban toi thieu cua EVF-37)
+//   - inventory seeder: nap ton kho tu Postgres vao Redis vao bucket con thieu (nhanh, 5 giay)
+//   - inventory reconciler: so Redis voi Postgres moi 10 giay va sua lech (EV-132)
 //   - outbox relay: relay su kien tu outbox_events sang RabbitMQ (EV-131, EVF-36)
-//   - TODO(EVF-37): inventory reconciler
 //
 // Tach khoi server la co y: mot dot tra kho lon khong duoc phep lam cham
 // duong di nong cua khach dang mua ve.
@@ -142,11 +142,15 @@ func run(log *slog.Logger) error {
 	seeder := worker.NewInventorySeeder(
 		repo, gate, worker.DefaultSeederConfig(eventIDs), log,
 	)
+	reconciler := worker.NewInventoryReconciler(
+		repo, repo, gate, worker.DefaultReconcilerConfig(eventIDs), log,
+	).WithMetrics(prom)
 
 	log.Info("worker bat dau", "so_su_kien", len(eventIDs),
-		"chu_ky_quet", time.Second, "chu_ky_nap_kho", worker.DefaultSeederConfig(nil).Interval)
+		"chu_ky_quet", time.Second, "chu_ky_nap_kho", worker.DefaultSeederConfig(nil).Interval,
+		"chu_ky_doi_soat", worker.DefaultReconcilerConfig(nil).Interval)
 
-	errs := make(chan error, 4)
+	errs := make(chan error, 5)
 	var wg sync.WaitGroup
 
 	wg.Add(1)
@@ -159,6 +163,12 @@ func run(log *slog.Logger) error {
 	go func() {
 		defer wg.Done()
 		errs <- seeder.Run(ctx)
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		errs <- reconciler.Run(ctx)
 	}()
 
 	wg.Add(1)
@@ -179,6 +189,7 @@ func run(log *slog.Logger) error {
 	stop()
 	wg.Wait()
 	return err
+
 }
 
 // logPublisher la publisher tam thoi cho local dev.

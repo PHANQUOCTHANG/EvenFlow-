@@ -208,8 +208,8 @@ apps/web/src/
 
 | Hạng mục | Quy ước |
 |---|---|
-| Nhánh Git | `main` (bảo vệ) ← `develop` ← `feat/EVF-123-mo-ta` |
-| Commit | Conventional Commits, kèm mã Jira: `feat(ticketing): EVF-123 them redis hold gate` |
+| Nhánh Git | `main` (bảo vệ) ← `develop` ← `feature/EV-123-mo-ta` (key Jira thật `EV-n`, không phải mã backlog `EVF-n`) |
+| Commit | Conventional Commits, mã Jira thật ở cuối subject: `feat(ticketing): them redis hold gate (EV-123)` |
 | API | REST + OpenAPI 3.1 ra ngoài; gRPC giữa các service; lỗi theo RFC 7807 |
 | Event MQ | `<domain>.<entity>.<action>` — vd `ticketing.hold.released`; payload có `event_id`, `occurred_at`, `trace_id`, `schema_version` |
 | Migration | `goose`, chỉ tiến (forward-only) trên production; đặt tên `NNNN_mo_ta.sql` |

@@ -10,6 +10,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"regexp"
+	"strings"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -70,19 +72,51 @@ func (r *Repository) ListInventory(ctx context.Context, eventID string) ([]port.
 	return out, rows.Err()
 }
 
-// CountPurchased dem so ve da mua thanh cong cua mot nguoi (BR-O4).
-// Chi tinh cac don da thanh toan hoac dang giu -- don da huy/het han khong tinh.
-func (r *Repository) CountPurchased(ctx context.Context, eventID, identityID string) (int, error) {
-	const q = `
-		SELECT COALESCE(SUM(oi.quantity), 0)
-		  FROM orders o
-		  JOIN order_items oi ON oi.order_id = o.id
-		 WHERE o.event_id = $1 AND o.identity_id = $2
-		   AND o.status IN ('HELD','PAYMENT_PENDING','PAID','ISSUED')`
+// countTicketsQuery cong so ve cua mot nguoi tren mot su kien, chi tinh don co trang thai trong $3.
+const countTicketsQuery = `
+	SELECT COALESCE(SUM(oi.quantity), 0)::int
+	  FROM orders o
+	  JOIN order_items oi ON oi.order_id = o.id
+	 WHERE o.event_id = $1 AND o.identity_id = $2
+	   AND o.status = ANY($3::text[])`
 
+// CountPurchased dem so ve trong cac don DA CHOT cua mot nguoi (lop kiem nhanh cua BR-O4).
+//
+// Khong dem don dang hoat dong (HELD, PAYMENT_PENDING): neu dem, khach dang giu ghe bam mua lai
+// se bi bao vuot han muc thay vi nhan lai hold dang co (BR-O3). Don dang hoat dong van bi chan,
+// boi Redis (ALREADY_HOLDING), boi unique index va boi lop chot trong PersistHold.
+func (r *Repository) CountPurchased(ctx context.Context, eventID, identityID string) (int, error) {
 	var n int
-	err := r.pool.QueryRow(ctx, q, eventID, identityID).Scan(&n)
+	err := r.pool.QueryRow(ctx, countTicketsQuery, eventID, identityID, domain.SettledOrderStatuses).Scan(&n)
 	return n, err
+}
+
+// GetPurchaseLimit doc han muc cua su kien (SCHEDULED hoac ON_SALE) va so ve khach dang chiem han
+// muc, trong MOT truy van de hai so cung mot snapshot.
+func (r *Repository) GetPurchaseLimit(ctx context.Context, eventID, identityID string) (port.PurchaseLimit, error) {
+	var l port.PurchaseLimit
+	if !uuidRE.MatchString(eventID) || !uuidRE.MatchString(identityID) {
+		// Id sai dinh dang khong the la su kien dang ban; khong de Postgres bao loi cast thanh 503.
+		return l, domain.ErrEventNotFound
+	}
+	const q = `
+		SELECT e.max_per_order, e.max_per_identity,
+		       COALESCE((SELECT SUM(oi.quantity)
+		                   FROM orders o
+		                   JOIN order_items oi ON oi.order_id = o.id
+		                  WHERE o.event_id = e.id AND o.identity_id = $2::uuid
+		                    AND o.status = ANY($3::text[])), 0)::int,
+		       EXISTS (SELECT 1 FROM orders o
+		                WHERE o.event_id = e.id AND o.identity_id = $2::uuid
+		                  AND o.status IN ('HELD','PAYMENT_PENDING'))
+		  FROM events e
+		 WHERE e.id = $1::uuid AND e.status IN ('SCHEDULED','ON_SALE')`
+	err := r.pool.QueryRow(ctx, q, eventID, identityID, domain.QuotaOrderStatuses).Scan(
+		&l.MaxPerOrder, &l.MaxPerIdentity, &l.Used, &l.HasActiveHold)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return l, domain.ErrEventNotFound
+	}
+	return l, err
 }
 
 func (r *Repository) GetActiveHold(ctx context.Context, eventID, identityID string) (port.HoldView, error) {
@@ -105,13 +139,14 @@ func (r *Repository) GetActiveHold(ctx context.Context, eventID, identityID stri
 
 // PersistHold chot lenh giu ghe trong MOT transaction.
 //
-// Bon viec phai cung song cung chet:
+// Nam viec phai cung song cung chet:
+//  0. Kiem lai han muc moi nguoi (BR-O4)
 //  1. Tru ton kho (co dieu kien available >= qty)
 //  2. Tao don hang
 //  3. Tao ban ghi hold
 //  4. Ghi outbox de bao cho cac service khac
 //
-// Neu bat ky buoc nao hong, ca bon bi rollback. Khong co trang thai nua voi.
+// Neu bat ky buoc nao hong, ca nam bi rollback. Khong co trang thai nua voi.
 func (r *Repository) PersistHold(ctx context.Context, p port.PersistHoldParams) (port.HoldView, error) {
 	ctx, end := otelx.StartSpan(ctx, "postgres.persist_hold")
 	out, err := r.persistHold(ctx, p)
@@ -127,6 +162,30 @@ func (r *Repository) persistHold(ctx context.Context, p port.PersistHoldParams) 
 		return out, err
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
+
+	// (0) Lop CHOT cua BR-O4. Lop nhanh trong app chay ngoai transaction: giua luc no dem va luc
+	// ghi, don cu co the vua chuyen PAYMENT_PENDING -> PAID va Redis da Consume hold do, nen
+	// khong con gi chan mot hold moi. O day dem MOI don dang chiem han muc, ke ca dang hoat dong.
+	//
+	// Khong can khoa them: moi don thanh PAID deu tung la don dang hoat dong, va unique index
+	// uq_active_order_per_identity_event chi cho moi nguoi mot don nhu vay. Cau dem nay luon thay
+	// don do (HELD/PAYMENT_PENDING hoac PAID); con mot don dang hoat dong moi chua commit thi lenh
+	// INSERT ben duoi se dung unique index. Ngoai le duy nhat la dua don EXPIRED len PAID -- luong
+	// thanh toan khong duoc lam vay ma khong kiem lai han muc.
+	//
+	// Han muc <= 0 la loi lap trinh (schema co CHECK max_per_identity > 0): tu choi thay vi bo qua,
+	// de mot noi goi quen truyen han muc khong mo duong vuot BR-O4.
+	if p.MaxPerIdentity <= 0 {
+		return out, fmt.Errorf("persist hold: thieu max_per_identity (%d)", p.MaxPerIdentity)
+	}
+	var used int
+	if err := tx.QueryRow(ctx, countTicketsQuery,
+		p.EventID, p.IdentityID, domain.QuotaOrderStatuses).Scan(&used); err != nil {
+		return out, err
+	}
+	if used+p.Quantity > p.MaxPerIdentity {
+		return out, domain.ErrPerIdentityLimit
+	}
 
 	// (1) Tru ton kho. Mot cau UPDATE duy nhat tren mot dong -> khoa dong toi
 	// thieu. Dieu kien available >= $3 lam cho thao tac nay an toan truoc moi
@@ -289,6 +348,55 @@ func (r *Repository) initInventory(ctx context.Context, ticketTypeID string, quo
 	return tx.Commit(ctx)
 }
 
+var uuidRE = regexp.MustCompile(`^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$`)
+
+// holdStatesBatch chia nho de mang UUID khong qua lon cho mot cau lenh.
+const holdStatesBatch = 1000
+
+// HoldStates tra trang thai cac hold theo id Redis (co the la hex 32 ky tu). Hold Postgres chua
+// ghi khong co trong ket qua. Id khong phai UUID duoc coi nhu chua ghi thay vi lam hong ca lo.
+func (r *Repository) HoldStates(ctx context.Context, holdIDs []string) (map[string]port.HoldState, error) {
+	out := make(map[string]port.HoldState, len(holdIDs))
+	byUUID := make(map[string]string, len(holdIDs)) // uuid co gach -> id goc
+	uuids := make([]string, 0, len(holdIDs))
+	for _, id := range holdIDs {
+		u := toUUID(id)
+		if !uuidRE.MatchString(u) {
+			continue
+		}
+		u = strings.ToLower(u)
+		byUUID[u] = id
+		uuids = append(uuids, u)
+	}
+
+	const q = `
+		SELECT id::text, released_at IS NOT NULL, consumed_at IS NOT NULL
+		  FROM seat_holds
+		 WHERE id = ANY($1::uuid[])`
+	for start := 0; start < len(uuids); start += holdStatesBatch {
+		end := min(start+holdStatesBatch, len(uuids))
+		rows, err := r.pool.Query(ctx, q, uuids[start:end])
+		if err != nil {
+			return nil, err
+		}
+		for rows.Next() {
+			var id string
+			var st port.HoldState
+			if err := rows.Scan(&id, &st.Released, &st.Consumed); err != nil {
+				rows.Close()
+				return nil, err
+			}
+			if orig, ok := byUUID[id]; ok {
+				out[orig] = st
+			}
+		}
+		rows.Close()
+		if err := rows.Err(); err != nil {
+			return nil, err
+		}
+	}
+	return out, nil
+}
 
 // wrapConstraint dich loi constraint cua Postgres sang loi nghiep vu.
 //
@@ -319,4 +427,7 @@ func toUUID(s string) string {
 var (
 	_ port.Repository      = (*Repository)(nil)
 	_ port.InventorySource = (*Repository)(nil)
+	_ port.HoldStateSource = (*Repository)(nil)
+
+	_ port.PurchaseLimitSource = (*Repository)(nil)
 )

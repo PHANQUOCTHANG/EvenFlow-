@@ -8,7 +8,9 @@ package redisadapter
 import (
 	"context"
 	"embed"
+	"encoding/json"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -165,6 +167,67 @@ func (g *Gate) SeedInventory(ctx context.Context, eventID, ticketTypeID string, 
 	return err
 }
 
+// Snapshot doc ton kho cac hang ve va hash hold cua su kien trong MOT giao dich (MULTI), de hai
+// so lieu cung thuoc ve mot thoi diem: khong co hold nao chen vao giua hai lan doc.
+func (g *Gate) Snapshot(ctx context.Context, eventID string, ticketTypeIDs []string) (port.RedisSnapshot, error) {
+	pipe := g.rdb.TxPipeline()
+	invCmds := make(map[string]*redis.MapStringStringCmd, len(ticketTypeIDs))
+	for _, tt := range ticketTypeIDs {
+		invCmds[tt] = pipe.HGetAll(ctx, invKey(eventID, tt))
+	}
+	holdsCmd := pipe.HGetAll(ctx, holdHKey(eventID))
+	if _, err := pipe.Exec(ctx); err != nil {
+		return port.RedisSnapshot{}, fmt.Errorf("doc anh chup redis: %w", err)
+	}
+
+	snap := port.RedisSnapshot{
+		Inventory: make(map[string]map[int]int, len(ticketTypeIDs)),
+		Holds:     make(map[string]port.RedisHold),
+	}
+	for tt, cmd := range invCmds {
+		buckets := make(map[int]int)
+		for field, val := range cmd.Val() {
+			b, err := strconv.Atoi(field)
+			if err != nil {
+				return port.RedisSnapshot{}, fmt.Errorf("bucket %q cua %s khong phai so: %w", field, tt, err)
+			}
+			n, err := strconv.Atoi(val)
+			if err != nil {
+				return port.RedisSnapshot{}, fmt.Errorf("ton kho %q cua %s/%d khong phai so: %w", val, tt, b, err)
+			}
+			buckets[b] = n
+		}
+		snap.Inventory[tt] = buckets
+	}
+	for id, raw := range holdsCmd.Val() {
+		var h struct {
+			TT     string `json:"tt"`
+			Bucket int    `json:"bucket"`
+			Qty    int    `json:"qty"`
+		}
+		if err := json.Unmarshal([]byte(raw), &h); err != nil {
+			return port.RedisSnapshot{}, fmt.Errorf("hold %s co json hong: %w", id, err)
+		}
+		snap.Holds[id] = port.RedisHold{TicketTypeID: h.TT, Bucket: h.Bucket, Quantity: h.Qty}
+	}
+	return snap, nil
+}
+
+// AdjustInventory cong delta vao mot bucket (khong de am). Xem script/reconcile.lua.
+func (g *Gate) AdjustInventory(ctx context.Context, eventID, ticketTypeID string, bucket, delta int) (int, error) {
+	n, err := g.scripts.Run(ctx, "reconcile", []string{invKey(eventID, ticketTypeID)}, bucket, delta).Int()
+	if err != nil {
+		return 0, fmt.Errorf("chay script reconcile: %w", err)
+	}
+	return n, nil
+}
+
+// TryReconcileLock giu khoa doi soat cua su kien trong ttl. Khong giai phong chu dong: de khoa tu
+// het han, hai instance khong bao gio cung sua mot su kien trong cung mot chu ky.
+func (g *Gate) TryReconcileLock(ctx context.Context, eventID string, ttl time.Duration) (bool, error) {
+	return g.rdb.SetNX(ctx, fmt.Sprintf("recon:{%s}:lock", eventID), "1", ttl).Result()
+}
+
 func asString(v any) string {
 	s, _ := v.(string)
 	return s
@@ -186,4 +249,5 @@ func asInt64(v any) int64 {
 var (
 	_ port.InventoryGate   = (*Gate)(nil)
 	_ port.InventorySeeder = (*Gate)(nil)
+	_ port.InventoryLedger = (*Gate)(nil)
 )

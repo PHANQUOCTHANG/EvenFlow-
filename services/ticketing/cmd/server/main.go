@@ -100,7 +100,8 @@ func run(log *slog.Logger) error {
 		return float64(st.AcquiredConns()) / float64(st.MaxConns())
 	})
 
-	h := httpadapter.New(app.NewCreateHold(gate, repo, log).WithMetrics(prom), log)
+	h := httpadapter.New(app.NewCreateHold(gate, repo, log).WithMetrics(prom), log).
+		WithPurchaseLimits(app.NewGetPurchaseLimit(repo))
 
 	// BR-O5. Dinh danh lay tu X-Identity-Id cho toi khi gateway cap JWT (giai doan 3); no nam
 	// trong hash cua request nen nguoi khac dung trung key khong nhan duoc response cua nhau.

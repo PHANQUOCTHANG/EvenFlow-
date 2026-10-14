@@ -11,25 +11,70 @@ import (
 	"github.com/eventflow/eventflow/libs/go/httpx"
 	"github.com/eventflow/eventflow/services/ticketing/internal/app"
 	"github.com/eventflow/eventflow/services/ticketing/internal/domain"
+	"github.com/eventflow/eventflow/services/ticketing/internal/port"
 )
 
 type HoldCreator interface {
 	Execute(ctx context.Context, in app.CreateHoldInput) (app.CreateHoldOutput, error)
 }
 
+// PurchaseLimitReader tra han muc mua cua mot khach (BR-O4).
+type PurchaseLimitReader interface {
+	Execute(ctx context.Context, eventID, identityID string) (port.PurchaseLimit, error)
+}
+
 type Handler struct {
-	holds HoldCreator
-	log   *slog.Logger
+	holds  HoldCreator
+	limits PurchaseLimitReader
+	log    *slog.Logger
 }
 
 func New(holds HoldCreator, log *slog.Logger) *Handler {
 	return &Handler{holds: holds, log: log}
 }
 
+// WithPurchaseLimits bat route GET han muc mua. Khong goi thi route khong duoc dang ky.
+func (h *Handler) WithPurchaseLimits(l PurchaseLimitReader) *Handler {
+	h.limits = l
+	return h
+}
+
+// Loai loi BR-O4. Cung 422 nhung client xu ly khac nhau: so luong sai thi chon lai, vuot han muc
+// ca nhan thi khong mua them duoc nua.
+const (
+	ProblemQuantityNotAllowed = "/problems/quantity-not-allowed"
+	ProblemPerIdentityLimit   = "/problems/per-identity-limit"
+)
+
 // Routes dang ky route. idempotency BAT BUOC: BR-O5 yeu cau moi API ghi co Idempotency-Key, nen
 // khong cho phep dang ky route ghi ma khong truyen middleware nay (truyen idem.Middleware(...)).
 func (h *Handler) Routes(mux *http.ServeMux, idempotency httpx.Middleware) {
 	mux.Handle("POST /v1/events/{eventID}/holds", idempotency(http.HandlerFunc(h.createHold)))
+	if h.limits != nil {
+		// Doc, khong ghi: khong can Idempotency-Key.
+		mux.HandleFunc("GET /v1/events/{eventID}/purchase-limit", h.purchaseLimit)
+	}
+}
+
+func (h *Handler) purchaseLimit(w http.ResponseWriter, r *http.Request) {
+	// Dinh danh lay tu X-Identity-Id cho toi khi gateway cap JWT (giai doan 3), giong createHold.
+	identityID := r.Header.Get("X-Identity-Id")
+	if identityID == "" {
+		httpx.WriteProblem(w, http.StatusUnauthorized, "ban can dang nhap de xem han muc mua")
+		return
+	}
+	out, err := h.limits.Execute(r.Context(), r.PathValue("eventID"), identityID)
+	switch {
+	case err == nil:
+		// Han muc doi ngay khi khach giu ghe hay thanh toan: khong cho cache dung chung.
+		w.Header().Set("Cache-Control", "private, no-store")
+		httpx.WriteJSON(w, http.StatusOK, out)
+	case errors.Is(err, domain.ErrEventNotFound):
+		httpx.WriteProblem(w, http.StatusNotFound, "su kien khong ton tai hoac chua mo ban")
+	default:
+		h.log.Error("doc han muc mua that bai", "err", err)
+		httpx.WriteProblem(w, http.StatusServiceUnavailable, "he thong dang ban, vui long thu lai")
+	}
 }
 
 type createHoldRequest struct {
@@ -62,8 +107,12 @@ func (h *Handler) createHold(w http.ResponseWriter, r *http.Request) {
 		// 409 chu khong phai 500: het ve la ket qua nghiep vu binh thuong, va
 		// day la ma trang thai ma client dua vao de hien dung thong bao.
 		httpx.WriteProblem(w, http.StatusConflict, "rat tiec, hang ve nay da het")
-	case errors.Is(err, domain.ErrPerIdentityLimit), errors.Is(err, domain.ErrQuantityNotAllowed):
-		httpx.WriteProblem(w, http.StatusUnprocessableEntity, "so luong vuot gioi han cho phep")
+	case errors.Is(err, domain.ErrQuantityNotAllowed):
+		httpx.WriteProblemType(w, http.StatusUnprocessableEntity, ProblemQuantityNotAllowed,
+			"so luong ve moi don khong hop le")
+	case errors.Is(err, domain.ErrPerIdentityLimit):
+		httpx.WriteProblemType(w, http.StatusUnprocessableEntity, ProblemPerIdentityLimit,
+			"ban da dat gioi han so ve moi nguoi cho su kien nay")
 	default:
 		h.log.Error("tao hold that bai", "err", err)
 		httpx.WriteProblem(w, http.StatusServiceUnavailable, "he thong dang ban, vui long thu lai")
