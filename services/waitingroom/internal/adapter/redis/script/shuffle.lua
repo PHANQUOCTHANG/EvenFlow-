@@ -12,12 +12,19 @@
 -- Chay DUNG MOT LAN moi su kien, boi admit controller da duoc bau lam leader.
 -- Co ma 'shuffled' de chay lai la no-op an toan.
 --
--- KEYS[1] = wr:{ev}:lobby   SET
--- KEYS[2] = wr:{ev}:queue   ZSET
--- KEYS[3] = wr:{ev}:meta    HASH
+-- KEYS[1] = wr:{ev}:lobby         SET
+-- KEYS[2] = wr:{ev}:queue         ZSET
+-- KEYS[3] = wr:{ev}:meta          HASH
+-- KEYS[4] = wr:{ev}:leader_epoch  STRING
 -- ARGV[1] = random seed (lay tu server, KHONG dung math.randomseed mac dinh)
+-- ARGV[2] = epoch cua leader goi
 --
--- Tra ve: so token da duoc cap thu tu (0 neu da shuffle truoc do)
+-- Tra ve: so token da duoc cap thu tu (0 neu da shuffle truoc do); loi 'FENCED' neu epoch da cu.
+-- Co ma 'shuffled' nen doi leader giua chung khong bao gio lam lottery hai lan (BR-Q1).
+
+if tonumber(redis.call('GET', KEYS[4]) or '0') ~= tonumber(ARGV[2]) then
+  return redis.error_reply('FENCED')
+end
 
 if redis.call('HGET', KEYS[3], 'shuffled') == '1' then
   return 0

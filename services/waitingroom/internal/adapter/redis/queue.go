@@ -14,6 +14,7 @@ import (
 
 	"github.com/redis/go-redis/v9"
 
+	"github.com/eventflow/eventflow/libs/go/leader"
 	"github.com/eventflow/eventflow/libs/go/redisx"
 	"github.com/eventflow/eventflow/services/waitingroom/internal/domain"
 )
@@ -21,7 +22,7 @@ import (
 //go:embed script/*.lua
 var scriptFS embed.FS
 
-// Queue la kho luu hang cho.
+// Queue la kho luu hang cho. Cac thao tac ghi cua admit controller di qua Fenced(epoch).
 type Queue struct {
 	rdb     *redis.Client
 	scripts *redisx.ScriptSet
@@ -99,30 +100,97 @@ func (q *Queue) Status(ctx context.Context, eventID, token string) (domain.Posit
 	), nil
 }
 
-// Admit tha mot lo nguoi vao mua ve. Chi admit controller (da doat leader) goi.
-func (q *Queue) Admit(ctx context.Context, eventID string, batch int, ttl time.Duration) ([]string, error) {
-	keys := []string{k(eventID, "queue"), k(eventID, "admitted"), k(eventID, "meta")}
-	res, err := q.scripts.Run(ctx, "admit", keys,
-		batch, time.Now().UnixMilli(), ttl.Milliseconds()).StringSlice()
+// Fenced tra ve cac thao tac GHI cua admit controller, gan voi epoch cua nhiem ky leader hien tai.
+// Moi lenh ghi mang epoch vao script va bi script tu choi (domain.ErrFenced) neu epoch da cu --
+// nen leader cu "dung hinh" roi tinh lai khong the tha them nguoi hay de len nhip cua leader moi.
+func (q *Queue) Fenced(epoch int64) *FencedQueue { return &FencedQueue{q: q, epoch: epoch} }
+
+// FencedQueue la Queue nhin tu mot nhiem ky leader. Hien thuc app.Admitter.
+type FencedQueue struct {
+	q     *Queue
+	epoch int64
+}
+
+func epochKey(eventID string) string { return k(eventID, "leader_epoch") }
+
+// fenceErr doi loi FENCED cua script thanh domain.ErrFenced de tang app khong phu thuoc Redis.
+func fenceErr(op string, err error) error {
+	if err == nil {
+		return nil
+	}
+	if leader.IsFenced(err) {
+		return fmt.Errorf("%s: %w", op, domain.ErrFenced)
+	}
+	return fmt.Errorf("%s: %w", op, err)
+}
+
+// Admit tha mot lo nguoi vao mua ve. Chi leader (epoch hien tai) thanh cong.
+func (f *FencedQueue) Admit(ctx context.Context, eventID string, batch int, ttl time.Duration) ([]string, error) {
+	keys := []string{k(eventID, "queue"), k(eventID, "admitted"), k(eventID, "meta"), epochKey(eventID)}
+	res, err := f.q.scripts.Run(ctx, "admit", keys,
+		batch, time.Now().UnixMilli(), ttl.Milliseconds(), f.epoch).StringSlice()
 	if err != nil {
-		return nil, fmt.Errorf("admit batch: %w", err)
+		return nil, fenceErr("admit batch", err)
 	}
 	return res, nil
 }
 
-// Shuffle chay lottery tai T0. An toan khi goi lai (lan sau la no-op).
-func (q *Queue) Shuffle(ctx context.Context, eventID string, seed int64) (int64, error) {
-	keys := []string{k(eventID, "lobby"), k(eventID, "queue"), k(eventID, "meta")}
-	n, err := q.scripts.Run(ctx, "shuffle", keys, seed).Int64()
+// Shuffle chay lottery tai T0. An toan khi goi lai (lan sau la no-op) va khi doi leader.
+func (f *FencedQueue) Shuffle(ctx context.Context, eventID string, seed int64) (int64, error) {
+	keys := []string{k(eventID, "lobby"), k(eventID, "queue"), k(eventID, "meta"), epochKey(eventID)}
+	n, err := f.q.scripts.Run(ctx, "shuffle", keys, seed, f.epoch).Int64()
 	if err != nil {
-		return 0, fmt.Errorf("shuffle lobby: %w", err)
+		return 0, fenceErr("shuffle lobby", err)
 	}
 	return n, nil
 }
 
-// SetAdmitRate ghi lai nhip admit hien tai de status.lua doc ra tinh ETA.
-func (q *Queue) SetAdmitRate(ctx context.Context, eventID string, ratePerSec float64) error {
-	return q.rdb.HSet(ctx, k(eventID, "meta"), "admit_rate", int64(ratePerSec*1000)).Err()
+// SetAdmitRate ghi nhip admit hien tai de status.lua tinh ETA va de leader ke tiep tiep tuc tu do.
+func (f *FencedQueue) SetAdmitRate(ctx context.Context, eventID string, ratePerSec float64) error {
+	keys := []string{k(eventID, "meta"), epochKey(eventID)}
+	err := f.q.scripts.Run(ctx, "set_rate", keys, f.epoch, int64(ratePerSec*1000)).Err()
+	return fenceErr("set admit rate", err)
+}
+
+func (f *FencedQueue) QueueDepth(ctx context.Context, eventID string) (int64, error) {
+	return f.q.QueueDepth(ctx, eventID)
+}
+
+// AdmitRate doc nhip admit leader truoc da ghi, de leader moi TIEP TUC thay vi bat dau lai tu san
+// (khong thi doi leader giua cao diem keo nhip tu hang tram ve 5 va mat ~50 giay de leo lai).
+func (f *FencedQueue) AdmitRate(ctx context.Context, eventID string) (rate float64, ok bool, err error) {
+	v, err := f.q.rdb.HGet(ctx, k(eventID, "meta"), "admit_rate").Int64()
+	if errors.Is(err, redis.Nil) {
+		return 0, false, nil
+	}
+	if err != nil {
+		return 0, false, fmt.Errorf("doc admit_rate: %w", err)
+	}
+	return float64(v) / 1000.0, true, nil
+}
+
+// RateOverride doc lenh ghi de cua Ops. Nam trong Redis (khong phai trong RAM controller) de
+// "tam dung khan cap" song sot qua doi leader va restart: leader moi tu mo van lai la loi an toan.
+func (f *FencedQueue) RateOverride(ctx context.Context, eventID string) (rate float64, active bool, err error) {
+	vals, err := f.q.rdb.HMGet(ctx, k(eventID, "meta"), "override", "override_rate").Result()
+	if err != nil {
+		return 0, false, fmt.Errorf("doc override: %w", err)
+	}
+	if toString(vals[0]) != "1" {
+		return 0, false, nil
+	}
+	return float64(toInt64(vals[1])) / 1000.0, true, nil
+}
+
+// SetRateOverride dat lenh ghi de cua Ops (EV-147 se goi tu API). Khong fencing: Ops khong phai leader.
+func (q *Queue) SetRateOverride(ctx context.Context, eventID string, ratePerSec float64) error {
+	return q.rdb.HSet(ctx, k(eventID, "meta"),
+		"override", "1", "override_rate", int64(ratePerSec*1000)).Err()
+}
+
+// ClearRateOverride bo ghi de, tra quyen lai cho AIMD.
+func (q *Queue) ClearRateOverride(ctx context.Context, eventID string) error {
+	return q.rdb.HDel(ctx, k(eventID, "meta"), "override", "override_rate").Err()
 }
 
 func (q *Queue) QueueDepth(ctx context.Context, eventID string) (int64, error) {

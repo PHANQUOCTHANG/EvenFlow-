@@ -4,6 +4,7 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -17,12 +18,14 @@ import (
 
 	"github.com/eventflow/eventflow/libs/go/httpx"
 	"github.com/eventflow/eventflow/libs/go/idem"
+	"github.com/eventflow/eventflow/libs/go/loadsignal"
 	"github.com/eventflow/eventflow/libs/go/otelx"
 	httpadapter "github.com/eventflow/eventflow/services/ticketing/internal/adapter/http"
 	metricsadapter "github.com/eventflow/eventflow/services/ticketing/internal/adapter/metrics"
 	postgresadapter "github.com/eventflow/eventflow/services/ticketing/internal/adapter/postgres"
 	redisadapter "github.com/eventflow/eventflow/services/ticketing/internal/adapter/redis"
 	"github.com/eventflow/eventflow/services/ticketing/internal/app"
+	"github.com/eventflow/eventflow/services/ticketing/internal/port"
 )
 
 func main() {
@@ -92,15 +95,21 @@ func run(log *slog.Logger) error {
 	prom := metricsadapter.New(prometheus.DefaultRegisterer)
 	// Muc dung pool la tin hieu backpressure cho admit controller: pool can thi
 	// Postgres dang qua tai.
-	prom.RegisterPoolUsage(func() float64 {
+	poolUsage := func() float64 {
 		st := pool.Stat()
 		if st.MaxConns() == 0 {
 			return 0
 		}
 		return float64(st.AcquiredConns()) / float64(st.MaxConns())
-	})
+	}
+	prom.RegisterPoolUsage(poolUsage)
 
-	h := httpadapter.New(app.NewCreateHold(gate, repo, log).WithMetrics(prom), log).
+	// Tin hieu suc khoe cho admit controller (EV-142). Moi pod tu ghi anh chup cua so 5 giay len
+	// Redis moi giay; controller gop lai va tu giam nhip khi p99 / loi / pool vuot nguong.
+	signals := loadsignal.NewRecorder()
+	go loadsignal.NewPublisher(rdb, loadsignal.DefaultKey, podID(), signals, poolUsage, log).Run(ctx)
+
+	h := httpadapter.New(app.NewCreateHold(gate, repo, log).WithMetrics(signalMetrics{HoldMetrics: prom, rec: signals}), log).
 		WithPurchaseLimits(app.NewGetPurchaseLimit(repo))
 
 	// BR-O5. Dinh danh lay tu X-Identity-Id cho toi khi gateway cap JWT (giai doan 3); no nam
@@ -125,6 +134,32 @@ func run(log *slog.Logger) error {
 	// 20 giay de cac transaction dang duoc commit xong. Cat ngang giua mot
 	// transaction tao hold la cach nhanh nhat de tao ra ve bi khoa.
 	return httpx.Run(ctx, srv, 20*time.Second)
+}
+
+// signalMetrics them viec ghi tin hieu suc khoe cho admit controller vao cung diem do HoldAttempt.
+type signalMetrics struct {
+	port.HoldMetrics
+	rec *loadsignal.Recorder
+}
+
+func (m signalMetrics) HoldAttempt(outcome string, d time.Duration) {
+	m.HoldMetrics.HoldAttempt(outcome, d)
+	// "Chua duoc admit" bi tu choi truoc khi cham Postgres: tinh vao se pha loang p99 dung luc
+	// tang duoi dang yeu. Het ve, vuot han muc va thanh cong deu di qua tang duoi.
+	if outcome == port.OutcomeNotAdmitted {
+		return
+	}
+	// Chi loi HE THONG tinh la loi; het ve / vuot han muc la ket qua nghiep vu binh thuong.
+	m.rec.Observe(d, outcome == port.OutcomeError)
+}
+
+// podID dinh danh pod trong tin hieu suc khoe.
+func podID() string {
+	host, err := os.Hostname()
+	if err != nil || host == "" {
+		host = "ticketing"
+	}
+	return fmt.Sprintf("%s-%d", host, os.Getpid())
 }
 
 func env(k, def string) string {

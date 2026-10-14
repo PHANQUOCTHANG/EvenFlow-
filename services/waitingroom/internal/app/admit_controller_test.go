@@ -185,9 +185,19 @@ func TestTick_RecoversAfterBackpressureClears(t *testing.T) {
 	mustTick(t, c)
 	low := c.Rate()
 	m.set(goodHealth, nil)
+
+	// Ngay sau lan giam la cua so cho (DecreaseCooldown): tin hieu tre chua phan anh quyet dinh
+	// truoc, nen khong tang vot len ngay -- do chinh la thu chong dao dong rang cua.
+	for i := 0; i < c.cfg.DecreaseCooldown; i++ {
+		mustTick(t, c)
+		if c.Rate() != low {
+			t.Fatalf("tick %d trong cua so cho: rate %v -> %v, muon giu nguyen", i, low, c.Rate())
+		}
+	}
+	// Het cua so cho ma van khoe thi tang tro lai.
 	mustTick(t, c)
 	if c.Rate() <= low {
-		t.Errorf("het suc ep: rate %v -> %v, muon tang tro lai", low, c.Rate())
+		t.Errorf("het suc ep va het cua so cho: rate %v -> %v, muon tang tro lai", low, c.Rate())
 	}
 }
 

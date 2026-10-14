@@ -38,3 +38,49 @@ func TestProm_AdmitState_TheoTungSuKien(t *testing.T) {
 		}
 	}
 }
+
+// EV-142: van hanh phai thay AI dang cam van (leader) va vi sao rate doi (adjust).
+func TestProm_LeaderVaAdjust(t *testing.T) {
+	reg := prometheus.NewRegistry()
+	m := metricsadapter.New(reg)
+
+	m.LeaderState("ev-a", true, 7)
+	m.LeaderState("ev-b", false, 0)
+	m.LeaderState("ev-a", false, 7) // mat quyen: gauge ve 0, epoch cu van de tham chieu
+	m.LeaderState("ev-a", true, 8)
+	m.AdmitAdjust("ev-a", "decrease")
+	m.AdmitAdjust("ev-a", "decrease")
+	m.AdmitAdjust("ev-a", "hold")
+
+	families, err := reg.Gather()
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := map[string]float64{}
+	for _, f := range families {
+		for _, mt := range f.GetMetric() {
+			name := f.GetName()
+			for _, l := range mt.GetLabel() {
+				name += "/" + l.GetValue()
+			}
+			switch {
+			case mt.Gauge != nil:
+				got[name] = mt.GetGauge().GetValue()
+			case mt.Counter != nil:
+				got[name] = mt.GetCounter().GetValue()
+			}
+		}
+	}
+	want := map[string]float64{
+		"waitingroom_admit_leader/ev-a":                1,
+		"waitingroom_admit_leader/ev-b":                0,
+		"waitingroom_admit_leader_epoch/ev-a":          8,
+		"waitingroom_admit_adjust_total/decrease/ev-a": 2,
+		"waitingroom_admit_adjust_total/hold/ev-a":     1,
+	}
+	for k, v := range want {
+		if got[k] != v {
+			t.Errorf("%s = %v, muon %v", k, got[k], v)
+		}
+	}
+}
