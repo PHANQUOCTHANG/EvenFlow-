@@ -21,9 +21,9 @@ Nên thứ tự ở đây là: nối cho chạy → dựng nền → hoàn thi�
 |---|---|---|---|---|---|
 | 0 | Nối dây | Seed, nạp tồn kho Redis, chạy worker + admit controller, smoke | Nối dây | — | **Xong** (nhánh `feat/phase-0-wiring`) |
 | 1 | Thư viện dùng chung | HTTP, quan trắc, test tích hợp, idempotency, message queue, outbox | Nền | 0 | **Đang làm** — PR A (`httpx`), PR B (`otelx`), W3 (`testx` + cổng oversell, EV-134), W4 (`idem`, EV-128) và W5 (`mq`) đã merge; còn W6 (`outbox`) là PR #55 draft, chờ duyệt migration |
-| 2 | Ticketing hoàn chỉnh | Đối soát tồn kho, giới hạn mua, API đơn hàng / huỷ hold / tình trạng vé | Nghiệp vụ + hệ thống | 1 | **Đang làm** — đối soát tồn kho (EV-132) đã code ở nhánh `feature/EV-132-inventory-reconciler`, chờ review; các việc còn lại chưa làm |
+| 2 | Ticketing hoàn chỉnh | Đối soát tồn kho, giới hạn mua, API đơn hàng / huỷ hold / tình trạng vé | Nghiệp vụ + hệ thống | 1 | **Đang làm** — đối soát tồn kho (EV-132) đã merge (PR #58); giới hạn mua (EV-130) ở nhánh `feature/EV-130-purchase-limit`; API đơn hàng, huỷ hold, tình trạng vé, dọn dẹp chưa làm |
 | 3 | Identity + Gateway | Đăng ký/đăng nhập, OTP, JWT, RBAC, queue token có ký, gateway | Nghiệp vụ | 1 | Chưa làm |
-| 4 | Event | CRUD sự kiện, state machine, lịch mở bán, khoá quota | Nghiệp vụ | 3 | Chưa làm |
+| 4 | Event | CRUD sự kiện, state machine, lịch mở bán, khoá quota | Nghiệp vụ | 3 | **Đang làm** — vòng đời sự kiện (EV-117, PR #59) và kiểm duyệt AI + hàng đợi Moderator (EV-120, EV-121) đã vào `develop` |
 | 5 | Phòng chờ hoàn chỉnh | Bầu leader, đo sức khoẻ thật, lottery, heartbeat, hết vé, API Ops | Hệ thống | 3, 4 | Chưa làm |
 | 6 | Thanh toán + phát vé | Webhook exactly-once, đối soát đơn treo, vé QR, email | Nghiệp vụ | 2, 4 | Chưa làm |
 | 7 | AI | Consumer, Gemini thật, cache, suy biến, kiểm duyệt | Nghiệp vụ + hệ thống | 1 (phần `mq`), 4 | Chưa làm |
@@ -93,7 +93,7 @@ Chia 3 PR: **A** = W0 + W1 · **B** = W2 · **C** = W3 → W6.
 | Việc | Issue | Nội dung |
 |---|---|---|
 | Đối soát tồn kho | EVF-37 (EV-132) | So Redis ↔ Postgres mỗi 10 giây, sửa lệch, metric `inventory_drift`. Seeder của GĐ 0 **giữ lại** để nạp nhanh sau khi mất dữ liệu hoàn toàn; job đối soát lo phần còn lại |
-| Giới hạn mua | EVF-35 | Chốt `CountPurchased` theo BR-O4 (tính đơn đang giữ hay chỉ đơn đã trả tiền) và viết test |
+| Giới hạn mua | EVF-35 (EV-130) | BR-O4 đã chốt; hai lớp như chống oversell: lớp nhanh chỉ đếm đơn đã chốt, lớp chốt đếm lại trong transaction `PersistHold`. Thêm `GET /v1/events/{id}/purchase-limit` và `type` riêng cho hai lỗi 422. Xem [workflow/EV-130-purchase-limit](workflow/EV-130-purchase-limit/spec.md) |
 | API đơn hàng | — | `GET /v1/orders/{id}` cho trang giữ ghế và trang kết quả |
 | Huỷ hold | — | Khách chủ động huỷ → trả kho ngay (dùng lại `ReleaseHold`) |
 | Tình trạng vé | — | `GET /v1/events/{id}/availability` trả `MANY` / `FEW` / `SOLD_OUT` (BR-A4: không lộ số chính xác) |
@@ -242,7 +242,7 @@ Không được cắt: giai đoạn 1 (W3, W4, W6), giai đoạn 2, giai đoạn
 | 2 | Topology RabbitMQ: `definitions.json` là nguồn duy nhất hay code Go tự khai báo? | Code Go (`libs/go/mq`) là nguồn chuẩn; `definitions.json` là bản sao dùng chung cho ai-worker Python, được unit test so khớp với code (EVF-7) |
 | 3 | EVF-39 làm ở giai đoạn 1 hay 2? | Giai đoạn 1 — vừa là bất biến quan trọng nhất, vừa chứng minh `testx` dùng được |
 | 4 | EVF-8 (generator service) làm khi nào? | Giai đoạn 3, rút từ `identity` |
-| 5 | BR-O4: giới hạn mua tính cả đơn đang giữ hay chỉ đơn đã trả tiền? | Chốt ở đầu giai đoạn 2 |
+| 5 | BR-O4: giới hạn mua tính cả đơn đang giữ hay chỉ đơn đã trả tiền? | **Đã chốt (EV-130):** tính mọi đơn đang chiếm hạn mức (`HELD`, `PAYMENT_PENDING`, `PAID`, `ISSUED`, `REFUNDING`) — xem BR-O4 trong [01-nghiep-vu.md](01-nghiep-vu.md) |
 
 ## 7. Cách làm việc áp dụng cho mọi giai đoạn
 
