@@ -105,7 +105,9 @@ func (uc *CreateHold) execute(ctx context.Context, in CreateHoldInput) (CreateHo
 		return CreateHoldOutput{}, err
 	}
 
-	// 1. Kiem gioi han mua (BR-O4) truoc khi dong vao ton kho.
+	// 1. Kiem gioi han mua (BR-O4) truoc khi dong vao ton kho. Day la lop NHANH, chi de chan som:
+	//    no chay ngoai transaction nen khong the dung duoi dong thoi. Lop CHOT nam trong
+	//    PersistHold (buoc 3), nhu CHECK (available >= 0) voi ton kho.
 	if in.Quantity <= 0 || in.Quantity > ev.MaxPerOrder {
 		return CreateHoldOutput{}, domain.ErrQuantityNotAllowed
 	}
@@ -114,7 +116,17 @@ func (uc *CreateHold) execute(ctx context.Context, in CreateHoldInput) (CreateHo
 		return CreateHoldOutput{}, err
 	}
 	if bought+in.Quantity > ev.MaxPerIdentity {
-		return CreateHoldOutput{}, domain.ErrPerIdentityLimit
+		// BR-O3 dung truoc BR-O4: khach dang co hold con han bam mua lai thi nhan lai hold do,
+		// khong bi bao vuot han muc. Chi ton them mot truy van tren nhanh bi tu choi.
+		hold, herr := uc.repo.GetActiveHold(ctx, in.EventID, in.IdentityID)
+		switch {
+		case herr == nil:
+			return hold, nil
+		case errors.Is(herr, domain.ErrOrderNotFound):
+			return CreateHoldOutput{}, domain.ErrPerIdentityLimit
+		default:
+			return CreateHoldOutput{}, herr
+		}
 	}
 
 	// 2. Cong chan Redis. Bucket bat dau ngau nhien de trai deu contention tren
@@ -153,18 +165,19 @@ func (uc *CreateHold) execute(ctx context.Context, in CreateHoldInput) (CreateHo
 		return CreateHoldOutput{}, fmt.Errorf("redis gate tra ve trang thai la: %s", res.Status)
 	}
 
-	// 3. Chot vao Postgres. Toan bo (tru ton kho + tao don + tao hold + outbox)
-	//    nam trong MOT transaction.
+	// 3. Chot vao Postgres. Toan bo (kiem lai han muc + tru ton kho + tao don + tao hold +
+	//    outbox) nam trong MOT transaction.
 	expiresAt := time.Now().Add(ttl)
 	out, err := uc.repo.PersistHold(ctx, port.PersistHoldParams{
-		EventID:      in.EventID,
-		TicketTypeID: in.TicketTypeID,
-		IdentityID:   in.IdentityID,
-		HoldID:       holdID,
-		Bucket:       res.Bucket,
-		Quantity:     in.Quantity,
-		UnitCents:    ev.PriceCents,
-		ExpiresAt:    expiresAt,
+		EventID:        in.EventID,
+		TicketTypeID:   in.TicketTypeID,
+		IdentityID:     in.IdentityID,
+		HoldID:         holdID,
+		Bucket:         res.Bucket,
+		Quantity:       in.Quantity,
+		UnitCents:      ev.PriceCents,
+		ExpiresAt:      expiresAt,
+		MaxPerIdentity: ev.MaxPerIdentity,
 	})
 	if err != nil {
 		// DEN BU: Redis da tru kho nhung Postgres tu choi. Phai tra lai ngay,

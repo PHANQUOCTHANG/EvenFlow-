@@ -157,6 +157,10 @@ func (r *fakeRepo) GetActiveHold(context.Context, string, string) (port.HoldView
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.activeCalls++
+	if r.activeErr == nil && r.active.HoldID == "" {
+		// Giong adapter that: khong co hold dang hoat dong la ErrOrderNotFound, khong phai hold rong.
+		return port.HoldView{}, domain.ErrOrderNotFound
+	}
 	return r.active, r.activeErr
 }
 
