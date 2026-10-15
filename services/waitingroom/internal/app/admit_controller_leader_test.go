@@ -59,9 +59,9 @@ type fencedQueue struct {
 
 func (f *fencedQueue) Admit(ctx context.Context, ev string, n int, ttl time.Duration) ([]string, error) {
 	if f.failAdmit {
-		f.fakeQueue.mu.Lock()
-		f.fakeQueue.admits = append(f.fakeQueue.admits, admitCall{at: time.Now(), batch: n, ttl: ttl})
-		f.fakeQueue.mu.Unlock()
+		f.mu.Lock()
+		f.admits = append(f.admits, admitCall{at: time.Now(), batch: n, ttl: ttl})
+		f.mu.Unlock()
 		return nil, fmt.Errorf("admit batch: %w", domain.ErrFenced)
 	}
 	return f.fakeQueue.Admit(ctx, ev, n, ttl)

@@ -44,7 +44,7 @@ func AdmitConfig(getenv Getenv, eventID string, saleStart time.Time) (app.AdmitC
 	set("ADMIT_STEP_UP", &cfg.StepUp)
 	set("ADMIT_BACKOFF", &cfg.Backoff)
 
-	var cooldown float64 = float64(cfg.DecreaseCooldown)
+	cooldown := float64(cfg.DecreaseCooldown)
 	set("ADMIT_DECREASE_COOLDOWN", &cooldown)
 	cfg.DecreaseCooldown = int(cooldown)
 
