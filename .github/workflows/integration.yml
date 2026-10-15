@@ -30,6 +30,7 @@ jobs:
           cache-dependency-path: |
             libs/go/go.sum
             services/ticketing/go.sum
+            services/waitingroom/go.sum
       - name: go test -tags=integration (ticketing)
         working-directory: services/ticketing
         run: go test -tags=integration ./... -count=1 -timeout=10m
@@ -64,3 +65,26 @@ jobs:
           REQUIRE_PASS: "1"
         run: |
           bash "$GITHUB_WORKSPACE/.github/scripts/run-and-report-tests.sh" TestTichHop             go test -v -tags=integration ./idem/... -count=1 -timeout=10m
+      # libs/go/leader + libs/go/loadsignal: bau leader co fencing va tin hieu suc khoe tren Redis that
+      # (EV-142). Cung quy tac fail-khong-skip.
+      - name: go vet -tags=integration (libs/go/leader, loadsignal)
+        working-directory: libs/go
+        run: go vet -tags=integration ./leader/... ./loadsignal/...
+      - name: go test -tags=integration (libs/go/leader, loadsignal)
+        working-directory: libs/go
+        env:
+          REQUIRE_PASS: "1"
+        run: |
+          bash "$GITHUB_WORKSPACE/.github/scripts/run-and-report-tests.sh" TestTichHop \
+            go test -v -tags=integration ./leader/... ./loadsignal/... -count=1 -timeout=10m
+      # waitingroom: fencing o cac script admit, hai controller tranh leader, doi leader giua cao diem.
+      - name: go vet -tags=integration (waitingroom)
+        working-directory: services/waitingroom
+        run: go vet -tags=integration ./...
+      - name: go test -tags=integration (waitingroom)
+        working-directory: services/waitingroom
+        env:
+          REQUIRE_PASS: "1"
+        run: |
+          bash "$GITHUB_WORKSPACE/.github/scripts/run-and-report-tests.sh" TestTichHop \
+            go test -v -tags=integration ./test/... -count=1 -timeout=10m

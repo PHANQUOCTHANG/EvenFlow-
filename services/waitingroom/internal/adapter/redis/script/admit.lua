@@ -5,20 +5,28 @@
 -- bi ghim o muc hang so, bat ke co 30 nghin hay 3 trieu nguoi dang xep hang.
 --
 -- ZPOPMIN dam bao atomic: hai instance controller chay song song (vd luc doi
--- leader) cung khong the admit trung mot token.
+-- leader) cung khong the admit trung mot token. Nhung ZPOPMIN KHONG chan duoc TOC DO gap doi,
+-- va toc do moi la thu lam sap Postgres. Fencing chan viec do: leader cu (epoch cu) bi tu choi
+-- ngay trong script, truoc moi lenh ghi (EV-142, BR-Q5).
 --
--- KEYS[1] = wr:{ev}:queue      ZSET
--- KEYS[2] = wr:{ev}:admitted   ZSET  token -> expire_at_ms
--- KEYS[3] = wr:{ev}:meta       HASH
+-- KEYS[1] = wr:{ev}:queue         ZSET
+-- KEYS[2] = wr:{ev}:admitted      ZSET  token -> expire_at_ms
+-- KEYS[3] = wr:{ev}:meta          HASH
+-- KEYS[4] = wr:{ev}:leader_epoch  STRING
 -- ARGV[1] = batch size
 -- ARGV[2] = now_ms
 -- ARGV[3] = admit_ttl_ms (mac dinh 15 phut)
+-- ARGV[4] = epoch cua leader goi
 --
--- Tra ve: danh sach token vua duoc admit
+-- Tra ve: danh sach token vua duoc admit; loi 'FENCED' neu epoch da cu
 
 local batch   = tonumber(ARGV[1])
 local now     = tonumber(ARGV[2])
 local ttl_ms  = tonumber(ARGV[3])
+
+if tonumber(redis.call('GET', KEYS[4]) or '0') ~= tonumber(ARGV[4]) then
+  return redis.error_reply('FENCED')
+end
 
 if batch <= 0 then return {} end
 

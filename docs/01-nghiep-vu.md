@@ -55,6 +55,15 @@ QUEUED --rot ket noi > 90s--> (giu cho 5 phut) --qua han--> DROPPED
 - **BR-Q3 (1 người 1 chỗ)** — Token gắn với `identity_id` đã xác thực OTP. Join lại từ thiết bị/tab khác trả về **đúng token và rank cũ** (idempotent). Không có cách nhân bản chỗ.
 - **BR-Q4** — Client nhận `poll_after_ms` do **server** quyết định theo rank (rank xa → 30s; gần lượt → 3s). Đây là van tự bảo vệ trước khách/bot tự ý poll dày.
 - **BR-Q5** — `admit_rate` do controller tự điều chỉnh theo thông lượng checkout thực đo và tín hiệu backpressure; Ops có thể ghi đè thủ công (`manual_override`).
+  - **Q5.1 (một người cầm van)** — Mỗi sự kiện có đúng một controller được quyền thả người tại mọi thời điểm. Lệnh thả từ controller không còn quyền bị **từ chối tại Redis** (fencing token), không dựa vào việc controller tự biết mình mất quyền.
+  - **Q5.2 (nhịp theo sức khoẻ thực đo)** — Nhịp dựa trên số đo thật của luồng giữ ghế trong cửa sổ 5 giây: p99 ≤ 800 ms, lỗi hệ thống ≤ 2%, pool DB ≤ 80%. Vượt **bất kỳ** ngưỡng nào thì giảm (×0,7); khoẻ thì cộng thêm (+10/giây).
+  - **Q5.3 (không đo được = có sức ép)** — Mất tín hiệu sức khoẻ (không pod ticketing nào báo cáo, Redis lỗi) thì xử lý như quá tải và lùi dần về sàn. Không dừng hẳn, để hàng chờ vẫn nhích.
+  - **Q5.4 (trần và sàn)** — Nhịp luôn trong `[MinRate, MaxRate]`; Ops cũng không được vượt trần.
+  - **Q5.5 (Ops có quyền cao nhất)** — Ghi đè của Ops (kể cả **0** = tạm dừng khẩn cấp) được lưu bền ở Redis và giữ qua mọi lần đổi leader và restart cho tới khi Ops tự bỏ; có hiệu lực trong ≤ 2 giây.
+  - **Q5.6 (đổi leader liền mạch)** — Leader mới tiếp tục từ nhịp đã lưu, không bắt đầu lại từ sàn. Khoảng không ai cầm van ≤ thời hạn lease (mặc định 5 giây; tắt êm thì ≈ 1 giây). Không ai bị thả trùng, không ai bị bỏ quên.
+  - **Q5.7 (không đụng đến công bằng)** — Controller chỉ quyết định **bao nhiêu** người, không quyết định **ai**: luôn thả đúng thứ tự rank. Lottery tại T0 (BR-Q1) chạy đúng một lần dù đổi leader.
+  - **Q5.8 (chống dao động)** — Sau mỗi lần giảm, giữ nguyên nhịp 5 tick để tín hiệu trễ (khách vừa vào cần 30 giây – 2 phút mới mua) kịp phản ánh quyết định trước; giảm chồng lên nhau gây dao động răng cưa.
+  - **Q5.9 (quan sát được)** — Nhịp, ai đang là leader, và lý do mỗi tick (tăng / giảm / giữ / ghi đè) hiện trên metric. Hai leader cùng lúc kéo dài phải cảnh báo.
 - **BR-Q6** — Khi hết vé, toàn bộ QUEUED nhận thông báo `SOLD_OUT` và được mời vào waitlist; không đẩy thêm ai vào checkout.
 - **BR-Q7** — Suất admit có TTL 15 phút (10 phút giữ ghế + thời gian chọn vé). Hết TTL chưa thanh toán → EXPIRED, không được ưu tiên khi xếp lại.
 

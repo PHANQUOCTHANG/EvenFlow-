@@ -18,6 +18,24 @@ groups:
         for: 60s
         labels: { severity: critical }
 
+      # Hai controller cung tu nhan la leader cua mot su kien keo dai. Fencing van chan duoc lenh
+      # ghi cua leader cu, nhung chi co the xay ra khi Redis failover hoac lease bi sai cau hinh
+      # (EV-142): trong luc do toc do tha nguoi co the gap doi.
+      - alert: AdmitLeaderSplit
+        expr: sum by (event) (waitingroom_admit_leader) > 1
+        for: 15s
+        labels: { severity: critical }
+        annotations:
+          summary: "Su kien {{ $labels.event }} co hon mot admit controller dang la leader"
+
+      # Co controller song nhung khong ai giu quyen admit: hang cho khong duoc tha.
+      - alert: AdmitNoLeader
+        expr: max by (event) (waitingroom_admit_leader) == 0
+        for: 30s
+        labels: { severity: critical }
+        annotations:
+          summary: "Su kien {{ $labels.event }} khong co admit controller nao la leader"
+
       # Redis va Postgres lech nhau -> ve bi khoa hoac bao het som.
       - alert: InventoryDrift
         expr: abs(ticketing_inventory_drift) > 0

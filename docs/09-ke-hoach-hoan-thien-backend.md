@@ -24,7 +24,7 @@ Nên thứ tự ở đây là: nối cho chạy → dựng nền → hoàn thi�
 | 2 | Ticketing hoàn chỉnh | Đối soát tồn kho, giới hạn mua, API đơn hàng / huỷ hold / tình trạng vé | Nghiệp vụ + hệ thống | 1 | **Đang làm** — đối soát tồn kho (EV-132) đã merge (PR #58); giới hạn mua (EV-130) ở nhánh `feature/EV-130-purchase-limit`; API đơn hàng, huỷ hold, tình trạng vé, dọn dẹp chưa làm |
 | 3 | Identity + Gateway | Đăng ký/đăng nhập, OTP, JWT, RBAC, queue token có ký, gateway | Nghiệp vụ | 1 | Chưa làm |
 | 4 | Event | CRUD sự kiện, state machine, lịch mở bán, khoá quota | Nghiệp vụ | 3 | **Đang làm** — vòng đời sự kiện (EV-117, PR #59) và kiểm duyệt AI + hàng đợi Moderator (EV-120, EV-121) đã vào `develop` |
-| 5 | Phòng chờ hoàn chỉnh | Bầu leader, đo sức khoẻ thật, lottery, heartbeat, hết vé, API Ops | Hệ thống | 3, 4 | Chưa làm |
+| 5 | Phòng chờ hoàn chỉnh | Bầu leader, đo sức khoẻ thật, lottery, heartbeat, hết vé, API Ops | Hệ thống | 3, 4 | **Đang làm** — bầu leader có fencing và đo sức khoẻ thật (EV-142) ở nhánh `feature/EV-142-admit-leader-fencing`; lottery, heartbeat, hết vé, API Ops chưa làm |
 | 6 | Thanh toán + phát vé | Webhook exactly-once, đối soát đơn treo, vé QR, email | Nghiệp vụ | 2, 4 | Chưa làm |
 | 7 | AI | Consumer, Gemini thật, cache, suy biến, kiểm duyệt | Nghiệp vụ + hệ thống | 1 (phần `mq`), 4 | Chưa làm |
 | 8 | Anti-bot | Rule engine, chấm điểm rủi ro, Turnstile | Nghiệp vụ | 3 | Chưa làm |
@@ -137,8 +137,8 @@ Chia 3 PR: **A** = W0 + W1 · **B** = W2 · **C** = W3 → W6.
 
 | Việc | Issue | Nội dung |
 |---|---|---|
-| Bầu leader | EVF-55 | `libs/go/leader`: Redis lock có fencing; controller chỉ chạy khi giữ lock |
-| Đo sức khoẻ thật | EVF-55 | `HealthProbe` đọc p99, tỷ lệ lỗi, mức dùng pool của ticketing — thay probe tĩnh |
+| Bầu leader | EVF-55 (EV-142) | **Xong.** `libs/go/leader`: lease Redis + epoch tăng đơn điệu; `admit.lua`, `shuffle.lua`, `set_rate.lua` từ chối epoch cũ trong cùng lệnh nguyên tử. Xem [workflow/EV-142-admit-leader-fencing](workflow/EV-142-admit-leader-fencing/spec.md) |
+| Đo sức khoẻ thật | EVF-55 (EV-142) | **Xong.** `libs/go/loadsignal`: mỗi pod ticketing tự ghi ảnh chụp cửa sổ 5 giây lên Redis mỗi giây, controller gộp pod tệ nhất; không có tín hiệu = coi như quá tải. Thêm cửa sổ chờ sau mỗi lần giảm để chống dao động |
 | Lottery tại T0 | EVF-52, 53 | Kiểm với T0 thật; kiểm định thống kê: thời điểm vào không tương quan với rank |
 | Heartbeat | EVF-58 | Giữ chỗ 5 phút khi rớt kết nối |
 | Hết vé | EVF-59 | Ticketing phát event → dừng admit → báo hàng chờ, chuyển waitlist |
