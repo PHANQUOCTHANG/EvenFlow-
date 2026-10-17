@@ -4,17 +4,22 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/eventflow/eventflow/libs/go/httpx"
+	gatewayadapter "github.com/eventflow/eventflow/services/payment/internal/adapter/gateway"
 	httpadapter "github.com/eventflow/eventflow/services/payment/internal/adapter/http"
+	"github.com/eventflow/eventflow/services/payment/internal/adapter/postgres"
 	"github.com/eventflow/eventflow/services/payment/internal/app"
 	"github.com/eventflow/eventflow/services/payment/internal/domain"
+	"github.com/eventflow/eventflow/services/payment/internal/port"
 )
 
 type mockInitiator struct {
@@ -497,5 +502,70 @@ func TestHandler_Webhook_OrderNotFound_404(t *testing.T) {
 
 	if w.Code != http.StatusNotFound {
 		t.Fatalf("expected 404 Not Found, got %d", w.Code)
+	}
+}
+
+func TestHandler_Webhook_ExactlyOnce_HTTP100Concurrent(t *testing.T) {
+	repo := postgres.NewMemoryRepository()
+	registry := gatewayadapter.NewRegistry(domain.ProviderSandbox, []string{"sandbox"})
+	sbxGW := gatewayadapter.NewSandboxGateway(gatewayadapter.SandboxModeSuccess)
+	registry.Register(sbxGW)
+
+	now := time.Now().UTC()
+	orderID := "ord-http-concurrent-100"
+	repo.SeedOrder(domain.OrderView{
+		ID:         orderID,
+		EventID:    "evt-http-100",
+		IdentityID: "user-100",
+		Status:     "PAYMENT_PENDING",
+		TotalCents: 200000,
+		Currency:   "VND",
+		ExpiresAt:  now.Add(10 * time.Minute),
+	})
+
+	log := slog.New(slog.NewJSONHandler(io.Discard, nil))
+	uc := app.NewProcessWebhookUseCase(repo, registry, port.SystemClock{}, log)
+	h := httpadapter.NewHandler(nil, nil, nil, uc, log)
+	mux := http.NewServeMux()
+	h.Routes(mux, nil)
+
+	concurrency := 100
+	var wg sync.WaitGroup
+	wg.Add(concurrency)
+	codes := make([]int, concurrency)
+
+	body := []byte(fmt.Sprintf(`{"provider_txn_id":"txn_http_100","order_id":"%s","status":"SUCCESS","timestamp":"%s"}`, orderID, now.Format(time.RFC3339)))
+
+	for i := 0; i < concurrency; i++ {
+		idx := i
+		go func() {
+			defer wg.Done()
+			req := httptest.NewRequest("POST", "/v1/payments/webhook/sandbox", bytes.NewReader(body))
+			req.Header.Set("Content-Type", "application/json")
+			w := httptest.NewRecorder()
+			mux.ServeHTTP(w, req)
+			codes[idx] = w.Code
+		}()
+	}
+
+	wg.Wait()
+
+	for _, code := range codes {
+		if code != http.StatusOK {
+			t.Fatalf("expected all HTTP 200, got %d", code)
+		}
+	}
+
+	order, err := repo.GetOrder(context.Background(), orderID)
+	if err != nil {
+		t.Fatalf("failed to get order: %v", err)
+	}
+	if order.Status != "PAID" {
+		t.Errorf("expected order status PAID, got %s", order.Status)
+	}
+
+	events := repo.GetOutboxEvents()
+	if len(events) != 1 {
+		t.Errorf("expected exactly 1 outbox event, got %d", len(events))
 	}
 }

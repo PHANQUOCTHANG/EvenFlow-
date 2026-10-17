@@ -90,9 +90,11 @@ ok  	github.com/eventflow/eventflow/services/payment/internal/adapter/gateway	0.
 --- PASS: TestHandler_Webhook_ReplayExpired_400 (0.00s)
 === RUN   TestHandler_Webhook_OrderNotFound_404
 --- PASS: TestHandler_Webhook_OrderNotFound_404 (0.00s)
+=== RUN   TestHandler_Webhook_ExactlyOnce_HTTP100Concurrent
+--- PASS: TestHandler_Webhook_ExactlyOnce_HTTP100Concurrent (0.00s)
 PASS
-coverage: 70.8% of statements
-ok  	github.com/eventflow/eventflow/services/payment/internal/adapter/http	0.038s	coverage: 70.8% of statements
+coverage: 71.9% of statements
+ok  	github.com/eventflow/eventflow/services/payment/internal/adapter/http	0.036s	coverage: 71.9% of statements
 === RUN   TestMemoryRepository
 --- PASS: TestMemoryRepository (0.00s)
 === RUN   TestProcessPaymentSuccessTx_Atomic
@@ -162,7 +164,7 @@ ok  	github.com/eventflow/eventflow/services/payment/internal/domain	0.034s	cove
 | `internal/domain` | **95.7%** | >= 80% | **VƯỢT NGƯỠNG** |
 | `internal/app` | **81.1%** | >= 80% | **VƯỢT NGƯỠNG** |
 | `internal/adapter/gateway` | **82.6%** | >= 70% | **VƯỢT NGƯỠNG** |
-| `internal/adapter/http` | **70.8%** | >= 70% | **VƯỢT NGƯỠNG** |
+| `internal/adapter/http` | **71.9%** | >= 70% | **VƯỢT NGƯỠNG** |
 
 ---
 
