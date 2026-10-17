@@ -457,3 +457,176 @@ func (r *Repository) ProcessPaymentFailedTx(ctx context.Context, params domain.P
 		Message:       "da ghi nhan thanh toan that bai",
 	}, nil
 }
+
+// SavePaymentInbox luu webhook vao bang payment_inbox khi don chua ton tai (BR-O6).
+// Su dung ON CONFLICT de dam bao tinh idempotent khi luu ban ghi.
+func (r *Repository) SavePaymentInbox(ctx context.Context, item domain.PaymentInboxItem) (int64, error) {
+	rawBytes, err := json.Marshal(item.Payload)
+	if err != nil {
+		rawBytes = []byte("{}")
+	}
+
+	receivedAt := item.ReceivedAt
+	if receivedAt.IsZero() {
+		receivedAt = time.Now().UTC()
+	}
+
+	query := `
+		INSERT INTO payment_inbox (provider, provider_txn_id, payload, received_at, attempts)
+		VALUES ($1, $2, $3, $4, $5)
+		ON CONFLICT (provider, provider_txn_id) DO UPDATE
+		SET attempts = payment_inbox.attempts
+		RETURNING id;
+	`
+	var id int64
+	err = r.pool.QueryRow(ctx, query,
+		string(item.Provider),
+		item.ProviderTxnID,
+		rawBytes,
+		receivedAt,
+		item.Attempts,
+	).Scan(&id)
+	if err != nil {
+		return 0, fmt.Errorf("luu payment_inbox that bai: %w", err)
+	}
+
+	return id, nil
+}
+
+// GetPendingPaymentInbox lay danh sach ban ghi chua xu ly (processed_at IS NULL) voi so lan thu < maxAttempts.
+func (r *Repository) GetPendingPaymentInbox(ctx context.Context, limit int, maxAttempts int) ([]domain.PaymentInboxItem, error) {
+	if maxAttempts <= 0 {
+		maxAttempts = 10
+	}
+	if limit <= 0 {
+		limit = 50
+	}
+
+	query := `
+		SELECT id, provider, provider_txn_id, payload, received_at, processed_at, attempts
+		FROM payment_inbox
+		WHERE processed_at IS NULL AND attempts < $1
+		ORDER BY received_at ASC
+		LIMIT $2;
+	`
+
+	rows, err := r.pool.Query(ctx, query, maxAttempts, limit)
+	if err != nil {
+		return nil, fmt.Errorf("truy van pending payment_inbox that bai: %w", err)
+	}
+	defer rows.Close()
+
+	var items []domain.PaymentInboxItem
+	for rows.Next() {
+		var (
+			it          domain.PaymentInboxItem
+			providerStr string
+			rawBytes    []byte
+		)
+		err := rows.Scan(
+			&it.ID,
+			&providerStr,
+			&it.ProviderTxnID,
+			&rawBytes,
+			&it.ReceivedAt,
+			&it.ProcessedAt,
+			&it.Attempts,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("scan dong payment_inbox that bai: %w", err)
+		}
+		it.Provider = domain.NormalizeProvider(providerStr)
+		if len(rawBytes) > 0 {
+			_ = json.Unmarshal(rawBytes, &it.Payload)
+		}
+		items = append(items, it)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("doc danh sach payment_inbox that bai: %w", err)
+	}
+
+	return items, nil
+}
+
+// MarkPaymentInboxProcessed cap nhat processed_at = now() cho ban ghi inbox da xu ly xong.
+func (r *Repository) MarkPaymentInboxProcessed(ctx context.Context, id int64, processedAt time.Time) error {
+	if processedAt.IsZero() {
+		processedAt = time.Now().UTC()
+	}
+
+	query := `
+		UPDATE payment_inbox
+		SET processed_at = $1
+		WHERE id = $2;
+	`
+	_, err := r.pool.Exec(ctx, query, processedAt, id)
+	if err != nil {
+		return fmt.Errorf("cap nhat processed_at cho payment_inbox id %d that bai: %w", id, err)
+	}
+	return nil
+}
+
+// IncrementPaymentInboxAttempts tang so lan thu sau moi luot replay chua thanh cong.
+func (r *Repository) IncrementPaymentInboxAttempts(ctx context.Context, id int64) error {
+	query := `
+		UPDATE payment_inbox
+		SET attempts = attempts + 1
+		WHERE id = $1;
+	`
+	_, err := r.pool.Exec(ctx, query, id)
+	if err != nil {
+		return fmt.Errorf("tang attempts cho payment_inbox id %d that bai: %w", id, err)
+	}
+	return nil
+}
+
+// GetStalePaymentInbox tim cac ban ghi chua xu ly co thoi gian ton vuot qua nguong cho phep.
+func (r *Repository) GetStalePaymentInbox(ctx context.Context, olderThan time.Duration, limit int) ([]domain.StaleInboxRecord, error) {
+	if limit <= 0 {
+		limit = 50
+	}
+	thresholdTime := time.Now().UTC().Add(-olderThan)
+
+	query := `
+		SELECT id, provider, provider_txn_id, received_at, attempts
+		FROM payment_inbox
+		WHERE processed_at IS NULL AND received_at <= $1
+		ORDER BY received_at ASC
+		LIMIT $2;
+	`
+
+	rows, err := r.pool.Query(ctx, query, thresholdTime, limit)
+	if err != nil {
+		return nil, fmt.Errorf("truy van stale payment_inbox that bai: %w", err)
+	}
+	defer rows.Close()
+
+	now := time.Now().UTC()
+	var records []domain.StaleInboxRecord
+	for rows.Next() {
+		var (
+			rec         domain.StaleInboxRecord
+			providerStr string
+		)
+		err := rows.Scan(
+			&rec.ID,
+			&providerStr,
+			&rec.ProviderTxnID,
+			&rec.ReceivedAt,
+			&rec.Attempts,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("scan stale payment_inbox that bai: %w", err)
+		}
+		rec.Provider = domain.NormalizeProvider(providerStr)
+		rec.Age = now.Sub(rec.ReceivedAt)
+		records = append(records, rec)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("doc stale payment_inbox that bai: %w", err)
+	}
+
+	return records, nil
+}

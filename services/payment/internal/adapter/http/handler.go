@@ -9,6 +9,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
+	"strconv"
 	"time"
 
 	"github.com/eventflow/eventflow/libs/go/httpx"
@@ -32,11 +33,18 @@ type WebhookProcessor interface {
 	Execute(ctx context.Context, in app.ProcessWebhookInput) (domain.WebhookProcessResult, error)
 }
 
+// InboxReplayer dinh nghia giao dien replay va kiem tra payment_inbox.
+type InboxReplayer interface {
+	Execute(ctx context.Context, limit int) (domain.ReplayInboxResult, error)
+	CheckStaleRecords(ctx context.Context, limit int) ([]domain.StaleInboxRecord, error)
+}
+
 type Handler struct {
 	initiator PaymentInitiator
 	getter    PaymentGetter
 	lister    MethodsLister
 	processor WebhookProcessor
+	replayer  InboxReplayer
 	log       *slog.Logger
 }
 
@@ -56,6 +64,12 @@ func NewHandler(
 	}
 }
 
+// WithInboxReplayer gan InboxReplayer cho Handler de kich hoat cac endpoint quan tri inbox.
+func (h *Handler) WithInboxReplayer(replayer InboxReplayer) *Handler {
+	h.replayer = replayer
+	return h
+}
+
 // Routes dang ky cac endpoints REST cho payment service.
 // idempotency BAT BUOC cho endpoint ghi thanh toan theo BR-O5.
 func (h *Handler) Routes(mux *http.ServeMux, idempotency httpx.Middleware) {
@@ -71,6 +85,12 @@ func (h *Handler) Routes(mux *http.ServeMux, idempotency httpx.Middleware) {
 	// Endpoints Webhook tiep nhan tu cac cong thanh toan (BR-O6 exactly-once)
 	mux.HandleFunc("POST /v1/payments/webhook/{provider}", h.handleWebhook)
 	mux.HandleFunc("GET /v1/payments/webhook/{provider}", h.handleWebhook)
+
+	// Endpoints Replay va giam sat Stale Inbox (EV-152 / BR-O6)
+	if h.replayer != nil {
+		mux.HandleFunc("POST /v1/payments/inbox/replay", h.handleReplayInbox)
+		mux.HandleFunc("GET /v1/payments/inbox/stale", h.handleStaleInbox)
+	}
 }
 
 func (h *Handler) initiatePayment(w http.ResponseWriter, r *http.Request) {
@@ -269,8 +289,52 @@ func (h *Handler) handleWebhook(w http.ResponseWriter, r *http.Request) {
 		OrderID:          res.OrderID,
 		PaymentID:        res.PaymentID,
 		AlreadyProcessed: res.AlreadyDone,
+		StoredInInbox:    res.StoredInInbox,
 		Message:          res.Message,
 	}
 
 	httpx.WriteJSON(w, http.StatusOK, resp)
+}
+
+func (h *Handler) handleReplayInbox(w http.ResponseWriter, r *http.Request) {
+	if h.replayer == nil {
+		httpx.WriteProblem(w, http.StatusNotImplemented, "chưa cấu hình inbox replayer")
+		return
+	}
+	limit := 50
+	if limitStr := r.URL.Query().Get("limit"); limitStr != "" {
+		if l, err := strconv.Atoi(limitStr); err == nil && l > 0 {
+			limit = l
+		}
+	}
+	res, err := h.replayer.Execute(r.Context(), limit)
+	if err != nil {
+		h.log.Error("loi khi thuc thi replay inbox", "err", err)
+		httpx.WriteProblem(w, http.StatusInternalServerError, "lỗi khi thực thi replay inbox")
+		return
+	}
+	httpx.WriteJSON(w, http.StatusOK, res)
+}
+
+func (h *Handler) handleStaleInbox(w http.ResponseWriter, r *http.Request) {
+	if h.replayer == nil {
+		httpx.WriteProblem(w, http.StatusNotImplemented, "chưa cấu hình inbox replayer")
+		return
+	}
+	limit := 50
+	if limitStr := r.URL.Query().Get("limit"); limitStr != "" {
+		if l, err := strconv.Atoi(limitStr); err == nil && l > 0 {
+			limit = l
+		}
+	}
+	records, err := h.replayer.CheckStaleRecords(r.Context(), limit)
+	if err != nil {
+		h.log.Error("loi khi kiem tra stale inbox", "err", err)
+		httpx.WriteProblem(w, http.StatusInternalServerError, "lỗi khi kiểm tra stale inbox")
+		return
+	}
+	httpx.WriteJSON(w, http.StatusOK, map[string]any{
+		"stale_records": records,
+		"count":         len(records),
+	})
 }

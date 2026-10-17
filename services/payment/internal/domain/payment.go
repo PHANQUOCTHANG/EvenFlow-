@@ -125,11 +125,56 @@ func MaskPII(val string) string {
 type WebhookProcessResult struct {
 	Success       bool          `json:"success"`
 	AlreadyDone   bool          `json:"already_done"`
+	StoredInInbox bool          `json:"stored_in_inbox"`
 	OrderID       string        `json:"order_id"`
 	PaymentID     string        `json:"payment_id"`
 	ProviderTxnID string        `json:"provider_txn_id"`
 	Status        PaymentStatus `json:"status"`
 	Message       string        `json:"message"`
+}
+
+// PaymentInboxItem dai dien cho ban ghi trong bang payment_inbox (BR-O6).
+type PaymentInboxItem struct {
+	ID            int64          `json:"id"`
+	Provider      Provider       `json:"provider"`
+	ProviderTxnID string         `json:"provider_txn_id"`
+	Payload       map[string]any `json:"payload"`
+	ReceivedAt    time.Time      `json:"received_at"`
+	ProcessedAt   *time.Time     `json:"processed_at,omitempty"`
+	Attempts      int            `json:"attempts"`
+}
+
+// IsProcessed kiem tra xem ban ghi inbox da duoc xu ly chua.
+func (item *PaymentInboxItem) IsProcessed() bool {
+	return item.ProcessedAt != nil
+}
+
+// IsStale kiem tra xem ban ghi inbox chua xu ly co vuot qua nguong thoi gian cho phep khong.
+func (item *PaymentInboxItem) IsStale(now time.Time, threshold time.Duration) bool {
+	if item.IsProcessed() {
+		return false
+	}
+	return now.Sub(item.ReceivedAt) > threshold
+}
+
+// ReplayInboxResult tong hop ket qua sau moi lan chay job replay payment_inbox.
+type ReplayInboxResult struct {
+	TotalScanned  int `json:"total_scanned"`
+	Succeeded     int `json:"succeeded"`
+	AlreadyDone   int `json:"already_done"`
+	StillPending  int `json:"still_pending"`
+	Failed        int `json:"failed"`
+	StaleDetected int `json:"stale_detected"`
+}
+
+// StaleInboxRecord chua thong tin ban ghi inbox bi ton dong qua lau can canh bao.
+type StaleInboxRecord struct {
+	ID            int64         `json:"id"`
+	Provider      Provider      `json:"provider"`
+	ProviderTxnID string        `json:"provider_txn_id"`
+	ReceivedAt    time.Time     `json:"received_at"`
+	Age           time.Duration `json:"age"`
+	Attempts      int           `json:"attempts"`
 }
 
 // ProcessWebhookParams chua toan bo thong tin can thiet de cap nhat giao dich atomic trong DB.

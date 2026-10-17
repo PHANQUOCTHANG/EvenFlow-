@@ -46,5 +46,6 @@ type WebhookResponse struct {
 	OrderID          string `json:"order_id,omitempty"`
 	PaymentID        string `json:"payment_id,omitempty"`
 	AlreadyProcessed bool   `json:"already_processed"`
+	StoredInInbox    bool   `json:"stored_in_inbox,omitempty"`
 	Message          string `json:"message"`
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
 	"sync"
 	"time"
 
@@ -12,10 +13,12 @@ import (
 
 // MemoryRepository cung cap kho luu tru in-memory phuc vu chay local va unit test.
 type MemoryRepository struct {
-	mu       sync.RWMutex
-	orders   map[string]domain.OrderView
-	payments map[string]domain.Payment
-	outbox   []map[string]any
+	mu          sync.RWMutex
+	orders      map[string]domain.OrderView
+	payments    map[string]domain.Payment
+	outbox      []map[string]any
+	inbox       map[int64]domain.PaymentInboxItem
+	nextInboxID int64
 }
 
 func NewMemoryRepository() *MemoryRepository {
@@ -23,6 +26,7 @@ func NewMemoryRepository() *MemoryRepository {
 		orders:   make(map[string]domain.OrderView),
 		payments: make(map[string]domain.Payment),
 		outbox:   make([]map[string]any, 0),
+		inbox:    make(map[int64]domain.PaymentInboxItem),
 	}
 }
 
@@ -256,4 +260,113 @@ func (m *MemoryRepository) ProcessPaymentFailedTx(_ context.Context, params doma
 		Status:        domain.StatusFailed,
 		Message:       "da ghi nhan thanh toan that bai",
 	}, nil
+}
+
+// SavePaymentInbox luu webhook vao payment_inbox khi don chua ton tai (BR-O6).
+// Neu ban ghi (provider, provider_txn_id) da ton tai, tra ve ID cu ma khong gay loi (idempotent).
+func (m *MemoryRepository) SavePaymentInbox(_ context.Context, item domain.PaymentInboxItem) (int64, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	for id, it := range m.inbox {
+		if it.Provider == item.Provider && it.ProviderTxnID == item.ProviderTxnID {
+			return id, nil
+		}
+	}
+
+	m.nextInboxID++
+	item.ID = m.nextInboxID
+	if item.ReceivedAt.IsZero() {
+		item.ReceivedAt = time.Now().UTC()
+	}
+	m.inbox[item.ID] = item
+	return item.ID, nil
+}
+
+// GetPendingPaymentInbox lay danh sach ban ghi chua xu ly (processed_at IS NULL) voi so lan thu < maxAttempts.
+func (m *MemoryRepository) GetPendingPaymentInbox(_ context.Context, limit int, maxAttempts int) ([]domain.PaymentInboxItem, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	var result []domain.PaymentInboxItem
+	for _, it := range m.inbox {
+		if it.ProcessedAt == nil && (maxAttempts <= 0 || it.Attempts < maxAttempts) {
+			result = append(result, it)
+		}
+	}
+
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].ReceivedAt.Before(result[j].ReceivedAt)
+	})
+
+	if limit > 0 && len(result) > limit {
+		result = result[:limit]
+	}
+
+	return result, nil
+}
+
+// MarkPaymentInboxProcessed danh dau ban ghi inbox da duoc xu ly thanh cong (processed_at = now()).
+func (m *MemoryRepository) MarkPaymentInboxProcessed(_ context.Context, id int64, processedAt time.Time) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	it, exists := m.inbox[id]
+	if !exists {
+		return errors.New("khong tim thay ban ghi payment_inbox")
+	}
+
+	if processedAt.IsZero() {
+		processedAt = time.Now().UTC()
+	}
+	it.ProcessedAt = &processedAt
+	m.inbox[id] = it
+	return nil
+}
+
+// IncrementPaymentInboxAttempts tang so lan thu attempts sau khi replay chua thanh cong.
+func (m *MemoryRepository) IncrementPaymentInboxAttempts(_ context.Context, id int64) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	it, exists := m.inbox[id]
+	if !exists {
+		return errors.New("khong tim thay ban ghi payment_inbox")
+	}
+
+	it.Attempts++
+	m.inbox[id] = it
+	return nil
+}
+
+// GetStalePaymentInbox tim cac ban ghi chua xu ly co thoi gian ton vuot qua nguong cho phep de canh bao.
+func (m *MemoryRepository) GetStalePaymentInbox(_ context.Context, olderThan time.Duration, limit int) ([]domain.StaleInboxRecord, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	now := time.Now().UTC()
+	var records []domain.StaleInboxRecord
+
+	for _, it := range m.inbox {
+		if it.ProcessedAt == nil && it.IsStale(now, olderThan) {
+			records = append(records, domain.StaleInboxRecord{
+				ID:            it.ID,
+				Provider:      it.Provider,
+				ProviderTxnID: it.ProviderTxnID,
+				ReceivedAt:    it.ReceivedAt,
+				Age:           now.Sub(it.ReceivedAt),
+				Attempts:      it.Attempts,
+			})
+		}
+	}
+
+	sort.Slice(records, func(i, j int) bool {
+		return records[i].ReceivedAt.Before(records[j].ReceivedAt)
+	})
+
+	if limit > 0 && len(records) > limit {
+		records = records[:limit]
+	}
+
+	return records, nil
 }

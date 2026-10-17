@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"time"
@@ -158,6 +159,61 @@ func (uc *ProcessWebhookUseCase) Execute(ctx context.Context, in ProcessWebhookI
 	if cb.Status == domain.StatusSucceeded {
 		res, err := uc.repo.ProcessPaymentSuccessTx(ctx, params)
 		if err != nil {
+			if errors.Is(err, domain.ErrOrderNotFound) {
+				// BR-O6: Webhook den truoc khi don ton tai -> luu payment_inbox va replay sau
+				inboxPayload := make(map[string]any)
+				for k, v := range cb.RawPayload {
+					inboxPayload[k] = v
+				}
+				for k, v := range in.Params {
+					if _, exists := inboxPayload[k]; !exists {
+						inboxPayload[k] = v
+					}
+				}
+				inboxPayload["order_id"] = orderID
+				inboxPayload["provider_txn_id"] = cb.ProviderTxnID
+				inboxPayload["amount_cents"] = cb.AmountCents
+				inboxPayload["status"] = string(cb.Status)
+
+				inboxItem := domain.PaymentInboxItem{
+					Provider:      provider,
+					ProviderTxnID: cb.ProviderTxnID,
+					Payload:       inboxPayload,
+					ReceivedAt:    uc.clock.Now(),
+					Attempts:      0,
+				}
+
+				inboxID, saveErr := uc.repo.SavePaymentInbox(ctx, inboxItem)
+				if saveErr != nil {
+					uc.log.Error("luu payment_inbox that bai",
+						"provider", provider,
+						"order_id", orderID,
+						"provider_txn_id", cb.ProviderTxnID,
+						"err", saveErr,
+						"trace_id", in.TraceID,
+					)
+					return domain.WebhookProcessResult{}, fmt.Errorf("luu payment_inbox that bai: %w", saveErr)
+				}
+
+				uc.log.Info("webhook den truoc khi don ton tai, da luu payment_inbox thanh cong de replay (BR-O6)",
+					"inbox_id", inboxID,
+					"provider", provider,
+					"order_id", orderID,
+					"provider_txn_id", cb.ProviderTxnID,
+					"trace_id", in.TraceID,
+				)
+
+				return domain.WebhookProcessResult{
+					Success:       true,
+					AlreadyDone:   false,
+					StoredInInbox: true,
+					OrderID:       orderID,
+					ProviderTxnID: cb.ProviderTxnID,
+					Status:        domain.StatusPending,
+					Message:       "webhook lưu vào payment_inbox thành công, chờ đơn xuất hiện để replay (BR-O6)",
+				}, nil
+			}
+
 			uc.log.Error("xu ly transaction webhook thanh toan that bai",
 				"provider", provider,
 				"order_id", orderID,
@@ -190,6 +246,37 @@ func (uc *ProcessWebhookUseCase) Execute(ctx context.Context, in ProcessWebhookI
 	// Truong hop giao dich that bai (AC-5)
 	res, err := uc.repo.ProcessPaymentFailedTx(ctx, params)
 	if err != nil {
+		if errors.Is(err, domain.ErrOrderNotFound) {
+			inboxPayload := make(map[string]any)
+			for k, v := range cb.RawPayload {
+				inboxPayload[k] = v
+			}
+			inboxPayload["order_id"] = orderID
+			inboxPayload["provider_txn_id"] = cb.ProviderTxnID
+			inboxPayload["amount_cents"] = cb.AmountCents
+			inboxPayload["status"] = string(cb.Status)
+
+			_, saveErr := uc.repo.SavePaymentInbox(ctx, domain.PaymentInboxItem{
+				Provider:      provider,
+				ProviderTxnID: cb.ProviderTxnID,
+				Payload:       inboxPayload,
+				ReceivedAt:    uc.clock.Now(),
+				Attempts:      0,
+			})
+			if saveErr != nil {
+				return domain.WebhookProcessResult{}, fmt.Errorf("luu payment_inbox failed that bai: %w", saveErr)
+			}
+			return domain.WebhookProcessResult{
+				Success:       true,
+				AlreadyDone:   false,
+				StoredInInbox: true,
+				OrderID:       orderID,
+				ProviderTxnID: cb.ProviderTxnID,
+				Status:        domain.StatusPending,
+				Message:       "webhook failed lưu vào payment_inbox thành công để chờ đơn (BR-O6)",
+			}, nil
+		}
+
 		uc.log.Error("ghi nhan payment failed that bai",
 			"provider", provider,
 			"order_id", orderID,
