@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -567,5 +568,187 @@ func TestHandler_Webhook_ExactlyOnce_HTTP100Concurrent(t *testing.T) {
 	events := repo.GetOutboxEvents()
 	if len(events) != 1 {
 		t.Errorf("expected exactly 1 outbox event, got %d", len(events))
+	}
+}
+
+type mockReplayer struct {
+	executeFn func(ctx context.Context, limit int) (domain.ReplayInboxResult, error)
+	staleFn   func(ctx context.Context, limit int) ([]domain.StaleInboxRecord, error)
+}
+
+func (m *mockReplayer) Execute(ctx context.Context, limit int) (domain.ReplayInboxResult, error) {
+	if m.executeFn != nil {
+		return m.executeFn(ctx, limit)
+	}
+	return domain.ReplayInboxResult{}, nil
+}
+
+func (m *mockReplayer) CheckStaleRecords(ctx context.Context, limit int) ([]domain.StaleInboxRecord, error) {
+	if m.staleFn != nil {
+		return m.staleFn(ctx, limit)
+	}
+	return nil, nil
+}
+
+// TestHandler_Webhook_OrderNotFound_StoresInInbox_200OK kiem chung AC-1 (BR-O6):
+// Khi don chua ton tai, webhook tra ve HTTP 200 kem stored_in_inbox=true.
+func TestHandler_Webhook_OrderNotFound_StoresInInbox_200OK(t *testing.T) {
+	proc := &mockProcessor{
+		fn: func(_ context.Context, in app.ProcessWebhookInput) (domain.WebhookProcessResult, error) {
+			return domain.WebhookProcessResult{
+				Success:       true,
+				AlreadyDone:   false,
+				StoredInInbox: true,
+				OrderID:       in.Params["order_id"],
+				ProviderTxnID: in.Params["provider_txn_id"],
+				Status:        domain.StatusPending,
+				Message:       "stored in inbox for delayed replay",
+			}, nil
+		},
+	}
+
+	mux := setupTestServer(nil, nil, nil, proc)
+
+	body := []byte(`{"order_id":"ord-not-exist-yet","provider_txn_id":"txn-early-http"}`)
+	req := httptest.NewRequest("POST", "/v1/payments/webhook/sandbox", bytes.NewReader(body))
+	w := httptest.NewRecorder()
+	mux.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200 OK when stored in inbox, got %d", w.Code)
+	}
+
+	var resp httpadapter.WebhookResponse
+	_ = json.Unmarshal(w.Body.Bytes(), &resp)
+	if !resp.StoredInInbox {
+		t.Errorf("expected stored_in_inbox=true in response")
+	}
+	if resp.Status != "ok" {
+		t.Errorf("expected status 'ok', got %s", resp.Status)
+	}
+}
+
+func TestHandler_ReplayInbox_Endpoint(t *testing.T) {
+	log := slog.New(slog.NewJSONHandler(io.Discard, nil))
+	replayer := &mockReplayer{
+		executeFn: func(_ context.Context, limit int) (domain.ReplayInboxResult, error) {
+			return domain.ReplayInboxResult{
+				TotalScanned: 3,
+				Succeeded:    2,
+				StillPending: 1,
+			}, nil
+		},
+	}
+
+	h := httpadapter.NewHandler(nil, nil, nil, nil, log).WithInboxReplayer(replayer)
+	mux := http.NewServeMux()
+	h.Routes(mux, nil)
+
+	req := httptest.NewRequest("POST", "/v1/payments/inbox/replay?limit=10", nil)
+	w := httptest.NewRecorder()
+	mux.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200 OK for replay endpoint, got %d", w.Code)
+	}
+
+	var result domain.ReplayInboxResult
+	_ = json.Unmarshal(w.Body.Bytes(), &result)
+	if result.TotalScanned != 3 || result.Succeeded != 2 {
+		t.Errorf("unexpected replay result: %+v", result)
+	}
+}
+
+func TestHandler_StaleInbox_Endpoint(t *testing.T) {
+	log := slog.New(slog.NewJSONHandler(io.Discard, nil))
+	now := time.Now().UTC()
+	replayer := &mockReplayer{
+		staleFn: func(_ context.Context, limit int) ([]domain.StaleInboxRecord, error) {
+			return []domain.StaleInboxRecord{
+				{
+					ID:            1,
+					Provider:      domain.ProviderVNPay,
+					ProviderTxnID: "vnp-stale-1",
+					ReceivedAt:    now.Add(-20 * time.Minute),
+					Age:           20 * time.Minute,
+					Attempts:      2,
+				},
+			}, nil
+		},
+	}
+
+	h := httpadapter.NewHandler(nil, nil, nil, nil, log).WithInboxReplayer(replayer)
+	mux := http.NewServeMux()
+	h.Routes(mux, nil)
+
+	req := httptest.NewRequest("GET", "/v1/payments/inbox/stale", nil)
+	w := httptest.NewRecorder()
+	mux.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200 OK for stale endpoint, got %d", w.Code)
+	}
+
+	var data map[string]any
+	_ = json.Unmarshal(w.Body.Bytes(), &data)
+	if count, ok := data["count"].(float64); !ok || count != 1 {
+		t.Errorf("expected count=1 in stale response, got %v", data["count"])
+	}
+}
+
+func TestHandler_ReplayInbox_Errors(t *testing.T) {
+	log := slog.New(slog.NewJSONHandler(io.Discard, nil))
+	replayer := &mockReplayer{
+		executeFn: func(_ context.Context, _ int) (domain.ReplayInboxResult, error) {
+			return domain.ReplayInboxResult{}, errors.New("db error")
+		},
+	}
+
+	h := httpadapter.NewHandler(nil, nil, nil, nil, log).WithInboxReplayer(replayer)
+	mux := http.NewServeMux()
+	h.Routes(mux, nil)
+
+	req := httptest.NewRequest("POST", "/v1/payments/inbox/replay?limit=invalid", nil)
+	w := httptest.NewRecorder()
+	mux.ServeHTTP(w, req)
+
+	if w.Code != http.StatusInternalServerError {
+		t.Fatalf("expected 500 on replay error, got %d", w.Code)
+	}
+}
+
+func TestHandler_StaleInbox_Errors(t *testing.T) {
+	log := slog.New(slog.NewJSONHandler(io.Discard, nil))
+	replayer := &mockReplayer{
+		staleFn: func(_ context.Context, _ int) ([]domain.StaleInboxRecord, error) {
+			return nil, errors.New("db error")
+		},
+	}
+
+	h := httpadapter.NewHandler(nil, nil, nil, nil, log).WithInboxReplayer(replayer)
+	mux := http.NewServeMux()
+	h.Routes(mux, nil)
+
+	req := httptest.NewRequest("GET", "/v1/payments/inbox/stale?limit=invalid", nil)
+	w := httptest.NewRecorder()
+	mux.ServeHTTP(w, req)
+
+	if w.Code != http.StatusInternalServerError {
+		t.Fatalf("expected 500 on stale error, got %d", w.Code)
+	}
+}
+
+func TestHandler_Webhook_ProcessorNil_501(t *testing.T) {
+	log := slog.New(slog.NewJSONHandler(io.Discard, nil))
+	h := httpadapter.NewHandler(nil, nil, nil, nil, log)
+	mux := http.NewServeMux()
+	h.Routes(mux, nil)
+
+	req := httptest.NewRequest("POST", "/v1/payments/webhook/sandbox", bytes.NewReader([]byte(`{}`)))
+	w := httptest.NewRecorder()
+	mux.ServeHTTP(w, req)
+
+	if w.Code != http.StatusNotImplemented {
+		t.Fatalf("expected 501 when processor is nil, got %d", w.Code)
 	}
 }

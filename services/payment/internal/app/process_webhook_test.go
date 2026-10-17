@@ -283,3 +283,97 @@ func TestProcessWebhook_InputValidation(t *testing.T) {
 		t.Errorf("expected error when order_id is missing")
 	}
 }
+
+// TestProcessWebhook_OrderNotFound_SavesToInbox kiem chung AC-1 (BR-O6):
+// Webhook den khi don hang chua ton tai -> tu dong luu vao payment_inbox va tra ve thanh cong (StoredInInbox = true).
+func TestProcessWebhook_OrderNotFound_SavesToInbox(t *testing.T) {
+	repo, registry, logger := setupWebhookTestEnv()
+	now := time.Now().UTC()
+	clock := fixedClock{currentTime: now}
+	uc := app.NewProcessWebhookUseCase(repo, registry, clock, logger)
+
+	orderID := "ord-not-yet-created"
+	txnID := "txn-early-bird-1"
+
+	res, err := uc.Execute(context.Background(), app.ProcessWebhookInput{
+		Provider: domain.ProviderSandbox,
+		Params: map[string]string{
+			"provider_txn_id": txnID,
+			"order_id":        orderID,
+			"amount_cents":    "150000",
+			"status":          "SUCCESS",
+			"timestamp":       now.Format(time.RFC3339),
+		},
+		TraceID: "trace-early-1",
+	})
+
+	if err != nil {
+		t.Fatalf("expected nil error when storing in inbox, got %v", err)
+	}
+	if !res.Success {
+		t.Errorf("expected res.Success = true")
+	}
+	if !res.StoredInInbox {
+		t.Errorf("expected res.StoredInInbox = true")
+	}
+	if res.Status != domain.StatusPending {
+		t.Errorf("expected res.Status = StatusPending, got %s", res.Status)
+	}
+
+	// Kiem tra du lieu da duoc ghi nhan vao pending payment_inbox
+	pending, err := repo.GetPendingPaymentInbox(context.Background(), 10, 5)
+	if err != nil {
+		t.Fatalf("GetPendingPaymentInbox failed: %v", err)
+	}
+	if len(pending) != 1 {
+		t.Fatalf("expected 1 item in payment_inbox, got %d", len(pending))
+	}
+	if pending[0].ProviderTxnID != txnID {
+		t.Errorf("expected ProviderTxnID %s, got %s", txnID, pending[0].ProviderTxnID)
+	}
+	if pending[0].Payload["order_id"] != orderID {
+		t.Errorf("expected order_id %s in payload, got %v", orderID, pending[0].Payload["order_id"])
+	}
+}
+
+// TestProcessWebhook_DuplicateEarlyWebhook_Idempotent kiem chung AC-2:
+// Ban lap webhook den som nhieu lan -> van thanh cong idempotent, khong sinh duplicate record hay loi DB.
+func TestProcessWebhook_DuplicateEarlyWebhook_Idempotent(t *testing.T) {
+	repo, registry, logger := setupWebhookTestEnv()
+	now := time.Now().UTC()
+	clock := fixedClock{currentTime: now}
+	uc := app.NewProcessWebhookUseCase(repo, registry, clock, logger)
+
+	orderID := "ord-early-dup"
+	txnID := "txn-early-dup-1"
+
+	input := app.ProcessWebhookInput{
+		Provider: domain.ProviderSandbox,
+		Params: map[string]string{
+			"provider_txn_id": txnID,
+			"order_id":        orderID,
+			"amount_cents":    "150000",
+			"status":          "SUCCESS",
+			"timestamp":       now.Format(time.RFC3339),
+		},
+		TraceID: "trace-dup-early",
+	}
+
+	// Lan 1
+	res1, err1 := uc.Execute(context.Background(), input)
+	if err1 != nil || !res1.StoredInInbox {
+		t.Fatalf("first call failed: res=%+v, err=%v", res1, err1)
+	}
+
+	// Lan 2 (Duplicate)
+	res2, err2 := uc.Execute(context.Background(), input)
+	if err2 != nil || !res2.StoredInInbox {
+		t.Fatalf("second duplicate call failed: res=%+v, err=%v", res2, err2)
+	}
+
+	// Kiem tra inbox van chi co dung 1 ban ghi
+	pending, _ := repo.GetPendingPaymentInbox(context.Background(), 10, 5)
+	if len(pending) != 1 {
+		t.Errorf("expected exactly 1 item in inbox after duplicate, got %d", len(pending))
+	}
+}

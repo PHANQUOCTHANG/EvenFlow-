@@ -31,6 +31,22 @@ type PaymentRepository interface {
 	// ProcessPaymentFailedTx ghi nhan trang thai thanh toan that bai vao bang payments
 	// trong CUNG MOT TRANSACTION, khong chuyen don sang PAID.
 	ProcessPaymentFailedTx(ctx context.Context, params domain.ProcessWebhookParams) (domain.WebhookProcessResult, error)
+
+	// SavePaymentInbox luu webhook chua khop don vao payment_inbox (BR-O6).
+	// Neu ban ghi (provider, provider_txn_id) da ton tai, khong tao loi duplicate key (idempotent).
+	SavePaymentInbox(ctx context.Context, item domain.PaymentInboxItem) (int64, error)
+
+	// GetPendingPaymentInbox lay danh sach ban ghi chua xu ly (processed_at IS NULL) voi so lan thu < maxAttempts.
+	GetPendingPaymentInbox(ctx context.Context, limit int, maxAttempts int) ([]domain.PaymentInboxItem, error)
+
+	// MarkPaymentInboxProcessed danh dau ban ghi inbox da duoc xu ly thanh cong (processed_at = now()).
+	MarkPaymentInboxProcessed(ctx context.Context, id int64, processedAt time.Time) error
+
+	// IncrementPaymentInboxAttempts tang so lan thu attempts sau khi replay chua thanh cong.
+	IncrementPaymentInboxAttempts(ctx context.Context, id int64) error
+
+	// GetStalePaymentInbox tim cac ban ghi chua xu ly co thoi gian ton vuot qua nguong cho phep de canh bao.
+	GetStalePaymentInbox(ctx context.Context, olderThan time.Duration, limit int) ([]domain.StaleInboxRecord, error)
 }
 
 // Clock ho tro inject thoi gian hien tai giup kiem thu chinh xac cac moc expires_at (BR-O2).

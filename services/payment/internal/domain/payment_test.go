@@ -152,3 +152,39 @@ func TestWebhookDomainErrorsAndStructs(t *testing.T) {
 		t.Errorf("unexpected OutboxOrderPaidPayload: %+v", payload)
 	}
 }
+
+func TestPaymentInboxItem_Methods(t *testing.T) {
+	now := time.Date(2026, 10, 17, 10, 0, 0, 0, time.UTC)
+	item := domain.PaymentInboxItem{
+		ID:            1,
+		Provider:      domain.ProviderVNPay,
+		ProviderTxnID: "vnp-12345",
+		Payload:       map[string]any{"vnp_Amount": "10000000"},
+		ReceivedAt:    now.Add(-20 * time.Minute),
+		ProcessedAt:   nil,
+		Attempts:      0,
+	}
+
+	if item.IsProcessed() {
+		t.Errorf("item with nil ProcessedAt should not be processed")
+	}
+
+	if !item.IsStale(now, 15*time.Minute) {
+		t.Errorf("item received 20m ago should be stale with 15m threshold")
+	}
+
+	if item.IsStale(now, 30*time.Minute) {
+		t.Errorf("item received 20m ago should not be stale with 30m threshold")
+	}
+
+	processedTime := now.Add(-5 * time.Minute)
+	item.ProcessedAt = &processedTime
+
+	if !item.IsProcessed() {
+		t.Errorf("item with non-nil ProcessedAt should be processed")
+	}
+
+	if item.IsStale(now, 15*time.Minute) {
+		t.Errorf("processed item should never be stale")
+	}
+}

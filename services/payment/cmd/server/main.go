@@ -107,9 +107,11 @@ func main() {
 	getPaymentUC := app.NewGetPaymentUseCase(repo)
 	listMethodsUC := app.NewListMethodsUseCase(registry)
 	processWebhookUC := app.NewProcessWebhookUseCase(repo, registry, clock, log)
+	replayInboxUC := app.NewReplayPaymentInboxUseCase(repo, clock, log)
 
-	// Khoi tao HTTP handler va dang ky routes (bao gom webhook exactly-once BR-O6)
-	handler := httpadapter.NewHandler(initiatePaymentUC, getPaymentUC, listMethodsUC, processWebhookUC, log)
+	// Khoi tao HTTP handler va dang ky routes (bao gom webhook exactly-once BR-O6 va inbox replay)
+	handler := httpadapter.NewHandler(initiatePaymentUC, getPaymentUC, listMethodsUC, processWebhookUC, log).
+		WithInboxReplayer(replayInboxUC)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, _ *http.Request) {
@@ -142,6 +144,38 @@ func main() {
 		WriteTimeout: 10 * time.Second,
 	}
 
+	// Khoi dong background worker dinh ky replay payment_inbox va quet stale records (EV-152 / BR-O6)
+	workerCtx, workerCancel := context.WithCancel(context.Background())
+	defer workerCancel()
+
+	go func() {
+		ticker := time.NewTicker(30 * time.Second)
+		defer ticker.Stop()
+		log.Info("khoi dong background worker replay payment_inbox", "interval", "30s")
+
+		for {
+			select {
+			case <-workerCtx.Done():
+				log.Info("dung background worker replay payment_inbox")
+				return
+			case <-ticker.C:
+				res, err := replayInboxUC.Execute(workerCtx, 50)
+				if err != nil {
+					log.Error("background replay payment_inbox gap loi", "err", err)
+				} else if res.TotalScanned > 0 || res.StaleDetected > 0 {
+					log.Info("ket qua chay background replay payment_inbox",
+						"scanned", res.TotalScanned,
+						"succeeded", res.Succeeded,
+						"already_done", res.AlreadyDone,
+						"still_pending", res.StillPending,
+						"failed", res.Failed,
+						"stale_detected", res.StaleDetected,
+					)
+				}
+			}
+		}
+	}()
+
 	stopChan := make(chan os.Signal, 1)
 	signal.Notify(stopChan, os.Interrupt, syscall.SIGTERM)
 
@@ -155,6 +189,7 @@ func main() {
 
 	<-stopChan
 	log.Info("nhan tin hieu tat, dang dong ket noi em ai...")
+	workerCancel()
 
 	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer shutdownCancel()
