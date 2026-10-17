@@ -39,3 +39,12 @@ type PaymentDetailsResponse struct {
 type PaymentMethodsResponse struct {
 	Methods []domain.PaymentMethodInfo `json:"methods"`
 }
+
+// WebhookResponse la ket qua tra ve khi xu ly webhook thanh cong.
+type WebhookResponse struct {
+	Status           string `json:"status"`
+	OrderID          string `json:"order_id,omitempty"`
+	PaymentID        string `json:"payment_id,omitempty"`
+	AlreadyProcessed bool   `json:"already_processed"`
+	Message          string `json:"message"`
+}

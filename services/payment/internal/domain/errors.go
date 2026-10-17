@@ -39,6 +39,15 @@ var (
 
 	// ErrGatewayCommunication tra ve khi giao tiep voi cong thanh toan that bai.
 	ErrGatewayCommunication = errors.New("lỗi giao tiếp với cổng thanh toán")
+
+	// ErrInvalidSignature tra ve khi chu ky webhook khong hop le hoac bi gia mao.
+	ErrInvalidSignature = errors.New("chữ ký số của cổng thanh toán không hợp lệ")
+
+	// ErrReplayDetected tra ve khi timestamp webhook vuot qua cua so thoi gian cho phep (chong replay attack).
+	ErrReplayDetected = errors.New("webhook quá cửa sổ thời gian cho phép (phát hiện replay attack)")
+
+	// ErrDuplicateWebhook tra ve khi webhook da duoc xu ly truoc do (BR-O6).
+	ErrDuplicateWebhook = errors.New("webhook trùng lặp đã được xử lý (BR-O6)")
 )
 
 // ValidationError mo ta chi tiet loi xac thuc tham so.

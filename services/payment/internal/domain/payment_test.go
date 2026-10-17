@@ -112,3 +112,43 @@ func TestValidationError(t *testing.T) {
 		t.Errorf("unexpected error message: %s", err.Error())
 	}
 }
+
+func TestWebhookDomainErrorsAndStructs(t *testing.T) {
+	if domain.ErrInvalidSignature == nil {
+		t.Fatal("ErrInvalidSignature should not be nil")
+	}
+	if domain.ErrReplayDetected == nil {
+		t.Fatal("ErrReplayDetected should not be nil")
+	}
+	if domain.ErrDuplicateWebhook == nil {
+		t.Fatal("ErrDuplicateWebhook should not be nil")
+	}
+
+	res := domain.WebhookProcessResult{
+		Success:       true,
+		AlreadyDone:   false,
+		OrderID:       "ord-1",
+		PaymentID:     "pay-1",
+		ProviderTxnID: "txn-1",
+		Status:        domain.StatusSucceeded,
+		Message:       "ok",
+	}
+	if !res.Success || res.OrderID != "ord-1" || res.Status != domain.StatusSucceeded {
+		t.Errorf("unexpected WebhookProcessResult: %+v", res)
+	}
+
+	payload := domain.OutboxOrderPaidPayload{
+		OrderID:       "ord-1",
+		EventID:       "evt-1",
+		IdentityID:    "user-1",
+		PaymentID:     "pay-1",
+		Provider:      "sandbox",
+		ProviderTxnID: "txn-1",
+		AmountCents:   100000,
+		Currency:      "VND",
+		PaidAt:        time.Now().UTC(),
+	}
+	if payload.AmountCents != 100000 || payload.Provider != "sandbox" {
+		t.Errorf("unexpected OutboxOrderPaidPayload: %+v", payload)
+	}
+}

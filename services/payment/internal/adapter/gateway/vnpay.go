@@ -143,11 +143,49 @@ func (v *VNPayGateway) VerifyCallback(ctx context.Context, params map[string]str
 		amountCents = rawAmount / 100
 	}
 
+	orderID := params["order_id"]
+	if orderID == "" {
+		orderID = params["vnp_OrderInfo"]
+	}
+
+	paymentID := params["payment_id"]
+	if paymentID == "" {
+		paymentID = params["vnp_TxnRef"]
+	}
+
+	var ts time.Time
+	if payDate := params["vnp_PayDate"]; payDate != "" {
+		// VNPay payDate format: yyyyMMddHHmmss (gio Viet Nam GMT+7)
+		loc := time.FixedZone("ICT", 7*3600)
+		if parsed, err := time.ParseInLocation("20060102150405", payDate, loc); err == nil {
+			ts = parsed.UTC()
+		}
+	}
+	if ts.IsZero() {
+		if tsStr := params["timestamp"]; tsStr != "" {
+			if parsed, err := time.Parse(time.RFC3339, tsStr); err == nil {
+				ts = parsed
+			}
+		}
+	}
+	if ts.IsZero() {
+		ts = time.Now().UTC()
+	}
+
+	raw := make(map[string]any, len(params))
+	for k, v := range params {
+		raw[k] = v
+	}
+
 	return port.CallbackResult{
 		Valid:         true,
 		ProviderTxnID: txnID,
+		OrderID:       orderID,
+		PaymentID:     paymentID,
 		Status:        status,
 		AmountCents:   amountCents,
+		Timestamp:     ts,
+		RawPayload:    raw,
 		Message:       fmt.Sprintf("VNPay response code: %s", responseCode),
 	}, nil
 }

@@ -87,3 +87,107 @@ func TestMemoryRepository(t *testing.T) {
 		t.Errorf("expected ErrOrderNotHeld when order is not HELD, got %v", err)
 	}
 }
+
+func TestProcessPaymentSuccessTx_Atomic(t *testing.T) {
+	repo := postgres.NewMemoryRepository()
+	ctx := context.Background()
+	now := time.Now().UTC()
+
+	repo.SeedOrder(domain.OrderView{
+		ID:         "ord-tx-1",
+		EventID:    "evt-tx-1",
+		IdentityID: "user-tx-1",
+		Status:     "PAYMENT_PENDING",
+		TotalCents: 500000,
+		Currency:   "VND",
+		ExpiresAt:  now.Add(10 * time.Minute),
+	})
+
+	params := domain.ProcessWebhookParams{
+		Provider:      domain.ProviderSandbox,
+		ProviderTxnID: "sbx_txn_atomic_1",
+		OrderID:       "ord-tx-1",
+		PaymentID:     "pay-atomic-1",
+		AmountCents:   500000,
+		Currency:      "VND",
+		Status:        domain.StatusSucceeded,
+		TraceID:       "trace-tx-1",
+		Timestamp:     now,
+	}
+
+	// Lan 1: Xu ly thanh cong, don chuyen sang PAID va phat outbox
+	res, err := repo.ProcessPaymentSuccessTx(ctx, params)
+	if err != nil {
+		t.Fatalf("ProcessPaymentSuccessTx failed: %v", err)
+	}
+	if !res.Success || res.AlreadyDone {
+		t.Errorf("expected Success=true, AlreadyDone=false, got %+v", res)
+	}
+
+	order, err := repo.GetOrder(ctx, "ord-tx-1")
+	if err != nil || order.Status != "PAID" {
+		t.Errorf("expected order status PAID, got %s", order.Status)
+	}
+
+	events := repo.GetOutboxEvents()
+	if len(events) != 1 {
+		t.Fatalf("expected 1 outbox event, got %d", len(events))
+	}
+	if events[0]["routing_key"] != "order.paid" {
+		t.Errorf("expected routing_key order.paid, got %v", events[0]["routing_key"])
+	}
+
+	// Lan 2: Duplicate webhook voi cung (provider, provider_txn_id) -> Exactly-once BR-O6
+	resDup, err := repo.ProcessPaymentSuccessTx(ctx, params)
+	if err != nil {
+		t.Fatalf("ProcessPaymentSuccessTx duplicate failed: %v", err)
+	}
+	if !resDup.Success || !resDup.AlreadyDone {
+		t.Errorf("expected Success=true, AlreadyDone=true for duplicate, got %+v", resDup)
+	}
+
+	// Outbox van chi co 1 su kien duy nhat, khong bi duplicate
+	eventsAfter := repo.GetOutboxEvents()
+	if len(eventsAfter) != 1 {
+		t.Errorf("expected exactly 1 outbox event after duplicate, got %d", len(eventsAfter))
+	}
+}
+
+func TestProcessPaymentFailedTx(t *testing.T) {
+	repo := postgres.NewMemoryRepository()
+	ctx := context.Background()
+
+	repo.SeedOrder(domain.OrderView{
+		ID:         "ord-fail-1",
+		EventID:    "evt-1",
+		IdentityID: "user-1",
+		Status:     "PAYMENT_PENDING",
+		TotalCents: 100000,
+		Currency:   "VND",
+	})
+
+	params := domain.ProcessWebhookParams{
+		Provider:      domain.ProviderSandbox,
+		ProviderTxnID: "sbx_txn_fail_1",
+		OrderID:       "ord-fail-1",
+		Status:        domain.StatusFailed,
+	}
+
+	res, err := repo.ProcessPaymentFailedTx(ctx, params)
+	if err != nil {
+		t.Fatalf("ProcessPaymentFailedTx failed: %v", err)
+	}
+	if res.Status != domain.StatusFailed {
+		t.Errorf("expected StatusFailed, got %s", res.Status)
+	}
+
+	order, _ := repo.GetOrder(ctx, "ord-fail-1")
+	if order.Status == "PAID" {
+		t.Errorf("order should not be marked PAID on failed payment")
+	}
+
+	events := repo.GetOutboxEvents()
+	if len(events) != 0 {
+		t.Errorf("expected 0 outbox events on failed payment, got %d", len(events))
+	}
+}

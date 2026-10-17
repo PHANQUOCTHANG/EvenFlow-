@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/eventflow/eventflow/services/payment/internal/domain"
 	"github.com/eventflow/eventflow/services/payment/internal/port"
@@ -145,11 +146,37 @@ func (m *MoMoGateway) VerifyCallback(ctx context.Context, params map[string]stri
 		amountCents = parsed
 	}
 
+	var ts time.Time
+	if responseTime != "" {
+		if ms, err := strconv.ParseInt(responseTime, 10, 64); err == nil {
+			ts = time.UnixMilli(ms).UTC()
+		}
+	}
+	if ts.IsZero() {
+		if tsStr := params["timestamp"]; tsStr != "" {
+			if parsed, err := time.Parse(time.RFC3339, tsStr); err == nil {
+				ts = parsed
+			}
+		}
+	}
+	if ts.IsZero() {
+		ts = time.Now().UTC()
+	}
+
+	raw := make(map[string]any, len(params))
+	for k, v := range params {
+		raw[k] = v
+	}
+
 	return port.CallbackResult{
 		Valid:         true,
 		ProviderTxnID: transID,
+		OrderID:       orderID,
+		PaymentID:     requestID,
 		Status:        status,
 		AmountCents:   amountCents,
+		Timestamp:     ts,
+		RawPayload:    raw,
 		Message:       message,
 	}, nil
 }

@@ -106,9 +106,10 @@ func main() {
 	initiatePaymentUC := app.NewInitiatePaymentUseCase(repo, registry, clock, idGen, log)
 	getPaymentUC := app.NewGetPaymentUseCase(repo)
 	listMethodsUC := app.NewListMethodsUseCase(registry)
+	processWebhookUC := app.NewProcessWebhookUseCase(repo, registry, clock, log)
 
-	// Khoi tao HTTP handler va dang ky routes
-	handler := httpadapter.NewHandler(initiatePaymentUC, getPaymentUC, listMethodsUC, log)
+	// Khoi tao HTTP handler va dang ky routes (bao gom webhook exactly-once BR-O6)
+	handler := httpadapter.NewHandler(initiatePaymentUC, getPaymentUC, listMethodsUC, processWebhookUC, log)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, _ *http.Request) {
