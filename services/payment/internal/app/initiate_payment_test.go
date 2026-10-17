@@ -84,6 +84,30 @@ func (m *memoryRepo) GetPaymentByOrder(_ context.Context, orderID string) (domai
 	return domain.Payment{}, errors.New("payment not found")
 }
 
+func (m *memoryRepo) ProcessPaymentSuccessTx(_ context.Context, params domain.ProcessWebhookParams) (domain.WebhookProcessResult, error) {
+	o, exists := m.orders[params.OrderID]
+	if !exists {
+		return domain.WebhookProcessResult{}, domain.ErrOrderNotFound
+	}
+	o.Status = "PAID"
+	m.orders[o.ID] = o
+	return domain.WebhookProcessResult{
+		Success:       true,
+		OrderID:       o.ID,
+		ProviderTxnID: params.ProviderTxnID,
+		Status:        domain.StatusSucceeded,
+	}, nil
+}
+
+func (m *memoryRepo) ProcessPaymentFailedTx(_ context.Context, params domain.ProcessWebhookParams) (domain.WebhookProcessResult, error) {
+	return domain.WebhookProcessResult{
+		Success:       false,
+		OrderID:       params.OrderID,
+		ProviderTxnID: params.ProviderTxnID,
+		Status:        domain.StatusFailed,
+	}, nil
+}
+
 func setupTestEnvironment() (*memoryRepo, *gateway.Registry, *fakeClock, *fakeIDGen, *slog.Logger) {
 	repo := newMemoryRepo()
 	reg := gateway.NewRegistry(domain.ProviderSandbox, []string{"sandbox", "vnpay"})

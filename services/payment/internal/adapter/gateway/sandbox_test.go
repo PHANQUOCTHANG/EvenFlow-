@@ -102,3 +102,37 @@ func TestSandboxGateway_SimulateDelay(t *testing.T) {
 		t.Errorf("expected redirectURL to contain simulated_delay=true, got %s", res.RedirectURL)
 	}
 }
+
+func TestSandboxGateway_VerifyCallback_SignatureAndTimestamp(t *testing.T) {
+	gw := gateway.NewSandboxGateway(gateway.SandboxModeSuccess)
+
+	// Test invalid signature
+	res, err := gw.VerifyCallback(context.Background(), map[string]string{
+		"provider_txn_id": "sbx_123",
+		"signature":       "invalid",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if res.Valid {
+		t.Errorf("expected invalid signature callback to return Valid=false")
+	}
+
+	// Test valid with timestamp and order_id
+	ts := "2026-10-17T10:00:00Z"
+	resOk, err := gw.VerifyCallback(context.Background(), map[string]string{
+		"provider_txn_id": "sbx_123",
+		"order_id":        "ord-abc",
+		"payment_id":      "pay-xyz",
+		"timestamp":       ts,
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !resOk.Valid || resOk.OrderID != "ord-abc" || resOk.PaymentID != "pay-xyz" {
+		t.Errorf("unexpected callback result: %+v", resOk)
+	}
+	if resOk.Timestamp.IsZero() {
+		t.Errorf("expected non-zero parsed timestamp")
+	}
+}

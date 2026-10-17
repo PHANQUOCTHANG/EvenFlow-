@@ -71,4 +71,17 @@ func TestStripeGateway_VerifyCallback(t *testing.T) {
 	if cbMissing.Valid {
 		t.Errorf("expected invalid result when session_id is missing")
 	}
+
+	// Case 3: Invalid signature
+	cbInvalidSig, err := gw.VerifyCallback(context.Background(), map[string]string{
+		"session_id": "cs_test_123",
+		"status":     "paid",
+		"signature":  "invalid",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if cbInvalidSig.Valid {
+		t.Errorf("expected invalid result when signature is invalid")
+	}
 }

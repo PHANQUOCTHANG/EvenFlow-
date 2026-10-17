@@ -41,13 +41,29 @@ func (m *mockLister) Execute(ctx context.Context) []domain.PaymentMethodInfo {
 	return m.fn(ctx)
 }
 
+type mockProcessor struct {
+	fn func(ctx context.Context, in app.ProcessWebhookInput) (domain.WebhookProcessResult, error)
+}
+
+func (m *mockProcessor) Execute(ctx context.Context, in app.ProcessWebhookInput) (domain.WebhookProcessResult, error) {
+	if m.fn != nil {
+		return m.fn(ctx, in)
+	}
+	return domain.WebhookProcessResult{}, nil
+}
+
 func setupTestServer(
 	initiator *mockInitiator,
 	getter *mockGetter,
 	lister *mockLister,
+	optionalProcessor ...*mockProcessor,
 ) *http.ServeMux {
+	var processor *mockProcessor
+	if len(optionalProcessor) > 0 {
+		processor = optionalProcessor[0]
+	}
 	log := slog.New(slog.NewJSONHandler(io.Discard, nil))
-	h := httpadapter.NewHandler(initiator, getter, lister, log)
+	h := httpadapter.NewHandler(initiator, getter, lister, processor, log)
 
 	mux := http.NewServeMux()
 	// Middleware pass-through de test logic cua handler
@@ -299,7 +315,7 @@ func TestHandler_IdempotencyKey_Integration(t *testing.T) {
 	}
 
 	log := slog.New(slog.NewJSONHandler(io.Discard, nil))
-	h := httpadapter.NewHandler(initiator, nil, nil, log)
+	h := httpadapter.NewHandler(initiator, nil, nil, nil, log)
 	mux := http.NewServeMux()
 	h.Routes(mux, idemMiddleware)
 
@@ -328,5 +344,158 @@ func TestHandler_IdempotencyKey_Integration(t *testing.T) {
 	}
 	if calls != 1 {
 		t.Errorf("expected underlying handler called exactly 1 time, but called %d times (BR-O5 failed)", calls)
+	}
+}
+
+func TestHandler_Webhook_Sandbox_Success(t *testing.T) {
+	proc := &mockProcessor{
+		fn: func(_ context.Context, in app.ProcessWebhookInput) (domain.WebhookProcessResult, error) {
+			if in.Provider != domain.ProviderSandbox {
+				t.Errorf("expected provider sandbox, got %s", in.Provider)
+			}
+			return domain.WebhookProcessResult{
+				Success:       true,
+				AlreadyDone:   false,
+				OrderID:       "ord-1",
+				PaymentID:     "pay-1",
+				ProviderTxnID: "sbx_txn_1",
+				Status:        domain.StatusSucceeded,
+				Message:       "ok",
+			}, nil
+		},
+	}
+
+	mux := setupTestServer(nil, nil, nil, proc)
+
+	body := []byte(`{"provider_txn_id":"sbx_txn_1","order_id":"ord-1","status":"SUCCESS"}`)
+	req := httptest.NewRequest("POST", "/v1/payments/webhook/sandbox", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	mux.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200 OK, got %d: %s", w.Code, w.Body.String())
+	}
+
+	var resp httpadapter.WebhookResponse
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("invalid json response: %v", err)
+	}
+	if resp.OrderID != "ord-1" || resp.AlreadyProcessed {
+		t.Errorf("unexpected response: %+v", resp)
+	}
+}
+
+func TestHandler_Webhook_VNPay_GET_Success(t *testing.T) {
+	proc := &mockProcessor{
+		fn: func(_ context.Context, in app.ProcessWebhookInput) (domain.WebhookProcessResult, error) {
+			if in.Provider != domain.ProviderVNPay {
+				t.Errorf("expected provider vnpay, got %s", in.Provider)
+			}
+			return domain.WebhookProcessResult{
+				Success:       true,
+				AlreadyDone:   false,
+				OrderID:       "ord-vnp",
+				PaymentID:     "pay-vnp",
+				ProviderTxnID: "vnp_123",
+				Status:        domain.StatusSucceeded,
+				Message:       "ok",
+			}, nil
+		},
+	}
+
+	mux := setupTestServer(nil, nil, nil, proc)
+
+	req := httptest.NewRequest("GET", "/v1/payments/webhook/vnpay?vnp_TransactionNo=14000&vnp_OrderInfo=ord-vnp&vnp_ResponseCode=00", nil)
+	w := httptest.NewRecorder()
+	mux.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200 OK for GET webhook, got %d: %s", w.Code, w.Body.String())
+	}
+}
+
+func TestHandler_Webhook_Duplicate_200OK(t *testing.T) {
+	proc := &mockProcessor{
+		fn: func(_ context.Context, _ app.ProcessWebhookInput) (domain.WebhookProcessResult, error) {
+			return domain.WebhookProcessResult{
+				Success:       true,
+				AlreadyDone:   true,
+				OrderID:       "ord-dup",
+				ProviderTxnID: "txn-dup",
+				Status:        domain.StatusSucceeded,
+				Message:       "already processed",
+			}, nil
+		},
+	}
+
+	mux := setupTestServer(nil, nil, nil, proc)
+
+	req := httptest.NewRequest("POST", "/v1/payments/webhook/momo", bytes.NewReader([]byte(`{"orderId":"ord-dup"}`)))
+	w := httptest.NewRecorder()
+	mux.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200 OK for duplicate webhook, got %d", w.Code)
+	}
+
+	var resp httpadapter.WebhookResponse
+	_ = json.Unmarshal(w.Body.Bytes(), &resp)
+	if !resp.AlreadyProcessed {
+		t.Errorf("expected already_processed=true for duplicate webhook")
+	}
+}
+
+func TestHandler_Webhook_InvalidSignature_400(t *testing.T) {
+	proc := &mockProcessor{
+		fn: func(_ context.Context, _ app.ProcessWebhookInput) (domain.WebhookProcessResult, error) {
+			return domain.WebhookProcessResult{}, domain.ErrInvalidSignature
+		},
+	}
+
+	mux := setupTestServer(nil, nil, nil, proc)
+
+	req := httptest.NewRequest("POST", "/v1/payments/webhook/momo", bytes.NewReader([]byte(`{"signature":"invalid"}`)))
+	w := httptest.NewRecorder()
+	mux.ServeHTTP(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 Bad Request on invalid signature, got %d", w.Code)
+	}
+}
+
+func TestHandler_Webhook_ReplayExpired_400(t *testing.T) {
+	proc := &mockProcessor{
+		fn: func(_ context.Context, _ app.ProcessWebhookInput) (domain.WebhookProcessResult, error) {
+			return domain.WebhookProcessResult{}, domain.ErrReplayDetected
+		},
+	}
+
+	mux := setupTestServer(nil, nil, nil, proc)
+
+	req := httptest.NewRequest("POST", "/v1/payments/webhook/stripe", bytes.NewReader([]byte(`{"id":"cs_old"}`)))
+	w := httptest.NewRecorder()
+	mux.ServeHTTP(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 Bad Request on replay detected, got %d", w.Code)
+	}
+}
+
+func TestHandler_Webhook_OrderNotFound_404(t *testing.T) {
+	proc := &mockProcessor{
+		fn: func(_ context.Context, _ app.ProcessWebhookInput) (domain.WebhookProcessResult, error) {
+			return domain.WebhookProcessResult{}, domain.ErrOrderNotFound
+		},
+	}
+
+	mux := setupTestServer(nil, nil, nil, proc)
+
+	req := httptest.NewRequest("POST", "/v1/payments/webhook/sandbox", bytes.NewReader([]byte(`{"order_id":"ord-not-exist"}`)))
+	w := httptest.NewRecorder()
+	mux.ServeHTTP(w, req)
+
+	if w.Code != http.StatusNotFound {
+		t.Fatalf("expected 404 Not Found, got %d", w.Code)
 	}
 }
