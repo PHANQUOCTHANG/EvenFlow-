@@ -2,6 +2,7 @@ package port
 
 import (
 	"context"
+	"time"
 
 	"github.com/eventflow/eventflow/services/payment/internal/domain"
 )
@@ -35,8 +36,12 @@ type PaymentResult struct {
 type CallbackResult struct {
 	Valid         bool
 	ProviderTxnID string
+	OrderID       string
+	PaymentID     string
 	Status        domain.PaymentStatus
 	AmountCents   int64
+	Timestamp     time.Time
+	RawPayload    map[string]any
 	Message       string
 }
 

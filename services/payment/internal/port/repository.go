@@ -21,6 +21,16 @@ type PaymentRepository interface {
 
 	// GetPaymentByOrder doc thong tin thanh toan gan nhat cua mot order_id.
 	GetPaymentByOrder(ctx context.Context, orderID string) (domain.Payment, error)
+
+	// ProcessPaymentSuccessTx cap nhat trang thai payments -> SUCCEEDED, orders -> PAID
+	// va ghi nhan su kien vao outbox_events trong CUNG MOT TRANSACTION (Quy tac bat bien 1).
+	// Neu giao dich da duoc xu ly truoc do (trung provider_txn_id hoac don da PAID),
+	// ham tra ve AlreadyDone = true ma khong gay loi (Exactly-once / BR-O6).
+	ProcessPaymentSuccessTx(ctx context.Context, params domain.ProcessWebhookParams) (domain.WebhookProcessResult, error)
+
+	// ProcessPaymentFailedTx ghi nhan trang thai thanh toan that bai vao bang payments
+	// trong CUNG MOT TRANSACTION, khong chuyen don sang PAID.
+	ProcessPaymentFailedTx(ctx context.Context, params domain.ProcessWebhookParams) (domain.WebhookProcessResult, error)
 }
 
 // Clock ho tro inject thoi gian hien tai giup kiem thu chinh xac cac moc expires_at (BR-O2).

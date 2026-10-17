@@ -120,3 +120,41 @@ func MaskPII(val string) string {
 
 	return "***"
 }
+
+// WebhookProcessResult dai dien cho ket qua sau khi xu ly webhook.
+type WebhookProcessResult struct {
+	Success       bool          `json:"success"`
+	AlreadyDone   bool          `json:"already_done"`
+	OrderID       string        `json:"order_id"`
+	PaymentID     string        `json:"payment_id"`
+	ProviderTxnID string        `json:"provider_txn_id"`
+	Status        PaymentStatus `json:"status"`
+	Message       string        `json:"message"`
+}
+
+// ProcessWebhookParams chua toan bo thong tin can thiet de cap nhat giao dich atomic trong DB.
+type ProcessWebhookParams struct {
+	Provider      Provider       `json:"provider"`
+	ProviderTxnID string         `json:"provider_txn_id"`
+	OrderID       string         `json:"order_id"`
+	PaymentID     string         `json:"payment_id"`
+	AmountCents   int64          `json:"amount_cents"`
+	Currency      string         `json:"currency"`
+	Status        PaymentStatus  `json:"status"`
+	RawPayload    map[string]any `json:"raw_payload,omitempty"`
+	TraceID       string         `json:"trace_id"`
+	Timestamp     time.Time      `json:"timestamp"`
+}
+
+// OutboxOrderPaidPayload la du lieu su kien phat vao bang outbox_events cho routing_key order.paid.
+type OutboxOrderPaidPayload struct {
+	OrderID       string    `json:"order_id"`
+	EventID       string    `json:"event_id"`
+	IdentityID    string    `json:"identity_id"`
+	PaymentID     string    `json:"payment_id"`
+	Provider      string    `json:"provider"`
+	ProviderTxnID string    `json:"provider_txn_id"`
+	AmountCents   int64     `json:"amount_cents"`
+	Currency      string    `json:"currency"`
+	PaidAt        time.Time `json:"paid_at"`
+}

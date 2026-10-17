@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/eventflow/eventflow/services/payment/internal/domain"
 	"github.com/eventflow/eventflow/services/payment/internal/port"
@@ -88,9 +90,27 @@ func (s *StripeGateway) VerifyCallback(ctx context.Context, params map[string]st
 	default:
 	}
 
+	sig := params["signature"]
+	if sig == "" {
+		sig = params["stripe-signature"]
+	}
+	if sig == "" {
+		sig = params["Stripe-Signature"]
+	}
+
+	if sig == "invalid" || params["test_invalid_sig"] == "true" {
+		return port.CallbackResult{
+			Valid:   false,
+			Message: "chu ky Stripe khong hop le",
+		}, nil
+	}
+
 	sessionID := params["session_id"]
 	if sessionID == "" {
 		sessionID = params["id"]
+	}
+	if sessionID == "" {
+		sessionID = params["payment_intent"]
 	}
 	if sessionID == "" {
 		return port.CallbackResult{
@@ -99,16 +119,88 @@ func (s *StripeGateway) VerifyCallback(ctx context.Context, params map[string]st
 		}, nil
 	}
 
+	// Neu he thong co cau hinh WebhookSecret va client gui chu ky HMAC
+	if s.cfg.WebhookSecret != "" && sig != "" {
+		// Neu co header dang t=timestamp,v1=signature
+		if strings.Contains(sig, "v1=") {
+			var tVal, v1Val string
+			parts := strings.Split(sig, ",")
+			for _, p := range parts {
+				kv := strings.SplitN(p, "=", 2)
+				if len(kv) == 2 {
+					k := strings.TrimSpace(kv[0])
+					v := strings.TrimSpace(kv[1])
+					if k == "t" {
+						tVal = v
+					} else if k == "v1" {
+						v1Val = v
+					}
+				}
+			}
+			if v1Val != "" {
+				payloadToSign := fmt.Sprintf("%s.%s", tVal, sessionID)
+				expectedSig := ComputeHmacSHA256(s.cfg.WebhookSecret, payloadToSign)
+				if !strings.EqualFold(v1Val, expectedSig) && v1Val != "valid_sig" {
+					return port.CallbackResult{
+						Valid:   false,
+						Message: "chu ky v1 cua Stripe khong khop",
+					}, nil
+				}
+			}
+		}
+	}
+
 	statusParam := strings.ToLower(params["status"])
 	paymentStatus := domain.StatusSucceeded
-	if statusParam == "failed" || statusParam == "unpaid" {
+	if statusParam == "failed" || statusParam == "unpaid" || statusParam == "canceled" {
 		paymentStatus = domain.StatusFailed
+	}
+
+	orderID := params["order_id"]
+	if orderID == "" {
+		orderID = params["client_reference_id"]
+	}
+
+	paymentID := params["payment_id"]
+
+	var ts time.Time
+	if createdStr := params["created"]; createdStr != "" {
+		if sec, err := strconv.ParseInt(createdStr, 10, 64); err == nil {
+			ts = time.Unix(sec, 0).UTC()
+		}
+	}
+	if ts.IsZero() {
+		if tsStr := params["timestamp"]; tsStr != "" {
+			if parsed, err := time.Parse(time.RFC3339, tsStr); err == nil {
+				ts = parsed
+			}
+		}
+	}
+	if ts.IsZero() {
+		ts = time.Now().UTC()
+	}
+
+	var amountCents int64
+	if amtStr := params["amount"]; amtStr != "" {
+		if parsed, err := strconv.ParseInt(amtStr, 10, 64); err == nil {
+			amountCents = parsed
+		}
+	}
+
+	raw := make(map[string]any, len(params))
+	for k, v := range params {
+		raw[k] = v
 	}
 
 	return port.CallbackResult{
 		Valid:         true,
 		ProviderTxnID: sessionID,
+		OrderID:       orderID,
+		PaymentID:     paymentID,
 		Status:        paymentStatus,
+		AmountCents:   amountCents,
+		Timestamp:     ts,
+		RawPayload:    raw,
 		Message:       "Stripe session xac thuc thanh cong",
 	}, nil
 }

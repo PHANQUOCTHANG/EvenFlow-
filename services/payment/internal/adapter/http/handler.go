@@ -4,8 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"io"
 	"log/slog"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/eventflow/eventflow/libs/go/httpx"
@@ -25,10 +28,15 @@ type MethodsLister interface {
 	Execute(ctx context.Context) []domain.PaymentMethodInfo
 }
 
+type WebhookProcessor interface {
+	Execute(ctx context.Context, in app.ProcessWebhookInput) (domain.WebhookProcessResult, error)
+}
+
 type Handler struct {
 	initiator PaymentInitiator
 	getter    PaymentGetter
 	lister    MethodsLister
+	processor WebhookProcessor
 	log       *slog.Logger
 }
 
@@ -36,12 +44,14 @@ func NewHandler(
 	initiator PaymentInitiator,
 	getter PaymentGetter,
 	lister MethodsLister,
+	processor WebhookProcessor,
 	log *slog.Logger,
 ) *Handler {
 	return &Handler{
 		initiator: initiator,
 		getter:    getter,
 		lister:    lister,
+		processor: processor,
 		log:       log,
 	}
 }
@@ -57,6 +67,10 @@ func (h *Handler) Routes(mux *http.ServeMux, idempotency httpx.Middleware) {
 
 	mux.HandleFunc("GET /v1/payments/{paymentID}", h.getPayment)
 	mux.HandleFunc("GET /v1/payments/methods", h.listMethods)
+
+	// Endpoints Webhook tiep nhan tu cac cong thanh toan (BR-O6 exactly-once)
+	mux.HandleFunc("POST /v1/payments/webhook/{provider}", h.handleWebhook)
+	mux.HandleFunc("GET /v1/payments/webhook/{provider}", h.handleWebhook)
 }
 
 func (h *Handler) initiatePayment(w http.ResponseWriter, r *http.Request) {
@@ -157,4 +171,106 @@ func (h *Handler) getPayment(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) listMethods(w http.ResponseWriter, r *http.Request) {
 	methods := h.lister.Execute(r.Context())
 	httpx.WriteJSON(w, http.StatusOK, PaymentMethodsResponse{Methods: methods})
+}
+
+func (h *Handler) handleWebhook(w http.ResponseWriter, r *http.Request) {
+	providerStr := r.PathValue("provider")
+	if providerStr == "" {
+		httpx.WriteProblem(w, http.StatusBadRequest, "thiếu provider trong đường dẫn webhook")
+		return
+	}
+
+	params := make(map[string]string)
+
+	// 1. Doc query parameters (VD: VNPay IPN/redirect callback)
+	for k, v := range r.URL.Query() {
+		if len(v) > 0 {
+			params[k] = v[0]
+		}
+	}
+
+	// 2. Doc body neu la POST
+	if r.Method == http.MethodPost && r.Body != nil {
+		bodyBytes, err := io.ReadAll(io.LimitReader(r.Body, 1024*1024))
+		if err == nil && len(bodyBytes) > 0 {
+			// Thu parse JSON
+			var jsonMap map[string]any
+			if jsonErr := json.Unmarshal(bodyBytes, &jsonMap); jsonErr == nil {
+				for k, v := range jsonMap {
+					if _, exists := params[k]; !exists {
+						params[k] = fmt.Sprintf("%v", v)
+					}
+				}
+			} else {
+				// Thu parse form data
+				if formVals, parseErr := url.ParseQuery(string(bodyBytes)); parseErr == nil {
+					for k, v := range formVals {
+						if len(v) > 0 {
+							if _, exists := params[k]; !exists {
+								params[k] = v[0]
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// 3. Trich xuat cac header chu ky so (vi du Stripe-Signature)
+	if stripeSig := r.Header.Get("Stripe-Signature"); stripeSig != "" {
+		params["signature"] = stripeSig
+		params["stripe-signature"] = stripeSig
+	}
+	if headerSig := r.Header.Get("X-Signature"); headerSig != "" {
+		if _, exists := params["signature"]; !exists {
+			params["signature"] = headerSig
+		}
+	}
+
+	traceID := r.Header.Get("X-Trace-ID")
+	if traceID == "" {
+		traceID = r.Header.Get("X-Request-ID")
+	}
+
+	if h.processor == nil {
+		httpx.WriteProblem(w, http.StatusNotImplemented, "chưa cấu hình webhook processor")
+		return
+	}
+
+	res, err := h.processor.Execute(r.Context(), app.ProcessWebhookInput{
+		Provider: domain.NormalizeProvider(providerStr),
+		Params:   params,
+		TraceID:  traceID,
+	})
+
+	if err != nil {
+		switch {
+		case errors.Is(err, domain.ErrInvalidSignature):
+			httpx.WriteProblem(w, http.StatusBadRequest, "chữ ký số của cổng thanh toán không hợp lệ")
+		case errors.Is(err, domain.ErrReplayDetected):
+			httpx.WriteProblem(w, http.StatusBadRequest, "webhook quá cửa sổ thời gian cho phép (phát hiện replay attack)")
+		case errors.Is(err, domain.ErrUnsupportedProvider):
+			httpx.WriteProblem(w, http.StatusBadRequest, "cổng thanh toán không được hỗ trợ")
+		case errors.Is(err, domain.ErrOrderNotFound):
+			httpx.WriteProblem(w, http.StatusNotFound, "không tìm thấy đơn hàng")
+		default:
+			h.log.Error("xu ly webhook loi he thong",
+				"provider", providerStr,
+				"err", err,
+				"trace_id", traceID,
+			)
+			httpx.WriteProblem(w, http.StatusInternalServerError, "lỗi xử lý webhook")
+		}
+		return
+	}
+
+	resp := WebhookResponse{
+		Status:           "ok",
+		OrderID:          res.OrderID,
+		PaymentID:        res.PaymentID,
+		AlreadyProcessed: res.AlreadyDone,
+		Message:          res.Message,
+	}
+
+	httpx.WriteJSON(w, http.StatusOK, resp)
 }

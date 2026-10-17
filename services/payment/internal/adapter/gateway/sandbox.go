@@ -102,6 +102,13 @@ func (s *SandboxGateway) VerifyCallback(ctx context.Context, params map[string]s
 	default:
 	}
 
+	if params["signature"] == "invalid" || params["test_invalid_sig"] == "true" {
+		return port.CallbackResult{
+			Valid:   false,
+			Message: "sandbox chu ky khong hop le",
+		}, nil
+	}
+
 	txnID := params["provider_txn_id"]
 	if txnID == "" {
 		txnID = params["vnp_TransactionNo"]
@@ -122,10 +129,41 @@ func (s *SandboxGateway) VerifyCallback(ctx context.Context, params map[string]s
 		paymentStatus = domain.StatusFailed
 	}
 
+	orderID := params["order_id"]
+	if orderID == "" {
+		orderID = params["orderId"]
+	}
+
+	paymentID := params["payment_id"]
+	if paymentID == "" {
+		paymentID = params["paymentId"]
+	}
+
+	var ts time.Time
+	if tsStr := params["timestamp"]; tsStr != "" {
+		if parsed, err := time.Parse(time.RFC3339, tsStr); err == nil {
+			ts = parsed
+		} else if parsedUnix, err := time.Parse(time.RFC3339Nano, tsStr); err == nil {
+			ts = parsedUnix
+		}
+	}
+	if ts.IsZero() {
+		ts = time.Now().UTC()
+	}
+
+	raw := make(map[string]any, len(params))
+	for k, v := range params {
+		raw[k] = v
+	}
+
 	return port.CallbackResult{
 		Valid:         true,
 		ProviderTxnID: txnID,
+		OrderID:       orderID,
+		PaymentID:     paymentID,
 		Status:        paymentStatus,
+		Timestamp:     ts,
+		RawPayload:    raw,
 		Message:       "sandbox callback hop le",
 	}, nil
 }
