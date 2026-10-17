@@ -191,3 +191,102 @@ func TestProcessPaymentFailedTx(t *testing.T) {
 		t.Errorf("expected 0 outbox events on failed payment, got %d", len(events))
 	}
 }
+
+func TestMemoryRepository_PaymentInbox(t *testing.T) {
+	repo := postgres.NewMemoryRepository()
+	ctx := context.Background()
+	now := time.Now().UTC()
+
+	// 1. Save payment inbox
+	item1 := domain.PaymentInboxItem{
+		Provider:      domain.ProviderVNPay,
+		ProviderTxnID: "vnp_txn_001",
+		Payload:       map[string]any{"vnp_Amount": "5000000", "vnp_OrderInfo": "ord-early-1"},
+		ReceivedAt:    now.Add(-20 * time.Minute),
+		Attempts:      0,
+	}
+
+	id1, err := repo.SavePaymentInbox(ctx, item1)
+	if err != nil {
+		t.Fatalf("SavePaymentInbox failed: %v", err)
+	}
+	if id1 <= 0 {
+		t.Fatalf("expected positive inbox ID, got %d", id1)
+	}
+
+	// 2. Save duplicate should be idempotent and return same ID
+	dupID, err := repo.SavePaymentInbox(ctx, item1)
+	if err != nil {
+		t.Fatalf("duplicate SavePaymentInbox failed: %v", err)
+	}
+	if dupID != id1 {
+		t.Errorf("expected dupID %d to equal id1 %d", dupID, id1)
+	}
+
+	// 3. Save second item
+	item2 := domain.PaymentInboxItem{
+		Provider:      domain.ProviderMoMo,
+		ProviderTxnID: "momo_txn_002",
+		Payload:       map[string]any{"amount": "300000", "orderId": "ord-early-2"},
+		ReceivedAt:    now.Add(-5 * time.Minute),
+		Attempts:      0,
+	}
+	id2, err := repo.SavePaymentInbox(ctx, item2)
+	if err != nil {
+		t.Fatalf("SavePaymentInbox item2 failed: %v", err)
+	}
+
+	// 4. GetPendingPaymentInbox
+	pending, err := repo.GetPendingPaymentInbox(ctx, 10, 5)
+	if err != nil {
+		t.Fatalf("GetPendingPaymentInbox failed: %v", err)
+	}
+	if len(pending) != 2 {
+		t.Fatalf("expected 2 pending items, got %d", len(pending))
+	}
+	// Verify ordered by ReceivedAt ascending
+	if pending[0].ID != id1 {
+		t.Errorf("expected first pending item to be id1, got %d", pending[0].ID)
+	}
+
+	// 5. IncrementPaymentInboxAttempts
+	err = repo.IncrementPaymentInboxAttempts(ctx, id1)
+	if err != nil {
+		t.Fatalf("IncrementPaymentInboxAttempts failed: %v", err)
+	}
+	pendingAfterInc, _ := repo.GetPendingPaymentInbox(ctx, 10, 5)
+	if pendingAfterInc[0].Attempts != 1 {
+		t.Errorf("expected attempts = 1, got %d", pendingAfterInc[0].Attempts)
+	}
+
+	// 6. GetStalePaymentInbox (> 15 minutes)
+	stale, err := repo.GetStalePaymentInbox(ctx, 15*time.Minute, 10)
+	if err != nil {
+		t.Fatalf("GetStalePaymentInbox failed: %v", err)
+	}
+	// item1 was received 20m ago, item2 5m ago
+	if len(stale) != 1 {
+		t.Fatalf("expected 1 stale record, got %d", len(stale))
+	}
+	if stale[0].ID != id1 {
+		t.Errorf("expected stale item id1, got %d", stale[0].ID)
+	}
+
+	// 7. MarkPaymentInboxProcessed
+	err = repo.MarkPaymentInboxProcessed(ctx, id1, now)
+	if err != nil {
+		t.Fatalf("MarkPaymentInboxProcessed failed: %v", err)
+	}
+
+	// Verify id1 no longer in pending
+	pendingAfterMark, _ := repo.GetPendingPaymentInbox(ctx, 10, 5)
+	if len(pendingAfterMark) != 1 || pendingAfterMark[0].ID != id2 {
+		t.Errorf("expected only id2 in pending, got %+v", pendingAfterMark)
+	}
+
+	// Verify id1 no longer in stale
+	staleAfterMark, _ := repo.GetStalePaymentInbox(ctx, 15*time.Minute, 10)
+	if len(staleAfterMark) != 0 {
+		t.Errorf("expected 0 stale items after marking processed, got %d", len(staleAfterMark))
+	}
+}

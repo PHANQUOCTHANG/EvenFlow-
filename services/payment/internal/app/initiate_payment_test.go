@@ -108,6 +108,26 @@ func (m *memoryRepo) ProcessPaymentFailedTx(_ context.Context, params domain.Pro
 	}, nil
 }
 
+func (m *memoryRepo) SavePaymentInbox(_ context.Context, item domain.PaymentInboxItem) (int64, error) {
+	return 1, nil
+}
+
+func (m *memoryRepo) GetPendingPaymentInbox(_ context.Context, limit int, maxAttempts int) ([]domain.PaymentInboxItem, error) {
+	return nil, nil
+}
+
+func (m *memoryRepo) MarkPaymentInboxProcessed(_ context.Context, id int64, processedAt time.Time) error {
+	return nil
+}
+
+func (m *memoryRepo) IncrementPaymentInboxAttempts(_ context.Context, id int64) error {
+	return nil
+}
+
+func (m *memoryRepo) GetStalePaymentInbox(_ context.Context, olderThan time.Duration, limit int) ([]domain.StaleInboxRecord, error) {
+	return nil, nil
+}
+
 func setupTestEnvironment() (*memoryRepo, *gateway.Registry, *fakeClock, *fakeIDGen, *slog.Logger) {
 	repo := newMemoryRepo()
 	reg := gateway.NewRegistry(domain.ProviderSandbox, []string{"sandbox", "vnpay"})
