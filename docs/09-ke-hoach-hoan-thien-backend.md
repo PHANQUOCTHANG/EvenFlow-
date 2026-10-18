@@ -26,7 +26,7 @@ Nên thứ tự ở đây là: nối cho chạy → dựng nền → hoàn thi�
 | 4 | Event | CRUD sự kiện, state machine, lịch mở bán, khoá quota | Nghiệp vụ | 3 | **Đang làm** — vòng đời sự kiện (EV-117, PR #59) và kiểm duyệt AI + hàng đợi Moderator (EV-120, EV-121) đã vào `develop` |
 | 5 | Phòng chờ hoàn chỉnh | Bầu leader, đo sức khoẻ thật, lottery, heartbeat, hết vé, API Ops | Hệ thống | 3, 4 | **Đang làm** — bầu leader có fencing và đo sức khoẻ thật (EV-142) ở nhánh `feature/EV-142-admit-leader-fencing`; lottery, heartbeat, hết vé, API Ops chưa làm |
 | 6 | Thanh toán + phát vé | Webhook exactly-once, đối soát đơn treo, vé QR, email | Nghiệp vụ | 2, 4 | Chưa làm |
-| 7 | AI | Consumer, Gemini thật, cache, suy biến, kiểm duyệt | Nghiệp vụ + hệ thống | 1 (phần `mq`), 4 | **Đang làm** — khung 4 consumer + Gemini thật (EV-157) ở nhánh `feature/EV-157-ai-worker-consumers`, xem [workflow/EV-157-ai-worker-consumers](workflow/EV-157-ai-worker-consumers/spec.md); retry/alert DLQ, API trợ lý, suy biến thật chưa làm |
+| 7 | AI | Consumer, Gemini thật, cache, suy biến, kiểm duyệt | Nghiệp vụ + hệ thống | 1 (phần `mq`), 4 | **Đang làm** — khung 4 consumer + Gemini thật (EV-157, PR #67), retry/phân loại lỗi + alert DLQ (EV-159, PR #69) đã merge; API trợ lý (EV-171) ở nhánh `feature/EV-171-assistant-api`; tool-call thật, suy biến thật, chống injection, cache vector chưa làm |
 | 8 | Anti-bot | Rule engine, chấm điểm rủi ro, Turnstile | Nghiệp vụ | 3 | Chưa làm |
 | 9 | Vận hành + chịu tải | K8s, autoscale, load shedding, k6 100k VU, chaos drill | Hệ thống | tất cả | Chưa làm |
 

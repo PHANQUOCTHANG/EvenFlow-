@@ -32,6 +32,17 @@ DEAD_LETTERED = Counter(
     "So message da chuyen vao DLQ theo ly do (permanent: loi khong the tu het, exhausted: het luot)",
     ["queue", "reason"],
 )
+# EV-171: API tro ly phia khach.
+ASSISTANT_REQUESTS = Counter(
+    "ai_assistant_requests_total",
+    "Yeu cau toi API tro ly theo ket qua (queued, quota_exceeded, unavailable, invalid, ...)",
+    ["outcome"],
+)
+ASSISTANT_ACCEPT_SECONDS = Histogram(
+    "ai_assistant_accept_seconds",
+    "Thoi gian API tro ly nhan va xep hang mot cau hoi (AC: < 50 ms)",
+    buckets=(0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1),
+)
 CACHE_HIT = Gauge("ai_semantic_cache_hit_ratio", "Ti le hit cache ngu nghia")
 RATE_LIMITED = Counter("ai_gemini_429_total", "So lan bi Gemini tu choi vi rate-limit")
 PERMIT_DENIED = Counter("ai_permit_denied_total", "So lan limiter tu choi cap phep")

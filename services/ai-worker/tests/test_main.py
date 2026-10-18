@@ -46,3 +46,13 @@ def test_PoolBangKhongVanCoSpecDeRuntimeBoQua() -> None:
     specs = build_specs(Settings(_env_file=None, anomaly_consumers=0, report_consumers=0),
                         chat=_chat, moderation=_mod)
     assert [p.concurrency for p in specs if p.key in ("anomaly", "report")] == [0, 0]
+
+
+def test_ApiTroLyDuocGanVaoApp() -> None:
+    from app.main import app
+
+    # FastAPI 0.14x boc router con (_IncludedRouter): doc tu OpenAPI thay vi app.routes.
+    paths = set(app.openapi()["paths"])
+    assert "/v1/events/{event_id}/assistant/messages" in paths
+    assert "/v1/assistant/messages/{job_id}" in paths
+    assert "/v1/assistant/messages/{job_id}/stream" in paths
