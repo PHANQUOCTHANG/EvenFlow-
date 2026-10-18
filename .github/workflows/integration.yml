@@ -88,3 +88,17 @@ jobs:
         run: |
           bash "$GITHUB_WORKSPACE/.github/scripts/run-and-report-tests.sh" TestTichHop \
             go test -v -tags=integration ./test/... -count=1 -timeout=10m
+      # ai-worker (EV-157): 4 pool consumer, retry/DLQ va tat em tren RabbitMQ 3.13 + Redis 7 that.
+      # pytest khong co co skip o day: thieu Docker thi fixture loi -> step do; khong thu duoc
+      # test nao thi pytest tra exit 5 -> step cung do. Khong boc run-and-report-tests.sh vi
+      # script do dem dong `--- PASS` cua `go test -v`.
+      - uses: astral-sh/setup-uv@v3
+        with:
+          version: "0.9.30"
+          enable-cache: true
+          cache-dependency-glob: services/ai-worker/uv.lock
+      - name: pytest -m integration (ai-worker)
+        working-directory: services/ai-worker
+        run: |
+          uv sync --all-extras --locked
+          uv run pytest -m integration -q -rA

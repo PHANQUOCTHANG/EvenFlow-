@@ -18,7 +18,11 @@ import logging
 import time
 from dataclasses import dataclass
 
-from app.gemini.limiter import GlobalRateLimiter, estimate_tokens
+from app.gemini.client import RateLimited
+from app.gemini.guarded import PermitDenied, guarded_generate
+from app.gemini.limiter import GlobalRateLimiter
+from app.mq.protocol import MAX_ATTEMPTS, PermanentError
+from app.mq.runtime import Delivery
 from app.pipeline import degradation
 from app.pipeline.faq import FaqMatcher
 from app.pipeline.semantic_cache import SemanticCache
@@ -66,16 +70,24 @@ class ChatConsumer:
         self._signals = signals
         self._publish = publish_result
 
-    async def handle(self, raw: bytes) -> None:
-        job = ChatJob(**json.loads(raw))
+    async def handle(self, raw: bytes) -> str | None:
+        """Xu ly mot job. Tra ve "expired" khi bo job qua han, None khi da tra loi.
+
+        Nem Retry khi can thu lai (limiter chua cho phep, Gemini 429), PermanentError
+        khi body hong -- thu lai bao nhieu lan cung khong doc duoc.
+        """
+        try:
+            job = ChatJob(**json.loads(raw))
+        except (ValueError, TypeError, UnicodeDecodeError) as exc:
+            raise PermanentError(f"job chat hong: {type(exc).__name__}") from exc
 
         # Message qua han bi bo, CO Y (BR-A3). Cau tra loi den sau khi khach da
         # duoc admit vao mua ve la vo gia tri -- giu lai chi ton quota va lam
         # nhung nguoi con dang cho phai doi lau hon.
         age = time.time() - job.enqueued_at
         if age > 60:
-            log.info("bo job qua han", extra={"job_id": job.job_id, "age_s": round(age, 1)})
-            return
+            log.info("bo job qua han", extra={"age_s": round(age, 1)})
+            return "expired"
 
         mode = degradation.decide(self._signals())
         policy = degradation.policy_for(mode)
@@ -114,39 +126,40 @@ class ChatConsumer:
         except Exception:
             # Gemini hong -> van tra loi duoc bang FAQ. Khach khong bao gio thay
             # loi ky thuat (BR-A1).
-            log.exception("goi gemini that bai", extra={"job_id": job.job_id})
+            log.exception("goi gemini that bai")
             await self._emit(job, self._faq.fallback(None), source="fallback", mode=mode)
-            return
+            return None
         finally:
             await self._flight.release(key)
 
         await self._cache.put(job.event_id, job.question, answer)
         await self._flight.publish(key, answer)
         await self._emit(job, answer, source="llm", mode=mode)
+        return None
 
     async def _call_gemini(self, job: ChatJob, policy: degradation.Policy) -> str:
         # ---- L6: xin phep TRUOC khi goi ----
         prompt = await self._gemini.build_prompt(job, self._tools)
-        est = estimate_tokens(prompt, policy.max_output_tokens)
-
-        permit = await self._limiter.acquire(est)
-        if not permit.granted:
-            # KHONG sleep o day. Nack ve queue voi do tre chinh xac de consumer
-            # nay ranh tay xu ly job khac (co the la job tra duoc tu cache).
-            raise Retry(permit.wait_ms)
-
-        actual_tokens = 0
         try:
-            result = await self._gemini.generate(
-                prompt, max_output_tokens=policy.max_output_tokens,
+            result = await guarded_generate(
+                self._limiter, self._gemini, prompt, max_output_tokens=policy.max_output_tokens,
             )
-            actual_tokens = result.total_tokens
-            return result.text
-        finally:
-            # Hoan lai phan dat cho thua -- ke ca khi goi that bai (luc do
-            # actual_tokens = 0 nen hoan toan bo). Neu bo qua buoc nay, han muc
-            # se ro ri dan cho toi khi limiter chan het moi thu.
-            await self._limiter.refund(permit.reserved_tokens, actual_tokens)
+        except PermitDenied as exc:
+            # KHONG sleep o day. Dua ve hang tre de consumer nay ranh tay xu ly job
+            # khac (co the la job tra duoc tu cache).
+            raise Retry(exc.wait_ms) from exc
+        except RateLimited as exc:
+            # Thu lai qua hang tre thay vi tra loi du phong: limiter dung thi 429 la su
+            # co hiem, khong phai tai.
+            raise Retry(0) from exc
+        return result.text
+
+    async def give_up(self, raw: bytes) -> None:
+        """Het luot thu: tra loi du phong thay vi im lang (goi sau khi handle da doc duoc job)."""
+        job = ChatJob(**json.loads(raw))
+        mode = degradation.decide(self._signals())
+        notice = degradation.policy_for(mode).user_notice
+        await self._emit(job, self._faq.fallback(notice), source="fallback", mode=mode)
 
     async def _emit(self, job: ChatJob, answer: str, *, source: str, mode: str) -> None:
         await self._publish(job.job_id, {
@@ -156,3 +169,22 @@ class ChatConsumer:
             "mode": str(mode),
             "latency_ms": int((time.time() - job.enqueued_at) * 1000),
         })
+
+
+def make_handler(consumer: ChatConsumer):
+    """Noi ChatConsumer vao runtime. Retry (limiter, 429) la loi tam -> di ai.chat.retry (5s).
+
+    Lan thu cuoi van Retry thi KHONG de job vao DLQ: luc mo ban limiter tu choi la chuyen
+    binh thuong, va job vao DLQ nghia la khach doi mai khong co cau tra loi (BR-A1).
+    """
+
+    async def handler(delivery: Delivery) -> str | None:
+        try:
+            return await consumer.handle(delivery.body)
+        except Retry:
+            if delivery.attempt < MAX_ATTEMPTS:
+                raise
+            await consumer.give_up(delivery.body)
+            return "fallback"
+
+    return handler

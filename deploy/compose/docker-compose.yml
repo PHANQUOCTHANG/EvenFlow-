@@ -202,6 +202,13 @@ services:
       # Dat thap hon han muc that de chua bien an toan (xem limiter.py).
       GEMINI_RPM: "55"
       GEMINI_TPM: "900000"
+      # So consumer moi hang doi (BR-A3). Anomaly/report chua co handler (EV-167, EV-168):
+      # message vao ai.dlq de replay sau.
+      CHAT_CONSUMERS: "20"
+      MODERATION_CONSUMERS: "5"
+      ANOMALY_CONSUMERS: "1"
+      REPORT_CONSUMERS: "1"
+      INTERNAL_API_BASE: "http://gateway:8080"
     ports: ["8090:8090"]
     depends_on:
       redis: {condition: service_healthy}
