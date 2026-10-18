@@ -59,11 +59,52 @@ def attempt_of(headers: Mapping[str, Any] | None) -> int:
     return raw
 
 
+# Ma HTTP 4xx van co the tu het neu thu lai: het thoi gian, "qua som", bi gioi han toc do.
+_RETRYABLE_4XX = frozenset({408, 425, 429})
+_MAX_CAUSE_DEPTH = 5
+
+
+def _status_of(err: BaseException) -> int | None:
+    """Ma loi kieu HTTP cua exception thu vien, doc bang duck typing (khong import thu vien).
+
+    httpx.HTTPStatusError: `.response.status_code`. google.genai.errors.APIError: `.code`.
+    """
+    response = getattr(err, "response", None)
+    status = getattr(response, "status_code", None)
+    if isinstance(status, int) and not isinstance(status, bool):
+        return status
+    code = getattr(err, "code", None)
+    if isinstance(code, int) and not isinstance(code, bool):
+        return code
+    return None
+
+
+def is_permanent(err: BaseException) -> bool:
+    """Loi nay co THE tu het khi thu lai khong (EV-159).
+
+    Thu lai loi khong the tu het chiem 3 luot va -- voi Gemini -- dat cho token 3 lan cho mot
+    request chac chan hong. Vinh vien: PermanentError, body khong giai ma duoc, HTTP 4xx tru
+    408/425/429. Con lai (5xx, timeout, mat ket noi, limiter...) la tam thoi. Xet ca chuoi
+    `raise ... from exc` vi handler hay boc loi thu vien.
+    """
+    seen = 0
+    cur: BaseException | None = err
+    while cur is not None and seen < _MAX_CAUSE_DEPTH:
+        if isinstance(cur, PermanentError | UnicodeDecodeError) or type(cur).__name__ == "JSONDecodeError":
+            return True
+        status = _status_of(cur)
+        if status is not None:
+            return 400 <= status < 500 and status not in _RETRYABLE_4XX
+        cur = cur.__cause__
+        seen += 1
+    return False
+
+
 def decide(err: BaseException | None, attempt: int, max_attempts: int = MAX_ATTEMPTS) -> Action:
     """Thanh cong -> ACK; loi vinh vien hoac het luot -> DEAD_LETTER; con lai -> RETRY."""
     if err is None:
         return Action.ACK
-    if isinstance(err, PermanentError) or attempt >= max_attempts:
+    if is_permanent(err) or attempt >= max_attempts:
         return Action.DEAD_LETTER
     return Action.RETRY
 

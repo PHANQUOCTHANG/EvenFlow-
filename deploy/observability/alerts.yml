@@ -49,6 +49,23 @@ groups:
         for: 0m
         labels: { severity: warning }
 
+      # EV-159: message trong ai.dlq la job da bi bo -- su kien co the dang ket o PENDING_REVIEW,
+      # hoac co mot loai loi vinh vien moi. Phai co nguoi xem va replay.
+      - alert: AiDeadLetterQueueNotEmpty
+        expr: ai_dlq_depth > 0
+        for: 1m
+        labels: { severity: warning }
+        annotations:
+          summary: "ai.dlq dang co {{ $value }} message chua ai xu ly"
+
+      # Hang loat job vao DLQ: Gemini/event service hong dien rong hoac mot ban deploy loi.
+      - alert: AiDeadLetterSpike
+        expr: sum(rate(ai_dead_lettered_total[5m])) * 60 > 10
+        for: 5m
+        labels: { severity: critical }
+        annotations:
+          summary: "Hon 10 job AI/phut dang vao DLQ"
+
       - alert: AiQueueLag
         expr: ai_queue_lag_seconds{queue="ai.chat.q"} > 30
         for: 2m
