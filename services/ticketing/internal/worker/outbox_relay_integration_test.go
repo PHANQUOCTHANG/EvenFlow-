@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"io"
 	"log/slog"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -191,7 +192,8 @@ func (p *unroutablePublisher) Publish(ctx context.Context, ex, key string, msg m
 	p.mu.Lock()
 	p.keys = append(p.keys, key)
 	p.mu.Unlock()
-	if key == "moderation" {
+	// ticketing.events chi co binding cho ticketing.*: key cua service khac bi tra ve.
+	if !strings.HasPrefix(key, "ticketing.") {
 		return mq.ErrUnroutable
 	}
 	return p.spyOutboxPublisher.Publish(ctx, ex, key, msg)
@@ -209,9 +211,11 @@ func TestOutboxRelay_Integration_KhongChamDongCuaServiceKhac(t *testing.T) {
 		INSERT INTO outbox_events (aggregate_type, aggregate_id, routing_key, payload)
 		VALUES ($1, $2::uuid, $3, '{}')
 		RETURNING id`
-	var idEvent, idOrder int64
-	// Dong cua event service chen TRUOC (id nho hon) -- dung thu tu gay ket.
+	var idEvent, idPayment, idOrder int64
+	// Dong cua service khac chen TRUOC (id nho hon) -- dung thu tu gay ket. Payment (EV-151)
+	// dung CUNG aggregate_type 'order' voi ticketing nen loc theo aggregate_type la khong du.
 	_ = pool.QueryRow(ctx, insQ, "event", uuid.New().String(), "moderation").Scan(&idEvent)
+	_ = pool.QueryRow(ctx, insQ, "order", uuid.New().String(), "order.paid").Scan(&idPayment)
 	_ = pool.QueryRow(ctx, insQ, "order", uuid.New().String(), "ticketing.hold.created").Scan(&idOrder)
 
 	pub := &unroutablePublisher{}
@@ -241,16 +245,18 @@ func TestOutboxRelay_Integration_KhongChamDongCuaServiceKhac(t *testing.T) {
 	cancelRelay()
 	<-done
 
-	var eventPublished *time.Time
-	_ = pool.QueryRow(ctx, "SELECT published_at FROM outbox_events WHERE id = $1", idEvent).Scan(&eventPublished)
-	if eventPublished != nil {
-		t.Fatal("relay ticketing khong duoc danh dau dong cua event service")
+	for _, id := range []int64{idEvent, idPayment} {
+		var published *time.Time
+		_ = pool.QueryRow(ctx, "SELECT published_at FROM outbox_events WHERE id = $1", id).Scan(&published)
+		if published != nil {
+			t.Fatalf("relay ticketing khong duoc danh dau dong %d cua service khac", id)
+		}
 	}
 	pub.mu.Lock()
 	defer pub.mu.Unlock()
 	for _, k := range pub.keys {
-		if k == "moderation" {
-			t.Fatal("relay ticketing khong duoc publish dong cua event service")
+		if !strings.HasPrefix(k, "ticketing.") {
+			t.Fatalf("relay ticketing khong duoc publish dong cua service khac (key %q)", k)
 		}
 	}
 }

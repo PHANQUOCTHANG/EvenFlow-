@@ -11,6 +11,6 @@ Viết tắt: `A:` = `services/event/internal/app/handle_ai_verdict_test.go`, `H
 | AC-2 một transaction, không nuốt lỗi | A: `TestSubmitForReview_GhiLoiThiTraLoiVaKhongCoJob` · PI (I): `TestTichHop_UpdateWithOutbox_HongGiuaChungThiKhongGhiGi` |
 | AC-3 relay event: lọc, confirm, đánh dấu, property | WI (I): `TestTichHop_NopDuyet_JobToiHangKiemDuyet` · W: `TestNewOutboxRelay_CauHinhSaiThiLoi`, `TestDefaultOutboxRelayConfig_ChiLayDongCuaEvent` |
 | AC-4 key không có tuyến không chặn dòng sau | WI (I): `TestTichHop_RoutingKeyLa_KhongChanDongSau` |
-| AC-5 relay ticketing chỉ lấy dòng của mình | TI (I): `TestOutboxRelay_Integration_KhongChamDongCuaServiceKhac` · T: `TestDefaultOutboxRelayConfig_ChiLayDongCuaTicketing` |
+| AC-5 relay ticketing chỉ lấy `ticketing.*` (kể cả khi payment dùng chung aggregate `order`) | TI (I): `TestOutboxRelay_Integration_KhongChamDongCuaServiceKhac` · T: `TestDefaultOutboxRelayConfig_ChiLayDongCuaTicketing` |
 | AC-6 không đói khi nhiều dòng service khác đứng trước | WI (I): `TestTichHop_NopDuyet_JobToiHangKiemDuyet` (12 dòng `order` > Batch 10) |
 | AC-7 không phá EVF-39 | `TestNoOversell_UnderExtremeConcurrency`, `TestNoOversell_WithConcurrentExpiry` ×20 (evidence §2) |

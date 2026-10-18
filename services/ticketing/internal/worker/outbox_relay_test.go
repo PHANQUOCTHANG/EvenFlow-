@@ -74,7 +74,7 @@ func TestOutboxRelay_GracefulShutdown(t *testing.T) {
 
 func TestDefaultOutboxRelayConfig_ChiLayDongCuaTicketing(t *testing.T) {
 	cfg := worker.DefaultOutboxRelayConfig()
-	if len(cfg.AggregateTypes) != 1 || cfg.AggregateTypes[0] != "order" {
-		t.Fatalf("relay ticketing chi duoc lay aggregate_type 'order', got %v", cfg.AggregateTypes)
+	if cfg.RoutingKeyPrefix != "ticketing." {
+		t.Fatalf("relay ticketing chi duoc lay routing key 'ticketing.*', got %q", cfg.RoutingKeyPrefix)
 	}
 }

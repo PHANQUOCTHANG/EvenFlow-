@@ -2,7 +2,7 @@
 
 Ngày chạy: 2026-10-18. Máy: Windows 11, Docker Desktop (engine 29.6.2). Go chạy trong `golang:1.26` (go1.26.9,
 Debian — có gcc cho `-race`), mount Docker socket cho testcontainers. Nhánh `bugfix/EV-120-moderation-outbox-relay`
-trên `feature/EV-157-ai-worker-consumers` @ `9065edb`.
+trên `feature/EV-157-ai-worker-consumers`, rebase lên `develop` @ `2079585` (có EV-151/152/153).
 
 **Chưa có bằng chứng CI (Linux):** nhánh chưa được đẩy.
 
@@ -11,6 +11,7 @@ trên `feature/EV-157-ai-worker-consumers` @ `9065edb`.
 | Lỗi | Cách tái hiện | Kết quả trên mã cũ |
 |---|---|---|
 | O4 | `TestOutboxRelay_Integration_KhongChamDongCuaServiceKhac`: dòng `event/moderation` chèn trước dòng `order` | **FAIL** sau 5 giây: "dong 'order' khong duoc phat: relay ticketing bi ket boi dong cua service khac" |
+| O6 | Cùng test, thêm dòng payment `order/order.paid` (đúng như `services/payment/.../repository.go:380`) — chạy với bộ lọc `aggregate_type` của bản sửa đầu | **FAIL** cùng thông báo: aggregate type không phân biệt được ticketing với payment. Đổi sang lọc tiền tố `ticketing.` thì PASS |
 | O1 | Đột biến G1 (đặt lại key `ai.moderation.q`) trên mã mới | Đỏ ở `TestHTTP_AddTier_And_Submit_BR_E1` và `TestTichHop_NopDuyet_JobToiHangKiemDuyet` |
 | O2, O5 | Mã cũ không có relay, không có `UpdateWithOutbox` (test không biên dịch được trên mã cũ) | Đột biến G2, G6 thay vai trò tái hiện — §3 |
 
@@ -23,7 +24,7 @@ trên `feature/EV-157-ai-worker-consumers` @ `9065edb`.
 | event: tích hợp (`-tags=integration`, Postgres 16 + RabbitMQ 3.13) | PASS — `TestTichHop_NopDuyet_JobToiHangKiemDuyet`, `TestTichHop_RoutingKeyLa_KhongChanDongSau`, `TestTichHop_UpdateWithOutbox_HongGiuaChungThiKhongGhiGi` |
 | ticketing: `go test -race ./...` | PASS |
 | ticketing: toàn bộ tích hợp `go test -tags=integration ./... -timeout=15m` | PASS — 9 package, kể cả `test/concurrency` |
-| **EVF-39**: `go test -v -tags=integration -run TestNoOversell ./test/concurrency/... -count=20` | **40/40 PASS** (`UnderExtremeConcurrency` ×20, `WithConcurrentExpiry` ×20), 0 SKIP, 490 giây |
+| **EVF-39**: `go test -v -tags=integration -run TestNoOversell ./test/concurrency/... -count=20` | **40/40 PASS** (`UnderExtremeConcurrency` ×20, `WithConcurrentExpiry` ×20), 0 SKIP — chạy 2 lần: sau bản lọc `aggregate_type` và sau khi đổi sang lọc tiền tố routing key (O6) |
 | Cổng coverage `domain/` + `app/` (`check-domain-coverage.sh … 70`) | event **78,7%**, ticketing **98,2%** |
 | golangci-lint v2.12.2 (bản LF) | ticketing **0 issues**. event: 7 issues, **đều có sẵn trên `develop`** (4 `rows.Close`, 1 `ifElseChain`, gofmt `domain/event.go`, `domain/ticket_tier.go`); lỗi do slice này gây ra (`exitAfterDefer`, gofmt 3 file) đã sửa |
 | `go.mod` event | dòng `go 1.25.0` giữ nguyên, không có `toolchain`; thêm `amqp091-go` v1.15.0 và phụ thuộc test của `libs/go/testx` |
@@ -37,7 +38,7 @@ trên `feature/EV-157-ai-worker-consumers` @ `9065edb`.
 | G2 | `SubmitForReview` dùng `Update` thường (không ghi job) | Đỏ | `TestHTTP_AddTier_And_Submit_BR_E1` |
 | G3 | Relay event bỏ lọc `aggregate_type` | **Sống sót lần đầu → siết test → Đỏ** | `TestTichHop_NopDuyet_JobToiHangKiemDuyet` |
 | G4 | Key không có tuyến thì `break` thay vì bỏ qua | Đỏ | `TestTichHop_RoutingKeyLa_KhongChanDongSau` |
-| G5 | Relay ticketing bỏ lọc `aggregate_type` | Đỏ | `TestOutboxRelay_Integration_KhongChamDongCuaServiceKhac` |
+| G5 | Relay ticketing bỏ lọc (bản đầu: `aggregate_type`; bản sau: tiền tố routing key) | Đỏ cả hai lần | `TestOutboxRelay_Integration_KhongChamDongCuaServiceKhac` |
 | G6 | Ghi outbox bằng `r.db` thay vì `tx` (ngoài transaction) | **Sống sót lần đầu → thêm test → Đỏ** | `TestTichHop_UpdateWithOutbox_HongGiuaChungThiKhongGhiGi` |
 
 - **G3**: bảng định tuyến tình cờ là lớp lọc thứ hai (dòng `order` không có tuyến → bỏ qua), nên test đầu không

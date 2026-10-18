@@ -13,28 +13,29 @@ import (
 	"github.com/eventflow/eventflow/libs/go/mq"
 )
 
-// TicketingAggregateTypes la cac aggregate_type ma ticketing ghi vao outbox_events.
+// TicketingRoutingKeyPrefix: relay ticketing chi phat dong co routing key thuoc domain cua
+// minh (quy uoc <domain>.<entity>.<action>, docs/03 §7).
 //
-// Bang outbox_events dung chung moi service (mot database). Relay chi duoc lay dong cua
-// chinh minh: dong cua service khac (vd event -> "moderation") khong co binding tren
-// ticketing.events, broker tra ve, va vi relay dung o dong loi dau tien de giu thu tu,
-// MOI chu ky sau se ket dung cho do -- toan bo outbox ticketing ngung chay.
-var TicketingAggregateTypes = []string{"order"}
+// Bang outbox_events dung chung moi service (mot database). Dong cua service khac khong co
+// binding tren ticketing.events, broker tra ve, va vi relay dung o dong loi dau tien de giu
+// thu tu, MOI chu ky sau se ket dung cho do -- toan bo outbox ticketing ngung chay. Loc theo
+// aggregate_type la KHONG DU: payment (EV-151) ghi 'order.paid' voi cung aggregate_type 'order'.
+const TicketingRoutingKeyPrefix = "ticketing."
 
 // OutboxRelayConfig cấu hình cho tiến trình outbox relay.
 type OutboxRelayConfig struct {
 	Interval time.Duration // Mặc định 1 giây
 	Batch    int           // Kích thước lô (mặc định 100)
-	// AggregateTypes: chi relay dong co aggregate_type trong danh sach nay. Rong ->
-	// TicketingAggregateTypes (khong bao gio la "moi dong").
-	AggregateTypes []string
+	// RoutingKeyPrefix: chi relay dong co routing_key bat dau bang tien to nay. Rong ->
+	// TicketingRoutingKeyPrefix (khong bao gio la "moi dong").
+	RoutingKeyPrefix string
 }
 
 func DefaultOutboxRelayConfig() OutboxRelayConfig {
 	return OutboxRelayConfig{
-		Interval:       time.Second,
-		Batch:          100,
-		AggregateTypes: TicketingAggregateTypes,
+		Interval:         time.Second,
+		Batch:            100,
+		RoutingKeyPrefix: TicketingRoutingKeyPrefix,
 	}
 }
 
@@ -76,8 +77,8 @@ func NewOutboxRelay(
 	cfg OutboxRelayConfig,
 	log *slog.Logger,
 ) *OutboxRelay {
-	if len(cfg.AggregateTypes) == 0 {
-		cfg.AggregateTypes = TicketingAggregateTypes
+	if cfg.RoutingKeyPrefix == "" {
+		cfg.RoutingKeyPrefix = TicketingRoutingKeyPrefix
 	}
 	return &OutboxRelay{
 		pool:     pool,
@@ -133,12 +134,12 @@ func (r *OutboxRelay) relay(ctx context.Context) error {
 		SELECT id, aggregate_id::text, routing_key, payload, trace_id
 		  FROM outbox_events
 		 WHERE published_at IS NULL
-		   AND aggregate_type = ANY($2)
+		   AND starts_with(routing_key, $2)
 		 ORDER BY id
 		 LIMIT $1
 		 FOR UPDATE SKIP LOCKED`
 
-	rows, err := tx.Query(ctx, q, r.cfg.Batch, r.cfg.AggregateTypes)
+	rows, err := tx.Query(ctx, q, r.cfg.Batch, r.cfg.RoutingKeyPrefix)
 	if err != nil {
 		return err
 	}
