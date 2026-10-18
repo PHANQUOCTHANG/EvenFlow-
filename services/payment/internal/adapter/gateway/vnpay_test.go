@@ -145,3 +145,28 @@ func TestVNPayGateway_VerifyCallback(t *testing.T) {
 		t.Errorf("expected valid signature but status FAILED, got valid=%v status=%s", resFailed.Valid, resFailed.Status)
 	}
 }
+
+func TestVNPayGateway_QueryPayment(t *testing.T) {
+	gw := gateway.NewVNPayGateway(gateway.VNPayConfig{
+		TmnCode:    "TESTTMN",
+		HashSecret: "SECRET123456",
+	})
+
+	// Valid query
+	res, err := gw.QueryPayment(context.Background(), domain.PaymentQueryRequest{
+		OrderID:       "ord-vnp-1",
+		ProviderTxnID: "vnp-txn-123",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if res.Status != domain.StatusSucceeded {
+		t.Errorf("expected StatusSucceeded, got %s", res.Status)
+	}
+
+	// Invalid empty query
+	_, errEmpty := gw.QueryPayment(context.Background(), domain.PaymentQueryRequest{})
+	if errEmpty == nil {
+		t.Errorf("expected error for empty query")
+	}
+}

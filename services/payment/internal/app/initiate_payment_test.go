@@ -128,6 +128,14 @@ func (m *memoryRepo) GetStalePaymentInbox(_ context.Context, olderThan time.Dura
 	return nil, nil
 }
 
+func (m *memoryRepo) GetStalePendingOrders(_ context.Context, olderThan time.Duration, limit int) ([]domain.StaleOrderInfo, error) {
+	return nil, nil
+}
+
+func (m *memoryRepo) ProcessOrderCancellationTx(_ context.Context, params domain.CancelOrderParams) (domain.CancelOrderResult, error) {
+	return domain.CancelOrderResult{OrderID: params.OrderID, Status: "CANCELLED"}, nil
+}
+
 func setupTestEnvironment() (*memoryRepo, *gateway.Registry, *fakeClock, *fakeIDGen, *slog.Logger) {
 	repo := newMemoryRepo()
 	reg := gateway.NewRegistry(domain.ProviderSandbox, []string{"sandbox", "vnpay"})

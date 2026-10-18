@@ -752,3 +752,83 @@ func TestHandler_Webhook_ProcessorNil_501(t *testing.T) {
 		t.Fatalf("expected 501 when processor is nil, got %d", w.Code)
 	}
 }
+
+type mockReconciler struct {
+	executeFn func(ctx context.Context, limit int) (domain.ReconciliationResult, error)
+}
+
+func (m *mockReconciler) Execute(ctx context.Context, limit int) (domain.ReconciliationResult, error) {
+	if m.executeFn != nil {
+		return m.executeFn(ctx, limit)
+	}
+	return domain.ReconciliationResult{}, nil
+}
+
+func TestHandler_ReconcileOrders_Success(t *testing.T) {
+	log := slog.New(slog.NewJSONHandler(io.Discard, nil))
+	reconciler := &mockReconciler{
+		executeFn: func(_ context.Context, limit int) (domain.ReconciliationResult, error) {
+			if limit != 25 {
+				t.Errorf("expected limit 25, got %d", limit)
+			}
+			return domain.ReconciliationResult{
+				TotalScanned:    5,
+				HealedPaid:      3,
+				HealedCancelled: 1,
+				StillPending:    1,
+				Duration:        50 * time.Millisecond,
+			}, nil
+		},
+	}
+
+	h := httpadapter.NewHandler(nil, nil, nil, nil, log).WithOrderReconciler(reconciler)
+	mux := http.NewServeMux()
+	h.Routes(mux, nil)
+
+	// Test route /internal/reconcile
+	req := httptest.NewRequest("POST", "/internal/reconcile?limit=25", nil)
+	w := httptest.NewRecorder()
+	mux.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200 OK, got %d: %s", w.Code, w.Body.String())
+	}
+
+	var res domain.ReconciliationResult
+	if err := json.Unmarshal(w.Body.Bytes(), &res); err != nil {
+		t.Fatalf("invalid json: %v", err)
+	}
+	if res.TotalScanned != 5 || res.HealedPaid != 3 || res.HealedCancelled != 1 {
+		t.Errorf("unexpected reconcile result: %+v", res)
+	}
+
+	// Test route /v1/payments/reconcile
+	req2 := httptest.NewRequest("POST", "/v1/payments/reconcile?limit=25", nil)
+	w2 := httptest.NewRecorder()
+	mux.ServeHTTP(w2, req2)
+
+	if w2.Code != http.StatusOK {
+		t.Fatalf("expected 200 OK for /v1/payments/reconcile, got %d", w2.Code)
+	}
+}
+
+func TestHandler_ReconcileOrders_Errors(t *testing.T) {
+	log := slog.New(slog.NewJSONHandler(io.Discard, nil))
+	reconciler := &mockReconciler{
+		executeFn: func(_ context.Context, _ int) (domain.ReconciliationResult, error) {
+			return domain.ReconciliationResult{}, errors.New("database connection lost")
+		},
+	}
+
+	h := httpadapter.NewHandler(nil, nil, nil, nil, log).WithOrderReconciler(reconciler)
+	mux := http.NewServeMux()
+	h.Routes(mux, nil)
+
+	req := httptest.NewRequest("POST", "/internal/reconcile?limit=invalid", nil)
+	w := httptest.NewRecorder()
+	mux.ServeHTTP(w, req)
+
+	if w.Code != http.StatusInternalServerError {
+		t.Fatalf("expected 500 on reconcile error, got %d", w.Code)
+	}
+}

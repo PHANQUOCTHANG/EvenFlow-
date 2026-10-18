@@ -290,3 +290,128 @@ func TestMemoryRepository_PaymentInbox(t *testing.T) {
 		t.Errorf("expected 0 stale items after marking processed, got %d", len(staleAfterMark))
 	}
 }
+
+func TestMemoryRepository_StaleOrdersAndCancellation(t *testing.T) {
+	repo := postgres.NewMemoryRepository()
+	ctx := context.Background()
+	now := time.Now().UTC()
+
+	// 1. Seed orders: 1 stale pending (> 15m), 1 fresh pending (< 5m), 1 held, 1 paid
+	repo.SeedOrder(domain.OrderView{
+		ID:         "ord-stale-1",
+		EventID:    "evt-1",
+		IdentityID: "user-1",
+		Status:     "PAYMENT_PENDING",
+		TotalCents: 200000,
+		Currency:   "VND",
+		CreatedAt:  now.Add(-25 * time.Minute),
+		UpdatedAt:  now.Add(-20 * time.Minute),
+	})
+
+	repo.SeedOrder(domain.OrderView{
+		ID:         "ord-fresh-2",
+		EventID:    "evt-1",
+		IdentityID: "user-2",
+		Status:     "PAYMENT_PENDING",
+		TotalCents: 150000,
+		Currency:   "VND",
+		CreatedAt:  now.Add(-3 * time.Minute),
+		UpdatedAt:  now.Add(-2 * time.Minute),
+	})
+
+	repo.SeedOrder(domain.OrderView{
+		ID:         "ord-paid-3",
+		EventID:    "evt-1",
+		IdentityID: "user-3",
+		Status:     "PAID",
+		TotalCents: 300000,
+		Currency:   "VND",
+		CreatedAt:  now.Add(-30 * time.Minute),
+		UpdatedAt:  now.Add(-28 * time.Minute),
+	})
+
+	// Add payment for ord-stale-1
+	repo.SeedPayment(domain.Payment{
+		ID:            "pay-stale-1",
+		OrderID:       "ord-stale-1",
+		Provider:      domain.ProviderSandbox,
+		ProviderTxnID: "sbx_txn_99",
+		AmountCents:   200000,
+		Currency:      "VND",
+		Status:        domain.StatusPending,
+		CreatedAt:     now.Add(-20 * time.Minute),
+	})
+
+	// 2. Query stale orders (> 15m)
+	staleOrders, err := repo.GetStalePendingOrders(ctx, 15*time.Minute, 10)
+	if err != nil {
+		t.Fatalf("GetStalePendingOrders failed: %v", err)
+	}
+	if len(staleOrders) != 1 {
+		t.Fatalf("expected 1 stale order, got %d", len(staleOrders))
+	}
+	if staleOrders[0].OrderID != "ord-stale-1" {
+		t.Errorf("expected ord-stale-1, got %s", staleOrders[0].OrderID)
+	}
+	if staleOrders[0].Provider != domain.ProviderSandbox || staleOrders[0].ProviderTxnID != "sbx_txn_99" {
+		t.Errorf("expected provider sandbox & txn sbx_txn_99, got %s / %s", staleOrders[0].Provider, staleOrders[0].ProviderTxnID)
+	}
+
+	// 3. ProcessOrderCancellationTx on stale order
+	cancelRes, err := repo.ProcessOrderCancellationTx(ctx, domain.CancelOrderParams{
+		OrderID: "ord-stale-1",
+		TraceID: "trace-cancel-1",
+		Reason:  "qua 15 phut khong nhan duoc webhook",
+	})
+	if err != nil {
+		t.Fatalf("ProcessOrderCancellationTx failed: %v", err)
+	}
+	if cancelRes.AlreadyDone || cancelRes.Status != "CANCELLED" {
+		t.Errorf("unexpected cancel result: %+v", cancelRes)
+	}
+
+	// Verify order status is CANCELLED
+	cancelledOrder, _ := repo.GetOrder(ctx, "ord-stale-1")
+	if cancelledOrder.Status != "CANCELLED" {
+		t.Errorf("expected order status CANCELLED, got %s", cancelledOrder.Status)
+	}
+
+	// Verify outbox event hold.released emitted
+	outbox := repo.GetOutboxEvents()
+	foundOutbox := false
+	for _, ev := range outbox {
+		if ev["routing_key"] == "hold.released" && ev["aggregate_id"] == "ord-stale-1" {
+			foundOutbox = true
+			break
+		}
+	}
+	if !foundOutbox {
+		t.Errorf("expected hold.released outbox event for ord-stale-1")
+	}
+
+	// 4. Idempotency: Cancel again returns AlreadyDone = true
+	cancelAgain, err := repo.ProcessOrderCancellationTx(ctx, domain.CancelOrderParams{
+		OrderID: "ord-stale-1",
+		TraceID: "trace-cancel-2",
+		Reason:  "retry cancel",
+	})
+	if err != nil {
+		t.Fatalf("second cancel failed: %v", err)
+	}
+	if !cancelAgain.AlreadyDone {
+		t.Errorf("expected AlreadyDone = true on second cancellation")
+	}
+
+	// 5. Cancel on PAID order should return AlreadyDone = true, status PAID, not cancelling
+	cancelPaid, err := repo.ProcessOrderCancellationTx(ctx, domain.CancelOrderParams{
+		OrderID: "ord-paid-3",
+		TraceID: "trace-cancel-3",
+		Reason:  "cancel paid order attempt",
+	})
+	if err != nil {
+		t.Fatalf("cancel on paid order failed: %v", err)
+	}
+	if cancelPaid.Status != "PAID" {
+		t.Errorf("expected status PAID, got %s", cancelPaid.Status)
+	}
+}

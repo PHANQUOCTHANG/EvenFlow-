@@ -85,3 +85,27 @@ func TestStripeGateway_VerifyCallback(t *testing.T) {
 		t.Errorf("expected invalid result when signature is invalid")
 	}
 }
+
+func TestStripeGateway_QueryPayment(t *testing.T) {
+	gw := gateway.NewStripeGateway(gateway.StripeConfig{
+		PublishableKey: "pk_test_123",
+		SecretKey:      "sk_test_456",
+		WebhookSecret:  "whsec_789",
+	})
+
+	res, err := gw.QueryPayment(context.Background(), domain.PaymentQueryRequest{
+		OrderID:       "ord-stripe-1",
+		ProviderTxnID: "cs_test_123",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if res.Status != domain.StatusSucceeded {
+		t.Errorf("expected StatusSucceeded, got %s", res.Status)
+	}
+
+	_, errEmpty := gw.QueryPayment(context.Background(), domain.PaymentQueryRequest{})
+	if errEmpty == nil {
+		t.Errorf("expected error for empty query")
+	}
+}
