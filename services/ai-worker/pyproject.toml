@@ -14,6 +14,8 @@ dependencies = [
     "prometheus-client>=0.21",
     "opentelemetry-sdk>=1.28",
     "opentelemetry-instrumentation-fastapi>=0.49b0",
+    # Import truc tiep (tools.py, consumers/moderation.py): khong dua vao phu thuoc bac cau.
+    "httpx>=0.28",
 ]
 
 [project.optional-dependencies]
@@ -27,3 +29,7 @@ target-version = "py312"
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+# Test tich hop can Docker: mac dinh bo qua, chay rieng bang `pytest -m integration`
+# (CI: .github/workflows/integration.yml). `-m` tren dong lenh de len gia tri nay.
+addopts = "-m 'not integration'"
+markers = ["integration: can RabbitMQ + Redis that (testcontainers)"]
