@@ -179,3 +179,78 @@ func TestOutboxRelay_Integration_BrokerFailure_AtLeastOnce(t *testing.T) {
 		t.Fatal("event should be marked published after retry")
 	}
 }
+
+// unroutablePublisher mo phong exchange ticketing.events (topic): khong binding nao cho
+// routing key cua service khac, nen broker tra ve -> mq.ErrUnroutable.
+type unroutablePublisher struct {
+	spyOutboxPublisher
+	keys []string
+}
+
+func (p *unroutablePublisher) Publish(ctx context.Context, ex, key string, msg mq.Message) error {
+	p.mu.Lock()
+	p.keys = append(p.keys, key)
+	p.mu.Unlock()
+	if key == "moderation" {
+		return mq.ErrUnroutable
+	}
+	return p.spyOutboxPublisher.Publish(ctx, ex, key, msg)
+}
+
+// Bang outbox_events dung chung moi service (mot database). Truoc day relay ticketing lay
+// MOI dong chua phat: dong cua event service (routing key "moderation") bi day vao
+// ticketing.events, broker tra ve, relay `break` ngay dong dau -> moi chu ky ket o do va
+// toan bo outbox cua ticketing ngung chay.
+func TestOutboxRelay_Integration_KhongChamDongCuaServiceKhac(t *testing.T) {
+	pool := setupOutboxIntegrationTest(t)
+	ctx := context.Background()
+
+	const insQ = `
+		INSERT INTO outbox_events (aggregate_type, aggregate_id, routing_key, payload)
+		VALUES ($1, $2::uuid, $3, '{}')
+		RETURNING id`
+	var idEvent, idOrder int64
+	// Dong cua event service chen TRUOC (id nho hon) -- dung thu tu gay ket.
+	_ = pool.QueryRow(ctx, insQ, "event", uuid.New().String(), "moderation").Scan(&idEvent)
+	_ = pool.QueryRow(ctx, insQ, "order", uuid.New().String(), "ticketing.hold.created").Scan(&idOrder)
+
+	pub := &unroutablePublisher{}
+	cfg := worker.OutboxRelayConfig{Interval: 20 * time.Millisecond, Batch: 10}
+	relay := worker.NewOutboxRelay(pool, pub, "ticketing.events", cfg, slog.New(slog.NewTextHandler(io.Discard, nil)))
+
+	ctxRelay, cancelRelay := context.WithCancel(context.Background())
+	defer cancelRelay()
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		_ = relay.Run(ctxRelay)
+	}()
+
+	deadline := time.Now().Add(3 * time.Second)
+	for {
+		var publishedAt *time.Time
+		_ = pool.QueryRow(ctx, "SELECT published_at FROM outbox_events WHERE id = $1", idOrder).Scan(&publishedAt)
+		if publishedAt != nil {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("dong 'order' khong duoc phat: relay ticketing bi ket boi dong cua service khac")
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	cancelRelay()
+	<-done
+
+	var eventPublished *time.Time
+	_ = pool.QueryRow(ctx, "SELECT published_at FROM outbox_events WHERE id = $1", idEvent).Scan(&eventPublished)
+	if eventPublished != nil {
+		t.Fatal("relay ticketing khong duoc danh dau dong cua event service")
+	}
+	pub.mu.Lock()
+	defer pub.mu.Unlock()
+	for _, k := range pub.keys {
+		if k == "moderation" {
+			t.Fatal("relay ticketing khong duoc publish dong cua event service")
+		}
+	}
+}

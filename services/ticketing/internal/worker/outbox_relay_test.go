@@ -71,3 +71,10 @@ func TestOutboxRelay_GracefulShutdown(t *testing.T) {
 		t.Fatal("outbox relay did not stop on context cancellation")
 	}
 }
+
+func TestDefaultOutboxRelayConfig_ChiLayDongCuaTicketing(t *testing.T) {
+	cfg := worker.DefaultOutboxRelayConfig()
+	if len(cfg.AggregateTypes) != 1 || cfg.AggregateTypes[0] != "order" {
+		t.Fatalf("relay ticketing chi duoc lay aggregate_type 'order', got %v", cfg.AggregateTypes)
+	}
+}
