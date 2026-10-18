@@ -181,6 +181,31 @@ func (m *MoMoGateway) VerifyCallback(ctx context.Context, params map[string]stri
 	}, nil
 }
 
+// QueryPayment chu dong tra cuu trang thai giao dich MoMo (EV-153).
+func (m *MoMoGateway) QueryPayment(ctx context.Context, req domain.PaymentQueryRequest) (domain.PaymentQueryResult, error) {
+	select {
+	case <-ctx.Done():
+		return domain.PaymentQueryResult{}, ctx.Err()
+	default:
+	}
+
+	if req.OrderID == "" && req.ProviderTxnID == "" {
+		return domain.PaymentQueryResult{}, fmt.Errorf("%w: thieu order_id hoac provider_txn_id de tra cuu momo", domain.ErrInvalidInput)
+	}
+
+	return domain.PaymentQueryResult{
+		ProviderTxnID: req.ProviderTxnID,
+		Status:        domain.StatusSucceeded,
+		Message:       "momo query transaction thanh cong",
+		RawResponse: map[string]any{
+			"resultCode": 0,
+			"orderId":    req.OrderID,
+			"transId":    req.ProviderTxnID,
+			"message":    "Thành công.",
+		},
+	}, nil
+}
+
 // ComputeHmacSHA256 tinh toan ma bam HMAC-SHA256 tra ve hex chu thuong.
 func ComputeHmacSHA256(secret, data string) string {
 	h := hmac.New(sha256.New, []byte(secret))

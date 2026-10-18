@@ -15,8 +15,10 @@ import (
 
 	"github.com/eventflow/eventflow/libs/go/httpx"
 	"github.com/eventflow/eventflow/libs/go/idem"
+	"github.com/eventflow/eventflow/libs/go/otelx"
 	gatewayadapter "github.com/eventflow/eventflow/services/payment/internal/adapter/gateway"
 	httpadapter "github.com/eventflow/eventflow/services/payment/internal/adapter/http"
+	metricsadapter "github.com/eventflow/eventflow/services/payment/internal/adapter/metrics"
 	"github.com/eventflow/eventflow/services/payment/internal/adapter/postgres"
 	"github.com/eventflow/eventflow/services/payment/internal/app"
 	"github.com/eventflow/eventflow/services/payment/internal/config"
@@ -24,6 +26,7 @@ import (
 	"github.com/eventflow/eventflow/services/payment/internal/port"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 type uuidGenerator struct{}
@@ -99,25 +102,29 @@ func main() {
 	})
 	registry.Register(stripeGW)
 
-	// Khoi tao Use cases
+	// Khoi tao Use cases va Metrics (AC-6, AC-7)
 	clock := port.SystemClock{}
 	idGen := uuidGenerator{}
+	metrics := metricsadapter.New(prometheus.DefaultRegisterer)
 
 	initiatePaymentUC := app.NewInitiatePaymentUseCase(repo, registry, clock, idGen, log)
 	getPaymentUC := app.NewGetPaymentUseCase(repo)
 	listMethodsUC := app.NewListMethodsUseCase(registry)
 	processWebhookUC := app.NewProcessWebhookUseCase(repo, registry, clock, log)
 	replayInboxUC := app.NewReplayPaymentInboxUseCase(repo, clock, log)
+	reconcileOrdersUC := app.NewReconcileStaleOrdersUseCase(repo, registry, clock, metrics, log)
 
-	// Khoi tao HTTP handler va dang ky routes (bao gom webhook exactly-once BR-O6 va inbox replay)
+	// Khoi tao HTTP handler va dang ky routes (bao gom webhook exactly-once BR-O6, inbox replay va doi soat EV-153)
 	handler := httpadapter.NewHandler(initiatePaymentUC, getPaymentUC, listMethodsUC, processWebhookUC, log).
-		WithInboxReplayer(replayInboxUC)
+		WithInboxReplayer(replayInboxUC).
+		WithOrderReconciler(reconcileOrdersUC)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write([]byte("ok"))
 	})
+	mux.Handle("GET /metrics", otelx.MetricsHandler())
 
 	var idemMiddleware httpx.Middleware
 	if idemStore != nil {
@@ -170,6 +177,36 @@ func main() {
 						"still_pending", res.StillPending,
 						"failed", res.Failed,
 						"stale_detected", res.StaleDetected,
+					)
+				}
+			}
+		}
+	}()
+
+	// Khoi dong background worker dinh ky doi soat don treo qua 15 phut (EV-153 / EVF-73)
+	go func() {
+		ticker := time.NewTicker(60 * time.Second)
+		defer ticker.Stop()
+		log.Info("khoi dong background worker doi soat don treo", "interval", "60s", "threshold", "15m")
+
+		for {
+			select {
+			case <-workerCtx.Done():
+				log.Info("dung background worker doi soat don treo")
+				return
+			case <-ticker.C:
+				res, err := reconcileOrdersUC.Execute(workerCtx, 50)
+				if err != nil {
+					log.Error("background doi soat don treo gap loi", "err", err)
+				} else if res.TotalScanned > 0 {
+					log.Info("ket qua chay background doi soat don treo",
+						"scanned", res.TotalScanned,
+						"healed_paid", res.HealedPaid,
+						"healed_cancelled", res.HealedCancelled,
+						"still_pending", res.StillPending,
+						"skipped", res.Skipped,
+						"errors", res.Errors,
+						"duration", res.Duration,
 					)
 				}
 			}

@@ -19,6 +19,7 @@ type MemoryRepository struct {
 	outbox      []map[string]any
 	inbox       map[int64]domain.PaymentInboxItem
 	nextInboxID int64
+	clock       func() time.Time
 }
 
 func NewMemoryRepository() *MemoryRepository {
@@ -27,13 +28,34 @@ func NewMemoryRepository() *MemoryRepository {
 		payments: make(map[string]domain.Payment),
 		outbox:   make([]map[string]any, 0),
 		inbox:    make(map[int64]domain.PaymentInboxItem),
+		clock:    func() time.Time { return time.Now().UTC() },
 	}
+}
+
+// SetClock cho phep inject thoi gian hien tai phuc vu unit test.
+func (m *MemoryRepository) SetClock(nowFunc func() time.Time) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.clock = nowFunc
+}
+
+func (m *MemoryRepository) now() time.Time {
+	if m.clock != nil {
+		return m.clock()
+	}
+	return time.Now().UTC()
 }
 
 func (m *MemoryRepository) SeedOrder(order domain.OrderView) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.orders[order.ID] = order
+}
+
+func (m *MemoryRepository) SeedPayment(payment domain.Payment) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.payments[payment.ID] = payment
 }
 
 func (m *MemoryRepository) GetOrder(_ context.Context, orderID string) (domain.OrderView, error) {
@@ -344,7 +366,7 @@ func (m *MemoryRepository) GetStalePaymentInbox(_ context.Context, olderThan tim
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
-	now := time.Now().UTC()
+	now := m.now()
 	var records []domain.StaleInboxRecord
 
 	for _, it := range m.inbox {
@@ -369,4 +391,122 @@ func (m *MemoryRepository) GetStalePaymentInbox(_ context.Context, olderThan tim
 	}
 
 	return records, nil
+}
+
+// GetStalePendingOrders quet cac don hang o trang thai PAYMENT_PENDING ton tai qua nguong olderThan.
+func (m *MemoryRepository) GetStalePendingOrders(_ context.Context, olderThan time.Duration, limit int) ([]domain.StaleOrderInfo, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	now := m.now()
+	threshold := now.Add(-olderThan)
+	var results []domain.StaleOrderInfo
+
+	for _, order := range m.orders {
+		if order.Status == "PAYMENT_PENDING" {
+			orderTime := order.CreatedAt
+			if !order.UpdatedAt.IsZero() {
+				orderTime = order.UpdatedAt
+			}
+			if !orderTime.After(threshold) {
+				info := domain.StaleOrderInfo{
+					OrderID:    order.ID,
+					EventID:    order.EventID,
+					IdentityID: order.IdentityID,
+					Status:     order.Status,
+					TotalCents: order.TotalCents,
+					Currency:   order.Currency,
+					ExpiresAt:  order.ExpiresAt,
+					UpdatedAt:  order.UpdatedAt,
+					CreatedAt:  order.CreatedAt,
+				}
+
+				// Tim payment gan nhat cua order nay neu co
+				for _, p := range m.payments {
+					if p.OrderID == order.ID {
+						info.PaymentID = p.ID
+						info.Provider = p.Provider
+						info.ProviderTxnID = p.ProviderTxnID
+						break
+					}
+				}
+
+				results = append(results, info)
+			}
+		}
+	}
+
+	sort.Slice(results, func(i, j int) bool {
+		return results[i].CreatedAt.Before(results[j].CreatedAt)
+	})
+
+	if limit > 0 && len(results) > limit {
+		results = results[:limit]
+	}
+
+	return results, nil
+}
+
+// ProcessOrderCancellationTx huy don hang treo va ghi su kien hold.released.
+func (m *MemoryRepository) ProcessOrderCancellationTx(_ context.Context, params domain.CancelOrderParams) (domain.CancelOrderResult, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	order, exists := m.orders[params.OrderID]
+	if !exists {
+		return domain.CancelOrderResult{}, domain.ErrOrderNotFound
+	}
+
+	if order.Status == "CANCELLED" || order.Status == "EXPIRED" {
+		return domain.CancelOrderResult{
+			OrderID:     order.ID,
+			AlreadyDone: true,
+			Status:      order.Status,
+			Message:     fmt.Sprintf("don hang da o trang thai %s truoc do", order.Status),
+		}, nil
+	}
+
+	if order.Status == "PAID" || order.Status == "ISSUED" {
+		return domain.CancelOrderResult{
+			OrderID:     order.ID,
+			AlreadyDone: true,
+			Status:      order.Status,
+			Message:     "don hang da thanh toan thanh cong (PAID), khong the huy",
+		}, nil
+	}
+
+	order.Status = "CANCELLED"
+	m.orders[order.ID] = order
+
+	for id, p := range m.payments {
+		if p.OrderID == order.ID {
+			p.Status = domain.StatusFailed
+			m.payments[id] = p
+		}
+	}
+
+	now := time.Now().UTC()
+	outboxEvent := map[string]any{
+		"aggregate_type": "order",
+		"aggregate_id":   order.ID,
+		"routing_key":    "hold.released",
+		"payload": domain.OutboxHoldReleasedPayload{
+			OrderID:    order.ID,
+			EventID:    order.EventID,
+			Reason:     params.Reason,
+			ReleasedAt: now,
+		},
+		"trace_id":   params.TraceID,
+		"created_at": now,
+	}
+	m.outbox = append(m.outbox, outboxEvent)
+
+	return domain.CancelOrderResult{
+		OrderID:         order.ID,
+		AlreadyDone:     false,
+		HoldsReleased:   1,
+		TicketsReturned: 1,
+		Status:          "CANCELLED",
+		Message:         "huy don thanh cong, da tra kho ve va phat outbox",
+	}, nil
 }

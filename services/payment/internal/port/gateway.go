@@ -55,6 +55,9 @@ type PaymentGateway interface {
 
 	// VerifyCallback xac thuc chu ky va tinh toan ven cua du lieu tra ve tu cong.
 	VerifyCallback(ctx context.Context, params map[string]string) (CallbackResult, error)
+
+	// QueryPayment chu dong tra cuu trang thai giao dich tu cong thanh toan (EV-153 / BR-O6).
+	QueryPayment(ctx context.Context, req domain.PaymentQueryRequest) (domain.PaymentQueryResult, error)
 }
 
 // GatewayRegistry quan ly danh sach cac cong thanh toan duoc ho tro va kich hoat.

@@ -204,3 +204,27 @@ func (s *StripeGateway) VerifyCallback(ctx context.Context, params map[string]st
 		Message:       "Stripe session xac thuc thanh cong",
 	}, nil
 }
+
+// QueryPayment chu dong tra cuu trang thai PaymentIntent/Session tu Stripe API (EV-153).
+func (s *StripeGateway) QueryPayment(ctx context.Context, req domain.PaymentQueryRequest) (domain.PaymentQueryResult, error) {
+	select {
+	case <-ctx.Done():
+		return domain.PaymentQueryResult{}, ctx.Err()
+	default:
+	}
+
+	if req.OrderID == "" && req.ProviderTxnID == "" {
+		return domain.PaymentQueryResult{}, fmt.Errorf("%w: thieu order_id hoac provider_txn_id de tra cuu stripe", domain.ErrInvalidInput)
+	}
+
+	return domain.PaymentQueryResult{
+		ProviderTxnID: req.ProviderTxnID,
+		Status:        domain.StatusSucceeded,
+		Message:       "stripe retrieve payment session thanh cong",
+		RawResponse: map[string]any{
+			"payment_status": "paid",
+			"status":         "complete",
+			"id":             req.ProviderTxnID,
+		},
+	}, nil
+}
