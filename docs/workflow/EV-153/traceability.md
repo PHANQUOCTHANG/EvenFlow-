@@ -1,0 +1,11 @@
+# EV-153 (EVF-73) — Ma trận truy vết AC ↔ Test (Traceability)
+
+| AC | Nội dung yêu cầu | Test File | Test Case Name | Trạng thái |
+|---|---|---|---|---|
+| **AC-1** | Quét đơn `PAYMENT_PENDING` quá 15 phút, giới hạn batch an toàn | `internal/adapter/postgres/memory_repository_test.go`<br/>`internal/app/reconcile_orders_test.go` | `TestMemoryRepository_StaleOrdersAndCancellation`<br/>`TestReconcileOrders_ScanStalePending` | **PASS** |
+| **AC-2** | Truy vấn trạng thái cổng (Active Gateway Query): Sandbox, VNPay, MoMo, Stripe | `internal/adapter/gateway/sandbox_test.go`<br/>`internal/adapter/gateway/vnpay_test.go`<br/>`internal/adapter/gateway/momo_test.go`<br/>`internal/adapter/gateway/stripe_test.go` | `TestSandboxGateway_QueryPayment`<br/>`TestVNPayGateway_QueryPayment`<br/>`TestMoMoGateway_QueryPayment`<br/>`TestStripeGateway_QueryPayment` | **PASS** |
+| **AC-3** | Tự chữa thành công -> `PAID`, cập nhật atomic DB transaction, phát outbox `order.paid` | `internal/app/reconcile_orders_test.go` | `TestReconcileOrders_HealPaid_Success`<br/>`TestReconcileOrders_IdempotentAlreadyPaid` | **PASS** |
+| **AC-4** | Tự chữa thất bại/hủy -> `CANCELLED`, trả kho vé idempotent (`seat_holds` & `ticket_inventory`), phát outbox | `internal/app/reconcile_orders_test.go`<br/>`internal/adapter/postgres/memory_repository_test.go` | `TestReconcileOrders_HealCancelled_ReleaseHold`<br/>`TestReconcileOrders_HealCancelled_NoPayment`<br/>`TestMemoryRepository_StaleOrdersAndCancellation` | **PASS** |
+| **AC-5** | Xử lý an toàn khi giao dịch vẫn `PENDING` hoặc lỗi mạng tạm thời (không hủy vội) | `internal/app/reconcile_orders_test.go` | `TestReconcileOrders_StillPending_NoAction`<br/>`TestReconcileOrders_NetworkError_RetryLater` | **PASS** |
+| **AC-6** | Export Prometheus metric `payment_webhook_lag_seconds` & Reconciliation metrics | `internal/adapter/metrics/prom_test.go`<br/>`internal/app/reconcile_orders_test.go` | `TestProm_WebhookLagAndReconciliation`<br/>`TestProm_NilSafe`<br/>`TestReconcileOrders_ExportMetrics` | **PASS** |
+| **AC-7** | Endpoint API nội bộ `POST /internal/reconcile` và Background Ticker Worker | `internal/adapter/http/handler_test.go` | `TestHandler_ReconcileOrders_Success`<br/>`TestHandler_ReconcileOrders_Errors` | **PASS** |
