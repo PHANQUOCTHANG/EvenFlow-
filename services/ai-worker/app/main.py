@@ -23,10 +23,14 @@ from redis.asyncio import Redis
 from starlette.responses import Response
 
 from app import logx
+from app.api.assistant import AssistantDeps
+from app.api.assistant import router as assistant_router
+from app.api.quota import AssistantQuota
 from app.config import Settings, settings
 from app.consumers import chat, moderation, unsupported
 from app.gemini.client import GeminiClient
 from app.gemini.limiter import GlobalRateLimiter, LimiterConfig
+from app.mq.publisher import JobPublisher
 from app.mq.runtime import ConsumerRuntime, Handler, PoolSpec
 from app.mq.topology import declare, load_ai_topology
 from app.pipeline import degradation
@@ -58,7 +62,7 @@ def build_specs(s: Settings, *, chat: Handler, moderation: Handler) -> list[Pool
 
 
 @contextlib.asynccontextmanager
-async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     logx.configure()
     async with contextlib.AsyncExitStack() as stack:
         redis = Redis.from_url(settings.redis_url)
@@ -107,6 +111,16 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
         stack.push_async_callback(runtime.stop)
         await runtime.start()
         _state["runtime"] = runtime
+
+        # EV-171: API tro ly phia khach -- chi nhan va xep hang, khong goi Gemini.
+        publisher = JobPublisher(connection)
+        stack.push_async_callback(publisher.close)
+        app.state.assistant = AssistantDeps(
+            quota=AssistantQuota(redis),
+            publish=publisher.publish,
+            redis=redis,
+            mode=lambda: degradation.decide(_signals_now()),
+        )
         log.info("ai-worker san sang", extra={"gemini_mock": settings.gemini_mock, "pools": runtime.keys})
 
         try:
@@ -117,6 +131,7 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
 
 
 app = FastAPI(title="EventFlow AI Worker", version="0.1.0", lifespan=lifespan)
+app.include_router(assistant_router)
 
 
 @app.get("/healthz")
