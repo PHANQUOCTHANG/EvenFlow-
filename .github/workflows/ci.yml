@@ -75,6 +75,7 @@ jobs:
             deploy:
               - 'deploy/k8s/**'
               - 'deploy/compose/**'
+              - 'deploy/observability/**'
             ci:
               - '.github/workflows/**'
               - '.github/scripts/**'
@@ -311,6 +312,12 @@ jobs:
             -strict -summary -kubernetes-version 1.32.0 /m
       - name: docker compose config
         run: docker compose -f deploy/compose/docker-compose.yml config -q
+      # Rule sai cu phap lam Prometheus bo CA file alerts.yml -- moi alert (ke ca oversell) mat theo
+      # ma khong ai biet. check: cu phap + PromQL; test: alert keu dung luc (EV-159).
+      - name: promtool check rules + test rules
+        run: |
+          docker run --rm --entrypoint promtool -v "$PWD/deploy/observability:/o:ro" -w /o prom/prometheus:v3.5.0 check rules alerts.yml
+          docker run --rm --entrypoint promtool -v "$PWD/deploy/observability:/o:ro" -w /o prom/prometheus:v3.5.0 test rules alerts_test.yml
 
   lint-ci:
     name: lint-ci

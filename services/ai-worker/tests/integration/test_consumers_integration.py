@@ -382,3 +382,43 @@ async def _get(conn, queue: str):
         q = await ch.declare_queue(queue, passive=True)
         msg = await q.get(no_ack=True, fail=True)
         return msg
+
+
+# ---------------------------------------------------------------- EV-159 phan loai loi + DLQ
+
+
+async def test_KiemDuyet_Callback404_VaoDLQNgayVaDoSauDLQ(connection) -> None:
+    import httpx
+
+    from app.consumers import moderation
+
+    calls = 0
+
+    def event_service(request: httpx.Request) -> httpx.Response:
+        nonlocal calls
+        calls += 1
+        return httpx.Response(404, json={"title": "event not found"})
+
+    client = httpx.AsyncClient(transport=httpx.MockTransport(event_service))
+    consumer = moderation.ModerationConsumer(GeminiClient(mock=True), "http://event", client=client)
+    rt = ConsumerRuntime(connection, [PoolSpec("moderation", 1, moderation.make_handler(consumer))], grace_seconds=5)
+    await rt.start()
+    try:
+        await _publish(connection, "moderation", {
+            "job_id": "m-404", "event_id": "khong-ton-tai", "event_title": "x",
+            "event_description": "y", "enqueued_at": time.time(),
+        })
+        await _eventually(lambda: _count_positive(connection, "ai.dlq"), timeout=10)
+        await rt.sample_once()
+    finally:
+        await rt.stop()
+        await client.aclose()
+
+    # Mot lan goi duy nhat: 404 khong the tu het, khong qua ai.moderation.retry (30s x 2).
+    assert calls == 1
+    msg = await _get(connection, "ai.dlq")
+    assert msg.headers[ATTEMPT_HEADER] == 1
+    assert msg.headers[ERROR_HEADER].startswith("permanent: HTTPStatusError")
+    assert (REGISTRY.get_sample_value("ai_dlq_depth") or 0) >= 1
+    assert (REGISTRY.get_sample_value("ai_dead_lettered_total",
+                                      {"queue": "ai.moderation.q", "reason": "permanent"}) or 0) >= 1

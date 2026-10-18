@@ -25,12 +25,13 @@ import aio_pika
 
 from app import metrics
 from app.logx import log_context, trace_id_from
-from app.mq.protocol import Action, attempt_of, decide, forward_headers
+from app.mq.protocol import Action, attempt_of, decide, forward_headers, is_permanent
 
 log = logging.getLogger(__name__)
 
 RETRY_EXCHANGE = "ai.retry"
 DLX_EXCHANGE = "ai.dlx"
+DLQ = "ai.dlq"
 SAMPLE_INTERVAL_SECONDS = 5.0
 
 
@@ -135,12 +136,15 @@ async def process(msg: Any, spec: PoolSpec, forward: Forward, stopping: Callable
             await msg.ack()
             return _done(queue, label or "ack")
 
+        dead_reason: str | None = None
         if action is Action.RETRY:
             exchange, next_attempt, reason = RETRY_EXCHANGE, attempt + 1, None
             log.warning("loi tam thoi, thu lai", extra={"error": repr(err)})
         else:
-            exchange, next_attempt, reason = DLX_EXCHANGE, attempt, f"{type(err).__name__}: {err}"
-            log.error("chuyen vao DLQ", extra={"error": reason})
+            dead_reason = "permanent" if is_permanent(err) else "exhausted"
+            exchange, next_attempt = DLX_EXCHANGE, attempt
+            reason = f"{dead_reason}: {type(err).__name__}: {err}"
+            log.error("chuyen vao DLQ", extra={"error": reason, "dead_reason": dead_reason})
 
         try:
             await forward(msg, exchange, spec.key, forward_headers(headers, next_attempt, reason))
@@ -150,6 +154,9 @@ async def process(msg: Any, spec: PoolSpec, forward: Forward, stopping: Callable
             await msg.nack(requeue=True)
             return _done(queue, "requeue")
 
+        if dead_reason is not None:
+            # Dem SAU khi broker xac nhan ban sao: message chua toi DLQ thi alert khong duoc keu.
+            metrics.DEAD_LETTERED.labels(queue, dead_reason).inc()
         await msg.ack()
         return _done(queue, action.value)
 
@@ -260,6 +267,14 @@ class ConsumerRuntime:
             metrics.QUEUE_DEPTH.labels(pool.spec.queue).set(count)
             if count == 0 and pool.in_flight == 0 and pool.buffer.empty():
                 metrics.QUEUE_LAG.labels(pool.spec.queue).set(0)
+        try:
+            if self._sample_channel is None or self._sample_channel.is_closed:
+                self._sample_channel = await self._connection.channel()
+            dlq = await self._sample_channel.declare_queue(DLQ, passive=True)
+            metrics.DLQ_DEPTH.set(dlq.declaration_result.message_count)
+        except Exception:
+            log.warning("khong doc duoc do sau ai.dlq", exc_info=True)
+            self._sample_channel = None
 
     async def _sample_loop(self) -> None:
         while True:

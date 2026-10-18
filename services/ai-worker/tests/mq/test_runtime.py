@@ -248,3 +248,56 @@ async def test_Sampler_LoiDungChannelRiengKhongDungPool() -> None:
     assert rt._pools[0].channel is pool_channel
     assert len(conn.opened) == 2
     assert REGISTRY.get_sample_value("ai_queue_depth", {"queue": "ai.chat.q"}) == 0
+
+
+# ---- EV-159: dem message vao DLQ theo ly do va do sau ai.dlq ----
+
+def _dead(queue: str, reason: str) -> float:
+    return REGISTRY.get_sample_value("ai_dead_lettered_total", {"queue": queue, "reason": reason}) or 0.0
+
+
+async def test_DLQ_DemTheoLyDo_VinhVien() -> None:
+    before = _dead("ai.moderation.q", "permanent")
+    await process(FakeMessage(), _spec(_permanent, key="moderation"), FakeForward(), _never_stopping)
+    assert _dead("ai.moderation.q", "permanent") == before + 1
+
+
+async def test_DLQ_DemTheoLyDo_HetLuot() -> None:
+    before = _dead("ai.chat.q", "exhausted")
+    await process(FakeMessage(headers={ATTEMPT_HEADER: 3}), _spec(_boom), FakeForward(), _never_stopping)
+    assert _dead("ai.chat.q", "exhausted") == before + 1
+
+
+async def test_DLQ_ChuyenTiepLoi_KhongDem() -> None:
+    # Message chua vao DLQ (broker tu choi) -> khong duoc dem, neu khong alert bao sai.
+    before = _dead("ai.report.q", "permanent")
+    await process(FakeMessage(), _spec(_permanent, key="report"), FakeForward(fail=True), _never_stopping)
+    assert _dead("ai.report.q", "permanent") == before
+
+
+async def test_DLQ_GhiLoaiLoiVaoHeader() -> None:
+    fwd = FakeForward()
+    await process(FakeMessage(), _spec(_permanent, key="moderation"), fwd, _never_stopping)
+    assert fwd.calls[0][2][ERROR_HEADER].startswith("permanent: PermanentError")
+
+
+async def test_Sampler_DoSauDLQ() -> None:
+    from types import SimpleNamespace
+
+    from app.mq.runtime import ConsumerRuntime
+
+    class _Ch:
+        is_closed = False
+
+        async def declare_queue(self, name, passive):
+            n = 4 if name == "ai.dlq" else 0
+            return SimpleNamespace(declaration_result=SimpleNamespace(message_count=n))
+
+    class _C:
+        async def channel(self, **kw):
+            return _Ch()
+
+    rt = ConsumerRuntime(_C(), [PoolSpec("chat", 1, _ok)], grace_seconds=1)
+    rt._pools[0].channel = object()
+    await rt.sample_once()
+    assert REGISTRY.get_sample_value("ai_dlq_depth") == 4

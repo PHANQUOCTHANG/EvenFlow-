@@ -1,0 +1,56 @@
+# Unit test cho alert rule: `promtool test rules deploy/observability/alerts_test.yml`.
+# Chay trong CI (validate-deploy). Them alert moi thi them test o day.
+rule_files:
+  - alerts.yml
+
+evaluation_interval: 15s
+
+tests:
+  # EV-159: DLQ co message lien tuc > 1 phut -> keu; vua co roi het thi khong keu.
+  - interval: 15s
+    input_series:
+      - series: 'ai_dlq_depth{instance="ai-worker:8090", job="ai-worker"}'
+        values: "0 0 3 3 3 3 3 3"
+      - series: 'ai_dlq_depth{instance="ai-worker-2:8090", job="ai-worker"}'
+        values: "0 2 0 0 0 0 0 0"
+    alert_rule_test:
+      - eval_time: 30s
+        alertname: AiDeadLetterQueueNotEmpty
+        exp_alerts: []
+      - eval_time: 105s
+        alertname: AiDeadLetterQueueNotEmpty
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+              instance: ai-worker:8090
+              job: ai-worker
+            exp_annotations:
+              summary: "ai.dlq dang co 3 message chua ai xu ly"
+
+  # EV-159: 20 job/phut vao DLQ trong hon 5 phut -> critical; 1 job/phut thi khong.
+  - interval: 1m
+    input_series:
+      - series: 'ai_dead_lettered_total{queue="ai.moderation.q", reason="permanent"}'
+        values: "0+20x12"
+      - series: 'ai_dead_lettered_total{queue="ai.chat.q", reason="exhausted"}'
+        values: "0+1x12"
+    alert_rule_test:
+      - eval_time: 4m
+        alertname: AiDeadLetterSpike
+        exp_alerts: []
+      - eval_time: 11m
+        alertname: AiDeadLetterSpike
+        exp_alerts:
+          - exp_labels:
+              severity: critical
+            exp_annotations:
+              summary: "Hon 10 job AI/phut dang vao DLQ"
+
+  - interval: 1m
+    input_series:
+      - series: 'ai_dead_lettered_total{queue="ai.chat.q", reason="exhausted"}'
+        values: "0+1x12"
+    alert_rule_test:
+      - eval_time: 11m
+        alertname: AiDeadLetterSpike
+        exp_alerts: []
