@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 
 	"github.com/eventflow/eventflow/services/event/internal/domain"
@@ -172,6 +173,40 @@ func (r *eventRepository) ListByOrganizer(ctx context.Context, organizerID uuid.
 }
 
 func (r *eventRepository) Update(ctx context.Context, e *domain.Event) error {
+	return updateEvent(ctx, r.db, e)
+}
+
+// UpdateWithOutbox cap nhat su kien va ghi outbox trong MOT transaction (EV-120, bat bien 1).
+func (r *eventRepository) UpdateWithOutbox(ctx context.Context, e *domain.Event, msgs ...port.OutboxMessage) error {
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	if err := updateEvent(ctx, tx, e); err != nil {
+		return err
+	}
+	const insertOutbox = `
+		INSERT INTO outbox_events (aggregate_type, aggregate_id, routing_key, payload)
+		VALUES ($1, $2, $3, $4)`
+	for _, m := range msgs {
+		payload, err := json.Marshal(m.Payload)
+		if err != nil {
+			return err
+		}
+		if _, err := tx.ExecContext(ctx, insertOutbox, m.AggregateType, m.AggregateID, m.RoutingKey, payload); err != nil {
+			return err
+		}
+	}
+	return tx.Commit()
+}
+
+type execer interface {
+	ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error)
+}
+
+func updateEvent(ctx context.Context, db execer, e *domain.Event) error {
 	query := `
 		UPDATE events SET
 			title = $1,
@@ -184,7 +219,7 @@ func (r *eventRepository) Update(ctx context.Context, e *domain.Event) error {
 			updated_at = $8
 		WHERE id = $9
 	`
-	_, err := r.db.ExecContext(
+	_, err := db.ExecContext(
 		ctx, query,
 		e.Title, e.Description, e.Venue,
 		e.StartsAt, e.SaleStartAt, e.SaleEndAt,

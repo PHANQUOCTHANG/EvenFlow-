@@ -46,7 +46,9 @@ func (uc *transitionStateUseCase) SubmitForReview(ctx context.Context, eventID, 
 		return nil, err
 	}
 
-	if err := uc.repo.Update(ctx, evt); err != nil {
+	// EV-120: job kiem duyet AI di CUNG transaction voi viec chuyen PENDING_REVIEW. Ghi rieng
+	// (nhu truoc) ma hong giua chung thi su kien ket o PENDING_REVIEW khong ai duyet.
+	if err := uc.repo.UpdateWithOutbox(ctx, evt, ModerationJobMessage(evt, time.Now().UTC(), uuid.New())); err != nil {
 		return nil, err
 	}
 

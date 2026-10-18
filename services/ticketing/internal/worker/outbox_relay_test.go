@@ -71,3 +71,10 @@ func TestOutboxRelay_GracefulShutdown(t *testing.T) {
 		t.Fatal("outbox relay did not stop on context cancellation")
 	}
 }
+
+func TestDefaultOutboxRelayConfig_ChiLayDongCuaTicketing(t *testing.T) {
+	cfg := worker.DefaultOutboxRelayConfig()
+	if cfg.RoutingKeyPrefix != "ticketing." {
+		t.Fatalf("relay ticketing chi duoc lay routing key 'ticketing.*', got %q", cfg.RoutingKeyPrefix)
+	}
+}

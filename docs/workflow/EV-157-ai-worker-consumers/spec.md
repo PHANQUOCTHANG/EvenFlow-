@@ -34,8 +34,8 @@ Phát hiện **ngoài phạm vi** (ghi lại để mở issue riêng, không s�
 
 | # | Phát hiện | Đề xuất |
 |---|---|---|
-| O1 | `services/event/internal/app/enqueue_moderation.go` ghi outbox với routing key `ai.moderation.q`, nhưng binding của `ai.direct` là `moderation` | Sửa key thành `moderation` (bugfix EV-120) |
-| O2 | Event service chưa có outbox relay (`cmd/server/main.go` chỉ tạo `OutboxRepository`) | Job kiểm duyệt chưa bao giờ rời Postgres; cần relay như ticketing (EV-131) |
+| O1 | `services/event/internal/app/enqueue_moderation.go` ghi outbox với routing key `ai.moderation.q`, nhưng binding của `ai.direct` là `moderation` | **Đã sửa** ở `bugfix/EV-120-moderation-outbox-relay` — xem [EV-120-moderation-outbox-relay](../EV-120-moderation-outbox-relay/spec.md) |
+| O2 | Event service chưa có outbox relay (`cmd/server/main.go` chỉ tạo `OutboxRepository`) | **Đã sửa** cùng nhánh trên; kèm O4 (relay ticketing lấy cả dòng của service khác) và O5 (ghi outbox ngoài transaction, nuốt lỗi) |
 | O3 | `GeminiClient.scan_moderation` nhánh thật gọi `generate` không qua limiter | **Đã kéo vào slice** (2026-10-18): slice này bật nhánh Gemini thật (AC-7), để lỗ này lại là phá bất biến "không bao giờ chạm trần". Xem AC-12 |
 
 ## 3. Tiêu chí nghiệm thu

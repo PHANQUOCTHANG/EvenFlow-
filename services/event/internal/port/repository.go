@@ -15,6 +15,9 @@ type EventRepository interface {
 	GetBySlug(ctx context.Context, slug string) (*domain.Event, error)
 	ListByOrganizer(ctx context.Context, organizerID uuid.UUID) ([]*domain.Event, error)
 	Update(ctx context.Context, event *domain.Event) error
+	// UpdateWithOutbox cap nhat su kien va ghi cac message outbox trong MOT transaction
+	// (quy tac bat bien 1): khong bao gio co su kien da doi trang thai ma thieu job di kem.
+	UpdateWithOutbox(ctx context.Context, event *domain.Event, msgs ...OutboxMessage) error
 
 	AddTier(ctx context.Context, tier *domain.TicketTier) error
 	UpdateTier(ctx context.Context, tier *domain.TicketTier) error
@@ -35,7 +38,11 @@ type AuditLogRepository interface {
 	ListBySubject(ctx context.Context, subject string) ([]*domain.AuditLog, error)
 }
 
-// OutboxRepository định nghĩa thao tác ghi Transactional Outbox (EV-120).
-type OutboxRepository interface {
-	Publish(ctx context.Context, aggregateType string, aggregateID uuid.UUID, routingKey string, payload any) error
+// OutboxMessage la mot dong outbox_events ghi cung transaction voi thay doi nghiep vu;
+// relay (internal/worker) phat no ra RabbitMQ sau (EV-120).
+type OutboxMessage struct {
+	AggregateType string
+	AggregateID   uuid.UUID
+	RoutingKey    string
+	Payload       any
 }

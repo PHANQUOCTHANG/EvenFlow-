@@ -20,10 +20,9 @@ type EventHandler struct {
 	transitionUC app.TransitionStateUseCase
 	getUC        app.GetEventUseCase
 
-	enqueueModUC app.EnqueueModerationUseCase
-	aiVerdictUC  app.HandleAiVerdictUseCase
-	modQueueUC   app.ListModerationQueueUseCase
-	modActionUC  app.ModeratorActionUseCase
+	aiVerdictUC app.HandleAiVerdictUseCase
+	modQueueUC  app.ListModerationQueueUseCase
+	modActionUC app.ModeratorActionUseCase
 }
 
 func NewEventHandler(
@@ -44,12 +43,10 @@ func NewEventHandler(
 
 // WithModeration gan cac use case lien quan den kiem duyet AI va Moderator (EV-120, EV-121).
 func (h *EventHandler) WithModeration(
-	enqueueModUC app.EnqueueModerationUseCase,
 	aiVerdictUC app.HandleAiVerdictUseCase,
 	modQueueUC app.ListModerationQueueUseCase,
 	modActionUC app.ModeratorActionUseCase,
 ) *EventHandler {
-	h.enqueueModUC = enqueueModUC
 	h.aiVerdictUC = aiVerdictUC
 	h.modQueueUC = modQueueUC
 	h.modActionUC = modActionUC
@@ -290,11 +287,6 @@ func (h *EventHandler) SubmitEvent(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		handleDomainError(w, err)
 		return
-	}
-
-	// EV-120: Day job vao hang doi kiem duyet AI qua transactional outbox
-	if h.enqueueModUC != nil {
-		_ = h.enqueueModUC.Execute(r.Context(), evt)
 	}
 
 	httpx.WriteJSON(w, http.StatusOK, ToEventResponse(evt))
