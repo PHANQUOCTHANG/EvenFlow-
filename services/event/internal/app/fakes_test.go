@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/eventflow/eventflow/services/event/internal/domain"
+	"github.com/eventflow/eventflow/services/event/internal/port"
 	"github.com/google/uuid"
 )
 
@@ -14,6 +15,7 @@ type fakeEventRepo struct {
 	createErr error
 	getErr    error
 	updateErr error
+	outbox    []port.OutboxMessage
 }
 
 func newFakeRepo() *fakeEventRepo {
@@ -69,6 +71,16 @@ func (r *fakeEventRepo) Update(ctx context.Context, event *domain.Event) error {
 		return r.updateErr
 	}
 	r.events[event.ID] = event
+	return nil
+}
+
+// UpdateWithOutbox mo phong mot transaction: loi thi KHONG ghi gi ca (ca su kien lan outbox).
+func (r *fakeEventRepo) UpdateWithOutbox(ctx context.Context, event *domain.Event, msgs ...port.OutboxMessage) error {
+	if r.updateErr != nil {
+		return r.updateErr
+	}
+	r.events[event.ID] = event
+	r.outbox = append(r.outbox, msgs...)
 	return nil
 }
 
@@ -166,32 +178,4 @@ func (r *fakeAuditRepo) ListBySubject(ctx context.Context, subject string) ([]*d
 		}
 	}
 	return list, nil
-}
-
-type fakeOutboxRepo struct {
-	messages []struct {
-		aggregateType string
-		aggregateID   uuid.UUID
-		routingKey    string
-		payload       any
-	}
-}
-
-func newFakeOutboxRepo() *fakeOutboxRepo {
-	return &fakeOutboxRepo{}
-}
-
-func (r *fakeOutboxRepo) Publish(ctx context.Context, aggregateType string, aggregateID uuid.UUID, routingKey string, payload any) error {
-	r.messages = append(r.messages, struct {
-		aggregateType string
-		aggregateID   uuid.UUID
-		routingKey    string
-		payload       any
-	}{
-		aggregateType: aggregateType,
-		aggregateID:   aggregateID,
-		routingKey:    routingKey,
-		payload:       payload,
-	})
-	return nil
 }

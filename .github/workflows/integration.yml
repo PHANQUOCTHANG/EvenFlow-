@@ -31,6 +31,7 @@ jobs:
             libs/go/go.sum
             services/ticketing/go.sum
             services/waitingroom/go.sum
+            services/event/go.sum
       - name: go test -tags=integration (ticketing)
         working-directory: services/ticketing
         run: go test -tags=integration ./... -count=1 -timeout=10m
@@ -102,3 +103,15 @@ jobs:
         run: |
           uv sync --all-extras --locked
           uv run pytest -m integration -q -rA
+      # event (EV-120): nop duyet ghi job kiem duyet cung transaction; relay outbox -> ai.direct ->
+      # ai.moderation.q tren Postgres + RabbitMQ that. Cung quy tac fail-khong-skip.
+      - name: go vet -tags=integration (event)
+        working-directory: services/event
+        run: go vet -tags=integration ./...
+      - name: go test -tags=integration (event)
+        working-directory: services/event
+        env:
+          REQUIRE_PASS: "1"
+        run: |
+          bash "$GITHUB_WORKSPACE/.github/scripts/run-and-report-tests.sh" TestTichHop \
+            go test -v -tags=integration ./internal/... -count=1 -timeout=10m

@@ -12,12 +12,14 @@ import (
 	adapterHTTP "github.com/eventflow/eventflow/services/event/internal/adapter/http"
 	"github.com/eventflow/eventflow/services/event/internal/app"
 	"github.com/eventflow/eventflow/services/event/internal/domain"
+	"github.com/eventflow/eventflow/services/event/internal/port"
 	"github.com/google/uuid"
 )
 
 type fakeRepo struct {
 	events map[uuid.UUID]*domain.Event
 	tiers  map[uuid.UUID][]domain.TicketTier
+	outbox []port.OutboxMessage
 }
 
 func newTestRepo() *fakeRepo {
@@ -61,6 +63,12 @@ func (r *fakeRepo) ListByOrganizer(ctx context.Context, orgID uuid.UUID) ([]*dom
 
 func (r *fakeRepo) Update(ctx context.Context, e *domain.Event) error {
 	r.events[e.ID] = e
+	return nil
+}
+
+func (r *fakeRepo) UpdateWithOutbox(ctx context.Context, e *domain.Event, msgs ...port.OutboxMessage) error {
+	r.events[e.ID] = e
+	r.outbox = append(r.outbox, msgs...)
 	return nil
 }
 
@@ -139,7 +147,7 @@ func TestHTTP_CreateAndGetEvent(t *testing.T) {
 }
 
 func TestHTTP_AddTier_And_Submit_BR_E1(t *testing.T) {
-	handler, _ := setupTestServer()
+	handler, repo := setupTestServer()
 	orgID := uuid.New()
 	now := time.Now().UTC()
 
@@ -189,6 +197,11 @@ func TestHTTP_AddTier_And_Submit_BR_E1(t *testing.T) {
 
 	if submitRec2.Code != http.StatusOK {
 		t.Fatalf("expected 200 OK for valid submit, got %d", submitRec2.Code)
+	}
+
+	// 5. EV-120: submit hop le ghi DUNG MOT job kiem duyet; submit bi tu choi (buoc 2) khong ghi.
+	if len(repo.outbox) != 1 || repo.outbox[0].RoutingKey != "moderation" {
+		t.Fatalf("expected 1 moderation job in outbox, got %+v", repo.outbox)
 	}
 }
 
@@ -263,15 +276,6 @@ func (r *fakeAuditRepo) ListBySubject(ctx context.Context, subject string) ([]*d
 	return list, nil
 }
 
-type fakeOutboxRepo struct {
-	messages []any
-}
-
-func (r *fakeOutboxRepo) Publish(ctx context.Context, aggregateType string, aggregateID uuid.UUID, routingKey string, payload any) error {
-	r.messages = append(r.messages, payload)
-	return nil
-}
-
 func setupModerationTestServer() (http.Handler, *fakeRepo, *fakeModRepo, *fakeAuditRepo) {
 	repo := newTestRepo()
 	modRepo := &fakeModRepo{
@@ -279,7 +283,6 @@ func setupModerationTestServer() (http.Handler, *fakeRepo, *fakeModRepo, *fakeAu
 		byEvent: make(map[uuid.UUID]*domain.ModerationReview),
 	}
 	auditRepo := &fakeAuditRepo{logs: make([]*domain.AuditLog, 0)}
-	outboxRepo := &fakeOutboxRepo{messages: make([]any, 0)}
 
 	createUC := app.NewCreateEventUseCase(repo)
 	updateUC := app.NewUpdateEventUseCase(repo)
@@ -287,13 +290,12 @@ func setupModerationTestServer() (http.Handler, *fakeRepo, *fakeModRepo, *fakeAu
 	transitionUC := app.NewTransitionStateUseCase(repo)
 	getUC := app.NewGetEventUseCase(repo)
 
-	enqueueModUC := app.NewEnqueueModerationUseCase(outboxRepo)
 	aiVerdictUC := app.NewHandleAiVerdictUseCase(repo, modRepo, auditRepo)
 	modQueueUC := app.NewListModerationQueueUseCase(repo, modRepo)
 	modActionUC := app.NewModeratorActionUseCase(repo, modRepo, auditRepo)
 
 	h := adapterHTTP.NewEventHandler(createUC, updateUC, tiersUC, transitionUC, getUC).
-		WithModeration(enqueueModUC, aiVerdictUC, modQueueUC, modActionUC)
+		WithModeration(aiVerdictUC, modQueueUC, modActionUC)
 
 	return adapterHTTP.NewRouter(h), repo, modRepo, auditRepo
 }
@@ -432,4 +434,3 @@ func TestHTTP_ModeratorApprove_And_Reject(t *testing.T) {
 		t.Errorf("expected at least 2 audit logs recorded, got %d", len(logs))
 	}
 }
-

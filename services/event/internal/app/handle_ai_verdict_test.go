@@ -2,6 +2,7 @@ package app_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -184,31 +185,68 @@ func TestHandleAiVerdict_InferredVerdict(t *testing.T) {
 	}
 }
 
-func TestEnqueueModerationUseCase(t *testing.T) {
-	ctx := context.Background()
-	outboxRepo := newFakeOutboxRepo()
-	uc := app.NewEnqueueModerationUseCase(outboxRepo)
-
-	evt, _ := domain.NewEvent(
-		uuid.New(),
-		"rock-show",
-		"Rock Show",
-		"Description",
-		"Stadium",
-		time.Now().Add(48*time.Hour),
-		time.Now().Add(2*time.Hour),
-		nil,
-	)
-
-	err := uc.Execute(ctx, evt)
+// EV-120: nop duyet phai ghi job kiem duyet vao outbox TRONG CUNG transaction voi viec
+// chuyen PENDING_REVIEW. Truoc day handler goi rieng va nuot loi: ghi outbox hong thi su
+// kien van PENDING_REVIEW ma khong co job nao -> ket mai. Routing key cu "ai.moderation.q"
+// (test cu khang dinh dung key sai nay) khong khop binding "moderation" cua ai.direct.
+func newSubmittableEvent(t *testing.T, repo *fakeEventRepo) (*domain.Event, uuid.UUID) {
+	t.Helper()
+	organizerID := uuid.New()
+	evt, err := domain.NewEvent(organizerID, "rock-show", "Rock Show", "Mo ta", "Stadium",
+		time.Now().Add(48*time.Hour), time.Now().Add(2*time.Hour), nil)
 	if err != nil {
-		t.Fatalf("unexpected error enqueuing: %v", err)
+		t.Fatalf("NewEvent: %v", err)
 	}
-	if len(outboxRepo.messages) != 1 {
-		t.Fatalf("expected 1 message in outbox, got %d", len(outboxRepo.messages))
+	repo.events[evt.ID] = evt
+	repo.tiers[evt.ID] = []domain.TicketTier{{ID: uuid.New(), EventID: evt.ID, Name: "GA", PriceCents: 1000, Quota: 10}}
+	return evt, organizerID
+}
+
+func TestSubmitForReview_GhiJobKiemDuyetCungTransaction(t *testing.T) {
+	repo := newFakeRepo()
+	evt, organizerID := newSubmittableEvent(t, repo)
+
+	submitted, err := app.NewTransitionStateUseCase(repo).SubmitForReview(context.Background(), evt.ID, organizerID)
+	if err != nil {
+		t.Fatalf("SubmitForReview: %v", err)
 	}
-	msg := outboxRepo.messages[0]
-	if msg.routingKey != "ai.moderation.q" {
-		t.Errorf("expected routing key ai.moderation.q, got %s", msg.routingKey)
+	if submitted.Status != domain.StatusPendingReview {
+		t.Fatalf("expected PENDING_REVIEW, got %s", submitted.Status)
+	}
+	if len(repo.outbox) != 1 {
+		t.Fatalf("expected 1 outbox message, got %d", len(repo.outbox))
+	}
+	msg := repo.outbox[0]
+	if msg.RoutingKey != "moderation" {
+		t.Errorf("routing key phai khop binding ai.direct 'moderation', got %q", msg.RoutingKey)
+	}
+	if msg.AggregateType != "event" || msg.AggregateID != evt.ID {
+		t.Errorf("aggregate sai: %s/%s", msg.AggregateType, msg.AggregateID)
+	}
+	payload, ok := msg.Payload.(map[string]any)
+	if !ok {
+		t.Fatalf("payload kieu %T", msg.Payload)
+	}
+	for _, k := range []string{"job_id", "event_id", "event_title", "event_description", "enqueued_at"} {
+		if _, ok := payload[k]; !ok {
+			t.Errorf("payload thieu %q (hop dong voi ai-worker ModerationJob)", k)
+		}
+	}
+	if payload["event_id"] != evt.ID.String() {
+		t.Errorf("event_id sai: %v", payload["event_id"])
+	}
+}
+
+func TestSubmitForReview_GhiLoiThiTraLoiVaKhongCoJob(t *testing.T) {
+	repo := newFakeRepo()
+	evt, organizerID := newSubmittableEvent(t, repo)
+	repo.updateErr = errors.New("db sap")
+
+	_, err := app.NewTransitionStateUseCase(repo).SubmitForReview(context.Background(), evt.ID, organizerID)
+	if err == nil {
+		t.Fatal("ghi that bai phai tra loi cho nguoi goi, khong duoc nuot")
+	}
+	if len(repo.outbox) != 0 {
+		t.Fatalf("khong duoc co job khi transaction hong, got %d", len(repo.outbox))
 	}
 }
