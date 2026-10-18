@@ -47,6 +47,12 @@ type PaymentRepository interface {
 
 	// GetStalePaymentInbox tim cac ban ghi chua xu ly co thoi gian ton vuot qua nguong cho phep de canh bao.
 	GetStalePaymentInbox(ctx context.Context, olderThan time.Duration, limit int) ([]domain.StaleInboxRecord, error)
+
+	// GetStalePendingOrders quet cac don hang o trang thai PAYMENT_PENDING ton tai qua nguong thoi gian olderThan.
+	GetStalePendingOrders(ctx context.Context, olderThan time.Duration, limit int) ([]domain.StaleOrderInfo, error)
+
+	// ProcessOrderCancellationTx huy don hang treo, giai phong kho ve va ban ghi payment trong CUNG MOT TRANSACTION (Quy tac bat bien 1, BR-O7).
+	ProcessOrderCancellationTx(ctx context.Context, params domain.CancelOrderParams) (domain.CancelOrderResult, error)
 }
 
 // Clock ho tro inject thoi gian hien tai giup kiem thu chinh xac cac moc expires_at (BR-O2).

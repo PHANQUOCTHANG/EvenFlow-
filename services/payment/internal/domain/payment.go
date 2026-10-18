@@ -73,6 +73,7 @@ type OrderView struct {
 	Currency   string    `json:"currency"`
 	ExpiresAt  time.Time `json:"expires_at"`
 	CreatedAt  time.Time `json:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at,omitempty"`
 }
 
 // IsHeld kiem tra don hang co dang o trang thai giu ve khong.
@@ -202,4 +203,73 @@ type OutboxOrderPaidPayload struct {
 	AmountCents   int64     `json:"amount_cents"`
 	Currency      string    `json:"currency"`
 	PaidAt        time.Time `json:"paid_at"`
+}
+
+// StaleOrderInfo dai dien cho mot don hang dang o trang thai PAYMENT_PENDING can duoc doi soat.
+type StaleOrderInfo struct {
+	OrderID       string    `json:"order_id"`
+	EventID       string    `json:"event_id"`
+	IdentityID    string    `json:"identity_id"`
+	Status        string    `json:"status"`
+	TotalCents    int64     `json:"total_cents"`
+	Currency      string    `json:"currency"`
+	ExpiresAt     time.Time `json:"expires_at"`
+	UpdatedAt     time.Time `json:"updated_at"`
+	CreatedAt     time.Time `json:"created_at"`
+	PaymentID     string    `json:"payment_id,omitempty"`
+	Provider      Provider  `json:"provider,omitempty"`
+	ProviderTxnID string    `json:"provider_txn_id,omitempty"`
+}
+
+// PaymentQueryRequest la tham so truyen toi cong thanh toan de tra cuu chu dong trang thai giao dich.
+type PaymentQueryRequest struct {
+	OrderID       string `json:"order_id"`
+	PaymentID     string `json:"payment_id,omitempty"`
+	ProviderTxnID string `json:"provider_txn_id,omitempty"`
+}
+
+// PaymentQueryResult dai dien cho ket qua tra ve tu cong thanh toan khi tra cuu chu dong.
+type PaymentQueryResult struct {
+	ProviderTxnID string         `json:"provider_txn_id"`
+	Status        PaymentStatus  `json:"status"` // SUCCEEDED, FAILED, PENDING
+	AmountCents   int64          `json:"amount_cents"`
+	RawResponse   map[string]any `json:"raw_response,omitempty"`
+	Message       string         `json:"message"`
+}
+
+// CancelOrderParams chua tham so de huy don va giai phong kho ve idempotent (BR-O7).
+type CancelOrderParams struct {
+	OrderID   string `json:"order_id"`
+	TraceID   string `json:"trace_id"`
+	Reason    string `json:"reason"`
+	PaymentID string `json:"payment_id,omitempty"`
+}
+
+// CancelOrderResult chua ket qua sau khi huy don va giai phong ghe.
+type CancelOrderResult struct {
+	OrderID         string `json:"order_id"`
+	AlreadyDone     bool   `json:"already_done"`
+	HoldsReleased   int    `json:"holds_released"`
+	TicketsReturned int    `json:"tickets_returned"`
+	Status          string `json:"status"`
+	Message         string `json:"message"`
+}
+
+// OutboxHoldReleasedPayload la du lieu su kien phat vao bang outbox_events cho routing_key hold.released.
+type OutboxHoldReleasedPayload struct {
+	OrderID    string    `json:"order_id"`
+	EventID    string    `json:"event_id"`
+	Reason     string    `json:"reason"`
+	ReleasedAt time.Time `json:"released_at"`
+}
+
+// ReconciliationResult tong hop ket qua sau moi dot chay job doi soat don treo.
+type ReconciliationResult struct {
+	TotalScanned    int           `json:"total_scanned"`
+	HealedPaid      int           `json:"healed_paid"`
+	HealedCancelled int           `json:"healed_cancelled"`
+	StillPending    int           `json:"still_pending"`
+	Skipped         int           `json:"skipped"`
+	Errors          int           `json:"errors"`
+	Duration        time.Duration `json:"duration"`
 }

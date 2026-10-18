@@ -630,3 +630,228 @@ func (r *Repository) GetStalePaymentInbox(ctx context.Context, olderThan time.Du
 
 	return records, nil
 }
+
+// GetStalePendingOrders quet cac don hang o trang thai PAYMENT_PENDING ton tai qua nguong thoi gian olderThan.
+func (r *Repository) GetStalePendingOrders(ctx context.Context, olderThan time.Duration, limit int) ([]domain.StaleOrderInfo, error) {
+	if limit <= 0 {
+		limit = 50
+	}
+	thresholdTime := time.Now().UTC().Add(-olderThan)
+
+	query := `
+		SELECT o.id, o.event_id, o.identity_id, o.status, o.total_cents, o.currency,
+		       o.expires_at, o.updated_at, o.created_at,
+		       COALESCE(p.id::text, ''), COALESCE(p.provider, ''), COALESCE(p.provider_txn_id, '')
+		FROM orders o
+		LEFT JOIN LATERAL (
+			SELECT id, provider, provider_txn_id
+			FROM payments
+			WHERE order_id = o.id
+			ORDER BY created_at DESC
+			LIMIT 1
+		) p ON true
+		WHERE o.status = 'PAYMENT_PENDING'
+		  AND (o.updated_at <= $1 OR o.created_at <= $1)
+		ORDER BY o.updated_at ASC
+		LIMIT $2;
+	`
+
+	rows, err := r.pool.Query(ctx, query, thresholdTime, limit)
+	if err != nil {
+		return nil, fmt.Errorf("truy van stale pending orders that bai: %w", err)
+	}
+	defer rows.Close()
+
+	var results []domain.StaleOrderInfo
+	for rows.Next() {
+		var (
+			info          domain.StaleOrderInfo
+			providerStr   string
+			paymentIDStr  string
+			providerTxnID string
+		)
+		err := rows.Scan(
+			&info.OrderID,
+			&info.EventID,
+			&info.IdentityID,
+			&info.Status,
+			&info.TotalCents,
+			&info.Currency,
+			&info.ExpiresAt,
+			&info.UpdatedAt,
+			&info.CreatedAt,
+			&paymentIDStr,
+			&providerStr,
+			&providerTxnID,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("scan stale pending order that bai: %w", err)
+		}
+
+		info.PaymentID = paymentIDStr
+		info.Provider = domain.NormalizeProvider(providerStr)
+		info.ProviderTxnID = providerTxnID
+		results = append(results, info)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("doc stale pending orders that bai: %w", err)
+	}
+
+	return results, nil
+}
+
+// ProcessOrderCancellationTx huy don hang treo, giai phong kho ve idempotent va cap nhat payment trong CUNG MOT TRANSACTION (Quy tac bat bien 1, BR-O7).
+func (r *Repository) ProcessOrderCancellationTx(ctx context.Context, params domain.CancelOrderParams) (domain.CancelOrderResult, error) {
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return domain.CancelOrderResult{}, fmt.Errorf("khoi tao transaction huy don that bai: %w", err)
+	}
+	defer func() {
+		_ = tx.Rollback(ctx)
+	}()
+
+	// 1. Doc va khoa dong don hang (FOR UPDATE de tranh race condition voi webhook den muon)
+	orderQuery := `
+		SELECT id, event_id, status
+		FROM orders
+		WHERE id = $1
+		FOR UPDATE;
+	`
+	var (
+		orderID string
+		eventID string
+		status  string
+	)
+	err = tx.QueryRow(ctx, orderQuery, params.OrderID).Scan(&orderID, &eventID, &status)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return domain.CancelOrderResult{}, domain.ErrOrderNotFound
+		}
+		return domain.CancelOrderResult{}, fmt.Errorf("khoa don hang de huy that bai: %w", err)
+	}
+
+	// Neu don da o trang thai CANCELLED hoac EXPIRED -> da duoc huy truoc do (idempotent)
+	if status == "CANCELLED" || status == "EXPIRED" {
+		return domain.CancelOrderResult{
+			OrderID:     orderID,
+			AlreadyDone: true,
+			Status:      status,
+			Message:     fmt.Sprintf("don hang da o trang thai %s truoc do", status),
+		}, nil
+	}
+
+	// Neu don da o trang thai PAID -> Webhook vua kip commit truoc, khong duoc phep huy!
+	if status == "PAID" || status == "ISSUED" {
+		return domain.CancelOrderResult{
+			OrderID:     orderID,
+			AlreadyDone: true,
+			Status:      status,
+			Message:     "don hang da thanh toan thanh cong (PAID), khong the huy",
+		}, nil
+	}
+
+	// 2. Cap nhat trang thai orders -> CANCELLED
+	updateOrderQuery := `
+		UPDATE orders
+		SET status = 'CANCELLED', updated_at = now()
+		WHERE id = $1 AND status = 'PAYMENT_PENDING';
+	`
+	cmdTag, err := tx.Exec(ctx, updateOrderQuery, orderID)
+	if err != nil {
+		return domain.CancelOrderResult{}, fmt.Errorf("cap nhat don sang CANCELLED that bai: %w", err)
+	}
+	if cmdTag.RowsAffected() == 0 {
+		return domain.CancelOrderResult{
+			OrderID:     orderID,
+			AlreadyDone: true,
+			Status:      status,
+			Message:     "don hang khong con o trang thai PAYMENT_PENDING",
+		}, nil
+	}
+
+	// 3. Giai phong seat_holds idempotent (BR-O7: WHERE released_at IS NULL AND consumed_at IS NULL)
+	claimHoldsQuery := `
+		UPDATE seat_holds
+		SET released_at = now()
+		WHERE order_id = $1::uuid AND released_at IS NULL AND consumed_at IS NULL
+		RETURNING ticket_type_id::text, bucket, quantity;
+	`
+	rows, err := tx.Query(ctx, claimHoldsQuery, orderID)
+	if err != nil {
+		return domain.CancelOrderResult{}, fmt.Errorf("giai phong seat_holds that bai: %w", err)
+	}
+
+	type releasedHold struct {
+		ticketTypeID string
+		bucket       int
+		quantity     int
+	}
+	var releasedList []releasedHold
+	for rows.Next() {
+		var rh releasedHold
+		if err := rows.Scan(&rh.ticketTypeID, &rh.bucket, &rh.quantity); err != nil {
+			rows.Close()
+			return domain.CancelOrderResult{}, fmt.Errorf("scan released seat_hold that bai: %w", err)
+		}
+		releasedList = append(releasedList, rh)
+	}
+	rows.Close()
+
+	// 4. Hoan tra kho ve ticket_inventory tuong ung cho tung bucket
+	ticketsReturned := 0
+	for _, rh := range releasedList {
+		restoreQuery := `
+			UPDATE ticket_inventory
+			SET available = available + $3
+			WHERE ticket_type_id = $1::uuid AND bucket = $2;
+		`
+		if _, err := tx.Exec(ctx, restoreQuery, rh.ticketTypeID, rh.bucket, rh.quantity); err != nil {
+			return domain.CancelOrderResult{}, fmt.Errorf("hoan tra ve vao ticket_inventory that bai: %w", err)
+		}
+		ticketsReturned += rh.quantity
+	}
+
+	// 5. Cap nhat ban ghi payments sang FAILED neu co
+	updatePaymentQuery := `
+		UPDATE payments
+		SET status = 'FAILED', raw_payload = jsonb_build_object('cancel_reason', $2::text, 'cancelled_at', now()::text)
+		WHERE order_id = $1::uuid AND status = 'PENDING';
+	`
+	_, _ = tx.Exec(ctx, updatePaymentQuery, orderID, params.Reason)
+
+	// 6. Ghi su kien outbox_events hold.released
+	outboxPayload := domain.OutboxHoldReleasedPayload{
+		OrderID:    orderID,
+		EventID:    eventID,
+		Reason:     params.Reason,
+		ReleasedAt: time.Now().UTC(),
+	}
+	outboxBytes, err := json.Marshal(outboxPayload)
+	if err != nil {
+		return domain.CancelOrderResult{}, fmt.Errorf("marshal outbox payload that bai: %w", err)
+	}
+
+	insertOutboxQuery := `
+		INSERT INTO outbox_events (aggregate_type, aggregate_id, routing_key, payload, trace_id, created_at)
+		VALUES ('order', $1, 'hold.released', $2, $3, now());
+	`
+	_, err = tx.Exec(ctx, insertOutboxQuery, orderID, outboxBytes, params.TraceID)
+	if err != nil {
+		return domain.CancelOrderResult{}, fmt.Errorf("chen outbox event that bai: %w", err)
+	}
+
+	// Commit Transaction
+	if err := tx.Commit(ctx); err != nil {
+		return domain.CancelOrderResult{}, fmt.Errorf("commit transaction huy don that bai: %w", err)
+	}
+
+	return domain.CancelOrderResult{
+		OrderID:         orderID,
+		AlreadyDone:     false,
+		HoldsReleased:   len(releasedList),
+		TicketsReturned: ticketsReturned,
+		Status:          "CANCELLED",
+		Message:         "huy don thanh cong, da tra kho ve va phat outbox",
+	}, nil
+}

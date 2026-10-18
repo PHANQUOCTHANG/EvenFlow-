@@ -102,3 +102,27 @@ func TestMoMoGateway_VerifyCallback(t *testing.T) {
 		t.Errorf("expected invalid result for tampered signature")
 	}
 }
+
+func TestMoMoGateway_QueryPayment(t *testing.T) {
+	gw := gateway.NewMoMoGateway(gateway.MoMoConfig{
+		PartnerCode: "MOMO_TEST",
+		AccessKey:   "ACCESS_123",
+		SecretKey:   "SECRET_456",
+	})
+
+	res, err := gw.QueryPayment(context.Background(), domain.PaymentQueryRequest{
+		OrderID:       "ord-momo-1",
+		ProviderTxnID: "trans_999",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if res.Status != domain.StatusSucceeded {
+		t.Errorf("expected StatusSucceeded, got %s", res.Status)
+	}
+
+	_, errEmpty := gw.QueryPayment(context.Background(), domain.PaymentQueryRequest{})
+	if errEmpty == nil {
+		t.Errorf("expected error for empty query")
+	}
+}

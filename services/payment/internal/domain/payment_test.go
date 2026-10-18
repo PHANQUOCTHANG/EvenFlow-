@@ -188,3 +188,79 @@ func TestPaymentInboxItem_Methods(t *testing.T) {
 		t.Errorf("processed item should never be stale")
 	}
 }
+
+func TestReconciliationDomainStructs(t *testing.T) {
+	now := time.Date(2026, 10, 18, 12, 0, 0, 0, time.UTC)
+	stale := domain.StaleOrderInfo{
+		OrderID:       "ord-stale-1",
+		EventID:       "evt-1",
+		IdentityID:    "user-1",
+		Status:        "PAYMENT_PENDING",
+		TotalCents:    500000,
+		Currency:      "VND",
+		ExpiresAt:     now.Add(-5 * time.Minute),
+		UpdatedAt:     now.Add(-20 * time.Minute),
+		CreatedAt:     now.Add(-25 * time.Minute),
+		PaymentID:     "pay-1",
+		Provider:      domain.ProviderSandbox,
+		ProviderTxnID: "sbx-txn-1",
+	}
+
+	if stale.OrderID != "ord-stale-1" || stale.Provider != domain.ProviderSandbox {
+		t.Errorf("unexpected StaleOrderInfo: %+v", stale)
+	}
+
+	qReq := domain.PaymentQueryRequest{
+		OrderID:       "ord-stale-1",
+		PaymentID:     "pay-1",
+		ProviderTxnID: "sbx-txn-1",
+	}
+	if qReq.OrderID != "ord-stale-1" {
+		t.Errorf("unexpected PaymentQueryRequest: %+v", qReq)
+	}
+
+	qRes := domain.PaymentQueryResult{
+		ProviderTxnID: "sbx-txn-1",
+		Status:        domain.StatusSucceeded,
+		AmountCents:   500000,
+		Message:       "thanh toan thanh cong",
+	}
+	if qRes.Status != domain.StatusSucceeded || qRes.AmountCents != 500000 {
+		t.Errorf("unexpected PaymentQueryResult: %+v", qRes)
+	}
+
+	cParams := domain.CancelOrderParams{
+		OrderID:   "ord-stale-1",
+		TraceID:   "trace-1",
+		Reason:    "qua 15 phut khong co webhook",
+		PaymentID: "pay-1",
+	}
+	if cParams.Reason != "qua 15 phut khong co webhook" {
+		t.Errorf("unexpected CancelOrderParams: %+v", cParams)
+	}
+
+	cRes := domain.CancelOrderResult{
+		OrderID:         "ord-stale-1",
+		AlreadyDone:     false,
+		HoldsReleased:   1,
+		TicketsReturned: 2,
+		Status:          "CANCELLED",
+		Message:         "huy thanh cong",
+	}
+	if cRes.HoldsReleased != 1 || cRes.TicketsReturned != 2 {
+		t.Errorf("unexpected CancelOrderResult: %+v", cRes)
+	}
+
+	reconRes := domain.ReconciliationResult{
+		TotalScanned:    10,
+		HealedPaid:      5,
+		HealedCancelled: 3,
+		StillPending:    1,
+		Skipped:         0,
+		Errors:          1,
+		Duration:        250 * time.Millisecond,
+	}
+	if reconRes.TotalScanned != 10 || reconRes.HealedPaid != 5 || reconRes.HealedCancelled != 3 {
+		t.Errorf("unexpected ReconciliationResult: %+v", reconRes)
+	}
+}

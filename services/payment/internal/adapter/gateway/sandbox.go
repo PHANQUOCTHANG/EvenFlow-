@@ -20,7 +20,8 @@ const (
 
 // SandboxGateway la hien thuc mock chay local 100%, 0 dependency ngoai.
 type SandboxGateway struct {
-	mode SandboxMode
+	mode          SandboxMode
+	queryStatuses map[string]domain.PaymentStatus
 }
 
 // NewSandboxGateway khoi tao sandbox gateway voi che do gia lap chi dinh.
@@ -28,7 +29,10 @@ func NewSandboxGateway(mode SandboxMode) *SandboxGateway {
 	if mode == "" {
 		mode = SandboxModeSuccess
 	}
-	return &SandboxGateway{mode: mode}
+	return &SandboxGateway{
+		mode:          mode,
+		queryStatuses: make(map[string]domain.PaymentStatus),
+	}
 }
 
 func (s *SandboxGateway) Provider() domain.Provider {
@@ -167,3 +171,59 @@ func (s *SandboxGateway) VerifyCallback(ctx context.Context, params map[string]s
 		Message:       "sandbox callback hop le",
 	}, nil
 }
+
+// SetQueryStatus ghi de trang thai tra ve khi QueryPayment cho mot order_id cu the (ho tro unit test).
+func (s *SandboxGateway) SetQueryStatus(orderID string, status domain.PaymentStatus) {
+	if s.queryStatuses == nil {
+		s.queryStatuses = make(map[string]domain.PaymentStatus)
+	}
+	s.queryStatuses[orderID] = status
+}
+
+// QueryPayment chu dong tra cuu trang thai giao dich tu sandbox gateway (EV-153).
+func (s *SandboxGateway) QueryPayment(ctx context.Context, req domain.PaymentQueryRequest) (domain.PaymentQueryResult, error) {
+	select {
+	case <-ctx.Done():
+		return domain.PaymentQueryResult{}, ctx.Err()
+	default:
+	}
+
+	// 1. Kiem tra ghi de rieng theo orderID
+	if s.queryStatuses != nil {
+		if st, ok := s.queryStatuses[req.OrderID]; ok {
+			return domain.PaymentQueryResult{
+				ProviderTxnID: req.ProviderTxnID,
+				Status:        st,
+				Message:       fmt.Sprintf("sandbox tra cuu thanh cong voi trang thai %s", st),
+			}, nil
+		}
+	}
+
+	// 2. Tra ve theo che do sandbox hien tai
+	switch s.mode {
+	case SandboxModeFail:
+		return domain.PaymentQueryResult{
+			ProviderTxnID: req.ProviderTxnID,
+			Status:        domain.StatusFailed,
+			Message:       "sandbox mo phong giao dich that bai hoac khong ton tai",
+		}, nil
+	case SandboxModeDelay:
+		// Neu dat simulate delay: mac dinh co the la PENDING (dang cho) hoac SUCCEEDED neu don da xong o cong
+		status := domain.StatusSucceeded
+		if req.OrderID == "ord-still-pending" {
+			status = domain.StatusPending
+		}
+		return domain.PaymentQueryResult{
+			ProviderTxnID: req.ProviderTxnID,
+			Status:        status,
+			Message:       "sandbox delay query result",
+		}, nil
+	default:
+		return domain.PaymentQueryResult{
+			ProviderTxnID: req.ProviderTxnID,
+			Status:        domain.StatusSucceeded,
+			Message:       "sandbox giao dich thanh cong",
+		}, nil
+	}
+}
+

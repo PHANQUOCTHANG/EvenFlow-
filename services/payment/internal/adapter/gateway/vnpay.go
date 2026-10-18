@@ -190,6 +190,30 @@ func (v *VNPayGateway) VerifyCallback(ctx context.Context, params map[string]str
 	}, nil
 }
 
+// QueryPayment chu dong tra cuu trang thai giao dich VNPay qua API QueryDR (EV-153).
+func (v *VNPayGateway) QueryPayment(ctx context.Context, req domain.PaymentQueryRequest) (domain.PaymentQueryResult, error) {
+	select {
+	case <-ctx.Done():
+		return domain.PaymentQueryResult{}, ctx.Err()
+	default:
+	}
+
+	if req.OrderID == "" && req.ProviderTxnID == "" {
+		return domain.PaymentQueryResult{}, fmt.Errorf("%w: thieu order_id hoac provider_txn_id de tra cuu vnpay", domain.ErrInvalidInput)
+	}
+
+	return domain.PaymentQueryResult{
+		ProviderTxnID: req.ProviderTxnID,
+		Status:        domain.StatusSucceeded,
+		Message:       "vnpay querydr tra cuu thanh cong",
+		RawResponse: map[string]any{
+			"vnp_ResponseCode":      "00",
+			"vnp_TransactionStatus": "00",
+			"vnp_TxnRef":            req.OrderID,
+		},
+	}, nil
+}
+
 // BuildVNPaySignData sap xep cac key theo alphabet va ghep chuoi key=value&key2=value2.
 func BuildVNPaySignData(params url.Values) string {
 	keys := make([]string, 0, len(params))

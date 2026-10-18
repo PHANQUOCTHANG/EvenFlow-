@@ -136,3 +136,59 @@ func TestSandboxGateway_VerifyCallback_SignatureAndTimestamp(t *testing.T) {
 		t.Errorf("expected non-zero parsed timestamp")
 	}
 }
+
+func TestSandboxGateway_QueryPayment(t *testing.T) {
+	ctx := context.Background()
+
+	// 1. Success mode
+	gwSuccess := gateway.NewSandboxGateway(gateway.SandboxModeSuccess)
+	res, err := gwSuccess.QueryPayment(ctx, domain.PaymentQueryRequest{
+		OrderID:       "ord-1",
+		ProviderTxnID: "sbx-txn-1",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if res.Status != domain.StatusSucceeded {
+		t.Errorf("expected StatusSucceeded, got %s", res.Status)
+	}
+
+	// 2. Fail mode
+	gwFail := gateway.NewSandboxGateway(gateway.SandboxModeFail)
+	resFail, err := gwFail.QueryPayment(ctx, domain.PaymentQueryRequest{
+		OrderID:       "ord-2",
+		ProviderTxnID: "sbx-txn-2",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if resFail.Status != domain.StatusFailed {
+		t.Errorf("expected StatusFailed, got %s", resFail.Status)
+	}
+
+	// 3. Delay mode
+	gwDelay := gateway.NewSandboxGateway(gateway.SandboxModeDelay)
+	resDelayPending, err := gwDelay.QueryPayment(ctx, domain.PaymentQueryRequest{
+		OrderID:       "ord-still-pending",
+		ProviderTxnID: "sbx-txn-3",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if resDelayPending.Status != domain.StatusPending {
+		t.Errorf("expected StatusPending for ord-still-pending, got %s", resDelayPending.Status)
+	}
+
+	// 4. Custom status override
+	gwDelay.SetQueryStatus("ord-custom-fail", domain.StatusFailed)
+	resCustom, err := gwDelay.QueryPayment(ctx, domain.PaymentQueryRequest{
+		OrderID:       "ord-custom-fail",
+		ProviderTxnID: "sbx-txn-4",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if resCustom.Status != domain.StatusFailed {
+		t.Errorf("expected StatusFailed for custom override, got %s", resCustom.Status)
+	}
+}

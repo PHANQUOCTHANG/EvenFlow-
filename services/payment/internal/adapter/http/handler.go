@@ -39,13 +39,19 @@ type InboxReplayer interface {
 	CheckStaleRecords(ctx context.Context, limit int) ([]domain.StaleInboxRecord, error)
 }
 
+// StaleOrderReconciler dinh nghia giao dien doi soat va tu chua don treo (EV-153).
+type StaleOrderReconciler interface {
+	Execute(ctx context.Context, limit int) (domain.ReconciliationResult, error)
+}
+
 type Handler struct {
-	initiator PaymentInitiator
-	getter    PaymentGetter
-	lister    MethodsLister
-	processor WebhookProcessor
-	replayer  InboxReplayer
-	log       *slog.Logger
+	initiator  PaymentInitiator
+	getter     PaymentGetter
+	lister     MethodsLister
+	processor  WebhookProcessor
+	replayer   InboxReplayer
+	reconciler StaleOrderReconciler
+	log        *slog.Logger
 }
 
 func NewHandler(
@@ -70,6 +76,12 @@ func (h *Handler) WithInboxReplayer(replayer InboxReplayer) *Handler {
 	return h
 }
 
+// WithOrderReconciler gan StaleOrderReconciler cho Handler de kich hoat cac endpoint doi soat don treo.
+func (h *Handler) WithOrderReconciler(reconciler StaleOrderReconciler) *Handler {
+	h.reconciler = reconciler
+	return h
+}
+
 // Routes dang ky cac endpoints REST cho payment service.
 // idempotency BAT BUOC cho endpoint ghi thanh toan theo BR-O5.
 func (h *Handler) Routes(mux *http.ServeMux, idempotency httpx.Middleware) {
@@ -90,6 +102,12 @@ func (h *Handler) Routes(mux *http.ServeMux, idempotency httpx.Middleware) {
 	if h.replayer != nil {
 		mux.HandleFunc("POST /v1/payments/inbox/replay", h.handleReplayInbox)
 		mux.HandleFunc("GET /v1/payments/inbox/stale", h.handleStaleInbox)
+	}
+
+	// Endpoints Doi soat don treo (EV-153 / EVF-73)
+	if h.reconciler != nil {
+		mux.HandleFunc("POST /v1/payments/reconcile", h.handleReconcileOrders)
+		mux.HandleFunc("POST /internal/reconcile", h.handleReconcileOrders)
 	}
 }
 
@@ -338,3 +356,27 @@ func (h *Handler) handleStaleInbox(w http.ResponseWriter, r *http.Request) {
 		"count":         len(records),
 	})
 }
+
+func (h *Handler) handleReconcileOrders(w http.ResponseWriter, r *http.Request) {
+	if h.reconciler == nil {
+		httpx.WriteProblem(w, http.StatusNotImplemented, "chưa cấu hình order reconciler")
+		return
+	}
+
+	limit := 50
+	if limitStr := r.URL.Query().Get("limit"); limitStr != "" {
+		if l, err := strconv.Atoi(limitStr); err == nil && l > 0 {
+			limit = l
+		}
+	}
+
+	result, err := h.reconciler.Execute(r.Context(), limit)
+	if err != nil {
+		h.log.Error("loi khi thuc thi doi soat don treo", "err", err)
+		httpx.WriteProblem(w, http.StatusInternalServerError, "lỗi khi thực thi đối soát đơn treo")
+		return
+	}
+
+	httpx.WriteJSON(w, http.StatusOK, result)
+}
+
