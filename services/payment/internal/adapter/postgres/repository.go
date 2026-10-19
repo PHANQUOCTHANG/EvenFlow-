@@ -855,3 +855,242 @@ func (r *Repository) ProcessOrderCancellationTx(ctx context.Context, params doma
 		Message:         "huy don thanh cong, da tra kho ve va phat outbox",
 	}, nil
 }
+
+// GetPaidOrdersByEvent lay danh sach cac don hang o trang thai PAID, ISSUED hoac REFUNDING cua mot su kien de hoan tien (EV-154 / EVF-74).
+func (r *Repository) GetPaidOrdersByEvent(ctx context.Context, eventID string, limit int) ([]domain.RefundOrderInfo, error) {
+	if limit <= 0 {
+		limit = 50
+	}
+
+	query := `
+		SELECT o.id::text, o.event_id::text, o.identity_id::text, o.status, o.total_cents, o.currency,
+		       o.created_at, o.updated_at,
+		       COALESCE(p.id::text, ''), COALESCE(p.provider, ''), COALESCE(p.provider_txn_id, '')
+		FROM orders o
+		LEFT JOIN payments p ON p.order_id = o.id AND p.status IN ('SUCCEEDED', 'REFUNDED')
+		WHERE o.event_id = $1::uuid AND o.status IN ('PAID', 'ISSUED', 'REFUNDING')
+		ORDER BY o.created_at ASC
+		LIMIT $2;
+	`
+
+	rows, err := r.pool.Query(ctx, query, eventID, limit)
+	if err != nil {
+		return nil, fmt.Errorf("truy van don hang can hoan tien that bai: %w", err)
+	}
+	defer rows.Close()
+
+	var results []domain.RefundOrderInfo
+	for rows.Next() {
+		var (
+			orderID       string
+			evtID         string
+			identityID    string
+			status        string
+			totalCents    int64
+			currency      string
+			createdAt     time.Time
+			updatedAt     time.Time
+			paymentID     string
+			providerStr   string
+			providerTxnID string
+		)
+
+		if err := rows.Scan(
+			&orderID, &evtID, &identityID, &status, &totalCents, &currency,
+			&createdAt, &updatedAt,
+			&paymentID, &providerStr, &providerTxnID,
+		); err != nil {
+			return nil, fmt.Errorf("scan refund order info that bai: %w", err)
+		}
+
+		results = append(results, domain.RefundOrderInfo{
+			OrderID:       orderID,
+			EventID:       evtID,
+			IdentityID:    identityID,
+			Status:        status,
+			TotalCents:    totalCents,
+			Currency:      currency,
+			PaymentID:     paymentID,
+			Provider:      domain.NormalizeProvider(providerStr),
+			ProviderTxnID: providerTxnID,
+			CreatedAt:     createdAt,
+			UpdatedAt:     updatedAt,
+		})
+	}
+
+	return results, nil
+}
+
+// MarkOrderRefundingTx cap nhat trang thai don hang sang REFUNDING trong transaction rieng biet (Quy tac bat bien 1).
+func (r *Repository) MarkOrderRefundingTx(ctx context.Context, orderID string) error {
+	query := `
+		UPDATE orders
+		SET status = 'REFUNDING', updated_at = now()
+		WHERE id = $1::uuid AND status IN ('PAID', 'ISSUED');
+	`
+	cmdTag, err := r.pool.Exec(ctx, query, orderID)
+	if err != nil {
+		return fmt.Errorf("cap nhat don hang sang REFUNDING that bai: %w", err)
+	}
+	if cmdTag.RowsAffected() == 0 {
+		// Kiem tra xem don co ton tai hoac da o REFUNDED chua
+		var status string
+		err := r.pool.QueryRow(ctx, "SELECT status FROM orders WHERE id = $1::uuid", orderID).Scan(&status)
+		if err != nil {
+			if errors.Is(err, pgx.ErrNoRows) {
+				return domain.ErrOrderNotFound
+			}
+			return fmt.Errorf("kiem tra trang thai don hang that bai: %w", err)
+		}
+		if status == "REFUNDED" {
+			return nil // Da duoc hoan tien truoc do
+		}
+		if status == "REFUNDING" {
+			return nil // Dang o trang thai REFUNDING
+		}
+		return domain.ErrOrderNotRefundable
+	}
+	return nil
+}
+
+// ProcessRefundSuccessTx cap nhat trang thai orders -> REFUNDED, payments -> REFUNDED, tickets -> REFUNDED
+// va ghi outbox event trong CUNG MOT TRANSACTION (Quy tac bat bien 1, BR-O4).
+func (r *Repository) ProcessRefundSuccessTx(ctx context.Context, params domain.ProcessRefundParams) (domain.ProcessRefundResult, error) {
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return domain.ProcessRefundResult{}, fmt.Errorf("khoi tao transaction hoan tien that bai: %w", err)
+	}
+	defer func() {
+		_ = tx.Rollback(ctx)
+	}()
+
+	// 1. Khoa ban ghi order bang FOR UPDATE
+	var (
+		orderID    string
+		eventID    string
+		identityID string
+		status     string
+		currency   string
+	)
+	lockQuery := `
+		SELECT id::text, event_id::text, identity_id::text, status, currency
+		FROM orders
+		WHERE id = $1::uuid
+		FOR UPDATE;
+	`
+	err = tx.QueryRow(ctx, lockQuery, params.OrderID).Scan(&orderID, &eventID, &identityID, &status, &currency)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return domain.ProcessRefundResult{}, domain.ErrOrderNotFound
+		}
+		return domain.ProcessRefundResult{}, fmt.Errorf("khoa don hang de hoan tien that bai: %w", err)
+	}
+
+	// Idempotent: Neu don da o trang thai REFUNDED truoc do
+	if status == "REFUNDED" {
+		return domain.ProcessRefundResult{
+			OrderID:         orderID,
+			PaymentID:       params.PaymentID,
+			AlreadyDone:     true,
+			TicketsRefunded: 0,
+			Status:          status,
+			Message:         "don hang da duoc hoan tien truoc do (idempotent)",
+		}, nil
+	}
+
+	if status != "PAID" && status != "ISSUED" && status != "REFUNDING" {
+		return domain.ProcessRefundResult{}, domain.ErrOrderNotRefundable
+	}
+
+	// 2. Cap nhat orders sang REFUNDED
+	updateOrderQuery := `
+		UPDATE orders
+		SET status = 'REFUNDED', updated_at = now()
+		WHERE id = $1::uuid;
+	`
+	if _, err := tx.Exec(ctx, updateOrderQuery, orderID); err != nil {
+		return domain.ProcessRefundResult{}, fmt.Errorf("cap nhat don hang sang REFUNDED that bai: %w", err)
+	}
+
+	// 3. Cap nhat payments sang REFUNDED neu co
+	updatePaymentQuery := `
+		UPDATE payments
+		SET status = 'REFUNDED',
+		    raw_payload = COALESCE(raw_payload, '{}'::jsonb) || jsonb_build_object(
+		        'refund_txn_id', $2::text,
+		        'refund_reason', $3::text,
+		        'refunded_at', now()::text
+		    )
+		WHERE order_id = $1::uuid;
+	`
+	if _, err := tx.Exec(ctx, updatePaymentQuery, orderID, params.RefundTxnID, params.Reason); err != nil {
+		return domain.ProcessRefundResult{}, fmt.Errorf("cap nhat payments sang REFUNDED that bai: %w", err)
+	}
+
+	// 4. Cap nhat tickets sang REFUNDED
+	updateTicketsQuery := `
+		UPDATE tickets
+		SET status = 'REFUNDED'
+		WHERE order_id = $1::uuid AND status != 'VOID';
+	`
+	cmdTickets, err := tx.Exec(ctx, updateTicketsQuery, orderID)
+	ticketsRefunded := 0
+	if err == nil {
+		ticketsRefunded = int(cmdTickets.RowsAffected())
+	}
+
+	// 5. Ghi outbox event payment.refunded
+	now := time.Now().UTC()
+	outboxPayload := domain.OutboxPaymentRefundedPayload{
+		OrderID:     orderID,
+		EventID:     eventID,
+		IdentityID:  identityID,
+		PaymentID:   params.PaymentID,
+		Provider:    string(params.Provider),
+		RefundTxnID: params.RefundTxnID,
+		AmountCents: params.AmountCents,
+		Currency:    currency,
+		Reason:      params.Reason,
+		RefundedAt:  now,
+	}
+	outboxBytes, err := json.Marshal(outboxPayload)
+	if err != nil {
+		return domain.ProcessRefundResult{}, fmt.Errorf("marshal outbox payload that bai: %w", err)
+	}
+
+	insertOutboxQuery := `
+		INSERT INTO outbox_events (aggregate_type, aggregate_id, routing_key, payload, trace_id, created_at)
+		VALUES ('payment', $1::uuid, 'payment.refunded', $2, $3, now());
+	`
+	if _, err := tx.Exec(ctx, insertOutboxQuery, orderID, outboxBytes, params.TraceID); err != nil {
+		return domain.ProcessRefundResult{}, fmt.Errorf("chen outbox event payment.refunded that bai: %w", err)
+	}
+
+	// Commit Transaction
+	if err := tx.Commit(ctx); err != nil {
+		return domain.ProcessRefundResult{}, fmt.Errorf("commit transaction hoan tien that bai: %w", err)
+	}
+
+	return domain.ProcessRefundResult{
+		OrderID:         orderID,
+		PaymentID:       params.PaymentID,
+		AlreadyDone:     false,
+		TicketsRefunded: ticketsRefunded,
+		Status:          "REFUNDED",
+		Message:         "hoan tien thanh cong, da cap nhat trang thai va phat outbox",
+	}, nil
+}
+
+// ProcessRefundFailedTx ghi nhan trang thai hoan tien that bai hoac can retry vao payments table.
+func (r *Repository) ProcessRefundFailedTx(ctx context.Context, orderID string, paymentID string, reason string) error {
+	query := `
+		UPDATE payments
+		SET raw_payload = COALESCE(raw_payload, '{}'::jsonb) || jsonb_build_object(
+		    'refund_last_error', $2::text,
+		    'refund_attempt_at', now()::text
+		)
+		WHERE order_id = $1::uuid;
+	`
+	_, err := r.pool.Exec(ctx, query, orderID, reason)
+	return err
+}

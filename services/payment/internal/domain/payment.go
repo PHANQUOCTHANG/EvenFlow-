@@ -86,6 +86,11 @@ func (o *OrderView) IsExpired(now time.Time) bool {
 	return !now.Before(o.ExpiresAt)
 }
 
+// IsRefundable kiem tra don hang co o trang thai co the hoan tien khong (PAID, ISSUED, REFUNDING).
+func (o *OrderView) IsRefundable() bool {
+	return o.Status == "PAID" || o.Status == "ISSUED" || o.Status == "REFUNDING"
+}
+
 // PaymentMethodInfo mo ta thong tin hien thi cua mot phuong thuc thanh toan.
 type PaymentMethodInfo struct {
 	Code        Provider `json:"code"`
@@ -272,4 +277,93 @@ type ReconciliationResult struct {
 	Skipped         int           `json:"skipped"`
 	Errors          int           `json:"errors"`
 	Duration        time.Duration `json:"duration"`
+}
+
+// PaymentRefundRequest chua toan bo tham so de yeu cau hoan tien toi cong thanh toan (EV-154 / EVF-74).
+type PaymentRefundRequest struct {
+	PaymentID     string `json:"payment_id"`
+	OrderID       string `json:"order_id"`
+	ProviderTxnID string `json:"provider_txn_id"`
+	AmountCents   int64  `json:"amount_cents"`
+	Currency      string `json:"currency"`
+	Reason        string `json:"reason"`
+	RefundID      string `json:"refund_id"`
+}
+
+// PaymentRefundResult la ket qua tra ve tu cong thanh toan sau khi thuc hien hoan tien.
+type PaymentRefundResult struct {
+	RefundTxnID string         `json:"refund_txn_id"`
+	Status      PaymentStatus  `json:"status"` // REFUNDED, FAILED, PENDING
+	AmountCents int64          `json:"amount_cents"`
+	RawResponse map[string]any `json:"raw_response,omitempty"`
+	Message     string         `json:"message"`
+}
+
+// RefundOrderInfo bieu dien don hang can duoc hoan tien khi su kien bi huy.
+type RefundOrderInfo struct {
+	OrderID       string    `json:"order_id"`
+	EventID       string    `json:"event_id"`
+	IdentityID    string    `json:"identity_id"`
+	Status        string    `json:"status"`
+	TotalCents    int64     `json:"total_cents"`
+	Currency      string    `json:"currency"`
+	PaymentID     string    `json:"payment_id,omitempty"`
+	Provider      Provider  `json:"provider,omitempty"`
+	ProviderTxnID string    `json:"provider_txn_id,omitempty"`
+	CreatedAt     time.Time `json:"created_at"`
+	UpdatedAt     time.Time `json:"updated_at,omitempty"`
+}
+
+// ProcessRefundParams chua thong tin can thiet de cap nhat hoan tien atomic trong DB (Quy tac 1).
+type ProcessRefundParams struct {
+	OrderID     string    `json:"order_id"`
+	PaymentID   string    `json:"payment_id"`
+	Provider    Provider  `json:"provider"`
+	RefundTxnID string    `json:"refund_txn_id"`
+	AmountCents int64     `json:"amount_cents"`
+	Reason      string    `json:"reason"`
+	TraceID     string    `json:"trace_id"`
+	Timestamp   time.Time `json:"timestamp"`
+}
+
+// ProcessRefundResult chua ket qua cap nhat sau khi hoan tien trong DB.
+type ProcessRefundResult struct {
+	OrderID         string `json:"order_id"`
+	PaymentID       string `json:"payment_id"`
+	AlreadyDone     bool   `json:"already_done"`
+	TicketsRefunded int    `json:"tickets_refunded"`
+	Status          string `json:"status"`
+	Message         string `json:"message"`
+}
+
+// OutboxPaymentRefundedPayload la du lieu su kien phat vao bang outbox_events cho routing_key payment.refunded.
+type OutboxPaymentRefundedPayload struct {
+	OrderID     string    `json:"order_id"`
+	EventID     string    `json:"event_id"`
+	IdentityID  string    `json:"identity_id"`
+	PaymentID   string    `json:"payment_id"`
+	Provider    string    `json:"provider"`
+	RefundTxnID string    `json:"refund_txn_id"`
+	AmountCents int64     `json:"amount_cents"`
+	Currency    string    `json:"currency"`
+	Reason      string    `json:"reason"`
+	RefundedAt  time.Time `json:"refunded_at"`
+}
+
+// RefundBatchSummary tong hop ket qua sau khi hoan tien theo su kien.
+type RefundBatchSummary struct {
+	EventID       string        `json:"event_id"`
+	TotalOrders   int           `json:"total_orders"`
+	RefundedCount int           `json:"refunded_count"`
+	FailedCount   int           `json:"failed_count"`
+	SkippedCount  int           `json:"skipped_count"`
+	TotalAmount   int64         `json:"total_amount"`
+	Duration      time.Duration `json:"duration"`
+}
+
+// EventCancelledPayload la du lieu nhan duoc khi su kien bi huy.
+type EventCancelledPayload struct {
+	EventID     string    `json:"event_id"`
+	CancelledAt time.Time `json:"cancelled_at"`
+	Reason      string    `json:"reason,omitempty"`
 }

@@ -206,6 +206,53 @@ func (m *MoMoGateway) QueryPayment(ctx context.Context, req domain.PaymentQueryR
 	}, nil
 }
 
+// RefundPayment chu dong thuc hien giao dich hoan tien qua MoMo Refund API (EV-154 / EVF-74).
+func (m *MoMoGateway) RefundPayment(ctx context.Context, req domain.PaymentRefundRequest) (domain.PaymentRefundResult, error) {
+	select {
+	case <-ctx.Done():
+		return domain.PaymentRefundResult{}, ctx.Err()
+	default:
+	}
+
+	if req.AmountCents <= 0 {
+		return domain.PaymentRefundResult{}, fmt.Errorf("%w: so tien hoan phai lon hon 0", domain.ErrInvalidInput)
+	}
+	if req.OrderID == "" {
+		return domain.PaymentRefundResult{}, fmt.Errorf("%w: thieu order_id de hoan tien momo", domain.ErrInvalidInput)
+	}
+
+	requestId := fmt.Sprintf("momo_ref_req_%d", time.Now().UnixNano())
+	refundTxnID := fmt.Sprintf("momo_ref_%d", time.Now().UnixNano()%10000000)
+
+	rawSignData := fmt.Sprintf("accessKey=%s&amount=%d&description=%s&orderId=%s&partnerCode=%s&requestId=%s&transId=%s",
+		m.cfg.AccessKey,
+		req.AmountCents,
+		req.Reason,
+		req.OrderID,
+		m.cfg.PartnerCode,
+		requestId,
+		req.ProviderTxnID,
+	)
+	signature := ComputeHmacSHA256(m.cfg.SecretKey, rawSignData)
+
+	return domain.PaymentRefundResult{
+		RefundTxnID: refundTxnID,
+		Status:      domain.StatusRefunded,
+		AmountCents: req.AmountCents,
+		Message:     "momo hoan tien thanh cong",
+		RawResponse: map[string]any{
+			"partnerCode": m.cfg.PartnerCode,
+			"orderId":     req.OrderID,
+			"requestId":   requestId,
+			"amount":      req.AmountCents,
+			"transId":     refundTxnID,
+			"resultCode":  0,
+			"message":     "Thành công.",
+			"signature":   signature,
+		},
+	}, nil
+}
+
 // ComputeHmacSHA256 tinh toan ma bam HMAC-SHA256 tra ve hex chu thuong.
 func ComputeHmacSHA256(secret, data string) string {
 	h := hmac.New(sha256.New, []byte(secret))

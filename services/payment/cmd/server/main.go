@@ -113,11 +113,13 @@ func main() {
 	processWebhookUC := app.NewProcessWebhookUseCase(repo, registry, clock, log)
 	replayInboxUC := app.NewReplayPaymentInboxUseCase(repo, clock, log)
 	reconcileOrdersUC := app.NewReconcileStaleOrdersUseCase(repo, registry, clock, metrics, log)
+	refundCancelledEventUC := app.NewRefundCancelledEventUseCase(repo, registry, clock, log)
 
-	// Khoi tao HTTP handler va dang ky routes (bao gom webhook exactly-once BR-O6, inbox replay va doi soat EV-153)
+	// Khoi tao HTTP handler va dang ky routes (bao gom webhook exactly-once BR-O6, inbox replay, doi soat EV-153 va hoan tien EV-154)
 	handler := httpadapter.NewHandler(initiatePaymentUC, getPaymentUC, listMethodsUC, processWebhookUC, log).
 		WithInboxReplayer(replayInboxUC).
-		WithOrderReconciler(reconcileOrdersUC)
+		WithOrderReconciler(reconcileOrdersUC).
+		WithEventRefunder(refundCancelledEventUC)
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, _ *http.Request) {

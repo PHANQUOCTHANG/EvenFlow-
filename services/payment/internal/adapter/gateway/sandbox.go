@@ -20,8 +20,9 @@ const (
 
 // SandboxGateway la hien thuc mock chay local 100%, 0 dependency ngoai.
 type SandboxGateway struct {
-	mode          SandboxMode
-	queryStatuses map[string]domain.PaymentStatus
+	mode           SandboxMode
+	queryStatuses  map[string]domain.PaymentStatus
+	refundStatuses map[string]domain.PaymentStatus
 }
 
 // NewSandboxGateway khoi tao sandbox gateway voi che do gia lap chi dinh.
@@ -30,8 +31,9 @@ func NewSandboxGateway(mode SandboxMode) *SandboxGateway {
 		mode = SandboxModeSuccess
 	}
 	return &SandboxGateway{
-		mode:          mode,
-		queryStatuses: make(map[string]domain.PaymentStatus),
+		mode:           mode,
+		queryStatuses:  make(map[string]domain.PaymentStatus),
+		refundStatuses: make(map[string]domain.PaymentStatus),
 	}
 }
 
@@ -227,3 +229,75 @@ func (s *SandboxGateway) QueryPayment(ctx context.Context, req domain.PaymentQue
 	}
 }
 
+// SetRefundStatus ghi de trang thai tra ve khi RefundPayment cho mot order_id cu the (ho tro unit test).
+func (s *SandboxGateway) SetRefundStatus(orderID string, status domain.PaymentStatus) {
+	if s.refundStatuses == nil {
+		s.refundStatuses = make(map[string]domain.PaymentStatus)
+	}
+	s.refundStatuses[orderID] = status
+}
+
+// RefundPayment chu dong thuc hien giao dich hoan tien tu sandbox gateway (EV-154 / EVF-74).
+func (s *SandboxGateway) RefundPayment(ctx context.Context, req domain.PaymentRefundRequest) (domain.PaymentRefundResult, error) {
+	select {
+	case <-ctx.Done():
+		return domain.PaymentRefundResult{}, ctx.Err()
+	default:
+	}
+
+	if req.AmountCents <= 0 {
+		return domain.PaymentRefundResult{}, fmt.Errorf("%w: so tien hoan phai lon hon 0", domain.ErrInvalidInput)
+	}
+
+	// 1. Kiem tra ghi de rieng theo orderID
+	if s.refundStatuses != nil {
+		if st, ok := s.refundStatuses[req.OrderID]; ok {
+			if st == domain.StatusFailed {
+				return domain.PaymentRefundResult{
+					RefundTxnID: "",
+					Status:      domain.StatusFailed,
+					AmountCents: req.AmountCents,
+					Message:     "sandbox ghi de hoan tien that bai",
+				}, nil
+			}
+			refundTxnID := fmt.Sprintf("sbx_ref_%s_%d", req.PaymentID, time.Now().UnixNano()%1000000)
+			return domain.PaymentRefundResult{
+				RefundTxnID: refundTxnID,
+				Status:      st,
+				AmountCents: req.AmountCents,
+				Message:     fmt.Sprintf("sandbox hoan tien voi trang thai %s", st),
+			}, nil
+		}
+	}
+
+	// 2. Tra ve theo che do sandbox hien tai
+	if s.mode == SandboxModeFail {
+		return domain.PaymentRefundResult{
+			RefundTxnID: "",
+			Status:      domain.StatusFailed,
+			AmountCents: req.AmountCents,
+			Message:     "sandbox mo phong cong thanh toan tu choi hoan tien",
+		}, fmt.Errorf("%w: sandbox tu choi hoan tien", domain.ErrRefundFailed)
+	}
+
+	refundTxnID := fmt.Sprintf("sbx_ref_%s_%d", req.PaymentID, time.Now().UnixNano()%1000000)
+	if req.RefundID != "" {
+		refundTxnID = fmt.Sprintf("sbx_ref_%s", req.RefundID)
+	}
+
+	return domain.PaymentRefundResult{
+		RefundTxnID: refundTxnID,
+		Status:      domain.StatusRefunded,
+		AmountCents: req.AmountCents,
+		Message:     "sandbox hoan tien thanh cong",
+		RawResponse: map[string]any{
+			"mode":          string(s.mode),
+			"provider":      string(domain.ProviderSandbox),
+			"refund_txn_id": refundTxnID,
+			"order_id":      req.OrderID,
+			"amount_cents":  req.AmountCents,
+			"reason":        req.Reason,
+			"refunded_at":   time.Now().UTC().Format(time.RFC3339),
+		},
+	}, nil
+}
