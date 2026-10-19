@@ -12,7 +12,7 @@
 -- ARGV[2] = now_ms
 --
 -- Tra ve: { state, rank, queue_depth, admit_rate, expire_at, lottery_size }
---   state: LOBBY | QUEUED | ADMITTED | EXPIRED | UNKNOWN
+--   state: LOBBY | QUEUED | ADMITTED | EXPIRED | SOLD_OUT | UNKNOWN
 
 local token = ARGV[1]
 local now   = tonumber(ARGV[2])
@@ -31,12 +31,18 @@ if exp then
   return { 'ADMITTED', 0, depth, admit_rate, tonumber(exp), lottery }
 end
 
+-- Het ve han (EV-146, BR-Q6): ticketing dat meta.sold_out khi kho = 0 va khong con hold nao co the
+-- tra lai. Chi ap cho nguoi CHUA duoc admit; nguoi da ADMITTED van xu ly o tren de hoan tat don.
+local sold_out = redis.call('HGET', KEYS[5], 'sold_out') == '1'
+
 local rank = redis.call('ZRANK', KEYS[2], token)
 if rank then
+  if sold_out then return { 'SOLD_OUT', -1, depth, admit_rate, 0, lottery } end
   return { 'QUEUED', rank + 1, depth, admit_rate, 0, lottery }
 end
 
 if redis.call('SISMEMBER', KEYS[4], token) == 1 then
+  if sold_out then return { 'SOLD_OUT', -1, depth, admit_rate, 0, lottery } end
   return { 'LOBBY', -1, depth, admit_rate, 0, lottery }
 end
 

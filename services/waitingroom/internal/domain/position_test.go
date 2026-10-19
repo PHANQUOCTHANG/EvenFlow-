@@ -28,6 +28,12 @@ func TestPollInterval_QueuedNearTurnPollsEvery3s(t *testing.T) {
 	}
 }
 
+func TestPollInterval_SoldOutIsAFinalStateWithSlowCadence(t *testing.T) {
+	if got := domain.PollInterval(domain.StateSoldOut, -1); got != 30*time.Second {
+		t.Fatalf("SOLD_OUT poll = %v, muon 30s", got)
+	}
+}
+
 func TestPollInterval_QueuedFarRankPollsEvery30s(t *testing.T) {
 	// BR-Q4: rank xa (hang tram nghin, hang trieu) -> 30s de giam tai poll.
 	for _, rank := range []int64{100_000, 300_000, 3_000_000, math.MaxInt64} {

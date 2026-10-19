@@ -14,6 +14,7 @@ const (
 	StateQueued   State = "QUEUED"   // da co rank
 	StateAdmitted State = "ADMITTED" // duoc vao mua ve
 	StateExpired  State = "EXPIRED"  // het TTL admit ma chua mua (BR-Q7)
+	StateSoldOut  State = "SOLD_OUT" // het ve han: khong con ai duoc vao mua nua (BR-Q6, EV-146)
 	StateUnknown  State = "UNKNOWN"
 )
 
@@ -49,6 +50,10 @@ func PollInterval(state State, rank int64) time.Duration {
 		return pollLobby
 	case StateAdmitted, StateExpired:
 		return pollNear
+	case StateSoldOut:
+		// Trang thai cuoi: client dung polling. Neu kho co lai (hoan tien) thi trang thai tu doi o lan
+		// hoi ke tiep, nen van tra mot nhip dai thay vi 0.
+		return pollFar
 	case StateQueued:
 		switch {
 		case rank <= 0 || rank < 500:

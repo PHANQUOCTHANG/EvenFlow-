@@ -146,11 +146,16 @@ func run(log *slog.Logger) error {
 		repo, repo, gate, worker.DefaultReconcilerConfig(eventIDs), log,
 	).WithMetrics(prom)
 
+	// EV-146: bao het ve cho phong cho (co meta.sold_out / stock_zero).
+	soldOut := worker.NewSoldOutWatcher(
+		worker.NewTierSource(repo), gate, gate, worker.DefaultSoldOutWatcherConfig(eventIDs), log,
+	)
+
 	log.Info("worker bat dau", "so_su_kien", len(eventIDs),
 		"chu_ky_quet", time.Second, "chu_ky_nap_kho", worker.DefaultSeederConfig(nil).Interval,
 		"chu_ky_doi_soat", worker.DefaultReconcilerConfig(nil).Interval)
 
-	errs := make(chan error, 5)
+	errs := make(chan error, 6)
 	var wg sync.WaitGroup
 
 	wg.Add(1)
@@ -169,6 +174,12 @@ func run(log *slog.Logger) error {
 	go func() {
 		defer wg.Done()
 		errs <- reconciler.Run(ctx)
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		errs <- soldOut.Run(ctx)
 	}()
 
 	wg.Add(1)

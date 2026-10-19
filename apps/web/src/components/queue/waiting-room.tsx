@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { AdmitBanner } from "@/components/queue/admit-banner";
 import { QueuePosition } from "@/components/queue/queue-position";
+import { QueueStatusPanel } from "@/components/queue/queue-status-panel";
 import { ChatPanel } from "@/components/assistant/chat-panel";
 import { Badge, Button, Spinner } from "@/components/ui";
 import { useQueueStatus } from "@/hooks/use-queue-status";
@@ -33,7 +34,12 @@ export function WaitingRoom({
   const [isJoining, setIsJoining] = useState(false);
   const [joinError, setJoinError] = useState<string | null>(null);
   const [isAssistantOpen, setIsAssistantOpen] = useState(false);
+  // Het ve han luc join (EV-146): khong co token de poll, nen trang thai den thang tu ket qua join.
+  const [soldOut, setSoldOut] = useState(false);
+  // Moi lan tang = vao lai hang (token cu bi tu choi). Idempotent theo BR-Q3 nen khong mat cho.
+  const [joinAttempt, setJoinAttempt] = useState(0);
   const redirectedRef = useRef(false);
+  const rejoinedRef = useRef(false);
 
   // 1. Quản lý khôi phục hoặc cấp mới queue token từ sessionStorage
   useEffect(() => {
@@ -53,6 +59,10 @@ export function WaitingRoom({
 
         const res = await joinQueue(eventId, {}, { jitter: false });
         if (!cancelled) {
+          if (res.state === "SOLD_OUT" || !res.queue_token) {
+            setSoldOut(true);
+            return;
+          }
           saveQueueToken(eventId, res.queue_token);
           setToken(res.queue_token);
         }
@@ -82,7 +92,7 @@ export function WaitingRoom({
     return () => {
       cancelled = true;
     };
-  }, [eventId]);
+  }, [eventId, joinAttempt]);
 
   // 2. Theo dõi trạng thái xếp hàng thông qua hook tối ưu
   const { snapshot, initialRank, connection, error } = useQueueStatus({
@@ -90,7 +100,18 @@ export function WaitingRoom({
     token,
   });
 
-  const state = snapshot?.state ?? "LOBBY";
+  // 401 tu status = queue token khong con hop le (het han 24 gio, hoac cap truoc khi doi sang token ky,
+  // EV-137). Vao lai hang dung MOT lan; lan hai van loi thi hien man loi de khach tu quyet dinh.
+  useEffect(() => {
+    if (error?.status === 401 && !rejoinedRef.current) {
+      rejoinedRef.current = true;
+      clearQueueToken(eventId);
+      setToken(null);
+      setJoinAttempt((n) => n + 1);
+    }
+  }, [error, eventId]);
+
+  const state = soldOut ? "SOLD_OUT" : (snapshot?.state ?? "LOBBY");
 
   // 3. Tự động điều hướng sang bước chọn vé khi đã tới lượt (AC-6)
   useEffect(() => {
@@ -135,8 +156,8 @@ export function WaitingRoom({
     );
   }
 
-  // Lỗi terminal từ status
-  if (error) {
+  // Lỗi terminal từ status (401 đang được tự vào lại hàng ở trên, không nháy màn lỗi)
+  if (error && !(error.status === 401 && !rejoinedRef.current) && !isJoining) {
     return (
       <div
         role="alert"
@@ -219,12 +240,17 @@ export function WaitingRoom({
 
       {/* Hiển thị vị trí & tiến trình (AC-5) */}
       <section aria-label="Thông tin vị trí hàng đợi">
-        <QueuePosition
-          state={state}
-          rank={snapshot?.rank ?? null}
-          etaSeconds={snapshot?.etaSeconds ?? null}
-          initialRank={initialRank}
-        />
+        {state === "SOLD_OUT" ? (
+          // BR-Q6: hết vé hẳn thì không còn vị trí để hiển thị; dùng nội dung chuẩn của panel trạng thái.
+          <QueueStatusPanel state="SOLD_OUT" connectionState={connection} offsetMs={offsetMs} />
+        ) : (
+          <QueuePosition
+            state={state}
+            rank={snapshot?.rank ?? null}
+            etaSeconds={snapshot?.etaSeconds ?? null}
+            initialRank={initialRank}
+          />
+        )}
       </section>
 
       {/* Hướng dẫn an toàn */}
