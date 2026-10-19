@@ -124,13 +124,16 @@ func (uc *VerifyTicketUseCase) Execute(ctx context.Context, in port.VerifyTicket
 			"trace_id", in.TraceID,
 		)
 
-		msg := "ve khong hop le de vao cua"
-		if errors.Is(admitErr, domain.ErrTicketAlreadyUsed) {
+		var msg string
+		switch {
+		case errors.Is(admitErr, domain.ErrTicketAlreadyUsed):
 			msg = "ve da duoc su dung de vao cua truoc do"
-		} else if errors.Is(admitErr, domain.ErrTicketVoid) {
+		case errors.Is(admitErr, domain.ErrTicketVoid):
 			msg = "ve da bi vo hieu hoa"
-		} else if errors.Is(admitErr, domain.ErrTicketRefunded) {
+		case errors.Is(admitErr, domain.ErrTicketRefunded):
 			msg = "ve da duoc hoan tien"
+		default:
+			msg = "ve khong hop le de vao cua"
 		}
 
 		return port.VerifyTicketResult{
