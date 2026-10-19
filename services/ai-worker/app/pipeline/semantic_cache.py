@@ -40,6 +40,7 @@ def normalize(text: str) -> str:
     Bo dau, ha chu thuong, gom khoang trang, bo dau cau. "Con ve khong?" va
     "còn vé không" tro thanh cung mot khoa.
     """
+    text = text.replace("đ", "d").replace("Đ", "d")
     text = unicodedata.normalize("NFD", text.lower())
     text = "".join(c for c in text if unicodedata.category(c) != "Mn")
     text = re.sub(r"[^\w\s]", " ", text)
