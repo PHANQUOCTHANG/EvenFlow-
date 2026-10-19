@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -17,9 +18,10 @@ import (
 )
 
 type fakeRepo struct {
-	events map[uuid.UUID]*domain.Event
-	tiers  map[uuid.UUID][]domain.TicketTier
-	outbox []port.OutboxMessage
+	failList bool
+	events   map[uuid.UUID]*domain.Event
+	tiers    map[uuid.UUID][]domain.TicketTier
+	outbox   []port.OutboxMessage
 }
 
 func newTestRepo() *fakeRepo {
@@ -52,6 +54,9 @@ func (r *fakeRepo) GetBySlug(ctx context.Context, slug string) (*domain.Event, e
 }
 
 func (r *fakeRepo) ListByOrganizer(ctx context.Context, orgID uuid.UUID) ([]*domain.Event, error) {
+	if r.failList {
+		return nil, errors.New("pq: connection refused to 10.0.0.5")
+	}
 	var list []*domain.Event
 	for _, e := range r.events {
 		if e.OrganizerID == orgID {
@@ -93,6 +98,13 @@ func (r *fakeRepo) GetTiersByEventID(ctx context.Context, eventID uuid.UUID) ([]
 	return r.tiers[eventID], nil
 }
 
+// as gan danh tinh nhu gateway da xac minh token (EV-114).
+func as(req *http.Request, id uuid.UUID, role string) *http.Request {
+	req.Header.Set("X-Identity-Id", id.String())
+	req.Header.Set("X-Identity-Role", role)
+	return req
+}
+
 func setupTestServer() (http.Handler, *fakeRepo) {
 	repo := newTestRepo()
 	createUC := app.NewCreateEventUseCase(repo)
@@ -119,7 +131,7 @@ func TestHTTP_CreateAndGetEvent(t *testing.T) {
 	bodyBytes, _ := json.Marshal(reqBody)
 
 	// POST /api/v1/events
-	req := httptest.NewRequest("POST", "/api/v1/events", bytes.NewReader(bodyBytes))
+	req := as(httptest.NewRequest("POST", "/api/v1/events", bytes.NewReader(bodyBytes)), orgID, "organizer")
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, req)
 
@@ -137,7 +149,7 @@ func TestHTTP_CreateAndGetEvent(t *testing.T) {
 	}
 
 	// GET /api/v1/events/{id}
-	getReq := httptest.NewRequest("GET", "/api/v1/events/"+res.ID.String(), nil)
+	getReq := as(httptest.NewRequest("GET", "/api/v1/events/"+res.ID.String(), nil), orgID, "organizer")
 	getRec := httptest.NewRecorder()
 	handler.ServeHTTP(getRec, getReq)
 
@@ -159,7 +171,7 @@ func TestHTTP_AddTier_And_Submit_BR_E1(t *testing.T) {
 		"sale_start_at": now.Add(24 * time.Hour),
 	})
 	rec := httptest.NewRecorder()
-	createReq := httptest.NewRequest("POST", "/api/v1/events", bytes.NewReader(createBody))
+	createReq := as(httptest.NewRequest("POST", "/api/v1/events", bytes.NewReader(createBody)), orgID, "organizer")
 	handler.ServeHTTP(rec, createReq)
 
 	var evt adapterHTTP.EventResponse
@@ -168,7 +180,7 @@ func TestHTTP_AddTier_And_Submit_BR_E1(t *testing.T) {
 	// 2. Submit khi chưa có hạng vé -> 422 Unprocessable Entity (BR-E1)
 	submitBody, _ := json.Marshal(map[string]any{"organizer_id": orgID.String()})
 	submitRec := httptest.NewRecorder()
-	submitReq := httptest.NewRequest("POST", "/api/v1/events/"+evt.ID.String()+"/submit", bytes.NewReader(submitBody))
+	submitReq := as(httptest.NewRequest("POST", "/api/v1/events/"+evt.ID.String()+"/submit", bytes.NewReader(submitBody)), orgID, "organizer")
 	handler.ServeHTTP(submitRec, submitReq)
 
 	if submitRec.Code != http.StatusUnprocessableEntity {
@@ -183,7 +195,7 @@ func TestHTTP_AddTier_And_Submit_BR_E1(t *testing.T) {
 		"quota":        100,
 	})
 	tierRec := httptest.NewRecorder()
-	tierReq := httptest.NewRequest("POST", "/api/v1/events/"+evt.ID.String()+"/tiers", bytes.NewReader(tierBody))
+	tierReq := as(httptest.NewRequest("POST", "/api/v1/events/"+evt.ID.String()+"/tiers", bytes.NewReader(tierBody)), orgID, "organizer")
 	handler.ServeHTTP(tierRec, tierReq)
 
 	if tierRec.Code != http.StatusCreated {
@@ -192,7 +204,7 @@ func TestHTTP_AddTier_And_Submit_BR_E1(t *testing.T) {
 
 	// 4. Submit lại sau khi có vé -> 200 OK
 	submitRec2 := httptest.NewRecorder()
-	submitReq2 := httptest.NewRequest("POST", "/api/v1/events/"+evt.ID.String()+"/submit", bytes.NewReader(submitBody))
+	submitReq2 := as(httptest.NewRequest("POST", "/api/v1/events/"+evt.ID.String()+"/submit", bytes.NewReader(submitBody)), orgID, "organizer")
 	handler.ServeHTTP(submitRec2, submitReq2)
 
 	if submitRec2.Code != http.StatusOK {
@@ -295,7 +307,8 @@ func setupModerationTestServer() (http.Handler, *fakeRepo, *fakeModRepo, *fakeAu
 	modActionUC := app.NewModeratorActionUseCase(repo, modRepo, auditRepo)
 
 	h := adapterHTTP.NewEventHandler(createUC, updateUC, tiersUC, transitionUC, getUC).
-		WithModeration(aiVerdictUC, modQueueUC, modActionUC)
+		WithModeration(aiVerdictUC, modQueueUC, modActionUC).
+		WithAudit(auditRepo)
 
 	return adapterHTTP.NewRouter(h), repo, modRepo, auditRepo
 }
@@ -352,7 +365,7 @@ func TestHTTP_ModerationQueue(t *testing.T) {
 		CreatedAt: now,
 	})
 
-	req := httptest.NewRequest("GET", "/api/v1/moderation/queue", nil)
+	req := as(httptest.NewRequest("GET", "/api/v1/moderation/queue", nil), uuid.New(), "moderator")
 	rec := httptest.NewRecorder()
 	router.ServeHTTP(rec, req)
 
@@ -392,12 +405,13 @@ func TestHTTP_ModeratorApprove_And_Reject(t *testing.T) {
 	})
 
 	// 1. Moderator Reject without reason -> 422 (BR-E5)
-	modID := uuid.New().String()
+	modUUID := uuid.New()
+	modID := modUUID.String()
 	rejectNoReasonBody, _ := json.Marshal(adapterHTTP.ModeratorRejectRequest{
 		ModeratorID: modID,
 		Reason:      "   ",
 	})
-	rejReq1 := httptest.NewRequest("POST", "/api/v1/events/"+evt.ID.String()+"/reject", bytes.NewReader(rejectNoReasonBody))
+	rejReq1 := as(httptest.NewRequest("POST", "/api/v1/events/"+evt.ID.String()+"/reject", bytes.NewReader(rejectNoReasonBody)), modUUID, "moderator")
 	rejRec1 := httptest.NewRecorder()
 	router.ServeHTTP(rejRec1, rejReq1)
 	if rejRec1.Code != http.StatusUnprocessableEntity {
@@ -409,7 +423,7 @@ func TestHTTP_ModeratorApprove_And_Reject(t *testing.T) {
 		ModeratorID: modID,
 		Reason:      "Permit not submitted",
 	})
-	rejReq2 := httptest.NewRequest("POST", "/api/v1/events/"+evt.ID.String()+"/reject", bytes.NewReader(rejectValidBody))
+	rejReq2 := as(httptest.NewRequest("POST", "/api/v1/events/"+evt.ID.String()+"/reject", bytes.NewReader(rejectValidBody)), modUUID, "moderator")
 	rejRec2 := httptest.NewRecorder()
 	router.ServeHTTP(rejRec2, rejReq2)
 	if rejRec2.Code != http.StatusOK {
@@ -421,7 +435,7 @@ func TestHTTP_ModeratorApprove_And_Reject(t *testing.T) {
 		ModeratorID: modID,
 		Note:        "Organizer submitted permit later, approved override",
 	})
-	appReq := httptest.NewRequest("POST", "/api/v1/events/"+evt.ID.String()+"/approve", bytes.NewReader(approveBody))
+	appReq := as(httptest.NewRequest("POST", "/api/v1/events/"+evt.ID.String()+"/approve", bytes.NewReader(approveBody)), modUUID, "moderator")
 	appRec := httptest.NewRecorder()
 	router.ServeHTTP(appRec, appReq)
 	if appRec.Code != http.StatusOK {

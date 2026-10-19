@@ -55,7 +55,8 @@ func main() {
 	modActionUC := app.NewModeratorActionUseCase(repo, modRepo, auditRepo)
 
 	handler := adapterHTTP.NewEventHandler(createUC, updateUC, tiersUC, transitionUC, getUC).
-		WithModeration(aiVerdictUC, modQueueUC, modActionUC)
+		WithModeration(aiVerdictUC, modQueueUC, modActionUC).
+		WithAudit(auditRepo)
 	router := adapterHTTP.NewRouter(handler)
 
 	addr := os.Getenv("HTTP_ADDR")
