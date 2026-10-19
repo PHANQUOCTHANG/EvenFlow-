@@ -3,9 +3,13 @@ package main
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
+	"strings"
+
+	"github.com/eventflow/eventflow/libs/go/pii"
 
 	identityHttp "github.com/eventflow/eventflow/services/identity/internal/adapter/http"
 	"github.com/eventflow/eventflow/services/identity/internal/adapter/postgres"
@@ -22,14 +26,23 @@ import (
 )
 
 func main() {
-	log := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	// EV-115: mọi dòng log đi qua bộ lọc PII (mật khẩu, token, OTP, DSN, email, SĐT...).
+	log := slog.New(pii.NewRedactingHandler(slog.NewJSONHandler(os.Stdout, nil)))
+	slog.SetDefault(log)
 
 	// Tự động nạp file .env ở thư mục root để lấy SMTP_USER/PASS
 	_ = godotenv.Load("../../.env")
 
 	// 1. Nạp cấu hình
 	cfg := config.Load()
-	log.Info("ket noi database", "url", cfg.DatabaseURL)
+	if cfg.DevPIIKeys {
+		log.Warn("PII_ENC_KEY/PII_HASH_KEY chua dat, dang dung khoa PII mac dinh cho dev")
+	}
+	protector, err := pii.NewProtector(cfg.PIIEncKey, cfg.PIIHashKey)
+	if err != nil {
+		log.Error("khoa PII khong hop le", "err", err)
+		os.Exit(1)
+	}
 
 	// 2. Kết nối Database
 	db, err := sql.Open("postgres", cfg.DatabaseURL)
@@ -60,7 +73,14 @@ func main() {
 	redisAdapterClient := redis.NewRedisClient(rawRedis)
 
 	// - Domain / Port
-	identityRepo := postgres.NewIdentityRepo(db)
+	identityRepo := postgres.NewIdentityRepo(db, protector)
+	// EV-115: dòng cũ lưu SĐT thô trong phone_hash -> chuyển sang HMAC + AES-GCM (idempotent).
+	if done, skipped, err := identityRepo.ProtectLegacyPhones(context.Background()); err != nil {
+		log.Error("khong bao ve duoc so dien thoai cu", "err", err)
+		os.Exit(1)
+	} else if done+skipped > 0 {
+		log.Warn("da ma hoa so dien thoai cu", "converted", done, "skipped_duplicates", skipped)
+	}
 	auditRepo := postgres.NewAuditRepo(db)
 	hasher := domain.NewArgon2idHasher()
 	// EV-112: access token 15 phút + refresh token xoay vòng lưu ở bảng refresh_tokens
@@ -78,11 +98,22 @@ func main() {
 	}
 
 	// - App (Use cases)
-	registerUC := app.NewRegisterUseCase(identityRepo, hasher, redisAdapterClient, notifier)
+	// OTP không có kênh gửi thật (SĐT, email chưa cấu hình SMTP): chỉ dev mới in ra stderr,
+	// che định danh, và không đi qua log (EV-115). Production: SĐT nhận OTP qua Telegram bot.
+	var registerOpts []app.RegisterOption
+	var resetOpts []app.ForgotPasswordOption
+	if !strings.EqualFold(cfg.AppEnv, "production") {
+		sink := func(identifier, otp string) {
+			fmt.Fprintf(os.Stderr, "[DEV ONLY] OTP %s cho %s\n", otp, pii.Mask(identifier))
+		}
+		registerOpts = append(registerOpts, app.WithDevOTPSink(sink))
+		resetOpts = append(resetOpts, app.WithResetDevOTPSink(sink))
+	}
+	registerUC := app.NewRegisterUseCase(identityRepo, hasher, redisAdapterClient, notifier, registerOpts...)
 	loginUC := app.NewLoginUseCase(identityRepo, hasher, tokenGen)
 	vneidUC := app.NewVNeIDUseCase(identityRepo, rawRedis, tokenGen)
 	forgotPwdUC := app.NewForgotPasswordUseCase(identityRepo, hasher, redisAdapterClient, notifier,
-		app.WithSessionRevoker(refreshRepo))
+		append(resetOpts, app.WithSessionRevoker(refreshRepo))...)
 
 	googleClientID := os.Getenv("GOOGLE_CLIENT_ID")
 	googleLoginUC := app.NewGoogleLoginUseCase(identityRepo, hasher, tokenGen, googleClientID)

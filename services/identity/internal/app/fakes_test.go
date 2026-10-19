@@ -32,6 +32,9 @@ func (r *fakeIdentityRepo) Save(ctx context.Context, identity *domain.Identity) 
 	if identity.PhoneHash != nil {
 		r.identities[*identity.PhoneHash] = identity
 	}
+	if identity.Phone != nil {
+		r.identities[*identity.Phone] = identity
+	}
 	return nil
 }
 

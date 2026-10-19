@@ -2,12 +2,15 @@ package app
 
 import (
 	"context"
+	crand "crypto/rand"
 	"errors"
 	"fmt"
-	"math/rand"
+	"log/slog"
+	"math/big"
 	"regexp"
 	"time"
 
+	"github.com/eventflow/eventflow/libs/go/pii"
 	"github.com/eventflow/eventflow/services/identity/internal/adapter/redis"
 	"github.com/eventflow/eventflow/services/identity/internal/domain"
 	"github.com/google/uuid"
@@ -40,15 +43,32 @@ type registerUseCase struct {
 	hasher   domain.PasswordHasher
 	redis    redis.Client
 	notifier domain.OTPNotifier
+	devOTP   DevOTPSink
 }
 
-func NewRegisterUseCase(repo domain.IdentityRepository, hasher domain.PasswordHasher, redisClient redis.Client, notifier domain.OTPNotifier) RegisterUseCase {
-	return &registerUseCase{
+// DevOTPSink nhận OTP khi không có kênh gửi thật (SĐT chưa có SMS, email chưa cấu hình SMTP).
+// Chỉ gắn ở môi trường dev: OTP KHÔNG BAO GIỜ được ghi vào log (EV-115).
+type DevOTPSink func(identifier, otp string)
+
+// RegisterOption tuỳ chỉnh use case đăng ký.
+type RegisterOption func(*registerUseCase)
+
+// WithDevOTPSink gắn nơi nhận OTP ở môi trường dev.
+func WithDevOTPSink(s DevOTPSink) RegisterOption {
+	return func(uc *registerUseCase) { uc.devOTP = s }
+}
+
+func NewRegisterUseCase(repo domain.IdentityRepository, hasher domain.PasswordHasher, redisClient redis.Client, notifier domain.OTPNotifier, opts ...RegisterOption) RegisterUseCase {
+	uc := &registerUseCase{
 		repo:     repo,
 		hasher:   hasher,
 		redis:    redisClient,
 		notifier: notifier,
 	}
+	for _, o := range opts {
+		o(uc)
+	}
+	return uc
 }
 
 func (uc *registerUseCase) RequestOTP(ctx context.Context, input RequestOTPInput) error {
@@ -77,8 +97,10 @@ func (uc *registerUseCase) RequestOTP(ctx context.Context, input RequestOTPInput
 	}
 
 	// 2. Generate 6-digit OTP
-	rand.Seed(time.Now().UnixNano())
-	otpCode := fmt.Sprintf("%06d", rand.Intn(1000000))
+	otpCode, err := newOTP()
+	if err != nil {
+		return err
+	}
 
 	// 3. Save OTP to Redis with 5 minutes TTL
 	err = uc.redis.SetOTP(ctx, input.Identifier, otpCode, 5*time.Minute)
@@ -88,17 +110,17 @@ func (uc *registerUseCase) RequestOTP(ctx context.Context, input RequestOTPInput
 
 	// 4. Publish Event or Send Email Directly
 	if isEmail(input.Identifier) && uc.notifier != nil {
-		fmt.Printf("[INFO] Gửi OTP thực tế qua Email tới: %s\n", input.Identifier)
+		slog.InfoContext(ctx, "gui OTP dang ky qua email", "email", input.Identifier)
 		go func() {
 			// Gửi trong goroutine để không block request
 			err := uc.notifier.SendOTP(context.Background(), input.Identifier, otpCode)
 			if err != nil {
-				fmt.Printf("[ERROR] Không thể gửi Email OTP: %v\n", err)
+				slog.Error("khong gui duoc email OTP", "email", input.Identifier, "err", err)
 			}
 		}()
-	} else {
-		// Mock (cho SĐT vì chưa tích hợp Twilio/Zalo)
-		fmt.Printf("[MOCK] SENDING OTP: %s to %s\n", otpCode, input.Identifier)
+	} else if uc.devOTP != nil {
+		// SĐT chưa có SMS (Telegram bot đọc OTP từ Redis); dev thì đưa OTP ra kênh riêng.
+		uc.devOTP(input.Identifier, otpCode)
 	}
 
 	return nil
@@ -142,8 +164,12 @@ func (uc *registerUseCase) VerifyOTP(ctx context.Context, input VerifyOTPInput) 
 	if isEmail(input.Identifier) {
 		identity.Email = &input.Identifier
 	} else {
-		// Mock hashing phone if needed, or store directly based on new schema
-		identity.PhoneHash = &input.Identifier 
+		// EV-115: chỉ giữ số đã chuẩn hoá trong bộ nhớ; repository lưu HMAC + bản mã AES-GCM.
+		phone, ok := pii.NormalizePhoneVN(input.Identifier)
+		if !ok {
+			return nil, ErrInvalidIdentifier
+		}
+		identity.Phone = &phone
 	}
 
 	// 4. Save to DB
@@ -158,10 +184,20 @@ func (uc *registerUseCase) VerifyOTP(ctx context.Context, input VerifyOTPInput) 
 	return identity, nil
 }
 
+// newOTP sinh mã 6 chữ số từ crypto/rand. math/rand gieo bằng thời gian thì ai biết lúc
+// request được gửi có thể đoán lại mã.
+func newOTP() (string, error) {
+	n, err := crand.Int(crand.Reader, big.NewInt(1_000_000))
+	if err != nil {
+		return "", fmt.Errorf("sinh OTP: %w", err)
+	}
+	return fmt.Sprintf("%06d", n.Int64()), nil
+}
+
 func isValidIdentifier(id string) bool {
 	// Basic regex for email or Vietnam phone number
 	isEmail := regexp.MustCompile(`^[^\s@]+@[^\s@]+\.[^\s@]+$`).MatchString(id)
-	isPhone := regexp.MustCompile(`^(84|0[3|5|7|8|9])+([0-9]{8})\b$`).MatchString(id)
+	_, isPhone := pii.NormalizePhoneVN(id)
 	return isEmail || isPhone
 }
 

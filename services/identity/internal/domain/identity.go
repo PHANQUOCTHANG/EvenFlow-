@@ -27,7 +27,8 @@ const (
 type Identity struct {
 	ID            uuid.UUID
 	Email         *string // Pointer because it can be null if registered via phone
-	PhoneHash     *string // Pointer because it can be null if registered via email
+	Phone         *string // Plaintext phone (84xxxxxxxxx), only in memory: the repository stores HMAC + AES-GCM (EV-115)
+	PhoneHash     *string // Keyed hash stored for lookup; never the raw number
 	PasswordHash  string
 	Role          Role
 	OtpVerifiedAt *time.Time

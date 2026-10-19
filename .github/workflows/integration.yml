@@ -116,7 +116,8 @@ jobs:
           bash "$GITHUB_WORKSPACE/.github/scripts/run-and-report-tests.sh" TestTichHop \
             go test -v -tags=integration ./internal/... -count=1 -timeout=10m
       # identity (EV-112): refresh token xoay vong, phat hien tai su dung va thu hoi tren Postgres
-      # that (20 request dong thoi cung mot token -> dung 1 thang). Cung quy tac fail-khong-skip.
+      # that (20 request dong thoi cung mot token -> dung 1 thang). EV-115: so dien thoai chi luu
+      # HMAC + AES-GCM, chuyen du lieu cu. Cung quy tac fail-khong-skip.
       - name: go vet -tags=integration (identity)
         working-directory: services/identity
         run: go vet -tags=integration ./...
@@ -125,5 +126,5 @@ jobs:
         env:
           REQUIRE_PASS: "1"
         run: |
-          bash "$GITHUB_WORKSPACE/.github/scripts/run-and-report-tests.sh" TestRefreshTokenRepo \
+          bash "$GITHUB_WORKSPACE/.github/scripts/run-and-report-tests.sh" "TestRefreshTokenRepo|TestIdentityRepoPII" \
             go test -v -tags=integration ./internal/... -count=1 -timeout=10m
