@@ -120,6 +120,12 @@ jobs:
           version: v2.12.2
           args: --timeout=5m
           working-directory: services/waitingroom
+      # gateway: cua vao duy nhat tu ngoai, nen lint ngay tu ban dau.
+      - uses: golangci/golangci-lint-action@v9
+        with:
+          version: v2.12.2
+          args: --timeout=5m
+          working-directory: services/gateway
 
   lint-web:
     name: lint-web
