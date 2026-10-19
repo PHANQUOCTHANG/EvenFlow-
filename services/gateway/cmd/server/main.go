@@ -1,31 +1,53 @@
-// Command server la diem vao cua gateway-svc.
+// Command server la diem vao cua gateway-svc: cua duy nhat tu ngoai vao backend.
 //
-// TODO: hien thuc theo backlog trong docs/04-jira-backlog.md.
-// Layout hexagonal chuan cua service Go: xem docs/03-cau-truc-src.md muc 2.
+// Xac minh access token (EV-112), xoa danh tinh client tu khai roi gan lai tu token, gioi han
+// toc do, chan /internal/* va chuyen tiep toi service. Khong giu trang thai: chay nhieu replica.
 package main
 
 import (
+	"context"
 	"log/slog"
-	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
+	"github.com/eventflow/eventflow/libs/go/httpx"
+	"github.com/eventflow/eventflow/services/gateway/internal/config"
+	"github.com/eventflow/eventflow/services/gateway/internal/proxy"
 )
 
 func main() {
 	log := slog.New(slog.NewJSONHandler(os.Stdout, nil))
-
-	mux := http.NewServeMux()
-	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, _ *http.Request) {
-		w.WriteHeader(http.StatusOK)
-	})
-
-	addr := os.Getenv("HTTP_ADDR")
-	if addr == "" {
-		addr = ":8080"
-	}
-
-	log.Info("gateway dang lang nghe", "addr", addr)
-	if err := http.ListenAndServe(addr, mux); err != nil {
-		log.Error("server dung", "err", err)
+	if err := run(log); err != nil {
+		log.Error("gateway dung", "err", err)
 		os.Exit(1)
 	}
+}
+
+func run(log *slog.Logger) error {
+	cfg, err := config.Load()
+	if err != nil {
+		return err
+	}
+	if cfg.DevSecret {
+		log.Warn("JWT_SECRET chua dat, dang dung secret mac dinh cho moi truong dev")
+	}
+
+	h, err := proxy.New(cfg, log)
+	if err != nil {
+		return err
+	}
+
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	// Khong dat WriteTimeout (xem httpx.NewServer): queue/stream la SSE song lau.
+	srv := httpx.NewServer(cfg.HTTPAddr, h)
+	upstreams := map[string]string{}
+	for name, u := range cfg.Upstreams {
+		upstreams[name] = u.String()
+	}
+	log.Info("gateway dang lang nghe", "addr", cfg.HTTPAddr, "upstreams", upstreams, "cors", cfg.AllowedOrigins)
+	return httpx.Run(ctx, srv, 20*time.Second)
 }
