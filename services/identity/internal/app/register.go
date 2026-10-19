@@ -2,15 +2,15 @@ package app
 
 import (
 	"context"
+	crand "crypto/rand"
 	"errors"
 	"fmt"
 	"log/slog"
-	"math/rand"
+	"math/big"
 	"regexp"
 	"time"
 
 	"github.com/eventflow/eventflow/libs/go/pii"
-
 	"github.com/eventflow/eventflow/services/identity/internal/adapter/redis"
 	"github.com/eventflow/eventflow/services/identity/internal/domain"
 	"github.com/google/uuid"
@@ -97,8 +97,10 @@ func (uc *registerUseCase) RequestOTP(ctx context.Context, input RequestOTPInput
 	}
 
 	// 2. Generate 6-digit OTP
-	rand.Seed(time.Now().UnixNano())
-	otpCode := fmt.Sprintf("%06d", rand.Intn(1000000))
+	otpCode, err := newOTP()
+	if err != nil {
+		return err
+	}
 
 	// 3. Save OTP to Redis with 5 minutes TTL
 	err = uc.redis.SetOTP(ctx, input.Identifier, otpCode, 5*time.Minute)
@@ -180,6 +182,16 @@ func (uc *registerUseCase) VerifyOTP(ctx context.Context, input VerifyOTPInput) 
 	_ = uc.redis.DeleteOTP(ctx, input.Identifier)
 
 	return identity, nil
+}
+
+// newOTP sinh mã 6 chữ số từ crypto/rand. math/rand gieo bằng thời gian thì ai biết lúc
+// request được gửi có thể đoán lại mã.
+func newOTP() (string, error) {
+	n, err := crand.Int(crand.Reader, big.NewInt(1_000_000))
+	if err != nil {
+		return "", fmt.Errorf("sinh OTP: %w", err)
+	}
+	return fmt.Sprintf("%06d", n.Int64()), nil
 }
 
 func isValidIdentifier(id string) bool {

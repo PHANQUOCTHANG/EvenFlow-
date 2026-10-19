@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"math/rand"
 	"time"
 
 	"github.com/eventflow/eventflow/services/identity/internal/adapter/redis"
@@ -84,8 +83,10 @@ func (uc *forgotPasswordUseCase) RequestResetOTP(ctx context.Context, identifier
 	}
 
 	// 3. Generate 6-digit OTP
-	rand.Seed(time.Now().UnixNano())
-	otpCode := fmt.Sprintf("%06d", rand.Intn(1000000))
+	otpCode, err := newOTP()
+	if err != nil {
+		return err
+	}
 
 	// 4. Save OTP to Redis with prefix "reset_"
 	// Note: SetOTP appends "otp:" inside, so actual key will be "otp:reset_0987654321"
