@@ -10,11 +10,21 @@ tay trong war room.
 
 from __future__ import annotations
 
+import asyncio
 import enum
 import logging
+from collections.abc import Callable
 from dataclasses import dataclass
 
+from redis.asyncio import Redis
+
 log = logging.getLogger(__name__)
+
+
+KEY_QUEUE_LAG = "ai:signals:queue_lag_seconds"
+KEY_BUDGET_RATIO = "ai:signals:budget_used_ratio"
+KEY_CIRCUIT_OPEN = "ai:signals:circuit_open"
+KEY_MANUAL_OVERRIDE = "ai:signals:manual_override"
 
 
 class Mode(enum.StrEnum):
@@ -95,3 +105,138 @@ _POLICIES: dict[Mode, Policy] = {
 
 def policy_for(mode: Mode) -> Policy:
     return _POLICIES[mode]
+
+
+def _parse_float(val: bytes | str | None, default: float = 0.0) -> float:
+    if val is None:
+        return default
+    try:
+        if isinstance(val, bytes):
+            val = val.decode()
+        return float(val)
+    except (ValueError, TypeError):
+        return default
+
+
+def _parse_bool(val: bytes | str | None, default: bool = False) -> bool:
+    if val is None:
+        return default
+    try:
+        if isinstance(val, bytes):
+            val = val.decode()
+        return val.strip().lower() in ("1", "true", "yes", "open")
+    except (ValueError, TypeError, AttributeError):
+        return default
+
+
+def _parse_mode(val: bytes | str | None) -> Mode | None:
+    if val is None:
+        return None
+    try:
+        if isinstance(val, bytes):
+            val = val.decode()
+        cleaned = val.strip().upper()
+        if cleaned in ("", "AUTO", "NONE"):
+            return None
+        return Mode(cleaned)
+    except (ValueError, TypeError, AttributeError):
+        return None
+
+
+class SignalReader:
+    """Doc cac tin hieu suy bien tu Redis (EV-164)."""
+
+    def __init__(self, redis: Redis) -> None:
+        self._redis = redis
+
+    async def fetch(self, default_override: Mode | None = None) -> Signals:
+        try:
+            lag_raw, budget_raw, circuit_raw, override_raw = await asyncio.gather(
+                self._redis.get(KEY_QUEUE_LAG),
+                self._redis.get(KEY_BUDGET_RATIO),
+                self._redis.get(KEY_CIRCUIT_OPEN),
+                self._redis.get(KEY_MANUAL_OVERRIDE),
+                return_exceptions=True,
+            )
+        except (RuntimeError, ConnectionError, OSError) as exc:
+            log.warning("doc signals tu redis that bai: %s", exc)
+            return Signals(
+                chat_queue_lag_seconds=0.0,
+                budget_used_ratio=0.0,
+                gemini_circuit_open=False,
+                manual_override=default_override,
+            )
+
+        lag = _parse_float(lag_raw if not isinstance(lag_raw, BaseException) else None, 0.0)
+        budget = _parse_float(budget_raw if not isinstance(budget_raw, BaseException) else None, 0.0)
+        circuit = _parse_bool(circuit_raw if not isinstance(circuit_raw, BaseException) else None, False)
+        override = _parse_mode(override_raw if not isinstance(override_raw, BaseException) else None)
+        if override is None:
+            override = default_override
+
+        return Signals(
+            chat_queue_lag_seconds=lag,
+            budget_used_ratio=budget,
+            gemini_circuit_open=circuit,
+            manual_override=override,
+        )
+
+
+class SignalCache:
+    """Bo nho dem tin hieu suy bien duoc cap nhat ngam (EV-164).
+
+    Giup cac consumer dong bo hoac khong can await moi lan xu ly job
+    van luon co tin hieu gan nhat.
+    """
+
+    def __init__(self, reader: SignalReader | None = None, initial: Signals | None = None) -> None:
+        self._reader = reader
+        self._current: Signals = initial or Signals(
+            chat_queue_lag_seconds=0.0,
+            budget_used_ratio=0.0,
+            gemini_circuit_open=False,
+            manual_override=None,
+        )
+        self._task: asyncio.Task | None = None
+
+    @property
+    def current(self) -> Signals:
+        return self._current
+
+    def get_signals(self) -> Signals:
+        return self._current
+
+    async def refresh(self, default_override: Mode | None = None) -> Signals:
+        if self._reader is not None:
+            self._current = await self._reader.fetch(default_override=default_override)
+        return self._current
+
+    def start_background_refresh(
+        self,
+        interval_seconds: float = 5.0,
+        override_supplier: Callable[[], Mode | None] | None = None,
+    ) -> None:
+        async def _loop() -> None:
+            while True:
+                try:
+                    override = override_supplier() if override_supplier else None
+                    await self.refresh(default_override=override)
+                except asyncio.CancelledError:
+                    break
+                except (RuntimeError, ConnectionError, OSError) as exc:
+                    log.warning("loi refresh signals cache: %s", exc)
+                try:
+                    await asyncio.sleep(interval_seconds)
+                except asyncio.CancelledError:
+                    break
+
+        self._task = asyncio.create_task(_loop())
+
+    async def stop_background_refresh(self) -> None:
+        if self._task is not None:
+            self._task.cancel()
+            try:
+                await self._task
+            except asyncio.CancelledError:
+                pass
+            self._task = None
