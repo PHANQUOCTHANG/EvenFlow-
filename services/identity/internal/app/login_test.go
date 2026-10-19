@@ -127,8 +127,8 @@ func TestLoginUseCase_Execute(t *testing.T) {
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
-		if output.Token != "mock-jwt-token" {
-			t.Errorf("expected mock-jwt-token, got %s", output.Token)
+		if output.Tokens.AccessToken != "mock-jwt-token" || output.Tokens.RefreshToken == "" {
+			t.Errorf("expected access mock-jwt-token and a refresh token, got %+v", output.Tokens)
 		}
 		if output.Identity.ID != expectedIdentity.ID {
 			t.Errorf("expected identity ID %v, got %v", expectedIdentity.ID, output.Identity.ID)

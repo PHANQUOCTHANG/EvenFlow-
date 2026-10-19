@@ -38,6 +38,7 @@ type Identity struct {
 type IdentityRepository interface {
 	Save(ctx context.Context, identity *Identity) error
 	FindByEmailOrPhone(ctx context.Context, identifier string) (*Identity, error)
+	FindByID(ctx context.Context, id uuid.UUID) (*Identity, error)
 	UpdatePassword(ctx context.Context, id uuid.UUID, newHash string) error
 }
 

@@ -27,15 +27,29 @@ type forgotPasswordUseCase struct {
 	hasher   domain.PasswordHasher
 	redis    redis.Client
 	notifier domain.OTPNotifier
+	sessions domain.SessionRevoker
 }
 
-func NewForgotPasswordUseCase(repo domain.IdentityRepository, hasher domain.PasswordHasher, redisClient redis.Client, notifier domain.OTPNotifier) ForgotPasswordUseCase {
-	return &forgotPasswordUseCase{
+// ForgotPasswordOption tuỳ chỉnh use case quên mật khẩu.
+type ForgotPasswordOption func(*forgotPasswordUseCase)
+
+// WithSessionRevoker thu hồi mọi phiên đăng nhập sau khi đặt lại mật khẩu (EV-112): kẻ đã
+// chiếm phiên không giữ được refresh token sau khi chủ tài khoản đổi mật khẩu.
+func WithSessionRevoker(r domain.SessionRevoker) ForgotPasswordOption {
+	return func(uc *forgotPasswordUseCase) { uc.sessions = r }
+}
+
+func NewForgotPasswordUseCase(repo domain.IdentityRepository, hasher domain.PasswordHasher, redisClient redis.Client, notifier domain.OTPNotifier, opts ...ForgotPasswordOption) ForgotPasswordUseCase {
+	uc := &forgotPasswordUseCase{
 		repo:     repo,
 		hasher:   hasher,
 		redis:    redisClient,
 		notifier: notifier,
 	}
+	for _, o := range opts {
+		o(uc)
+	}
+	return uc
 }
 
 func (uc *forgotPasswordUseCase) RequestResetOTP(ctx context.Context, identifier string) error {
@@ -130,6 +144,14 @@ func (uc *forgotPasswordUseCase) ResetPassword(ctx context.Context, input ResetP
 
 	// 6. Clean up OTP from Redis
 	_ = uc.redis.DeleteOTP(ctx, "reset_"+input.Identifier)
+
+	// 7. Revoke every session (EV-112). Password is already changed, so report the error
+	// instead of hiding it: the caller must know old sessions may still be alive.
+	if uc.sessions != nil {
+		if err := uc.sessions.RevokeAllForIdentity(ctx, identity.ID, domain.RevokeReasonPassword, time.Now()); err != nil {
+			return fmt.Errorf("thu hoi phien sau khi doi mat khau: %w", err)
+		}
+	}
 
 	return nil
 }

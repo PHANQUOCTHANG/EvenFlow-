@@ -46,6 +46,18 @@ func (r *fakeIdentityRepo) FindByEmailOrPhone(ctx context.Context, identifier st
 	return id, nil
 }
 
+func (r *fakeIdentityRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.Identity, error) {
+	if r.findErr != nil {
+		return nil, r.findErr
+	}
+	for _, ident := range r.identities {
+		if ident.ID == id {
+			return ident, nil
+		}
+	}
+	return nil, domain.ErrIdentityNotFound
+}
+
 func (r *fakeIdentityRepo) UpdatePassword(ctx context.Context, id uuid.UUID, newHash string) error {
 	if r.updateErr != nil {
 		return r.updateErr
@@ -86,11 +98,11 @@ type fakeTokenGen struct {
 	err   error
 }
 
-func (t *fakeTokenGen) GenerateToken(identity *domain.Identity) (string, error) {
+func (t *fakeTokenGen) GenerateTokens(ctx context.Context, identity *domain.Identity) (*domain.TokenPair, error) {
 	if t.err != nil {
-		return "", t.err
+		return nil, t.err
 	}
-	return t.token, nil
+	return &domain.TokenPair{AccessToken: t.token, RefreshToken: "refresh-" + t.token}, nil
 }
 
 // fakeRedisClient implements redis.Client

@@ -63,7 +63,10 @@ func main() {
 	identityRepo := postgres.NewIdentityRepo(db)
 	auditRepo := postgres.NewAuditRepo(db)
 	hasher := domain.NewArgon2idHasher()
-	tokenGen := domain.NewJWTTokenGenerator(cfg.JWTSecret)
+	// EV-112: access token 15 phút + refresh token xoay vòng lưu ở bảng refresh_tokens
+	refreshRepo := postgres.NewRefreshTokenRepo(db)
+	sessions := app.NewSessionService([]byte(cfg.JWTSecret), identityRepo, refreshRepo, auditRepo)
+	tokenGen := sessions
 
 	// - Notifier
 	var notifier domain.OTPNotifier
@@ -78,7 +81,8 @@ func main() {
 	registerUC := app.NewRegisterUseCase(identityRepo, hasher, redisAdapterClient, notifier)
 	loginUC := app.NewLoginUseCase(identityRepo, hasher, tokenGen)
 	vneidUC := app.NewVNeIDUseCase(identityRepo, rawRedis, tokenGen)
-	forgotPwdUC := app.NewForgotPasswordUseCase(identityRepo, hasher, redisAdapterClient, notifier)
+	forgotPwdUC := app.NewForgotPasswordUseCase(identityRepo, hasher, redisAdapterClient, notifier,
+		app.WithSessionRevoker(refreshRepo))
 
 	googleClientID := os.Getenv("GOOGLE_CLIENT_ID")
 	googleLoginUC := app.NewGoogleLoginUseCase(identityRepo, hasher, tokenGen, googleClientID)
@@ -98,7 +102,7 @@ func main() {
 	}
 
 	// - Adapter (HTTP)
-	authHandler := identityHttp.NewAuthHandler(registerUC, loginUC, vneidUC, forgotPwdUC, googleLoginUC, rawRedis)
+	authHandler := identityHttp.NewAuthHandler(registerUC, loginUC, vneidUC, forgotPwdUC, googleLoginUC, sessions, rawRedis)
 
 	// 4. Khởi tạo Router và đăng ký API
 	mux := http.NewServeMux()

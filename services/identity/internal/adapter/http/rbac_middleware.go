@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/eventflow/eventflow/libs/go/authx"
 	"github.com/eventflow/eventflow/services/identity/internal/domain"
-	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 )
 
@@ -60,44 +60,20 @@ func Authenticate(secretKey string) func(http.Handler) http.Handler {
 				return
 			}
 
-			tokenStr := strings.TrimSpace(parts[1])
-			token, err := jwt.Parse(tokenStr, func(t *jwt.Token) (interface{}, error) {
-				if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
-					return nil, fmt.Errorf("thuật toán ký không hợp lệ: %v", t.Header["alg"])
-				}
-				return []byte(secretKey), nil
-			})
-
-			if err != nil || !token.Valid {
+			// EV-112: chỉ nhận access token đúng hợp đồng authx (HS256, iss/aud/typ, ≤ 15 phút).
+			claims, err := authx.VerifyAccessToken([]byte(secretKey), strings.TrimSpace(parts[1]), time.Now())
+			if err != nil {
 				writeProblemDetails(w, http.StatusUnauthorized, "Token không hợp lệ hoặc đã hết hạn")
 				return
 			}
 
-			claims, ok := token.Claims.(jwt.MapClaims)
-			if !ok {
-				writeProblemDetails(w, http.StatusUnauthorized, "Claims của token không hợp lệ")
-				return
-			}
-
-			subStr, ok := claims["sub"].(string)
-			if !ok {
-				writeProblemDetails(w, http.StatusUnauthorized, "Token thiếu claim 'sub'")
-				return
-			}
-
-			identityID, err := uuid.Parse(subStr)
+			identityID, err := uuid.Parse(claims.Subject)
 			if err != nil {
 				writeProblemDetails(w, http.StatusUnauthorized, "Claim 'sub' không phải UUID hợp lệ")
 				return
 			}
 
-			roleStr, ok := claims["role"].(string)
-			if !ok {
-				writeProblemDetails(w, http.StatusUnauthorized, "Token thiếu claim 'role'")
-				return
-			}
-
-			callerRole := domain.Role(roleStr)
+			callerRole := domain.Role(claims.Role)
 			if !domain.IsValidRole(callerRole) {
 				writeProblemDetails(w, http.StatusUnauthorized, "Claim 'role' không hợp lệ")
 				return

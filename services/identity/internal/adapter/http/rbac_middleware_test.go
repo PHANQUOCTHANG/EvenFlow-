@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/eventflow/eventflow/libs/go/authx"
 	identityHttp "github.com/eventflow/eventflow/services/identity/internal/adapter/http"
 	"github.com/eventflow/eventflow/services/identity/internal/domain"
 	"github.com/golang-jwt/jwt/v5"
@@ -35,20 +36,51 @@ func (m *mockAuditRepo) GetLogs() []*domain.AuditLog {
 	return copied
 }
 
+// generateTestToken ký access token đúng hợp đồng authx (EV-112), hết hạn sau exp.
 func generateTestToken(secret string, id uuid.UUID, role domain.Role, exp time.Duration) string {
-	claims := jwt.MapClaims{
-		"sub":  id.String(),
-		"role": string(role),
-		"iat":  time.Now().Unix(),
-		"exp":  time.Now().Add(exp).Unix(),
+	now := time.Now()
+	iat := now
+	if exp < 0 {
+		iat = now.Add(exp - time.Minute)
 	}
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenStr, _ := token.SignedString([]byte(secret))
+	tokenStr, err := authx.SignAccessToken([]byte(secret), authx.AccessClaims{
+		Subject:   id.String(),
+		Role:      string(role),
+		ID:        uuid.NewString(),
+		IssuedAt:  iat,
+		ExpiresAt: now.Add(exp),
+	})
+	if err != nil {
+		panic(err)
+	}
 	return tokenStr
 }
 
+// TestAuthenticate_TuChoiJWTCu24Gio: JWT kiểu cũ (không iss/aud/typ, sống 24 giờ) phải bị từ
+// chối sau EV-112, dù ký đúng secret.
+func TestAuthenticate_TuChoiJWTCu24Gio(t *testing.T) {
+	secret := "test-secret-key-at-least-16"
+	legacy, _ := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"sub":  uuid.NewString(),
+		"role": string(domain.RoleOps),
+		"iat":  time.Now().Unix(),
+		"exp":  time.Now().Add(24 * time.Hour).Unix(),
+	}).SignedString([]byte(secret))
+
+	mw := identityHttp.Authenticate(secret)(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		t.Error("handler không được chạy với JWT cũ")
+	}))
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/auth/me", nil)
+	req.Header.Set("Authorization", "Bearer "+legacy)
+	rec := httptest.NewRecorder()
+	mw.ServeHTTP(rec, req)
+	if rec.Code != http.StatusUnauthorized {
+		t.Fatalf("JWT cũ phải nhận 401, nhận %d", rec.Code)
+	}
+}
+
 func TestAuthenticate_Middleware(t *testing.T) {
-	secret := "test-secret-key"
+	secret := "test-secret-key-at-least-16"
 	testID := uuid.New()
 
 	successHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -91,7 +123,7 @@ func TestAuthenticate_Middleware(t *testing.T) {
 	})
 
 	t.Run("Thất bại với Token sai secret key -> 401", func(t *testing.T) {
-		badToken := generateTestToken("wrong-secret", testID, domain.RoleBuyer, time.Hour)
+		badToken := generateTestToken("wrong-secret-key-at-least-16", testID, domain.RoleBuyer, time.Hour)
 		req := httptest.NewRequest("GET", "/api/v1/protected", nil)
 		req.Header.Set("Authorization", "Bearer "+badToken)
 		rec := httptest.NewRecorder()

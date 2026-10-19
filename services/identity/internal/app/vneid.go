@@ -65,8 +65,8 @@ func (uc *vneidUseCase) HandleCallback(ctx context.Context, input VNeIDCallbackI
 		}
 	}
 
-	// 2. Tạo JWT Token cho user này
-	token, err := uc.tokenGen.GenerateToken(identity)
+	// 2. Mở phiên cho user này (access + refresh token, EV-112)
+	tokens, err := uc.tokenGen.GenerateTokens(ctx, identity)
 	if err != nil {
 		return err
 	}
@@ -74,7 +74,8 @@ func (uc *vneidUseCase) HandleCallback(ctx context.Context, input VNeIDCallbackI
 	// 3. Pub message qua Redis Pub/Sub để báo Frontend biết
 	payload := map[string]interface{}{
 		"status": "success",
-		"token":  token,
+		"token":         tokens.AccessToken,
+		"refresh_token": tokens.RefreshToken,
 		"user": map[string]string{
 			"full_name": input.FullName,
 			"cccd":      input.CCCDNumber,
