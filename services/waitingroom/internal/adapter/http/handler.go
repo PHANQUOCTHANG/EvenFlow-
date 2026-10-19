@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/eventflow/eventflow/libs/go/authx"
 	"github.com/eventflow/eventflow/libs/go/httpx"
 	"github.com/eventflow/eventflow/services/waitingroom/internal/domain"
 )
@@ -56,11 +57,17 @@ type joinRequest struct {
 
 func (h *Handler) join(w http.ResponseWriter, r *http.Request) {
 	eventID := r.PathValue("eventID")
-	identityID, ok := identityFrom(r)
+	p, ok := authx.PrincipalFromHeaders(r.Header)
 	if !ok {
-		httpx.WriteProblem(w, http.StatusUnauthorized, "can dang nhap va xac thuc OTP truoc khi xep hang")
+		httpx.WriteProblem(w, http.StatusUnauthorized, "can dang nhap truoc khi xep hang")
 		return
 	}
+	// BR-Q3: token xep hang gan voi identity DA xac thuc OTP. Chan tai khoan ao ngay cua vao.
+	if !p.Verified {
+		httpx.WriteProblemType(w, http.StatusForbidden, ProblemOTPRequired, "can xac thuc OTP truoc khi xep hang")
+		return
+	}
+	identityID := p.ID
 
 	var req joinRequest
 	_ = json.NewDecoder(r.Body).Decode(&req)
@@ -183,18 +190,5 @@ func newToken() string {
 	return hex.EncodeToString(b)
 }
 
-// identityFrom lay identity da duoc gateway xac thuc va dat vao context.
-func identityFrom(r *http.Request) (string, bool) {
-	if v, ok := r.Context().Value(ctxKeyIdentity).(string); ok && v != "" {
-		return v, true
-	}
-	// Fallback cho local dev khi chay khong co gateway.
-	if v := r.Header.Get("X-Identity-Id"); v != "" {
-		return v, true
-	}
-	return "", false
-}
-
-type ctxKey string
-
-const ctxKeyIdentity ctxKey = "identity_id"
+// ProblemOTPRequired la "type" RFC 7807 client dung de chuyen khach sang man xac thuc OTP.
+const ProblemOTPRequired = "/problems/otp-required"

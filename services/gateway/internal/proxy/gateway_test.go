@@ -181,6 +181,30 @@ func TestGateway_XoaDanhTinhGiaMaoTrenMoiRoute(t *testing.T) {
 	}
 }
 
+// BR-Q3: co "da xac thuc OTP" chi den tu claim cua token, khong tu header client.
+func TestGateway_ChuyenCoXacThucOTPTuToken(t *testing.T) {
+	f := newFixture(t)
+	sign := func(verified bool) string {
+		tok, _ := authx.SignAccessToken([]byte(secret), authx.AccessClaims{
+			Subject: buyerID, Role: "buyer", ID: "j", Verified: verified, IssuedAt: f.now})
+		return tok
+	}
+	spoof := map[string]string{"X-Identity-Verified": "true"}
+
+	f.do(t, http.MethodPost, "/v1/events/e1/queue/join", sign(false), spoof, "")
+	if got := f.up.last(t).Header.Get("X-Identity-Verified"); got != "false" {
+		t.Fatalf("token chua verify + header gia: upstream nhan %q, muon false", got)
+	}
+	f.do(t, http.MethodPost, "/v1/events/e1/queue/join", sign(true), nil, "")
+	if got := f.up.last(t).Header.Get("X-Identity-Verified"); got != "true" {
+		t.Fatalf("token da verify: upstream nhan %q, muon true", got)
+	}
+	f.do(t, http.MethodGet, "/api/v1/events/e1", "", spoof, "")
+	if got := f.up.last(t).Header.Get("X-Identity-Verified"); got != "" {
+		t.Fatalf("khach vang lai: header verified lot xuong upstream (%q)", got)
+	}
+}
+
 // AC-2: route can dang nhap tu choi khi thieu/sai/het han token, upstream khong bi cham.
 func TestGateway_RouteCanDangNhapTuChoiTokenKhongHopLe(t *testing.T) {
 	f := newFixture(t)

@@ -46,8 +46,8 @@ func (r *identityRepo) Save(ctx context.Context, identity *domain.Identity) erro
 	}
 
 	query := `
-		INSERT INTO identities (id, email, phone_hash, phone_enc, password_hash, role, created_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)
+		INSERT INTO identities (id, email, phone_hash, phone_enc, password_hash, role, otp_verified_at, created_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 	`
 	_, err := r.db.ExecContext(ctx, query,
 		identity.ID,
@@ -56,6 +56,7 @@ func (r *identityRepo) Save(ctx context.Context, identity *domain.Identity) erro
 		phoneEnc,
 		identity.PasswordHash,
 		string(identity.Role),
+		identity.OtpVerifiedAt,
 		identity.CreatedAt,
 	)
 

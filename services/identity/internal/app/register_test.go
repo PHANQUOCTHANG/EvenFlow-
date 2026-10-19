@@ -225,6 +225,9 @@ func TestRegisterUseCase_VerifyOTP(t *testing.T) {
 			t.Fatalf("unexpected error: %v", err)
 		}
 		// EV-115: use case chỉ đưa số đã chuẩn hoá cho repository, không tự ghi số thô vào PhoneHash.
+		if ident == nil || ident.OtpVerifiedAt == nil {
+			t.Errorf("tai khoan tao sau OTP phai co otp_verified_at (BR-Q3): %+v", ident)
+		}
 		if ident == nil || ident.Phone == nil || *ident.Phone != "84987654321" || ident.PhoneHash != nil {
 			t.Errorf("unexpected registered phone identity: %+v", ident)
 		}

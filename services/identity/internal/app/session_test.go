@@ -148,6 +148,29 @@ func TestSession_DangNhapCapAccess15PhutVaRefresh30Ngay(t *testing.T) {
 	}
 }
 
+// BR-Q3: access token mang co "da xac thuc OTP" theo cot otp_verified_at, doc lai moi lan refresh.
+func TestSession_TokenMangCoXacThucOTP(t *testing.T) {
+	f := newSessionFixture(t)
+	verifiedOf := func(p *domain.TokenPair) bool {
+		c, err := authx.VerifyAccessToken(sessionSecret, p.AccessToken, f.now)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return c.Verified
+	}
+
+	pair, _ := f.svc.GenerateTokens(context.Background(), f.identity)
+	if verifiedOf(pair) {
+		t.Fatal("identity chua co otp_verified_at khong duoc mang co verified")
+	}
+	at := f.now
+	f.identity.OtpVerifiedAt = &at
+	next, _, err := f.svc.Refresh(context.Background(), pair.RefreshToken)
+	if err != nil || !verifiedOf(next) {
+		t.Fatalf("sau khi xac thuc, refresh phai mang co verified: %v", err)
+	}
+}
+
 func TestSession_RefreshXoayVongVaGiuHanCuaPhien(t *testing.T) {
 	f := newSessionFixture(t)
 	first, _ := f.svc.GenerateTokens(context.Background(), f.identity)

@@ -43,13 +43,15 @@ type AccessClaims struct {
 	Subject   string    // identity_id (UUID)
 	Role      string    // buyer | organizer | moderator | ops
 	ID        string    // jti: duy nhat moi token, de truy vet
+	Verified  bool      // ver: identity da xac thuc OTP/IdP (BR-Q3)
 	IssuedAt  time.Time // iat
 	ExpiresAt time.Time // exp
 }
 
 type accessJWT struct {
-	Role string `json:"role"`
-	Type string `json:"typ"`
+	Role     string `json:"role"`
+	Type     string `json:"typ"`
+	Verified bool   `json:"ver,omitempty"`
 	jwt.RegisteredClaims
 }
 
@@ -66,8 +68,9 @@ func SignAccessToken(secret []byte, c AccessClaims) (string, error) {
 		exp = c.IssuedAt.Add(AccessTokenTTL)
 	}
 	claims := accessJWT{
-		Role: c.Role,
-		Type: accessType,
+		Role:     c.Role,
+		Type:     accessType,
+		Verified: c.Verified,
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    AccessIssuer,
 			Subject:   c.Subject,
@@ -110,6 +113,7 @@ func VerifyAccessToken(secret []byte, token string, now time.Time) (*AccessClaim
 		Subject:   claims.Subject,
 		Role:      claims.Role,
 		ID:        claims.ID,
+		Verified:  claims.Verified,
 		ExpiresAt: claims.ExpiresAt.Time,
 	}
 	if claims.IssuedAt != nil {
