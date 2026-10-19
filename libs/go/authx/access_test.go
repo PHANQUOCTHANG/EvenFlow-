@@ -52,6 +52,21 @@ func TestAccessToken_CoXacThucOTPDiTheoToken(t *testing.T) {
 	}
 }
 
+func TestAccessToken_ThietBiDiTheoToken(t *testing.T) {
+	now := time.Unix(1_800_000_000, 0)
+	c := validClaims(now)
+	c.DeviceID = "7f6c2a8e-0000-4000-8000-0000000000d1"
+	tok, _ := authx.SignAccessToken(accessSecret, c)
+	got, err := authx.VerifyAccessToken(accessSecret, tok, now)
+	if err != nil || got.DeviceID != c.DeviceID {
+		t.Fatalf("did = %q err=%v", got.DeviceID, err)
+	}
+	tok, _ = authx.SignAccessToken(accessSecret, validClaims(now))
+	if got, _ := authx.VerifyAccessToken(accessSecret, tok, now); got.DeviceID != "" {
+		t.Fatal("token khong gan thiet bi khong duoc co did")
+	}
+}
+
 func TestAccessToken_HetHanTraLoiRieng(t *testing.T) {
 	now := time.Unix(1_800_000_000, 0)
 	tok, _ := authx.SignAccessToken(accessSecret, validClaims(now))

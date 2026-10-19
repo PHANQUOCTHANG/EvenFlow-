@@ -64,6 +64,29 @@ func TestPrincipal_VerifiedChiLaTrueKhiGatewayGan(t *testing.T) {
 	}
 }
 
+func TestPrincipal_ThietBiChiTuGatewayVaPhaiLaUUID(t *testing.T) {
+	const did = "7f6c2a8e-0000-4000-8000-0000000000d1"
+	h := http.Header{}
+	authx.SetIdentityHeaders(h, authx.Principal{ID: someID, Role: "buyer", DeviceID: did})
+	if p, ok := authx.PrincipalFromHeaders(h); !ok || p.DeviceID != did {
+		t.Fatalf("doc lai %+v ok=%v", p, ok)
+	}
+
+	// Client gui X-Device-Id, token khong gan thiet bi: header cua client bi xoa.
+	h = http.Header{}
+	h.Set("X-Device-Id", did)
+	authx.SetIdentityHeaders(h, authx.Principal{ID: someID, Role: "buyer"})
+	if p, _ := authx.PrincipalFromHeaders(h); p.DeviceID != "" {
+		t.Fatal("X-Device-Id do client gui khong duoc song sot")
+	}
+
+	// Gia tri khong phai UUID: tu choi ca principal.
+	h = http.Header{"X-Identity-Id": {someID}, "X-Identity-Role": {"buyer"}, "X-Device-Id": {"khong-phai-uuid"}}
+	if _, ok := authx.PrincipalFromHeaders(h); ok {
+		t.Fatal("X-Device-Id hong phai bi tu choi")
+	}
+}
+
 func TestPrincipal_FromHeadersTuChoiGiaTriSai(t *testing.T) {
 	cases := map[string][2]string{
 		"thieu id":      {"", "buyer"},

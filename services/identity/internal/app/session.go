@@ -27,7 +27,14 @@ type SessionService struct {
 	identities domain.IdentityRepository
 	tokens     domain.RefreshTokenRepository
 	audit      domain.AuditRepository
+	devices    domain.DeviceRegistrar
 	now        func() time.Time
+}
+
+// WithDevices cho phep Refresh gan / doi thiet bi cua phien (EV-113).
+func (s *SessionService) WithDevices(d domain.DeviceRegistrar) *SessionService {
+	s.devices = d
+	return s
 }
 
 // NewSessionService tao service. audit co the nil (khong ghi audit khi phat hien tai su dung).
@@ -54,7 +61,12 @@ func (s *SessionService) GenerateTokens(ctx context.Context, identity *domain.Id
 	if err != nil {
 		return nil, fmt.Errorf("sinh refresh token: %w", err)
 	}
+	var deviceID *uuid.UUID
+	if id, ok := domain.DeviceFromContext(ctx); ok {
+		deviceID = &id
+	}
 	rt := &domain.RefreshToken{
+		DeviceID:   deviceID,
 		ID:         uuid.New(),
 		IdentityID: identity.ID,
 		FamilyID:   uuid.New(),
@@ -65,12 +77,13 @@ func (s *SessionService) GenerateTokens(ctx context.Context, identity *domain.Id
 	if err := s.tokens.Create(ctx, rt); err != nil {
 		return nil, fmt.Errorf("luu refresh token: %w", err)
 	}
-	return s.pair(identity, raw, rt.ExpiresAt, now)
+	return s.pair(identity, raw, rt.ExpiresAt, deviceID, now)
 }
 
 // Refresh doi refresh token lay cap token moi. Role doc lai tu DB nen doi role co hieu luc
-// tu lan refresh ke tiep.
-func (s *SessionService) Refresh(ctx context.Context, rawRefresh string) (*domain.TokenPair, *domain.Identity, error) {
+// tu lan refresh ke tiep. Phien giu thiet bi cu; neu client gui device thi dang ky (hoac doi) thiet bi
+// cua phien sang thiet bi do -- cach de client Google/VNeID gan thiet bi sau khi dang nhap.
+func (s *SessionService) Refresh(ctx context.Context, rawRefresh string, device *domain.DeviceInfo) (*domain.TokenPair, *domain.Identity, error) {
 	if rawRefresh == "" {
 		return nil, nil, domain.ErrRefreshTokenInvalid
 	}
@@ -97,7 +110,23 @@ func (s *SessionService) Refresh(ctx context.Context, rawRefresh string) (*domai
 		}
 		return nil, nil, err
 	}
-	pair, err := s.pair(identity, nextRaw, next.ExpiresAt, now)
+	deviceID := old.DeviceID
+	if device != nil {
+		if s.devices == nil {
+			return nil, nil, errors.New("khong cau hinh dang ky thiet bi")
+		}
+		id, err := s.devices.Register(ctx, identity.ID, *device)
+		if err != nil {
+			return nil, nil, err
+		}
+		if deviceID == nil || *deviceID != id {
+			if err := s.tokens.SetDevice(ctx, next.ID, id); err != nil {
+				return nil, nil, fmt.Errorf("gan thiet bi cho phien: %w", err)
+			}
+			deviceID = &id
+		}
+	}
+	pair, err := s.pair(identity, nextRaw, next.ExpiresAt, deviceID, now)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -118,8 +147,13 @@ func (s *SessionService) LogoutAll(ctx context.Context, identityID uuid.UUID) er
 	return s.tokens.RevokeAllForIdentity(ctx, identityID, domain.RevokeReasonLogoutAll, s.now())
 }
 
-func (s *SessionService) pair(identity *domain.Identity, rawRefresh string, refreshExp, now time.Time) (*domain.TokenPair, error) {
+func (s *SessionService) pair(identity *domain.Identity, rawRefresh string, refreshExp time.Time, deviceID *uuid.UUID, now time.Time) (*domain.TokenPair, error) {
+	did := ""
+	if deviceID != nil {
+		did = deviceID.String()
+	}
 	access, err := authx.SignAccessToken(s.secret, authx.AccessClaims{
+		DeviceID: did,
 		Subject:  identity.ID.String(),
 		Role:     string(identity.Role),
 		ID:       uuid.NewString(),

@@ -126,5 +126,5 @@ jobs:
         env:
           REQUIRE_PASS: "1"
         run: |
-          bash "$GITHUB_WORKSPACE/.github/scripts/run-and-report-tests.sh" "TestRefreshTokenRepo|TestIdentityRepo" \
+          bash "$GITHUB_WORKSPACE/.github/scripts/run-and-report-tests.sh" "TestRefreshTokenRepo|TestIdentityRepo|TestDeviceRepo" \
             go test -v -tags=integration ./internal/... -count=1 -timeout=10m

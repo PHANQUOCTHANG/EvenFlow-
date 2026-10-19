@@ -85,7 +85,8 @@ func main() {
 	hasher := domain.NewArgon2idHasher()
 	// EV-112: access token 15 phút + refresh token xoay vòng lưu ở bảng refresh_tokens
 	refreshRepo := postgres.NewRefreshTokenRepo(db)
-	sessions := app.NewSessionService([]byte(cfg.JWTSecret), identityRepo, refreshRepo, auditRepo)
+	deviceSvc := app.NewDeviceService(postgres.NewDeviceRepo(db, protector))
+	sessions := app.NewSessionService([]byte(cfg.JWTSecret), identityRepo, refreshRepo, auditRepo).WithDevices(deviceSvc)
 	tokenGen := sessions
 
 	// - Notifier
@@ -110,7 +111,7 @@ func main() {
 		resetOpts = append(resetOpts, app.WithResetDevOTPSink(sink))
 	}
 	registerUC := app.NewRegisterUseCase(identityRepo, hasher, redisAdapterClient, notifier, registerOpts...)
-	loginUC := app.NewLoginUseCase(identityRepo, hasher, tokenGen)
+	loginUC := app.NewLoginUseCase(identityRepo, hasher, tokenGen, app.WithDeviceRegistrar(deviceSvc))
 	vneidUC := app.NewVNeIDUseCase(identityRepo, rawRedis, tokenGen)
 	forgotPwdUC := app.NewForgotPasswordUseCase(identityRepo, hasher, redisAdapterClient, notifier,
 		append(resetOpts, app.WithSessionRevoker(refreshRepo))...)
@@ -133,7 +134,7 @@ func main() {
 	}
 
 	// - Adapter (HTTP)
-	authHandler := identityHttp.NewAuthHandler(registerUC, loginUC, vneidUC, forgotPwdUC, googleLoginUC, sessions, rawRedis)
+	authHandler := identityHttp.NewAuthHandler(registerUC, loginUC, vneidUC, forgotPwdUC, googleLoginUC, sessions, rawRedis).WithDevices(deviceSvc)
 
 	// 4. Khởi tạo Router và đăng ký API
 	mux := http.NewServeMux()
