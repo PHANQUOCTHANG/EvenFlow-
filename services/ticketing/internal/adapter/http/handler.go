@@ -24,9 +24,12 @@ type PurchaseLimitReader interface {
 }
 
 type Handler struct {
-	holds  HoldCreator
-	limits PurchaseLimitReader
-	log    *slog.Logger
+	holds          HoldCreator
+	limits         PurchaseLimitReader
+	ticketIssuer   TicketIssuer
+	ticketVerifier TicketVerifier
+	ticketReader   TicketReader
+	log            *slog.Logger
 }
 
 func New(holds HoldCreator, log *slog.Logger) *Handler {
@@ -36,6 +39,14 @@ func New(holds HoldCreator, log *slog.Logger) *Handler {
 // WithPurchaseLimits bat route GET han muc mua. Khong goi thi route khong duoc dang ky.
 func (h *Handler) WithPurchaseLimits(l PurchaseLimitReader) *Handler {
 	h.limits = l
+	return h
+}
+
+// WithTickets dang ky use case phat hanh, xac thuc va xem ve (EV-133).
+func (h *Handler) WithTickets(issuer TicketIssuer, verifier TicketVerifier, reader TicketReader) *Handler {
+	h.ticketIssuer = issuer
+	h.ticketVerifier = verifier
+	h.ticketReader = reader
 	return h
 }
 
@@ -53,6 +64,16 @@ func (h *Handler) Routes(mux *http.ServeMux, idempotency httpx.Middleware) {
 	if h.limits != nil {
 		// Doc, khong ghi: khong can Idempotency-Key.
 		mux.HandleFunc("GET /v1/events/{eventID}/purchase-limit", h.purchaseLimit)
+	}
+	if h.ticketIssuer != nil {
+		// Phat hanh ve can Idempotency-Key chong duplicate retry (BR-O5)
+		mux.Handle("POST /v1/orders/{orderID}/issue-tickets", idempotency(http.HandlerFunc(h.issueTickets)))
+	}
+	if h.ticketReader != nil {
+		mux.HandleFunc("GET /v1/orders/{orderID}/tickets", h.listOrderTickets)
+	}
+	if h.ticketVerifier != nil {
+		mux.HandleFunc("POST /v1/tickets/verify", h.verifyTicket)
 	}
 }
 
