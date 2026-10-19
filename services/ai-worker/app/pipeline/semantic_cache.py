@@ -48,9 +48,15 @@ def normalize(text: str) -> str:
 
 
 class SemanticCache:
-    def __init__(self, redis: Redis, embedder) -> None:
+    def __init__(
+        self,
+        redis: Redis,
+        embedder,
+        similarity_threshold: float = SIMILARITY_THRESHOLD,
+    ) -> None:
         self._redis = redis
         self._embedder = embedder
+        self._similarity_threshold = similarity_threshold
 
     def key(self, event_id: str, question: str) -> str:
         """Khoa cache LUON gom event_id.
@@ -78,7 +84,7 @@ class SemanticCache:
         if neighbor is None:
             return None
         score, answer = neighbor
-        if score < SIMILARITY_THRESHOLD:
+        if score < self._similarity_threshold:
             return None
 
         log.debug("cache ngu nghia hit", extra={"score": round(score, 3)})
@@ -94,11 +100,14 @@ class SemanticCache:
             # embedder bien mat hoan toan, khong ai biet cache ngu nghia da ngung hoat dong.
             log.warning("embed that bai, bo qua ghi vector", exc_info=True)
             return
-        await self._redis.execute_command(
-            "HSET", f"ai:vec:{{{event_id}}}", self.key(event_id, question),
-            json.dumps({"v": vec, "a": answer}),
-        )
-        await self._redis.expire(f"ai:vec:{{{event_id}}}", TTL_SECONDS)
+        async with self._redis.pipeline() as pipe:
+            pipe.hset(
+                f"ai:vec:{{{event_id}}}",
+                self.key(event_id, question),
+                json.dumps({"v": vec, "a": answer}),
+            )
+            pipe.expire(f"ai:vec:{{{event_id}}}", TTL_SECONDS)
+            await pipe.execute()
 
     async def _nearest(self, event_id: str, vec: list[float]) -> tuple[float, str] | None:
         """Tim lang gieng gan nhat.
@@ -115,11 +124,13 @@ class SemanticCache:
         for payload in raw.values():
             try:
                 item = json.loads(payload)
-            except (TypeError, ValueError):
+                item_v = item["v"]
+                item_a = item["a"]
+            except (TypeError, ValueError, KeyError):
                 continue
-            score = _cosine(vec, item["v"])
+            score = _cosine(vec, item_v)
             if best is None or score > best[0]:
-                best = (score, item["a"])
+                best = (score, item_a)
         return best
 
 
