@@ -3,6 +3,8 @@ package http
 import (
 	"encoding/json"
 	"errors"
+	"io"
+	"log/slog"
 	"net/http"
 	"strings"
 	"time"
@@ -10,6 +12,7 @@ import (
 	"github.com/eventflow/eventflow/libs/go/httpx"
 	"github.com/eventflow/eventflow/services/event/internal/app"
 	"github.com/eventflow/eventflow/services/event/internal/domain"
+	"github.com/eventflow/eventflow/services/event/internal/port"
 	"github.com/google/uuid"
 )
 
@@ -23,6 +26,14 @@ type EventHandler struct {
 	aiVerdictUC app.HandleAiVerdictUseCase
 	modQueueUC  app.ListModerationQueueUseCase
 	modActionUC app.ModeratorActionUseCase
+
+	auditRepo port.AuditLogRepository
+}
+
+// WithAudit ghi audit_logs khi tu choi truy cap (EV-114).
+func (h *EventHandler) WithAudit(repo port.AuditLogRepository) *EventHandler {
+	h.auditRepo = repo
+	return h
 }
 
 func NewEventHandler(
@@ -61,11 +72,11 @@ func (h *EventHandler) CreateEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	orgID, err := uuid.Parse(req.OrganizerID)
-	if err != nil {
-		httpx.WriteProblem(w, http.StatusBadRequest, "invalid organizer_id uuid")
+	c, _ := callerFrom(r.Context())
+	if !h.matchBodyID(w, r, c, "organizer_id", req.OrganizerID) {
 		return
 	}
+	orgID := c.ID
 
 	evt, err := h.createUC.Execute(r.Context(), app.CreateEventInput{
 		OrganizerID: orgID,
@@ -78,7 +89,7 @@ func (h *EventHandler) CreateEvent(w http.ResponseWriter, r *http.Request) {
 		SaleEndAt:   req.SaleEndAt,
 	})
 	if err != nil {
-		handleDomainError(w, err)
+		h.fail(w, r, err)
 		return
 	}
 
@@ -96,7 +107,11 @@ func (h *EventHandler) GetEventByID(w http.ResponseWriter, r *http.Request) {
 
 	evt, err := h.getUC.GetByID(r.Context(), id)
 	if err != nil {
-		handleDomainError(w, err)
+		h.fail(w, r, err)
+		return
+	}
+	if c, ok := optionalCaller(r); !canSeeUnpublished(evt, c, ok) {
+		h.fail(w, r, domain.ErrEventNotFound)
 		return
 	}
 
@@ -113,30 +128,46 @@ func (h *EventHandler) GetEventBySlug(w http.ResponseWriter, r *http.Request) {
 
 	evt, err := h.getUC.GetBySlug(r.Context(), slug)
 	if err != nil {
-		handleDomainError(w, err)
+		h.fail(w, r, err)
+		return
+	}
+	if c, ok := optionalCaller(r); !canSeeUnpublished(evt, c, ok) {
+		h.fail(w, r, domain.ErrEventNotFound)
 		return
 	}
 
 	httpx.WriteJSON(w, http.StatusOK, ToEventResponse(evt))
 }
 
-// GET /api/v1/events?organizer_id={id}
+// GET /api/v1/events[?organizer_id={id}]
+//
+// Organizer: luon la su kien cua chinh minh (organizer_id khac -> 403). Moderator/Ops: bat buoc
+// chi dinh organizer_id.
 func (h *EventHandler) ListOrganizerEvents(w http.ResponseWriter, r *http.Request) {
+	c, _ := callerFrom(r.Context())
 	orgIDStr := r.URL.Query().Get("organizer_id")
-	if orgIDStr == "" {
-		httpx.WriteProblem(w, http.StatusBadRequest, "query parameter organizer_id is required")
-		return
-	}
 
-	orgID, err := uuid.Parse(orgIDStr)
-	if err != nil {
-		httpx.WriteProblem(w, http.StatusBadRequest, "invalid organizer_id uuid")
-		return
+	var orgID uuid.UUID
+	if c.Role == roleOrganizer {
+		if !h.matchBodyID(w, r, c, "organizer_id", orgIDStr) {
+			return
+		}
+		orgID = c.ID
+	} else {
+		if orgIDStr == "" {
+			httpx.WriteProblem(w, http.StatusBadRequest, "query parameter organizer_id is required")
+			return
+		}
+		var err error
+		if orgID, err = uuid.Parse(orgIDStr); err != nil {
+			httpx.WriteProblem(w, http.StatusBadRequest, "invalid organizer_id uuid")
+			return
+		}
 	}
 
 	events, err := h.getUC.ListByOrganizer(r.Context(), orgID)
 	if err != nil {
-		handleDomainError(w, err)
+		h.fail(w, r, err)
 		return
 	}
 
@@ -162,11 +193,11 @@ func (h *EventHandler) UpdateEvent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	orgID, err := uuid.Parse(req.OrganizerID)
-	if err != nil {
-		httpx.WriteProblem(w, http.StatusBadRequest, "invalid organizer_id uuid")
+	c, _ := callerFrom(r.Context())
+	if !h.matchBodyID(w, r, c, "organizer_id", req.OrganizerID) {
 		return
 	}
+	orgID := c.ID
 
 	evt, err := h.updateUC.Execute(r.Context(), app.UpdateEventInput{
 		EventID:     evtID,
@@ -179,7 +210,7 @@ func (h *EventHandler) UpdateEvent(w http.ResponseWriter, r *http.Request) {
 		SaleEndAt:   req.SaleEndAt,
 	})
 	if err != nil {
-		handleDomainError(w, err)
+		h.fail(w, r, err)
 		return
 	}
 
@@ -200,11 +231,11 @@ func (h *EventHandler) AddTier(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	orgID, err := uuid.Parse(req.OrganizerID)
-	if err != nil {
-		httpx.WriteProblem(w, http.StatusBadRequest, "invalid organizer_id uuid")
+	c, _ := callerFrom(r.Context())
+	if !h.matchBodyID(w, r, c, "organizer_id", req.OrganizerID) {
 		return
 	}
+	orgID := c.ID
 
 	tier, err := h.tiersUC.AddTier(r.Context(), app.AddTierInput{
 		EventID:     evtID,
@@ -214,7 +245,7 @@ func (h *EventHandler) AddTier(w http.ResponseWriter, r *http.Request) {
 		Quota:       req.Quota,
 	})
 	if err != nil {
-		handleDomainError(w, err)
+		h.fail(w, r, err)
 		return
 	}
 
@@ -241,11 +272,11 @@ func (h *EventHandler) UpdateTierQuota(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	orgID, err := uuid.Parse(req.OrganizerID)
-	if err != nil {
-		httpx.WriteProblem(w, http.StatusBadRequest, "invalid organizer_id uuid")
+	c, _ := callerFrom(r.Context())
+	if !h.matchBodyID(w, r, c, "organizer_id", req.OrganizerID) {
 		return
 	}
+	orgID := c.ID
 
 	tier, err := h.tiersUC.UpdateTierQuota(r.Context(), app.UpdateTierQuotaInput{
 		EventID:     evtID,
@@ -254,7 +285,7 @@ func (h *EventHandler) UpdateTierQuota(w http.ResponseWriter, r *http.Request) {
 		NewQuota:    req.NewQuota,
 	})
 	if err != nil {
-		handleDomainError(w, err)
+		h.fail(w, r, err)
 		return
 	}
 
@@ -272,20 +303,20 @@ func (h *EventHandler) SubmitEvent(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		OrganizerID string `json:"organizer_id"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := decodeOptional(r, &req); err != nil {
 		httpx.WriteProblem(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
-	orgID, err := uuid.Parse(req.OrganizerID)
-	if err != nil {
-		httpx.WriteProblem(w, http.StatusBadRequest, "invalid organizer_id uuid")
+	c, _ := callerFrom(r.Context())
+	if !h.matchBodyID(w, r, c, "organizer_id", req.OrganizerID) {
 		return
 	}
+	orgID := c.ID
 
 	evt, err := h.transitionUC.SubmitForReview(r.Context(), evtID, orgID)
 	if err != nil {
-		handleDomainError(w, err)
+		h.fail(w, r, err)
 		return
 	}
 
@@ -301,18 +332,20 @@ func (h *EventHandler) ApproveEvent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req ModeratorApproveRequest
-	_ = json.NewDecoder(r.Body).Decode(&req)
+	if err := decodeOptional(r, &req); err != nil {
+		httpx.WriteProblem(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	c, _ := callerFrom(r.Context())
+	if !h.matchBodyID(w, r, c, "moderator_id", req.ModeratorID) {
+		return
+	}
 
 	var evt *domain.Event
-	if req.ModeratorID != "" && h.modActionUC != nil {
-		modID, parseErr := uuid.Parse(req.ModeratorID)
-		if parseErr != nil {
-			httpx.WriteProblem(w, http.StatusBadRequest, "invalid moderator_id uuid")
-			return
-		}
+	if h.modActionUC != nil {
 		evt, err = h.modActionUC.Approve(r.Context(), app.ModeratorApproveInput{
 			EventID:     evtID,
-			ModeratorID: modID,
+			ModeratorID: c.ID,
 			Note:        req.Note,
 		})
 	} else {
@@ -320,7 +353,7 @@ func (h *EventHandler) ApproveEvent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err != nil {
-		handleDomainError(w, err)
+		h.fail(w, r, err)
 		return
 	}
 
@@ -336,23 +369,21 @@ func (h *EventHandler) RejectEvent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req ModeratorRejectRequest
-	decodeErr := json.NewDecoder(r.Body).Decode(&req)
+	if err := decodeOptional(r, &req); err != nil {
+		httpx.WriteProblem(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	c, _ := callerFrom(r.Context())
+	if !h.matchBodyID(w, r, c, "moderator_id", req.ModeratorID) {
+		return
+	}
 
 	var evt *domain.Event
-	// Neu co request body voi thong tin moderator hoac reason thi dung ModeratorActionUseCase
-	if decodeErr == nil && (req.ModeratorID != "" || req.Reason != "") && h.modActionUC != nil {
-		var modID uuid.UUID
-		if req.ModeratorID != "" {
-			var parseErr error
-			modID, parseErr = uuid.Parse(req.ModeratorID)
-			if parseErr != nil {
-				httpx.WriteProblem(w, http.StatusBadRequest, "invalid moderator_id uuid")
-				return
-			}
-		}
+	// Co ModeratorActionUseCase thi luon dung no: bat buoc ly do (BR-E5) va ghi audit.
+	if h.modActionUC != nil {
 		evt, err = h.modActionUC.Reject(r.Context(), app.ModeratorRejectInput{
 			EventID:     evtID,
-			ModeratorID: modID,
+			ModeratorID: c.ID,
 			Reason:      req.Reason,
 		})
 	} else {
@@ -360,7 +391,7 @@ func (h *EventHandler) RejectEvent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err != nil {
-		handleDomainError(w, err)
+		h.fail(w, r, err)
 		return
 	}
 
@@ -377,7 +408,7 @@ func (h *EventHandler) PublishEvent(w http.ResponseWriter, r *http.Request) {
 
 	evt, err := h.transitionUC.Publish(r.Context(), evtID, time.Now().UTC())
 	if err != nil {
-		handleDomainError(w, err)
+		h.fail(w, r, err)
 		return
 	}
 
@@ -395,20 +426,20 @@ func (h *EventHandler) CancelEvent(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		OrganizerID string `json:"organizer_id"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := decodeOptional(r, &req); err != nil {
 		httpx.WriteProblem(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
-	orgID, err := uuid.Parse(req.OrganizerID)
-	if err != nil {
-		httpx.WriteProblem(w, http.StatusBadRequest, "invalid organizer_id uuid")
+	c, _ := callerFrom(r.Context())
+	if !h.matchBodyID(w, r, c, "organizer_id", req.OrganizerID) {
 		return
 	}
+	orgID := c.ID
 
 	evt, err := h.transitionUC.Cancel(r.Context(), evtID, orgID)
 	if err != nil {
-		handleDomainError(w, err)
+		h.fail(w, r, err)
 		return
 	}
 
@@ -442,7 +473,7 @@ func (h *EventHandler) HandleAiVerdict(w http.ResponseWriter, r *http.Request) {
 		Axes:    req.Axes,
 	})
 	if err != nil {
-		handleDomainError(w, err)
+		h.fail(w, r, err)
 		return
 	}
 
@@ -460,7 +491,7 @@ func (h *EventHandler) GetModerationQueue(w http.ResponseWriter, r *http.Request
 
 	items, err := h.modQueueUC.Execute(r.Context())
 	if err != nil {
-		handleDomainError(w, err)
+		h.fail(w, r, err)
 		return
 	}
 
@@ -471,7 +502,15 @@ func (h *EventHandler) GetModerationQueue(w http.ResponseWriter, r *http.Request
 	httpx.WriteJSON(w, http.StatusOK, items)
 }
 
-func handleDomainError(w http.ResponseWriter, err error) {
+// decodeOptional doc JSON body; body rong khong phai loi (truong trong body da tuy chon).
+func decodeOptional(r *http.Request, v any) error {
+	if err := json.NewDecoder(r.Body).Decode(v); err != nil && !errors.Is(err, io.EOF) {
+		return err
+	}
+	return nil
+}
+
+func handleDomainError(w http.ResponseWriter, r *http.Request, err error) {
 	switch {
 	case errors.Is(err, domain.ErrEventNotFound) ||
 		errors.Is(err, domain.ErrTierNotFound) ||
@@ -494,6 +533,7 @@ func handleDomainError(w http.ResponseWriter, err error) {
 		strings.Contains(err.Error(), "reason is required"):
 		httpx.WriteProblem(w, http.StatusUnprocessableEntity, err.Error())
 	default:
-		httpx.WriteProblem(w, http.StatusInternalServerError, err.Error())
+		slog.ErrorContext(r.Context(), "loi xu ly request event", "route", r.Pattern, "err", err)
+		httpx.WriteProblem(w, http.StatusInternalServerError, "internal error, please retry")
 	}
 }
