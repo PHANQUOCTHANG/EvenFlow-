@@ -170,3 +170,53 @@ func TestVNPayGateway_QueryPayment(t *testing.T) {
 		t.Errorf("expected error for empty query")
 	}
 }
+
+func TestVNPayGateway_RefundPayment(t *testing.T) {
+	gw := gateway.NewVNPayGateway(gateway.VNPayConfig{
+		TmnCode:    "TESTTMN",
+		HashSecret: "SECRET123456",
+	})
+
+	ctx := context.Background()
+
+	// 1. Valid refund
+	req := domain.PaymentRefundRequest{
+		PaymentID:     "pay-vnp-1",
+		OrderID:       "ord-vnp-1",
+		ProviderTxnID: "vnp-txn-123",
+		AmountCents:   500000,
+		Currency:      "VND",
+		Reason:        "Sự kiện bị hủy",
+		RefundID:      "ref-vnp-1",
+	}
+
+	res, err := gw.RefundPayment(ctx, req)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if res.Status != domain.StatusRefunded {
+		t.Errorf("expected StatusRefunded, got %s", res.Status)
+	}
+	if res.AmountCents != 500000 {
+		t.Errorf("expected amount 500000, got %d", res.AmountCents)
+	}
+	if !strings.HasPrefix(res.RefundTxnID, "vnp_ref_ord-vnp-1") {
+		t.Errorf("expected refundTxnID to start with vnp_ref_ord-vnp-1, got %s", res.RefundTxnID)
+	}
+
+	// 2. Invalid amount <= 0
+	reqInvalid := req
+	reqInvalid.AmountCents = 0
+	_, errInvalid := gw.RefundPayment(ctx, reqInvalid)
+	if errInvalid == nil {
+		t.Errorf("expected error for amount <= 0")
+	}
+
+	// 3. Missing order ID
+	reqMissingOrder := req
+	reqMissingOrder.OrderID = ""
+	_, errMissing := gw.RefundPayment(ctx, reqMissingOrder)
+	if errMissing == nil {
+		t.Errorf("expected error for missing order_id")
+	}
+}

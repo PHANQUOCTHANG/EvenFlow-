@@ -53,6 +53,20 @@ type PaymentRepository interface {
 
 	// ProcessOrderCancellationTx huy don hang treo, giai phong kho ve va ban ghi payment trong CUNG MOT TRANSACTION (Quy tac bat bien 1, BR-O7).
 	ProcessOrderCancellationTx(ctx context.Context, params domain.CancelOrderParams) (domain.CancelOrderResult, error)
+
+	// GetPaidOrdersByEvent lay danh sach cac don hang o trang thai PAID, ISSUED hoac REFUNDING cua mot su kien de hoan tien (EV-154 / EVF-74).
+	GetPaidOrdersByEvent(ctx context.Context, eventID string, limit int) ([]domain.RefundOrderInfo, error)
+
+	// MarkOrderRefundingTx cap nhat trang thai don hang sang REFUNDING trong transaction rieng biet (Quy tac bat bien 1).
+	MarkOrderRefundingTx(ctx context.Context, orderID string) error
+
+	// ProcessRefundSuccessTx cap nhat trang thai orders -> REFUNDED, payments -> REFUNDED, tickets -> REFUNDED
+	// va ghi nhan outbox_events 'payment.refunded' trong CUNG MOT TRANSACTION (Quy tac bat bien 1, BR-O4).
+	// Neu don da o trang thai REFUNDED truoc do, ham tra ve AlreadyDone = true ma khong gay loi (Idempotent / BR-O7).
+	ProcessRefundSuccessTx(ctx context.Context, params domain.ProcessRefundParams) (domain.ProcessRefundResult, error)
+
+	// ProcessRefundFailedTx ghi nhan trang thai hoan tien that bai hoac can retry.
+	ProcessRefundFailedTx(ctx context.Context, orderID string, paymentID string, reason string) error
 }
 
 // Clock ho tro inject thoi gian hien tai giup kiem thu chinh xac cac moc expires_at (BR-O2).

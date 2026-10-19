@@ -109,3 +109,55 @@ func TestStripeGateway_QueryPayment(t *testing.T) {
 		t.Errorf("expected error for empty query")
 	}
 }
+
+func TestStripeGateway_RefundPayment(t *testing.T) {
+	gw := gateway.NewStripeGateway(gateway.StripeConfig{
+		PublishableKey: "pk_test_123",
+		SecretKey:      "sk_test_456",
+		WebhookSecret:  "whsec_789",
+	})
+
+	ctx := context.Background()
+
+	// 1. Valid refund
+	req := domain.PaymentRefundRequest{
+		PaymentID:     "pay-stripe-1",
+		OrderID:       "ord-stripe-1",
+		ProviderTxnID: "pi_123456",
+		AmountCents:   450000,
+		Currency:      "VND",
+		Reason:        "Sự kiện bị hủy",
+		RefundID:      "ref-stripe-1",
+	}
+
+	res, err := gw.RefundPayment(ctx, req)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if res.Status != domain.StatusRefunded {
+		t.Errorf("expected StatusRefunded, got %s", res.Status)
+	}
+	if res.AmountCents != 450000 {
+		t.Errorf("expected amount 450000, got %d", res.AmountCents)
+	}
+	if res.RefundTxnID != "re_ref-stripe-1" {
+		t.Errorf("expected refundTxnID re_ref-stripe-1, got %s", res.RefundTxnID)
+	}
+
+	// 2. Invalid amount <= 0
+	reqInvalid := req
+	reqInvalid.AmountCents = 0
+	_, errInvalid := gw.RefundPayment(ctx, reqInvalid)
+	if errInvalid == nil {
+		t.Errorf("expected error for amount <= 0")
+	}
+
+	// 3. Missing order ID and provider txn ID
+	reqMissing := req
+	reqMissing.OrderID = ""
+	reqMissing.ProviderTxnID = ""
+	_, errMissing := gw.RefundPayment(ctx, reqMissing)
+	if errMissing == nil {
+		t.Errorf("expected error for missing identifiers")
+	}
+}

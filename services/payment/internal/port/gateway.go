@@ -58,6 +58,9 @@ type PaymentGateway interface {
 
 	// QueryPayment chu dong tra cuu trang thai giao dich tu cong thanh toan (EV-153 / BR-O6).
 	QueryPayment(ctx context.Context, req domain.PaymentQueryRequest) (domain.PaymentQueryResult, error)
+
+	// RefundPayment chu dong thuc hien giao dich hoan tien toi cong thanh toan (EV-154 / EVF-74).
+	RefundPayment(ctx context.Context, req domain.PaymentRefundRequest) (domain.PaymentRefundResult, error)
 }
 
 // GatewayRegistry quan ly danh sach cac cong thanh toan duoc ho tro va kich hoat.

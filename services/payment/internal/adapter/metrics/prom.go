@@ -15,10 +15,10 @@ import (
 
 // Prom hien thuc port.ReconciliationMetrics su dung Prometheus client.
 type Prom struct {
-	webhookLag       *prometheus.HistogramVec
-	reconcileTotal   *prometheus.CounterVec
-	reconcileDur     prometheus.Histogram
-	reg              prometheus.Registerer
+	webhookLag     *prometheus.HistogramVec
+	reconcileTotal *prometheus.CounterVec
+	reconcileDur   prometheus.Histogram
+	reg            prometheus.Registerer
 }
 
 // New dang ky cac metric vao Prometheus registerer chi dinh.

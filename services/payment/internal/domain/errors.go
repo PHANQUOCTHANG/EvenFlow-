@@ -48,6 +48,15 @@ var (
 
 	// ErrDuplicateWebhook tra ve khi webhook da duoc xu ly truoc do (BR-O6).
 	ErrDuplicateWebhook = errors.New("webhook trùng lặp đã được xử lý (BR-O6)")
+
+	// ErrOrderNotRefundable tra ve khi don hang khong o trang thai co the hoan tien (PAID/ISSUED/REFUNDING).
+	ErrOrderNotRefundable = errors.New("đơn hàng không ở trạng thái có thể hoàn tiền")
+
+	// ErrRefundFailed tra ve khi giao dich hoan tien qua cong thanh toan that bai.
+	ErrRefundFailed = errors.New("hoàn tiền qua cổng thanh toán thất bại")
+
+	// ErrAlreadyRefunded tra ve khi don hang da duoc hoan tien truoc do.
+	ErrAlreadyRefunded = errors.New("đơn hàng đã được hoàn tiền trước đó")
 )
 
 // ValidationError mo ta chi tiet loi xac thuc tham so.

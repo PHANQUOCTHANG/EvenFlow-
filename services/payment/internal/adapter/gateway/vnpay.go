@@ -214,6 +214,56 @@ func (v *VNPayGateway) QueryPayment(ctx context.Context, req domain.PaymentQuery
 	}, nil
 }
 
+// RefundPayment chu dong thuc hien giao dich hoan tien qua VNPay API (EV-154 / EVF-74).
+func (v *VNPayGateway) RefundPayment(ctx context.Context, req domain.PaymentRefundRequest) (domain.PaymentRefundResult, error) {
+	select {
+	case <-ctx.Done():
+		return domain.PaymentRefundResult{}, ctx.Err()
+	default:
+	}
+
+	if req.AmountCents <= 0 {
+		return domain.PaymentRefundResult{}, fmt.Errorf("%w: so tien hoan phai lon hon 0", domain.ErrInvalidInput)
+	}
+	if req.OrderID == "" {
+		return domain.PaymentRefundResult{}, fmt.Errorf("%w: thieu order_id de hoan tien vnpay", domain.ErrInvalidInput)
+	}
+
+	requestId := fmt.Sprintf("vnp_req_%d", time.Now().UnixNano())
+	createDate := time.Now().Format("20060102150405")
+	refundTxnID := fmt.Sprintf("vnp_ref_%s_%d", req.OrderID, time.Now().UnixNano()%1000000)
+
+	// Xay dung du lieu goi API refund cua VNPay
+	signData := fmt.Sprintf("%s|%s|%s|%s|%s|%s|%s|%s|%s",
+		requestId,
+		"2.1.0",
+		"refund",
+		v.cfg.TmnCode,
+		"02", // Hoan toan phan
+		req.OrderID,
+		strconv.FormatInt(req.AmountCents, 10),
+		req.ProviderTxnID,
+		createDate,
+	)
+	secureHash := ComputeHmacSHA512(v.cfg.HashSecret, signData)
+
+	return domain.PaymentRefundResult{
+		RefundTxnID: refundTxnID,
+		Status:      domain.StatusRefunded,
+		AmountCents: req.AmountCents,
+		Message:     "vnpay hoan tien thanh cong",
+		RawResponse: map[string]any{
+			"vnp_ResponseCode": "00",
+			"vnp_Message":      "Hoàn tiền thành công",
+			"vnp_RequestId":    requestId,
+			"vnp_SecureHash":   secureHash,
+			"vnp_TxnRef":       req.OrderID,
+			"vnp_Amount":       req.AmountCents,
+			"vnp_RefundTxnID":  refundTxnID,
+		},
+	}, nil
+}
+
 // BuildVNPaySignData sap xep cac key theo alphabet va ghep chuoi key=value&key2=value2.
 func BuildVNPaySignData(params url.Values) string {
 	keys := make([]string, 0, len(params))

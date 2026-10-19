@@ -192,3 +192,60 @@ func TestSandboxGateway_QueryPayment(t *testing.T) {
 		t.Errorf("expected StatusFailed for custom override, got %s", resCustom.Status)
 	}
 }
+
+func TestSandboxGateway_RefundPayment(t *testing.T) {
+	ctx := context.Background()
+
+	// 1. Success mode
+	gw := gateway.NewSandboxGateway(gateway.SandboxModeSuccess)
+	req := domain.PaymentRefundRequest{
+		PaymentID:     "pay-1",
+		OrderID:       "ord-1",
+		ProviderTxnID: "sbx-txn-1",
+		AmountCents:   250000,
+		Currency:      "VND",
+		Reason:        "Sự kiện bị hủy",
+		RefundID:      "ref-123",
+	}
+
+	res, err := gw.RefundPayment(ctx, req)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if res.Status != domain.StatusRefunded {
+		t.Errorf("expected StatusRefunded, got %s", res.Status)
+	}
+	if res.RefundTxnID != "sbx_ref_ref-123" {
+		t.Errorf("expected refundTxnID sbx_ref_ref-123, got %s", res.RefundTxnID)
+	}
+	if res.AmountCents != 250000 {
+		t.Errorf("expected amount 250000, got %d", res.AmountCents)
+	}
+
+	// 2. Fail mode
+	gwFail := gateway.NewSandboxGateway(gateway.SandboxModeFail)
+	_, errFail := gwFail.RefundPayment(ctx, req)
+	if errFail == nil {
+		t.Fatalf("expected error in fail mode, got nil")
+	}
+
+	// 3. Invalid input (amount <= 0)
+	reqInvalid := req
+	reqInvalid.AmountCents = 0
+	_, errInvalid := gw.RefundPayment(ctx, reqInvalid)
+	if errInvalid == nil {
+		t.Fatalf("expected error for amount <= 0, got nil")
+	}
+
+	// 4. Custom status override
+	gw.SetRefundStatus("ord-custom-fail", domain.StatusFailed)
+	reqCustom := req
+	reqCustom.OrderID = "ord-custom-fail"
+	resCustom, err := gw.RefundPayment(ctx, reqCustom)
+	if err != nil {
+		t.Fatalf("unexpected error with custom status: %v", err)
+	}
+	if resCustom.Status != domain.StatusFailed {
+		t.Errorf("expected StatusFailed for custom override, got %s", resCustom.Status)
+	}
+}

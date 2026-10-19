@@ -296,6 +296,17 @@ func TestTransitionStateUseCase(t *testing.T) {
 		if cancelled.Status != domain.StatusCancelled {
 			t.Errorf("expected CANCELLED, got %s", cancelled.Status)
 		}
+
+		foundOutbox := false
+		for _, msg := range repo.outbox {
+			if msg.RoutingKey == app.EventCancelledRoutingKey && msg.AggregateID == evt.ID {
+				foundOutbox = true
+				break
+			}
+		}
+		if !foundOutbox {
+			t.Errorf("expected event.cancelled outbox message")
+		}
 	})
 
 	t.Run("Reject transition", func(t *testing.T) {

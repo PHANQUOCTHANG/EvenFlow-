@@ -44,6 +44,11 @@ type StaleOrderReconciler interface {
 	Execute(ctx context.Context, limit int) (domain.ReconciliationResult, error)
 }
 
+// EventRefunder dinh nghia giao dien hoan tien cho su kien bi huy (EV-154 / EVF-74).
+type EventRefunder interface {
+	Execute(ctx context.Context, in app.RefundCancelledEventInput) (app.RefundCancelledEventOutput, error)
+}
+
 type Handler struct {
 	initiator  PaymentInitiator
 	getter     PaymentGetter
@@ -51,6 +56,7 @@ type Handler struct {
 	processor  WebhookProcessor
 	replayer   InboxReplayer
 	reconciler StaleOrderReconciler
+	refunder   EventRefunder
 	log        *slog.Logger
 }
 
@@ -82,6 +88,12 @@ func (h *Handler) WithOrderReconciler(reconciler StaleOrderReconciler) *Handler 
 	return h
 }
 
+// WithEventRefunder gan EventRefunder cho Handler de kich hoat endpoint hoan tien su kien bi huy (EV-154).
+func (h *Handler) WithEventRefunder(refunder EventRefunder) *Handler {
+	h.refunder = refunder
+	return h
+}
+
 // Routes dang ky cac endpoints REST cho payment service.
 // idempotency BAT BUOC cho endpoint ghi thanh toan theo BR-O5.
 func (h *Handler) Routes(mux *http.ServeMux, idempotency httpx.Middleware) {
@@ -108,6 +120,16 @@ func (h *Handler) Routes(mux *http.ServeMux, idempotency httpx.Middleware) {
 	if h.reconciler != nil {
 		mux.HandleFunc("POST /v1/payments/reconcile", h.handleReconcileOrders)
 		mux.HandleFunc("POST /internal/reconcile", h.handleReconcileOrders)
+	}
+
+	// Endpoints Hoan tien su kien bi huy (EV-154 / EVF-74)
+	if h.refunder != nil {
+		if idempotency != nil {
+			mux.Handle("POST /v1/events/{eventID}/refund", idempotency(http.HandlerFunc(h.handleRefundEvent)))
+		} else {
+			mux.HandleFunc("POST /v1/events/{eventID}/refund", h.handleRefundEvent)
+		}
+		mux.HandleFunc("POST /internal/events/{eventID}/refund", h.handleRefundEvent)
 	}
 }
 
@@ -380,3 +402,49 @@ func (h *Handler) handleReconcileOrders(w http.ResponseWriter, r *http.Request) 
 	httpx.WriteJSON(w, http.StatusOK, result)
 }
 
+// RefundEventRequest chua tham so tuy chon khi kich hoat hoan tien su kien.
+type RefundEventRequest struct {
+	Reason    string `json:"reason"`
+	BatchSize int    `json:"batch_size"`
+}
+
+func (h *Handler) handleRefundEvent(w http.ResponseWriter, r *http.Request) {
+	if h.refunder == nil {
+		httpx.WriteProblem(w, http.StatusNotImplemented, "chưa cấu hình event refunder")
+		return
+	}
+
+	eventID := r.PathValue("eventID")
+	if eventID == "" {
+		httpx.WriteProblem(w, http.StatusBadRequest, "thiếu eventID trong đường dẫn")
+		return
+	}
+
+	var req RefundEventRequest
+	if r.Body != nil && r.ContentLength > 0 {
+		_ = json.NewDecoder(r.Body).Decode(&req)
+	}
+
+	traceID := r.Header.Get("X-Trace-ID")
+	if traceID == "" {
+		traceID = fmt.Sprintf("refund-http-%s-%d", eventID, time.Now().UnixNano())
+	}
+
+	result, err := h.refunder.Execute(r.Context(), app.RefundCancelledEventInput{
+		EventID:   eventID,
+		Reason:    req.Reason,
+		TraceID:   traceID,
+		BatchSize: req.BatchSize,
+	})
+	if err != nil {
+		if errors.Is(err, domain.ErrInvalidInput) {
+			httpx.WriteProblem(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		h.log.Error("loi khi thuc thi hoan tien su kien bi huy", "event_id", eventID, "err", err)
+		httpx.WriteProblem(w, http.StatusInternalServerError, "lỗi khi thực thi hoàn tiền sự kiện")
+		return
+	}
+
+	httpx.WriteJSON(w, http.StatusOK, result)
+}

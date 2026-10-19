@@ -510,3 +510,170 @@ func (m *MemoryRepository) ProcessOrderCancellationTx(_ context.Context, params 
 		Message:         "huy don thanh cong, da tra kho ve va phat outbox",
 	}, nil
 }
+
+// GetOutbox tra ve ban sao danh sach su kien outbox da duoc ghi nhan (ho tro kiem thu).
+func (m *MemoryRepository) GetOutbox() []map[string]any {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	res := make([]map[string]any, len(m.outbox))
+	copy(res, m.outbox)
+	return res
+}
+
+// GetPaidOrdersByEvent lay danh sach cac don hang o trang thai PAID, ISSUED hoac REFUNDING cua mot su kien de hoan tien (EV-154 / EVF-74).
+func (m *MemoryRepository) GetPaidOrdersByEvent(_ context.Context, eventID string, limit int) ([]domain.RefundOrderInfo, error) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	var results []domain.RefundOrderInfo
+	for _, order := range m.orders {
+		if order.EventID == eventID && (order.Status == "PAID" || order.Status == "ISSUED" || order.Status == "REFUNDING") {
+			info := domain.RefundOrderInfo{
+				OrderID:    order.ID,
+				EventID:    order.EventID,
+				IdentityID: order.IdentityID,
+				Status:     order.Status,
+				TotalCents: order.TotalCents,
+				Currency:   order.Currency,
+				CreatedAt:  order.CreatedAt,
+				UpdatedAt:  order.UpdatedAt,
+			}
+
+			// Tim payment tuong ung neu co
+			for _, p := range m.payments {
+				if p.OrderID == order.ID {
+					info.PaymentID = p.ID
+					info.Provider = p.Provider
+					info.ProviderTxnID = p.ProviderTxnID
+					break
+				}
+			}
+
+			results = append(results, info)
+		}
+	}
+
+	sort.Slice(results, func(i, j int) bool {
+		return results[i].CreatedAt.Before(results[j].CreatedAt)
+	})
+
+	if limit > 0 && len(results) > limit {
+		results = results[:limit]
+	}
+
+	return results, nil
+}
+
+// MarkOrderRefundingTx cap nhat trang thai don hang sang REFUNDING.
+func (m *MemoryRepository) MarkOrderRefundingTx(_ context.Context, orderID string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	order, exists := m.orders[orderID]
+	if !exists {
+		return domain.ErrOrderNotFound
+	}
+
+	if order.Status == "REFUNDED" {
+		return nil // Already refunded
+	}
+	if order.Status != "PAID" && order.Status != "ISSUED" && order.Status != "REFUNDING" {
+		return domain.ErrOrderNotRefundable
+	}
+
+	order.Status = "REFUNDING"
+	order.UpdatedAt = m.now()
+	m.orders[orderID] = order
+	return nil
+}
+
+// ProcessRefundSuccessTx cap nhat trang thai orders -> REFUNDED, payments -> REFUNDED trong mot transaction (Quy tac 1).
+func (m *MemoryRepository) ProcessRefundSuccessTx(_ context.Context, params domain.ProcessRefundParams) (domain.ProcessRefundResult, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	order, exists := m.orders[params.OrderID]
+	if !exists {
+		return domain.ProcessRefundResult{}, domain.ErrOrderNotFound
+	}
+
+	// Idempotent: neu don da o trang thai REFUNDED truoc do
+	if order.Status == "REFUNDED" {
+		return domain.ProcessRefundResult{
+			OrderID:         order.ID,
+			PaymentID:       params.PaymentID,
+			AlreadyDone:     true,
+			TicketsRefunded: 1,
+			Status:          "REFUNDED",
+			Message:         "don hang da duoc hoan tien truoc do (idempotent)",
+		}, nil
+	}
+
+	now := m.now()
+	order.Status = "REFUNDED"
+	order.UpdatedAt = now
+	m.orders[order.ID] = order
+
+	// Cap nhat payment
+	for id, p := range m.payments {
+		if p.OrderID == order.ID || (params.PaymentID != "" && p.ID == params.PaymentID) {
+			p.Status = domain.StatusRefunded
+			if p.RawPayload == nil {
+				p.RawPayload = make(map[string]any)
+			}
+			p.RawPayload["refund_txn_id"] = params.RefundTxnID
+			p.RawPayload["refund_reason"] = params.Reason
+			p.RawPayload["refunded_at"] = now.Format(time.RFC3339)
+			m.payments[id] = p
+		}
+	}
+
+	// Ghi nhan outbox event payment.refunded
+	outboxEvent := map[string]any{
+		"aggregate_type": "payment",
+		"aggregate_id":   order.ID,
+		"routing_key":    "payment.refunded",
+		"payload": domain.OutboxPaymentRefundedPayload{
+			OrderID:     order.ID,
+			EventID:     order.EventID,
+			IdentityID:  order.IdentityID,
+			PaymentID:   params.PaymentID,
+			Provider:    string(params.Provider),
+			RefundTxnID: params.RefundTxnID,
+			AmountCents: params.AmountCents,
+			Currency:    order.Currency,
+			Reason:      params.Reason,
+			RefundedAt:  now,
+		},
+		"trace_id":   params.TraceID,
+		"created_at": now,
+	}
+	m.outbox = append(m.outbox, outboxEvent)
+
+	return domain.ProcessRefundResult{
+		OrderID:         order.ID,
+		PaymentID:       params.PaymentID,
+		AlreadyDone:     false,
+		TicketsRefunded: 1,
+		Status:          "REFUNDED",
+		Message:         "hoan tien thanh cong, da cap nhat trang thai va phat outbox",
+	}, nil
+}
+
+// ProcessRefundFailedTx ghi nhan trang thai hoan tien that bai hoac can retry.
+func (m *MemoryRepository) ProcessRefundFailedTx(_ context.Context, orderID string, paymentID string, reason string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	for id, p := range m.payments {
+		if p.OrderID == orderID || (paymentID != "" && p.ID == paymentID) {
+			if p.RawPayload == nil {
+				p.RawPayload = make(map[string]any)
+			}
+			p.RawPayload["refund_last_error"] = reason
+			p.RawPayload["refund_attempt_at"] = m.now().Format(time.RFC3339)
+			m.payments[id] = p
+		}
+	}
+	return nil
+}

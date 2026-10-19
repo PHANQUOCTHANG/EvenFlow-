@@ -136,6 +136,22 @@ func (m *memoryRepo) ProcessOrderCancellationTx(_ context.Context, params domain
 	return domain.CancelOrderResult{OrderID: params.OrderID, Status: "CANCELLED"}, nil
 }
 
+func (m *memoryRepo) GetPaidOrdersByEvent(_ context.Context, eventID string, limit int) ([]domain.RefundOrderInfo, error) {
+	return nil, nil
+}
+
+func (m *memoryRepo) MarkOrderRefundingTx(_ context.Context, orderID string) error {
+	return nil
+}
+
+func (m *memoryRepo) ProcessRefundSuccessTx(_ context.Context, params domain.ProcessRefundParams) (domain.ProcessRefundResult, error) {
+	return domain.ProcessRefundResult{OrderID: params.OrderID, Status: "REFUNDED"}, nil
+}
+
+func (m *memoryRepo) ProcessRefundFailedTx(_ context.Context, orderID string, paymentID string, reason string) error {
+	return nil
+}
+
 func setupTestEnvironment() (*memoryRepo, *gateway.Registry, *fakeClock, *fakeIDGen, *slog.Logger) {
 	repo := newMemoryRepo()
 	reg := gateway.NewRegistry(domain.ProviderSandbox, []string{"sandbox", "vnpay"})
