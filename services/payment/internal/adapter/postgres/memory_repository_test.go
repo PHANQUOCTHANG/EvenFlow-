@@ -415,3 +415,172 @@ func TestMemoryRepository_StaleOrdersAndCancellation(t *testing.T) {
 		t.Errorf("expected status PAID, got %s", cancelPaid.Status)
 	}
 }
+
+func TestMemoryRepository_RefundOperations(t *testing.T) {
+	repo := postgres.NewMemoryRepository()
+	ctx := context.Background()
+	now := time.Now().UTC()
+
+	eventID := "evt-refund-1"
+
+	// 1. Seed various orders for evt-refund-1 and evt-other
+	repo.SeedOrder(domain.OrderView{
+		ID:         "ord-paid-1",
+		EventID:    eventID,
+		IdentityID: "user-1",
+		Status:     "PAID",
+		TotalCents: 200000,
+		Currency:   "VND",
+		CreatedAt:  now.Add(-10 * time.Minute),
+	})
+	repo.SeedPayment(domain.Payment{
+		ID:            "pay-1",
+		OrderID:       "ord-paid-1",
+		Provider:      domain.ProviderSandbox,
+		ProviderTxnID: "sbx-txn-1",
+		AmountCents:   200000,
+		Currency:      "VND",
+		Status:        domain.StatusSucceeded,
+	})
+
+	repo.SeedOrder(domain.OrderView{
+		ID:         "ord-issued-2",
+		EventID:    eventID,
+		IdentityID: "user-2",
+		Status:     "ISSUED",
+		TotalCents: 300000,
+		Currency:   "VND",
+		CreatedAt:  now.Add(-8 * time.Minute),
+	})
+	repo.SeedPayment(domain.Payment{
+		ID:            "pay-2",
+		OrderID:       "ord-issued-2",
+		Provider:      domain.ProviderVNPay,
+		ProviderTxnID: "vnp-txn-2",
+		AmountCents:   300000,
+		Currency:      "VND",
+		Status:        domain.StatusSucceeded,
+	})
+
+	repo.SeedOrder(domain.OrderView{
+		ID:         "ord-cancelled-3",
+		EventID:    eventID,
+		IdentityID: "user-3",
+		Status:     "CANCELLED",
+		TotalCents: 150000,
+		Currency:   "VND",
+		CreatedAt:  now.Add(-15 * time.Minute),
+	})
+
+	repo.SeedOrder(domain.OrderView{
+		ID:         "ord-other-4",
+		EventID:    "evt-other-99",
+		IdentityID: "user-4",
+		Status:     "PAID",
+		TotalCents: 500000,
+		Currency:   "VND",
+		CreatedAt:  now.Add(-5 * time.Minute),
+	})
+
+	// 2. Test GetPaidOrdersByEvent
+	refundOrders, err := repo.GetPaidOrdersByEvent(ctx, eventID, 10)
+	if err != nil {
+		t.Fatalf("GetPaidOrdersByEvent failed: %v", err)
+	}
+	if len(refundOrders) != 2 {
+		t.Fatalf("expected 2 refundable orders for %s, got %d", eventID, len(refundOrders))
+	}
+	if refundOrders[0].OrderID != "ord-paid-1" || refundOrders[1].OrderID != "ord-issued-2" {
+		t.Errorf("unexpected orders: %+v", refundOrders)
+	}
+	if refundOrders[0].Provider != domain.ProviderSandbox || refundOrders[1].Provider != domain.ProviderVNPay {
+		t.Errorf("unexpected providers in refund orders: %+v", refundOrders)
+	}
+
+	// 3. Test MarkOrderRefundingTx
+	err = repo.MarkOrderRefundingTx(ctx, "ord-paid-1")
+	if err != nil {
+		t.Fatalf("MarkOrderRefundingTx failed: %v", err)
+	}
+	order1, _ := repo.GetOrder(ctx, "ord-paid-1")
+	if order1.Status != "REFUNDING" {
+		t.Errorf("expected status REFUNDING, got %s", order1.Status)
+	}
+
+	// Ineligible order fails MarkOrderRefundingTx
+	err = repo.MarkOrderRefundingTx(ctx, "ord-cancelled-3")
+	if err == nil {
+		t.Errorf("expected error marking CANCELLED order as REFUNDING")
+	}
+
+	// 4. Test ProcessRefundSuccessTx
+	refundRes, err := repo.ProcessRefundSuccessTx(ctx, domain.ProcessRefundParams{
+		OrderID:     "ord-paid-1",
+		PaymentID:   "pay-1",
+		Provider:    domain.ProviderSandbox,
+		RefundTxnID: "sbx-ref-1",
+		AmountCents: 200000,
+		Reason:      "Hủy sự kiện do bão",
+		TraceID:     "trace-ref-1",
+		Timestamp:   now,
+	})
+	if err != nil {
+		t.Fatalf("ProcessRefundSuccessTx failed: %v", err)
+	}
+	if refundRes.AlreadyDone || refundRes.Status != "REFUNDED" {
+		t.Errorf("unexpected refund result: %+v", refundRes)
+	}
+
+	// Verify order status is REFUNDED
+	orderAfterRefund, _ := repo.GetOrder(ctx, "ord-paid-1")
+	if orderAfterRefund.Status != "REFUNDED" {
+		t.Errorf("expected order status REFUNDED, got %s", orderAfterRefund.Status)
+	}
+
+	// Verify payment status is REFUNDED
+	payAfterRefund, _ := repo.GetPayment(ctx, "pay-1")
+	if payAfterRefund.Status != domain.StatusRefunded {
+		t.Errorf("expected payment status REFUNDED, got %s", payAfterRefund.Status)
+	}
+
+	// Verify outbox event payment.refunded
+	outbox := repo.GetOutboxEvents()
+	foundRefundOutbox := false
+	for _, ev := range outbox {
+		if ev["routing_key"] == "payment.refunded" && ev["aggregate_id"] == "ord-paid-1" {
+			foundRefundOutbox = true
+			payload, ok := ev["payload"].(domain.OutboxPaymentRefundedPayload)
+			if !ok || payload.RefundTxnID != "sbx-ref-1" || payload.AmountCents != 200000 {
+				t.Errorf("invalid outbox payload: %+v", ev["payload"])
+			}
+			break
+		}
+	}
+	if !foundRefundOutbox {
+		t.Errorf("expected payment.refunded outbox event")
+	}
+
+	// 5. Test Idempotency: second refund returns AlreadyDone = true
+	secondRefund, err := repo.ProcessRefundSuccessTx(ctx, domain.ProcessRefundParams{
+		OrderID:     "ord-paid-1",
+		PaymentID:   "pay-1",
+		Provider:    domain.ProviderSandbox,
+		RefundTxnID: "sbx-ref-1",
+		AmountCents: 200000,
+		Reason:      "Hủy sự kiện do bão (retry)",
+		TraceID:     "trace-ref-2",
+		Timestamp:   now,
+	})
+	if err != nil {
+		t.Fatalf("second ProcessRefundSuccessTx failed: %v", err)
+	}
+	if !secondRefund.AlreadyDone {
+		t.Errorf("expected AlreadyDone = true on second refund")
+	}
+
+	// 6. Test ProcessRefundFailedTx
+	err = repo.ProcessRefundFailedTx(ctx, "ord-issued-2", "pay-2", "network timeout")
+	if err != nil {
+		t.Fatalf("ProcessRefundFailedTx failed: %v", err)
+	}
+}

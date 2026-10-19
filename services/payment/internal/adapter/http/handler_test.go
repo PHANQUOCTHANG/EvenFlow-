@@ -832,3 +832,103 @@ func TestHandler_ReconcileOrders_Errors(t *testing.T) {
 		t.Fatalf("expected 500 on reconcile error, got %d", w.Code)
 	}
 }
+
+type mockRefunder struct {
+	executeFn func(ctx context.Context, in app.RefundCancelledEventInput) (app.RefundCancelledEventOutput, error)
+}
+
+func (m *mockRefunder) Execute(ctx context.Context, in app.RefundCancelledEventInput) (app.RefundCancelledEventOutput, error) {
+	if m.executeFn != nil {
+		return m.executeFn(ctx, in)
+	}
+	return app.RefundCancelledEventOutput{}, nil
+}
+
+func TestHandler_RefundEvent_Success(t *testing.T) {
+	log := slog.New(slog.NewJSONHandler(io.Discard, nil))
+	refunder := &mockRefunder{
+		executeFn: func(_ context.Context, in app.RefundCancelledEventInput) (app.RefundCancelledEventOutput, error) {
+			if in.EventID != "evt-test-123" {
+				t.Errorf("expected EventID evt-test-123, got %s", in.EventID)
+			}
+			return app.RefundCancelledEventOutput{
+				EventID:       in.EventID,
+				TotalOrders:   3,
+				RefundedCount: 3,
+				TotalAmount:   750000,
+			}, nil
+		},
+	}
+
+	h := httpadapter.NewHandler(nil, nil, nil, nil, log).WithEventRefunder(refunder)
+	mux := http.NewServeMux()
+	h.Routes(mux, nil)
+
+	// 1. POST /v1/events/{eventID}/refund
+	body := bytes.NewReader([]byte(`{"reason":"Sự kiện bị hủy do bão","batch_size":20}`))
+	req := httptest.NewRequest("POST", "/v1/events/evt-test-123/refund", body)
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	mux.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200 OK for refund, got %d: %s", w.Code, w.Body.String())
+	}
+
+	var res app.RefundCancelledEventOutput
+	if err := json.Unmarshal(w.Body.Bytes(), &res); err != nil {
+		t.Fatalf("invalid json: %v", err)
+	}
+	if res.RefundedCount != 3 || res.TotalAmount != 750000 {
+		t.Errorf("unexpected refund output: %+v", res)
+	}
+
+	// 2. POST /internal/events/{eventID}/refund
+	reqInternal := httptest.NewRequest("POST", "/internal/events/evt-test-123/refund", nil)
+	wInternal := httptest.NewRecorder()
+	mux.ServeHTTP(wInternal, reqInternal)
+
+	if wInternal.Code != http.StatusOK {
+		t.Fatalf("expected 200 OK for internal refund endpoint, got %d", wInternal.Code)
+	}
+}
+
+func TestHandler_RefundEvent_Errors(t *testing.T) {
+	log := slog.New(slog.NewJSONHandler(io.Discard, nil))
+
+	// Refunder not configured
+	hNil := httpadapter.NewHandler(nil, nil, nil, nil, log)
+	muxNil := http.NewServeMux()
+	hNil.Routes(muxNil, nil)
+
+	// Calling on non-registered returns 404 or not implemented if handler called directly
+	// When refunder is configured but returns errors:
+	refunder := &mockRefunder{
+		executeFn: func(_ context.Context, in app.RefundCancelledEventInput) (app.RefundCancelledEventOutput, error) {
+			if in.EventID == "evt-invalid" {
+				return app.RefundCancelledEventOutput{}, domain.ErrInvalidInput
+			}
+			return app.RefundCancelledEventOutput{}, errors.New("database failure")
+		},
+	}
+
+	h := httpadapter.NewHandler(nil, nil, nil, nil, log).WithEventRefunder(refunder)
+	mux := http.NewServeMux()
+	h.Routes(mux, nil)
+
+	// 400 Bad Request
+	reqInvalid := httptest.NewRequest("POST", "/v1/events/evt-invalid/refund", nil)
+	wInvalid := httptest.NewRecorder()
+	mux.ServeHTTP(wInvalid, reqInvalid)
+	if wInvalid.Code != http.StatusBadRequest {
+		t.Errorf("expected 400 on invalid input, got %d", wInvalid.Code)
+	}
+
+	// 500 Internal Server Error
+	reqErr := httptest.NewRequest("POST", "/v1/events/evt-err/refund", nil)
+	wErr := httptest.NewRecorder()
+	mux.ServeHTTP(wErr, reqErr)
+	if wErr.Code != http.StatusInternalServerError {
+		t.Errorf("expected 500 on execution error, got %d", wErr.Code)
+	}
+}

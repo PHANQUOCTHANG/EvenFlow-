@@ -126,3 +126,54 @@ func TestMoMoGateway_QueryPayment(t *testing.T) {
 		t.Errorf("expected error for empty query")
 	}
 }
+
+func TestMoMoGateway_RefundPayment(t *testing.T) {
+	gw := gateway.NewMoMoGateway(gateway.MoMoConfig{
+		PartnerCode: "MOMO_TEST",
+		AccessKey:   "ACCESS_123",
+		SecretKey:   "SECRET_456",
+	})
+
+	ctx := context.Background()
+
+	// 1. Valid refund
+	req := domain.PaymentRefundRequest{
+		PaymentID:     "pay-momo-1",
+		OrderID:       "ord-momo-1",
+		ProviderTxnID: "trans_999",
+		AmountCents:   350000,
+		Currency:      "VND",
+		Reason:        "Sự kiện bị hủy",
+		RefundID:      "ref-momo-1",
+	}
+
+	res, err := gw.RefundPayment(ctx, req)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if res.Status != domain.StatusRefunded {
+		t.Errorf("expected StatusRefunded, got %s", res.Status)
+	}
+	if res.AmountCents != 350000 {
+		t.Errorf("expected amount 350000, got %d", res.AmountCents)
+	}
+	if !strings.HasPrefix(res.RefundTxnID, "momo_ref_") {
+		t.Errorf("expected refundTxnID to start with momo_ref_, got %s", res.RefundTxnID)
+	}
+
+	// 2. Invalid amount <= 0
+	reqInvalid := req
+	reqInvalid.AmountCents = 0
+	_, errInvalid := gw.RefundPayment(ctx, reqInvalid)
+	if errInvalid == nil {
+		t.Errorf("expected error for amount <= 0")
+	}
+
+	// 3. Missing order ID
+	reqMissingOrder := req
+	reqMissingOrder.OrderID = ""
+	_, errMissing := gw.RefundPayment(ctx, reqMissingOrder)
+	if errMissing == nil {
+		t.Errorf("expected error for missing order_id")
+	}
+}

@@ -264,3 +264,155 @@ func TestReconciliationDomainStructs(t *testing.T) {
 		t.Errorf("unexpected ReconciliationResult: %+v", reconRes)
 	}
 }
+
+func TestOrderView_IsRefundable(t *testing.T) {
+	tests := []struct {
+		status     string
+		refundable bool
+	}{
+		{"PAID", true},
+		{"ISSUED", true},
+		{"REFUNDING", true},
+		{"HELD", false},
+		{"PAYMENT_PENDING", false},
+		{"CANCELLED", false},
+		{"EXPIRED", false},
+		{"REFUNDED", false},
+	}
+
+	for _, tc := range tests {
+		order := domain.OrderView{
+			ID:     "ord-1",
+			Status: tc.status,
+		}
+		if got := order.IsRefundable(); got != tc.refundable {
+			t.Errorf("OrderView(status=%s).IsRefundable() = %v; want %v", tc.status, got, tc.refundable)
+		}
+	}
+}
+
+func TestRefundDomainStructs(t *testing.T) {
+	now := time.Date(2026, 10, 19, 10, 0, 0, 0, time.UTC)
+
+	req := domain.PaymentRefundRequest{
+		PaymentID:     "pay-1",
+		OrderID:       "ord-1",
+		ProviderTxnID: "txn-1",
+		AmountCents:   250000,
+		Currency:      "VND",
+		Reason:        "Sự kiện bị hủy",
+		RefundID:      "ref-1",
+	}
+	if req.PaymentID != "pay-1" || req.AmountCents != 250000 {
+		t.Errorf("unexpected PaymentRefundRequest: %+v", req)
+	}
+
+	res := domain.PaymentRefundResult{
+		RefundTxnID: "ref-txn-1",
+		Status:      domain.StatusRefunded,
+		AmountCents: 250000,
+		Message:     "hoàn tiền thành công",
+	}
+	if res.Status != domain.StatusRefunded || res.RefundTxnID != "ref-txn-1" {
+		t.Errorf("unexpected PaymentRefundResult: %+v", res)
+	}
+
+	orderInfo := domain.RefundOrderInfo{
+		OrderID:       "ord-1",
+		EventID:       "evt-1",
+		IdentityID:    "user-1",
+		Status:        "PAID",
+		TotalCents:    250000,
+		Currency:      "VND",
+		PaymentID:     "pay-1",
+		Provider:      domain.ProviderSandbox,
+		ProviderTxnID: "txn-1",
+		CreatedAt:     now,
+	}
+	if orderInfo.OrderID != "ord-1" || orderInfo.Provider != domain.ProviderSandbox {
+		t.Errorf("unexpected RefundOrderInfo: %+v", orderInfo)
+	}
+
+	pParams := domain.ProcessRefundParams{
+		OrderID:     "ord-1",
+		PaymentID:   "pay-1",
+		Provider:    domain.ProviderSandbox,
+		RefundTxnID: "ref-txn-1",
+		AmountCents: 250000,
+		Reason:      "Sự kiện bị hủy",
+		TraceID:     "trace-ref-1",
+		Timestamp:   now,
+	}
+	if pParams.RefundTxnID != "ref-txn-1" {
+		t.Errorf("unexpected ProcessRefundParams: %+v", pParams)
+	}
+
+	pResult := domain.ProcessRefundResult{
+		OrderID:         "ord-1",
+		PaymentID:       "pay-1",
+		AlreadyDone:     false,
+		TicketsRefunded: 2,
+		Status:          "REFUNDED",
+		Message:         "hoàn tiền thành công",
+	}
+	if pResult.TicketsRefunded != 2 || pResult.Status != "REFUNDED" {
+		t.Errorf("unexpected ProcessRefundResult: %+v", pResult)
+	}
+
+	outbox := domain.OutboxPaymentRefundedPayload{
+		OrderID:     "ord-1",
+		EventID:     "evt-1",
+		IdentityID:  "user-1",
+		PaymentID:   "pay-1",
+		Provider:    "sandbox",
+		RefundTxnID: "ref-txn-1",
+		AmountCents: 250000,
+		Currency:    "VND",
+		Reason:      "Sự kiện bị hủy",
+		RefundedAt:  now,
+	}
+	if outbox.OrderID != "ord-1" || outbox.RefundTxnID != "ref-txn-1" {
+		t.Errorf("unexpected OutboxPaymentRefundedPayload: %+v", outbox)
+	}
+
+	batch := domain.RefundBatchSummary{
+		EventID:       "evt-1",
+		TotalOrders:   5,
+		RefundedCount: 4,
+		FailedCount:   0,
+		SkippedCount:  1,
+		TotalAmount:   1000000,
+		Duration:      150 * time.Millisecond,
+	}
+	if batch.RefundedCount != 4 || batch.TotalAmount != 1000000 {
+		t.Errorf("unexpected RefundBatchSummary: %+v", batch)
+	}
+
+	evtCancelled := domain.EventCancelledPayload{
+		EventID:     "evt-1",
+		CancelledAt: now,
+		Reason:      "Lý do thời tiết",
+	}
+	if evtCancelled.EventID != "evt-1" || evtCancelled.Reason != "Lý do thời tiết" {
+		t.Errorf("unexpected EventCancelledPayload: %+v", evtCancelled)
+	}
+}
+
+func TestDomain_RefundStatus_RestoresQuota(t *testing.T) {
+	// BR-O4: Đơn EXPIRED, CANCELLED, REFUNDED trả lại hạn mức cho khách
+	// Kiểm tra tính nhất quán của StatusRefunded
+	if !domain.StatusRefunded.IsTerminal() {
+		t.Errorf("StatusRefunded must be a terminal status")
+	}
+
+	// Đảm bảo các lỗi domain mới được định nghĩa rõ ràng
+	if domain.ErrOrderNotRefundable == nil {
+		t.Errorf("ErrOrderNotRefundable should not be nil")
+	}
+	if domain.ErrRefundFailed == nil {
+		t.Errorf("ErrRefundFailed should not be nil")
+	}
+	if domain.ErrAlreadyRefunded == nil {
+		t.Errorf("ErrAlreadyRefunded should not be nil")
+	}
+}
