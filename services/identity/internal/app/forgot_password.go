@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"math/rand"
 	"time"
 
@@ -28,10 +29,16 @@ type forgotPasswordUseCase struct {
 	redis    redis.Client
 	notifier domain.OTPNotifier
 	sessions domain.SessionRevoker
+	devOTP   DevOTPSink
 }
 
 // ForgotPasswordOption tuỳ chỉnh use case quên mật khẩu.
 type ForgotPasswordOption func(*forgotPasswordUseCase)
+
+// WithResetDevOTPSink gắn nơi nhận OTP đặt lại mật khẩu ở môi trường dev (xem DevOTPSink).
+func WithResetDevOTPSink(s DevOTPSink) ForgotPasswordOption {
+	return func(uc *forgotPasswordUseCase) { uc.devOTP = s }
+}
 
 // WithSessionRevoker thu hồi mọi phiên đăng nhập sau khi đặt lại mật khẩu (EV-112): kẻ đã
 // chiếm phiên không giữ được refresh token sau khi chủ tài khoản đổi mật khẩu.
@@ -89,16 +96,15 @@ func (uc *forgotPasswordUseCase) RequestResetOTP(ctx context.Context, identifier
 
 	// 5. Publish Event or Send Email Directly
 	if isEmail(identifier) && uc.notifier != nil {
-		fmt.Printf("[INFO] Gửi OTP khôi phục mật khẩu qua Email tới: %s\n", identifier)
+		slog.InfoContext(ctx, "gui OTP dat lai mat khau qua email", "email", identifier)
 		go func() {
 			err := uc.notifier.SendOTP(context.Background(), identifier, otpCode)
 			if err != nil {
-				fmt.Printf("[ERROR] Không thể gửi Email OTP: %v\n", err)
+				slog.Error("khong gui duoc email OTP", "email", identifier, "err", err)
 			}
 		}()
-	} else {
-		// Mock (cho SĐT vì chưa tích hợp Twilio/Zalo)
-		fmt.Printf("[MOCK] SENDING RESET OTP: %s to %s\n", otpCode, identifier)
+	} else if uc.devOTP != nil {
+		uc.devOTP(identifier, otpCode)
 	}
 
 	return nil
