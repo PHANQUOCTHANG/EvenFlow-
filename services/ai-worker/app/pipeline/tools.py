@@ -22,6 +22,10 @@ import httpx
 log = logging.getLogger(__name__)
 
 
+class ToolError(RuntimeError):
+    """Loi khi goi tool phu thuoc ben ngoai (HTTP status, timeout, connection)."""
+
+
 class SystemTools:
     """Cac cong cu doc so lieu that. Chi doc, khong bao gio ghi.
 
@@ -36,12 +40,15 @@ class SystemTools:
 
     async def queue_position(self, event_id: str, queue_token: str) -> dict:
         """Vi tri that trong hang cho."""
-        r = await self._client.get(
-            f"{self._base}/v1/events/{event_id}/queue/status",
-            headers={"X-Queue-Token": queue_token},
-        )
-        r.raise_for_status()
-        return r.json()
+        try:
+            r = await self._client.get(
+                f"{self._base}/v1/events/{event_id}/queue/status",
+                headers={"X-Queue-Token": queue_token},
+            )
+            r.raise_for_status()
+            return r.json()
+        except httpx.HTTPError as exc:
+            raise ToolError(f"queue_position that bai: {exc}") from exc
 
     async def availability_bucket(self, event_id: str) -> str:
         """Tinh trang ve dang KHOANG, khong phai con so chinh xac.
@@ -50,19 +57,25 @@ class SystemTools:
         (BR-A4): no vua gay tam ly hoang loan, vua cho bot mot kenh do toc do
         ban de canh thoi gian tan cong.
         """
-        r = await self._client.get(f"{self._base}/v1/events/{event_id}/availability")
-        r.raise_for_status()
-        return r.json().get("bucket", "MANY")
+        try:
+            r = await self._client.get(f"{self._base}/v1/events/{event_id}/availability")
+            r.raise_for_status()
+            return r.json().get("bucket", "MANY")
+        except httpx.HTTPError as exc:
+            raise ToolError(f"availability_bucket that bai: {exc}") from exc
 
     async def event_config(self, event_id: str) -> dict:
         """Cau hinh dung de dien vao template FAQ."""
-        r = await self._client.get(f"{self._base}/v1/events/{event_id}")
-        r.raise_for_status()
-        data = r.json()
-        return {
-            "max_per_identity": data.get("max_per_identity", 4),
-            "hold_minutes": data.get("hold_ttl_seconds", 600) // 60,
-        }
+        try:
+            r = await self._client.get(f"{self._base}/v1/events/{event_id}")
+            r.raise_for_status()
+            data = r.json()
+            return {
+                "max_per_identity": data.get("max_per_identity", 4),
+                "hold_minutes": data.get("hold_ttl_seconds", 600) // 60,
+            }
+        except httpx.HTTPError as exc:
+            raise ToolError(f"event_config that bai: {exc}") from exc
 
     async def event_context(self, event_id: str) -> str:
         """Ngu canh su kien de nhet vao prompt.
@@ -70,8 +83,11 @@ class SystemTools:
         Chi lay cac truong CAN cho viec tra loi. Nhet ca ban ghi vao prompt vua
         ton token vua tang be mat ro ri thong tin noi bo.
         """
-        r = await self._client.get(f"{self._base}/v1/events/{event_id}")
-        r.raise_for_status()
-        d = r.json()
-        fields = ("title", "venue", "starts_at", "sale_start_at", "description")
-        return "\n".join(f"{k}: {d.get(k, '')}" for k in fields)
+        try:
+            r = await self._client.get(f"{self._base}/v1/events/{event_id}")
+            r.raise_for_status()
+            d = r.json()
+            fields = ("title", "venue", "starts_at", "sale_start_at", "description")
+            return "\n".join(f"{k}: {d.get(k, '')}" for k in fields)
+        except httpx.HTTPError as exc:
+            raise ToolError(f"event_context that bai: {exc}") from exc
