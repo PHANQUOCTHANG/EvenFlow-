@@ -16,7 +16,7 @@ WORKDIR /src
 # Phai copy ca go.sum cua module con lai: workspace gop go.sum cua moi module, thieu thi
 # `go build` bao `missing go.sum entry for go.mod file` du khong dung dependency do.
 COPY go.work go.work.sum ./
-COPY services/gateway/go.mod services/gateway/
+COPY services/gateway/go.mod services/gateway/go.sum services/gateway/
 COPY services/identity/go.mod services/identity/go.sum services/identity/
 COPY services/event/go.mod services/event/go.sum services/event/
 COPY services/ticketing/go.mod services/ticketing/go.sum services/ticketing/
