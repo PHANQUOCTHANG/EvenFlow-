@@ -32,8 +32,8 @@ class Intent:
 # Tap y dinh. Rut ra tu log cau hoi that; bo sung sau moi dot mo ban.
 INTENTS: tuple[Intent, ...] = (
     Intent("queue_position",
-           ("toi dang o vi tri nao", "thu tu cua toi", "so may", "vi tri cua toi",
-            "bao gio toi luot", "con bao lau", "khi nao toi luot", "cho bao lau"),
+           ("toi dang o vi tri nao", "vi tri nao", "o vi tri nao", "thu tu cua toi", "so may",
+            "vi tri cua toi", "bao gio toi luot", "con bao lau", "khi nao toi luot", "cho bao lau"),
            needs_live_data=True),
     Intent("ticket_availability",
            ("con ve khong", "con ve hang", "het ve chua", "con bao nhieu ve"),
@@ -60,6 +60,18 @@ INTENTS: tuple[Intent, ...] = (
            ("vao som co loi khong", "xep hang kieu gi", "co cong bang khong",
             "sao nguoi khac vao truoc"),
            needs_live_data=False),
+    Intent("event_info",
+           ("dien ra o dau", "dia diem su kien", "khi nao bat dau", "gio mo cua",
+            "su kien o dau", "ngay to chuc", "dia chi su kien", "to chuc o dau"),
+           needs_live_data=True),
+    Intent("payment_failure",
+           ("thanh toan that bai", "loi thanh toan", "thanh toan khong thanh cong",
+            "bi tu choi the", "sao khong chuyen khoan duoc"),
+           needs_live_data=False),
+    Intent("multiple_accounts",
+           ("dung 2 tai khoan", "mua nhieu tai khoan", "ho nha toi mua", "chong toi mua",
+            "2 nick", "nhieu tai khoan"),
+           needs_live_data=False),
 )
 
 # Template tinh. Nhung cau nay duoc bien tap boi con nguoi va da duyet -- khong
@@ -85,6 +97,13 @@ STATIC_ANSWERS: dict[str, str] = {
         "Vao som khong co loi the. Tat ca nhung ai vao truoc gio mo ban deu duoc "
         "xao tron ngau nhien tai dung thoi diem mo ban, roi moi cap so thu tu. "
         "Nguoi vao truoc 2 tieng va nguoi vao truoc 2 giay co co hoi nhu nhau.",
+    "payment_failure":
+        "Neu thanh toan that bai, don hang se duoc giu trong 10 phut de ban thu lai. "
+        "Vui long kiem tra han muc the, so du vi hoac doi sang phuong thuc thanh toan khac.",
+    "multiple_accounts":
+        "He thong gioi han so ve tren moi ca nhan de dam bao cong bang. "
+        "Viec dung nhieu tai khoan de gom ve vuot han muc co the bi he thong phat hien "
+        "va huy ve theo dieu khoan su dung.",
 }
 
 FALLBACK = (
@@ -120,34 +139,56 @@ class FaqMatcher:
             if template is None:
                 return None
             if "{" in template:
-                cfg = await tools.event_config(event_id)
-                return template.format(**cfg)
+                try:
+                    cfg = await tools.event_config(event_id)
+                    return template.format(**cfg)
+                except (KeyError, ValueError, TypeError, AttributeError, RuntimeError) as exc:
+                    log.warning("dinh dang template faq that bai: %s", exc)
+                    return template
             return template
 
         # Cau hoi ve so lieu dong -> lay tu he thong that, khong doan (BR-A5).
         if intent.name == "queue_position":
-            pos = await tools.queue_position(event_id, queue_token)
-            if pos["state"] == "ADMITTED":
-                return "Da toi luot ban. Hay quay lai tab dat ve de chon ve ngay."
-            if pos["state"] == "LOBBY":
-                return ("Ban da o trong phong cho. So thu tu se duoc cap ngau nhien "
-                        "dung thoi diem mo ban, nen ban khong can lam gi them.")
-            if pos["eta_seconds"] and pos["eta_seconds"] > 0:
-                return (f"Ban dang o vi tri {pos['rank']:,}. Uoc tinh khoang "
-                        f"{pos['eta_seconds'] // 60} phut nua toi luot ban.")
-            return (f"Ban dang o vi tri {pos['rank']:,}. He thong chua uoc tinh duoc "
-                    f"thoi gian cho, minh se cap nhat ngay khi co.")
+            try:
+                pos = await tools.queue_position(event_id, queue_token)
+                if pos["state"] == "ADMITTED":
+                    return "Da toi luot ban. Hay quay lai tab dat ve de chon ve ngay."
+                if pos["state"] == "LOBBY":
+                    return ("Ban da o trong phong cho. So thu tu se duoc cap ngau nhien "
+                            "dung thoi diem mo ban, nen ban khong can lam gi them.")
+                if pos.get("eta_seconds") and pos["eta_seconds"] > 0:
+                    return (f"Ban dang o vi tri {pos['rank']:,}. Uoc tinh khoang "
+                            f"{pos['eta_seconds'] // 60} phut nua toi luot ban.")
+                return (f"Ban dang o vi tri {pos['rank']:,}. He thong chua uoc tinh duoc "
+                        f"thoi gian cho, minh se cap nhat ngay khi co.")
+            except (RuntimeError, KeyError, ValueError, TypeError) as exc:
+                log.warning("goi queue_position that bai: %s", exc)
+                return FALLBACK
 
         if intent.name == "ticket_availability":
             # CO Y khong noi con chinh xac bao nhieu ve (BR-A4): con so chinh xac
             # vua tao tam ly hoang loan, vua giup bot do duoc toc do ban.
-            avail = await tools.availability_bucket(event_id)
-            return {
-                "MANY": "Cac hang ve van con nhieu. Ban cu binh tinh cho toi luot.",
-                "FEW": "Mot so hang ve sap het. Khi toi luot, ban nen chon nhanh.",
-                "SOLD_OUT": "Rat tiec, ve da ban het. Ban co the dang ky nhan thong bao "
-                            "neu co ve duoc tra lai.",
-            }.get(avail, FALLBACK)
+            try:
+                avail = await tools.availability_bucket(event_id)
+                return {
+                    "MANY": "Cac hang ve van con nhieu. Ban cu binh tinh cho toi luot.",
+                    "FEW": "Mot so hang ve sap het. Khi toi luot, ban nen chon nhanh.",
+                    "SOLD_OUT": "Rat tiec, ve da ban het. Ban co the dang ky nhan thong bao "
+                                "neu co ve duoc tra lai.",
+                }.get(avail, FALLBACK)
+            except (RuntimeError, KeyError, ValueError, TypeError) as exc:
+                log.warning("goi availability_bucket that bai: %s", exc)
+                return FALLBACK
+
+        if intent.name == "event_info":
+            try:
+                context = await tools.event_context(event_id)
+                if context:
+                    return f"Thong tin su kien:\n{context}"
+                return FALLBACK
+            except (RuntimeError, KeyError, ValueError, TypeError) as exc:
+                log.warning("goi event_context that bai: %s", exc)
+                return FALLBACK
 
         return None
 

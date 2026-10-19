@@ -69,7 +69,15 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         stack.push_async_callback(redis.aclose)
         await redis.ping()
         limiter = GlobalRateLimiter(redis, LimiterConfig(rpm=settings.gemini_rpm, tpm=settings.gemini_tpm))
-        _state.update(redis=redis, limiter=limiter)
+        signal_reader = degradation.SignalReader(redis)
+        signal_cache = degradation.SignalCache(signal_reader)
+        await signal_cache.refresh(default_override=_state.get("manual_override"))
+        signal_cache.start_background_refresh(
+            interval_seconds=5.0,
+            override_supplier=lambda: _state.get("manual_override"),
+        )
+        stack.push_async_callback(signal_cache.stop_background_refresh)
+        _state.update(redis=redis, limiter=limiter, signal_cache=signal_cache)
 
         connection = await aio_pika.connect_robust(settings.amqp_url)
         stack.push_async_callback(connection.close)
@@ -184,6 +192,13 @@ async def set_mode(mode: str) -> dict[str, str]:
     """
     if mode.upper() == "AUTO":
         _state["manual_override"] = None
+        if redis := _state.get("redis"):
+            try:
+                await redis.delete(degradation.KEY_MANUAL_OVERRIDE)
+            except (RuntimeError, ConnectionError, OSError) as exc:
+                log.warning("xoa manual_override tren redis that bai: %s", exc)
+        if "signal_cache" in _state:
+            await _state["signal_cache"].refresh(default_override=None)
         log.warning("Ops tra che do suy bien ve TU DONG")
         return {"manual_override": "AUTO"}
 
@@ -196,15 +211,23 @@ async def set_mode(mode: str) -> dict[str, str]:
         ) from exc
 
     _state["manual_override"] = chosen
+    if redis := _state.get("redis"):
+        try:
+            await redis.set(degradation.KEY_MANUAL_OVERRIDE, str(chosen))
+        except (RuntimeError, ConnectionError, OSError) as exc:
+            log.warning("ghi manual_override len redis that bai: %s", exc)
+    if "signal_cache" in _state:
+        await _state["signal_cache"].refresh(default_override=chosen)
     log.warning("Ops ghi de nac suy bien thanh %s", chosen)
     return {"manual_override": str(chosen)}
 
 
 def _signals_now() -> degradation.Signals:
-    # TODO(EVF-87): lay lag that (ai_queue_lag_seconds cua ai.chat.q) va ngan sach tu Redis.
+    if "signal_cache" in _state:
+        return _state["signal_cache"].get_signals()
     return degradation.Signals(
         chat_queue_lag_seconds=0.0,
         budget_used_ratio=0.0,
         gemini_circuit_open=False,
-        manual_override=_state["manual_override"],
+        manual_override=_state.get("manual_override"),
     )
