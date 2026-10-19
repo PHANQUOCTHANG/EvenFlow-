@@ -32,7 +32,7 @@ import { expect, test as base, type BrowserContext, type Request, type Route } f
  * | POST /v1/events/{id}/holds (201)                       | { order_id, hold_id, expires_at: ISO = now + 10' tinh LUC NHAN request }  | hold-client.ts requestHold |
  * | POST /v1/events/{id}/holds (409)                       | { title:"Conflict", detail }                                              | hold-client.ts -> SOLD_OUT |
  * | POST /v1/events/{id}/payments (200)                    | { payment_id, order_id, status:"PENDING", redirect_url: return_url + "&e2e=paid-ok" } | payment-client.ts initiatePayment |
- * | GET  /v1/events/{id}/orders/{orderId} (200)            | { order_id, event_id, event_title, venue, tier_name, quantity, total_amount, status:"PAID", paid_at, payment_method, issued_tickets:[{ ticketId, ticketCode, tierName, attendeeName, qrPayload }] } | payment-client.ts getOrderDetails (issued_tickets truyen nguyen, nen phan tu dung camelCase) |
+ * | GET  /v1/orders/{orderId} (200)                       | { order_id, event_id, event_title, venue, tier_name, quantity, total_amount, status:"PAID", paid_at, payment_method, issued_tickets:[{ ticketId, ticketCode, tierName, attendeeName, qrPayload }] } | payment-client.ts getOrderDetails (issued_tickets truyen nguyen, nen phan tu dung camelCase) |
  */
 
 export const WEB_BASE = trimSlash(process.env.BASE_URL ?? "http://localhost:3000");

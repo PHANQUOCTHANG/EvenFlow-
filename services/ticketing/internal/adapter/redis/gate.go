@@ -213,6 +213,33 @@ func (g *Gate) Snapshot(ctx context.Context, eventID string, ticketTypeIDs []str
 	return snap, nil
 }
 
+// Remaining tra tong so ve con theo hang ve, cong cac bucket trong Redis (duong nong, khong cham
+// Postgres). Hang ve chua duoc nap vao Redis tinh la 0 -- tin phia an toan: hien "het" ro hon la
+// hua "con".
+func (g *Gate) Remaining(ctx context.Context, eventID string, ticketTypeIDs []string) (map[string]int, error) {
+	pipe := g.rdb.Pipeline()
+	cmds := make(map[string]*redis.MapStringStringCmd, len(ticketTypeIDs))
+	for _, tt := range ticketTypeIDs {
+		cmds[tt] = pipe.HGetAll(ctx, invKey(eventID, tt))
+	}
+	if _, err := pipe.Exec(ctx); err != nil {
+		return nil, fmt.Errorf("doc ton kho redis: %w", err)
+	}
+	out := make(map[string]int, len(ticketTypeIDs))
+	for tt, cmd := range cmds {
+		total := 0
+		for field, val := range cmd.Val() {
+			n, err := strconv.Atoi(val)
+			if err != nil {
+				return nil, fmt.Errorf("ton kho %q cua %s/%s khong phai so: %w", val, tt, field, err)
+			}
+			total += max(n, 0)
+		}
+		out[tt] = total
+	}
+	return out, nil
+}
+
 // AdjustInventory cong delta vao mot bucket (khong de am). Xem script/reconcile.lua.
 func (g *Gate) AdjustInventory(ctx context.Context, eventID, ticketTypeID string, bucket, delta int) (int, error) {
 	n, err := g.scripts.Run(ctx, "reconcile", []string{invKey(eventID, ticketTypeID)}, bucket, delta).Int()
@@ -251,3 +278,7 @@ var (
 	_ port.InventorySeeder = (*Gate)(nil)
 	_ port.InventoryLedger = (*Gate)(nil)
 )
+
+var _ interface {
+	Remaining(context.Context, string, []string) (map[string]int, error)
+} = (*Gate)(nil)

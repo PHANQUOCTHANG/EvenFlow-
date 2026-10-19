@@ -292,7 +292,7 @@ describe("payment-client — mặc định apiBaseUrl theo NEXT_PUBLIC_API_BASE 
     );
   });
 
-  it("getOrderDetails không truyền apiBaseUrl gọi ${NEXT_PUBLIC_API_BASE}/v1/events/{id}/orders/{orderId}", async () => {
+  it("getOrderDetails không truyền apiBaseUrl gọi ${NEXT_PUBLIC_API_BASE}/v1/orders/{orderId}", async () => {
     vi.stubEnv("NEXT_PUBLIC_API_BASE", "http://localhost:8080");
     const fresh = await loadFresh();
 
@@ -307,8 +307,28 @@ describe("payment-client — mặc định apiBaseUrl theo NEXT_PUBLIC_API_BASE 
 
     expect(mockFetch).toHaveBeenCalledTimes(1);
     expect(mockFetch.mock.calls[0][0]).toBe(
-      "http://localhost:8080/v1/events/evt-tech-summit-2026/orders/ord-b2",
+      "http://localhost:8080/v1/orders/ord-b2",
     );
+  });
+
+  it("getOrderDetails gửi Authorization khi đã đăng nhập, không gửi khi chưa", async () => {
+    const fresh = await loadFresh();
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ order_id: "ord-b2", status: "PAID" }),
+    });
+    globalThis.fetch = mockFetch;
+
+    window.localStorage.removeItem("ef_token");
+    window.sessionStorage.removeItem("ef_token");
+    await fresh.getOrderDetails("ord-b2", "evt-1", "https://api.test");
+    expect(mockFetch.mock.calls[0][1].headers.Authorization).toBeUndefined();
+
+    window.sessionStorage.setItem("ef_token", "tok-abc");
+    await fresh.getOrderDetails("ord-b2", "evt-1", "https://api.test");
+    expect(mockFetch.mock.calls[1][1].headers.Authorization).toBe("Bearer tok-abc");
+    window.sessionStorage.removeItem("ef_token");
   });
 
   it("getOrderDetails: apiBaseUrl truyền tường minh vẫn thắng biến môi trường", async () => {
@@ -325,7 +345,7 @@ describe("payment-client — mặc định apiBaseUrl theo NEXT_PUBLIC_API_BASE 
     await fresh.getOrderDetails("ord-b2", "evt-1", "https://explicit.example");
 
     expect(mockFetch.mock.calls[0][0]).toBe(
-      "https://explicit.example/v1/events/evt-1/orders/ord-b2",
+      "https://explicit.example/v1/orders/ord-b2",
     );
   });
 });

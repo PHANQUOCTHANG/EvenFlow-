@@ -36,7 +36,7 @@ export const P = {
   stream: `/v1/events/${EVENT_ID}/queue/stream`,
   holds: `/v1/events/${EVENT_ID}/holds`,
   payments: `/v1/events/${EVENT_ID}/payments`,
-  order: `/v1/events/${EVENT_ID}/orders/${ORDER_ID}`,
+  order: `/v1/orders/${ORDER_ID}`,
 };
 
 export type Gate = { open: () => void };

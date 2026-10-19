@@ -24,6 +24,17 @@ type fakeTicketRepo struct {
 	byJTI   map[string]domain.Ticket
 }
 
+// allOwner coi moi nguoi goi la chu don: cac test nay kiem phat hanh / xac thuc ve, khong kiem quyen.
+type allOwner struct{}
+
+func (allOwner) OrderOwnedBy(context.Context, string, string) (bool, error) { return true, nil }
+
+func asBuyer(r *http.Request) *http.Request {
+	r.Header.Set("X-Identity-Id", "11111111-1111-4111-8111-111111111111")
+	r.Header.Set("X-Identity-Role", "buyer")
+	return r
+}
+
 func newFakeTicketRepo() *fakeTicketRepo {
 	return &fakeTicketRepo{
 		orders:  make(map[string]port.OrderIssuanceInfo),
@@ -90,7 +101,7 @@ func setupTicketMux(repo *fakeTicketRepo, signer port.QRSigner) *http.ServeMux {
 	issuer := app.NewIssueTicketsUseCase(repo, signer, log)
 	verifier := app.NewVerifyTicketUseCase(repo, signer, log)
 
-	h := httpadapter.New(nil, log).WithTickets(issuer, verifier, repo)
+	h := httpadapter.New(nil, log).WithTickets(issuer, verifier, repo).WithOrderOwner(allOwner{})
 	mux := http.NewServeMux()
 	noopMiddleware := func(next http.Handler) http.Handler { return next }
 	h.Routes(mux, noopMiddleware)
@@ -113,7 +124,7 @@ func TestTicketHandler_IssueTickets_Success(t *testing.T) {
 
 	mux := setupTicketMux(repo, signer)
 
-	req := httptest.NewRequest("POST", "/v1/orders/"+orderID+"/issue-tickets", nil)
+	req := asBuyer(httptest.NewRequest("POST", "/v1/orders/"+orderID+"/issue-tickets", nil))
 	w := httptest.NewRecorder()
 	mux.ServeHTTP(w, req)
 
@@ -134,7 +145,7 @@ func TestTicketHandler_IssueTickets_Success(t *testing.T) {
 	}
 
 	// Kiem tra endpoint GET /v1/orders/{orderID}/tickets
-	getReq := httptest.NewRequest("GET", "/v1/orders/"+orderID+"/tickets", nil)
+	getReq := asBuyer(httptest.NewRequest("GET", "/v1/orders/"+orderID+"/tickets", nil))
 	getW := httptest.NewRecorder()
 	mux.ServeHTTP(getW, getReq)
 
@@ -167,7 +178,7 @@ func TestTicketHandler_IssueTickets_OrderNotPaid_422(t *testing.T) {
 
 	mux := setupTicketMux(repo, signer)
 
-	req := httptest.NewRequest("POST", "/v1/orders/"+orderID+"/issue-tickets", nil)
+	req := asBuyer(httptest.NewRequest("POST", "/v1/orders/"+orderID+"/issue-tickets", nil))
 	w := httptest.NewRecorder()
 	mux.ServeHTTP(w, req)
 

@@ -51,6 +51,9 @@ func Routes() []Route {
 		{Pattern: "/v1/events/{eventID}/holds", Upstream: config.Ticketing, Access: Authenticated, Rate: config.RateDefault},
 		{Pattern: "/v1/events/{eventID}/purchase-limit", Upstream: config.Ticketing, Access: Authenticated, Rate: config.RateDefault},
 		{Pattern: "/v1/orders/", Upstream: config.Ticketing, Access: Authenticated, Rate: config.RateDefault},
+		{Pattern: "/v1/holds/", Upstream: config.Ticketing, Access: Authenticated, Rate: config.RateDefault},
+		// Muc con ve cong khai (khong lo so chinh xac); ticketing gom request va dat Cache-Control.
+		{Pattern: "GET /v1/events/{eventID}/availability", Upstream: config.Ticketing, Access: Public, Rate: config.RateDefault},
 		{Pattern: "/v1/tickets/", Upstream: config.Ticketing, Access: Authenticated, Rate: config.RateDefault},
 
 		// Payment. Webhook cong khai vi cong thanh toan goi vao; payment tu xac minh chu ky.

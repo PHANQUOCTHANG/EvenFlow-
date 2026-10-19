@@ -36,6 +36,9 @@ const (
 
 func (h *Handler) issueTickets(w http.ResponseWriter, r *http.Request) {
 	orderID := r.PathValue("orderID")
+	if !h.requireOwner(w, r, orderID) {
+		return
+	}
 	traceID := r.Header.Get("X-Trace-Id")
 
 	out, err := h.ticketIssuer.Execute(r.Context(), port.IssueTicketsParams{
@@ -59,6 +62,9 @@ func (h *Handler) issueTickets(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) listOrderTickets(w http.ResponseWriter, r *http.Request) {
 	orderID := r.PathValue("orderID")
+	if !h.requireOwner(w, r, orderID) {
+		return
+	}
 	tickets, err := h.ticketReader.GetTicketsByOrderID(r.Context(), orderID)
 	if err != nil {
 		h.log.Error("doc danh sach ve that bai", "order_id", orderID, "err", err)
