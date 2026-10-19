@@ -68,7 +68,7 @@ func newLimitServer(l PurchaseLimitReader) http.Handler {
 func getLimit(h http.Handler, identity string) *httptest.ResponseRecorder {
 	r := httptest.NewRequest(http.MethodGet, "/v1/events/e1/purchase-limit", nil)
 	if identity != "" {
-		r.Header.Set("X-Identity-Id", identity)
+		setPrincipal(r, identity, "")
 	}
 	w := httptest.NewRecorder()
 	h.ServeHTTP(w, r)
@@ -77,12 +77,12 @@ func getLimit(h http.Handler, identity string) *httptest.ResponseRecorder {
 
 func TestPurchaseLimit_TraHanMucChoDungKhach(t *testing.T) {
 	l := &fakeLimits{out: port.PurchaseLimit{MaxPerOrder: 4, MaxPerIdentity: 4, Used: 1, MaxSelectable: 3}}
-	w := getLimit(newLimitServer(l), "u1")
+	w := getLimit(newLimitServer(l), testUser)
 
 	if w.Code != http.StatusOK {
 		t.Fatalf("status = %d, muon 200", w.Code)
 	}
-	if l.event != "e1" || l.identity != "u1" {
+	if l.event != "e1" || l.identity != testUser {
 		t.Errorf("phai doc han muc cua dung su kien/khach, nhan %s/%s", l.event, l.identity)
 	}
 	var got map[string]any
@@ -106,7 +106,7 @@ func TestPurchaseLimit_TraHanMucChoDungKhach(t *testing.T) {
 
 // Doc khong phai ghi: khong doi Idempotency-Key (BR-O5 chi ap cho API ghi).
 func TestPurchaseLimit_KhongCanIdempotencyKey(t *testing.T) {
-	if w := getLimit(newLimitServer(&fakeLimits{}), "u1"); w.Code != http.StatusOK {
+	if w := getLimit(newLimitServer(&fakeLimits{}), testUser); w.Code != http.StatusOK {
 		t.Fatalf("status = %d, muon 200", w.Code)
 	}
 }
@@ -120,8 +120,8 @@ func TestPurchaseLimit_LoiDuocDichDungMa(t *testing.T) {
 		wantCall bool
 	}{
 		{"thieu dinh danh", "", nil, http.StatusUnauthorized, false},
-		{"su kien khong dang ban", "u1", domain.ErrEventNotFound, http.StatusNotFound, true},
-		{"loi ha tang", "u1", errors.New("mat ket noi"), http.StatusServiceUnavailable, true},
+		{"su kien khong dang ban", testUser, domain.ErrEventNotFound, http.StatusNotFound, true},
+		{"loi ha tang", testUser, errors.New("mat ket noi"), http.StatusServiceUnavailable, true},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -142,7 +142,7 @@ func TestPurchaseLimit_KhongCauHinhThiKhongCoRoute(t *testing.T) {
 	h := New(&fakeHolds{}, slog.New(slog.NewTextHandler(io.Discard, nil)))
 	mux := http.NewServeMux()
 	h.Routes(mux, idem.Middleware(&memIdem{}))
-	if w := getLimit(mux, "u1"); w.Code != http.StatusNotFound {
+	if w := getLimit(mux, testUser); w.Code != http.StatusNotFound {
 		t.Fatalf("status = %d, muon 404", w.Code)
 	}
 }

@@ -7,7 +7,9 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+	"time"
 
+	"github.com/eventflow/eventflow/libs/go/authx"
 	"github.com/eventflow/eventflow/libs/go/httpx"
 	"github.com/eventflow/eventflow/services/ticketing/internal/app"
 	"github.com/eventflow/eventflow/services/ticketing/internal/domain"
@@ -30,10 +32,26 @@ type Handler struct {
 	ticketVerifier TicketVerifier
 	ticketReader   TicketReader
 	log            *slog.Logger
+
+	queueSecret []byte // xac minh queue token (EV-137); rong -> tu choi tao hold (fail-closed)
+	now         func() time.Time
 }
 
+// WithQueueTokens bat xac minh queue token ky HMAC o createHold (EV-137).
+func (h *Handler) WithQueueTokens(secret []byte) *Handler {
+	h.queueSecret = secret
+	return h
+}
+
+// Loai loi queue token. Tat ca 403: khach chua duoc vao mua ve theo nghia nay.
+const (
+	ProblemQueueTokenInvalid  = "/problems/queue-token-invalid"
+	ProblemQueueTokenExpired  = "/problems/queue-token-expired"
+	ProblemQueueTokenMismatch = "/problems/queue-token-mismatch"
+)
+
 func New(holds HoldCreator, log *slog.Logger) *Handler {
-	return &Handler{holds: holds, log: log}
+	return &Handler{holds: holds, log: log, now: time.Now}
 }
 
 // WithPurchaseLimits bat route GET han muc mua. Khong goi thi route khong duoc dang ky.
@@ -78,13 +96,13 @@ func (h *Handler) Routes(mux *http.ServeMux, idempotency httpx.Middleware) {
 }
 
 func (h *Handler) purchaseLimit(w http.ResponseWriter, r *http.Request) {
-	// Dinh danh lay tu X-Identity-Id cho toi khi gateway cap JWT (giai doan 3), giong createHold.
-	identityID := r.Header.Get("X-Identity-Id")
-	if identityID == "" {
+	// Danh tinh do gateway xac minh va gan (authx.PrincipalFromHeaders).
+	p, ok := authx.PrincipalFromHeaders(r.Header)
+	if !ok {
 		httpx.WriteProblem(w, http.StatusUnauthorized, "ban can dang nhap de xem han muc mua")
 		return
 	}
-	out, err := h.limits.Execute(r.Context(), r.PathValue("eventID"), identityID)
+	out, err := h.limits.Execute(r.Context(), r.PathValue("eventID"), p.ID)
 	switch {
 	case err == nil:
 		// Han muc doi ngay khi khach giu ghe hay thanh toan: khong cho cache dung chung.
@@ -98,6 +116,29 @@ func (h *Handler) purchaseLimit(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// admittedJTI xac minh X-Queue-Token va tra jti de doi chieu voi ZSET admitted. Token phai ky dung,
+// con han, va thuoc dung su kien + dung nguoi + dung thiet bi dang goi: chia token cho tai khoan khac
+// hay mang sang su kien khac deu bi chan o day (EV-137).
+func (h *Handler) admittedJTI(w http.ResponseWriter, r *http.Request, eventID string, p authx.Principal) (string, bool) {
+	if h.queueSecret == nil {
+		httpx.WriteProblem(w, http.StatusServiceUnavailable, "chua cau hinh queue token")
+		return "", false
+	}
+	claims, err := authx.VerifyQueueToken(h.queueSecret, r.Header.Get("X-Queue-Token"), h.now())
+	switch {
+	case errors.Is(err, authx.ErrExpiredQueueToken):
+		httpx.WriteProblemType(w, http.StatusForbidden, ProblemQueueTokenExpired, "queue token da het han, hay vao hang cho lai")
+	case err != nil:
+		httpx.WriteProblemType(w, http.StatusForbidden, ProblemQueueTokenInvalid, "ban chua duoc vao mua ve, vui long quay lai phong cho")
+	case !claims.Matches(eventID, p.ID, p.DeviceID):
+		h.log.Warn("queue token khong khop nguoi goi khi giu ve", "event", eventID)
+		httpx.WriteProblemType(w, http.StatusForbidden, ProblemQueueTokenMismatch, "queue token khong thuoc ve ban hoac thiet bi nay")
+	default:
+		return claims.JTI, true
+	}
+	return "", false
+}
+
 type createHoldRequest struct {
 	TicketTypeID string `json:"ticket_type_id"`
 	Quantity     int    `json:"quantity"`
@@ -105,6 +146,17 @@ type createHoldRequest struct {
 
 func (h *Handler) createHold(w http.ResponseWriter, r *http.Request) {
 	// BR-O5 (bat buoc Idempotency-Key, phat lai response cu) do middleware idem lo, xem Routes.
+	p, ok := authx.PrincipalFromHeaders(r.Header)
+	if !ok {
+		httpx.WriteProblem(w, http.StatusUnauthorized, "ban can dang nhap de giu ve")
+		return
+	}
+	eventID := r.PathValue("eventID")
+	jti, ok := h.admittedJTI(w, r, eventID, p)
+	if !ok {
+		return
+	}
+
 	var req createHoldRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		httpx.WriteProblem(w, http.StatusBadRequest, "body khong hop le")
@@ -112,10 +164,10 @@ func (h *Handler) createHold(w http.ResponseWriter, r *http.Request) {
 	}
 
 	out, err := h.holds.Execute(r.Context(), app.CreateHoldInput{
-		EventID:      r.PathValue("eventID"),
+		EventID:      eventID,
 		TicketTypeID: req.TicketTypeID,
-		IdentityID:   r.Header.Get("X-Identity-Id"),
-		QueueToken:   r.Header.Get("X-Queue-Token"),
+		IdentityID:   p.ID,
+		QueueToken:   jti,
 		Quantity:     req.Quantity,
 	})
 

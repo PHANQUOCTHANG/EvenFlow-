@@ -1,3 +1,5 @@
+import { getDeviceFingerprint } from '@/lib/device';
+
 export interface IdentityResponse {
   id: string;
   email?: string;
@@ -45,7 +47,8 @@ export async function loginUser(identifier: string, password: string): Promise<I
   const res = await fetch(`${API_BASE_URL}/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ identifier, password }),
+    // Backend gan phien voi thiet bi; phong cho yeu cau thiet bi moi cho xep hang (EV-113 / EV-137).
+    body: JSON.stringify({ identifier, password, device_fingerprint: getDeviceFingerprint() }),
   });
 
   const data = await res.json();
