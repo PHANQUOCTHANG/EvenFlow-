@@ -126,17 +126,17 @@ func TestIssueTickets_Success_MultipleItems(t *testing.T) {
 	typeCounts := make(map[string]int)
 
 	for _, twq := range res.Tickets {
-		if twq.Ticket.OrderID != orderID {
-			t.Errorf("OrderID khong khop: %s", twq.Ticket.OrderID)
+		if twq.OrderID != orderID {
+			t.Errorf("OrderID khong khop: %s", twq.OrderID)
 		}
-		if twq.Ticket.Status != domain.TicketStatusIssued {
-			t.Errorf("trang thai khong phai ISSUED: %s", twq.Ticket.Status)
+		if twq.Status != domain.TicketStatusIssued {
+			t.Errorf("trang thai khong phai ISSUED: %s", twq.Status)
 		}
-		if twq.Ticket.QRSig == "" {
-			t.Errorf("QRSig rong cho ve: %s", twq.Ticket.ID)
+		if twq.QRSig == "" {
+			t.Errorf("QRSig rong cho ve: %s", twq.ID)
 		}
 		if twq.QRPayload == "" {
-			t.Errorf("QRPayload rong cho ve: %s", twq.Ticket.ID)
+			t.Errorf("QRPayload rong cho ve: %s", twq.ID)
 		}
 
 		// Verify chuoi QR payload
@@ -144,12 +144,12 @@ func TestIssueTickets_Success_MultipleItems(t *testing.T) {
 		if vErr != nil {
 			t.Fatalf("verify QR sinh ra that bai: %v", vErr)
 		}
-		if claims.TicketID != twq.Ticket.ID || claims.JTI != twq.Ticket.JTI {
+		if claims.TicketID != twq.ID || claims.JTI != twq.JTI {
 			t.Errorf("claims khong khop voi ban ghi ve")
 		}
 
-		jtiSet[twq.Ticket.JTI] = true
-		typeCounts[twq.Ticket.TicketTypeID]++
+		jtiSet[twq.JTI] = true
+		typeCounts[twq.TicketTypeID]++
 	}
 
 	// JTIs phai duy nhat
@@ -231,8 +231,8 @@ func TestIssueTickets_Idempotent_AlreadyIssued(t *testing.T) {
 	if len(res.Tickets) != 1 {
 		t.Fatalf("ky vong 1 ve da cap, got %d", len(res.Tickets))
 	}
-	if res.Tickets[0].Ticket.ID != "ticket-1" {
-		t.Errorf("ve tra ve khong khop: %s", res.Tickets[0].Ticket.ID)
+	if res.Tickets[0].ID != "ticket-1" {
+		t.Errorf("ve tra ve khong khop: %s", res.Tickets[0].ID)
 	}
 }
 
