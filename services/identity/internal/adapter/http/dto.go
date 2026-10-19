@@ -40,11 +40,27 @@ type ResetPasswordRequest struct {
 
 // DTO trả về thông tin người dùng
 type IdentityResponse struct {
-	ID        uuid.UUID  `json:"id"`
-	Email     *string    `json:"email,omitempty"`
-	Role      string     `json:"role"`
-	Token     string     `json:"token,omitempty"`
-	CreatedAt time.Time  `json:"created_at"`
+	ID        uuid.UUID `json:"id"`
+	Email     *string   `json:"email,omitempty"`
+	Role      string    `json:"role"`
+	CreatedAt time.Time `json:"created_at"`
+	*TokenResponse
+}
+
+// TokenResponse là cặp token của một phiên (EV-112). Token giữ lại cho client cũ: cùng giá
+// trị với AccessToken.
+type TokenResponse struct {
+	Token            string `json:"token"`
+	AccessToken      string `json:"access_token"`
+	TokenType        string `json:"token_type"`
+	ExpiresIn        int64  `json:"expires_in"`
+	RefreshToken     string `json:"refresh_token"`
+	RefreshExpiresIn int64  `json:"refresh_expires_in"`
+}
+
+// RefreshRequest dùng cho /auth/refresh và /auth/logout.
+type RefreshRequest struct {
+	RefreshToken string `json:"refresh_token"`
 }
 
 // Cấu trúc lỗi chuẩn RFC 7807 (Problem Details for HTTP APIs)

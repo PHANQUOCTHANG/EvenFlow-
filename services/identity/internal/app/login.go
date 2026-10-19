@@ -19,7 +19,7 @@ type LoginInput struct {
 
 type LoginOutput struct {
 	Identity *domain.Identity
-	Token    string
+	Tokens   *domain.TokenPair
 }
 
 type LoginUseCase interface {
@@ -65,14 +65,14 @@ func (uc *loginUseCase) Execute(ctx context.Context, input LoginInput) (*LoginOu
 		return nil, ErrInvalidCredentials
 	}
 
-	// 3. Tạo JWT Token
-	token, err := uc.tokenGen.GenerateToken(identity)
+	// 3. Mở phiên: access token 15 phút + refresh token xoay vòng (EV-112)
+	tokens, err := uc.tokenGen.GenerateTokens(ctx, identity)
 	if err != nil {
 		return nil, err
 	}
 
 	return &LoginOutput{
 		Identity: identity,
-		Token:    token,
+		Tokens:   tokens,
 	}, nil
 }

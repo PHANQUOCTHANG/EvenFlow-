@@ -1,12 +1,16 @@
 package http
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
+	"log/slog"
 	"net/http"
+	"time"
 
 	"github.com/eventflow/eventflow/services/identity/internal/app"
 	"github.com/eventflow/eventflow/services/identity/internal/domain"
+	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -16,17 +20,42 @@ type AuthHandler struct {
 	vneidUC       app.VNeIDUseCase
 	forgotPwdUC   app.ForgotPasswordUseCase
 	googleLoginUC app.GoogleLoginUseCase
+	sessions      SessionManager
 	redisClient   *redis.Client
 }
 
-func NewAuthHandler(registerUC app.RegisterUseCase, loginUC app.LoginUseCase, vneidUC app.VNeIDUseCase, forgotPwdUC app.ForgotPasswordUseCase, googleLoginUC app.GoogleLoginUseCase, redisClient *redis.Client) *AuthHandler {
+// SessionManager là phần của app.SessionService mà handler cần (EV-112).
+type SessionManager interface {
+	Refresh(ctx context.Context, rawRefresh string) (*domain.TokenPair, *domain.Identity, error)
+	Logout(ctx context.Context, rawRefresh string) error
+	LogoutAll(ctx context.Context, identityID uuid.UUID) error
+}
+
+func NewAuthHandler(registerUC app.RegisterUseCase, loginUC app.LoginUseCase, vneidUC app.VNeIDUseCase, forgotPwdUC app.ForgotPasswordUseCase, googleLoginUC app.GoogleLoginUseCase, sessions SessionManager, redisClient *redis.Client) *AuthHandler {
 	return &AuthHandler{
 		registerUC:    registerUC,
 		loginUC:       loginUC,
 		vneidUC:       vneidUC,
 		forgotPwdUC:   forgotPwdUC,
 		googleLoginUC: googleLoginUC,
+		sessions:      sessions,
 		redisClient:   redisClient,
+	}
+}
+
+// tokenResponse đổi TokenPair sang DTO; expires_in tính từ lúc trả lời.
+func tokenResponse(p *domain.TokenPair) *TokenResponse {
+	if p == nil {
+		return nil
+	}
+	now := time.Now()
+	return &TokenResponse{
+		Token:            p.AccessToken,
+		AccessToken:      p.AccessToken,
+		TokenType:        "Bearer",
+		ExpiresIn:        int64(p.AccessExpiresAt.Sub(now).Seconds()),
+		RefreshToken:     p.RefreshToken,
+		RefreshExpiresIn: int64(p.RefreshExpiresAt.Sub(now).Seconds()),
 	}
 }
 
@@ -142,11 +171,11 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	resp := IdentityResponse{
-		ID:        output.Identity.ID,
-		Email:     output.Identity.Email,
-		Role:      string(output.Identity.Role),
-		Token:     output.Token,
-		CreatedAt: output.Identity.CreatedAt,
+		ID:            output.Identity.ID,
+		Email:         output.Identity.Email,
+		Role:          string(output.Identity.Role),
+		CreatedAt:     output.Identity.CreatedAt,
+		TokenResponse: tokenResponse(output.Tokens),
 	}
 	writeJSON(w, http.StatusOK, resp)
 }
@@ -173,13 +202,77 @@ func (h *AuthHandler) GoogleLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	resp := IdentityResponse{
-		ID:        output.Identity.ID,
-		Email:     output.Identity.Email,
-		Role:      string(output.Identity.Role),
-		Token:     output.Token,
-		CreatedAt: output.Identity.CreatedAt,
+		ID:            output.Identity.ID,
+		Email:         output.Identity.Email,
+		Role:          string(output.Identity.Role),
+		CreatedAt:     output.Identity.CreatedAt,
+		TokenResponse: tokenResponse(output.Tokens),
 	}
 	writeJSON(w, http.StatusOK, resp)
+}
+
+// ---- SESSION (EV-112) ----
+
+// Refresh đổi refresh token lấy cặp token mới; token cũ bị thu hồi ngay.
+func (h *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) {
+	var req RefreshRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.RefreshToken == "" {
+		writeError(w, http.StatusBadRequest, "Invalid Request", "Thiếu refresh_token")
+		return
+	}
+
+	pair, identity, err := h.sessions.Refresh(r.Context(), req.RefreshToken)
+	if err != nil {
+		switch {
+		case errors.Is(err, domain.ErrRefreshTokenReused):
+			slog.WarnContext(r.Context(), "refresh token bi dung lai, da thu hoi ca phien")
+			writeError(w, http.StatusUnauthorized, "Unauthorized", "Phiên đăng nhập đã bị thu hồi, vui lòng đăng nhập lại")
+		case errors.Is(err, domain.ErrRefreshTokenInvalid):
+			writeError(w, http.StatusUnauthorized, "Unauthorized", "Refresh token không hợp lệ hoặc đã hết hạn")
+		default:
+			slog.ErrorContext(r.Context(), "refresh token that bai", "err", err)
+			writeError(w, http.StatusInternalServerError, "Server Error", "Lỗi hệ thống nội bộ")
+		}
+		return
+	}
+
+	writeJSON(w, http.StatusOK, IdentityResponse{
+		ID:            identity.ID,
+		Email:         identity.Email,
+		Role:          string(identity.Role),
+		CreatedAt:     identity.CreatedAt,
+		TokenResponse: tokenResponse(pair),
+	})
+}
+
+// Logout thu hồi phiên chứa refresh token. Luôn 204 với token lạ để không lộ token nào hợp lệ.
+func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
+	var req RefreshRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "Invalid Request", "Dữ liệu JSON không hợp lệ")
+		return
+	}
+	if err := h.sessions.Logout(r.Context(), req.RefreshToken); err != nil {
+		slog.ErrorContext(r.Context(), "logout that bai", "err", err)
+		writeError(w, http.StatusInternalServerError, "Server Error", "Lỗi hệ thống nội bộ")
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+// LogoutAll thu hồi mọi phiên của người đang đăng nhập (cần access token).
+func (h *AuthHandler) LogoutAll(w http.ResponseWriter, r *http.Request) {
+	caller, ok := CallerFromContext(r.Context())
+	if !ok {
+		writeError(w, http.StatusUnauthorized, "Unauthorized", "Chưa đăng nhập")
+		return
+	}
+	if err := h.sessions.LogoutAll(r.Context(), caller.ID); err != nil {
+		slog.ErrorContext(r.Context(), "logout-all that bai", "err", err)
+		writeError(w, http.StatusInternalServerError, "Server Error", "Lỗi hệ thống nội bộ")
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
 }
 
 // ---- FORGOT PASSWORD ----

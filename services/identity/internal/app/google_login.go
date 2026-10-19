@@ -20,7 +20,7 @@ type GoogleLoginInput struct {
 
 type GoogleLoginOutput struct {
 	Identity *domain.Identity
-	Token    string
+	Tokens   *domain.TokenPair
 }
 
 type GoogleLoginUseCase interface {
@@ -79,14 +79,14 @@ func (uc *googleLoginUseCase) Execute(ctx context.Context, input GoogleLoginInpu
 		}
 	}
 
-	// 4. Generate JWT
-	token, err := uc.jwtSvc.GenerateToken(identity)
+	// 4. Open a session (access + refresh token, EV-112)
+	tokens, err := uc.jwtSvc.GenerateTokens(ctx, identity)
 	if err != nil {
 		return nil, err
 	}
 
 	return &GoogleLoginOutput{
 		Identity: identity,
-		Token:    token,
+		Tokens:   tokens,
 	}, nil
 }

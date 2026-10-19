@@ -17,9 +17,12 @@ func RegisterRoutes(mux *http.ServeMux, authHandler *AuthHandler, jwtSecret stri
 	mux.HandleFunc("POST /api/v1/auth/forgot-password/reset", authHandler.ResetPassword)
 	mux.HandleFunc("POST /api/v1/auth/vneid/callback", authHandler.VNeIDCallback)
 	mux.HandleFunc("GET /api/v1/auth/vneid/sse", authHandler.VNeIDListenSSE)
+	mux.HandleFunc("POST /api/v1/auth/refresh", authHandler.Refresh)
+	mux.HandleFunc("POST /api/v1/auth/logout", authHandler.Logout)
 
 	// Protected routes
 	authMiddleware := Authenticate(jwtSecret)
 	mux.Handle("GET /api/v1/auth/me", authMiddleware(http.HandlerFunc(authHandler.Me)))
+	mux.Handle("POST /api/v1/auth/logout-all", authMiddleware(http.HandlerFunc(authHandler.LogoutAll)))
 }
 

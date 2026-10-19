@@ -78,6 +78,26 @@ func (r *identityRepo) FindByEmailOrPhone(ctx context.Context, identifier string
 	return &i, nil
 }
 
+// FindByID tra identity theo khoa chinh (dung khi refresh: role co the da doi tu luc dang nhap).
+func (r *identityRepo) FindByID(ctx context.Context, id uuid.UUID) (*domain.Identity, error) {
+	row := r.db.QueryRowContext(ctx, `
+		SELECT id, email, phone_hash, password_hash, role, otp_verified_at, created_at
+		FROM identities
+		WHERE id = $1
+	`, id)
+
+	var i domain.Identity
+	var role string
+	if err := row.Scan(&i.ID, &i.Email, &i.PhoneHash, &i.PasswordHash, &role, &i.OtpVerifiedAt, &i.CreatedAt); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, domain.ErrIdentityNotFound
+		}
+		return nil, err
+	}
+	i.Role = domain.Role(role)
+	return &i, nil
+}
+
 func (r *identityRepo) UpdatePassword(ctx context.Context, id uuid.UUID, newHash string) error {
 	query := `UPDATE identities SET password_hash = $1 WHERE id = $2`
 	_, err := r.db.ExecContext(ctx, query, newHash, id)
