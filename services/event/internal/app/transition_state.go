@@ -109,7 +109,25 @@ func (uc *transitionStateUseCase) Publish(ctx context.Context, eventID uuid.UUID
 	return evt, nil
 }
 
-// Cancel hủy sự kiện.
+// EventCancelledRoutingKey la routing key cho su kien huy su kien phat sang RabbitMQ (EV-154 / EVF-74).
+const EventCancelledRoutingKey = "event.cancelled"
+
+// EventCancelledMessage tao OutboxMessage de phat su kien huy su kien, trigger hoan tien tu dong.
+func EventCancelledMessage(evt *domain.Event, now time.Time) port.OutboxMessage {
+	return port.OutboxMessage{
+		AggregateType: OutboxAggregateEvent,
+		AggregateID:   evt.ID,
+		RoutingKey:    EventCancelledRoutingKey,
+		Payload: map[string]any{
+			"event_id":     evt.ID.String(),
+			"event_title":  evt.Title,
+			"cancelled_at": now.Format(time.RFC3339),
+			"status":       string(evt.Status),
+		},
+	}
+}
+
+// Cancel hủy sự kiện va phat su kien outbox event.cancelled trong cung mot transaction (EV-154 / EVF-74).
 func (uc *transitionStateUseCase) Cancel(ctx context.Context, eventID, organizerID uuid.UUID) (*domain.Event, error) {
 	evt, err := uc.repo.GetByID(ctx, eventID)
 	if err != nil {
@@ -124,7 +142,8 @@ func (uc *transitionStateUseCase) Cancel(ctx context.Context, eventID, organizer
 		return nil, err
 	}
 
-	if err := uc.repo.Update(ctx, evt); err != nil {
+	now := time.Now().UTC()
+	if err := uc.repo.UpdateWithOutbox(ctx, evt, EventCancelledMessage(evt, now)); err != nil {
 		return nil, err
 	}
 
