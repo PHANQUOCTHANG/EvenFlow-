@@ -16,6 +16,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/redis/go-redis/v9"
 
+	"github.com/eventflow/eventflow/libs/go/authx"
 	"github.com/eventflow/eventflow/libs/go/httpx"
 	"github.com/eventflow/eventflow/libs/go/idem"
 	"github.com/eventflow/eventflow/libs/go/loadsignal"
@@ -109,8 +110,17 @@ func run(log *slog.Logger) error {
 	signals := loadsignal.NewRecorder()
 	go loadsignal.NewPublisher(rdb, loadsignal.DefaultKey, podID(), signals, poolUsage, log).Run(ctx)
 
+	qrSecret := []byte(env("HMAC_QR_SECRET", "evenflow-default-development-secret-key-32b!"))
+	qrEngine, err := authx.NewQREngine(qrSecret)
+	if err != nil {
+		return fmt.Errorf("khoi tao authx qr engine that bai: %w", err)
+	}
+	issueTicketsUC := app.NewIssueTicketsUseCase(repo, qrEngine, log)
+	verifyTicketUC := app.NewVerifyTicketUseCase(repo, qrEngine, log)
+
 	h := httpadapter.New(app.NewCreateHold(gate, repo, log).WithMetrics(signalMetrics{HoldMetrics: prom, rec: signals}), log).
-		WithPurchaseLimits(app.NewGetPurchaseLimit(repo))
+		WithPurchaseLimits(app.NewGetPurchaseLimit(repo)).
+		WithTickets(issueTicketsUC, verifyTicketUC, repo)
 
 	// BR-O5. Dinh danh lay tu X-Identity-Id cho toi khi gateway cap JWT (giai doan 3); no nam
 	// trong hash cua request nen nguoi khac dung trung key khong nhan duoc response cua nhau.

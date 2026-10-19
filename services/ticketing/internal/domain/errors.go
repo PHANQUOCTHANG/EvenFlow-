@@ -23,6 +23,16 @@ var (
 	ErrHoldExpired        = errors.New("lenh giu ghe da het han") // BR-O2
 	ErrOrderNotFound      = errors.New("khong tim thay don hang")
 	ErrEventNotFound      = errors.New("khong tim thay su kien dang ban")
+
+	// Cac loi ve phat hanh va xac thuc ve (EV-133, BR-O8)
+	ErrOrderNotPaid        = errors.New("don hang chua duoc thanh toan de phat hanh ve")
+	ErrTicketNotFound      = errors.New("khong tim thay ve")
+	ErrTamperedQR          = errors.New("ma QR gia mao hoac bi sua doi")
+	ErrTicketAlreadyUsed   = errors.New("ve da duoc su dung truoc do")
+	ErrTicketExpired       = errors.New("ve da qua han su dung")
+	ErrTicketVoid          = errors.New("ve da bi huy hoac vo hieu hoa")
+	ErrTicketRefunded      = errors.New("ve da duoc hoan tien")
+	ErrInvalidTicketStatus = errors.New("trang thai ve khong hop le")
 )
 
 // NewID sinh dinh danh ngau nhien 128-bit.
