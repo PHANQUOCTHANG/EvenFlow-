@@ -130,7 +130,10 @@ func run(log *slog.Logger) error {
 	h := httpadapter.New(app.NewCreateHold(gate, repo, log).WithMetrics(signalMetrics{HoldMetrics: prom, rec: signals}), log).
 		WithQueueTokens(queueSecret).
 		WithPurchaseLimits(app.NewGetPurchaseLimit(repo)).
-		WithTickets(issueTicketsUC, verifyTicketUC, repo)
+		WithTickets(issueTicketsUC, verifyTicketUC, repo).
+		WithOrderOwner(repo).
+		WithOrders(app.NewGetOrder(repo, repo), app.NewCancelHold(repo, gate, log),
+			app.NewGetAvailability(availabilitySource{tiers: repo, stock: gate}))
 
 	// BR-O5. Dinh danh lay tu X-Identity-Id cho toi khi gateway cap JWT (giai doan 3); no nam
 	// trong hash cua request nen nguoi khac dung trung key khong nhan duoc response cua nhau.
@@ -187,4 +190,22 @@ func env(k, def string) string {
 		return v
 	}
 	return def
+}
+
+// availabilitySource ghep hang ve (Postgres) voi so ve con (Redis, duong nong) cho API ton kho cong khai.
+type availabilitySource struct {
+	tiers interface {
+		ListTiers(ctx context.Context, eventID string) ([]port.TierInfo, error)
+	}
+	stock interface {
+		Remaining(ctx context.Context, eventID string, ticketTypeIDs []string) (map[string]int, error)
+	}
+}
+
+func (a availabilitySource) ListTiers(ctx context.Context, eventID string) ([]port.TierInfo, error) {
+	return a.tiers.ListTiers(ctx, eventID)
+}
+
+func (a availabilitySource) Remaining(ctx context.Context, eventID string, ids []string) (map[string]int, error) {
+	return a.stock.Remaining(ctx, eventID, ids)
 }

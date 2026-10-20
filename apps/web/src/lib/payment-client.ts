@@ -240,19 +240,32 @@ export async function initiatePayment(
   }
 }
 
-/** Tra cuu trang thai don hang tu backend (GET /v1/events/{id}/orders/{orderId}) */
+/** Access token cua phien dang nhap (cung khoa voi use-auth), de gui qua gateway. */
+function accessToken(): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    return window.localStorage.getItem("ef_token") || window.sessionStorage.getItem("ef_token");
+  } catch {
+    return null;
+  }
+}
+
+/** Tra cuu trang thai don hang tu backend (GET /v1/orders/{orderId}, EV-NEW-2).
+ *  Route cu /v1/events/{id}/orders/{orderId} chua tung ton tai o backend. Don chi hien cho chu don. */
 export async function getOrderDetails(
   orderId: string,
   eventId: string,
   apiBaseUrl = apiBase(),
 ): Promise<OrderDetails> {
-  const url = `${apiBaseUrl}/v1/events/${encodeURIComponent(eventId)}/orders/${encodeURIComponent(orderId)}`;
+  const url = `${apiBaseUrl}/v1/orders/${encodeURIComponent(orderId)}`;
+  const token = accessToken();
 
   try {
     const res = await fetch(url, {
       method: "GET",
       headers: {
         Accept: "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
     });
 

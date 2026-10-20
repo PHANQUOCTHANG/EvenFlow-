@@ -31,6 +31,7 @@ type Handler struct {
 	ticketIssuer   TicketIssuer
 	ticketVerifier TicketVerifier
 	ticketReader   TicketReader
+	orderAPI       // API don hang (EV-NEW-2), xem order_handler.go
 	log            *slog.Logger
 
 	queueSecret []byte // xac minh queue token (EV-137); rong -> tu choi tao hold (fail-closed)
@@ -79,6 +80,7 @@ const (
 // khong cho phep dang ky route ghi ma khong truyen middleware nay (truyen idem.Middleware(...)).
 func (h *Handler) Routes(mux *http.ServeMux, idempotency httpx.Middleware) {
 	mux.Handle("POST /v1/events/{eventID}/holds", idempotency(http.HandlerFunc(h.createHold)))
+	h.registerOrderRoutes(mux, idempotency)
 	if h.limits != nil {
 		// Doc, khong ghi: khong can Idempotency-Key.
 		mux.HandleFunc("GET /v1/events/{eventID}/purchase-limit", h.purchaseLimit)
