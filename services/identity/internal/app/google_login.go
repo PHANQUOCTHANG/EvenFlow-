@@ -54,6 +54,10 @@ func (uc *googleLoginUseCase) Execute(ctx context.Context, input GoogleLoginInpu
 	if !ok || email == "" {
 		return nil, errors.New("email not provided by Google")
 	}
+	// Email chưa xác thực ở Google thì không được coi là đã xác thực ở đây (BR-Q3).
+	if verified, _ := payload.Claims["email_verified"].(bool); !verified {
+		return nil, ErrInvalidGoogleToken
+	}
 
 	// 2. Check if identity already exists
 	identity, err := uc.repo.FindByEmailOrPhone(ctx, email)
@@ -61,7 +65,7 @@ func (uc *googleLoginUseCase) Execute(ctx context.Context, input GoogleLoginInpu
 		if errors.Is(err, domain.ErrIdentityNotFound) {
 			// 3. Create new identity
 			hashed, _ := uc.hasher.Hash(uuid.New().String()) // Random unguessable password
-			
+
 			now := time.Now()
 			identity = &domain.Identity{
 				ID:           uuid.New(),
@@ -69,6 +73,8 @@ func (uc *googleLoginUseCase) Execute(ctx context.Context, input GoogleLoginInpu
 				PasswordHash: hashed,
 				Role:         domain.RoleBuyer,
 				CreatedAt:    now,
+				// Google chỉ cấp token cho email đã xác thực (kiểm bên dưới).
+				OtpVerifiedAt: &now,
 			}
 			err = uc.repo.Save(ctx, identity)
 			if err != nil {

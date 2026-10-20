@@ -3,6 +3,7 @@ package authx
 import (
 	"net/http"
 	"regexp"
+	"strconv"
 )
 
 // Hop dong danh tinh giua gateway va cac service phia sau.
@@ -13,6 +14,8 @@ import (
 const (
 	HeaderIdentityID   = "X-Identity-Id"
 	HeaderIdentityRole = "X-Identity-Role"
+	// HeaderIdentityVerified la "true" khi identity da xac thuc OTP/IdP (BR-Q3).
+	HeaderIdentityVerified = "X-Identity-Verified"
 )
 
 // identityHeaders la moi header ma client co the dung de gia danh. Gom ca ten cu/bien the
@@ -20,6 +23,7 @@ const (
 var identityHeaders = []string{
 	HeaderIdentityID,
 	HeaderIdentityRole,
+	HeaderIdentityVerified,
 	"X-User-Id",
 	"X-Role",
 	"X-Organizer-Id",
@@ -29,6 +33,8 @@ var identityHeaders = []string{
 type Principal struct {
 	ID   string // identity_id (UUID)
 	Role string // buyer | organizer | moderator | ops
+	// Verified: identity da xac thuc OTP (hoac IdP). Phong cho tu choi join khi false.
+	Verified bool
 }
 
 var uuidRe = regexp.MustCompile(`^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$`)
@@ -54,11 +60,16 @@ func SetIdentityHeaders(h http.Header, p Principal) {
 	StripIdentityHeaders(h)
 	h.Set(HeaderIdentityID, p.ID)
 	h.Set(HeaderIdentityRole, p.Role)
+	h.Set(HeaderIdentityVerified, strconv.FormatBool(p.Verified))
 }
 
 // PrincipalFromHeaders doc danh tinh gateway da gan. ok=false neu thieu hoac sai dinh dang.
 func PrincipalFromHeaders(h http.Header) (Principal, bool) {
-	p := Principal{ID: h.Get(HeaderIdentityID), Role: h.Get(HeaderIdentityRole)}
+	p := Principal{
+		ID:       h.Get(HeaderIdentityID),
+		Role:     h.Get(HeaderIdentityRole),
+		Verified: h.Get(HeaderIdentityVerified) == "true",
+	}
 	if !p.Valid() {
 		return Principal{}, false
 	}

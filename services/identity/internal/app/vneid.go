@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"time"
 
 	"github.com/eventflow/eventflow/services/identity/internal/domain"
 	"github.com/google/uuid"
@@ -44,10 +45,11 @@ func (uc *vneidUseCase) HandleCallback(ctx context.Context, input VNeIDCallbackI
 	// Trong thực tế, VNeID trả về thông tin đáng tin cậy. Nếu chưa có, ta tạo account.
 	// Để đơn giản, ta tìm qua Repo. Ghi chú: identity_repo hiện chưa có cột CCCD.
 	// Nên ta sẽ mượn Email để lưu (vd: 0123456789@vneid.mock) để tránh rườm rà thay đổi schema DB hiện tại.
-	
+
+	now := time.Now()
 	mockEmail := input.CCCDNumber + "@vneid.mock"
 	identity, err := uc.repo.FindByEmailOrPhone(ctx, mockEmail)
-	
+
 	if err != nil {
 		if errors.Is(err, domain.ErrIdentityNotFound) {
 			// Tạo mới
@@ -56,6 +58,9 @@ func (uc *vneidUseCase) HandleCallback(ctx context.Context, input VNeIDCallbackI
 				Email:        &mockEmail,
 				Role:         domain.RoleBuyer,
 				PasswordHash: "$argon2id$v=19$m=65536,t=1,p=2$mock$mock", // Fake password
+				CreatedAt:    now,
+				// VNeID là định danh quốc gia: tài khoản coi là đã xác thực.
+				OtpVerifiedAt: &now,
 			}
 			if saveErr := uc.repo.Save(ctx, identity); saveErr != nil {
 				return saveErr
@@ -73,7 +78,7 @@ func (uc *vneidUseCase) HandleCallback(ctx context.Context, input VNeIDCallbackI
 
 	// 3. Pub message qua Redis Pub/Sub để báo Frontend biết
 	payload := map[string]interface{}{
-		"status": "success",
+		"status":        "success",
 		"token":         tokens.AccessToken,
 		"refresh_token": tokens.RefreshToken,
 		"user": map[string]string{
@@ -81,9 +86,9 @@ func (uc *vneidUseCase) HandleCallback(ctx context.Context, input VNeIDCallbackI
 			"cccd":      input.CCCDNumber,
 		},
 	}
-	
+
 	payloadBytes, _ := json.Marshal(payload)
-	
+
 	// Pub/Sub channel theo SessionID
 	channelName := "vneid_session:" + input.SessionID
 	return uc.redisClient.Publish(ctx, channelName, string(payloadBytes)).Err()

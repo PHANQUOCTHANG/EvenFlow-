@@ -137,3 +137,35 @@ func TestIdentityRepoPII_ChuyenDuLieuCuVaIdempotent(t *testing.T) {
 		t.Fatalf("chay lai phai idempotent: done=%d err=%v", done2, err)
 	}
 }
+
+// EV-111 (BR-Q3): Save ghi otp_verified_at; migration 0004 backfill dong cu bang created_at.
+func TestIdentityRepo_GhiOtpVerifiedAt(t *testing.T) {
+	db := openDB(t)
+	repo := postgres.NewIdentityRepo(db, protector(t))
+	ctx := context.Background()
+	email := uuid.NewString() + "@test.local"
+	at := time.Now().UTC().Truncate(time.Microsecond)
+
+	ident := &domain.Identity{ID: uuid.New(), Email: &email, PasswordHash: "x", Role: domain.RoleBuyer, CreatedAt: at, OtpVerifiedAt: &at}
+	if err := repo.Save(ctx, ident); err != nil {
+		t.Fatal(err)
+	}
+	got, err := repo.FindByEmailOrPhone(ctx, email)
+	if err != nil || got.OtpVerifiedAt == nil || !got.OtpVerifiedAt.Equal(at) {
+		t.Fatalf("otp_verified_at = %v, %v; muon %v", got, err, at)
+	}
+
+	// Dong cu chua co gia tri + chay lai cau backfill cua migration.
+	oldID := uuid.New()
+	if _, err := db.Exec(`INSERT INTO identities (id, email, password_hash, created_at) VALUES ($1, $2, 'x', $3)`,
+		oldID, uuid.NewString()+"@old.local", at.Add(-time.Hour)); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := db.Exec(`UPDATE identities SET otp_verified_at = created_at WHERE otp_verified_at IS NULL`); err != nil {
+		t.Fatal(err)
+	}
+	var verified sql.NullTime
+	if err := db.QueryRow(`SELECT otp_verified_at FROM identities WHERE id = $1`, oldID).Scan(&verified); err != nil || !verified.Valid {
+		t.Fatalf("backfill khong ghi: %v %v", verified, err)
+	}
+}

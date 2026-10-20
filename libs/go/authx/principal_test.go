@@ -41,6 +41,29 @@ func TestPrincipal_SetGhiDeGiaTriCuaClient(t *testing.T) {
 	}
 }
 
+func TestPrincipal_VerifiedChiLaTrueKhiGatewayGan(t *testing.T) {
+	for _, verified := range []bool{true, false} {
+		h := http.Header{}
+		authx.SetIdentityHeaders(h, authx.Principal{ID: someID, Role: "buyer", Verified: verified})
+		p, ok := authx.PrincipalFromHeaders(h)
+		if !ok || p.Verified != verified {
+			t.Fatalf("verified=%v: doc lai %+v ok=%v", verified, p, ok)
+		}
+	}
+	// Client gui true, gateway gan false: gia tri cua client khong con.
+	h := http.Header{}
+	h.Set("X-Identity-Verified", "true")
+	authx.SetIdentityHeaders(h, authx.Principal{ID: someID, Role: "buyer", Verified: false})
+	if p, _ := authx.PrincipalFromHeaders(h); p.Verified {
+		t.Fatal("header verified do client gui khong duoc song sot")
+	}
+	// Thieu header: khong duoc coi la da xac thuc.
+	h = http.Header{"X-Identity-Id": {someID}, "X-Identity-Role": {"buyer"}}
+	if p, _ := authx.PrincipalFromHeaders(h); p.Verified {
+		t.Fatal("thieu header verified phai la chua xac thuc")
+	}
+}
+
 func TestPrincipal_FromHeadersTuChoiGiaTriSai(t *testing.T) {
 	cases := map[string][2]string{
 		"thieu id":      {"", "buyer"},

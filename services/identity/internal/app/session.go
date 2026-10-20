@@ -123,6 +123,7 @@ func (s *SessionService) pair(identity *domain.Identity, rawRefresh string, refr
 		Subject:  identity.ID.String(),
 		Role:     string(identity.Role),
 		ID:       uuid.NewString(),
+		Verified: identity.OtpVerifiedAt != nil,
 		IssuedAt: now,
 	})
 	if err != nil {

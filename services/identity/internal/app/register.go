@@ -158,8 +158,10 @@ func (uc *registerUseCase) VerifyOTP(ctx context.Context, input VerifyOTPInput) 
 		PasswordHash: hashed,
 		Role:         domain.RoleBuyer,
 		CreatedAt:    now,
+		// Tài khoản chỉ được tạo sau khi nhập đúng OTP (BR-Q3).
+		OtpVerifiedAt: &now,
 	}
-	
+
 	// Determine if email or phone (basic check for '@')
 	if isEmail(input.Identifier) {
 		identity.Email = &input.Identifier

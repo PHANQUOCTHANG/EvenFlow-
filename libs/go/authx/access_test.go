@@ -39,6 +39,19 @@ func TestAccessToken_KyRoiXacMinhDuocDungClaims(t *testing.T) {
 	}
 }
 
+func TestAccessToken_CoXacThucOTPDiTheoToken(t *testing.T) {
+	now := time.Unix(1_800_000_000, 0)
+	for _, verified := range []bool{true, false} {
+		c := validClaims(now)
+		c.Verified = verified
+		tok, _ := authx.SignAccessToken(accessSecret, c)
+		got, err := authx.VerifyAccessToken(accessSecret, tok, now)
+		if err != nil || got.Verified != verified {
+			t.Fatalf("verified=%v: nhan %+v %v", verified, got, err)
+		}
+	}
+}
+
 func TestAccessToken_HetHanTraLoiRieng(t *testing.T) {
 	now := time.Unix(1_800_000_000, 0)
 	tok, _ := authx.SignAccessToken(accessSecret, validClaims(now))
