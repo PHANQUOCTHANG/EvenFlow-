@@ -5,9 +5,12 @@ import (
 	"encoding/json"
 	"errors"
 	"log/slog"
+	"net"
 	"net/http"
+	"strings"
 	"time"
 
+	"github.com/eventflow/eventflow/libs/go/httpx"
 	"github.com/eventflow/eventflow/services/identity/internal/app"
 	"github.com/eventflow/eventflow/services/identity/internal/domain"
 	"github.com/google/uuid"
@@ -21,12 +24,82 @@ type AuthHandler struct {
 	forgotPwdUC   app.ForgotPasswordUseCase
 	googleLoginUC app.GoogleLoginUseCase
 	sessions      SessionManager
+	devices       domain.DeviceRegistrar
 	redisClient   *redis.Client
+}
+
+// WithDevices bật API đăng ký thiết bị (EV-113).
+func (h *AuthHandler) WithDevices(d domain.DeviceRegistrar) *AuthHandler {
+	h.devices = d
+	return h
+}
+
+// Loại lỗi RFC 7807 của API thiết bị.
+const (
+	ProblemInvalidFingerprint = "/problems/invalid-fingerprint"
+	ProblemTooManyDevices     = "/problems/too-many-devices"
+)
+
+// deviceFrom dựng DeviceInfo từ fingerprint client gửi; nil nếu client không gửi.
+// IP lấy từ X-Forwarded-For do gateway đặt (gateway xoá giá trị client gửi).
+func deviceFrom(r *http.Request, fingerprint string) *domain.DeviceInfo {
+	if fingerprint == "" {
+		return nil
+	}
+	d := newDevice(r, fingerprint)
+	return &d
+}
+
+func newDevice(r *http.Request, fingerprint string) domain.DeviceInfo {
+	ip := r.RemoteAddr
+	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
+		ip, _, _ = strings.Cut(xff, ",")
+	}
+	if host, _, err := net.SplitHostPort(ip); err == nil {
+		ip = host
+	}
+	return domain.DeviceInfo{Fingerprint: fingerprint, IP: strings.TrimSpace(ip)}
+}
+
+// writeDeviceError trả true nếu err là lỗi thiết bị đã được ghi ra response.
+func writeDeviceError(w http.ResponseWriter, err error) bool {
+	switch {
+	case errors.Is(err, domain.ErrInvalidFingerprint):
+		httpx.WriteProblemType(w, http.StatusBadRequest, ProblemInvalidFingerprint, "device fingerprint không hợp lệ")
+	case errors.Is(err, domain.ErrTooManyDevices):
+		httpx.WriteProblemType(w, http.StatusTooManyRequests, ProblemTooManyDevices, "tài khoản đã gắn quá nhiều thiết bị")
+	default:
+		return false
+	}
+	return true
+}
+
+// RegisterDevice gắn thiết bị với người đang đăng nhập; idempotent theo fingerprint.
+func (h *AuthHandler) RegisterDevice(w http.ResponseWriter, r *http.Request) {
+	caller, ok := CallerFromContext(r.Context())
+	if !ok || h.devices == nil {
+		writeError(w, http.StatusUnauthorized, "Unauthorized", "Chưa đăng nhập")
+		return
+	}
+	var req RegisterDeviceRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "Invalid Request", "Dữ liệu JSON không hợp lệ")
+		return
+	}
+	id, err := h.devices.Register(r.Context(), caller.ID, newDevice(r, req.Fingerprint))
+	if err != nil {
+		if !writeDeviceError(w, err) {
+			slog.ErrorContext(r.Context(), "dang ky thiet bi that bai", "err", err)
+			writeError(w, http.StatusInternalServerError, "Server Error", "Lỗi hệ thống nội bộ")
+		}
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]string{"device_id": id.String()})
 }
 
 // SessionManager là phần của app.SessionService mà handler cần (EV-112).
 type SessionManager interface {
-	Refresh(ctx context.Context, rawRefresh string) (*domain.TokenPair, *domain.Identity, error)
+	Refresh(ctx context.Context, rawRefresh string, device *domain.DeviceInfo) (*domain.TokenPair, *domain.Identity, error)
 	Logout(ctx context.Context, rawRefresh string) error
 	LogoutAll(ctx context.Context, identityID uuid.UUID) error
 }
@@ -156,10 +229,12 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	output, err := h.loginUC.Execute(r.Context(), app.LoginInput{
 		Identifier: req.Identifier,
 		Password:   req.Password,
+		Device:     deviceFrom(r, req.DeviceFingerprint),
 	})
 
 	if err != nil {
 		switch {
+		case writeDeviceError(w, err):
 		case errors.Is(err, app.ErrInvalidInput):
 			writeError(w, http.StatusBadRequest, "Validation Error", err.Error())
 		case errors.Is(err, app.ErrInvalidCredentials):
@@ -221,9 +296,10 @@ func (h *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pair, identity, err := h.sessions.Refresh(r.Context(), req.RefreshToken)
+	pair, identity, err := h.sessions.Refresh(r.Context(), req.RefreshToken, deviceFrom(r, req.DeviceFingerprint))
 	if err != nil {
 		switch {
+		case writeDeviceError(w, err):
 		case errors.Is(err, domain.ErrRefreshTokenReused):
 			slog.WarnContext(r.Context(), "refresh token bi dung lai, da thu hoi ca phien")
 			writeError(w, http.StatusUnauthorized, "Unauthorized", "Phiên đăng nhập đã bị thu hồi, vui lòng đăng nhập lại")

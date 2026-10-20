@@ -118,7 +118,17 @@ func run(log *slog.Logger) error {
 	issueTicketsUC := app.NewIssueTicketsUseCase(repo, qrEngine, log)
 	verifyTicketUC := app.NewVerifyTicketUseCase(repo, qrEngine, log)
 
+	// EV-137: queue token ky HMAC, cung secret voi waitingroom. Production thieu secret thi khong khoi dong.
+	queueSecret, devSecret, err := authx.QueueTokenSecretFromEnv()
+	if err != nil {
+		return err
+	}
+	if devSecret {
+		log.Warn("QUEUE_TOKEN_SECRET chua dat, dang dung secret mac dinh cho dev")
+	}
+
 	h := httpadapter.New(app.NewCreateHold(gate, repo, log).WithMetrics(signalMetrics{HoldMetrics: prom, rec: signals}), log).
+		WithQueueTokens(queueSecret).
 		WithPurchaseLimits(app.NewGetPurchaseLimit(repo)).
 		WithTickets(issueTicketsUC, verifyTicketUC, repo)
 

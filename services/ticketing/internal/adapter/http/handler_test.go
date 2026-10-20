@@ -13,6 +13,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/eventflow/eventflow/libs/go/authx"
 	"github.com/eventflow/eventflow/libs/go/idem"
 	"github.com/eventflow/eventflow/services/ticketing/internal/app"
 	"github.com/eventflow/eventflow/services/ticketing/internal/domain"
@@ -22,9 +23,21 @@ import (
 type fakeHolds struct {
 	calls atomic.Int32
 	err   error
+
+	mu   sync.Mutex
+	last app.CreateHoldInput
+}
+
+func (f *fakeHolds) lastInput() app.CreateHoldInput {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.last
 }
 
 func (f *fakeHolds) Execute(_ context.Context, in app.CreateHoldInput) (app.CreateHoldOutput, error) {
+	f.mu.Lock()
+	f.last = in
+	f.mu.Unlock()
 	n := f.calls.Add(1)
 	if f.err != nil {
 		return app.CreateHoldOutput{}, f.err
@@ -87,8 +100,43 @@ func (m *memIdem) Abandon(_ context.Context, r idem.Request, _ string) error {
 	return nil
 }
 
+// Danh tinh va queue token hop le cho su kien e1 (EV-137).
+const (
+	testUser   = "11111111-1111-4111-8111-111111111111"
+	testDevice = "33333333-3333-4333-8333-333333333333"
+	testJTI    = "jti-test-1"
+)
+
+var testQueueSecret = []byte("ticketing-test-queue-secret-16+")
+
+func queueToken(_ testing.TB, c authx.QueueClaims) string {
+	if c.IssuedAt.IsZero() {
+		c.IssuedAt = time.Now()
+		c.ExpiresAt = c.IssuedAt.Add(time.Hour)
+	}
+	tok, err := authx.SignQueueToken(testQueueSecret, c)
+	if err != nil {
+		panic(err)
+	}
+	return tok
+}
+
+func validQueueToken(t testing.TB) string {
+	return queueToken(t, authx.QueueClaims{EventID: "e1", Subject: testUser, DeviceID: testDevice, JTI: testJTI})
+}
+
+func setPrincipal(r *http.Request, id, device string) {
+	r.Header.Set("X-Identity-Id", id)
+	r.Header.Set("X-Identity-Role", "buyer")
+	if device != "" {
+		r.Header.Set("X-Device-Id", device)
+	}
+}
+
+func newServerLog() *slog.Logger { return slog.New(slog.NewTextHandler(io.Discard, nil)) }
+
 func newServer(holds HoldCreator) http.Handler {
-	h := New(holds, slog.New(slog.NewTextHandler(io.Discard, nil)))
+	h := New(holds, slog.New(slog.NewTextHandler(io.Discard, nil))).WithQueueTokens(testQueueSecret)
 	mux := http.NewServeMux()
 	h.Routes(mux, idem.Middleware(&memIdem{},
 		idem.WithIdentity(func(r *http.Request) string { return r.Header.Get("X-Identity-Id") })))
@@ -100,8 +148,8 @@ func post(h http.Handler, key, body string) *httptest.ResponseRecorder {
 	if key != "" {
 		r.Header.Set(idem.Header, key)
 	}
-	r.Header.Set("X-Identity-Id", "u1")
-	r.Header.Set("X-Queue-Token", "tok")
+	setPrincipal(r, testUser, testDevice)
+	r.Header.Set("X-Queue-Token", validQueueToken(nil))
 	w := httptest.NewRecorder()
 	h.ServeHTTP(w, r)
 	return w

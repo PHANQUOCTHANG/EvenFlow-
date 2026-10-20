@@ -43,6 +43,7 @@ type RefreshToken struct {
 	ExpiresAt  time.Time
 	CreatedAt  time.Time
 	RevokedAt  *time.Time
+	DeviceID   *uuid.UUID // thiet bi cua phien (EV-113); giu nguyen khi xoay
 }
 
 // TokenPair la ket qua mot lan dang nhap hoac refresh.
@@ -61,6 +62,8 @@ type RefreshTokenRepository interface {
 	// Tra ve ban ghi cu. Token da thu hoi -> thu hoi ca ho va tra ErrRefreshTokenReused;
 	// khong ton tai hoac het han -> ErrRefreshTokenInvalid.
 	Rotate(ctx context.Context, oldHash string, next *RefreshToken, now time.Time) (*RefreshToken, error)
+	// SetDevice gan (hoac doi) thiet bi cua mot refresh token dang song.
+	SetDevice(ctx context.Context, tokenID, deviceID uuid.UUID) error
 	// RevokeFamilyByHash thu hoi ca ho chua token co hash nay (logout). Khong thay thi khong loi.
 	RevokeFamilyByHash(ctx context.Context, hash, reason string, now time.Time) error
 	// RevokeAllForIdentity thu hoi moi phien con hieu luc cua identity.

@@ -22,9 +22,21 @@ func NewRefreshTokenRepo(db *sql.DB) domain.RefreshTokenRepository {
 
 func (r *refreshTokenRepo) Create(ctx context.Context, t *domain.RefreshToken) error {
 	_, err := r.db.ExecContext(ctx, `
-		INSERT INTO refresh_tokens (id, identity_id, family_id, token_hash, expires_at, created_at)
-		VALUES ($1, $2, $3, $4, $5, $6)
-	`, t.ID, t.IdentityID, t.FamilyID, t.TokenHash, t.ExpiresAt, t.CreatedAt)
+		INSERT INTO refresh_tokens (id, identity_id, family_id, token_hash, expires_at, created_at, device_id)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
+	`, t.ID, t.IdentityID, t.FamilyID, t.TokenHash, t.ExpiresAt, t.CreatedAt, nullUUID(t.DeviceID))
+	return err
+}
+
+func nullUUID(id *uuid.UUID) uuid.NullUUID {
+	if id == nil {
+		return uuid.NullUUID{}
+	}
+	return uuid.NullUUID{UUID: *id, Valid: true}
+}
+
+func (r *refreshTokenRepo) SetDevice(ctx context.Context, tokenID, deviceID uuid.UUID) error {
+	_, err := r.db.ExecContext(ctx, `UPDATE refresh_tokens SET device_id = $2 WHERE id = $1 AND revoked_at IS NULL`, tokenID, deviceID)
 	return err
 }
 
@@ -38,17 +50,22 @@ func (r *refreshTokenRepo) Rotate(ctx context.Context, oldHash string, next *dom
 	defer func() { _ = tx.Rollback() }()
 
 	var old domain.RefreshToken
+	var dev uuid.NullUUID
 	err = tx.QueryRowContext(ctx, `
-		SELECT id, identity_id, family_id, token_hash, expires_at, created_at, revoked_at
+		SELECT id, identity_id, family_id, token_hash, expires_at, created_at, revoked_at, device_id
 		FROM refresh_tokens
 		WHERE token_hash = $1
 		FOR UPDATE
-	`, oldHash).Scan(&old.ID, &old.IdentityID, &old.FamilyID, &old.TokenHash, &old.ExpiresAt, &old.CreatedAt, &old.RevokedAt)
+	`, oldHash).Scan(&old.ID, &old.IdentityID, &old.FamilyID, &old.TokenHash, &old.ExpiresAt, &old.CreatedAt, &old.RevokedAt, &dev)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, domain.ErrRefreshTokenInvalid
 	}
 	if err != nil {
 		return nil, err
+	}
+
+	if dev.Valid {
+		old.DeviceID = &dev.UUID
 	}
 
 	if old.RevokedAt != nil {
@@ -70,10 +87,11 @@ func (r *refreshTokenRepo) Rotate(ctx context.Context, oldHash string, next *dom
 	next.IdentityID = old.IdentityID
 	next.FamilyID = old.FamilyID
 	next.ExpiresAt = old.ExpiresAt
+	next.DeviceID = old.DeviceID
 	if _, err := tx.ExecContext(ctx, `
-		INSERT INTO refresh_tokens (id, identity_id, family_id, token_hash, expires_at, created_at)
-		VALUES ($1, $2, $3, $4, $5, $6)
-	`, next.ID, next.IdentityID, next.FamilyID, next.TokenHash, next.ExpiresAt, next.CreatedAt); err != nil {
+		INSERT INTO refresh_tokens (id, identity_id, family_id, token_hash, expires_at, created_at, device_id)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
+	`, next.ID, next.IdentityID, next.FamilyID, next.TokenHash, next.ExpiresAt, next.CreatedAt, nullUUID(next.DeviceID)); err != nil {
 		return nil, fmt.Errorf("chen refresh token moi: %w", err)
 	}
 	if _, err := tx.ExecContext(ctx, `

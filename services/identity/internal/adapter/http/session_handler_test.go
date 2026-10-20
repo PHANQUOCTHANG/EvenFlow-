@@ -21,10 +21,12 @@ type fakeSessions struct {
 	logoutAllFor  uuid.UUID
 	identity      *domain.Identity
 	refreshCalled string
+	refreshDevice *domain.DeviceInfo
 }
 
-func (f *fakeSessions) Refresh(_ context.Context, raw string) (*domain.TokenPair, *domain.Identity, error) {
+func (f *fakeSessions) Refresh(_ context.Context, raw string, device *domain.DeviceInfo) (*domain.TokenPair, *domain.Identity, error) {
 	f.refreshCalled = raw
+	f.refreshDevice = device
 	if f.refreshErr != nil {
 		return nil, nil, f.refreshErr
 	}

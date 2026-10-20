@@ -13,6 +13,7 @@ import (
 
 	"github.com/redis/go-redis/v9"
 
+	"github.com/eventflow/eventflow/libs/go/authx"
 	"github.com/eventflow/eventflow/libs/go/httpx"
 	"github.com/eventflow/eventflow/libs/go/otelx"
 	httpadapter "github.com/eventflow/eventflow/services/waitingroom/internal/adapter/http"
@@ -69,7 +70,18 @@ func run(log *slog.Logger) error {
 		return err
 	}
 
-	h := httpadapter.New(store{queue}, nil, log)
+	// EV-137: queue token ky HMAC. Production thieu secret thi khong khoi dong.
+	queueSecret, devSecret, err := authx.QueueTokenSecretFromEnv()
+	if err != nil {
+		return err
+	}
+	if devSecret {
+		log.Warn("QUEUE_TOKEN_SECRET chua dat, dang dung secret mac dinh cho dev")
+	}
+	// QUEUE_REQUIRE_DEVICE=false cho phep join khi phien chua gan thiet bi (chi dev / k6).
+	requireDevice := env("QUEUE_REQUIRE_DEVICE", "true") != "false"
+
+	h := httpadapter.New(store{queue}, nil, log).WithQueueTokens(queueSecret, requireDevice)
 
 	mux := http.NewServeMux()
 	h.Routes(mux)

@@ -6,6 +6,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -39,10 +40,25 @@ type Handler struct {
 	store QueueStore
 	bots  BotGuard
 	log   *slog.Logger
+
+	secret        []byte // ky / xac minh queue token (EV-137); rong -> tu choi moi yeu cau co token
+	requireDevice bool
+	now           func() time.Time
 }
 
+// WithQueueTokens bat queue token ky HMAC (EV-137). requireDevice: join bi tu choi neu phien chua gan
+// thiet bi, de token luon rang buoc duoc voi thiet bi.
+func (h *Handler) WithQueueTokens(secret []byte, requireDevice bool) *Handler {
+	h.secret, h.requireDevice = secret, requireDevice
+	return h
+}
+
+// queueTokenTTL la han queue token. Bang han phien hang (24 gio, xem NewQueue o main): het han thi
+// client join lai, ket qua idempotent theo BR-Q3 nen khong mat cho.
+const queueTokenTTL = 24 * time.Hour
+
 func New(store QueueStore, bots BotGuard, log *slog.Logger) *Handler {
-	return &Handler{store: store, bots: bots, log: log}
+	return &Handler{store: store, bots: bots, log: log, now: time.Now}
 }
 
 func (h *Handler) Routes(mux *http.ServeMux) {
@@ -68,6 +84,14 @@ func (h *Handler) join(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	identityID := p.ID
+	if h.secret == nil {
+		httpx.WriteProblem(w, http.StatusServiceUnavailable, "phong cho chua cau hinh queue token")
+		return
+	}
+	if h.requireDevice && p.DeviceID == "" {
+		httpx.WriteProblemType(w, http.StatusForbidden, ProblemDeviceRequired, "can gan thiet bi cho phien dang nhap truoc khi xep hang")
+		return
+	}
 
 	var req joinRequest
 	_ = json.NewDecoder(r.Body).Decode(&req)
@@ -96,24 +120,69 @@ func (h *Handler) join(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// res.Token la jti (thanh vien trong hang). Client nhan token KY gan jti voi nguoi + thiet bi + su kien.
+	now := h.now()
+	signed, err := authx.SignQueueToken(h.secret, authx.QueueClaims{
+		EventID: eventID, Subject: identityID, DeviceID: p.DeviceID, JTI: res.Token,
+		IssuedAt: now, ExpiresAt: now.Add(queueTokenTTL),
+	})
+	if err != nil {
+		h.log.Error("ky queue token that bai", "event", eventID, "err", err)
+		httpx.WriteProblem(w, http.StatusInternalServerError, "khong cap duoc queue token")
+		return
+	}
+
 	httpx.WriteJSON(w, http.StatusOK, map[string]any{
 		"state":         res.State,
-		"queue_token":   res.Token,
+		"queue_token":   signed,
 		"rank":          res.Rank,
 		"is_new":        res.IsNew,
 		"poll_after_ms": domain.PollInterval(res.State, res.Rank).Milliseconds(),
 	})
 }
 
-func (h *Handler) status(w http.ResponseWriter, r *http.Request) {
-	eventID := r.PathValue("eventID")
+// queueClaims xac minh X-Queue-Token: chu ky, han, va token phai thuoc dung su kien, dung nguoi, dung
+// thiet bi dang goi (EV-137). Tra false sau khi da ghi loi.
+func (h *Handler) queueClaims(w http.ResponseWriter, r *http.Request, eventID string) (*authx.QueueClaims, bool) {
 	token := r.Header.Get("X-Queue-Token")
 	if token == "" {
 		httpx.WriteProblem(w, http.StatusBadRequest, "thieu X-Queue-Token")
+		return nil, false
+	}
+	p, ok := authx.PrincipalFromHeaders(r.Header)
+	if !ok {
+		httpx.WriteProblem(w, http.StatusUnauthorized, "can dang nhap")
+		return nil, false
+	}
+	if h.secret == nil {
+		httpx.WriteProblem(w, http.StatusServiceUnavailable, "phong cho chua cau hinh queue token")
+		return nil, false
+	}
+	claims, err := authx.VerifyQueueToken(h.secret, token, h.now())
+	switch {
+	case errors.Is(err, authx.ErrExpiredQueueToken):
+		httpx.WriteProblemType(w, http.StatusUnauthorized, ProblemQueueTokenExpired, "queue token da het han, hay vao hang cho lai")
+		return nil, false
+	case err != nil:
+		httpx.WriteProblemType(w, http.StatusUnauthorized, ProblemQueueTokenInvalid, "queue token khong hop le")
+		return nil, false
+	case !claims.Matches(eventID, p.ID, p.DeviceID):
+		// Token hop le nhung cua nguoi / thiet bi / su kien khac: token bi chia se hoac dung nham.
+		h.log.Warn("queue token khong khop nguoi goi", "event", eventID)
+		httpx.WriteProblemType(w, http.StatusForbidden, ProblemQueueTokenMismatch, "queue token khong thuoc ve ban hoac thiet bi nay")
+		return nil, false
+	}
+	return claims, true
+}
+
+func (h *Handler) status(w http.ResponseWriter, r *http.Request) {
+	eventID := r.PathValue("eventID")
+	claims, ok := h.queueClaims(w, r, eventID)
+	if !ok {
 		return
 	}
 
-	pos, err := h.store.Status(r.Context(), eventID, token)
+	pos, err := h.store.Status(r.Context(), eventID, claims.JTI)
 	if err != nil {
 		httpx.WriteProblem(w, http.StatusServiceUnavailable, "khong doc duoc trang thai hang cho")
 		return
@@ -140,11 +209,11 @@ func (h *Handler) status(w http.ResponseWriter, r *http.Request) {
 // chac chan nhat de het file descriptor.
 func (h *Handler) stream(w http.ResponseWriter, r *http.Request) {
 	eventID := r.PathValue("eventID")
-	token := r.Header.Get("X-Queue-Token")
-	if token == "" {
-		httpx.WriteProblem(w, http.StatusBadRequest, "thieu X-Queue-Token")
+	claims, ok := h.queueClaims(w, r, eventID)
+	if !ok {
 		return
 	}
+	token := claims.JTI
 	flusher, ok := w.(http.Flusher)
 	if !ok {
 		httpx.WriteProblem(w, http.StatusInternalServerError, "streaming khong duoc ho tro")
@@ -192,3 +261,11 @@ func newToken() string {
 
 // ProblemOTPRequired la "type" RFC 7807 client dung de chuyen khach sang man xac thuc OTP.
 const ProblemOTPRequired = "/problems/otp-required"
+
+// Loai loi queue token / thiet bi (EV-137): client dua vao "type" de quyet dinh join lai hay dang nhap lai.
+const (
+	ProblemDeviceRequired     = "/problems/device-required"
+	ProblemQueueTokenInvalid  = "/problems/queue-token-invalid"
+	ProblemQueueTokenExpired  = "/problems/queue-token-expired"
+	ProblemQueueTokenMismatch = "/problems/queue-token-mismatch"
+)

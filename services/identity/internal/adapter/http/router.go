@@ -23,6 +23,7 @@ func RegisterRoutes(mux *http.ServeMux, authHandler *AuthHandler, jwtSecret stri
 	// Protected routes
 	authMiddleware := Authenticate(jwtSecret)
 	mux.Handle("GET /api/v1/auth/me", authMiddleware(http.HandlerFunc(authHandler.Me)))
+	mux.Handle("POST /api/v1/auth/devices", authMiddleware(http.HandlerFunc(authHandler.RegisterDevice)))
 	mux.Handle("POST /api/v1/auth/logout-all", authMiddleware(http.HandlerFunc(authHandler.LogoutAll)))
 }
 

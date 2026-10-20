@@ -205,6 +205,27 @@ func TestGateway_ChuyenCoXacThucOTPTuToken(t *testing.T) {
 	}
 }
 
+// EV-113: thiet bi chi den tu claim did cua token.
+func TestGateway_ChuyenThietBiTuToken(t *testing.T) {
+	f := newFixture(t)
+	const did = "33333333-3333-4333-8333-333333333333"
+	sign := func(d string) string {
+		tok, _ := authx.SignAccessToken([]byte(secret), authx.AccessClaims{
+			Subject: buyerID, Role: "buyer", ID: "j", Verified: true, DeviceID: d, IssuedAt: f.now})
+		return tok
+	}
+	spoof := map[string]string{"X-Device-Id": "44444444-4444-4444-8444-444444444444"}
+
+	f.do(t, http.MethodPost, "/v1/events/e1/queue/join", sign(did), spoof, "")
+	if got := f.up.last(t).Header.Get("X-Device-Id"); got != did {
+		t.Fatalf("X-Device-Id = %q, muon %s (tu token)", got, did)
+	}
+	f.do(t, http.MethodPost, "/v1/events/e1/queue/join", sign(""), spoof, "")
+	if got := f.up.last(t).Header.Get("X-Device-Id"); got != "" {
+		t.Fatalf("token khong gan thiet bi nhung upstream nhan %q", got)
+	}
+}
+
 // AC-2: route can dang nhap tu choi khi thieu/sai/het han token, upstream khong bi cham.
 func TestGateway_RouteCanDangNhapTuChoiTokenKhongHopLe(t *testing.T) {
 	f := newFixture(t)

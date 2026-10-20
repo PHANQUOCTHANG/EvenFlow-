@@ -20,8 +20,9 @@ type VerifyOTPRequest struct {
 
 // DTO cho yêu cầu Đăng nhập
 type LoginRequest struct {
-	Identifier string `json:"identifier"` // Chấp nhận Email hoặc Phone
-	Password   string `json:"password"`
+	Identifier        string `json:"identifier"` // Chấp nhận Email hoặc Phone
+	Password          string `json:"password"`
+	DeviceFingerprint string `json:"device_fingerprint,omitempty"` // tuỳ chọn: gắn thiết bị cho phiên (EV-113)
 }
 
 type GoogleLoginRequest struct {
@@ -60,7 +61,13 @@ type TokenResponse struct {
 
 // RefreshRequest dùng cho /auth/refresh và /auth/logout.
 type RefreshRequest struct {
-	RefreshToken string `json:"refresh_token"`
+	RefreshToken      string `json:"refresh_token"`
+	DeviceFingerprint string `json:"device_fingerprint,omitempty"` // tuỳ chọn: gắn / đổi thiết bị của phiên
+}
+
+// RegisterDeviceRequest dùng cho POST /auth/devices.
+type RegisterDeviceRequest struct {
+	Fingerprint string `json:"fingerprint"`
 }
 
 // Cấu trúc lỗi chuẩn RFC 7807 (Problem Details for HTTP APIs)

@@ -48,12 +48,24 @@ func (m *memRefreshRepo) Rotate(_ context.Context, oldHash string, next *domain.
 	if !now.Before(old.ExpiresAt) {
 		return nil, domain.ErrRefreshTokenInvalid
 	}
-	next.IdentityID, next.FamilyID, next.ExpiresAt = old.IdentityID, old.FamilyID, old.ExpiresAt
+	next.IdentityID, next.FamilyID, next.ExpiresAt, next.DeviceID = old.IdentityID, old.FamilyID, old.ExpiresAt, old.DeviceID
 	cp := *next
 	m.rows[next.TokenHash] = &cp
 	old.RevokedAt = &now
 	oldCp := *old
 	return &oldCp, nil
+}
+
+func (m *memRefreshRepo) SetDevice(_ context.Context, tokenID, deviceID uuid.UUID) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	for _, r := range m.rows {
+		if r.ID == tokenID {
+			d := deviceID
+			r.DeviceID = &d
+		}
+	}
+	return nil
 }
 
 func (m *memRefreshRepo) RevokeFamilyByHash(_ context.Context, hash, _ string, now time.Time) error {
@@ -165,7 +177,7 @@ func TestSession_TokenMangCoXacThucOTP(t *testing.T) {
 	}
 	at := f.now
 	f.identity.OtpVerifiedAt = &at
-	next, _, err := f.svc.Refresh(context.Background(), pair.RefreshToken)
+	next, _, err := f.svc.Refresh(context.Background(), pair.RefreshToken, nil)
 	if err != nil || !verifiedOf(next) {
 		t.Fatalf("sau khi xac thuc, refresh phai mang co verified: %v", err)
 	}
@@ -176,7 +188,7 @@ func TestSession_RefreshXoayVongVaGiuHanCuaPhien(t *testing.T) {
 	first, _ := f.svc.GenerateTokens(context.Background(), f.identity)
 
 	f.now = f.now.Add(20 * time.Minute)
-	second, ident, err := f.svc.Refresh(context.Background(), first.RefreshToken)
+	second, ident, err := f.svc.Refresh(context.Background(), first.RefreshToken, nil)
 	if err != nil {
 		t.Fatalf("refresh lan dau phai thanh cong: %v", err)
 	}
@@ -197,17 +209,17 @@ func TestSession_RefreshXoayVongVaGiuHanCuaPhien(t *testing.T) {
 func TestSession_DungLaiTokenCuThuHoiCaHo(t *testing.T) {
 	f := newSessionFixture(t)
 	first, _ := f.svc.GenerateTokens(context.Background(), f.identity)
-	second, _, err := f.svc.Refresh(context.Background(), first.RefreshToken)
+	second, _, err := f.svc.Refresh(context.Background(), first.RefreshToken, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	// Ke trom dung lai token cu.
-	if _, _, err := f.svc.Refresh(context.Background(), first.RefreshToken); !errors.Is(err, domain.ErrRefreshTokenReused) {
+	if _, _, err := f.svc.Refresh(context.Background(), first.RefreshToken, nil); !errors.Is(err, domain.ErrRefreshTokenReused) {
 		t.Fatalf("dung lai token da xoay phai bi bat, nhan %v", err)
 	}
 	// Token moi nhat cua chu that cung bi thu hoi: ca hai phai dang nhap lai.
-	if _, _, err := f.svc.Refresh(context.Background(), second.RefreshToken); err == nil {
+	if _, _, err := f.svc.Refresh(context.Background(), second.RefreshToken, nil); err == nil {
 		t.Fatal("sau khi phat hien tai su dung, token moi nhat cua ho cung phai bi thu hoi")
 	}
 	if len(f.audit.logs) == 0 || f.audit.logs[0].Action != app.ActionRefreshTokenReuse {
@@ -220,13 +232,13 @@ func TestSession_HetHanHoacTokenLaBiTuChoi(t *testing.T) {
 	pair, _ := f.svc.GenerateTokens(context.Background(), f.identity)
 
 	for name, tok := range map[string]string{"rong": "", "la": "khong-phai-token"} {
-		if _, _, err := f.svc.Refresh(context.Background(), tok); !errors.Is(err, domain.ErrRefreshTokenInvalid) {
+		if _, _, err := f.svc.Refresh(context.Background(), tok, nil); !errors.Is(err, domain.ErrRefreshTokenInvalid) {
 			t.Fatalf("%s: phai tra ErrRefreshTokenInvalid, nhan %v", name, err)
 		}
 	}
 
 	f.now = f.now.Add(domain.RefreshTokenTTL)
-	if _, _, err := f.svc.Refresh(context.Background(), pair.RefreshToken); !errors.Is(err, domain.ErrRefreshTokenInvalid) {
+	if _, _, err := f.svc.Refresh(context.Background(), pair.RefreshToken, nil); !errors.Is(err, domain.ErrRefreshTokenInvalid) {
 		t.Fatalf("het 30 ngay phai tu choi, nhan %v", err)
 	}
 }
@@ -239,10 +251,10 @@ func TestSession_LogoutThuHoiPhienNayKhongDungPhienKhac(t *testing.T) {
 	if err := f.svc.Logout(context.Background(), laptop.RefreshToken); err != nil {
 		t.Fatal(err)
 	}
-	if _, _, err := f.svc.Refresh(context.Background(), laptop.RefreshToken); err == nil {
+	if _, _, err := f.svc.Refresh(context.Background(), laptop.RefreshToken, nil); err == nil {
 		t.Fatal("phien da logout khong duoc refresh")
 	}
-	if _, _, err := f.svc.Refresh(context.Background(), phone.RefreshToken); err != nil {
+	if _, _, err := f.svc.Refresh(context.Background(), phone.RefreshToken, nil); err != nil {
 		t.Fatalf("phien tren thiet bi khac phai con song: %v", err)
 	}
 	// Logout token la: idempotent, khong loi.
@@ -260,7 +272,7 @@ func TestSession_LogoutAllThuHoiMoiPhien(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, p := range []*domain.TokenPair{a, b} {
-		if _, _, err := f.svc.Refresh(context.Background(), p.RefreshToken); err == nil {
+		if _, _, err := f.svc.Refresh(context.Background(), p.RefreshToken, nil); err == nil {
 			t.Fatal("logout-all phai thu hoi moi phien")
 		}
 	}
@@ -271,7 +283,7 @@ func TestSession_RefreshDocLaiRoleTuDB(t *testing.T) {
 	pair, _ := f.svc.GenerateTokens(context.Background(), f.identity)
 
 	f.identity.Role = domain.RoleOrganizer // Ops nang quyen sau khi dang nhap
-	next, _, err := f.svc.Refresh(context.Background(), pair.RefreshToken)
+	next, _, err := f.svc.Refresh(context.Background(), pair.RefreshToken, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -286,7 +298,7 @@ func TestSession_IdentityBiXoaThiRefreshThatBai(t *testing.T) {
 	pair, _ := f.svc.GenerateTokens(context.Background(), f.identity)
 	delete(f.ids.identities, *f.identity.Email)
 
-	if _, _, err := f.svc.Refresh(context.Background(), pair.RefreshToken); !errors.Is(err, domain.ErrRefreshTokenInvalid) {
+	if _, _, err := f.svc.Refresh(context.Background(), pair.RefreshToken, nil); !errors.Is(err, domain.ErrRefreshTokenInvalid) {
 		t.Fatalf("identity khong con thi phai tu choi, nhan %v", err)
 	}
 }
@@ -303,7 +315,7 @@ func TestForgotPassword_DatLaiMatKhauThuHoiMoiPhien(t *testing.T) {
 	}); err != nil {
 		t.Fatal(err)
 	}
-	if _, _, err := f.svc.Refresh(context.Background(), pair.RefreshToken); err == nil {
+	if _, _, err := f.svc.Refresh(context.Background(), pair.RefreshToken, nil); err == nil {
 		t.Fatal("doi mat khau xong phien cu phai bi thu hoi")
 	}
 }

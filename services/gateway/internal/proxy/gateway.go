@@ -168,7 +168,7 @@ func (g *Gateway) authenticate(r *http.Request) (*authx.Principal, error) {
 	if err != nil {
 		return nil, err
 	}
-	p := authx.Principal{ID: claims.Subject, Role: claims.Role, Verified: claims.Verified}
+	p := authx.Principal{ID: claims.Subject, Role: claims.Role, Verified: claims.Verified, DeviceID: claims.DeviceID}
 	if !p.Valid() {
 		return nil, authx.ErrInvalidAccessToken
 	}

@@ -11,6 +11,11 @@
  * test tu chon chu ky poll, no dang do mot he thong khac voi he thong that.
  *
  * Chay:  k6 run -e BASE=http://localhost:8080 -e EVENT=<uuid> tests/load/opening-spike.js
+ *
+ * Danh tinh: gateway xoa moi header danh tinh cua client va chi tin access token. Script nay dung de do
+ * TUNG SERVICE (waitingroom :8081, ticketing :8082) nen tu dat header danh tinh nhu gateway se dat
+ * (X-Identity-*, X-Device-Id). Muon do qua gateway thi phai cap access token that cho tung VU.
+ * Queue token (EV-137) do waitingroom cap luc join; VU phai join truoc roi dung dung token do.
  */
 
 import http from "k6/http";
@@ -63,8 +68,24 @@ export const options = {
   },
 };
 
+// UUID co dinh theo (vu, iter): phong cho yeu cau identity la UUID hop le.
+function uuidFor(vu, iter) {
+  const hex = (vu * 1000 + iter).toString(16).padStart(12, "0");
+  return `00000000-0000-4000-8000-${hex}`;
+}
+
 function identity() {
-  return `loadtest-${__VU}-${__ITER}`;
+  return uuidFor(__VU, __ITER);
+}
+
+// Header ma gateway se dat sau khi xac minh access token (authx.SetIdentityHeaders).
+function idHeaders(id) {
+  return {
+    "X-Identity-Id": id,
+    "X-Identity-Role": "buyer",
+    "X-Identity-Verified": "true",
+    "X-Device-Id": uuidFor(__VU, 999),
+  };
 }
 
 export function joinQueue() {
@@ -77,7 +98,7 @@ export function joinQueue() {
     `${BASE}/v1/events/${EVENT}/queue/join`,
     JSON.stringify({ signals: { interactions: randomIntBetween(3, 20) } }),
     {
-      headers: { "Content-Type": "application/json", "X-Identity-Id": identity() },
+      headers: { "Content-Type": "application/json", ...idHeaders(identity()) },
       tags: { phase: "join" },
     },
   );
@@ -93,13 +114,21 @@ export function joinQueue() {
 }
 
 export function pollStatus() {
-  const token = `loadtest-token-${__VU}`;
+  // Moi VU polling la mot khach da vao hang: join truoc de lay queue token ky (idempotent theo BR-Q3).
+  const id = uuidFor(__VU, 0);
+  const joined = http.post(
+    `${BASE}/v1/events/${EVENT}/queue/join`,
+    JSON.stringify({ signals: {} }),
+    { headers: { "Content-Type": "application/json", ...idHeaders(id) }, tags: { phase: "join" } },
+  );
+  if (joined.status !== 200) return;
+  const token = joined.json("queue_token");
   let etag = null;
 
   // Vong lap ton trong nhip do SERVER chi dinh (BR-Q4). Day la diem khac biet
   // giua mot bai load test trung thuc va mot bai test tu ve ra tai.
   for (;;) {
-    const headers = { "X-Queue-Token": token };
+    const headers = { "X-Queue-Token": token, ...idHeaders(id) };
     if (etag) headers["If-None-Match"] = etag;
 
     const res = http.get(`${BASE}/v1/events/${EVENT}/queue/status`, {
@@ -120,7 +149,7 @@ export function pollStatus() {
     const state = res.json("state");
     if (state === "ADMITTED") {
       admitted.add(1);
-      checkout(token);
+      checkout(token, id);
       return;
     }
     if (state === "EXPIRED" || state === "UNKNOWN") return;
@@ -129,7 +158,7 @@ export function pollStatus() {
   }
 }
 
-function checkout(token) {
+function checkout(token, id) {
   const res = http.post(
     `${BASE}/v1/events/${EVENT}/holds`,
     JSON.stringify({ ticket_type_id: __ENV.TICKET_TYPE, quantity: 1 }),
@@ -137,7 +166,7 @@ function checkout(token) {
       headers: {
         "Content-Type": "application/json",
         "X-Queue-Token": token,
-        "X-Identity-Id": identity(),
+        ...idHeaders(id),
         // BR-O5: moi API ghi deu bat buoc co idempotency key.
         "Idempotency-Key": `${token}-${__ITER}`,
       },
