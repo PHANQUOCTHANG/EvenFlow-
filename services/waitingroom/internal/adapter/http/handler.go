@@ -120,6 +120,19 @@ func (h *Handler) join(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Het ve han (EV-146, BR-Q6): khach moi khong duoc ghi danh nen khong co token. 200 chu khong phai loi:
+	// day la ket qua nghiep vu binh thuong, client hien man het ve.
+	if res.State == domain.StateSoldOut {
+		httpx.WriteJSON(w, http.StatusOK, map[string]any{
+			"state":         domain.StateSoldOut,
+			"queue_token":   "",
+			"rank":          -1,
+			"is_new":        false,
+			"poll_after_ms": domain.PollInterval(domain.StateSoldOut, -1).Milliseconds(),
+		})
+		return
+	}
+
 	// res.Token la jti (thanh vien trong hang). Client nhan token KY gan jti voi nguoi + thiet bi + su kien.
 	now := h.now()
 	signed, err := authx.SignQueueToken(h.secret, authx.QueueClaims{
@@ -246,7 +259,7 @@ func (h *Handler) stream(w http.ResponseWriter, r *http.Request) {
 			}
 			flusher.Flush()
 
-			if pos.State == domain.StateAdmitted || pos.State == domain.StateExpired {
+			if pos.State == domain.StateAdmitted || pos.State == domain.StateExpired || pos.State == domain.StateSoldOut {
 				return
 			}
 		}

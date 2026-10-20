@@ -18,10 +18,11 @@
  *    (vong lap, backoff, dung han khi gap 4xx).
  */
 
-export type QueueState = "LOBBY" | "QUEUED" | "ADMITTED" | "EXPIRED" | "UNKNOWN";
+export type QueueState = "LOBBY" | "QUEUED" | "ADMITTED" | "EXPIRED" | "SOLD_OUT" | "UNKNOWN";
 
 export interface JoinResponse {
   state: QueueState;
+  /** Rong khi state = SOLD_OUT: het ve han thi khach moi khong duoc ghi danh nen khong co token (EV-146). */
   queue_token: string;
   rank: number;
   is_new: boolean;

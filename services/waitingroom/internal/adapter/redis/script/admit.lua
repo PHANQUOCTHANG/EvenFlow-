@@ -30,8 +30,9 @@ end
 
 if batch <= 0 then return {} end
 
--- Khong tha them ai khi da het ve (BR-Q6).
-if redis.call('HGET', KEYS[3], 'sold_out') == '1' then
+-- Khong tha them ai khi da het ve (BR-Q6): sold_out = het han, stock_zero = kho dang 0 nhung con hold
+-- co the tra lai. Ca hai deu do ticketing ghi (EV-146); tha nguoi vao luc kho 0 chi lang phi suat admit.
+if redis.call('HGET', KEYS[3], 'sold_out') == '1' or redis.call('HGET', KEYS[3], 'stock_zero') == '1' then
   return {}
 end
 

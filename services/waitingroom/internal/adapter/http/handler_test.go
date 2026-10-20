@@ -29,10 +29,14 @@ var secret = []byte("waitingroom-test-secret-16bytes+")
 type fakeStore struct {
 	joins       int
 	statusCalls []string
+	soldOut     bool // Join tra SOLD_OUT, khong cap token (het ve han)
 }
 
 func (f *fakeStore) Join(_ context.Context, _, _, token string) (httpadapter.JoinResult, error) {
 	f.joins++
+	if f.soldOut {
+		return httpadapter.JoinResult{State: domain.StateSoldOut, Rank: -1}, nil
+	}
 	return httpadapter.JoinResult{State: domain.StateLobby, Token: jti, Rank: -1, IsNew: true}, nil
 }
 
@@ -142,6 +146,23 @@ func TestJoin_CapQueueTokenKy(t *testing.T) {
 	}
 	if time.Until(claims.ExpiresAt) < 23*time.Hour {
 		t.Fatalf("han token = %v, muon ~24 gio", claims.ExpiresAt)
+	}
+}
+
+// EV-146 (BR-Q6): het ve han thi khach moi nhan SOLD_OUT, khong co queue token.
+func TestJoin_HetVeHanKhongCapToken(t *testing.T) {
+	rec := do(newMux(&fakeStore{soldOut: true}, true), http.MethodPost, "/v1/events/e1/queue/join", verifiedBuyer(nil))
+	if rec.Code != http.StatusOK {
+		t.Fatalf("het ve la ket qua nghiep vu binh thuong, muon 200, nhan %d: %s", rec.Code, rec.Body)
+	}
+	var body struct {
+		State       string `json:"state"`
+		QueueToken  string `json:"queue_token"`
+		PollAfterMs int64  `json:"poll_after_ms"`
+	}
+	_ = json.Unmarshal(rec.Body.Bytes(), &body)
+	if body.State != "SOLD_OUT" || body.QueueToken != "" || body.PollAfterMs <= 0 {
+		t.Fatalf("body = %+v", body)
 	}
 }
 

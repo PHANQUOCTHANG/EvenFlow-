@@ -19,7 +19,7 @@
 -- ARGV[4] = session_ttl_seconds
 --
 -- Tra ve: { state, token, rank, is_new }
---   state: "LOBBY" | "QUEUED" | "ADMITTED"
+--   state: "LOBBY" | "QUEUED" | "ADMITTED" | "SOLD_OUT" (chi khi khach moi vao luc het ve han)
 --   rank : -1 neu con trong LOBBY (chua co thu tu)
 
 local identity = ARGV[1]
@@ -39,6 +39,12 @@ if existing then
   end
   -- Khong o lobby cung khong o queue -> da duoc admit (hoac het han).
   return { 'ADMITTED', existing, 0, 0 }
+end
+
+-- 1b. Het ve han (EV-146): khong ghi danh them ai vao hang vo vong. Nguoi da co cho o tren van duoc tra
+-- lai trang thai cu; nguoi moi nhan SOLD_OUT, khong co token.
+if redis.call('HGET', KEYS[5], 'sold_out') == '1' then
+  return { 'SOLD_OUT', '', -1, 0 }
 end
 
 -- 2. Chua co -> cap token moi.
