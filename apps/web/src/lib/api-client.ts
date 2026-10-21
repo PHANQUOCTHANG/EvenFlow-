@@ -111,13 +111,17 @@ function pairKey(s: { accessToken: string; refreshToken: string | null }): strin
 
 const networkError = () => new ApiError("NETWORK_ERROR", 0, {}, "Khong ket noi duoc may chu");
 
-async function doRefresh(usedRefresh: string | null): Promise<string> {
+const userChanged = () => new ApiError("AUTH_REQUIRED", 401, {}, "Phien dang nhap da chuyen sang nguoi dung khac");
+
+async function doRefresh(usedRefresh: string | null, sentUserId: string | null): Promise<string> {
   // Doc lai storage ngay truoc khi refresh: tab khac co the da xoay cap token (refresh token cu bi thu hoi).
   const cur = getSession();
   if (!cur || !cur.refreshToken) {
     clearSession();
     throw new ApiError("AUTH_REQUIRED", 401, {}, "Phien dang nhap da het han");
   }
+  // Request goc gui bang user A; tab khac da doi sang user B -> khong dung token cua B, khong xoa phien cua B, khong POST.
+  if (sentUserId && cur.user.id !== sentUserId) throw userChanged();
   if (usedRefresh && cur.refreshToken !== usedRefresh) return cur.accessToken;
   return refreshCore(cur, cur.refreshToken);
 }
@@ -168,6 +172,7 @@ async function refreshPost(cur: Session, refreshToken: string, epoch: number, co
   if (epoch !== getSessionEpoch() || !after) {
     throw new ApiError("AUTH_REQUIRED", 401, {}, "Phien dang nhap da ket thuc");
   }
+  if (after.user.id !== cur.user.id) throw userChanged(); // tab khac doi user trong luc POST: khong tra token cua nguoi khac
   if (after.refreshToken !== cur.refreshToken) return after.accessToken; // tab khac da xoay cap moi
   const next = sessionFromIdentity(body, cur.user);
   if (!next || !next.refreshToken) {
@@ -183,9 +188,9 @@ async function refreshPost(cur: Session, refreshToken: string, epoch: number, co
  *  POST chi bi huy sau REFRESH_POST_TIMEOUT_MS va khi do KHONG bao gio POST lai token cu (reuse -> thu hoi ca ho token).
  *  Cho khoa co han cung HARD_DEADLINE_MS (AbortSignal): het han -> NETWORK_ERROR, khong clearSession, khong POST;
  *  yeu cau da bo khong bao gio duoc cap khoa de POST. */
-async function withRefreshLock(usedRefresh: string | null): Promise<string> {
+async function withRefreshLock(usedRefresh: string | null, sentUserId: string | null): Promise<string> {
   const locks = typeof navigator !== "undefined" ? (navigator as Navigator & { locks?: LockManager }).locks : undefined;
-  if (locksUnusable || !(locks && typeof locks.request === "function")) return doRefresh(usedRefresh);
+  if (locksUnusable || !(locks && typeof locks.request === "function")) return doRefresh(usedRefresh, sentUserId);
 
   let abandoned = false;
   let granted = false;
@@ -210,7 +215,7 @@ async function withRefreshLock(usedRefresh: string | null): Promise<string> {
       granted = true;
       clearTimeout(deadlineTimer);
       locksUnusable = true;
-      return doRefresh(usedRefresh);
+      return doRefresh(usedRefresh, sentUserId);
     }
     throw networkError();
   };
@@ -222,7 +227,7 @@ async function withRefreshLock(usedRefresh: string | null): Promise<string> {
         if (abandoned) throw networkError();
         granted = true;
         clearTimeout(deadlineTimer);
-        return doRefresh(usedRefresh);
+        return doRefresh(usedRefresh, sentUserId);
       }),
     ).catch(onLockError) as Promise<string>;
   } catch (err) {
@@ -264,7 +269,7 @@ export function refreshAccessToken(
   const key = userId ?? "";
   const existing = inflight.get(key);
   if (existing) return joinInflight(existing);
-  const p: Promise<string> = withRefreshLock(usedRefresh).finally(() => {
+  const p: Promise<string> = withRefreshLock(usedRefresh, userId).finally(() => {
     if (inflight.get(key) === p) inflight.delete(key);
   });
   inflight.set(key, p);
@@ -301,6 +306,7 @@ export async function apiFetch(path: string, init: ApiFetchInit = {}): Promise<R
   if (!auth) return fetch(url, rest);
 
   let session = getSession();
+  const startUserId = session?.user.id ?? null;
   if (session?.refreshToken && shouldRefreshEarly(session)) {
     lastProactive = { pair: pairKey(session), at: Date.now() };
     try {
@@ -310,6 +316,8 @@ export async function apiFetch(path: string, init: ApiFetchInit = {}): Promise<R
       if (err instanceof ApiError && err.code === "AUTH_REQUIRED") throw err;
     }
     session = getSession();
+    // Doi user trong luc refresh (ke ca khi loi tam thoi bi nuot): khong gui request cua A bang token cua B.
+    if (session && session.user.id !== startUserId) throw userChanged();
   }
   const sentAccess = session?.accessToken ?? null;
   const sentRefresh = session?.refreshToken ?? null;
