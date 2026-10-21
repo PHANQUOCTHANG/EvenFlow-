@@ -24,10 +24,10 @@ npx @next/codemod@canary next-lint-to-eslint-cli .
 ./src/components/auth/LoginForm.tsx
 8:10  Warning: 'Alert' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
 60:10  Warning: 'GoogleIcon' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
-98:10  Warning: 'errorMessage' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
-101:9  Warning: 'handleGoogleLogin' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
-132:19  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
-292:33  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+101:10  Warning: 'errorMessage' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+104:9  Warning: 'handleGoogleLogin' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+135:19  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+295:33  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
 
 ./src/components/auth/OTPVerification.tsx
 5:18  Warning: 'Alert' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
@@ -41,6 +41,6 @@ npx @next/codemod@canary next-lint-to-eslint-cli .
 352:19  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
 367:19  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
 391:19  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
-636:33  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+644:33  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
 
 info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/app/api-reference/config/eslint#disabling-rules

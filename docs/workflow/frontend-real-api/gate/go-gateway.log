@@ -1,4 +1,4 @@
 ?   	github.com/eventflow/eventflow/services/gateway/cmd/server	[no test files]
-ok  	github.com/eventflow/eventflow/services/gateway/internal/config	0.378s
-ok  	github.com/eventflow/eventflow/services/gateway/internal/proxy	0.898s
-ok  	github.com/eventflow/eventflow/services/gateway/internal/ratelimit	0.203s
+ok  	github.com/eventflow/eventflow/services/gateway/internal/config	0.638s
+ok  	github.com/eventflow/eventflow/services/gateway/internal/proxy	1.544s
+ok  	github.com/eventflow/eventflow/services/gateway/internal/ratelimit	0.371s

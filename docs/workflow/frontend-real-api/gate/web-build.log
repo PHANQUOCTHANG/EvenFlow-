@@ -17,7 +17,9 @@
 \\?\D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\node_modules\@next\swc-win32-x64-msvc\next-swc.win32-x64-msvc.node
  ⚠ Attempted to load @next/swc-win32-x64-msvc, but an error occurred: A dynamic link library (DLL) initialization routine failed.
 \\?\D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\node_modules\@next\swc-win32-x64-msvc\next-swc.win32-x64-msvc.node
- ✓ Compiled successfully in 9.1s
+ ⚠ Attempted to load @next/swc-win32-x64-msvc, but an error occurred: A dynamic link library (DLL) initialization routine failed.
+\\?\D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\node_modules\@next\swc-win32-x64-msvc\next-swc.win32-x64-msvc.node
+ ✓ Compiled successfully in 5.1s
    Linting and checking validity of types ...
 
 ./src/components/auth/ForgotPasswordForm.tsx
@@ -29,10 +31,10 @@
 ./src/components/auth/LoginForm.tsx
 8:10  Warning: 'Alert' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
 60:10  Warning: 'GoogleIcon' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
-98:10  Warning: 'errorMessage' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
-101:9  Warning: 'handleGoogleLogin' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
-132:19  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
-292:33  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+101:10  Warning: 'errorMessage' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+104:9  Warning: 'handleGoogleLogin' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+135:19  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+295:33  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
 
 ./src/components/auth/OTPVerification.tsx
 5:18  Warning: 'Alert' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
@@ -46,7 +48,7 @@
 352:19  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
 367:19  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
 391:19  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
-636:33  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+644:33  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
 
 info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/app/api-reference/config/eslint#disabling-rules
    Collecting page data ...
@@ -66,24 +68,24 @@ Route (app)                                       Size  First Load JS  Revalidat
 ├ ƒ /api/healthz                                 140 B         103 kB
 ├ ƒ /api/readyz                                  140 B         103 kB
 ├ ƒ /api/time                                    140 B         103 kB
-├ ○ /auth/forgot-password                      6.39 kB         161 kB
-├ ○ /auth/sign-in                              2.99 kB         125 kB
+├ ○ /auth/forgot-password                       6.4 kB         161 kB
+├ ○ /auth/sign-in                                 3 kB         125 kB
 ├ ○ /auth/sign-up                              6.57 kB         164 kB
-├ ƒ /checkout/[eventId]                        6.88 kB         126 kB
-├ ƒ /checkout/[eventId]/payment                6.86 kB         126 kB
-├ ƒ /checkout/[eventId]/result                 15.6 kB         135 kB
-├ ○ /events                                    3.73 kB         117 kB          1m      1y
+├ ƒ /checkout/[eventId]                        6.88 kB         127 kB
+├ ƒ /checkout/[eventId]/payment                6.95 kB         127 kB
+├ ƒ /checkout/[eventId]/result                 15.7 kB         135 kB
+├ ○ /events                                    3.73 kB         118 kB          1m      1y
 ├ ● /events/[slug]                             5.94 kB         117 kB
 ├ ƒ /ops/events                                  165 B         106 kB
 ├ ƒ /ops/events/[eventId]                        128 B         114 kB
 ├ ○ /organizer                                   140 B         103 kB
-├ ○ /organizer/events                            737 B         119 kB
-├ ƒ /organizer/events/[eventId]/edit           1.49 kB         122 kB
+├ ○ /organizer/events                            737 B         120 kB
+├ ƒ /organizer/events/[eventId]/edit           1.53 kB         122 kB
 ├ ƒ /organizer/events/[eventId]/review-status  3.56 kB         122 kB
-├ ƒ /organizer/events/[eventId]/sales          4.16 kB         119 kB
+├ ƒ /organizer/events/[eventId]/sales          4.16 kB         120 kB
 ├ ○ /organizer/events/new                        477 B         121 kB
 ├ ○ /showcase                                  10.1 kB         129 kB
-├ ○ /unauthorized                              2.41 kB         111 kB
+├ ○ /unauthorized                              2.42 kB         112 kB
 └ ƒ /waiting/[eventId]                         7.25 kB         135 kB
 + First Load JS shared by all                   103 kB
   ├ chunks/1255-5cd2fe06309409a0.js            46.5 kB
