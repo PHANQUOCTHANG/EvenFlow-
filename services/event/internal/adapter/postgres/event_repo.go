@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"strconv"
+	"strings"
 
 	"github.com/eventflow/eventflow/services/event/internal/domain"
 	"github.com/eventflow/eventflow/services/event/internal/port"
@@ -125,6 +127,91 @@ func (r *eventRepository) GetBySlug(ctx context.Context, slug string) (*domain.E
 	tiers, _ := r.GetTiersByEventID(ctx, e.ID)
 	e.Tiers = tiers
 	return &e, nil
+}
+
+func (r *eventRepository) ListPublic(ctx context.Context, limit int) ([]*domain.Event, error) {
+	query := `
+		SELECT
+			id, organizer_id, slug, title, description, venue,
+			starts_at, sale_start_at, sale_end_at, status,
+			max_per_identity, max_per_order, hold_ttl_seconds,
+			created_at, updated_at
+		FROM events
+		WHERE status IN ('SCHEDULED', 'ON_SALE', 'SOLD_OUT')
+		ORDER BY sale_start_at ASC, id ASC
+		LIMIT $1
+	`
+	rows, err := r.db.QueryContext(ctx, query, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	events := []*domain.Event{}
+	byID := map[uuid.UUID]*domain.Event{}
+	for rows.Next() {
+		e := &domain.Event{}
+		var status string
+		var desc, venue sql.NullString
+		var saleEndAt sql.NullTime
+
+		if err := rows.Scan(
+			&e.ID, &e.OrganizerID, &e.Slug, &e.Title, &desc, &venue,
+			&e.StartsAt, &e.SaleStartAt, &saleEndAt, &status,
+			&e.MaxPerIdentity, &e.MaxPerOrder, &e.HoldTTLSeconds,
+			&e.CreatedAt, &e.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+
+		e.Description = desc.String
+		e.Venue = venue.String
+		e.Status = domain.EventStatus(status)
+		if saleEndAt.Valid {
+			e.SaleEndAt = &saleEndAt.Time
+		}
+		events = append(events, e)
+		byID[e.ID] = e
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	rows.Close()
+	if len(events) == 0 {
+		return events, nil
+	}
+
+	// Mot query tiers cho ca danh sach (tranh N+1). Placeholder $1..$n, n <= limit.
+	args := make([]any, len(events))
+	holders := make([]string, len(events))
+	for i, e := range events {
+		args[i] = e.ID
+		holders[i] = "$" + strconv.Itoa(i+1)
+	}
+	tierQuery := `
+		SELECT id, event_id, name, price_cents, currency, quota, bucket_count, created_at
+		FROM ticket_types
+		WHERE event_id IN (` + strings.Join(holders, ", ") + `)
+		ORDER BY price_cents ASC
+	`
+	trows, err := r.db.QueryContext(ctx, tierQuery, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer trows.Close()
+	for trows.Next() {
+		var t domain.TicketTier
+		if err := trows.Scan(
+			&t.ID, &t.EventID, &t.Name, &t.PriceCents,
+			&t.Currency, &t.Quota, &t.BucketCount, &t.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		if e := byID[t.EventID]; e != nil {
+			e.Tiers = append(e.Tiers, t)
+		}
+	}
+	return events, trows.Err()
 }
 
 func (r *eventRepository) ListByOrganizer(ctx context.Context, organizerID uuid.UUID) ([]*domain.Event, error) {
