@@ -45,7 +45,8 @@ run tamper bash -c "
 set -e
 # Task nay: MOI file test da co o commit dong bang deu bi khoa (khong chi contract test)
 # Chi xet commit cua nhanh nay (first-parent, bo merge tu develop): thay doi test do teammate merge vao develop khong tinh
-d=\$(git log --first-parent --no-merges --format= --name-only --diff-filter=MD $TESTS_FROZEN..HEAD -- '*.test.ts' '*.test.tsx' '*_test.go' 'apps/web/src/lib/debt/harness.ts' 'apps/web/src/test-utils' | sort -u | sed '/^\$/d')
+d=\$(git log --first-parent --no-merges --format= --name-only --diff-filter=MD $TESTS_FROZEN..HEAD -- '*.test.ts' '*.test.tsx' '*_test.go' 'apps/web/src/lib/debt/harness.ts' 'apps/web/src/test-utils' | sort -u | sed '/^\$/d' | while read -r f; do git cat-file -e $TESTS_FROZEN:\"\$f\" 2>/dev/null && echo \"\$f\"; done)
+# (file test tao SAU commit dong bang thi duoc phep sua tiep trong nhanh — chi khoa file da ton tai luc dong bang)
 # Ngoai le DA DUYET (test-change-request.md, TCR-1): dung 1 dong them vao ac3-locks-errors.test.ts
 ok='apps/web/src/lib/debt/ac3-locks-errors.test.ts'
 if [ \"\$d\" = \"\$ok\" ]; then
