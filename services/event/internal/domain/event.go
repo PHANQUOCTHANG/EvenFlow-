@@ -22,12 +22,6 @@ const (
 	StatusCancelled     EventStatus = "CANCELLED"
 )
 
-// PublicStatuses la trang thai khach an danh xem duoc trong danh sach cong khai: da duoc duyet va
-// chua ket thuc. DRAFT/PENDING_REVIEW/REJECTED chi chu su kien va moderator thay.
-func PublicStatuses() []EventStatus {
-	return []EventStatus{StatusScheduled, StatusOnSale, StatusSoldOut}
-}
-
 // DefaultMinSaleLead la khoang toi thieu giua luc duyet va gio mo ban (BR-E2): du de pre-warm ha tang.
 const DefaultMinSaleLead = 30 * time.Minute
 

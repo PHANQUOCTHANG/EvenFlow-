@@ -359,7 +359,7 @@ test.describe("m6 header cong khai o 700px van mot hang", () => {
 // EV-188 challenge F1, F3 (challenge.md).
 // ---------------------------------------------------------------------------
 
-/** Su kien SCHEDULED trong du lieu mau (lib/event-service.ts), mo ban 2026-10-15T10:00:00+07:00. */
+/** Su kien SCHEDULED trong fixtures/events.json (stub-api phuc vu SSR), mo ban 2026-10-15T10:00:00+07:00. */
 const SCHEDULED_SLUG = "evenflow-grand-concert-2026";
 const SCHEDULED_SALE_START_MS = Date.parse("2026-10-15T10:00:00+07:00");
 

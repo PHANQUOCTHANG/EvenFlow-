@@ -100,9 +100,9 @@ describe("connectSse", () => {
     await vi.advanceTimersByTimeAsync(0);
     expect(onOpen).toHaveBeenCalledTimes(1);
 
-    const headers = fetchMock.mock.calls[0][1]?.headers as Record<string, string>;
-    expect(headers["X-Queue-Token"]).toBe("tok");
-    expect(headers.Accept).toBe("text/event-stream");
+    const headers = new Headers(fetchMock.mock.calls[0][1]?.headers);
+    expect(headers.get("X-Queue-Token")).toBe("tok");
+    expect(headers.get("Accept")).toBe("text/event-stream");
 
     s.send("event: position\ndata: 1\n\n");
     await vi.advanceTimersByTimeAsync(0);

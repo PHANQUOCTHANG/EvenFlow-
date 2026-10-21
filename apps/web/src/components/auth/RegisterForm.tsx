@@ -6,7 +6,7 @@ import Image from "next/image";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { requestRegistrationOTP, verifyRegistrationOTP, loginWithGoogle } from "@/lib/api/auth";
+import { requestRegistrationOTP, verifyRegistrationOTP, loginWithGoogle, REGISTERED_LOGIN_FAILED } from "@/lib/api/auth";
 import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
 import { Alert, Button, useToast } from "@/components/ui";
 import OTPVerification from "./OTPVerification";
@@ -316,6 +316,7 @@ function TelegramOTPVerification({
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [registeredPassword, setRegisteredPassword] = useState(""); // Cached for OTP step
+  const [loginPending, setLoginPending] = useState(false); // Da tao tai khoan nhung chua dang nhap duoc
   
   const { register, handleSubmit, formState: { errors, isSubmitting }, watch } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -364,6 +365,17 @@ function TelegramOTPVerification({
       await verifyRegistrationOTP(currentIdentifier, registeredPassword, otp);
       setStep("SUCCESS");
     } catch (err: any) {
+      if (err?.code === REGISTERED_LOGIN_FAILED) {
+        // Tai khoan da tao nhung dang nhap tu dong that bai: dua nguoi dung sang trang dang nhap (F-6).
+        setLoginPending(true);
+        toast({
+          variant: "info",
+          title: "Tài khoản đã được tạo",
+          description: "Tài khoản đã được tạo, vui lòng đăng nhập.",
+        });
+        setStep("SUCCESS");
+        return;
+      }
       throw new Error(err?.detail || "OTP không hợp lệ");
     }
   };
@@ -398,11 +410,24 @@ function TelegramOTPVerification({
            <div>
              <h1 className="text-2xl font-extrabold text-fg tracking-tight">Xác thực thành công!</h1>
              <p className="mt-2 text-[14px] leading-relaxed text-fg-muted">
-               Tài khoản của bạn đã được tạo và định danh thành công. Bạn có thể đăng nhập ngay để trải nghiệm EventFlow.
+               {loginPending
+                 ? "Tài khoản đã được tạo, vui lòng đăng nhập để tiếp tục."
+                 : "Tài khoản của bạn đã được tạo và định danh thành công. Bạn có thể đăng nhập ngay để trải nghiệm EventFlow."}
              </p>
            </div>
            
-           <Link href="/auth/sign-in" className="w-full mt-2">
+           <Link
+             href="/auth/sign-in"
+             onClick={() => {
+               // G-7: dinh danh KHONG di vao URL (lich su/log); chuyen qua sessionStorage, LoginForm doc 1 lan roi xoa.
+               try {
+                 if (currentIdentifier) sessionStorage.setItem("ef:signin:identifier", currentIdentifier);
+               } catch {
+                 /* bo qua */
+               }
+             }}
+             className="w-full mt-2"
+           >
              <Button className="h-[48px] w-full rounded-[12px] bg-indigo-600 hover:bg-indigo-700 text-white text-[15px] font-bold shadow-md shadow-indigo-600/20 hover:shadow-indigo-600/30 transition-all active:scale-[0.98]">
                Về trang Đăng nhập
              </Button>
@@ -606,10 +631,8 @@ function TelegramOTPVerification({
               onSuccess={async (credentialResponse) => {
                 if (credentialResponse.credential) {
                   try {
-                    const res = await loginWithGoogle(credentialResponse.credential);
-                    if (res.token) {
-                      localStorage.setItem("ef_token", res.token);
-                    }
+                    // loginWithGoogle luu phien va gan thiet bi (AC-8)
+                    await loginWithGoogle(credentialResponse.credential);
                     toast({
                       variant: "success",
                       title: "Đăng nhập thành công!",

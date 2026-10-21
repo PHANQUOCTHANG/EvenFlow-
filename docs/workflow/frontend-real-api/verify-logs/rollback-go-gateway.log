@@ -1,0 +1,5 @@
+?   	github.com/eventflow/eventflow/services/gateway/cmd/server	[no test files]
+ok  	github.com/eventflow/eventflow/services/gateway/internal/config	0.656s
+ok  	github.com/eventflow/eventflow/services/gateway/internal/proxy	1.428s
+ok  	github.com/eventflow/eventflow/services/gateway/internal/ratelimit	0.361s
+go test exit=0

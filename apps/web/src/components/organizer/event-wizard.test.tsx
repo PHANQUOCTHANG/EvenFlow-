@@ -98,8 +98,14 @@ describe("EventWizard component (EV-186, EVF-116, Stitch 10.13, BR-E1, BR-E2, BR
       target: { value: tooSoon },
     });
 
-    fireEvent.click(screen.getByRole("button", { name: "Tiếp tục →" }));
+    // F-19: BR-E2 chỉ cảnh báo ở bước 3, không chặn sang bước 4 / lưu nháp.
     expect(screen.getAllByText(/BR-E2/).length).toBeGreaterThanOrEqual(1);
+    fireEvent.click(screen.getByRole("button", { name: "Tiếp tục →" }));
+    expect(screen.getByText("Xác nhận thông tin sự kiện")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Gửi kiểm duyệt/ }));
+    expect(onSubmit).not.toHaveBeenCalled();
+    expect(screen.getAllByText(/BR-E2/).length).toBeGreaterThanOrEqual(1);
+    fireEvent.click(screen.getByRole("button", { name: "← Quay lại" }));
 
     // Đặt thời gian mở bán 2 giờ sau (hợp lệ)
     const validTime = toLocalDatetimeString(new Date(Date.now() + 120 * 60 * 1000));
@@ -164,14 +170,11 @@ describe("EventWizard component (EV-186, EVF-116, Stitch 10.13, BR-E1, BR-E2, BR
     const onSubmit = vi.fn();
     render(<EventWizard initialEvent={onSaleEvent} onSubmit={onSubmit} />);
 
-    // Sang Bước 2
-    fireEvent.click(screen.getByRole("button", { name: "Tiếp tục →" }));
-
-    // Cố tình giảm quota từ 1000 xuống 600
+    // ON_SALE: form chỉ tăng số lượng vé (AC-22), cố tình giảm quota từ 1000 xuống 600
     const quotaInput = screen.getByLabelText(/Số lượng vé \(Quota\)/);
     fireEvent.change(quotaInput, { target: { value: "600" } });
 
-    fireEvent.click(screen.getByRole("button", { name: "Tiếp tục →" }));
+    fireEvent.click(screen.getByRole("button", { name: "Lưu số lượng vé" }));
 
     // Bị chặn lại bởi quy tắc BR-E3
     expect(screen.getByText(/Tuyệt đối cấm giảm số lượng vé/)).toBeInTheDocument();

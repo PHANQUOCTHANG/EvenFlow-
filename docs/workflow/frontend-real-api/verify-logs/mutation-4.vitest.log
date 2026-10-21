@@ -1,0 +1,242 @@
+The CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.
+
+ RUN  v2.1.8 D:/Documents/Nam4-1/Project1/EvenFlow-verify/apps/web
+
+ ✓ src/lib/i18n/messages.test.ts (55 tests) 39ms
+ ✓ src/lib/ops-service.test.ts (53 tests) 61ms
+ ✓ src/lib/api/auth.contract.test.ts (20 tests) 96ms
+ ✓ src/lib/organizer-service.contract.test.ts (28 tests) 123ms
+ ✓ src/lib/payment-client.test.ts (11 tests) 134ms
+ ❯ src/lib/api-client.contract.test.ts (33 tests | 2 failed) 238ms
+   × refresh that bai (AC-4) > refresh tra 401 -> xoa phien va nem ApiError AUTH_REQUIRED 17ms
+     → expected 'old' to be null
+   × refresh that bai (AC-4) > refresh tra 400 -> xoa phien va nem ApiError AUTH_REQUIRED 4ms
+     → expected 'old' to be null
+ ✓ src/lib/payment-client.contract.test.ts (29 tests) 123ms
+ ✓ src/lib/format.test.ts (94 tests) 54ms
+stderr | src/lib/server-time.test.ts > toEpochMs — chi nhan moc co mui gio tuong minh (AC-3) > tu choi '2026-10-03' (chi co ngay, ECMA hieu la UTC) -> null
+[server-time] moc thoi han "2026-10-03" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+stderr | src/lib/server-time.test.ts > toEpochMs — chi nhan moc co mui gio tuong minh (AC-3) > tu choi '2026-10-03T09:00:00' (co gio nhung khong co offset -> gio dia phuong) -> null
+[server-time] moc thoi han "2026-10-03T09:00:00" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+stderr | src/lib/server-time.test.ts > toEpochMs — chi nhan moc co mui gio tuong minh (AC-3) > tu choi '2026-10-03T09:00:00.500' (co milisecond nhung van khong co offset) -> null
+[server-time] moc thoi han "2026-10-03T09:00:00.500" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+stderr | src/lib/server-time.test.ts > toEpochMs — chi nhan moc co mui gio tuong minh (AC-3) > tu choi '2026-10-03 09:00:00' (dang co dau cach, khong co offset) -> null
+[server-time] moc thoi han "2026-10-03 09:00:00" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+stderr | src/lib/server-time.test.ts > toEpochMs — chi nhan moc co mui gio tuong minh (AC-3) > chuoi rac '' -> null, khong throw
+[server-time] moc thoi han "" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+[server-time] moc thoi han "" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+stderr | src/lib/server-time.test.ts > toEpochMs — chi nhan moc co mui gio tuong minh (AC-3) > chuoi rac '   ' -> null, khong throw
+[server-time] moc thoi han "" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+[server-time] moc thoi han "" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+stderr | src/lib/server-time.test.ts > toEpochMs — chi nhan moc co mui gio tuong minh (AC-3) > chuoi rac 'soon' -> null, khong throw
+[server-time] moc thoi han "soon" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+[server-time] moc thoi han "soon" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+stderr | src/lib/server-time.test.ts > toEpochMs — chi nhan moc co mui gio tuong minh (AC-3) > chuoi rac 'not-a-date' -> null, khong throw
+[server-time] moc thoi han "not-a-date" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+[server-time] moc thoi han "not-a-date" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+ ✓ src/lib/server-time.test.ts (39 tests) 62ms
+ ✓ src/lib/organizer-service.test.ts (22 tests) 127ms
+ ❯ src/lib/fix2/g1-lock-refresh.test.ts (9 tests | 1 failed) 346ms
+   × H-1 > Z-3: own POST answered 401 -> AUTH_REQUIRED and the session is cleared 45ms
+     → expected { accessToken: 'old', …(2) } to be null
+ ✓ src/lib/sse.test.ts (17 tests) 79ms
+ ✓ src/lib/money.test.ts (24 tests) 29ms
+ ✓ src/lib/event-service.contract.test.ts (18 tests) 84ms
+ ✓ src/lib/queue-status.test.ts (22 tests) 46ms
+ ✓ src/lib/queue-token.test.ts (16 tests) 24ms
+ ✓ src/lib/readiness.test.ts (19 tests) 169ms
+ ✓ src/lib/session.contract.test.ts (17 tests) 27ms
+ ✓ src/lib/theme.test.ts (11 tests) 21ms
+ ✓ src/lib/event-service.test.ts (5 tests) 42ms
+ ✓ src/lib/fix1/f4-proactive-refresh.test.ts (6 tests) 80ms
+ ✓ src/lib/fix1/f7-idempotency-in-progress.test.ts (7 tests) 117ms
+ ✓ src/lib/queue-client.contract.test.ts (12 tests) 107ms
+ ✓ src/lib/queue-client.test.ts (6 tests) 179ms
+ ✓ src/lib/assistant-client.test.ts (13 tests) 1012ms
+   ✓ assistant-client (EV-185, EVF-115) > 5. Mô phỏng luồng Streaming (AC-3) > stream các token tuần tự và gọi onComplete với đầy đủ nội dung 991ms
+ ✓ src/lib/fix1/f6-register-autologin.test.tsx (3 tests) 364ms
+   ✓ F-6 > form: shows account-created + sign-in link with identifier, never 'OTP khong hop le' 338ms
+ ✓ src/lib/fix1/f5-auth-required.test.tsx (7 tests) 384ms
+ ✓ src/lib/hold-client.test.ts (14 tests) 2124ms
+   ✓ hold-client (EVF-113, BR-O2, BR-O5) > requestHold > 409 do cùng Idempotency-Key đang xử lý là AMBIGUOUS, không phải SOLD_OUT (BR-O5) 2025ms
+ ✓ src/lib/fix1/f11-waiting-auth.test.tsx (3 tests) 516ms
+ ✓ src/lib/fix1/f13-issue-tickets.test.tsx (8 tests) 609ms
+ ✓ src/lib/hold-client.contract.test.ts (23 tests) 2128ms
+   ✓ requestHold: anh xa loi (AC-10) > 409 idempotency-in-progress KHONG phai het ve -> AMBIGUOUS 2034ms
+ ✓ src/lib/api-base.test.ts (7 tests) 22ms
+ ✓ src/lib/jitter.test.ts (7 tests) 25ms
+ ✓ src/lib/fix2/g5-g6-payment-key.test.ts (2 tests) 49ms
+ ❯ src/lib/fix3/h2-user-switch.test.ts (3 tests | 2 failed) 57ms
+   × H-2 > different user signs in after involuntary expiry: buy-flow keys cleared 41ms
+     → expected { accessToken: 'old', …(2) } to be null
+   × H-2 > same user signs in again: buy-flow keys kept 8ms
+     → expected { accessToken: 'old', …(2) } to be null
+ ✓ src/lib/fix1/f15-logout-session-write.test.ts (3 tests) 25ms
+ ✓ src/lib/backoff.test.ts (7 tests) 13ms
+ ✓ src/lib/fix1/f14-lock-timeout.test.ts (1 test) 32ms
+ ✓ src/lib/fix1/f8-payment-key.test.tsx (3 tests) 89ms
+ ✓ src/lib/fix1/f12-logout-inflight.test.ts (1 test) 19ms
+ ❯ src/lib/fix2/g4-involuntary-expiry.test.ts (2 tests | 1 failed) 34ms
+   × G-4 > refresh rejected (401) -> auth keys cleared, buy-flow keys kept 26ms
+     → expected { accessToken: 'old', …(2) } to be null
+stderr | src/lib/fix2/g7-signin-prefill.test.tsx > G-7 > LoginForm prefills from the one-shot key and removes it
+Error: Not implemented: navigation (except hash changes)
+    at module.exports (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\node_modules\jsdom\lib\jsdom\browser\not-implemented.js:9:17)
+    at navigateFetch (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\node_modules\jsdom\lib\jsdom\living\window\navigation.js:77:3)
+    at exports.navigate (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\node_modules\jsdom\lib\jsdom\living\window\navigation.js:55:3)
+    at Timeout._onTimeout (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\node_modules\jsdom\lib\jsdom\living\nodes\HTMLHyperlinkElementUtils-impl.js:81:7)
+    at listOnTimeout (node:internal/timers:588:17)
+    at processTimers (node:internal/timers:523:7) undefined
+
+ ✓ src/lib/fix2/g7-signin-prefill.test.tsx (2 tests) 358ms
+   ✓ G-7 > register -> sign-in link has no identifier in the URL and stores it one-shot in sessionStorage 330ms
+ ✓ src/lib/cn.test.ts (7 tests) 8ms
+ ✓ src/lib/device.test.ts (4 tests) 10ms
+ ✓ src/lib/fix1/f17-logout-clears-buyflow.test.ts (1 test) 12ms
+ ✓ src/lib/fix1/f18-availability-url.test.ts (1 test) 14ms
+ ✓ src/lib/fix1/f20-max-per-order.test.tsx (3 tests) 110ms
+ ✓ src/lib/fix1/f5-payment-signin.test.tsx (1 test) 271ms
+ ✓ src/lib/fix1/f16-google-remember.test.tsx (3 tests) 307ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/lib/api-client.contract.test.ts > refresh that bai (AC-4) > refresh tra 401 -> xoa phien va nem ApiError AUTH_REQUIRED
+ FAIL  src/lib/api-client.contract.test.ts > refresh that bai (AC-4) > refresh tra 400 -> xoa phien va nem ApiError AUTH_REQUIRED
+AssertionError: expected 'old' to be null
+
+- Expected: 
+null
+
++ Received: 
+"old"
+
+ ❯ src/lib/api-client.contract.test.ts:222:46
+    220|     expect((err as ApiError).code).toBe("AUTH_REQUIRED");
+    221|     expect(typeof (err as ApiError).status).toBe("number");
+    222|     expect(localStorage.getItem("ef_token")).toBeNull();
+       |                                              ^
+    223|     expect(localStorage.getItem("ef_refresh")).toBeNull();
+    224|     expect(localStorage.getItem("ef_user")).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  src/lib/fix2/g1-lock-refresh.test.ts > H-1 > Z-3: own POST answered 401 -> AUTH_REQUIRED and the session is cleared
+AssertionError: expected { accessToken: 'old', …(2) } to be null
+
+- Expected: 
+null
+
++ Received: 
+Object {
+  "accessToken": "old",
+  "refreshToken": "r1",
+  "user": Object {
+    "id": "u-1",
+    "role": "buyer",
+  },
+}
+
+ ❯ src/lib/fix2/g1-lock-refresh.test.ts:216:35
+    214|     await vi.advanceTimersByTimeAsync(2_000);
+    215|     expect(await p).toBe("B:AUTH_REQUIRED");
+    216|     expect(tab.sess.getSession()).toBeNull();
+       |                                   ^
+    217|   });
+    218| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  src/lib/fix2/g4-involuntary-expiry.test.ts > G-4 > refresh rejected (401) -> auth keys cleared, buy-flow keys kept
+AssertionError: expected { accessToken: 'old', …(2) } to be null
+
+- Expected: 
+null
+
++ Received: 
+Object {
+  "accessToken": "old",
+  "refreshToken": "r1",
+  "user": Object {
+    "id": "u-1",
+    "role": "buyer",
+  },
+}
+
+ ❯ src/lib/fix2/g4-involuntary-expiry.test.ts:22:26
+     20|     );
+     21|     await expect(apiFetch("/v1/orders/o1")).rejects.toMatchObject({ co…
+     22|     expect(getSession()).toBeNull();
+       |                          ^
+     23|     for (const k of KEYS) expect(sessionStorage.getItem(k), k).toBe("x…
+     24|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  src/lib/fix3/h2-user-switch.test.ts > H-2 > different user signs in after involuntary expiry: buy-flow keys cleared
+AssertionError: expected { accessToken: 'old', …(2) } to be null
+
+- Expected: 
+null
+
++ Received: 
+Object {
+  "accessToken": "old",
+  "refreshToken": "r1",
+  "user": Object {
+    "id": "u-1",
+    "role": "buyer",
+  },
+}
+
+ ❯ expireThenLogin src/lib/fix3/h2-user-switch.test.ts:32:24
+     30|   installFetch(handler(uid));
+     31|   await expect(apiFetch("/v1/orders/o1")).rejects.toMatchObject({ code…
+     32|   expect(getSession()).toBeNull();
+       |                        ^
+     33|   for (const k of KEYS) expect(sessionStorage.getItem(k), k).toBe("x")…
+     34|   await loginUser("a@b.co", "pw");
+ ❯ src/lib/fix3/h2-user-switch.test.ts:39:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  src/lib/fix3/h2-user-switch.test.ts > H-2 > same user signs in again: buy-flow keys kept
+AssertionError: expected { accessToken: 'old', …(2) } to be null
+
+- Expected: 
+null
+
++ Received: 
+Object {
+  "accessToken": "old",
+  "refreshToken": "r1",
+  "user": Object {
+    "id": "u-1",
+    "role": "buyer",
+  },
+}
+
+ ❯ expireThenLogin src/lib/fix3/h2-user-switch.test.ts:32:24
+     30|   installFetch(handler(uid));
+     31|   await expect(apiFetch("/v1/orders/o1")).rejects.toMatchObject({ code…
+     32|   expect(getSession()).toBeNull();
+       |                        ^
+     33|   for (const k of KEYS) expect(sessionStorage.getItem(k), k).toBe("x")…
+     34|   await loginUser("a@b.co", "pw");
+ ❯ src/lib/fix3/h2-user-switch.test.ts:45:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ Test Files  4 failed | 45 passed (49)
+      Tests  6 failed | 696 passed (702)
+   Start at  21:21:23
+   Duration  12.88s (transform 3.80s, setup 47.82s, collect 10.05s, tests 11.00s, environment 224.76s, prepare 17.90s)
+
+vitest exit=0

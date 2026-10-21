@@ -1,0 +1,70 @@
+
+Running 38 tests using 16 workers
+
+[axe] / en | dark — khong chan (moderate/minor + incomplete):
+  incomplete color-contrast                   serious   1 node
+  ok 10 [chromium] › buy-flow.spec.ts:157:7 › AC-7: gia lap khong che loi › ghi vi pham kem URL cho request /v1/** toi origin web va request API khong co handler (5.2s)
+  ok 11 [chromium] › buy-flow.spec.ts:118:7 › EV-198 luong mua ve (backend gia lap) › AC-5: join tra 401 -> phong cho bao can dang nhap/OTP, khong chuyen trang (6.1s)
+[axe] / 320px menu dong | dark — khong chan (moderate/minor + incomplete):
+  incomplete color-contrast                   serious   1 node
+  ok 17 [chromium] › buy-flow.spec.ts:182:7 › AC-7: gia lap khong che loi › teardown cua fixture nem loi kem URL khi co request /v1/** toi origin web (1.3s)
+[axe] / | dark — khong chan (moderate/minor + incomplete):
+  incomplete color-contrast                   serious   1 node
+[axe] /events/vietnam-tech-summit-2026 en | dark — khong chan (moderate/minor + incomplete):
+  incomplete color-contrast                   serious   1 node
+[axe] /waiting QUEUED | light — khong chan (moderate/minor + incomplete):
+  incomplete color-contrast                   serious   2 node
+[axe] /waiting QUEUED | dark — khong chan (moderate/minor + incomplete):
+  incomplete color-contrast                   serious   2 node
+  ok 16 [chromium] › a11y.spec.ts:179:9 › AC-1 quet axe — theme dark › /auth/sign-in (chan Google + grainy-gradients) | dark (7.3s)
+  ok 5 [chromium] › a11y.spec.ts:179:9 › AC-1 quet axe — theme light › /auth/sign-in (chan Google + grainy-gradients) | light (8.1s)
+[axe] / 320px menu mo | dark — khong chan (moderate/minor + incomplete):
+  incomplete color-contrast                   serious   1 node
+  ok 8 [chromium] › a11y.spec.ts:166:9 › AC-1 quet axe — theme dark › phong cho khi join bi 401 | dark (7.8s)
+  ok 4 [chromium] › a11y.spec.ts:166:9 › AC-1 quet axe — theme light › phong cho khi join bi 401 | light (8.4s)
+  ok 18 [chromium] › i18n.spec.ts:84:7 › AC-6 doi ngon ngu khong reload › trang chu: bam English -> chu doi ngay, html lang = en, khong dieu huong, focus giu tren nut (1.5s)
+  ok 12 [chromium] › a11y.spec.ts:190:9 › AC-1 quet axe — theme dark › locale en (m10): /, /events/vietnam-tech-summit-2026 | dark (8.0s)
+[axe] /events | dark — khong chan (moderate/minor + incomplete):
+  incomplete color-contrast                   serious   1 node
+  ok 19 [chromium] › i18n.spec.ts:121:7 › AC-6 doi ngon ngu khong reload › bam Tiếng Việt -> tro ve vi, luu vi, van khong reload (1.5s)
+  ok 15 [chromium] › a11y.spec.ts:224:9 › M3 reflow 320px — theme dark › / menu dong va mo, khong tran ngang | dark (7.9s)
+  ok 6 [chromium] › a11y.spec.ts:224:9 › M3 reflow 320px — theme light › / menu dong va mo, khong tran ngang | light (8.2s)
+  ok 25 [chromium] › i18n.spec.ts:213:9 › AC-7 /events va /events/[slug] van la ISR (khong bi cookies()/headers() bien thanh dynamic) › /events: Cache-Control cua ISR (s-maxage), khong no-store (579ms)
+  ok 2 [chromium] › a11y.spec.ts:190:9 › AC-1 quet axe — theme light › locale en (m10): /, /events/vietnam-tech-summit-2026 | light (9.1s)
+  ok 26 [chromium] › i18n.spec.ts:213:9 › AC-7 /events va /events/[slug] van la ISR (khong bi cookies()/headers() bien thanh dynamic) › /events/vietnam-tech-summit-2026: Cache-Control cua ISR (s-maxage), khong no-store (624ms)
+  ok 21 [chromium] › i18n.spec.ts:155:7 › AC-6 doi ngon ngu khong reload › trang su kien: bam English -> panel mua ve dich, goc panel lang = en, main van lang = vi (1.3s)
+[axe] /events/vietnam-tech-summit-2026 | dark — khong chan (moderate/minor + incomplete):
+  incomplete color-contrast                   serious   1 node
+  ok 24 [chromium] › i18n.spec.ts:202:7 › AC-7 render dau la vi, locale da luu ap dung sau mount, khong loi hydration › reload voi en da luu khong sinh loi hydration (1.5s)
+  ok 20 [chromium] › i18n.spec.ts:141:7 › AC-6 doi ngon ngu khong reload › lua chon duoc nho qua reload (1.6s)
+  ok 27 [chromium] › i18n.spec.ts:250:7 › M1 vung chua dich nam trong [lang=vi] khi da chon en › /auth/sign-in: noi dung trang co lang hieu luc vi (1.2s)
+  ok 28 [chromium] › i18n.spec.ts:263:7 › M1 vung chua dich nam trong [lang=vi] khi da chon en › /ops/events: tieu de workspace, nav va noi dung co lang hieu luc vi (1.1s)
+  ok 22 [chromium] › i18n.spec.ts:189:9 › AC-7 render dau la vi, locale da luu ap dung sau mount, khong loi hydration › /: HTML server la vi; sau mount thanh en; khong console.error (1.7s)
+  ok 23 [chromium] › i18n.spec.ts:189:9 › AC-7 render dau la vi, locale da luu ap dung sau mount, khong loi hydration › /events/vietnam-tech-summit-2026: HTML server la vi; sau mount thanh en; khong console.error (1.7s)
+  ok 29 [chromium] › i18n.spec.ts:306:9 › m1 nut ngon ngu: ten truy cap chua chu hien thi — 320px (man hep) › Tiếng Việt va English | 320px (man hep) (1.1s)
+  ok 30 [chromium] › i18n.spec.ts:306:9 › m1 nut ngon ngu: ten truy cap chua chu hien thi — 1280px (desktop) › Tiếng Việt va English | 1280px (desktop) (1.2s)
+  ok 14 [chromium] › a11y.spec.ts:112:9 › AC-1 quet axe — theme dark › trang cong khai: /, /events, /events/vietnam-tech-summit-2026 | dark (9.6s)
+  ok 31 [chromium] › i18n.spec.ts:321:7 › m6 header cong khai o 700px van mot hang › logo, nhom ngon ngu, ThemeToggle va nut menu cung mot hang; hang tren khong cao hon o desktop (1.3s)
+  ok 1 [chromium] › a11y.spec.ts:112:9 › AC-1 quet axe — theme light › trang cong khai: /, /events, /events/vietnam-tech-summit-2026 | light (10.6s)
+  ok 32 [chromium] › i18n.spec.ts:385:7 › challenge F1: panel SCHEDULED voi en — chu tieng Viet cua dong ho nam trong lang=vi › /events/evenflow-grand-concert-2026: moi text node tieng Viet trong panel co [lang] gan nhat = vi (1.3s)
+  ok 33 [chromium] › i18n.spec.ts:428:11 › challenge F3: /auth/sign-up va /auth/forgot-password khong loi console — locale vi › /auth/sign-up | vi (1.2s)
+  ok 34 [chromium] › i18n.spec.ts:428:11 › challenge F3: /auth/sign-up va /auth/forgot-password khong loi console — locale vi › /auth/forgot-password | vi (1.2s)
+  ok 9 [chromium] › buy-flow.spec.ts:135:7 › EV-198 luong mua ve (backend gia lap) › AC-6: hold tra 409 -> bao hang ve da het, khong sang trang thanh toan (10.6s)
+  ok 38 [chromium] › smoke.spec.ts:3:5 › trang chu tai duoc (1.1s)
+  ok 36 [chromium] › i18n.spec.ts:428:11 › challenge F3: /auth/sign-up va /auth/forgot-password khong loi console — locale en › /auth/forgot-password | en (1.3s)
+  ok 35 [chromium] › i18n.spec.ts:428:11 › challenge F3: /auth/sign-up va /auth/forgot-password khong loi console — locale en › /auth/sign-up | en (1.3s)
+  ok 37 [chromium] › ops-war-room.spec.ts:13:5 › ops vào war room từ danh sách, thấy dữ liệu mẫu và làm mới được (1.6s)
+[axe] /checkout truoc giu ve | dark — khong chan (moderate/minor + incomplete):
+  incomplete color-contrast                   serious   1 node
+[axe] /checkout truoc giu ve | light — khong chan (moderate/minor + incomplete):
+  incomplete color-contrast                   serious   1 node
+  ok 7 [chromium] › buy-flow.spec.ts:44:7 › EV-198 luong mua ve (backend gia lap) › AC-1..AC-4: xep hang -> duoc goi -> giu ve -> thanh toan -> nhan ve (11.7s)
+[axe] /checkout sau giu ve | dark — khong chan (moderate/minor + incomplete):
+  incomplete color-contrast                   serious   1 node
+[axe] /checkout sau giu ve | light — khong chan (moderate/minor + incomplete):
+  incomplete color-contrast                   serious   1 node
+  ok 3 [chromium] › a11y.spec.ts:130:9 › AC-1 quet axe — theme light › luong mua ve: QUEUED -> checkout truoc/sau giu -> thanh toan -> ket qua | light (15.0s)
+  ok 13 [chromium] › a11y.spec.ts:130:9 › AC-1 quet axe — theme dark › luong mua ve: QUEUED -> checkout truoc/sau giu -> thanh toan -> ket qua | dark (14.4s)
+
+  38 passed (19.0s)
+exit=0

@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
 
-import { OrderResultView } from "@/components/checkout/order-result-view";
-import { getEventById } from "@/lib/event-service";
+import { ResultPageClient } from "@/components/checkout/result-page-client";
 
 interface PageProps {
   params: Promise<{ eventId: string }>;
@@ -11,32 +9,19 @@ interface PageProps {
   }>;
 }
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const { eventId } = await params;
-  const event = await getEventById(eventId);
-
-  const title = event?.title ? `Kết quả đơn hàng: ${event.title}` : "Kết quả đơn hàng";
-
-  return {
-    title: `${title} | EvenFlow`,
-    description: "Trạng thái và chi tiết vé điện tử của đơn hàng trên EvenFlow.",
-    robots: {
-      index: false,
-      follow: false,
-    },
-  };
-}
+// Tieu de tinh: su kien duoc tai phia client (AC-18), server khong goi backend.
+export const metadata: Metadata = {
+  title: "Kết quả đơn hàng | EvenFlow",
+  description: "Trạng thái và chi tiết vé điện tử của đơn hàng trên EvenFlow.",
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 export default async function OrderResultPage({ params, searchParams }: PageProps) {
   const { eventId } = await params;
   const query = await searchParams;
 
-  const event = await getEventById(eventId);
-  if (!event) {
-    notFound();
-  }
-
-  const orderId = query.orderId || `ord_${eventId}`;
-
-  return <OrderResultView eventId={event.id} orderId={orderId} />;
+  return <ResultPageClient eventId={eventId} orderId={query.orderId} />;
 }

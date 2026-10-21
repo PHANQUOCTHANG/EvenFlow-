@@ -9,6 +9,7 @@
  * dung `backoffDelay` (luy thua + jitter) va co tran so lan thu; vuot tran thi ket thuc de hook
  * roi ve polling, khong retry mai mai. */
 
+import { apiFetch } from "@/lib/api-client";
 import { backoffDelay, type BackoffOptions } from "@/lib/backoff";
 
 export interface SseMessage {
@@ -110,6 +111,7 @@ function retryAfterMs(header: string | null): number | null {
 }
 
 export interface SseConnectOptions {
+  /** Duong dan tuong doi (vd `/v1/events/{id}/queue/stream`); goc API do apiFetch them. */
   url: string;
   headers?: Record<string, string>;
   onMessage: (message: SseMessage) => void;
@@ -151,9 +153,9 @@ export function connectSse(options: SseConnectOptions): SseConnection {
 
     while (!closed) {
       try {
-        const res = await fetch(options.url, {
+        // `url` la duong dan tuong doi gateway; apiFetch them goc API va Bearer (AC-9).
+        const res = await apiFetch(options.url, {
           headers: { Accept: "text/event-stream", ...options.headers },
-          credentials: "include",
           cache: "no-store",
           signal: controller.signal,
         });

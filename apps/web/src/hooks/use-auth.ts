@@ -2,7 +2,10 @@
 
 import { useEffect, useState, useCallback } from "react";
 
-export type Role = "buyer" | "organizer" | "moderator" | "ops";
+import { logout as logoutRequest } from "@/lib/api/auth";
+import { getSession, SESSION_EVENT, type Role as SessionRole } from "@/lib/session";
+
+export type Role = SessionRole;
 
 export interface AuthUser {
   id: string;
@@ -42,64 +45,40 @@ export function useAuth() {
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Phien lay tu lib/session (ef_user), khong doc email tu JWT. Access token het han van tinh la da dang nhap:
+  // apiFetch se refresh o lan goi ke tiep, client khong tu quyet dinh han.
   const loadAuth = useCallback(() => {
-    if (typeof window === "undefined") {
-      setLoading(false);
-      return;
-    }
-
-    const storedToken =
-      localStorage.getItem("ef_token") || sessionStorage.getItem("ef_token");
-
-    if (!storedToken) {
-      setUser(null);
-      setToken(null);
-      setLoading(false);
-      return;
-    }
-
-    const payload = parseJwtPayload(storedToken);
-    if (!payload || (typeof payload.exp === "number" && payload.exp * 1000 < Date.now())) {
-      // Token hết hạn hoặc không hợp lệ -> xoá
-      localStorage.removeItem("ef_token");
-      sessionStorage.removeItem("ef_token");
-      setUser(null);
-      setToken(null);
-      setLoading(false);
-      return;
-    }
-
-    setToken(storedToken);
-    setUser({
-      id: payload.sub || "",
-      role: (payload.role as Role) || "buyer",
-      email: typeof payload.email === "string" ? payload.email : undefined,
-    });
+    const session = getSession();
+    setUser(session ? { ...session.user } : null);
+    setToken(session ? session.accessToken : null);
     setLoading(false);
   }, []);
 
   useEffect(() => {
     loadAuth();
 
-    // Lắng nghe sự kiện thay đổi storage giữa các tab
+    // Dong bo giua cac tab (storage) va trong cung tab (ef:session)
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === "ef_token") {
+      if (e.key === null || e.key === "ef_token" || e.key === "ef_refresh" || e.key === "ef_user") {
         loadAuth();
       }
     };
 
     window.addEventListener("storage", handleStorageChange);
-    return () => window.removeEventListener("storage", handleStorageChange);
+    window.addEventListener(SESSION_EVENT, loadAuth);
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener(SESSION_EVENT, loadAuth);
+    };
   }, [loadAuth]);
 
-  const logout = useCallback(() => {
-    if (typeof window !== "undefined") {
-      localStorage.removeItem("ef_token");
-      sessionStorage.removeItem("ef_token");
-      setUser(null);
-      setToken(null);
-      window.location.href = "/auth/sign-in";
-    }
+  const logout = useCallback(async () => {
+    if (typeof window === "undefined") return;
+    // Thu hoi refresh token tren server; phien client luon bi xoa du loi.
+    await logoutRequest();
+    setUser(null);
+    setToken(null);
+    window.location.href = "/auth/sign-in";
   }, []);
 
   const hasRole = useCallback(
