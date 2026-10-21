@@ -105,6 +105,7 @@ export type PaymentClientErrorType =
   | "NETWORK_ERROR"
   | "NOT_FOUND"
   | "AUTH_REQUIRED"
+  | "FORBIDDEN"
   | "UNKNOWN";
 
 export class PaymentClientError extends Error {
@@ -120,6 +121,15 @@ export class PaymentClientError extends Error {
     this.code = type;
     this.status = status;
   }
+}
+
+const FORBIDDEN_PROBLEM = "/problems/forbidden";
+
+/** 403 `/problems/forbidden` (sai vai tro / khong du quyen): loi rieng, khong thu lai (AC-6). Cac 403 khac giu nguyen. */
+async function forbiddenError(res: Response): Promise<PaymentClientError | null> {
+  if (res.status !== 403) return null;
+  if ((await readProblem(res)).type !== FORBIDDEN_PROBLEM) return null;
+  return new PaymentClientError("Không đủ quyền thực hiện thao tác này", "FORBIDDEN", 403);
 }
 
 /** Sinh Idempotency-Key UUID v4 an toan (BR-O5) */
@@ -288,6 +298,8 @@ export async function initiatePayment(
     };
   }
 
+  const forbidden = await forbiddenError(response);
+  if (forbidden) throw forbidden;
   if (response.status === 409) {
     throw new PaymentClientError("Phiên giữ vé đã hết hạn trước khi thanh toán (BR-O2)", "HOLD_EXPIRED", 409);
   }
@@ -341,6 +353,8 @@ export async function getOrderDetails(orderId: string, eventId: string): Promise
   if (res.status === 404) {
     throw new PaymentClientError("Không tìm thấy đơn hàng", "NOT_FOUND", 404);
   }
+  const forbidden = await forbiddenError(res);
+  if (forbidden) throw forbidden;
   if (!res.ok) {
     throw new PaymentClientError(`Lỗi máy chủ HTTP ${res.status}`, "UNKNOWN", res.status);
   }
@@ -443,6 +457,8 @@ export async function issueTickets(orderId: string): Promise<IssuedTicketQR[]> {
   if (!res.ok) {
     // Phan hoi loi HTTP co the bi middleware idempotency ghi nho theo key: lan thu lai dung key moi.
     forgetIssueKey(orderId);
+    const forbidden = await forbiddenError(res);
+    if (forbidden) throw forbidden;
     const code: PaymentClientErrorType = res.status === 404 ? "NOT_FOUND" : "UNKNOWN";
     throw new PaymentClientError(`Chưa thể phát hành vé (HTTP ${res.status})`, code, res.status);
   }

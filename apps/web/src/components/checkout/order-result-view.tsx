@@ -76,10 +76,14 @@ export function OrderResultView({
             className="text-left"
           >
             <p className="text-body-sm">
-              {error.type === "NOT_FOUND" ? t("result.notFoundBody") : t("result.loadErrorBody")}
+              {error.type === "NOT_FOUND"
+                ? t("result.notFoundBody")
+                : error.type === "FORBIDDEN"
+                  ? t("checkout.forbidden")
+                  : t("result.loadErrorBody")}
             </p>
           </Alert>
-          {error.type !== "NOT_FOUND" ? (
+          {error.type !== "NOT_FOUND" && error.type !== "FORBIDDEN" ? (
             <Button variant="secondary" loading={loading} onClick={refresh}>
               {t("result.retry")}
             </Button>
@@ -175,6 +179,10 @@ export function OrderResultView({
                 </p>
                 <p className="text-body-sm text-fg-muted">{t("result.ticketsPendingBody")}</p>
               </Card>
+            ) : null}
+
+            {issued.forbidden ? (
+              <Alert variant="error" title={t("checkout.forbidden")} />
             ) : null}
 
             {issued.failed ? (

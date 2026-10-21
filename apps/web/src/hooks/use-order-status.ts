@@ -89,7 +89,7 @@ export function useOrderStatus({
     }
 
     // 404 / het phien: poll tiep khong giup gi.
-    if (error?.type === "NOT_FOUND" || error?.type === "AUTH_REQUIRED") {
+    if (error?.type === "NOT_FOUND" || error?.type === "AUTH_REQUIRED" || error?.type === "FORBIDDEN") {
       return;
     }
 
@@ -132,6 +132,8 @@ export interface UseIssuedTicketsReturn {
   tickets: IssuedTicketQR[];
   /** true khi chua co ve nao (dang lay hoac cho phat hanh) va con luot thu lai. */
   pending: boolean;
+  /** true khi server tu choi (403 forbidden): khong thu lai. */
+  forbidden: boolean;
   /** true khi da het luot thu lai ma van chua co ve: UI cho nguoi dung bam thu lai. */
   failed: boolean;
   retry: () => void;
@@ -148,6 +150,7 @@ export function useIssuedTickets(
   const { baseDelayMs = 2000, maxAttempts = 6, onRetry } = opts;
   const [tickets, setTickets] = useState<IssuedTicketQR[]>([]);
   const [attempts, setAttempts] = useState(0);
+  const [forbidden, setForbidden] = useState(false);
   const [run, setRun] = useState(0);
   const attemptsRef = useRef(0);
   const onRetryRef = useRef(onRetry);
@@ -170,7 +173,8 @@ export function useIssuedTickets(
       .catch((err: unknown) => {
         if (cancelled) return;
         // Het phien / khong thay don: thu lai khong the thanh cong -> dung han, de UI hien nut thu lai thu cong (F-13).
-        if (err instanceof PaymentClientError && (err.type === "AUTH_REQUIRED" || err.type === "NOT_FOUND")) {
+        if (err instanceof PaymentClientError && (err.type === "AUTH_REQUIRED" || err.type === "NOT_FOUND" || err.type === "FORBIDDEN")) {
+          if (err.type === "FORBIDDEN") setForbidden(true);
           attemptsRef.current = maxAttempts;
           setAttempts(maxAttempts);
           return;
@@ -198,10 +202,17 @@ export function useIssuedTickets(
     forgetIssueKey(orderId);
     attemptsRef.current = 0;
     setAttempts(0);
+    setForbidden(false);
     setRun((r) => r + 1);
   }, [orderId]);
 
   const hasTickets = tickets.length > 0;
   const exhausted = attempts >= maxAttempts;
-  return { tickets, pending: paid && !hasTickets && !exhausted, failed: paid && !hasTickets && exhausted, retry };
+  return {
+    tickets,
+    pending: paid && !hasTickets && !exhausted,
+    forbidden: paid && !hasTickets && forbidden,
+    failed: paid && !hasTickets && exhausted && !forbidden,
+    retry,
+  };
 }
