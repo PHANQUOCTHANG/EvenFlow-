@@ -122,7 +122,7 @@ async function doRefresh(usedRefresh: string | null, sentUserId: string | null):
   const cur = peekSession();
   // Request goc gui bang user A; tab khac da doi sang user B -> khong dung token cua B, khong xoa phien cua B, khong POST.
   // Kiem tra user TRUOC nhanh "khong co refresh token" (nhanh do xoa phien).
-  if (cur && sentUserId && cur.user.id !== sentUserId) throw userChanged();
+  if (cur && sentUserId !== null && cur.user.id !== sentUserId) throw userChanged();
   if (!cur || !cur.refreshToken) {
     clearSession();
     throw new ApiError("AUTH_REQUIRED", 401, {}, "Phien dang nhap da het han");
