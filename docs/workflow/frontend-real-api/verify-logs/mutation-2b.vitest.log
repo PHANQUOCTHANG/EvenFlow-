@@ -1,0 +1,125 @@
+The CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.
+
+ RUN  v2.1.8 D:/Documents/Nam4-1/Project1/EvenFlow-verify/apps/web
+
+ ✓ src/lib/format.test.ts (94 tests) 46ms
+ ✓ src/lib/ops-service.test.ts (53 tests) 51ms
+ ✓ src/lib/money.test.ts (24 tests) 26ms
+ ✓ src/lib/api/auth.contract.test.ts (20 tests) 95ms
+ ✓ src/lib/organizer-service.test.ts (22 tests) 101ms
+ ✓ src/lib/event-service.contract.test.ts (18 tests) 78ms
+ ✓ src/lib/organizer-service.contract.test.ts (28 tests) 114ms
+ ✓ src/lib/payment-client.contract.test.ts (29 tests) 109ms
+ ✓ src/lib/payment-client.test.ts (11 tests) 175ms
+ ❯ src/lib/api-client.contract.test.ts (33 tests | 1 failed) 250ms
+   × refresh don le (AC-4) > request 401 lan hai (sau khi da refresh) van het han: KHONG refresh lan 2 29ms
+     → expected [ { …(7) }, { …(7) } ] to have a length of 1 but got 2
+ ✓ src/lib/fix2/g1-lock-refresh.test.ts (9 tests) 421ms
+ ✓ src/lib/i18n/messages.test.ts (55 tests) 41ms
+ ✓ src/lib/queue-status.test.ts (22 tests) 45ms
+stderr | src/lib/server-time.test.ts > toEpochMs — chi nhan moc co mui gio tuong minh (AC-3) > tu choi '2026-10-03' (chi co ngay, ECMA hieu la UTC) -> null
+[server-time] moc thoi han "2026-10-03" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+stderr | src/lib/server-time.test.ts > toEpochMs — chi nhan moc co mui gio tuong minh (AC-3) > tu choi '2026-10-03T09:00:00' (co gio nhung khong co offset -> gio dia phuong) -> null
+[server-time] moc thoi han "2026-10-03T09:00:00" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+stderr | src/lib/server-time.test.ts > toEpochMs — chi nhan moc co mui gio tuong minh (AC-3) > tu choi '2026-10-03T09:00:00.500' (co milisecond nhung van khong co offset) -> null
+[server-time] moc thoi han "2026-10-03T09:00:00.500" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+stderr | src/lib/server-time.test.ts > toEpochMs — chi nhan moc co mui gio tuong minh (AC-3) > tu choi '2026-10-03 09:00:00' (dang co dau cach, khong co offset) -> null
+[server-time] moc thoi han "2026-10-03 09:00:00" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+stderr | src/lib/server-time.test.ts > toEpochMs — chi nhan moc co mui gio tuong minh (AC-3) > chuoi rac '' -> null, khong throw
+[server-time] moc thoi han "" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+[server-time] moc thoi han "" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+stderr | src/lib/server-time.test.ts > toEpochMs — chi nhan moc co mui gio tuong minh (AC-3) > chuoi rac '   ' -> null, khong throw
+[server-time] moc thoi han "" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+[server-time] moc thoi han "" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+ ✓ src/lib/queue-token.test.ts (16 tests) 23ms
+stderr | src/lib/server-time.test.ts > toEpochMs — chi nhan moc co mui gio tuong minh (AC-3) > chuoi rac 'soon' -> null, khong throw
+[server-time] moc thoi han "soon" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+[server-time] moc thoi han "soon" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+stderr | src/lib/server-time.test.ts > toEpochMs — chi nhan moc co mui gio tuong minh (AC-3) > chuoi rac 'not-a-date' -> null, khong throw
+[server-time] moc thoi han "not-a-date" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+[server-time] moc thoi han "not-a-date" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+ ✓ src/lib/server-time.test.ts (39 tests) 63ms
+ ✓ src/lib/readiness.test.ts (19 tests) 122ms
+ ✓ src/lib/theme.test.ts (11 tests) 20ms
+ ✓ src/lib/event-service.test.ts (5 tests) 36ms
+ ✓ src/lib/session.contract.test.ts (17 tests) 30ms
+ ✓ src/lib/fix1/f7-idempotency-in-progress.test.ts (7 tests) 80ms
+ ✓ src/lib/fix1/f4-proactive-refresh.test.ts (6 tests) 73ms
+ ✓ src/lib/queue-client.contract.test.ts (12 tests) 78ms
+ ✓ src/lib/queue-client.test.ts (6 tests) 132ms
+ ✓ src/lib/sse.test.ts (17 tests) 68ms
+ ✓ src/lib/assistant-client.test.ts (13 tests) 1005ms
+   ✓ assistant-client (EV-185, EVF-115) > 5. Mô phỏng luồng Streaming (AC-3) > stream các token tuần tự và gọi onComplete với đầy đủ nội dung 987ms
+ ✓ src/lib/fix1/f6-register-autologin.test.tsx (3 tests) 372ms
+   ✓ F-6 > form: shows account-created + sign-in link with identifier, never 'OTP khong hop le' 343ms
+ ✓ src/lib/fix1/f5-auth-required.test.tsx (7 tests) 367ms
+ ✓ src/lib/fix1/f11-waiting-auth.test.tsx (3 tests) 502ms
+ ✓ src/lib/hold-client.test.ts (14 tests) 2113ms
+   ✓ hold-client (EVF-113, BR-O2, BR-O5) > requestHold > 409 do cùng Idempotency-Key đang xử lý là AMBIGUOUS, không phải SOLD_OUT (BR-O5) 2025ms
+ ✓ src/lib/fix1/f13-issue-tickets.test.tsx (8 tests) 657ms
+ ✓ src/lib/hold-client.contract.test.ts (23 tests) 2115ms
+   ✓ requestHold: anh xa loi (AC-10) > 409 idempotency-in-progress KHONG phai het ve -> AMBIGUOUS 2024ms
+ ✓ src/lib/api-base.test.ts (7 tests) 24ms
+ ✓ src/lib/jitter.test.ts (7 tests) 25ms
+ ✓ src/lib/fix1/f15-logout-session-write.test.ts (3 tests) 24ms
+ ✓ src/lib/fix2/g5-g6-payment-key.test.ts (2 tests) 44ms
+ ✓ src/lib/fix3/h2-user-switch.test.ts (3 tests) 43ms
+ ✓ src/lib/backoff.test.ts (7 tests) 15ms
+ ✓ src/lib/fix1/f14-lock-timeout.test.ts (1 test) 27ms
+ ✓ src/lib/fix1/f8-payment-key.test.tsx (3 tests) 85ms
+ ✓ src/lib/fix2/g4-involuntary-expiry.test.ts (2 tests) 26ms
+ ✓ src/lib/cn.test.ts (7 tests) 8ms
+ ✓ src/lib/device.test.ts (4 tests) 7ms
+ ✓ src/lib/fix1/f12-logout-inflight.test.ts (1 test) 20ms
+ ✓ src/lib/fix1/f17-logout-clears-buyflow.test.ts (1 test) 11ms
+ ✓ src/lib/fix1/f18-availability-url.test.ts (1 test) 14ms
+ ✓ src/lib/fix1/f16-google-remember.test.tsx (3 tests) 353ms
+stderr | src/lib/fix2/g7-signin-prefill.test.tsx > G-7 > LoginForm prefills from the one-shot key and removes it
+Error: Not implemented: navigation (except hash changes)
+    at module.exports (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\node_modules\jsdom\lib\jsdom\browser\not-implemented.js:9:17)
+    at navigateFetch (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\node_modules\jsdom\lib\jsdom\living\window\navigation.js:77:3)
+    at exports.navigate (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\node_modules\jsdom\lib\jsdom\living\window\navigation.js:55:3)
+    at Timeout._onTimeout (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\node_modules\jsdom\lib\jsdom\living\nodes\HTMLHyperlinkElementUtils-impl.js:81:7)
+    at listOnTimeout (node:internal/timers:588:17)
+    at processTimers (node:internal/timers:523:7) undefined
+
+ ✓ src/lib/fix2/g7-signin-prefill.test.tsx (2 tests) 366ms
+   ✓ G-7 > register -> sign-in link has no identifier in the URL and stores it one-shot in sessionStorage 338ms
+ ✓ src/lib/fix1/f20-max-per-order.test.tsx (3 tests) 120ms
+ ✓ src/lib/fix1/f5-payment-signin.test.tsx (1 test) 278ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/lib/api-client.contract.test.ts > refresh don le (AC-4) > request 401 lan hai (sau khi da refresh) van het han: KHONG refresh lan 2
+AssertionError: expected [ { …(7) }, { …(7) } ] to have a length of 1 but got 2
+
+- Expected
++ Received
+
+- 1
++ 2
+
+ ❯ src/lib/api-client.contract.test.ts:139:68
+    137|     });
+    138|     await apiFetch("/v1/orders/o1").catch(() => undefined);
+    139|     expect(calls.filter((c) => c.path === "/api/v1/auth/refresh")).toH…
+       |                                                                    ^
+    140|     expect(calls.filter((c) => c.path === "/v1/orders/o1")).toHaveLeng…
+    141|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+ Test Files  1 failed | 48 passed (49)
+      Tests  1 failed | 701 passed (702)
+   Start at  21:22:52
+   Duration  12.84s (transform 4.41s, setup 45.80s, collect 11.57s, tests 10.90s, environment 222.05s, prepare 17.02s)
+
+vitest exit=1

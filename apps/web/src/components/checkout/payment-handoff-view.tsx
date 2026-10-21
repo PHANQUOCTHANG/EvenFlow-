@@ -1,8 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect } from "react";
 
 import { Alert, Button, Card, Input, RadioGroup, ServerExpiryCountdown } from "@/components/ui";
+import { useT } from "@/components/i18n/locale-provider";
+import { usePaymentMethods } from "@/hooks/use-payment-methods";
 import { usePaymentSession, type PaymentFormData } from "@/hooks/use-payment-session";
 import { cn } from "@/lib/cn";
 import { formatMoney } from "@/lib/money";
@@ -19,7 +22,6 @@ export interface PaymentHandoffViewProps {
   unitPrice: number;
   expiresAt?: string;
   offsetMs?: number;
-  apiBaseUrl?: string;
   onPaymentSuccess?: (result: PaymentInitiationResult) => void;
   className?: string;
 }
@@ -35,11 +37,12 @@ export function PaymentHandoffView({
   unitPrice,
   expiresAt,
   offsetMs = 0,
-  apiBaseUrl,
   onPaymentSuccess,
   className,
 }: PaymentHandoffViewProps) {
   const totalAmount = unitPrice * quantity;
+  const t = useT();
+  const methodsState = usePaymentMethods();
 
   const {
     formData,
@@ -48,6 +51,7 @@ export function PaymentHandoffView({
     submitting,
     holdExpired,
     error,
+    authRequired,
     submitPayment,
   } = usePaymentSession({
     eventId,
@@ -56,7 +60,6 @@ export function PaymentHandoffView({
     amount: totalAmount,
     expiresAt,
     offsetMs,
-    apiBaseUrl,
     onSuccess: (result) => {
       if (onPaymentSuccess) {
         onPaymentSuccess(result);
@@ -65,6 +68,17 @@ export function PaymentHandoffView({
       }
     },
   });
+
+  // Phuong thuc dang chon phai nam trong danh sach dang bat do backend tra (AC-13).
+  const { status: methodsStatus, methods } = methodsState;
+  useEffect(() => {
+    if (methodsStatus !== "ready" || methods.length === 0) return;
+    setFormData((prev) =>
+      methods.some((m) => m.code === prev.method) ? prev : { ...prev, method: methods[0].code },
+    );
+  }, [methodsStatus, methods, setFormData]);
+
+  const methodsReady = methodsState.status === "ready" && methodsState.methods.length > 0;
 
   const handleInputChange = (field: keyof PaymentFormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -76,6 +90,7 @@ export function PaymentHandoffView({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!methodsReady) return;
     await submitPayment();
   };
 
@@ -109,8 +124,21 @@ export function PaymentHandoffView({
 
       {/* Lỗi submit khác nếu có */}
       {error && !holdExpired ? (
-        <Alert variant="error" title="Không thể khởi tạo thanh toán" className="mb-md">
-          {error}
+        <Alert
+          variant="error"
+          title={authRequired ? t("checkout.authRequired") : "Không thể khởi tạo thanh toán"}
+          className="mb-md"
+        >
+          {authRequired ? (
+            <Link
+              href="/auth/sign-in"
+              className="ef-focus-ring inline-flex items-center justify-center rounded-control border border-border-strong bg-surface px-md py-sm text-label-md text-fg hover:bg-surface-subtle"
+            >
+              {t("checkout.signInAction")}
+            </Link>
+          ) : (
+            error
+          )}
         </Alert>
       ) : null}
 
@@ -162,29 +190,38 @@ export function PaymentHandoffView({
               Chọn cổng thanh toán an toàn được liên kết với EvenFlow.
             </p>
 
-            <RadioGroup
-              name="payment-method"
-              legend="Chọn cổng thanh toán"
-              value={formData.method}
-              onValueChange={handleMethodChange}
-              options={[
-                {
-                  value: "sandbox",
-                  label: "Sandbox Mock (Thẻ quốc tế / Giả lập thử nghiệm — không trừ tiền thật)",
+            {methodsState.status === "loading" ? (
+              <p role="status" className="text-body-sm text-fg-muted">
+                {t("payment.methodsLoading")}
+              </p>
+            ) : null}
+
+            {methodsState.status === "error" ? (
+              <Alert variant="error" title={t("payment.methodsErrorTitle")}>
+                <p className="mb-sm">{t("payment.methodsErrorBody")}</p>
+                <Button variant="secondary" onClick={methodsState.retry}>
+                  {t("payment.methodsRetry")}
+                </Button>
+              </Alert>
+            ) : null}
+
+            {methodsState.status === "ready" && methodsState.methods.length === 0 ? (
+              <Alert variant="warning">{t("payment.methodsEmpty")}</Alert>
+            ) : null}
+
+            {methodsReady ? (
+              <RadioGroup
+                name="payment-method"
+                legend="Chọn cổng thanh toán"
+                value={formData.method}
+                onValueChange={handleMethodChange}
+                options={methodsState.methods.map((m) => ({
+                  value: m.code,
+                  label: m.description ? `${m.name} — ${m.description}` : m.name,
                   disabled: submitting || holdExpired,
-                },
-                {
-                  value: "vnpay",
-                  label: "Cổng thanh toán VNPay (VNPAY-QR, Thẻ ATM / Tài khoản ngân hàng)",
-                  disabled: submitting || holdExpired,
-                },
-                {
-                  value: "momo",
-                  label: "Ví điện tử MoMo (Quét mã QR MoMo hoặc ứng dụng MoMo)",
-                  disabled: submitting || holdExpired,
-                },
-              ]}
-            />
+                }))}
+              />
+            ) : null}
           </Card>
         </div>
 
@@ -231,7 +268,7 @@ export function PaymentHandoffView({
                 type="submit"
                 form="payment-form"
                 variant="primary"
-                disabled={submitting || holdExpired}
+                disabled={submitting || holdExpired || !methodsReady}
                 loading={submitting}
                 onClick={handleSubmit}
                 className="w-full py-md text-label-md"

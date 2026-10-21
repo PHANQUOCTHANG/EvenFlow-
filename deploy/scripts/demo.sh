@@ -136,9 +136,16 @@ fi
 [[ "$STATUS" == SCHEDULED ]] || die "su kien phai SCHEDULED, dang $STATUS"
 ok "kiem duyet xong -> SCHEDULED"
 call GET "$GW/api/v1/events/public"; expect 200 "danh sach cong khai"
-[[ "$(printf '%s' "$BODY" | "$PY" -c "import sys,json;print(any(e['id']=='$EV' for e in json.load(sys.stdin)))")" == True ]] \
-  || die "su kien chua co trong danh sach cong khai"
-ok "khach an danh thay su kien trong GET /events/public"
+# Phan hoi la {"events": [...]}, xep theo gio mo ban tang dan va cat o 100: sau rat nhieu lan demo tren cung mot
+# DB, su kien moi co the nam ngoai 100 dau, nen danh sach day (100) thi khong coi thieu la loi.
+PUB="$(printf '%s' "$BODY" | "$PY" -c "import sys,json;l=json.load(sys.stdin)['events'];print(len(l), any(e['id']=='$EV' for e in l))")"
+if [[ "$PUB" == *True ]]; then
+  ok "khach an danh thay su kien trong GET /events/public"
+elif (( ${PUB%% *} >= 100 )); then
+  info "danh sach cong khai day (100 su kien cu nhat): bo qua kiem tra su kien moi; chay 'make down && make up' de don"
+else
+  die "su kien chua co trong danh sach cong khai ($PUB)"
+fi
 
 # ---------------------------------------------------------------------------
 step "3. Phong cho: join truoc gio mo ban (LOBBY) -> boc tham -> ADMITTED"

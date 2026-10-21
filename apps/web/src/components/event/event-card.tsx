@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Badge, type BadgeVariant } from "@/components/ui";
 import { cn } from "@/lib/cn";
 import { toEpochMs } from "@/lib/server-time";
+import type { EventStatus } from "@/lib/types/event";
 
 /** 6 trang thai cong khai theo state machine o docs/01-nghiep-vu.md dong 22-23:
  *  SCHEDULED -> ON_SALE -> SOLD_OUT | CLOSED -> COMPLETED, va nhanh CANCELLED.
@@ -10,13 +11,7 @@ import { toEpochMs } from "@/lib/server-time";
  *  Handoff muc 11.2 chi liet 4 nhan (scheduled / on-sale / sold-out / cancelled), thieu
  *  CLOSED va COMPLETED. Hai cai do KHAC nhau va khac SOLD_OUT: CLOSED la het gio ban (ve co
  *  the van con), COMPLETED la su kien da dien ra. docs/01 la nguon chuan nghiep vu. */
-export type EventPublicState =
-  | "SCHEDULED"
-  | "ON_SALE"
-  | "SOLD_OUT"
-  | "CLOSED"
-  | "COMPLETED"
-  | "CANCELLED";
+export type EventPublicState = Exclude<EventStatus, "DRAFT" | "PENDING_REVIEW" | "REJECTED">;
 
 interface StateCopy {
   badge: BadgeVariant;
@@ -94,7 +89,8 @@ function formatVenueTime(value: number | string): string | null {
 }
 
 export interface EventCardProps {
-  state: EventPublicState;
+  /** Trang thai khong cong khai (DRAFT / PENDING_REVIEW / REJECTED) hien nhu "da dong ban". */
+  state: EventStatus;
   title: string;
   venue?: string;
   /** Epoch ms hoac ISO-8601 CO mui gio. */
@@ -132,7 +128,7 @@ export function EventCard({
     );
   }
 
-  const copy = STATE[state];
+  const copy = STATE[state as EventPublicState] ?? STATE.CLOSED;
   const time = startsAt === undefined ? null : formatVenueTime(startsAt);
   // Phai trim: `imageUrl="   "` la truthy nen se sinh <img src="   ">, browser gui mot request
   // rong roi bao loi anh hong. Chuoi toan khoang trang phai duoc coi nhu khong co anh.

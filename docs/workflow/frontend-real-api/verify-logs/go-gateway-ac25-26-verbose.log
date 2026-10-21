@@ -1,0 +1,18 @@
+=== RUN   TestGateway_CORS_PreflightChoPhepHeaderCuaPhongCho
+--- PASS: TestGateway_CORS_PreflightChoPhepHeaderCuaPhongCho (0.01s)
+=== RUN   TestGateway_CORS_ExposeHeaders
+--- PASS: TestGateway_CORS_ExposeHeaders (0.00s)
+=== RUN   TestGateway_CORS_KhongCoAllowCredentials
+--- PASS: TestGateway_CORS_KhongCoAllowCredentials (0.00s)
+=== RUN   TestGateway_CORS_OriginLaKhongDoi
+--- PASS: TestGateway_CORS_OriginLaKhongDoi (0.00s)
+=== RUN   TestGateway_EventsPublic_CongKhaiToiEventService
+--- PASS: TestGateway_EventsPublic_CongKhaiToiEventService (0.00s)
+=== RUN   TestGateway_EventsPublic_TokenHongBiBoQua
+--- PASS: TestGateway_EventsPublic_TokenHongBiBoQua (0.00s)
+=== RUN   TestGateway_EventsPublic_KhongLamHongRouteCu
+--- PASS: TestGateway_EventsPublic_KhongLamHongRouteCu (0.01s)
+=== RUN   TestGateway_CORS
+--- PASS: TestGateway_CORS (0.00s)
+PASS
+ok  	github.com/eventflow/eventflow/services/gateway/internal/proxy	1.281s

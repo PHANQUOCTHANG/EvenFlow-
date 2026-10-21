@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 
 import { Alert } from "@/components/ui";
@@ -11,7 +11,9 @@ import {
 } from "@/components/checkout/ticket-tier-card";
 import { useHoldTimer } from "@/hooks/use-hold-timer";
 import { useServerTimeSync } from "@/hooks/use-server-time-sync";
+import { useT } from "@/components/i18n/locale-provider";
 import { cn } from "@/lib/cn";
+import { clearQueueToken } from "@/lib/queue-token";
 import type { EventDetailSnapshot } from "@/lib/event-service";
 
 export interface CheckoutViewProps {
@@ -39,25 +41,31 @@ export function buildPaymentUrl(
   return `/checkout/${encodeURIComponent(eventId)}/payment?${query.toString()}`;
 }
 
-function mapTierAvailability(availability: string): TierAvailability {
+/** BR-A4: UNKNOWN (chua biet) KHONG duoc hien la "con ve": tra undefined de the khong khang dinh gi.
+ *  Giu hang ve chon duoc vi ket qua giu ve moi la nguon dung. */
+function mapTierAvailability(availability: string): TierAvailability | undefined {
   switch (availability) {
     case "FEW_LEFT":
       return "limited";
     case "SOLD_OUT":
       return "sold_out";
     case "AVAILABLE":
-    default:
       return "available";
+    default:
+      return undefined;
   }
 }
 
 export function CheckoutView({
   event,
   initialQueueToken,
-  maxSelectablePerOrder = 4,
+  maxSelectablePerOrder: maxSelectableProp,
   onProceedToPayment,
   className,
 }: CheckoutViewProps) {
+  const t = useT();
+  // F-20: gioi han moi don theo su kien (max_per_order); thieu/0 -> 4.
+  const maxSelectablePerOrder = maxSelectableProp ?? (event.maxPerOrder > 0 ? event.maxPerOrder : 4);
   const { offsetMs } = useServerTimeSync();
   const {
     hold,
@@ -112,9 +120,67 @@ export function CheckoutView({
   };
 
   const isAdmittedError = error?.type === "NOT_ADMITTED";
+  // Queue token het han/sai (AC-10): bo token cu de phong cho cap lai, roi dua nguoi dung ve phong cho.
+  const isTokenInvalid = error?.type === "QUEUE_TOKEN_INVALID";
+  const isAuthRequired = error?.type === "AUTH_REQUIRED";
+  const limitMessage =
+    error?.type === "PER_IDENTITY_LIMIT"
+      ? t("checkout.perIdentityLimit")
+      : error?.type === "QUANTITY_NOT_ALLOWED"
+        ? t("checkout.quantityNotAllowed")
+        : null;
+
+  // F-5: moi loi khac chua co banner rieng phai hien thi (khong bao gio im lang).
+  const showGenericError =
+    !!error && !["NOT_ADMITTED", "FORBIDDEN", "QUEUE_TOKEN_INVALID", "AUTH_REQUIRED", "PER_IDENTITY_LIMIT", "QUANTITY_NOT_ALLOWED", "SOLD_OUT", "AMBIGUOUS"].includes(error.type);
+
+  useEffect(() => {
+    if (isTokenInvalid) clearQueueToken(event.id);
+  }, [isTokenInvalid, event.id]);
 
   return (
     <div className={cn("mx-auto max-w-content space-y-lg py-md", className)}>
+      {isTokenInvalid ? (
+        <Alert variant="warning" title={t("checkout.tokenInvalidTitle")} className="mb-md">
+          <p className="mb-sm">{t("checkout.tokenInvalidBody")}</p>
+          <Link
+            href={`/waiting/${event.id}`}
+            className="ef-focus-ring inline-flex items-center justify-center rounded-control border border-border-strong bg-surface px-md py-sm text-label-md text-fg hover:bg-surface-subtle"
+          >
+            {t("checkout.tokenInvalidAction")}
+          </Link>
+        </Alert>
+      ) : null}
+
+      {isAuthRequired ? (
+        <Alert variant="error" title={t("checkout.authRequired")} className="mb-md">
+          <Link
+            href="/auth/sign-in"
+            className="ef-focus-ring inline-flex items-center justify-center rounded-control border border-border-strong bg-surface px-md py-sm text-label-md text-fg hover:bg-surface-subtle"
+          >
+            {t("checkout.signInAction")}
+          </Link>
+        </Alert>
+      ) : null}
+
+      {error?.type === "FORBIDDEN" ? (
+        <Alert variant="error" className="mb-md">
+          {t("checkout.forbidden")}
+        </Alert>
+      ) : null}
+
+      {showGenericError ? (
+        <Alert variant="error" className="mb-md">
+          {error?.message}
+        </Alert>
+      ) : null}
+
+      {limitMessage ? (
+        <Alert variant="warning" className="mb-md">
+          {limitMessage}
+        </Alert>
+      ) : null}
+
       {/* Banner canh bao chua duoc admit (AC-6) */}
       {isAdmittedError ? (
         <Alert
@@ -146,6 +212,7 @@ export function CheckoutView({
           className="space-y-md lg:col-span-2"
         >
           <h2 className="text-headline-sm text-fg">Hạng vé sẵn có</h2>
+          <p className="text-body-sm text-fg-muted">{t("checkout.availabilityIndicative")}</p>
 
           <div className="space-y-md">
             {event.tiers.map((tier) => {

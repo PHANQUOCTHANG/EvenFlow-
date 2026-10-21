@@ -267,10 +267,10 @@ func CORS(origins []string) httpx.Middleware {
 				h := w.Header()
 				h.Set("Access-Control-Allow-Origin", origin)
 				h.Add("Vary", "Origin")
-				h.Set("Access-Control-Expose-Headers", "X-Request-Id, Retry-After")
+				h.Set("Access-Control-Expose-Headers", "X-Request-Id, Retry-After, ETag, X-Poll-After-Ms")
 				if r.Method == http.MethodOptions && r.Header.Get("Access-Control-Request-Method") != "" {
 					h.Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
-					h.Set("Access-Control-Allow-Headers", "Authorization, Content-Type, Idempotency-Key, X-Request-Id, Last-Event-ID")
+					h.Set("Access-Control-Allow-Headers", "Authorization, Content-Type, Idempotency-Key, X-Request-Id, Last-Event-ID, X-Queue-Token, If-None-Match")
 					h.Set("Access-Control-Max-Age", "600")
 					w.WriteHeader(http.StatusNoContent)
 					return

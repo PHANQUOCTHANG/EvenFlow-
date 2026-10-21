@@ -26,7 +26,6 @@ export interface UsePaymentSessionOptions {
   amount: number;
   expiresAt?: string;
   offsetMs?: number;
-  apiBaseUrl?: string;
   onSuccess?: (result: PaymentInitiationResult) => void;
 }
 
@@ -38,6 +37,8 @@ export interface UsePaymentSessionReturn {
   holdExpired: boolean;
   remainingMs: number;
   error: string | null;
+  /** true khi phien dang nhap het han (F-5): UI hien loi moi dang nhap lai. */
+  authRequired: boolean;
   submitPayment: () => Promise<PaymentInitiationResult | null>;
 }
 
@@ -75,7 +76,6 @@ export function usePaymentSession({
   amount,
   expiresAt,
   offsetMs = 0,
-  apiBaseUrl,
   onSuccess,
 }: UsePaymentSessionOptions): UsePaymentSessionReturn {
   const [formData, setFormData] = useState<PaymentFormData>({
@@ -88,6 +88,7 @@ export function usePaymentSession({
   const [submitting, setSubmitting] = useState(false);
   const [holdExpired, setHoldExpired] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [authRequired, setAuthRequired] = useState(false);
 
   const isSubmittingRef = useRef(false);
 
@@ -120,6 +121,7 @@ export function usePaymentSession({
     isSubmittingRef.current = true;
     setSubmitting(true);
     setError(null);
+    setAuthRequired(false);
 
     try {
       const params: InitiatePaymentParams = {
@@ -131,7 +133,6 @@ export function usePaymentSession({
         buyerName: formData.buyerName.trim(),
         buyerEmail: formData.buyerEmail.trim(),
         buyerPhone: formData.buyerPhone.trim(),
-        apiBaseUrl,
       };
 
       const result = await initiatePayment(params);
@@ -145,6 +146,9 @@ export function usePaymentSession({
           setHoldExpired(true);
           clearActiveHold(eventId);
           setError("Phiên giữ vé đã hết hạn trong lúc thanh toán (BR-O2)");
+        } else if (err.type === "AUTH_REQUIRED") {
+          setAuthRequired(true);
+          setError(err.message);
         } else {
           setError(err.message);
         }
@@ -165,7 +169,6 @@ export function usePaymentSession({
     orderId,
     holdId,
     amount,
-    apiBaseUrl,
     onSuccess,
   ]);
 
@@ -177,6 +180,7 @@ export function usePaymentSession({
     holdExpired: holdExpired || countdown.expired,
     remainingMs: countdown.remainingMs,
     error,
+    authRequired,
     submitPayment,
   };
 }

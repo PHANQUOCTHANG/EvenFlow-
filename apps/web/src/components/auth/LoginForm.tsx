@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { loginUser, loginWithGoogle } from "@/lib/api/auth";
@@ -82,6 +82,18 @@ export default function LoginForm() {
   const { toast } = useToast();
 
   const [identifier, setIdentifier] = useState("");
+  // Sau dang ky (dang nhap tu dong that bai) dien san dinh danh tu sessionStorage (1 lan, F-6/G-7; khong dung URL).
+  useEffect(() => {
+    try {
+      const prefill = sessionStorage.getItem("ef:signin:identifier");
+      if (prefill) {
+        sessionStorage.removeItem("ef:signin:identifier");
+        setIdentifier(prefill);
+      }
+    } catch {
+      /* bo qua */
+    }
+  }, []);
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(true);
@@ -109,16 +121,8 @@ export default function LoginForm() {
     setErrorMessage("");
 
     try {
-      const res = await loginUser(identifier, password);
-      
-      // Save token (Task EV-112)
-      if (res.token) {
-        if (remember) {
-          localStorage.setItem("ef_token", res.token);
-        } else {
-          sessionStorage.setItem("ef_token", res.token);
-        }
-      }
+      // loginUser luu phien (access + refresh + user); "ghi nho toi" tat -> sessionStorage (Task EV-112)
+      await loginUser(identifier, password, { persist: remember ? "local" : "session" });
 
       toast({
         variant: "success",
@@ -278,10 +282,8 @@ export default function LoginForm() {
                 if (credentialResponse.credential) {
                   try {
                     setLoading(true);
-                    const res = await loginWithGoogle(credentialResponse.credential);
-                    if (res.token) {
-                      localStorage.setItem("ef_token", res.token);
-                    }
+                    // loginWithGoogle luu phien va gan thiet bi (AC-8)
+                    await loginWithGoogle(credentialResponse.credential, { persist: remember ? "local" : "session" });
                     toast({
                       variant: "success",
                       title: "Đăng nhập thành công!",

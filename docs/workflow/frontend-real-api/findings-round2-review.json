@@ -1,0 +1,182 @@
+{
+  "review": {
+    "round": 2,
+    "base": "fa6ee8c",
+    "head": "604d721",
+    "scope": "incremental re-review: correctness/regression + security of fix round 1"
+  },
+  "verdicts": [
+    {
+      "id": "F-1",
+      "status": "partial",
+      "evidence": "ON_SALE now opens a quota-only form: organizer-service.ts:292-299 (canIncreaseTierQuota/canOpenEventEditor), event-wizard.tsx:337-410 (read-only name/price, no add-tier, BR-E3 decrease blocked in handleSaveQuotas :248-286), edit-event-client.tsx:57,74 (PUT /events skipped when !fullEdit, only updateTierQuota). Links: event-list.tsx:228, moderation-status-card.tsx:315. Tests: edit/page.test.tsx 'F-1: ON_SALE -> form tăng số lượng vé, chỉ gọi PUT tier quota' (asserts updateQuota(EVT,'tier-a',500), update/addTier/submit not called) and 'F-1: ON_SALE giảm quota bị chặn phía client'; event-wizard.fixround1.test.tsx 'F-1: ON_SALE ...'. NOT covered: SOLD_OUT. The merged fix asked for SOLD_OUT 'if the backend allows it' and it does: services/event/internal/domain/event.go:158-162 accepts a quota increase on SOLD_OUT and flips the event back to ON_SALE. SOLD_OUT is the main reason to raise a quota, yet canIncreaseTierQuota returns false for it, and the tests now lock that in (edit/page.test.tsx it.each still lists SOLD_OUT as 'không được chỉnh sửa'; event-list.status.test.tsx expects exactly 1 'Tăng số lượng vé' link for [ON_SALE, SOLD_OUT]). See R2-5."
+    },
+    {
+      "id": "F-2",
+      "status": "fixed",
+      "evidence": "new/page.tsx:21-22 sets blockResubmit:true when result.event exists with failedStep; event-wizard.tsx:335 `blocked` disables both 'Lưu nháp' and 'Gửi kiểm duyệt' (:731,:736); partial is only reset inside handleSubmit/handleSaveQuotas, which can't be reached while disabled. Tests: new/page.test.tsx 'F-2: sau lỗi một phần, không POST /events lần nữa' (clicks Lưu nháp again, asserts createMock called once and button disabled); event-wizard.fixround1.test.tsx 'F-2: kết quả một phần có blockResubmit'."
+    },
+    {
+      "id": "F-3",
+      "status": "fixed",
+      "evidence": "edit-event-client.tsx:40 useRef map from local wizard tier id to the created server tier; :70-75 skips POST for tiers already created in this session; :80 diffs against a fresh GET (reload) rather than the stale prop; :79,:92 setEvent(await reload()) after a failure; the self-link draftHref is gone. Test: edit/page.test.tsx 'F-3: thử lại sau khi lỗi một phần không POST lại hạng vé đã tạo' asserts addTier is called 3 times in total (#2, failed #3, then #3 again) and the last call is for '#3', so #2 is not re-POSTed. That is the reported failure. Residual (the created tier stays name/price-editable): see R2-4."
+    },
+    {
+      "id": "F-4",
+      "status": "fixed",
+      "evidence": "session.ts:190-194 stores expiresAt = Date.now() + expires_in*1000 (client clock at receipt, so client/server skew drops out); api-client.ts expiryMs() prefers it and falls back to the JWT exp only for legacy sessions. The backend always sends expires_in (services/identity/internal/adapter/http/handler.go:129). The guard is per token pair (lastProactive, set before the refresh), and every tab sees the shared ef_expires_at, so the cross-tab ping-pong stops. A non-AUTH_REQUIRED proactive failure falls through to the normal request. Tests: fix1/f4-proactive-refresh.test.ts 'skewed client clock (+20min): refresh once, then no refresh...' (exactly 1 refresh over 4 requests and 100 s), 'another tab's newer pair...', 'network failure still sends the original request', '429 / 5xx still sends...' (refresh token unchanged), 'rejected (401) still surfaces AUTH_REQUIRED'."
+    },
+    {
+      "id": "F-5",
+      "status": "fixed",
+      "evidence": "hold-client.ts:213-215 (requestHold) and :289-291 (cancelHold) map a non-queue 401 to AUTH_REQUIRED; payment-client.ts paymentFetch :175-179 does the same for initiatePayment/getOrderDetails/issueTickets; checkout-view.tsx:134-135,166-170 adds a generic error banner for unhandled types; payment-handoff-view.tsx:127-141 shows a sign-in link. Tests: fix1/f5-auth-required.test.tsx (no-session 401, 'retried request still token-expired', queue-token 401 stays QUEUE_TOKEN_INVALID, cancel/payment/order/issue 401, CheckoutView sign-in link, HTTP 500 visible alert); fix1/f5-payment-signin.test.tsx. Not done: the optional half of the fix suggestion, a separate code for 403 /problems/forbidden. hold-client.ts:218 still maps every 403 to NOT_ADMITTED ('quay lại phòng chờ'). This was outside the reported title."
+    },
+    {
+      "id": "F-6",
+      "status": "fixed",
+      "evidence": "auth.ts:74-85 wraps a login failure that follows a successful /register/verify as ApiError REGISTERED_LOGIN_FAILED; RegisterForm.tsx:368-378 routes that to the SUCCESS step with 'Tài khoản đã được tạo, vui lòng đăng nhập' and a sign-in link carrying ?identifier= (LoginForm.tsx:155-162 prefills it). Tests: fix1/f6-register-autologin.test.tsx 'lib: verify 201 + login 429 rejects with REGISTERED_LOGIN_FAILED', 'lib: verify failure keeps its own error (409)', and 'form: shows account-created + sign-in link..., never OTP khong hop le' (asserts data-otp-error is null)."
+    },
+    {
+      "id": "F-7",
+      "status": "fixed",
+      "evidence": "idempotency.ts gives a sessionStorage-stable key, retryAfterMs (default 1 s, cap 5 s) and at most 3 sends. hold-client.ts:116-120,130-187 keys per (event, tier, qty), waits Retry-After on 409 in-progress and resends the SAME key, keeps the key on network/5xx/in-progress, and forgets it on 2xx or a definitive 4xx. payment-client.ts:244-260 does the same. use-hold-timer.ts:102 does not pass its own key, so the UI gets the stable key. The server never stores a 5xx (libs/go/idem/middleware.go:163-167 Abandon), so keeping the key after a 5xx cannot replay one. Tests: fix1/f7-idempotency-in-progress.test.ts 'in-progress then success: waits Retry-After and resends the same key' (no resend before 1 s, same key), 'in-progress forever: at most 3 sends then AMBIGUOUS', 'key is stable across user retries after AMBIGUOUS, then rotates after success', 'definitive error rotates the key', and the payment equivalents."
+    },
+    {
+      "id": "F-8",
+      "status": "fixed",
+      "evidence": "payment-client.ts:206-208 stableKey('ef:pay:'+orderId), reused after NETWORK_ERROR (paymentFetch throws before forgetKey) and forgotten on 2xx or a definitive 4xx (:254-256); use-payment-session.ts:128-138 passes no key. Tests: fix1/f8-payment-key.test.tsx 'same key is re-sent after NETWORK_ERROR' (drives the real hook: first fetch throws TypeError), 'key is rotated after a definitive 4xx', 'key is cleared after success'. Caveat: the key is wiped by clearSession on an involuntary session expiry (R2-2)."
+    },
+    {
+      "id": "F-9",
+      "status": "fixed",
+      "evidence": "event-wizard.tsx:482-483 slug Input disabled={isEditing} with the hint 'Không thể đổi sau khi tạo.' Tests: event-wizard.fixround1.test.tsx 'F-9: chế độ sửa -> slug chỉ đọc' / 'chế độ tạo -> slug nhập được'."
+    },
+    {
+      "id": "F-10",
+      "status": "fixed",
+      "evidence": "event-wizard.tsx:98 canSubmit = !initialEvent || canSubmitEvent(state); :731-740 the submit button renders only when canSubmit. Tests: event-wizard.fixround1.test.tsx 'F-10: SCHEDULED -> không có nút Gửi kiểm duyệt' and the DRAFT/REJECTED positive cases."
+    },
+    {
+      "id": "F-11",
+      "status": "fixed",
+      "evidence": "waiting-room.tsx:78-79 maps a join ApiError AUTH_REQUIRED to kind 'auth'; :122 the auto-rejoin skips AUTH_REQUIRED; :150-168 renders waiting.signInRequired plus a sign-in link. use-queue-status.ts:238-242 makes AUTH_REQUIRED terminal (transport idle). The keys waiting.signInRequired and checkout.signInAction exist in both vi and en (messages.ts:52,61,133,142). Tests: fix1/f11-waiting-auth.test.tsx 'join: refresh rejected -> signInRequired...', 'poll: refresh rejected -> terminal sign-in prompt and no further polling' (status call count frozen), 'hook: AUTH_REQUIRED becomes terminal error and transport idle'."
+    },
+    {
+      "id": "F-12",
+      "status": "fixed",
+      "evidence": "api-client.ts doRefresh captures getSessionEpoch() before the fetch; after it, `epoch !== getSessionEpoch() || !after` discards the result and throws AUTH_REQUIRED. That covers same-tab logout (epoch) and other-tab logout (storage empty). A pair that another tab rotated is returned without being overwritten. clearSession bumps the epoch (session.ts:167). Test: fix1/f12-logout-inflight.test.ts 'logout while refresh is pending: refresh result is discarded' (gated refresh; asserts AUTH_REQUIRED, getSession() null, ef_refresh null)."
+    },
+    {
+      "id": "F-13",
+      "status": "fixed",
+      "evidence": "payment-client.ts:444-446 forgets the issue key when the filtered list is empty; use-order-status.ts:196-198 retry() forgets the key; :171-176 AUTH_REQUIRED/NOT_FOUND stop retrying (failed). order-result-view.tsx:135-147 shows 'đã sẵn sàng' only when tickets.length > 0; result.paidIssuingTitle/Body are in both locales (messages.ts:81-82,162-163). Tests: fix1/f13-issue-tickets.test.tsx (empty list rotates the key, list without qr_payload rotates, QR tickets keep the key, 'hook retry() starts with a fresh key', it.each AUTH_REQUIRED/NOT_FOUND 'stops after one attempt and ends in failed', both headline tests)."
+    },
+    {
+      "id": "F-14",
+      "status": "fixed",
+      "evidence": "api-client.ts:99,152-176 waits for the lock at most LOCK_WAIT_MS=10 s using an AbortSignal plus a race, then calls doRefresh without the lock (still single-flight in the tab through `inflight`). The timer is cleared synchronously when the lock is granted, so it cannot double-run after a grant. Test: fix1/f14-lock-timeout.test.ts 'lock never granted -> after the timeout the tab refreshes on its own' (settled after 11 s, 200, new token stored). New risk from the unlocked fallback: R2-3."
+    },
+    {
+      "id": "F-15",
+      "status": "fixed",
+      "evidence": "auth.ts:128-129 logout reads getStoredRefreshToken() (session.ts:138-148, raw ef_refresh from both stores) instead of getSession(). session.ts:92-128 setSession writes first, rolls back to a snapshot if a setItem throws, and wipes the other store only after a successful write. Tests: fix1/f15-logout-session-write.test.ts 'corrupt ef_user: logout still POSTs /logout with the stored refresh token' (asserts body), 'setItem throwing mid-write keeps the previous session', 'switching storage keeps old copy until the new write succeeded'."
+    },
+    {
+      "id": "F-16",
+      "status": "fixed",
+      "evidence": "LoginForm.tsx:283 passes persist: remember ? 'local' : 'session' to loginWithGoogle. Tests: fix1/f16-google-remember.test.tsx 'remember unchecked -> session stored in sessionStorage only' (localStorage ef_token/ef_refresh null) and 'remember checked -> localStorage'. RegisterForm's Google button still uses the default (local) and nothing documents that choice, which the fix asked for (cosmetic)."
+    },
+    {
+      "id": "F-17",
+      "status": "fixed",
+      "evidence": "session.ts:150-171 clearSession now removes sessionStorage keys with the prefixes ef:queue:token:, evenflow_hold_, evenflow_order_, ef:issue:, ef:pay:, ef:hold: (all match the real prefixes: queue-token.ts:9, hold-client.ts:77,117, payment-client.ts:137-138,397). Test: fix1/f17-logout-clears-buyflow.test.ts asserts each prefix is removed and an unrelated key is kept. Residuals: sessionStorage is per tab, so other open tabs keep their buy-flow data after a logout elsewhere (low impact: server-side tokens and holds are bound to the user). The clearing also runs on involuntary expiry, which is a new problem (R2-2)."
+    },
+    {
+      "id": "F-18",
+      "status": "fixed",
+      "evidence": "event-service.ts:108 encodeURIComponent(eventId) in the availability path. Test: fix1/f18-availability-url.test.ts asserts the URL contains /v1/events/a%2Fb%20c/availability."
+    },
+    {
+      "id": "F-19",
+      "status": "fixed",
+      "evidence": "event-wizard.tsx:232 BR-E2 removed from the step-3 gate; :301-308 enforced only when submitForReview; :652-657 warning alert on step 3. Tests: event-wizard.fixround1.test.tsx 'F-19: mở bán < 30 phút vẫn sang được bước 4 và Lưu nháp gọi onSubmit' and '...chỉ chặn Gửi kiểm duyệt'; event-wizard.test.tsx updated accordingly."
+    },
+    {
+      "id": "F-20",
+      "status": "fixed",
+      "evidence": "checkout-view.tsx:62,68: an explicit prop wins, otherwise event.maxPerOrder (>0), otherwise 4. CheckoutPageClient (checkout-page-client.tsx:8) passes no prop, so the event value is used. Tests: fix1/f20-max-per-order.test.tsx (2, 8, fallback 4)."
+    }
+  ],
+  "new_findings": [
+    {
+      "id": "R2-1",
+      "severity": "minor",
+      "file": "apps/web/src/lib/api-client.ts",
+      "line": 102,
+      "title": "api-client.ts now contains a literal NUL byte and CRLF line endings, so git treats it as a binary file",
+      "evidence": "pairKey returns a template literal with a raw 0x00 between `${s.accessToken}` and `${s.refreshToken}` (od -c shows `}\\0${`). The whole file was also converted from LF (0 CR at fa6ee8c) to CRLF (241 CR). `git diff --stat` reports 'Bin 7291 -> 9927 bytes', `git diff` prints 'Binary files differ', and grep reports 'Binary file matches'. The code works at runtime.",
+      "repro": "git diff fa6ee8c 604d721 -- apps/web/src/lib/api-client.ts  -> 'Binary files ... differ'. Any concurrent branch that touches api-client.ts then gets a binary merge conflict with no text merge, and PR review on GitHub shows no diff for the most security-sensitive file.",
+      "fix": "Use an escape sequence (\"\\u0000\") or a printable separator (\"|\" or \"\\n\"; tokens contain neither) and normalise the file back to LF."
+    },
+    {
+      "id": "R2-2",
+      "severity": "minor",
+      "file": "apps/web/src/lib/session.ts",
+      "line": 170,
+      "title": "Buy-flow storage is wiped on every clearSession, including involuntary expiry. That drops the payment/hold idempotency keys and the active hold mid-checkout, undoing F-7/F-8 in that path",
+      "evidence": "clearBuyFlowStorage() runs inside clearSession(), and api-client doRefresh calls clearSession whenever refresh returns 400/401/403 or there is no refresh token (session expired, or the family was revoked as in D-S-6/R2-3), not only on user logout. This removes ef:pay:{orderId}, ef:hold:*, evenflow_hold_{eventId} and ef:queue:token:*. F-17 asked only for logout to clear these.",
+      "repro": "On the payment page, POST /payments fails with NETWORK_ERROR (the server may have accepted it; the key is kept as intended). The next click gets token-expired, refresh is rejected, clearSession wipes ef:pay:o1, and the user sees 'sign in'. After signing in again (same account) and returning to the payment page, initiatePayment generates a NEW Idempotency-Key, so the request is no longer deduplicated by the idem middleware (BR-O5). In the same scenario on checkout, the active hold (evenflow_hold_) is forgotten client-side while it still counts against the per-identity limit server-side.",
+      "fix": "Clear buy-flow storage only from the explicit logout() path (auth.ts), or only when the next session belongs to a different user id. Keep clearSession limited to the auth keys plus the epoch bump."
+    },
+    {
+      "id": "R2-3",
+      "severity": "minor",
+      "file": "apps/web/src/lib/api-client.ts",
+      "line": 175,
+      "title": "The lock-timeout fallback can refresh concurrently with a slow (not suspended) lock holder, so the same refresh token is used twice and the server revokes the family (forced logout in all tabs)",
+      "evidence": "After 10 s the tab calls doRefresh without the lock. doRefresh only skips when storage already has a different refresh token, but while the holder's refresh is still in flight the storage token is unchanged, so both tabs POST /auth/refresh with the same token. A refresh slower than 10 s is plausible on the auth service during an on-sale spike, which is exactly when many tabs are open.",
+      "repro": "Two tabs, both with an expired access token. In tab A the refresh request takes >10 s (throttled network). Tab B times out on the lock and refreshes with the same refresh token. The second use is treated as reuse, the family is revoked, and both tabs land on AUTH_REQUIRED.",
+      "fix": "Before the unlocked fallback, re-read storage and compare with usedRefresh as now, and also wait for a cross-tab 'refresh in progress' marker (e.g. localStorage ef_refreshing_at < 15 s old). Alternatively use steal:true only after a much longer timeout (30 s) or when document.visibilityState shows the holder is gone. At minimum, document the trade-off next to D-S-6."
+    },
+    {
+      "id": "R2-4",
+      "severity": "minor",
+      "file": "apps/web/src/app/(organizer)/organizer/events/[eventId]/edit/edit-event-client.tsx",
+      "line": 70,
+      "title": "Known residual: a tier created during a failed edit stays name/price-editable and removable in the wizard, but a retry sends only its quota, so later name/price edits and removals are silently dropped",
+      "evidence": "After a partial failure, setEvent(fresh) changes initialEvent, but the wizard's `tiers` state was initialised once and still holds the created tier under its LOCAL id. existingTierIds (event-wizard.tsx:100) contains the server id, so the tier is still treated as new (name/price inputs enabled, remove button shown). On retry, created.current maps local id to server tier, and the loop only calls updateTierQuota when the quota differs. There is no PUT for name/price and no delete for a removed tier, so the server keeps the original name/price and the tier stays even if the user removed it, with no error shown.",
+      "repro": "Edit a DRAFT event and add tiers #2 and #3. #2 is created, #3 fails. Rename #2 to 'VIP' (or delete it) and click Lưu nháp. The request succeeds and redirects to review-status, but the server tier is still 'Hạng vé #2' with the old price and still present.",
+      "fix": "After a partial failure, also map created tiers into the wizard (e.g. pass a key so the wizard remounts from the reloaded event, or expose a callback that replaces the local id with the server id). The tier then becomes read-only like other existing tiers, and removal is blocked or handled. Rating: minor. It is a draft-only, rare path, nothing is lost server-side, and the user can see the real state on review-status."
+    },
+    {
+      "id": "R2-5",
+      "severity": "minor",
+      "file": "apps/web/src/lib/organizer-service.ts",
+      "line": 292,
+      "title": "Quota-only mode excludes SOLD_OUT although the backend allows raising the quota there (and reopens the sale)",
+      "evidence": "canIncreaseTierQuota returns state === 'ON_SALE'. services/event/internal/domain/event.go:158-162 accepts newQuota > currentQuota on SOLD_OUT and sets the status to ON_SALE. The tests now assert SOLD_OUT has no editor link (event-list.status.test.tsx 'F-1' expects 1 link for [ON_SALE, SOLD_OUT]; edit/page.test.tsx it.each includes SOLD_OUT).",
+      "repro": "An organizer whose event sold out cannot add capacity from the UI, which is the most common reason to raise a quota.",
+      "fix": "Include SOLD_OUT in canIncreaseTierQuota (validateTierQuotaUpdate already blocks decreases), and update the two tests plus the 'Không thể chỉnh sửa' copy."
+    },
+    {
+      "id": "R2-6",
+      "severity": "minor",
+      "file": "apps/web/src/components/auth/RegisterForm.tsx",
+      "line": 420,
+      "title": "The registered email/phone is put in the sign-in URL query (?identifier=), so it lands in browser history and server/proxy access logs",
+      "evidence": "The F-6 fix links to /auth/sign-in?identifier=<encoded email or phone>, and LoginForm.tsx:155-162 reads it back. This is PII in a GET URL. Cross-origin referrers are stripped by the default strict-origin-when-cross-origin policy, but same-origin logs, the gateway/CDN access logs and history keep it.",
+      "repro": "Register, then fail auto-login (429). Click 'Về trang Đăng nhập'. The URL bar and the history entry show the email address.",
+      "fix": "Pass the identifier through sessionStorage (one-shot read and delete) or router state instead of the query string."
+    },
+    {
+      "id": "R2-7",
+      "severity": "minor",
+      "file": "apps/web/src/lib/payment-client.ts",
+      "line": 207,
+      "title": "The payment key is stable per order only: changing the method or buyer details after a NETWORK_ERROR reuses the key with a different body, which yields a 422 idempotency-key-reused error",
+      "evidence": "The idem middleware hashes the body (libs/go/idem/middleware.go:99, Mismatch -> 422 urn:eventflow:problem:idempotency-key-reused). stableKey('ef:pay:'+orderId) ignores method, name, email and phone. The 422 is definitive, so the key is then forgotten and the next click works, but the user first sees a confusing validation-style error. The protection itself is correct (it prevents a second initiation while the first may be in flight).",
+      "repro": "Submit payment with sandbox and lose the network on the response. Switch the method to momo and submit: 422 'Idempotency-Key đã được dùng...'. A third submit succeeds.",
+      "fix": "Map urn:eventflow:problem:idempotency-key-reused to a clear message ('Yêu cầu thanh toán trước vẫn đang được xử lý, vui lòng kiểm tra đơn hàng'), or include the method in the storage key on purpose and document the trade-off."
+    }
+  ]
+}

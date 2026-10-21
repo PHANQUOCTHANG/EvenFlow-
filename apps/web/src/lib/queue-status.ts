@@ -7,7 +7,8 @@
  * mot gia tri hong (0, am, NaN, thieu) KHONG BAO GIO bien thanh poll nhanh hon. */
 
 import type { QueueState } from "@/components/queue/queue-status-panel";
-import { QueueError } from "@/lib/queue-client";
+import { apiFetch } from "@/lib/api-client";
+import { queueErrorFrom } from "@/lib/queue-client";
 
 /** Nhip du phong khi server khong noi gi. Bang `pollMid` phia server — khong nhanh hon. */
 export const DEFAULT_POLL_MS = 10_000;
@@ -86,19 +87,9 @@ export function normalizePosition(raw: unknown): QueueSnapshot {
   };
 }
 
-async function safeDetail(res: Response): Promise<string> {
-  try {
-    const body = (await res.json()) as { detail?: string; title?: string };
-    return body.detail ?? body.title ?? res.statusText;
-  } catch {
-    return res.statusText;
-  }
-}
-
 export interface FetchQueueStatusOptions {
   etag?: string | null;
   signal?: AbortSignal;
-  baseUrl?: string;
 }
 
 /** GET `/v1/events/{eventId}/queue/status` dung MOT lan.
@@ -112,13 +103,11 @@ export async function fetchQueueStatus(
   token: string,
   opts: FetchQueueStatusOptions = {},
 ): Promise<StatusResult> {
-  const base = opts.baseUrl ?? process.env.NEXT_PUBLIC_API_BASE ?? "";
   const headers: Record<string, string> = { "X-Queue-Token": token };
   if (opts.etag) headers["If-None-Match"] = opts.etag;
 
-  const res = await fetch(`${base}/v1/events/${encodeURIComponent(eventId)}/queue/status`, {
+  const res = await apiFetch(`/v1/events/${encodeURIComponent(eventId)}/queue/status`, {
     headers,
-    credentials: "include",
     cache: "no-store",
     signal: opts.signal,
   });
@@ -138,7 +127,7 @@ export async function fetchQueueStatus(
   }
 
   if (!res.ok) {
-    throw new QueueError(res.status, await safeDetail(res));
+    throw await queueErrorFrom(res);
   }
 
   const snapshot = normalizePosition(await res.json());
