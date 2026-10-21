@@ -75,3 +75,21 @@ Khong co test bi loi/phai doi assertion. Chi them test moi (khong xoa/skip/lam y
 | .../events/[eventId]/review-status/page.test.tsx | `render trang thai kiem duyet` (mock, "Da duyet") -> trang thai that + nhan mau; `non-existent` 404; (moi) submit/cancel + 422 | AC-23, AC-24 |
 | .../events/[eventId]/sales/page.test.tsx | dashboard tu mock store -> fetch client-side + nhan "Du lieu mau"; 404 | AC-24 |
 | apps/web/src/lib/ops-service.test.ts | khong doi (da thay o WP1) | |
+
+## WP6
+
+Nguon: AC-28 (spec.md). Khong xoa, khong skip, khong lam yeu assertion cu; chi doi hang so/id va setup cho luong API that.
+
+| File | Old -> new | Ly do |
+|---|---|---|
+| tests/e2e/fixtures/buy-flow-helpers.ts | `EVENT_ID`, `TIER_ID`, `ORDER_ID`, `HOLD_ID` la chuoi `evt-...`/`tier-...`/`ord-...` -> UUID (events.json); `TICKET_CODES` `E2E-TKT-000x` -> `E2E00001`, `E2E00002` | backend tu choi id khong phai UUID (400 -> null); man hinh ket qua hien ma ve = 8 ky tu dau cua `ticketId` viet hoa nen ma ve phai suy ra tu ticketId. Assertion `tickets.getByText(code)` giu nguyen |
+| tests/e2e/fixtures/buy-flow-helpers.ts | `mockHoldCreated` tra 201 -> 200 | gateway/ticketing that tra 200 (contracts.md muc 4) |
+| tests/e2e/fixtures/buy-flow-helpers.ts | `mockPaidOrder`: `issued_tickets[].qrPayload` bo; them `total_cents`, `currency`, `items`, `hold_id`, `expires_at`, `status` tren ve | dung ten truong that cua GET /v1/orders/{id}; backend khong tra QR payload |
+| tests/e2e/fixtures/api-mock.ts | CORS: bo `Access-Control-Allow-Credentials`, Allow/Expose-Headers y het `gateway.go`; header tac gia ngoai danh sach -> vi pham (them kiem tra) | AC-28; fixture truoc day cho phep nhieu hon gateway |
+| tests/e2e/specs/buy-flow.spec.ts | `beforeEach` them `seedLoggedInSession(page)` | web that gui Bearer; luong mua ve bat dau o trang thai da dang nhap (ef_token/ef_refresh/ef_user trong localStorage) |
+| tests/e2e/specs/buy-flow.spec.ts | THEM (khong thay the): sau khi kiem ma ve, kiem `QR-<ma>` hien trong khung QR va `POST /v1/orders/{id}/issue-tickets` duoc goi | AC-15: QR hien payload ky that tu issue-tickets (san pham moi hien payload dang chu) |
+| tests/e2e/specs/a11y.spec.ts | test luong mua ve va test join 401 goi `seedLoggedInSession(page)` truoc `goto` | nhu tren; test `/auth/sign-in` va trang cong khai khong seed |
+| tests/e2e/specs/i18n.spec.ts | chi doi comment ve nguon su kien SCHEDULED | du lieu nay nay den tu events.json/stub-api |
+| tests/e2e/specs/ops-war-room.spec.ts, smoke.spec.ts | khong doi | ops van dung SAMPLE_EVENTS (AC-19) |
+| tests/e2e/tsconfig.json | them `resolveJsonModule` | import `events.json` dung chung giua api-mock.ts va stub-api.mjs |
+| tests/e2e/playwright.config.ts | them `webServer` chay `fixtures/stub-api.mjs` (:8080, `reuseExistingServer: !CI`) | fetch phia server cua Next (SSR/ISR) khong di qua page.route |
