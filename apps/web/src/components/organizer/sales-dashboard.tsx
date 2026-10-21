@@ -45,6 +45,8 @@ export function SalesDashboard({
   } = useOrganizerSales({
     eventId: event.id,
     initialData: initialSalesData,
+    // Dữ liệu mẫu: không cần gọi API liên tục.
+    initialAutoRefresh: false,
   });
 
   const [activeTab, setActiveTab] = useState<"realtime" | "report">("realtime");
@@ -70,9 +72,8 @@ export function SalesDashboard({
 
         {/* Realtime control toolbar */}
         <div className="flex flex-wrap items-center gap-sm">
-          <Badge variant="admitted" className="flex items-center gap-xs text-label-sm">
-            <span className="inline-block w-2 h-2 rounded-full bg-success animate-pulse" />
-            Realtime (≤ 5s)
+          <Badge variant="pending" className="flex items-center gap-xs text-label-sm">
+            Dữ liệu mẫu · mô phỏng Realtime (≤ 5s)
           </Badge>
 
           <Button
@@ -95,6 +96,12 @@ export function SalesDashboard({
           </Button>
         </div>
       </div>
+
+      {/* Backend chưa có API doanh số cho organizer (contracts mục 7): luôn gắn nhãn mẫu */}
+      <Alert variant="info" title="Dữ liệu mẫu — chưa khả dụng từ hệ thống">
+        Doanh số, vé đang giữ và báo cáo bên dưới là số liệu minh hoạ suy từ hạn mức vé, chưa nối với
+        nguồn thật. Không dùng để đối soát doanh thu.
+      </Alert>
 
       {/* Freshness banner & errors */}
       {error && (
@@ -160,7 +167,7 @@ export function SalesDashboard({
                 <p className="text-heading-lg font-bold text-primary">
                   {formatVnd(data.grossRevenue)}
                 </p>
-                <span className="text-label-sm text-success">Đã thanh toán (PAID)</span>
+                <span className="text-label-sm text-fg-muted">Mẫu — chưa phải doanh thu thật</span>
               </Card>
 
               <Card className="p-md space-y-xs">
@@ -288,15 +295,15 @@ export function SalesDashboard({
                 <p className="text-heading-lg font-bold text-fg">
                   {data.postSaleReport?.peakSalesVelocityTps ?? 0} TPS
                 </p>
-                <span className="text-label-sm text-success">Chịu tải ổn định</span>
+                <span className="text-label-sm text-fg-muted">Số liệu mẫu</span>
               </Card>
 
               <Card className="p-md space-y-xs">
                 <span className="text-body-xs text-fg-muted font-medium">
                   Tỷ lệ hoàn thành đơn
                 </span>
-                <p className="text-heading-lg font-bold text-success">98.6%</p>
-                <span className="text-label-sm text-fg-muted">Ít đơn huỷ / hết hạn</span>
+                <p className="text-heading-lg font-bold text-fg-muted">—</p>
+                <span className="text-label-sm text-fg-muted">Chưa có dữ liệu</span>
               </Card>
             </div>
 

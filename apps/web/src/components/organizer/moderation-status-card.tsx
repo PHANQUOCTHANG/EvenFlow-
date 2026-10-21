@@ -16,22 +16,36 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/cn";
-import type { OrganizerEvent } from "@/lib/organizer-service";
+import {
+  canCancelEvent,
+  canEditEvent,
+  canSubmitEvent,
+  type OrganizerEvent,
+} from "@/lib/organizer-service";
+
+import { LIFECYCLE_BADGE_CONFIG } from "./event-list";
 
 export interface ModerationStatusCardProps {
   event: OrganizerEvent;
+  /** Nộp duyệt (DRAFT/REJECTED -> PENDING_REVIEW). */
   onResubmit?: (eventId: string) => Promise<void>;
+  /** Huỷ sự kiện (cần xác nhận). */
+  onCancel?: (eventId: string) => Promise<void>;
   className?: string;
 }
 
 export function ModerationStatusCard({
   event,
   onResubmit,
+  onCancel,
   className,
 }: ModerationStatusCardProps) {
   const [isResubmitting, setIsResubmitting] = useState(false);
   const [resubmitSuccess, setResubmitSuccess] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [confirmingCancel, setConfirmingCancel] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
+  const [cancelError, setCancelError] = useState<string | null>(null);
 
   const moderation = event.moderation;
   const isRejected = event.state === "REJECTED";
@@ -53,6 +67,22 @@ export function ModerationStatusCard({
       setIsResubmitting(false);
     }
   };
+
+  const handleCancel = async () => {
+    if (!onCancel) return;
+    setIsCancelling(true);
+    setCancelError(null);
+    try {
+      await onCancel(event.id);
+      setConfirmingCancel(false);
+    } catch (err) {
+      setCancelError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setIsCancelling(false);
+    }
+  };
+
+  const statusBadge = LIFECYCLE_BADGE_CONFIG[event.state] ?? { label: event.state, variant: "neutral" as const };
 
   return (
     <div className={cn("space-y-lg max-w-4xl mx-auto", className)}>
@@ -90,28 +120,37 @@ export function ModerationStatusCard({
                 📝 Bản nháp
               </Badge>
             )}
+            {!isApproved && !isPending && !isRejected && event.state !== "DRAFT" && (
+              <Badge variant={statusBadge.variant} className="text-body-sm px-md py-xs">
+                {statusBadge.label}
+              </Badge>
+            )}
           </div>
         </div>
+
+        <p className="text-body-sm text-fg-muted">
+          Trạng thái thực từ hệ thống:{" "}
+          <strong className="text-fg" data-testid="real-status">
+            {event.state}
+          </strong>
+        </p>
 
         {/* Thông báo bối cảnh */}
         {isRejected && (
           <Alert variant="error" title="Sự kiện không đạt tiêu chuẩn kiểm duyệt">
-            Hệ thống phát hiện vi phạm tiêu chuẩn cộng đồng hoặc thiếu thông tin pháp lý (BR-E4).
-            Vui lòng xem chi tiết 4 trục bên dưới, chỉnh sửa nội dung và gửi nộp duyệt lại.
+            Sự kiện đã bị từ chối kiểm duyệt. Vui lòng chỉnh sửa nội dung và nộp duyệt lại.
           </Alert>
         )}
 
         {isPending && (
           <Alert variant="warning" title="Đang trong hàng đợi kiểm duyệt thủ công">
-            Điểm rủi ro AI nằm trong khoảng 0.3 - 0.8 (NEEDS_HUMAN - BR-E4). Sự kiện đang được gửi
-            tới hàng đợi kiểm duyệt viên (Moderator queue EVF-24) để xác minh giấy phép.
+            Sự kiện đang chờ kiểm duyệt (PENDING_REVIEW). Bạn sẽ thấy trạng thái cập nhật ở đây khi có kết quả.
           </Alert>
         )}
 
         {isApproved && (
           <Alert variant="success" title="Sự kiện đã được phê duyệt">
-            Sự kiện đã vượt qua bài kiểm tra an toàn AI 4 trục (Điểm rủi ro &lt; 0.3 - BR-E4) và sẵn
-            sàng mở bán đúng thời điểm T0.
+            Sự kiện đã vượt qua kiểm duyệt và sẵn sàng mở bán đúng thời điểm T0.
           </Alert>
         )}
 
@@ -126,6 +165,13 @@ export function ModerationStatusCard({
             {errorMsg}
           </Alert>
         )}
+
+        {/* Chi tiết kiểm duyệt AI: backend chưa cung cấp cho organizer (contracts mục 7) */}
+        <Alert variant="info" title="Chi tiết kiểm duyệt AI: dữ liệu mẫu / chưa khả dụng">
+          {moderation
+            ? "Điểm rủi ro và 4 trục bên dưới là dữ liệu mẫu, chưa nối với nguồn thật. Không dùng để đánh giá kết quả duyệt."
+            : "Hệ thống chưa cung cấp điểm rủi ro và phân tích 4 trục cho Ban tổ chức. Chỉ trạng thái duyệt ở trên là dữ liệu thật."}
+        </Alert>
 
         {/* Chi tiết điểm rủi ro tổng hợp */}
         {moderation && (
@@ -231,6 +277,33 @@ export function ModerationStatusCard({
           </div>
         )}
 
+        {confirmingCancel && (
+          <Alert variant="warning" title="Xác nhận huỷ sự kiện">
+            <p>Huỷ sự kiện &ldquo;{event.title}&rdquo;? Hành động này không thể hoàn tác.</p>
+            <div className="mt-sm flex gap-sm">
+              <Button variant="destructive" onClick={handleCancel} disabled={isCancelling}>
+                {isCancelling ? "Đang huỷ..." : "Xác nhận huỷ"}
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setConfirmingCancel(false);
+                  setCancelError(null);
+                }}
+                disabled={isCancelling}
+              >
+                Giữ lại sự kiện
+              </Button>
+            </div>
+          </Alert>
+        )}
+
+        {cancelError && (
+          <Alert variant="error" title="Lỗi huỷ sự kiện">
+            {cancelError}
+          </Alert>
+        )}
+
         {/* Các nút hành động */}
         <div className="flex flex-wrap items-center justify-between gap-sm pt-md border-t border-border">
           <Link href="/organizer/events">
@@ -238,11 +311,19 @@ export function ModerationStatusCard({
           </Link>
 
           <div className="flex gap-sm">
-            <Link href={`/organizer/events/${event.id}/edit`}>
-              <Button variant="secondary">✏️ Chỉnh sửa thông tin</Button>
-            </Link>
+            {canEditEvent(event.state) && (
+              <Link href={`/organizer/events/${event.id}/edit`}>
+                <Button variant="secondary">✏️ Chỉnh sửa thông tin</Button>
+              </Link>
+            )}
 
-            {onResubmit && (isRejected || event.state === "DRAFT") && (
+            {onCancel && canCancelEvent(event.state) && !confirmingCancel && (
+              <Button variant="destructive" onClick={() => setConfirmingCancel(true)}>
+                Huỷ sự kiện
+              </Button>
+            )}
+
+            {onResubmit && canSubmitEvent(event.state) && (
               <Button
                 variant="primary"
                 onClick={handleResubmit}
