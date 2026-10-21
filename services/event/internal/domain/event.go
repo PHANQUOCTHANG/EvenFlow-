@@ -2,6 +2,7 @@ package domain
 
 import (
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"github.com/google/uuid"
@@ -21,24 +22,49 @@ const (
 	StatusCancelled     EventStatus = "CANCELLED"
 )
 
+// PublicStatuses la trang thai khach an danh xem duoc trong danh sach cong khai: da duoc duyet va
+// chua ket thuc. DRAFT/PENDING_REVIEW/REJECTED chi chu su kien va moderator thay.
+func PublicStatuses() []EventStatus {
+	return []EventStatus{StatusScheduled, StatusOnSale, StatusSoldOut}
+}
+
+// DefaultMinSaleLead la khoang toi thieu giua luc duyet va gio mo ban (BR-E2): du de pre-warm ha tang.
+const DefaultMinSaleLead = 30 * time.Minute
+
+var minSaleLead atomic.Int64
+
+func init() { minSaleLead.Store(int64(DefaultMinSaleLead)) }
+
+// SetMinSaleLead doi khoang BR-E2 cho toan process. CHI goi luc khoi dong (event-svc doc
+// MIN_SALE_LEAD_SECONDS) de moi truong demo duyet va mo ban trong vai phut; production giu mac dinh.
+func SetMinSaleLead(d time.Duration) {
+	if d < 0 {
+		d = 0
+	}
+	minSaleLead.Store(int64(d))
+}
+
+// MinSaleLead tra khoang BR-E2 dang ap dung.
+func MinSaleLead() time.Duration { return time.Duration(minSaleLead.Load()) }
+
 // Event đại diện cho một sự kiện trong hệ thống EvenFlow.
 type Event struct {
-	ID              uuid.UUID    `json:"id"`
-	OrganizerID     uuid.UUID    `json:"organizer_id"`
-	Slug            string       `json:"slug"`
-	Title           string       `json:"title"`
-	Description     string       `json:"description"`
-	Venue           string       `json:"venue"`
-	StartsAt        time.Time    `json:"starts_at"`
-	SaleStartAt     time.Time    `json:"sale_start_at"`
-	SaleEndAt       *time.Time   `json:"sale_end_at,omitempty"`
-	Status          EventStatus  `json:"status"`
-	MaxPerIdentity  int          `json:"max_per_identity"`
-	MaxPerOrder     int          `json:"max_per_order"`
-	HoldTTLSeconds  int          `json:"hold_ttl_seconds"`
-	CreatedAt       time.Time    `json:"created_at"`
-	UpdatedAt       time.Time    `json:"updated_at"`
-	Tiers           []TicketTier `json:"tiers,omitempty"`
+	ID             uuid.UUID    `json:"id"`
+	OrganizerID    uuid.UUID    `json:"organizer_id"`
+	Slug           string       `json:"slug"`
+	Title          string       `json:"title"`
+	Description    string       `json:"description"`
+	Venue          string       `json:"venue"`
+	StartsAt       time.Time    `json:"starts_at"`
+	SaleStartAt    time.Time    `json:"sale_start_at"`
+	SaleEndAt      *time.Time   `json:"sale_end_at,omitempty"`
+	Status         EventStatus  `json:"status"`
+	MaxPerIdentity int          `json:"max_per_identity"`
+	MaxPerOrder    int          `json:"max_per_order"`
+	HoldTTLSeconds int          `json:"hold_ttl_seconds"`
+	CreatedAt      time.Time    `json:"created_at"`
+	UpdatedAt      time.Time    `json:"updated_at"`
+	Tiers          []TicketTier `json:"tiers,omitempty"`
 }
 
 // NewEvent tạo một sự kiện mới ở trạng thái DRAFT.
@@ -201,7 +227,7 @@ func (e *Event) Approve(now time.Time) error {
 	}
 
 	// Kiểm tra BR-E2: T0 >= approval_time + 30 phút
-	earliestAllowedSaleStart := now.Add(30 * time.Minute)
+	earliestAllowedSaleStart := now.Add(MinSaleLead())
 	if e.SaleStartAt.Before(earliestAllowedSaleStart) {
 		return ErrSaleStartTimeTooEarly
 	}
@@ -218,7 +244,7 @@ func (e *Event) ApproveOverride(now time.Time) error {
 		return ErrInvalidStateTransition
 	}
 
-	earliestAllowedSaleStart := now.Add(30 * time.Minute)
+	earliestAllowedSaleStart := now.Add(MinSaleLead())
 	if e.SaleStartAt.Before(earliestAllowedSaleStart) {
 		return ErrSaleStartTimeTooEarly
 	}

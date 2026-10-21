@@ -9,6 +9,7 @@ import (
 	"github.com/eventflow/eventflow/services/event/internal/domain"
 	"github.com/eventflow/eventflow/services/event/internal/port"
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 )
 
 type eventRepository struct {
@@ -127,23 +128,45 @@ func (r *eventRepository) GetBySlug(ctx context.Context, slug string) (*domain.E
 	return &e, nil
 }
 
-func (r *eventRepository) ListByOrganizer(ctx context.Context, organizerID uuid.UUID) ([]*domain.Event, error) {
-	query := `
-		SELECT
+const eventColumns = `
 			id, organizer_id, slug, title, description, venue,
 			starts_at, sale_start_at, sale_end_at, status,
 			max_per_identity, max_per_order, hold_ttl_seconds,
-			created_at, updated_at
+			created_at, updated_at`
+
+func (r *eventRepository) ListByOrganizer(ctx context.Context, organizerID uuid.UUID) ([]*domain.Event, error) {
+	query := `SELECT ` + eventColumns + `
 		FROM events
 		WHERE organizer_id = $1
-		ORDER BY created_at DESC
-	`
+		ORDER BY created_at DESC`
 	rows, err := r.db.QueryContext(ctx, query, organizerID)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	return scanEvents(rows)
+}
 
+// ListPublic: su kien da duyet (domain.PublicStatuses), gan mo ban nhat truoc.
+func (r *eventRepository) ListPublic(ctx context.Context, limit int) ([]*domain.Event, error) {
+	statuses := domain.PublicStatuses()
+	names := make([]string, len(statuses))
+	for i, st := range statuses {
+		names[i] = string(st)
+	}
+	query := `SELECT ` + eventColumns + `
+		FROM events
+		WHERE status = ANY($1)
+		ORDER BY sale_start_at, id
+		LIMIT $2`
+	rows, err := r.db.QueryContext(ctx, query, pq.Array(names), limit)
+	if err != nil {
+		return nil, err
+	}
+	return scanEvents(rows)
+}
+
+func scanEvents(rows *sql.Rows) ([]*domain.Event, error) {
+	defer rows.Close()
 	var events []*domain.Event
 	for rows.Next() {
 		var e domain.Event
@@ -168,7 +191,6 @@ func (r *eventRepository) ListByOrganizer(ctx context.Context, organizerID uuid.
 		}
 		events = append(events, &e)
 	}
-
 	return events, rows.Err()
 }
 

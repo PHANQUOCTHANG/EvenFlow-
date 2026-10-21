@@ -4,6 +4,8 @@
 //   - inventory reconciler: so Redis voi Postgres moi 10 giay va sua lech (EV-132)
 //   - outbox relay: relay su kien tu outbox_events sang RabbitMQ (EV-131, EVF-36)
 //   - order.paid consumer: thanh toan xong thi tu phat ve (EV-133)
+//   - event discovery: tim su kien dang/sap mo ban trong Postgres, cac tien trinh tren va admit
+//     controller tu phuc vu su kien moi (EV-118)
 //
 // Tach khoi server la co y: mot dot tra kho lon khong duoc phep lam cham
 // duong di nong cua khach dang mua ve.
@@ -81,10 +83,9 @@ func run(log *slog.Logger) error {
 		return err
 	}
 
+	// ACTIVE_EVENT_IDS la phan co dinh (smoke, k6); phan con lai do EventDiscovery tim trong Postgres.
 	eventIDs := splitCSV(os.Getenv("ACTIVE_EVENT_IDS"))
-	if len(eventIDs) == 0 {
-		log.Warn("khong co su kien nao de quet; dat ACTIVE_EVENT_IDS")
-	}
+	active := worker.NewActiveEvents(eventIDs)
 
 	repo := postgresadapter.NewRepository(pool)
 
@@ -171,31 +172,34 @@ func run(log *slog.Logger) error {
 	}
 
 	prom := metricsadapter.New(prometheus.DefaultRegisterer)
-	sweeper := worker.NewHoldSweeper(
-		gate,
-		repo,
-		pub,
-		worker.DefaultSweeperConfig(eventIDs),
-		log,
-	).WithMetrics(prom)
-	seeder := worker.NewInventorySeeder(
-		repo, gate, worker.DefaultSeederConfig(eventIDs), log,
-	)
-	reconciler := worker.NewInventoryReconciler(
-		repo, repo, gate, worker.DefaultReconcilerConfig(eventIDs), log,
-	).WithMetrics(prom)
+	sweeperCfg := worker.DefaultSweeperConfig(eventIDs)
+	sweeperCfg.Events = active.List
+	sweeper := worker.NewHoldSweeper(gate, repo, pub, sweeperCfg, log).WithMetrics(prom)
+	seederCfg := worker.DefaultSeederConfig(eventIDs)
+	seederCfg.Events = active.List
+	seeder := worker.NewInventorySeeder(repo, gate, seederCfg, log)
+	reconcilerCfg := worker.DefaultReconcilerConfig(eventIDs)
+	reconcilerCfg.Events = active.List
+	reconciler := worker.NewInventoryReconciler(repo, repo, gate, reconcilerCfg, log).WithMetrics(prom)
 
 	// EV-146: bao het ve cho phong cho (co meta.sold_out / stock_zero).
-	soldOut := worker.NewSoldOutWatcher(
-		worker.NewTierSource(repo), gate, gate, worker.DefaultSoldOutWatcherConfig(eventIDs), log,
-	)
+	soldOutCfg := worker.DefaultSoldOutWatcherConfig(eventIDs)
+	soldOutCfg.Events = active.List
+	soldOut := worker.NewSoldOutWatcher(worker.NewTierSource(repo), gate, gate, soldOutCfg, log)
 
-	log.Info("worker bat dau", "so_su_kien", len(eventIDs),
+	discovery := worker.NewEventDiscovery(repo, gate, active, worker.DefaultEventDiscoveryConfig(), log)
+
+	log.Info("worker bat dau", "su_kien_co_dinh", len(eventIDs),
 		"chu_ky_quet", time.Second, "chu_ky_nap_kho", worker.DefaultSeederConfig(nil).Interval,
 		"chu_ky_doi_soat", worker.DefaultReconcilerConfig(nil).Interval)
 
-	errs := make(chan error, 7)
+	errs := make(chan error, 8)
 	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		errs <- discovery.Run(ctx)
+	}()
 
 	wg.Add(1)
 	go func() {

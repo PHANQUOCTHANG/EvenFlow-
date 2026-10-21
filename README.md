@@ -41,6 +41,23 @@ make smoke       # chay tron mot luong mua ve
 
 Dev không cần API key Gemini: `GEMINI_MOCK=1` (mặc định) dùng client giả lập.
 
+### Tài khoản demo
+
+`make seed` tạo sẵn 4 tài khoản đã xác thực OTP, đăng nhập qua `POST http://localhost:8080/api/v1/auth/login`.
+Mật khẩu chung `Demo@123456` — **chỉ dùng cho local/demo**.
+
+| Email | Vai trò |
+|---|---|
+| `demo@eventflow.local` | buyer |
+| `organizer@eventflow.local` | organizer (chủ sự kiện demo) |
+| `moderator@eventflow.local` | moderator |
+| `ops@eventflow.local` | ops |
+
+Sự kiện organizer tạo mới tự vào bán, không cần sửa `ACTIVE_EVENT_IDS` hay khởi động lại container:
+được duyệt (`SCHEDULED`) thì trong vài giây phòng chờ và ticketing đã nhận, đến giờ mở bán thì tự chuyển `ON_SALE`.
+Compose đặt `MIN_SALE_LEAD_SECONDS=60` (BR-E2 mặc định 30 phút giữa lúc duyệt và giờ mở bán) để demo được trong một buổi;
+production không đặt biến này.
+
 ## Tài liệu
 
 | Tài liệu | Nội dung |

@@ -229,6 +229,9 @@ services:
       ANOMALY_CONSUMERS: "1"
       REPORT_CONSUMERS: "1"
       INTERNAL_API_BASE: "http://gateway:8080"
+      # Ket qua kiem duyet AI goi PATCH /internal/... cua event-service. Gateway chan /internal/*
+      # tu ben ngoai, nen goi thang event trong mang compose.
+      MODERATION_API_BASE: "http://event:8084"
     # RabbitMQ co the mo cong cham hon luc ai-worker khoi dong; tu thu lai thay vi chet han.
     restart: unless-stopped
     ports: ["8090:8090"]
@@ -266,6 +269,9 @@ services:
       HTTP_ADDR: ":8084"
       DATABASE_URL: "postgres://eventflow:eventflow@pgbouncer:5432/eventflow?sslmode=disable"
       RABBITMQ_URL: "amqp://eventflow:eventflow@rabbitmq:5672/"
+      # BR-E2 mac dinh 30 phut giua luc duyet va gio mo ban. Demo ha xuong 60 giay de organizer tao,
+      # duyet va mo ban trong mot buoi trinh bay. Production KHONG dat bien nay.
+      MIN_SALE_LEAD_SECONDS: "${MIN_SALE_LEAD_SECONDS:-60}"
     depends_on:
       rabbitmq: {condition: service_healthy}
       migrate: {condition: service_completed_successfully}

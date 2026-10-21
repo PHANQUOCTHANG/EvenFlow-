@@ -179,3 +179,20 @@ func (r *fakeAuditRepo) ListBySubject(ctx context.Context, subject string) ([]*d
 	}
 	return list, nil
 }
+
+func (r *fakeEventRepo) ListPublic(ctx context.Context, limit int) ([]*domain.Event, error) {
+	public := map[domain.EventStatus]bool{}
+	for _, st := range domain.PublicStatuses() {
+		public[st] = true
+	}
+	var list []*domain.Event
+	for _, e := range r.events {
+		if public[e.Status] {
+			list = append(list, e)
+		}
+	}
+	if len(list) > limit {
+		list = list[:limit]
+	}
+	return list, nil
+}

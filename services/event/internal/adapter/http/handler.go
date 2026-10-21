@@ -6,6 +6,7 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -116,6 +117,31 @@ func (h *EventHandler) GetEventByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	httpx.WriteJSON(w, http.StatusOK, ToEventResponse(evt))
+}
+
+// GET /api/v1/events/public?limit=n — danh sach cong khai (khach an danh), gan mo ban nhat truoc.
+// Cache ngan o CDN/trinh duyet: trang chu bi goi rat nhieu luc sap mo ban (EV-181).
+func (h *EventHandler) ListPublicEvents(w http.ResponseWriter, r *http.Request) {
+	limit := 0
+	if raw := r.URL.Query().Get("limit"); raw != "" {
+		n, err := strconv.Atoi(raw)
+		if err != nil || n < 1 {
+			httpx.WriteProblem(w, http.StatusBadRequest, "limit phai la so nguyen >= 1")
+			return
+		}
+		limit = n
+	}
+	events, err := h.getUC.ListPublic(r.Context(), limit)
+	if err != nil {
+		h.fail(w, r, err)
+		return
+	}
+	resp := make([]EventResponse, len(events))
+	for i, e := range events {
+		resp[i] = ToEventResponse(e)
+	}
+	w.Header().Set("Cache-Control", "public, max-age=10")
+	httpx.WriteJSON(w, http.StatusOK, resp)
 }
 
 // GET /api/v1/events/slug/{slug}

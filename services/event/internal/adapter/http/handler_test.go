@@ -448,3 +448,20 @@ func TestHTTP_ModeratorApprove_And_Reject(t *testing.T) {
 		t.Errorf("expected at least 2 audit logs recorded, got %d", len(logs))
 	}
 }
+
+func (r *fakeRepo) ListPublic(ctx context.Context, limit int) ([]*domain.Event, error) {
+	public := map[domain.EventStatus]bool{}
+	for _, st := range domain.PublicStatuses() {
+		public[st] = true
+	}
+	var list []*domain.Event
+	for _, e := range r.events {
+		if public[e.Status] {
+			list = append(list, e)
+		}
+	}
+	if len(list) > limit {
+		list = list[:limit]
+	}
+	return list, nil
+}

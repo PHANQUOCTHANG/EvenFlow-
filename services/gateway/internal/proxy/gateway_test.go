@@ -310,6 +310,7 @@ func TestGateway_DinhTuyenDungService(t *testing.T) {
 		{http.MethodPost, "/api/v1/auth/login", "", config.Identity},
 		{http.MethodPost, "/api/v1/auth/refresh", "", config.Identity},
 		{http.MethodGet, "/api/v1/auth/me", buyer, config.Identity},
+		{http.MethodGet, "/api/v1/events/public", "", config.Event},
 		{http.MethodGet, "/api/v1/events/e1", "", config.Event},
 		{http.MethodGet, "/api/v1/events/slug/live-show", "", config.Event},
 		{http.MethodPost, "/api/v1/events", buyer, config.Event},

@@ -14,6 +14,8 @@ type EventRepository interface {
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.Event, error)
 	GetBySlug(ctx context.Context, slug string) (*domain.Event, error)
 	ListByOrganizer(ctx context.Context, organizerID uuid.UUID) ([]*domain.Event, error)
+	// ListPublic tra su kien khach xem duoc (domain.PublicStatuses), sap theo gio mo ban.
+	ListPublic(ctx context.Context, limit int) ([]*domain.Event, error)
 	Update(ctx context.Context, event *domain.Event) error
 	// UpdateWithOutbox cap nhat su kien va ghi cac message outbox trong MOT transaction
 	// (quy tac bat bien 1): khong bao gio co su kien da doi trang thai ma thieu job di kem.

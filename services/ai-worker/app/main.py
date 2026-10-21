@@ -93,7 +93,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             embed_model=settings.gemini_embed_model,
         )
         tools = SystemTools(settings.internal_api_base)
-        mod_consumer = moderation.ModerationConsumer(gemini, settings.internal_api_base, limiter=limiter)
+        mod_consumer = moderation.ModerationConsumer(gemini, settings.moderation_base, limiter=limiter)
         stack.push_async_callback(mod_consumer.aclose)
         chat_consumer = chat.ChatConsumer(
             limiter=limiter,
