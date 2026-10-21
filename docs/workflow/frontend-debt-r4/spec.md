@@ -19,7 +19,10 @@ correct (single POST per refresh token, always inside the Web Lock, no steal).
   rejects with `AUTH_REQUIRED`, B's stored session is left untouched, and no `POST /api/v1/auth/refresh` is sent with
   any token. A rotation by another tab for the SAME user is still reused without a POST (unchanged).
 - **AC-2 (R4-1 / W-3)** Given a refresh POST that does not answer:
-  - each caller waiting on it (same tab or other tabs) rejects with `NETWORK_ERROR` after at most 45 s, the session
+  - (clarified 2026-10-21 after plan review B-1: the call that owns the POST waits for the POST itself, bounded by the
+    120 s abort below, so existing test Z-1b "holder gets 200 after 60 s" stays valid)
+    every OTHER caller waiting on it (later calls in the same tab joining the in-flight refresh, or other tabs waiting
+    for the lock) rejects with `NETWORK_ERROR` after at most 45 s, the session
     is kept, and no second POST is sent while the first is in flight;
   - the refresh POST itself is aborted after 120 s; that outcome is `AUTH_REQUIRED` and the session is cleared,
     because the server may already have rotated the token, which must never be POSTed again;
