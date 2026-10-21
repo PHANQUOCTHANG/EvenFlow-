@@ -52,6 +52,10 @@ export function OrderResultView({
         }).toString()}`
       : `/checkout/${eventId}`;
 
+  // 403 forbidden: hien thong bao ke ca khi da co don PENDING tren man hinh (khong spinner, khong nut kiem tra, khong poll).
+  const blocked = error?.type === "FORBIDDEN";
+  const showErrorCard = error !== null && (blocked || order === null);
+
   const handlePrint = () => {
     if (typeof window !== "undefined") {
       window.print();
@@ -68,7 +72,7 @@ export function OrderResultView({
       </header>
 
       {/* 0. Khong lay duoc don (404 / loi mang): bao loi + thu lai, khong bia du lieu (AC-14) */}
-      {order === null && error !== null && (
+      {showErrorCard && error !== null && (
         <Card className="space-y-md p-xl text-center">
           <Alert
             variant="error"
@@ -92,7 +96,7 @@ export function OrderResultView({
       )}
 
       {/* 1. Trạng thái PENDING: Webhook chậm hoặc đang chờ cổng phản hồi (AC-4, BR-O6) */}
-      {status === "PENDING" && !(order === null && error !== null) && (
+      {status === "PENDING" && !showErrorCard && (
         <Card className="space-y-md p-xl text-center">
           <div className="flex justify-center">
             <Spinner size="lg" aria-label="Đang xác nhận" />
