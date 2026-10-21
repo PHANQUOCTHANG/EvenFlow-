@@ -44,6 +44,14 @@ run go-event   bash -c "cd services/event && go vet ./... && go vet -tags integr
 run tamper bash -c "
 set -e
 d=\$(git diff --name-only $TESTS_FROZEN HEAD -- '*.contract.test.*' 'apps/web/src/test-utils' '*contract_test.go' 'services/event/internal/adapter/postgres/list_public_integration_test.go')
+# Ngoai le DA DUYET (test-change-request-fix2.md, G-9): dung 1 dong trong hold-client.contract.test.ts
+ok='apps/web/src/lib/hold-client.contract.test.ts'
+if [ \"\$d\" = \"\$ok\" ]; then
+  ch=\$(git diff $TESTS_FROZEN HEAD -- \$ok | grep -E '^[+-] ' | sort | tr '\\n' '|')
+  [ \"\$ch\" = '+    [403, \"/problems/forbidden\", \"FORBIDDEN\"],|-    [403, \"/problems/forbidden\", \"NOT_ADMITTED\"],|' ] || { echo \"unapproved change in \$ok: \$ch\"; exit 1; }
+  echo 'approved TCR G-9 only'
+  d=''
+fi
 [ -z \"\$d\" ] || { echo \"contract tests changed: \$d\"; exit 1; }
 del=\$(git diff --diff-filter=D --name-only $BASE HEAD | grep -E '\\.test\\.(ts|tsx)\$|_test\\.go\$|\\.spec\\.ts\$' || true)
 [ -z \"\$del\" ] || { echo \"deleted test files (must be listed in tcr-applied.md):\"; echo \"\$del\"; for f in \$del; do grep -q \"\$(basename \$f)\" docs/workflow/frontend-real-api/tcr-applied.md || { echo \"NOT LOGGED: \$f\"; exit 1; }; done; }
