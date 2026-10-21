@@ -362,5 +362,119 @@
       "title": "Google login: when /devices succeeds and /refresh fails on the NETWORK (response lost after the server rotated the pair) the client restores the original Google refresh token, which may already be revoked -> the next token-expired turns into a forced logout",
       "reason": "rare network race after server rotation; leads to re-login, no leak"
     }
-  ]
+  ],
+  "round2": {
+    "review_commit": "604d721",
+    "verdicts_from": [
+      "findings-round2-review.json",
+      "findings-round2-challenge.json"
+    ],
+    "items": [
+      {
+        "id": "G-1",
+        "status": "to_fix",
+        "severity": "major",
+        "sources": [
+          "Y-1",
+          "R2-3"
+        ],
+        "title": "Lock-timeout fallback refreshes outside the Web Lock -> refresh-token reuse -> family revoked -> all tabs logged out"
+      },
+      {
+        "id": "G-2",
+        "status": "to_fix",
+        "severity": "major",
+        "sources": [
+          "Y-10",
+          "R2-5",
+          "F-1 partial"
+        ],
+        "title": "SOLD_OUT events cannot raise tier quota although backend allows it"
+      },
+      {
+        "id": "G-3",
+        "status": "to_fix",
+        "severity": "minor",
+        "sources": [
+          "R2-1",
+          "Y-13"
+        ],
+        "title": "NUL byte + CRLF in api-client.ts makes git treat it as binary"
+      },
+      {
+        "id": "G-4",
+        "status": "to_fix",
+        "severity": "minor",
+        "sources": [
+          "R2-2"
+        ],
+        "title": "Involuntary session expiry wipes buy-flow idempotency keys and hold mid-checkout"
+      },
+      {
+        "id": "G-5",
+        "status": "to_fix",
+        "severity": "minor",
+        "sources": [
+          "Y-7",
+          "R2-7"
+        ],
+        "title": "Payment idempotency key not scoped to request body"
+      },
+      {
+        "id": "G-6",
+        "status": "to_fix",
+        "severity": "minor",
+        "sources": [
+          "Y-8"
+        ],
+        "title": "Stale in-progress flag keeps payment key after definitive 4xx"
+      },
+      {
+        "id": "G-7",
+        "status": "to_fix",
+        "severity": "minor",
+        "sources": [
+          "R2-6"
+        ],
+        "title": "Identifier (email/phone) passed in sign-in URL query"
+      },
+      {
+        "id": "G-8",
+        "status": "to_fix",
+        "severity": "minor",
+        "sources": [
+          "R2-4",
+          "Y-11"
+        ],
+        "title": "Tier created during failed edit stays editable; rename/reprice silently dropped on retry"
+      },
+      {
+        "id": "G-9",
+        "status": "to_fix",
+        "severity": "minor",
+        "sources": [
+          "F-5 gap"
+        ],
+        "title": "403 /problems/forbidden mapped to NOT_ADMITTED"
+      },
+      {
+        "id": "D-F16",
+        "status": "deferred",
+        "severity": "minor",
+        "sources": [
+          "F-16 gap"
+        ],
+        "reason": "RegisterForm Google button has no remember-me control; default local storage documented"
+      },
+      {
+        "id": "D-F17",
+        "status": "deferred",
+        "severity": "minor",
+        "sources": [
+          "F-17 gap"
+        ],
+        "reason": "sessionStorage is per tab by design; other tabs lose access on next call via AUTH_REQUIRED"
+      }
+    ]
+  }
 }
