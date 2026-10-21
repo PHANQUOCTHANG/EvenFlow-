@@ -13,9 +13,12 @@ afterEach(() => {
 });
 
 describe("F-14", () => {
-  it("lock never granted -> after the timeout the tab refreshes on its own", async () => {
+  it("lock never granted -> after the timeout the tab steals the lock and refreshes inside it (G-1)", async () => {
     vi.useFakeTimers();
-    Object.defineProperty(navigator, "locks", { value: { request: () => new Promise(() => {}) }, configurable: true });
+    // Pending (non-steal) requests never settle; a steal request runs its callback at once.
+    const request = (_n: string, opts: unknown, cb?: () => Promise<unknown>) =>
+      (opts as { steal?: boolean }).steal && cb ? cb() : new Promise(() => {});
+    Object.defineProperty(navigator, "locks", { value: { request }, configurable: true });
     let refreshed = false;
     installFetch((c) => {
       if (c.path === "/api/v1/auth/refresh") {
