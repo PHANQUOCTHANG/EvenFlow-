@@ -131,6 +131,12 @@ async function doRefresh(usedRefresh: string | null, sentUserId: string | null):
   return refreshCore(cur, cur.refreshToken);
 }
 
+/** Chi xoa phien khi no van la phien da POST: cung epoch, cung refresh token VA cung user id. */
+function isSamePostedSession(epoch: number, cur: Session): boolean {
+  const stored = peekSession();
+  return epoch === getSessionEpoch() && stored?.refreshToken === cur.refreshToken && stored?.user.id === cur.user.id;
+}
+
 async function refreshCore(cur: Session, refreshToken: string): Promise<string> {
   const epoch = getSessionEpoch();
   const controller = new AbortController();
@@ -140,7 +146,7 @@ async function refreshCore(cur: Session, refreshToken: string): Promise<string> 
   } catch (err) {
     if (controller.signal.aborted) {
       // Server co the da xoay token roi: khong bao gio POST lai. Chi xoa neu phien van la phien da POST.
-      if (epoch === getSessionEpoch() && peekSession()?.refreshToken === cur.refreshToken) clearSession();
+      if (isSamePostedSession(epoch, cur)) clearSession();
       throw new ApiError("AUTH_REQUIRED", 401, {}, "Phien dang nhap da het han");
     }
     if (err instanceof ApiError) throw err;
@@ -166,7 +172,7 @@ async function refreshPost(cur: Session, refreshToken: string, epoch: number, co
   if (!res.ok) {
     if (res.status === 400 || res.status === 401 || res.status === 403) {
       // Dang xuat/xoay trong luc cho: khong xoa phien cua nguoi khac.
-      if (epoch === getSessionEpoch() && peekSession()?.refreshToken === cur.refreshToken) clearSession();
+      if (isSamePostedSession(epoch, cur)) clearSession();
       throw new ApiError("AUTH_REQUIRED", 401, await readProblem(res), "Phien dang nhap da het han");
     }
     throw await toApiError(res);
