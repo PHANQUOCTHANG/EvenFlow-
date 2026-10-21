@@ -28,6 +28,7 @@ make up          # toan bo ha tang + service
 make migrate
 make seed        # 1 su kien ON_SALE, 20.000 ve
 make smoke       # chay tron mot luong mua ve
+make demo        # ~2 phut: dang ky -> organizer tao su kien -> mua ve -> ve + email (qua gateway)
 ```
 
 | Dịch vụ | URL |
@@ -68,6 +69,7 @@ production không đặt biến này.
 | [docs/03-cau-truc-src.md](docs/03-cau-truc-src.md) | Cấu trúc thư mục, quy ước |
 | [docs/04-jira-backlog.md](docs/04-jira-backlog.md) | 10 epic, 89 story/task, 461 SP — kèm `docs/jira-import.csv` |
 | [docs/08-stitch-ui-ux-handoff.md](docs/08-stitch-ui-ux-handoff.md) | Product/UI context, design direction và prompt Stitch theo page/component |
+| [docs/demo/kich-ban.md](docs/demo/kich-ban.md) | Kịch bản trình bày `make demo` (≈ 5 phút), xử lý sự cố |
 | [docs/09-ke-hoach-hoan-thien-backend.md](docs/09-ke-hoach-hoan-thien-backend.md) | Kế hoạch hoàn thiện backend theo 10 giai đoạn, kèm trạng thái |
 
 ## Cấu trúc

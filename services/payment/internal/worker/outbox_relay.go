@@ -13,6 +13,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/eventflow/eventflow/libs/go/mq"
+	"github.com/eventflow/eventflow/libs/go/otelx"
 )
 
 // Exchange nhan su kien cua payment (libs/go/mq.PaymentTopology).
@@ -138,7 +139,12 @@ func (r *OutboxRelay) RelayOnce(ctx context.Context) (int, error) {
 		if it.traceID != nil && *it.traceID != "" {
 			msg.CorrelationID = *it.traceID
 		}
-		pubCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+		// Noi tiep trace cua request da ghi dong outbox nay (EV-103).
+		var tp string
+		if it.traceID != nil {
+			tp = *it.traceID
+		}
+		pubCtx, cancel := context.WithTimeout(otelx.ContextWithTraceparent(ctx, tp), 5*time.Second)
 		err := r.pub.Publish(pubCtx, Exchange, it.routingKey, msg)
 		cancel()
 		if err != nil {

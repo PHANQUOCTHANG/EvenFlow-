@@ -18,6 +18,7 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 
 	"github.com/eventflow/eventflow/libs/go/mq"
+	"github.com/eventflow/eventflow/libs/go/otelx"
 	httpadapter "github.com/eventflow/eventflow/services/notification/internal/adapter/http"
 	pgadapter "github.com/eventflow/eventflow/services/notification/internal/adapter/postgres"
 	"github.com/eventflow/eventflow/services/notification/internal/adapter/rabbitmq"
@@ -41,6 +42,14 @@ func main() {
 		"email_provider", cfg.EmailProvider,
 		"sms_provider", cfg.SMSProvider,
 	)
+
+	// EV-103: span cua consumer (mq.Consume) noi tiep trace cua payment/ticketing qua header AMQP.
+	shutdownTrace, err := otelx.Init(context.Background(), "notification")
+	if err != nil {
+		log.Error("khoi tao trace that bai", "err", err)
+		os.Exit(1)
+	}
+	defer func() { _ = shutdownTrace(context.Background()) }()
 
 	// 1. Khoi tao Template Renderer tieng Viet
 	renderer, err := template.NewGoTemplateRenderer()
@@ -109,6 +118,7 @@ func main() {
 	mux := http.NewServeMux()
 	handler := httpadapter.NewNotificationHandler(orderPaidUC, ticketIssuedUC, refundUC, getHistoryUC)
 	handler.RegisterRoutes(mux)
+	mux.Handle("GET /metrics", otelx.MetricsHandler())
 
 	server := &http.Server{
 		Addr:              cfg.HTTPAddr,

@@ -1,0 +1,248 @@
+### EventFlow -- demo bang tay (VS Code "REST Client" hoac Bruno/IntelliJ HTTP Client)
+###
+### Cung luong voi `make demo`, nhung bam tung buoc de vua noi vua cho nguoi xem. Moi request qua gateway.
+### Dieu kien: `make up && make migrate && make seed`. Email OTP/ve xem o Mailpit http://localhost:8025.
+### Chay tung request theo thu tu tu tren xuong; bien @x = {{...}} lay tu response truoc (REST Client).
+
+@gw = http://localhost:8080
+@pw = Demo@123456
+
+###########################################################################
+# 1. Tai khoan seed (mat khau chung Demo@123456)
+###########################################################################
+
+# @name organizerLogin
+POST {{gw}}/api/v1/auth/login
+Content-Type: application/json
+
+{"identifier": "organizer@eventflow.local", "password": "{{pw}}", "device_fingerprint": "http-organizer"}
+
+###
+@organizer = {{organizerLogin.response.body.access_token}}
+
+# @name moderatorLogin
+POST {{gw}}/api/v1/auth/login
+Content-Type: application/json
+
+{"identifier": "moderator@eventflow.local", "password": "{{pw}}", "device_fingerprint": "http-moderator"}
+
+###
+@moderator = {{moderatorLogin.response.body.access_token}}
+
+# @name opsLogin
+POST {{gw}}/api/v1/auth/login
+Content-Type: application/json
+
+{"identifier": "ops@eventflow.local", "password": "{{pw}}", "device_fingerprint": "http-ops"}
+
+###
+@ops = {{opsLogin.response.body.access_token}}
+
+###########################################################################
+# 2. Khach hang tu dang ky (email moi): xin OTP -> doc OTP trong Mailpit -> xac minh -> dang nhap
+###########################################################################
+
+@buyerEmail = khach.demo@example.com
+
+POST {{gw}}/api/v1/auth/register/request-otp
+Content-Type: application/json
+
+{"identifier": "{{buyerEmail}}"}
+
+### Mo http://localhost:8025, lay ma 6 so, dien vao "otp" roi gui:
+POST {{gw}}/api/v1/auth/register/verify
+Content-Type: application/json
+
+{"identifier": "{{buyerEmail}}", "password": "{{pw}}", "otp": "123456"}
+
+###
+# @name buyerLogin
+POST {{gw}}/api/v1/auth/login
+Content-Type: application/json
+
+{"identifier": "{{buyerEmail}}", "password": "{{pw}}", "device_fingerprint": "http-buyer"}
+
+###
+@buyer = {{buyerLogin.response.body.access_token}}
+
+###########################################################################
+# 3. Organizer tao su kien. sale_start_at = 90 giay sau luc bam gui ({{$datetime ...}} la bien dong cua
+#    REST Client; Bruno/IntelliJ thi tu dien gio UTC dang ...Z). BR-E2 o compose demo la 60 giay giua luc
+#    duyet va gio mo ban, nen nop duyet NGAY sau khi tao, khong de qua 30 giay.
+###########################################################################
+
+# @name createEvent
+POST {{gw}}/api/v1/events
+Authorization: Bearer {{organizer}}
+Content-Type: application/json
+Idempotency-Key: http-create-1
+
+{
+  "slug": "demo-http-1",
+  "title": "Dem nhac EventFlow Live",
+  "description": "Tao bang tay luc demo",
+  "venue": "San van dong My Dinh",
+  "starts_at": "{{$datetime iso8601 7 d}}",
+  "sale_start_at": "{{$datetime iso8601 90 s}}"
+}
+
+###
+@eventId = {{createEvent.response.body.id}}
+
+POST {{gw}}/api/v1/events/{{eventId}}/tiers
+Authorization: Bearer {{organizer}}
+Content-Type: application/json
+Idempotency-Key: http-tier-1
+
+{"name": "Standard", "price_cents": 50000000, "quota": 200}
+
+### Nop duyet: AI kiem duyet (mock) trong ~1 giay -> tu duyet, hoac vao hang doi Moderator.
+POST {{gw}}/api/v1/events/{{eventId}}/submit
+Authorization: Bearer {{organizer}}
+Content-Type: application/json
+Idempotency-Key: http-submit-1
+
+{}
+
+### Neu status con PENDING_REVIEW thi Moderator duyet:
+POST {{gw}}/api/v1/events/{{eventId}}/approve
+Authorization: Bearer {{moderator}}
+Content-Type: application/json
+Idempotency-Key: http-approve-1
+
+{"reason": "Noi dung hop le"}
+
+### Khach an danh thay su kien trong danh sach cong khai:
+GET {{gw}}/api/v1/events/public
+
+
+
+###
+GET {{gw}}/api/v1/events/{{eventId}}
+
+###########################################################################
+# 4. Phong cho -> giu ghe (join truoc gio mo ban se o LOBBY; den gio boc tham, ADMITTED)
+###########################################################################
+
+# @name availability
+GET {{gw}}/v1/events/{{eventId}}/availability
+
+###
+@ticketTypeId = {{availability.response.body.tiers[0].ticket_type_id}}
+
+# @name join
+POST {{gw}}/v1/events/{{eventId}}/queue/join
+Authorization: Bearer {{buyer}}
+Content-Type: application/json
+
+{"signals": {}}
+
+###
+@queueToken = {{join.response.body.queue_token}}
+
+### Bam lai cho toi khi "state": "ADMITTED"
+GET {{gw}}/v1/events/{{eventId}}/queue/status
+Authorization: Bearer {{buyer}}
+X-Queue-Token: {{queueToken}}
+
+###
+# @name hold
+POST {{gw}}/v1/events/{{eventId}}/holds
+Authorization: Bearer {{buyer}}
+X-Queue-Token: {{queueToken}}
+Content-Type: application/json
+Idempotency-Key: http-hold-1
+
+{"ticket_type_id": "{{ticketTypeId}}", "quantity": 1}
+
+###
+@orderId = {{hold.response.body.order_id}}
+@holdId = {{hold.response.body.hold_id}}
+
+GET {{gw}}/v1/orders/{{orderId}}
+Authorization: Bearer {{buyer}}
+
+###########################################################################
+# 5. Thanh toan sandbox -> webhook -> ve TU PHAT + email (xem Mailpit)
+###########################################################################
+
+# @name pay
+POST {{gw}}/v1/events/{{eventId}}/payments
+Authorization: Bearer {{buyer}}
+Content-Type: application/json
+Idempotency-Key: http-pay-1
+
+{
+  "order_id": "{{orderId}}",
+  "hold_id": "{{holdId}}",
+  "amount": 50000000,
+  "method": "sandbox",
+  "buyer_name": "Khach Demo",
+  "buyer_email": "{{buyerEmail}}",
+  "return_url": "http://localhost:3000/orders"
+}
+
+###
+@paymentId = {{pay.response.body.payment_id}}
+@txn = {{pay.response.body.provider_txn_id}}
+
+POST {{gw}}/v1/payments/webhook/sandbox?provider_txn_id={{txn}}&order_id={{orderId}}&payment_id={{paymentId}}&status=SUCCESS&amount=50000000
+
+### Doi ~1-3 giay roi xem lai don: order_status = ISSUED, co issued_tickets
+GET {{gw}}/v1/orders/{{orderId}}
+Authorization: Bearer {{buyer}}
+
+###########################################################################
+# 6. Cong soat: kiem ve QR (lay qr_payload tu issue-tickets, idempotent)
+###########################################################################
+
+# @name tickets
+POST {{gw}}/v1/orders/{{orderId}}/issue-tickets
+Authorization: Bearer {{buyer}}
+Idempotency-Key: http-issue-1
+
+###
+@qr = {{tickets.response.body.tickets[0].qr_payload}}
+
+POST {{gw}}/v1/tickets/verify
+Authorization: Bearer {{ops}}
+Content-Type: application/json
+
+{"qr_payload": "{{qr}}"}
+
+### Check-in (chi ops): lan 1 -> 200 CHECKED_IN, lan 2 -> 409 ve da duoc su dung
+POST {{gw}}/v1/tickets/check-in
+Authorization: Bearer {{ops}}
+Content-Type: application/json
+
+{"qr_payload": "{{qr}}"}
+
+###########################################################################
+# 7. Bao mat
+###########################################################################
+
+### /internal/* bi chan tu ngoai -> 404
+POST {{gw}}/internal/reconcile
+
+### Gia header danh tinh khi khong co JWT -> 401
+POST {{gw}}/v1/events/{{eventId}}/queue/join
+X-Identity-Id: 00000000-0000-4000-8000-000000000001
+X-Identity-Verified: true
+Content-Type: application/json
+
+{}
+
+###########################################################################
+# 8. Tro ly AI
+###########################################################################
+
+# @name ask
+POST {{gw}}/v1/events/{{eventId}}/assistant/messages
+Authorization: Bearer {{buyer}}
+Content-Type: application/json
+
+{"question": "Khi nao mo ban ve?"}
+
+###
+GET {{gw}}{{ask.response.body.poll_url}}
+Authorization: Bearer {{buyer}}

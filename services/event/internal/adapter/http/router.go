@@ -1,6 +1,10 @@
 package http
 
-import "net/http"
+import (
+	"net/http"
+
+	"github.com/eventflow/eventflow/libs/go/otelx"
+)
 
 // NewRouter dang ky route cua event-svc kem quyen theo ma tran docs/01 muc 3 (EV-114).
 //
@@ -12,6 +16,9 @@ func NewRouter(h *EventHandler) http.Handler {
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
+
+	// Prometheus scrape trong mang noi bo; gateway chi dinh tuyen /api/v1/events... nen /metrics khong ra ngoai.
+	mux.Handle("GET /metrics", otelx.MetricsHandler())
 
 	// Cong khai: su kien chua duyet chi chu su kien / moderator / ops thay (canSeeUnpublished).
 	mux.HandleFunc("GET /api/v1/events/public", h.ListPublicEvents)

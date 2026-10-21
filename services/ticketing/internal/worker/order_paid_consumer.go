@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/eventflow/eventflow/libs/go/mq"
+	"github.com/eventflow/eventflow/libs/go/otelx"
 	"github.com/eventflow/eventflow/services/ticketing/internal/domain"
 	"github.com/eventflow/eventflow/services/ticketing/internal/port"
 )
@@ -51,6 +52,10 @@ func (h *OrderPaidHandler) Handle(ctx context.Context, d mq.Delivery) error {
 	}
 
 	traceID, _ := d.Headers["x-trace-id"].(string)
+	if tp := otelx.Traceparent(ctx); tp != "" {
+		// Luu vao outbox cua ticketing.ticket.issued de relay noi tiep cung trace toi notification (EV-103).
+		traceID = tp
+	}
 	res, err := h.issuer.Execute(ctx, port.IssueTicketsParams{OrderID: p.OrderID, TraceID: traceID})
 	switch {
 	case errors.Is(err, domain.ErrOrderNotFound), errors.Is(err, domain.ErrOrderNotPaid):

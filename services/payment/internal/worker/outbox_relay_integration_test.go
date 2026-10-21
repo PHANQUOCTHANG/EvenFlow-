@@ -7,6 +7,7 @@ import (
 	"io"
 	"log/slog"
 	"strconv"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -15,6 +16,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/eventflow/eventflow/libs/go/mq"
+	"github.com/eventflow/eventflow/libs/go/otelx"
 	"github.com/eventflow/eventflow/libs/go/testx"
 	"github.com/eventflow/eventflow/services/payment/internal/worker"
 )
@@ -132,4 +134,48 @@ func TestRelay_BrokerLoiGiuThuTuVaThuLai(t *testing.T) {
 	if got := pub.ids[1:]; got[0] != strconv.FormatInt(id2, 10) || got[1] != strconv.FormatInt(id3, 10) {
 		t.Errorf("MessageID = %v, muon id outbox theo thu tu", got)
 	}
+}
+
+// EV-103: dong outbox mang traceparent -> relay publish duoi CUNG trace (consumer ben kia noi tiep trace
+// cua request webhook); ma request cu (khong phai traceparent) van phat binh thuong, khong trace.
+func TestRelay_NoiTiepTraceTuOutbox(t *testing.T) {
+	shutdown, err := otelx.Init(context.Background(), "relay-test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = shutdown(context.Background()) })
+	pool := setup(t)
+
+	const traceID = "4bf92f3577b34da6a3ce929d0e0e4736"
+	withTrace := insert(t, pool, "order.paid")
+	legacy := insert(t, pool, "order.paid")
+	if _, err := pool.Exec(context.Background(), `UPDATE outbox_events SET trace_id = $2 WHERE id = $1`,
+		withTrace, "00-"+traceID+"-00f067aa0ba902b7-01"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := pool.Exec(context.Background(), `UPDATE outbox_events SET trace_id = '8027108cd73783fd' WHERE id = $1`, legacy); err != nil {
+		t.Fatal(err)
+	}
+
+	pub := &traceSpy{}
+	if n, err := newRelay(pool, pub).RelayOnce(context.Background()); err != nil || n != 2 {
+		t.Fatalf("RelayOnce = %d, %v", n, err)
+	}
+	if len(pub.traces) != 2 || pub.traces[0] != traceID {
+		t.Fatalf("trace khi publish = %v, muon [%s \"\"]", pub.traces, traceID)
+	}
+	if pub.traces[1] != "" {
+		t.Errorf("dong cu (ma request) khong duoc tao trace, nhan %q", pub.traces[1])
+	}
+}
+
+type traceSpy struct{ traces []string }
+
+func (s *traceSpy) Publish(ctx context.Context, _, _ string, _ mq.Message) error {
+	id := ""
+	if parts := strings.Split(otelx.Traceparent(ctx), "-"); len(parts) == 4 {
+		id = parts[1]
+	}
+	s.traces = append(s.traces, id)
+	return nil
 }

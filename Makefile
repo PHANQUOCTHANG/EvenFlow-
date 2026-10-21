@@ -93,6 +93,10 @@ load: ## Mo phong gio mo ban (can k6)
 smoke: ## Chay tron mot luong mua ve (xep hang -> admit -> giu ghe -> tra kho)
 	bash deploy/scripts/smoke.sh
 
+.PHONY: demo
+demo: ## Demo end-to-end qua gateway: dang ky -> organizer tao su kien -> mua ve -> ve + email (can make up/migrate/seed)
+	bash deploy/scripts/demo.sh
+
 .PHONY: test-e2e
 test-e2e: ## E2E Playwright (can make up truoc)
 	cd tests/e2e && npm test

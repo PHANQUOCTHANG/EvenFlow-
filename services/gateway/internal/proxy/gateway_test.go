@@ -298,6 +298,20 @@ func TestGateway_RouteTheoRole(t *testing.T) {
 	if resp := f.do(t, http.MethodPost, "/v1/payments/inbox/replay", token(t, opsID, "ops", f.now), nil, ""); resp.StatusCode != http.StatusOK {
 		t.Fatalf("ops goi inbox replay: %d, muon 200", resp.StatusCode)
 	}
+
+	// EV-135: check-in doi trang thai ve nen chi ops; khach van kiem (verify) duoc.
+	if resp := f.do(t, http.MethodPost, "/v1/tickets/check-in", buyer, nil, ""); resp.StatusCode != http.StatusForbidden {
+		t.Fatalf("buyer check-in ve: %d, muon 403", resp.StatusCode)
+	}
+	if resp := f.do(t, http.MethodPost, "/v1/tickets/check-in", token(t, opsID, "ops", f.now), nil, ""); resp.StatusCode != http.StatusOK {
+		t.Fatalf("ops check-in ve: %d, muon 200", resp.StatusCode)
+	}
+	if got := f.up.last(t); got.Upstream != config.Ticketing || got.Path != "/v1/tickets/check-in" {
+		t.Fatalf("check-in -> %s %s", got.Upstream, got.Path)
+	}
+	if resp := f.do(t, http.MethodPost, "/v1/tickets/verify", buyer, nil, ""); resp.StatusCode != http.StatusOK {
+		t.Fatalf("buyer verify ve: %d, muon 200", resp.StatusCode)
+	}
 }
 
 // AC-5: moi duong dan web dang goi tro dung service.

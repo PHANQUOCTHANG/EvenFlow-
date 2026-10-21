@@ -17,6 +17,7 @@ import (
 
 	"github.com/eventflow/eventflow/libs/go/authx"
 	"github.com/eventflow/eventflow/libs/go/httpx"
+	"github.com/eventflow/eventflow/libs/go/otelx"
 	"github.com/eventflow/eventflow/services/gateway/internal/config"
 	"github.com/eventflow/eventflow/services/gateway/internal/ratelimit"
 )
@@ -87,6 +88,8 @@ func New(cfg *config.Config, log *slog.Logger, opts ...Option) (http.Handler, er
 		httpx.RequestID(),
 		securityHeaders,
 		CORS(cfg.AllowedOrigins),
+		// Sau moi middleware tao ban sao request (de route khop trong span), truoc AccessLog (log mang trace_id).
+		otelx.HTTP("gateway"),
 		httpx.AccessLog(log),
 		httpx.Recover(log),
 	), nil
@@ -218,6 +221,8 @@ func newReverseProxy(target *url.URL, log *slog.Logger) *httputil.ReverseProxy {
 		Rewrite: func(pr *httputil.ProxyRequest) {
 			pr.SetURL(target)
 			pr.SetXForwarded()
+			// Noi trace sang service phia sau (traceparent) de mot yeu cau la mot trace.
+			otelx.InjectHTTP(pr.In.Context(), pr.Out.Header)
 		},
 		Transport: transport,
 		// SSE (queue/stream, vneid/sse): day tung su kien ngay, khong gom buffer.
