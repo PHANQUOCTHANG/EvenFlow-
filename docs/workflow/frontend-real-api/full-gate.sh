@@ -70,7 +70,10 @@ d=\$(dirname \$s); cp -r .next/static \$d/.next/static; cp -r public \$d/public
 (cd \$d && HOSTNAME=127.0.0.1 PORT=3000 node server.js > /tmp/web-e2e.log 2>&1 & echo \$! > /tmp/web-e2e.pid)
 for i in \$(seq 1 30); do curl -sf http://127.0.0.1:3000/api/healthz >/dev/null && break; sleep 2; done
 cd ../../tests/e2e && npm ci --no-audit --no-fund >/dev/null && CI=1 npx playwright test; rc=\$?
-kill \$(cat /tmp/web-e2e.pid) 2>/dev/null; exit \$rc"
+kill \$(cat /tmp/web-e2e.pid) 2>/dev/null
+# Windows: kill cua MSYS khong luon toi duoc node.exe; giai phong cong 3000 de lan build sau khong bi khoa .next
+for p in \$(netstat -ano 2>/dev/null | grep -E ':3000 .*LISTEN' | awk '{print \$5}' | sort -u); do taskkill //F //PID \$p >/dev/null 2>&1; done
+exit \$rc"
 
 # --- report ---
 {
