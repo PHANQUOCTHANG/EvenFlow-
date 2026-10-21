@@ -44,7 +44,8 @@ run go-event   bash -c "cd services/event && go vet ./... && go vet -tags integr
 run tamper bash -c "
 set -e
 # Task nay: MOI file test da co o commit dong bang deu bi khoa (khong chi contract test)
-d=\$(git diff --name-only --diff-filter=MD $TESTS_FROZEN HEAD -- '*.test.ts' '*.test.tsx' '*_test.go' 'apps/web/src/lib/debt/harness.ts' 'apps/web/src/test-utils')
+# Chi xet commit cua nhanh nay (first-parent, bo merge tu develop): thay doi test do teammate merge vao develop khong tinh
+d=\$(git log --first-parent --no-merges --format= --name-only --diff-filter=MD $TESTS_FROZEN..HEAD -- '*.test.ts' '*.test.tsx' '*_test.go' 'apps/web/src/lib/debt/harness.ts' 'apps/web/src/test-utils' | sort -u | sed '/^\$/d')
 # Ngoai le DA DUYET (test-change-request.md, TCR-1): dung 1 dong them vao ac3-locks-errors.test.ts
 ok='apps/web/src/lib/debt/ac3-locks-errors.test.ts'
 if [ \"\$d\" = \"\$ok\" ]; then
@@ -54,9 +55,9 @@ if [ \"\$d\" = \"\$ok\" ]; then
   d=''
 fi
 [ -z \"\$d\" ] || { echo \"contract tests changed: \$d\"; exit 1; }
-del=\$(git diff --diff-filter=D --name-only $BASE HEAD | grep -E '\\.test\\.(ts|tsx)\$|_test\\.go\$|\\.spec\\.ts\$' || true)
+del=\$(git log --first-parent --no-merges --format= --name-only --diff-filter=D $BASE..HEAD | grep -E '\\.test\\.(ts|tsx)\$|_test\\.go\$|\\.spec\\.ts\$' || true)
 [ -z \"\$del\" ] || { echo \"deleted test files (must be listed in tcr-applied.md):\"; echo \"\$del\"; for f in \$del; do grep -q \"\$(basename \$f)\" docs/workflow/frontend-debt-r4/tcr-applied.md || { echo \"NOT LOGGED: \$f\"; exit 1; }; done; }
-add=\$(git diff $BASE HEAD -- 'apps/web' 'tests/e2e' 'services' | grep -E '^\\+.*\\b(it|test|describe)\\.(skip|only|todo)\\(|^\\+.*t\\.Skip\\(' || true)
+add=\$(git log --first-parent --no-merges -p --format= $BASE..HEAD -- 'apps/web' 'tests/e2e' 'services' | grep -E '^\\+.*\\b(it|test|describe)\\.(skip|only|todo)\\(|^\\+.*t\\.Skip\\(' || true)
 [ -z \"\$add\" ] || { echo \"new skip/only: \$add\"; exit 1; }
 echo ok"
 
