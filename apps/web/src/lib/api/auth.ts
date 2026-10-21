@@ -8,6 +8,7 @@ import {
   clearSession,
   getSession,
   getSessionPersist,
+  getStoredRefreshToken,
   sessionFromIdentity,
   setSession,
   type Session,
@@ -110,7 +111,8 @@ export async function refreshSession(): Promise<Session | null> {
 
 /** Dang xuat: bao server thu hoi refresh token, nhung LUON xoa phien du loi (AC-6). */
 export async function logout(): Promise<void> {
-  const refreshToken = getSession()?.refreshToken;
+  // Doc truc tiep tu storage: ef_user hong van khong duoc bo qua viec thu hoi refresh token (F-15).
+  const refreshToken = getStoredRefreshToken();
   try {
     if (refreshToken) await postJson("/logout", { refresh_token: refreshToken });
   } catch {
