@@ -111,8 +111,9 @@
           "N-1",
           "R2-2"
         ],
-        "status": "to_fix",
-        "title": "Forbidden card shown above PAID/FAILED/EXPIRED/CANCELLED sections (double message) — introduced by F-1"
+        "status": "fixed",
+        "title": "Forbidden card shown above PAID/FAILED/EXPIRED/CANCELLED sections (double message) — introduced by F-1",
+        "verified_in": "findings-round3-review.json"
       },
       {
         "id": "G-2",
@@ -120,8 +121,9 @@
         "sources": [
           "R2-1"
         ],
-        "status": "to_fix",
-        "title": "NOT_FOUND / AUTH_REQUIRED on a poll with a PENDING order on screen leave a silent spinner (pre-existing, same code path as F-1)"
+        "status": "fixed",
+        "title": "NOT_FOUND / AUTH_REQUIRED on a poll with a PENDING order on screen leave a silent spinner (pre-existing, same code path as F-1)",
+        "verified_in": "findings-round3-review.json"
       },
       {
         "id": "D-R2-3",
@@ -149,6 +151,40 @@
         ],
         "status": "deferred",
         "reason": "unreachable with server-issued tokens"
+      }
+    ]
+  },
+  "round3": {
+    "review_commit": "e91dff0",
+    "blocker": 0,
+    "major": 0,
+    "items": [
+      {
+        "id": "D-R3-1",
+        "severity": "minor",
+        "sources": [
+          "R3-1"
+        ],
+        "status": "deferred",
+        "reason": "pre-existing: 401 on the first order GET shows generic load error without sign-in link"
+      },
+      {
+        "id": "D-R3-2",
+        "severity": "minor",
+        "sources": [
+          "R3-2"
+        ],
+        "status": "deferred",
+        "reason": "nit: empty <p> in AUTH_REQUIRED alert"
+      },
+      {
+        "id": "D-R3-3",
+        "severity": "minor",
+        "sources": [
+          "R3-3"
+        ],
+        "status": "deferred",
+        "reason": "pre-existing F-13 design: issue-tickets 401 shows retry without sign-in prompt"
       }
     ]
   }
