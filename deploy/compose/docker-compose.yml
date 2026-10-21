@@ -250,6 +250,7 @@ services:
       dockerfile: deploy/docker/go-service.Dockerfile
       args: {SERVICE: identity}
     environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://jaeger:4318"
       HTTP_ADDR: ":8083"
       # NOI THANG Postgres, khong qua PgBouncer: service nay dung lib/pq, ma lib/pq chuan bi cau lenh nhieu
       # vong (Parse/Describe roi Bind/Execute); PgBouncer che do transaction co the doi ket noi giua hai
@@ -273,6 +274,7 @@ services:
       dockerfile: deploy/docker/go-service.Dockerfile
       args: {SERVICE: event}
     environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://jaeger:4318"
       HTTP_ADDR: ":8084"
       # NOI THANG Postgres, khong qua PgBouncer: service nay dung lib/pq, ma lib/pq chuan bi cau lenh nhieu
       # vong (Parse/Describe roi Bind/Execute); PgBouncer che do transaction co the doi ket noi giua hai
@@ -295,6 +297,7 @@ services:
       dockerfile: deploy/docker/go-service.Dockerfile
       args: {SERVICE: payment}
     environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://jaeger:4318"
       HTTP_ADDR: ":8085"
       DATABASE_URL: "postgres://eventflow:eventflow@pgbouncer:5432/eventflow?sslmode=disable"
       PAYMENT_SANDBOX_MODE: "true"
@@ -312,6 +315,7 @@ services:
       dockerfile: deploy/docker/go-service.Dockerfile
       args: {SERVICE: notification}
     environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://jaeger:4318"
       HTTP_ADDR: ":8087"
       DATABASE_URL: "postgres://eventflow:eventflow@pgbouncer:5432/eventflow?sslmode=disable"
       AMQP_URL: "amqp://eventflow:eventflow@rabbitmq:5672/"
@@ -330,6 +334,7 @@ services:
       dockerfile: deploy/docker/go-service.Dockerfile
       args: {SERVICE: gateway}
     environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://jaeger:4318"
       HTTP_ADDR: ":8080"
       JWT_SECRET: "${JWT_SECRET:-dev-jwt-secret-change-me-0123456789}"
       IDENTITY_URL: "http://identity:8083"

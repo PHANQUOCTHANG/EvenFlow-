@@ -1,6 +1,7 @@
 package otelx
 
 import (
+	"context"
 	"net/http"
 	"strconv"
 	"strings"
@@ -84,4 +85,33 @@ func routeLabel(pattern string) string {
 		return pattern[i+1:]
 	}
 	return pattern
+}
+
+// InjectHTTP ghi trace context hien tai (header traceparent) vao h de request di tiep toi service
+// khac noi tiep cung trace. Gateway goi o buoc chuyen tiep; thieu buoc nay moi service phia sau tao trace
+// rieng va Jaeger khong thay duoc mot yeu cau di qua nhung service nao.
+func InjectHTTP(ctx context.Context, h http.Header) {
+	otel.GetTextMapPropagator().Inject(ctx, propagation.HeaderCarrier(h))
+}
+
+// Traceparent tra header traceparent (W3C) cua span hien tai, rong neu ctx khong co span. Dung de luu vao
+// outbox_events.trace_id: relay se noi tiep trace khi phat message, du cho do khong con trong request goc.
+func Traceparent(ctx context.Context) string {
+	h := http.Header{}
+	InjectHTTP(ctx, h)
+	return h.Get("traceparent")
+}
+
+// ContextWithTraceparent tra ctx co span cha la traceparent da luu (xem Traceparent). Chuoi rong hoac khong dung
+// dinh dang (vd ma request cu ghi truoc EV-103) thi tra lai ctx nguyen ven.
+func ContextWithTraceparent(ctx context.Context, traceparent string) context.Context {
+	if traceparent == "" {
+		return ctx
+	}
+	carrier := propagation.MapCarrier{"traceparent": traceparent}
+	out := otel.GetTextMapPropagator().Extract(ctx, carrier)
+	if !trace.SpanContextFromContext(out).IsValid() {
+		return ctx
+	}
+	return out
 }

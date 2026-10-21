@@ -32,9 +32,10 @@ Chạy `make demo`. Mỗi bước in `ok` khi xong; nói trong lúc nó chạy, 
 | 84–88 | 6. Khách 2 huỷ giữ ghế | "Huỷ trả kho đúng một lần dù gọi lại." | Terminal |
 | 88 | 7. Bảo mật | "Giả header danh tính, xem đơn người khác, dùng token của người khác: đều bị chặn." | Terminal |
 | 88–89 | 8. Trợ lý AI | "Khách chờ có thể hỏi trợ lý; có giới hạn tốc độ để không chạm trần Gemini." (Đang chạy chế độ giả lập `GEMINI_MOCK=1`) | Terminal |
+| 101–105 | 10. Quan sát | "Webhook thanh toán → payment → RabbitMQ → ticketing phát vé → RabbitMQ → notification gửi mail: **một trace duy nhất**." Mở link trace do script in ra | Jaeger: trace gateway, payment, ticketing-worker, notification |
 | 89–101 | 9. Hết vé | "Hết vé thì người đang chờ được báo ngay, không bị đẩy vào hàng vô vọng." | Terminal |
 
-Kết thúc: dòng `[demo] DAT: 36 buoc trong ~95s`.
+Kết thúc: dòng `[demo] DAT: 37 buoc trong ~100s`.
 
 ### Lời dẫn khi chờ giờ mở bán (~70 giây)
 
@@ -63,4 +64,4 @@ Bỏ bước hết vé: `DEMO_SOLDOUT=0 make demo`.
 - Đây là bản demo trên máy cục bộ; chưa chạy load test 100.000 người, chưa có anti-bot (EV-173…177), chưa có K8s/HPA.
 - Trợ lý AI ở chế độ giả lập: trả lời mẫu, chưa gọi Gemini thật.
 - Email vé hiện hiển thị chữ ký QR dạng chữ, chưa có ảnh QR.
-- Trace Jaeger mới có waitingroom, ticketing, ticketing-worker; gateway, identity, event chưa gắn tracing (EV-103).
+- Trace Jaeger phủ gateway, identity, event, payment, waitingroom, ticketing, ticketing-worker, notification; ai-worker (Python) chưa gắn tracing.

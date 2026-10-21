@@ -200,7 +200,9 @@ expect 200 "lay ve"; QR="$(jget "d['tickets'][0]['qr_payload']")"
 ok "lay ve (idempotent, khong tao ve thu hai)"
 call POST "$GW/v1/tickets/verify" -H "$(auth "$OPS")" -H 'Content-Type: application/json' -d "{\"qr_payload\":\"$QR\"}"
 expect 200 "kiem ve hop le"; ok "QR hop le: $(jget "d['message']")"
-call POST "$GW/v1/tickets/verify" -H "$(auth "$OPS")" -H 'Content-Type: application/json' -d "{\"qr_payload\":\"${QR%?}x\"}"
+# Doi ky tu cuoi sang ky tu KHAC (neu vo tinh dung ky tu cuoi cua QR thi QR khong bi sua gi ca).
+SWAP=x; [[ "${QR: -1}" == x ]] && SWAP=y
+call POST "$GW/v1/tickets/verify" -H "$(auth "$OPS")" -H 'Content-Type: application/json' -d "{\"qr_payload\":\"${QR%?}$SWAP\"}"
 expect 400 "kiem ve gia"; ok "QR bi sua 1 ky tu bi tu choi (400 tampered-qr)"
 call POST "$GW/v1/tickets/check-in" -H "$(auth "$T1")" -H 'Content-Type: application/json' -d "{\"qr_payload\":\"$QR\"}"
 expect 403 "khach tu check-in"; ok "khach khong tu check-in ve duoc (403): chi nhan vien van hanh"
@@ -299,9 +301,27 @@ if [[ "$SOLDOUT" == 1 ]]; then
 fi
 
 # ---------------------------------------------------------------------------
-step "Quan sat (thong tin, khong tinh buoc)"
-JS="$(curl -sS -m 5 http://localhost:16686/api/services 2>/dev/null | "$PY" -c 'import sys,json;print(", ".join(json.load(sys.stdin)["data"]))' 2>/dev/null)"
-info "Jaeger http://localhost:16686 co trace cua: ${JS:-khong doc duoc}"
+step "10. Quan sat: mot yeu cau = mot trace xuyen nhieu service (Jaeger)"
+JAEGER="${JAEGER_URL:-http://localhost:16686}"
+if curl -sS -m 5 -o /dev/null "$JAEGER/api/services" 2>/dev/null; then
+  # Webhook thanh toan -> payment -> RabbitMQ -> ticketing-worker phat ve -> RabbitMQ -> notification gui mail
+  # phai nam trong CUNG mot trace (traceparent di qua outbox va header AMQP). Exporter gui theo lo nen cho toi 25s.
+  TR=""
+  for _ in $(seq 1 25); do
+    TR="$(curl -sS -m 10 "$JAEGER/api/traces?service=gateway&limit=100&lookback=15m" 2>/dev/null | "$PY" -c '
+import sys,json
+best=(0,"",[])
+for t in json.load(sys.stdin).get("data",[]):
+    svcs=sorted({p["serviceName"] for p in t["processes"].values()})
+    if len(svcs)>best[0]: best=(len(svcs),t["traceID"],svcs)
+print("%d %s %s"%(best[0],best[1],",".join(best[2])))' 2>/dev/null)"
+    [[ "${TR%% *}" =~ ^[0-9]+$ ]] && (( ${TR%% *} >= 4 )) && break; sleep 1
+  done
+  [[ "${TR%% *}" =~ ^[0-9]+$ ]] && (( ${TR%% *} >= 4 )) || die "khong co trace nao xuyen >= 4 service trong Jaeger (nhieu nhat: ${TR:-khong co})"
+  ok "co trace xuyen ${TR%% *} service: ${TR##* } ($JAEGER/trace/$(echo "$TR" | cut -d' ' -f2))"
+else
+  info "bo qua: khong toi duoc Jaeger $JAEGER"
+fi
 info "Mailpit $MAILPIT | RabbitMQ http://localhost:15672 (eventflow/eventflow) | Grafana http://localhost:3001"
 
 printf '\n[demo] DAT: %d buoc trong %ss.\n' "$PASS" "$(( $(date +%s) - START ))"

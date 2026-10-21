@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/eventflow/eventflow/libs/go/httpx"
+	"github.com/eventflow/eventflow/libs/go/otelx"
 	"github.com/eventflow/eventflow/services/gateway/internal/config"
 	"github.com/eventflow/eventflow/services/gateway/internal/proxy"
 )
@@ -33,6 +34,19 @@ func run(log *slog.Logger) error {
 	if cfg.DevSecret {
 		log.Warn("JWT_SECRET chua dat, dang dung secret mac dinh cho moi truong dev")
 	}
+
+	// Trace: OTEL_EXPORTER_OTLP_ENDPOINT trong thi khong xuat di dau (xem otelx.Init).
+	shutdownTrace, err := otelx.Init(context.Background(), "gateway")
+	if err != nil {
+		return err
+	}
+	defer func() {
+		sh, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if err := shutdownTrace(sh); err != nil {
+			log.Warn("tat trace loi", "err", err)
+		}
+	}()
 
 	h, err := proxy.New(cfg, log)
 	if err != nil {

@@ -9,6 +9,8 @@ import (
 	"os"
 	"strings"
 
+	"github.com/eventflow/eventflow/libs/go/httpx"
+	"github.com/eventflow/eventflow/libs/go/otelx"
 	"github.com/eventflow/eventflow/libs/go/pii"
 
 	identityHttp "github.com/eventflow/eventflow/services/identity/internal/adapter/http"
@@ -64,12 +66,12 @@ func main() {
 		Password: cfg.RedisPassword,
 		DB:       0,
 	})
-	
+
 	if err := rawRedis.Ping(context.Background()).Err(); err != nil {
 		log.Error("khong the ping redis", "err", err)
 		os.Exit(1)
 	}
-	
+
 	redisAdapterClient := redis.NewRedisClient(rawRedis)
 
 	// - Domain / Port
@@ -139,7 +141,7 @@ func main() {
 
 	// 4. Khởi tạo Router và đăng ký API
 	mux := http.NewServeMux()
-	
+
 	// API Health check (cho K8s/Docker)
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
@@ -162,7 +164,14 @@ func main() {
 		})
 	}
 
-	handler := corsMiddleware(mux)
+	// EV-103: trace noi tiep traceparent do gateway chuyen toi. otelx.HTTP phai nam sau CORS (ban sao request).
+	shutdownTrace, err := otelx.Init(context.Background(), "identity")
+	if err != nil {
+		log.Error("khoi tao trace that bai", "err", err)
+		os.Exit(1)
+	}
+	defer func() { _ = shutdownTrace(context.Background()) }()
+	handler := httpx.Chain(corsMiddleware(mux), otelx.HTTP("identity"))
 
 	// 5. Khởi chạy Server
 	log.Info("identity dang lang nghe", "addr", cfg.HTTPAddr)

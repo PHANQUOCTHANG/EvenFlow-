@@ -152,9 +152,17 @@ func main() {
 
 	handler.Routes(mux, idemMiddleware)
 
+	// EV-103: noi tiep traceparent do gateway chuyen toi.
+	shutdownTrace, err := otelx.Init(context.Background(), "payment")
+	if err != nil {
+		log.Error("khoi tao trace that bai", "err", err)
+		os.Exit(1)
+	}
+	defer func() { _ = shutdownTrace(context.Background()) }()
+
 	server := &http.Server{
 		Addr:         cfg.HTTPAddr,
-		Handler:      mux,
+		Handler:      httpx.Chain(mux, otelx.HTTP("payment")),
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
 	}

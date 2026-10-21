@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/eventflow/eventflow/libs/go/httpx"
+	"github.com/eventflow/eventflow/libs/go/otelx"
 	"github.com/eventflow/eventflow/services/payment/internal/app"
 	"github.com/eventflow/eventflow/services/payment/internal/domain"
 )
@@ -288,6 +289,10 @@ func (h *Handler) handleWebhook(w http.ResponseWriter, r *http.Request) {
 	}
 
 	traceID := r.Header.Get("X-Trace-ID")
+	if tp := otelx.Traceparent(r.Context()); tp != "" {
+		// EV-103: luu traceparent vao outbox de relay noi tiep trace toi ticketing va notification.
+		traceID = tp
+	}
 	if traceID == "" {
 		traceID = r.Header.Get("X-Request-ID")
 	}
