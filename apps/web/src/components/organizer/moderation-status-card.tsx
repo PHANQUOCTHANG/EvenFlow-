@@ -19,6 +19,7 @@ import { cn } from "@/lib/cn";
 import {
   canCancelEvent,
   canEditEvent,
+  canOpenEventEditor,
   canSubmitEvent,
   type OrganizerEvent,
 } from "@/lib/organizer-service";
@@ -311,9 +312,11 @@ export function ModerationStatusCard({
           </Link>
 
           <div className="flex gap-sm">
-            {canEditEvent(event.state) && (
+            {canOpenEventEditor(event.state) && (
               <Link href={`/organizer/events/${event.id}/edit`}>
-                <Button variant="secondary">✏️ Chỉnh sửa thông tin</Button>
+                <Button variant="secondary">
+                  {canEditEvent(event.state) ? "✏️ Chỉnh sửa thông tin" : "✏️ Tăng số lượng vé"}
+                </Button>
               </Link>
             )}
 
