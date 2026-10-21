@@ -19,7 +19,7 @@
 \\?\D:\Documents\Nam4-1\Project1\EvenFlow-debt\apps\web\node_modules\@next\swc-win32-x64-msvc\next-swc.win32-x64-msvc.node
  ⚠ Attempted to load @next/swc-win32-x64-msvc, but an error occurred: A dynamic link library (DLL) initialization routine failed.
 \\?\D:\Documents\Nam4-1\Project1\EvenFlow-debt\apps\web\node_modules\@next\swc-win32-x64-msvc\next-swc.win32-x64-msvc.node
- ✓ Compiled successfully in 5.4s
+ ✓ Compiled successfully in 13.9s
    Linting and checking validity of types ...
 
 ./src/components/auth/ForgotPasswordForm.tsx

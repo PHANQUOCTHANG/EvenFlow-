@@ -3,19 +3,25 @@
 [1m[7m[36m RUN [39m[27m[22m [36mv2.1.8 [39m[90mD:/Documents/Nam4-1/Project1/EvenFlow-debt/apps/web[39m
       [2mCoverage enabled with [22m[33mv8[39m
 
- [32m✓[39m src/lib/ops-service.test.ts [2m([22m[2m53 tests[22m[2m)[22m[90m 74[2mms[22m[39m
+ [32m✓[39m src/lib/ops-service.test.ts [2m([22m[2m53 tests[22m[2m)[22m[90m 73[2mms[22m[39m
+ [32m✓[39m src/hooks/use-ops-war-room.test.tsx [2m([22m[2m34 tests[22m[2m)[22m[90m 248[2mms[22m[39m
+ [32m✓[39m src/lib/format.test.ts [2m([22m[2m94 tests[22m[2m)[22m[90m 63[2mms[22m[39m
+ [32m✓[39m src/components/layout/nav-config.test.ts [2m([22m[2m48 tests[22m[2m)[22m[90m 34[2mms[22m[39m
 [90mstderr[2m | src/hooks/use-server-countdown.test.tsx[2m > [22m[2museServerCountdown — chua co moc thi KHONG phai het han (AC-4, hop dong §5)[2m > [22m[2mstring khong parse duoc -> giong null: remainingMs 0, expired FALSE
 [22m[39m[server-time] moc thoi han "soon" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
 [server-time] moc thoi han "soon" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
 
+ [32m✓[39m src/lib/organizer-service.test.ts [2m([22m[2m22 tests[22m[2m)[22m[90m 116[2mms[22m[39m
 [90mstderr[2m | src/hooks/use-server-countdown.test.tsx[2m > [22m[2museServerCountdown — chua co moc thi KHONG phai het han (AC-4, hop dong §5)[2m > [22m[2mstring rong cung khong phai het han
 [22m[39m[server-time] moc thoi han "" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
 [server-time] moc thoi han "" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
 
+ [32m✓[39m src/lib/api/auth.contract.test.ts [2m([22m[2m20 tests[22m[2m)[22m[90m 107[2mms[22m[39m
 [90mstderr[2m | src/hooks/use-server-countdown.test.tsx[2m > [22m[2museServerCountdown — chua co moc thi KHONG phai het han (AC-4, hop dong §5)[2m > [22m[2mstring khong parse duoc + thoi gian troi van khong thanh expired
 [22m[39m[server-time] moc thoi han "not-a-date" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
 [server-time] moc thoi han "not-a-date" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
 
+ [32m✓[39m src/lib/organizer-service.contract.test.ts [2m([22m[2m28 tests[22m[2m)[22m[90m 127[2mms[22m[39m
 [90mstderr[2m | src/hooks/use-server-countdown.test.tsx[2m > [22m[2museServerCountdown — ready sau khi mount (AC-4)[2m > [22m[2mmoc khong doc duoc () -> ready FALSE va expired FALSE
 [22m[39m[server-time] moc thoi han "" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
 [server-time] moc thoi han "" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
@@ -28,7 +34,6 @@
 [22m[39m[server-time] moc thoi han "2026-10-03" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
 [server-time] moc thoi han "2026-10-03" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
 
- [32m✓[39m src/hooks/use-ops-war-room.test.tsx [2m([22m[2m34 tests[22m[2m)[22m[90m 210[2mms[22m[39m
 [90mstderr[2m | src/hooks/use-server-countdown.test.tsx[2m > [22m[2museServerCountdown — ready sau khi mount (AC-4)[2m > [22m[2mmoc khong doc duoc (2026-10-03T09:00:00) -> ready FALSE va expired FALSE
 [22m[39m[server-time] moc thoi han "2026-10-03T09:00:00" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
 [server-time] moc thoi han "2026-10-03T09:00:00" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
@@ -37,13 +42,9 @@
 [22m[39m[server-time] moc thoi han "khong-phai-ngay" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
 [server-time] moc thoi han "khong-phai-ngay" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
 
- [32m✓[39m src/hooks/use-server-countdown.test.tsx [2m([22m[2m48 tests[22m[2m)[22m[90m 243[2mms[22m[39m
- [32m✓[39m src/lib/format.test.ts [2m([22m[2m94 tests[22m[2m)[22m[90m 55[2mms[22m[39m
- [32m✓[39m src/components/layout/nav-config.test.ts [2m([22m[2m48 tests[22m[2m)[22m[90m 33[2mms[22m[39m
- [32m✓[39m src/lib/organizer-service.test.ts [2m([22m[2m22 tests[22m[2m)[22m[90m 108[2mms[22m[39m
- [32m✓[39m src/lib/api-client.contract.test.ts [2m([22m[2m33 tests[22m[2m)[22m[90m 201[2mms[22m[39m
- [32m✓[39m src/lib/organizer-service.contract.test.ts [2m([22m[2m28 tests[22m[2m)[22m[90m 126[2mms[22m[39m
- [32m✓[39m src/lib/api/auth.contract.test.ts [2m([22m[2m20 tests[22m[2m)[22m[90m 93[2mms[22m[39m
+ [32m✓[39m src/hooks/use-server-countdown.test.tsx [2m([22m[2m48 tests[22m[2m)[22m[90m 266[2mms[22m[39m
+ [32m✓[39m src/lib/payment-client.contract.test.ts [2m([22m[2m29 tests[22m[2m)[22m[90m 119[2mms[22m[39m
+ [32m✓[39m src/lib/api-client.contract.test.ts [2m([22m[2m33 tests[22m[2m)[22m[90m 216[2mms[22m[39m
 [90mstderr[2m | src/hooks/use-hold-timer.test.tsx[2m > [22m[2museHoldTimer (EVF-113, BR-O2, BR-O5)[2m > [22m[2mBấm đặt nhiều lần không tạo hold trùng (BR-O5)
 [22m[39mWarning: An update to TestComponent inside a test was not wrapped in act(...).
 
@@ -68,8 +69,7 @@ act(() => {
 This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
     at TestComponent (D:\Documents\Nam4-1\Project1\EvenFlow-debt\apps\web\node_modules\@testing-library\react\dist\pure.js:307:5)
 
- [32m✓[39m src/lib/payment-client.contract.test.ts [2m([22m[2m29 tests[22m[2m)[22m[90m 109[2mms[22m[39m
- [32m✓[39m src/hooks/use-hold-timer.test.tsx [2m([22m[2m12 tests[22m[2m)[22m[90m 129[2mms[22m[39m
+ [32m✓[39m src/hooks/use-hold-timer.test.tsx [2m([22m[2m12 tests[22m[2m)[22m[90m 134[2mms[22m[39m
 [90mstderr[2m | src/components/ui/server-expiry-countdown.test.tsx[2m > [22m[2mServerExpiryCountdown — truoc khi biet moc: unknown + '--:--' (AC-5, M1)[2m > [22m[2mmoc khong doc duoc (string rac) -> unknown va '--:--', khong phai 00:00
 [22m[39m[server-time] moc thoi han "soon" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
 [server-time] moc thoi han "soon" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
@@ -90,10 +90,10 @@ This ensures that you're testing the behavior the user would see in the browser.
 [22m[39m[server-time] moc thoi han "soon" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
 [server-time] moc thoi han "soon" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
 
- [32m✓[39m src/components/ui/server-expiry-countdown.test.tsx [2m([22m[2m43 tests[22m[2m)[22m[33m 469[2mms[22m[39m
- [32m✓[39m src/lib/payment-client.test.ts [2m([22m[2m11 tests[22m[2m)[22m[90m 276[2mms[22m[39m
- [32m✓[39m src/hooks/use-queue-status.test.tsx [2m([22m[2m10 tests[22m[2m)[22m[90m 145[2mms[22m[39m
- [32m✓[39m src/lib/fix2/g1-lock-refresh.test.ts [2m([22m[2m9 tests[22m[2m)[22m[33m 612[2mms[22m[39m
+ [32m✓[39m src/hooks/use-queue-status.test.tsx [2m([22m[2m10 tests[22m[2m)[22m[90m 138[2mms[22m[39m
+ [32m✓[39m src/lib/payment-client.test.ts [2m([22m[2m11 tests[22m[2m)[22m[33m 333[2mms[22m[39m
+ [32m✓[39m src/lib/fix2/g1-lock-refresh.test.ts [2m([22m[2m9 tests[22m[2m)[22m[33m 741[2mms[22m[39m
+ [32m✓[39m src/components/ui/server-expiry-countdown.test.tsx [2m([22m[2m43 tests[22m[2m)[22m[33m 509[2mms[22m[39m
 [90mstderr[2m | src/app/(organizer)/organizer/events/[eventId]/edit/page.test.tsx[2m > [22m[2mEditEventPage route (/organizer/events/[eventId]/edit - AC-22)[2m > [22m[2mtải sự kiện từ API rồi hiện form chỉnh sửa
 [22m[39mWarning: An update to OrganizerEventView inside a test was not wrapped in act(...).
 
@@ -136,6 +136,20 @@ This ensures that you're testing the behavior the user would see in the browser.
     at OrganizerEventView (D:\Documents\Nam4-1\Project1\EvenFlow-debt\apps\web\src\app\(organizer)\organizer\_lib\organizer-event-view.tsx:18:31)
     at EditEventClient (D:\Documents\Nam4-1\Project1\EvenFlow-debt\apps\web\src\app\(organizer)\organizer\events\[eventId]\edit\edit-event-client.tsx:131:28)
 
+[90mstderr[2m | src/components/event/event-action-panel.test.tsx[2m > [22m[2mEventActionPanel (EVF-111, BR-Q5, BR-O2)[2m > [22m[2mSCHEDULED va chua toi gio mo ban: hien thi countdown va nut disabled
+[22m[39mWarning: An update to EventActionPanel inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at EventActionPanel (D:\Documents\Nam4-1\Project1\EvenFlow-debt\apps\web\src\components\event\event-action-panel.tsx:19:3)
+
+ [32m✓[39m src/lib/debt/ac2-refresh-deadlines.test.ts [2m([22m[2m18 tests[22m[2m)[22m[33m 1004[2mms[22m[39m
 [90mstderr[2m | src/app/(organizer)/organizer/events/[eventId]/edit/page.test.tsx[2m > [22m[2mEditEventPage route (/organizer/events/[eventId]/edit - AC-22)[2m > [22m[2mtrạng thái PENDING_REVIEW không được chỉnh sửa: không hiện form
 [22m[39mWarning: An update to OrganizerEventView inside a test was not wrapped in act(...).
 
@@ -149,19 +163,6 @@ act(() => {
 This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
     at OrganizerEventView (D:\Documents\Nam4-1\Project1\EvenFlow-debt\apps\web\src\app\(organizer)\organizer\_lib\organizer-event-view.tsx:18:31)
     at EditEventClient (D:\Documents\Nam4-1\Project1\EvenFlow-debt\apps\web\src\app\(organizer)\organizer\events\[eventId]\edit\edit-event-client.tsx:131:28)
-
-[90mstderr[2m | src/components/event/event-action-panel.test.tsx[2m > [22m[2mEventActionPanel (EVF-111, BR-Q5, BR-O2)[2m > [22m[2mSCHEDULED va chua toi gio mo ban: hien thi countdown va nut disabled
-[22m[39mWarning: An update to EventActionPanel inside a test was not wrapped in act(...).
-
-When testing, code that causes React state updates should be wrapped into act(...):
-
-act(() => {
-  /* fire events that update state */
-});
-/* assert on the output */
-
-This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
-    at EventActionPanel (D:\Documents\Nam4-1\Project1\EvenFlow-debt\apps\web\src\components\event\event-action-panel.tsx:19:3)
 
 [90mstderr[2m | src/app/(organizer)/organizer/events/[eventId]/edit/page.test.tsx[2m > [22m[2mEditEventPage route (/organizer/events/[eventId]/edit - AC-22)[2m > [22m[2mtrạng thái CLOSED không được chỉnh sửa: không hiện form
 [22m[39mWarning: An update to OrganizerEventView inside a test was not wrapped in act(...).
@@ -177,6 +178,7 @@ This ensures that you're testing the behavior the user would see in the browser.
     at OrganizerEventView (D:\Documents\Nam4-1\Project1\EvenFlow-debt\apps\web\src\app\(organizer)\organizer\_lib\organizer-event-view.tsx:18:31)
     at EditEventClient (D:\Documents\Nam4-1\Project1\EvenFlow-debt\apps\web\src\app\(organizer)\organizer\events\[eventId]\edit\edit-event-client.tsx:131:28)
 
+ [32m✓[39m src/components/i18n/locale-provider.test.tsx [2m([22m[2m23 tests[22m[2m)[22m[33m 1005[2mms[22m[39m
 [90mstderr[2m | src/app/(organizer)/organizer/events/[eventId]/edit/page.test.tsx[2m > [22m[2mEditEventPage route (/organizer/events/[eventId]/edit - AC-22)[2m > [22m[2mtrạng thái COMPLETED không được chỉnh sửa: không hiện form
 [22m[39mWarning: An update to OrganizerEventView inside a test was not wrapped in act(...).
 
@@ -205,7 +207,6 @@ This ensures that you're testing the behavior the user would see in the browser.
     at OrganizerEventView (D:\Documents\Nam4-1\Project1\EvenFlow-debt\apps\web\src\app\(organizer)\organizer\_lib\organizer-event-view.tsx:18:31)
     at EditEventClient (D:\Documents\Nam4-1\Project1\EvenFlow-debt\apps\web\src\app\(organizer)\organizer\events\[eventId]\edit\edit-event-client.tsx:131:28)
 
- [32m✓[39m src/lib/debt/ac2-refresh-deadlines.test.ts [2m([22m[2m18 tests[22m[2m)[22m[33m 949[2mms[22m[39m
 [90mstderr[2m | src/app/(organizer)/organizer/events/[eventId]/edit/page.test.tsx[2m > [22m[2mEditEventPage route (/organizer/events/[eventId]/edit - AC-22)[2m > [22m[2mtrạng thái DRAFT có form chỉnh sửa
 [22m[39mWarning: An update to OrganizerEventView inside a test was not wrapped in act(...).
 
@@ -220,8 +221,6 @@ This ensures that you're testing the behavior the user would see in the browser.
     at OrganizerEventView (D:\Documents\Nam4-1\Project1\EvenFlow-debt\apps\web\src\app\(organizer)\organizer\_lib\organizer-event-view.tsx:18:31)
     at EditEventClient (D:\Documents\Nam4-1\Project1\EvenFlow-debt\apps\web\src\app\(organizer)\organizer\events\[eventId]\edit\edit-event-client.tsx:131:28)
 
- [32m✓[39m src/components/i18n/locale-provider.test.tsx [2m([22m[2m23 tests[22m[2m)[22m[33m 940[2mms[22m[39m
-   [33m[2m✓[22m[39m LocaleProvider — setLocale (AC-6)[2m > [22mdoi chu, ghi localStorage, dat html lang [33m328[2mms[22m[39m
 [90mstderr[2m | src/app/(organizer)/organizer/events/[eventId]/edit/page.test.tsx[2m > [22m[2mEditEventPage route (/organizer/events/[eventId]/edit - AC-22)[2m > [22m[2mtrạng thái SCHEDULED có form chỉnh sửa
 [22m[39mWarning: An update to OrganizerEventView inside a test was not wrapped in act(...).
 
@@ -249,6 +248,10 @@ act(() => {
 This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
     at OrganizerEventView (D:\Documents\Nam4-1\Project1\EvenFlow-debt\apps\web\src\app\(organizer)\organizer\_lib\organizer-event-view.tsx:18:31)
     at EditEventClient (D:\Documents\Nam4-1\Project1\EvenFlow-debt\apps\web\src\app\(organizer)\organizer\events\[eventId]\edit\edit-event-client.tsx:131:28)
+
+ [32m✓[39m src/components/layout/nav-link.test.tsx [2m([22m[2m37 tests[22m[2m)[22m[33m 803[2mms[22m[39m
+[90mstderr[2m | src/components/event/event-card.test.tsx[2m > [22m[2mEventCard — thoi diem bat dau: khong bao gio ro ri 'NaN'/'Invalid Date' (AC-2)[2m > [22m[2mmoc khong doc duoc -> khong hien 'NaN'/'Invalid Date', va van hien ten su kien
+[22m[39m[server-time] moc thoi han "khong-phai-ngay" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
 
 [90mstderr[2m | src/app/(organizer)/organizer/events/[eventId]/edit/page.test.tsx[2m > [22m[2mEditEventPage route (/organizer/events/[eventId]/edit - AC-22)[2m > [22m[2mlưu: PUT đầy đủ -> quota hạng cũ đổi -> hạng mới POST -> về review-status
 [22m[39mWarning: An update to OrganizerEventView inside a test was not wrapped in act(...).
@@ -459,27 +462,8 @@ act(() => {
 This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
     at EventActionPanel (D:\Documents\Nam4-1\Project1\EvenFlow-debt\apps\web\src\components\event\event-action-panel.tsx:19:3)
 
- [32m✓[39m src/components/checkout/ticket-tier-card.test.tsx [2m([22m[2m52 tests[22m[2m)[22m[33m 648[2mms[22m[39m
-[90mstderr[2m | src/components/event/event-card.test.tsx[2m > [22m[2mEventCard — thoi diem bat dau: khong bao gio ro ri 'NaN'/'Invalid Date' (AC-2)[2m > [22m[2mmoc khong doc duoc -> khong hien 'NaN'/'Invalid Date', va van hien ten su kien
-[22m[39m[server-time] moc thoi han "khong-phai-ngay" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
-
- [32m✓[39m src/components/layout/nav-link.test.tsx [2m([22m[2m37 tests[22m[2m)[22m[33m 832[2mms[22m[39m
- [32m✓[39m src/components/event/event-card.test.tsx [2m([22m[2m41 tests[22m[2m)[22m[33m 989[2mms[22m[39m
- [32m✓[39m src/components/event/event-action-panel.test.tsx [2m([22m[2m28 tests[22m[2m)[22m[33m 1157[2mms[22m[39m
-[90mstderr[2m | src/app/(organizer)/organizer/events/[eventId]/edit/page.test.tsx[2m > [22m[2mEditEventPage route (/organizer/events/[eventId]/edit - AC-22)[2m > [22m[2mquota không đổi thì không gọi PUT hạng vé
-[22m[39mWarning: An update to OrganizerEventView inside a test was not wrapped in act(...).
-
-When testing, code that causes React state updates should be wrapped into act(...):
-
-act(() => {
-  /* fire events that update state */
-});
-/* assert on the output */
-
-This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
-    at OrganizerEventView (D:\Documents\Nam4-1\Project1\EvenFlow-debt\apps\web\src\app\(organizer)\organizer\_lib\organizer-event-view.tsx:18:31)
-    at EditEventClient (D:\Documents\Nam4-1\Project1\EvenFlow-debt\apps\web\src\app\(organizer)\organizer\events\[eventId]\edit\edit-event-client.tsx:131:28)
-
+ [32m✓[39m src/components/checkout/ticket-tier-card.test.tsx [2m([22m[2m52 tests[22m[2m)[22m[33m 643[2mms[22m[39m
+ [32m✓[39m src/components/event/event-card.test.tsx [2m([22m[2m41 tests[22m[2m)[22m[33m 834[2mms[22m[39m
 [90mstderr[2m | src/components/checkout/order-result-view.test.tsx[2m > [22m[2mOrderResultView — phat hanh ve va loi (AC-14, AC-15)[2m > [22m[2mchua phat hanh (rong): hien trang thai cho, KHONG ve QR nao, thanh cong khi thu lai
 [22m[39mWarning: An update to OrderResultView inside a test was not wrapped in act(...).
 
@@ -588,6 +572,20 @@ This ensures that you're testing the behavior the user would see in the browser.
     at div
     at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-debt\apps\web\src\components\checkout\order-result-view.tsx:19:3)
 
+[90mstderr[2m | src/app/(organizer)/organizer/events/[eventId]/edit/page.test.tsx[2m > [22m[2mEditEventPage route (/organizer/events/[eventId]/edit - AC-22)[2m > [22m[2mquota không đổi thì không gọi PUT hạng vé
+[22m[39mWarning: An update to OrganizerEventView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrganizerEventView (D:\Documents\Nam4-1\Project1\EvenFlow-debt\apps\web\src\app\(organizer)\organizer\_lib\organizer-event-view.tsx:18:31)
+    at EditEventClient (D:\Documents\Nam4-1\Project1\EvenFlow-debt\apps\web\src\app\(organizer)\organizer\events\[eventId]\edit\edit-event-client.tsx:131:28)
+
 [90mstderr[2m | src/components/checkout/order-result-view.test.tsx[2m > [22m[2mOrderResultView — phat hanh ve va loi (AC-14, AC-15)[2m > [22m[2mhet luot thu lai van chua co ve: bao loi + nut lay ve lai, van khong co QR, so lan thu co gioi han
 [22m[39mWarning: An update to OrderResultView inside a test was not wrapped in act(...).
 
@@ -620,6 +618,7 @@ This ensures that you're testing the behavior the user would see in the browser.
     at div
     at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-debt\apps\web\src\components\checkout\order-result-view.tsx:19:3)
 
+ [32m✓[39m src/components/event/event-action-panel.test.tsx [2m([22m[2m28 tests[22m[2m)[22m[33m 1101[2mms[22m[39m
 [90mstderr[2m | src/components/checkout/order-result-view.test.tsx[2m > [22m[2mOrderResultView — phat hanh ve va loi (AC-14, AC-15)[2m > [22m[2mhet luot thu lai van chua co ve: bao loi + nut lay ve lai, van khong co QR, so lan thu co gioi han
 [22m[39mWarning: An update to OrderResultView inside a test was not wrapped in act(...).
 
@@ -974,9 +973,11 @@ This ensures that you're testing the behavior the user would see in the browser.
     at OrganizerEventView (D:\Documents\Nam4-1\Project1\EvenFlow-debt\apps\web\src\app\(organizer)\organizer\_lib\organizer-event-view.tsx:18:31)
     at EditEventClient (D:\Documents\Nam4-1\Project1\EvenFlow-debt\apps\web\src\app\(organizer)\organizer\events\[eventId]\edit\edit-event-client.tsx:131:28)
 
- [32m✓[39m src/components/checkout/checkout-view.test.tsx [2m([22m[2m11 tests[22m[2m)[22m[33m 1289[2mms[22m[39m
-   [33m[2m✓[22m[39m CheckoutView (EVF-113, EV-183)[2m > [22mrender danh sách hạng vé và nhãn định tính không lộ số tồn kho (BR-O1) [33m422[2mms[22m[39m
- [32m✓[39m src/components/checkout/order-result-view.test.tsx [2m([22m[2m12 tests[22m[2m)[22m[33m 1445[2mms[22m[39m
+ [32m✓[39m src/components/checkout/checkout-view.test.tsx [2m([22m[2m11 tests[22m[2m)[22m[33m 1355[2mms[22m[39m
+   [33m[2m✓[22m[39m CheckoutView (EVF-113, EV-183)[2m > [22mrender danh sách hạng vé và nhãn định tính không lộ số tồn kho (BR-O1) [33m452[2mms[22m[39m
+ [32m✓[39m src/components/checkout/order-summary.test.tsx [2m([22m[2m74 tests[22m[2m)[22m[33m 1524[2mms[22m[39m
+ [32m✓[39m src/lib/hold-client.test.ts [2m([22m[2m14 tests[22m[2m)[22m[33m 2137[2mms[22m[39m
+   [33m[2m✓[22m[39m hold-client (EVF-113, BR-O2, BR-O5)[2m > [22mrequestHold[2m > [22m409 do cùng Idempotency-Key đang xử lý là AMBIGUOUS, không phải SOLD_OUT (BR-O5) [33m2035[2mms[22m[39m
 [90mstderr[2m | src/app/(organizer)/organizer/events/[eventId]/edit/page.test.tsx[2m > [22m[2mEditEventPage route (/organizer/events/[eventId]/edit - AC-22)[2m > [22m[2mPUT thất bại (422): hiện detail, không đổi hạng vé, không điều hướng
 [22m[39mWarning: An update to OrganizerEventView inside a test was not wrapped in act(...).
 
@@ -991,15 +992,14 @@ This ensures that you're testing the behavior the user would see in the browser.
     at OrganizerEventView (D:\Documents\Nam4-1\Project1\EvenFlow-debt\apps\web\src\app\(organizer)\organizer\_lib\organizer-event-view.tsx:18:31)
     at EditEventClient (D:\Documents\Nam4-1\Project1\EvenFlow-debt\apps\web\src\app\(organizer)\organizer\events\[eventId]\edit\edit-event-client.tsx:131:28)
 
+ [32m✓[39m src/components/checkout/order-result-view.test.tsx [2m([22m[2m12 tests[22m[2m)[22m[33m 1375[2mms[22m[39m
+   [33m[2m✓[22m[39m OrderResultView component (EVF-114, BR-O2, BR-O6, BR-O8)[2m > [22mrender trạng thái PENDING khi đang chờ xác nhận từ cổng (AC-4, BR-O6) [33m317[2mms[22m[39m
 [90mstderr[2m | src/components/queue/queue-status-panel.test.tsx[2m > [22m[2mQueueStatusPanel — so rac phai bi coi nhu KHONG CO (AC-8, M2)[2m > [22m[2madmissionExpiresAt la chuoi rac -> khong lo 'NaN'/'Invalid Date' ra UI
 [22m[39m[server-time] moc thoi han "soon" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
 [server-time] moc thoi han "soon" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
 [server-time] moc thoi han "soon" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
 [server-time] moc thoi han "soon" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
 
- [32m✓[39m src/lib/hold-client.test.ts [2m([22m[2m14 tests[22m[2m)[22m[33m 2148[2mms[22m[39m
-   [33m[2m✓[22m[39m hold-client (EVF-113, BR-O2, BR-O5)[2m > [22mrequestHold[2m > [22m409 do cùng Idempotency-Key đang xử lý là AMBIGUOUS, không phải SOLD_OUT (BR-O5) [33m2036[2mms[22m[39m
- [32m✓[39m src/components/checkout/order-summary.test.tsx [2m([22m[2m74 tests[22m[2m)[22m[33m 1655[2mms[22m[39m
 [90mstderr[2m | src/app/(organizer)/organizer/events/[eventId]/edit/page.test.tsx[2m > [22m[2mEditEventPage route (/organizer/events/[eventId]/edit - AC-22)[2m > [22m[2mđổi quota hạng vé thất bại: báo bước hạng vé, kèm link mở lại bản nháp
 [22m[39mWarning: An update to OrganizerEventView inside a test was not wrapped in act(...).
 
@@ -1014,7 +1014,7 @@ This ensures that you're testing the behavior the user would see in the browser.
     at OrganizerEventView (D:\Documents\Nam4-1\Project1\EvenFlow-debt\apps\web\src\app\(organizer)\organizer\_lib\organizer-event-view.tsx:18:31)
     at EditEventClient (D:\Documents\Nam4-1\Project1\EvenFlow-debt\apps\web\src\app\(organizer)\organizer\events\[eventId]\edit\edit-event-client.tsx:131:28)
 
- [32m✓[39m src/components/queue/queue-status-panel.test.tsx [2m([22m[2m112 tests[22m[2m)[22m[33m 1780[2mms[22m[39m
+ [32m✓[39m src/components/queue/queue-status-panel.test.tsx [2m([22m[2m112 tests[22m[2m)[22m[33m 1904[2mms[22m[39m
 [90mstderr[2m | src/app/(organizer)/organizer/events/[eventId]/edit/page.test.tsx[2m > [22m[2mEditEventPage route (/organizer/events/[eventId]/edit - AC-22)[2m > [22m[2mF-1: ON_SALE -> form tăng số lượng vé, chỉ gọi PUT tier quota (không PUT sự kiện, không POST hạng vé)
 [22m[39mWarning: An update to OrganizerEventView inside a test was not wrapped in act(...).
 
@@ -1071,6 +1071,15 @@ This ensures that you're testing the behavior the user would see in the browser.
     at OrganizerEventView (D:\Documents\Nam4-1\Project1\EvenFlow-debt\apps\web\src\app\(organizer)\organizer\_lib\organizer-event-view.tsx:18:31)
     at EditEventClient (D:\Documents\Nam4-1\Project1\EvenFlow-debt\apps\web\src\app\(organizer)\organizer\events\[eventId]\edit\edit-event-client.tsx:131:28)
 
+[90mstderr[2m | src/components/layout/workspace-shell.test.tsx[2m > [22m[2mWorkspaceShell — m4 bam link trong nav thi dong menu[2m > [22m[2mbam link ready: true -> menu dong, KE CA khi pathname khong doi
+[22m[39mError: Not implemented: navigation (except hash changes)
+    at module.exports (D:\Documents\Nam4-1\Project1\EvenFlow-debt\apps\web\node_modules\jsdom\lib\jsdom\browser\not-implemented.js:9:17)
+    at navigateFetch (D:\Documents\Nam4-1\Project1\EvenFlow-debt\apps\web\node_modules\jsdom\lib\jsdom\living\window\navigation.js:77:3)
+    at exports.navigate (D:\Documents\Nam4-1\Project1\EvenFlow-debt\apps\web\node_modules\jsdom\lib\jsdom\living\window\navigation.js:55:3)
+    at Timeout._onTimeout (D:\Documents\Nam4-1\Project1\EvenFlow-debt\apps\web\node_modules\jsdom\lib\jsdom\living\nodes\HTMLHyperlinkElementUtils-impl.js:81:7)
+    at listOnTimeout (node:internal/timers:588:17)
+    at processTimers (node:internal/timers:523:7) [90mundefined[39m
+
 [90mstderr[2m | src/app/(organizer)/organizer/events/[eventId]/edit/page.test.tsx[2m > [22m[2mEditEventPage route (/organizer/events/[eventId]/edit - AC-22)[2m > [22m[2mF-3: thử lại sau khi lỗi một phần không POST lại hạng vé đã tạo
 [22m[39mWarning: An update to OrganizerEventView inside a test was not wrapped in act(...).
 
@@ -1084,15 +1093,6 @@ act(() => {
 This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
     at OrganizerEventView (D:\Documents\Nam4-1\Project1\EvenFlow-debt\apps\web\src\app\(organizer)\organizer\_lib\organizer-event-view.tsx:18:31)
     at EditEventClient (D:\Documents\Nam4-1\Project1\EvenFlow-debt\apps\web\src\app\(organizer)\organizer\events\[eventId]\edit\edit-event-client.tsx:131:28)
-
-[90mstderr[2m | src/components/layout/workspace-shell.test.tsx[2m > [22m[2mWorkspaceShell — m4 bam link trong nav thi dong menu[2m > [22m[2mbam link ready: true -> menu dong, KE CA khi pathname khong doi
-[22m[39mError: Not implemented: navigation (except hash changes)
-    at module.exports (D:\Documents\Nam4-1\Project1\EvenFlow-debt\apps\web\node_modules\jsdom\lib\jsdom\browser\not-implemented.js:9:17)
-    at navigateFetch (D:\Documents\Nam4-1\Project1\EvenFlow-debt\apps\web\node_modules\jsdom\lib\jsdom\living\window\navigation.js:77:3)
-    at exports.navigate (D:\Documents\Nam4-1\Project1\EvenFlow-debt\apps\web\node_modules\jsdom\lib\jsdom\living\window\navigation.js:55:3)
-    at Timeout._onTimeout (D:\Documents\Nam4-1\Project1\EvenFlow-debt\apps\web\node_modules\jsdom\lib\jsdom\living\nodes\HTMLHyperlinkElementUtils-impl.js:81:7)
-    at listOnTimeout (node:internal/timers:588:17)
-    at processTimers (node:internal/timers:523:7) [90mundefined[39m
 
 [90mstderr[2m | src/components/layout/workspace-shell.test.tsx[2m > [22m[2mWorkspaceShell — m4 bam link trong nav thi dong menu[2m > [22m[2mbam link sang route KHAC cung dong menu
 [22m[39mError: Not implemented: navigation (except hash changes)
@@ -1153,7 +1153,7 @@ This ensures that you're testing the behavior the user would see in the browser.
     at listOnTimeout (node:internal/timers:588:17)
     at processTimers (node:internal/timers:523:7) [90mundefined[39m
 
- [32m✓[39m src/components/layout/workspace-shell.test.tsx [2m([22m[2m47 tests[22m[2m)[22m[33m 2840[2mms[22m[39m
+ [32m✓[39m src/components/layout/workspace-shell.test.tsx [2m([22m[2m47 tests[22m[2m)[22m[33m 2865[2mms[22m[39m
 [90mstderr[2m | src/app/(organizer)/organizer/events/[eventId]/edit/page.test.tsx[2m > [22m[2mEditEventPage route (/organizer/events/[eventId]/edit - AC-22)[2m > [22m[2mH-3 (Z-5): reload fails twice after a partial failure -> created tier stays read-only and is not POSTed again
 [22m[39mWarning: An update to OrganizerEventView inside a test was not wrapped in act(...).
 
@@ -1168,17 +1168,19 @@ This ensures that you're testing the behavior the user would see in the browser.
     at OrganizerEventView (D:\Documents\Nam4-1\Project1\EvenFlow-debt\apps\web\src\app\(organizer)\organizer\_lib\organizer-event-view.tsx:18:31)
     at EditEventClient (D:\Documents\Nam4-1\Project1\EvenFlow-debt\apps\web\src\app\(organizer)\organizer\events\[eventId]\edit\edit-event-client.tsx:131:28)
 
- [32m✓[39m src/components/assistant/assistant-panel.test.tsx [2m([22m[2m180 tests[22m[2m)[22m[33m 3308[2mms[22m[39m
- [32m✓[39m src/components/layout/public-header.test.tsx [2m([22m[2m43 tests[22m[2m)[22m[33m 3503[2mms[22m[39m
- [32m✓[39m src/app/(organizer)/organizer/events/[eventId]/edit/page.test.tsx [2m([22m[2m22 tests[22m[2m)[22m[33m 3569[2mms[22m[39m
-   [33m[2m✓[22m[39m EditEventPage route (/organizer/events/[eventId]/edit - AC-22)[2m > [22mlưu: PUT đầy đủ -> quota hạng cũ đổi -> hạng mới POST -> về review-status [33m571[2mms[22m[39m
-   [33m[2m✓[22m[39m EditEventPage route (/organizer/events/[eventId]/edit - AC-22)[2m > [22mF-3: thử lại sau khi lỗi một phần không POST lại hạng vé đã tạo [33m305[2mms[22m[39m
-   [33m[2m✓[22m[39m EditEventPage route (/organizer/events/[eventId]/edit - AC-22)[2m > [22mG-8: sau lỗi một phần, hạng vé đã tạo thành hạng cũ (chỉ sửa quota), hạng chưa lưu vẫn sửa được [33m470[2mms[22m[39m
-   [33m[2m✓[22m[39m EditEventPage route (/organizer/events/[eventId]/edit - AC-22)[2m > [22mH-3 (Z-5): reload fails twice after a partial failure -> created tier stays read-only and is not POSTed again [33m435[2mms[22m[39m
- [32m✓[39m src/components/ops/ops-war-room.test.tsx [2m([22m[2m74 tests[22m[2m)[22m[33m 4835[2mms[22m[39m
-   [33m[2m✓[22m[39m OpsWarRoom — AC-1 một màn hình đủ số liệu[2m > [22mh1 là tên sự kiện, có trạng thái bán [33m309[2mms[22m[39m
+ [32m✓[39m src/components/assistant/assistant-panel.test.tsx [2m([22m[2m180 tests[22m[2m)[22m[33m 3353[2mms[22m[39m
+ [32m✓[39m src/components/layout/public-header.test.tsx [2m([22m[2m43 tests[22m[2m)[22m[33m 3520[2mms[22m[39m
+   [33m[2m✓[22m[39m PublicHeader — AC-6 mo / dong menu[2m > [22mbam nut: aria-expanded doi "false" -> "true" va nav sang data-state "open" [33m309[2mms[22m[39m
+ [32m✓[39m src/app/(organizer)/organizer/events/[eventId]/edit/page.test.tsx [2m([22m[2m22 tests[22m[2m)[22m[33m 3583[2mms[22m[39m
+   [33m[2m✓[22m[39m EditEventPage route (/organizer/events/[eventId]/edit - AC-22)[2m > [22mlưu: PUT đầy đủ -> quota hạng cũ đổi -> hạng mới POST -> về review-status [33m490[2mms[22m[39m
+   [33m[2m✓[22m[39m EditEventPage route (/organizer/events/[eventId]/edit - AC-22)[2m > [22mG-8: sau lỗi một phần, hạng vé đã tạo thành hạng cũ (chỉ sửa quota), hạng chưa lưu vẫn sửa được [33m490[2mms[22m[39m
+   [33m[2m✓[22m[39m EditEventPage route (/organizer/events/[eventId]/edit - AC-22)[2m > [22mH-3 (Z-5): reload fails twice after a partial failure -> created tier stays read-only and is not POSTed again [33m436[2mms[22m[39m
  [32m✓[39m src/lib/i18n/messages.test.ts [2m([22m[2m55 tests[22m[2m)[22m[90m 48[2mms[22m[39m
- [32m✓[39m src/lib/sse.test.ts [2m([22m[2m17 tests[22m[2m)[22m[90m 72[2mms[22m[39m
+ [32m✓[39m src/components/ops/ops-war-room.test.tsx [2m([22m[2m74 tests[22m[2m)[22m[33m 4950[2mms[22m[39m
+   [33m[2m✓[22m[39m OpsWarRoom — AC-1 một màn hình đủ số liệu[2m > [22mh1 là tên sự kiện, có trạng thái bán [33m311[2mms[22m[39m
+ [32m✓[39m src/components/ui/toast.test.tsx [2m([22m[2m18 tests[22m[2m)[22m[33m 436[2mms[22m[39m
+ [32m✓[39m src/lib/sse.test.ts [2m([22m[2m17 tests[22m[2m)[22m[90m 69[2mms[22m[39m
+ [32m✓[39m src/lib/event-service.contract.test.ts [2m([22m[2m18 tests[22m[2m)[22m[90m 92[2mms[22m[39m
 [90mstderr[2m | src/app/(organizer)/organizer/events/[eventId]/edit/page.debt.test.tsx[2m > [22m[2mAC-5 lost addTier response[2m > [22m[2mW-4: retry matches the reloaded server tier: addTier called once in total, no quota PUT, navigates to review-status
 [22m[39mWarning: An update to OrganizerEventView inside a test was not wrapped in act(...).
 
@@ -1193,9 +1195,7 @@ This ensures that you're testing the behavior the user would see in the browser.
     at OrganizerEventView (D:\Documents\Nam4-1\Project1\EvenFlow-debt\apps\web\src\app\(organizer)\organizer\_lib\organizer-event-view.tsx:18:31)
     at EditEventClient (D:\Documents\Nam4-1\Project1\EvenFlow-debt\apps\web\src\app\(organizer)\organizer\events\[eventId]\edit\edit-event-client.tsx:131:28)
 
- [32m✓[39m src/lib/money.test.ts [2m([22m[2m24 tests[22m[2m)[22m[90m 30[2mms[22m[39m
- [32m✓[39m src/components/ui/toast.test.tsx [2m([22m[2m18 tests[22m[2m)[22m[33m 479[2mms[22m[39m
- [32m✓[39m src/lib/event-service.contract.test.ts [2m([22m[2m18 tests[22m[2m)[22m[90m 91[2mms[22m[39m
+ [32m✓[39m src/lib/money.test.ts [2m([22m[2m24 tests[22m[2m)[22m[90m 29[2mms[22m[39m
 [90mstderr[2m | src/lib/server-time.test.ts[2m > [22m[2mtoEpochMs — chi nhan moc co mui gio tuong minh (AC-3)[2m > [22m[2mtu choi '2026-10-03' (chi co ngay, ECMA hieu la UTC) -> null
 [22m[39m[server-time] moc thoi han "2026-10-03" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
 
@@ -1238,7 +1238,9 @@ This ensures that you're testing the behavior the user would see in the browser.
     at OrganizerEventView (D:\Documents\Nam4-1\Project1\EvenFlow-debt\apps\web\src\app\(organizer)\organizer\_lib\organizer-event-view.tsx:18:31)
     at EditEventClient (D:\Documents\Nam4-1\Project1\EvenFlow-debt\apps\web\src\app\(organizer)\organizer\events\[eventId]\edit\edit-event-client.tsx:131:28)
 
- [32m✓[39m src/lib/server-time.test.ts [2m([22m[2m39 tests[22m[2m)[22m[90m 55[2mms[22m[39m
+ [32m✓[39m src/lib/server-time.test.ts [2m([22m[2m39 tests[22m[2m)[22m[90m 46[2mms[22m[39m
+ [32m✓[39m src/app/(marketing)/events/[slug]/page.test.tsx [2m([22m[2m13 tests[22m[2m)[22m[33m 635[2mms[22m[39m
+ [32m✓[39m src/components/ui/input.test.tsx [2m([22m[2m23 tests[22m[2m)[22m[33m 878[2mms[22m[39m
 [90mstderr[2m | src/app/(organizer)/organizer/events/[eventId]/edit/page.debt.test.tsx[2m > [22m[2mAC-5 lost addTier response[2m > [22m[2mtrim + case-insensitive: server stored the name as ' HẠNG VÉ #2 ' -> still matched, no second POST
 [22m[39mWarning: An update to OrganizerEventView inside a test was not wrapped in act(...).
 
@@ -1253,8 +1255,34 @@ This ensures that you're testing the behavior the user would see in the browser.
     at OrganizerEventView (D:\Documents\Nam4-1\Project1\EvenFlow-debt\apps\web\src\app\(organizer)\organizer\_lib\organizer-event-view.tsx:18:31)
     at EditEventClient (D:\Documents\Nam4-1\Project1\EvenFlow-debt\apps\web\src\app\(organizer)\organizer\events\[eventId]\edit\edit-event-client.tsx:131:28)
 
- [32m✓[39m src/app/(marketing)/events/[slug]/page.test.tsx [2m([22m[2m13 tests[22m[2m)[22m[33m 656[2mms[22m[39m
- [32m✓[39m src/components/ui/input.test.tsx [2m([22m[2m23 tests[22m[2m)[22m[33m 924[2mms[22m[39m
+ [32m✓[39m src/lib/queue-status.test.ts [2m([22m[2m22 tests[22m[2m)[22m[90m 55[2mms[22m[39m
+[90mstderr[2m | src/components/checkout/payment-handoff-view.test.tsx[2m > [22m[2mPaymentHandoffView component (EVF-114, BR-O2, BR-O5)[2m > [22m[2mgọi onPaymentSuccess khi nhập đầy đủ thông tin và submit thành công (BR-O5)
+[22m[39mWarning: An update to PaymentHandoffView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at PaymentHandoffView (D:\Documents\Nam4-1\Project1\EvenFlow-debt\apps\web\src\components\checkout\payment-handoff-view.tsx:21:3)
+
+[90mstderr[2m | src/components/organizer/event-wizard.test.tsx[2m > [22m[2mEventWizard component (EV-186, EVF-116, Stitch 10.13, BR-E1, BR-E2, BR-E3)[2m > [22m[2mgọi onSubmit với submitForReview=true khi bấm Gửi kiểm duyệt ở Bước 4
+[22m[39mWarning: An update to EventWizard inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at EventWizard (D:\Documents\Nam4-1\Project1\EvenFlow-debt\apps\web\src\components\organizer\event-wizard.tsx:66:3)
+
+ [32m✓[39m src/lib/queue-client.contract.test.ts [2m([22m[2m12 tests[22m[2m)[22m[90m 99[2mms[22m[39m
 [90mstderr[2m | src/app/(organizer)/organizer/events/[eventId]/edit/page.debt.test.tsx[2m > [22m[2mAC-5 lost addTier response[2m > [22m[2many 422 from addTier triggers the same lookup: server tier visible only after the failure -> matched, no error shown
 [22m[39mWarning: An update to OrganizerEventView inside a test was not wrapped in act(...).
 
@@ -1269,38 +1297,15 @@ This ensures that you're testing the behavior the user would see in the browser.
     at OrganizerEventView (D:\Documents\Nam4-1\Project1\EvenFlow-debt\apps\web\src\app\(organizer)\organizer\_lib\organizer-event-view.tsx:18:31)
     at EditEventClient (D:\Documents\Nam4-1\Project1\EvenFlow-debt\apps\web\src\app\(organizer)\organizer\events\[eventId]\edit\edit-event-client.tsx:131:28)
 
- [32m✓[39m src/components/i18n/language-toggle.test.tsx [2m([22m[2m19 tests[22m[2m)[22m[33m 1609[2mms[22m[39m
-[90mstderr[2m | src/components/organizer/event-wizard.test.tsx[2m > [22m[2mEventWizard component (EV-186, EVF-116, Stitch 10.13, BR-E1, BR-E2, BR-E3)[2m > [22m[2mgọi onSubmit với submitForReview=true khi bấm Gửi kiểm duyệt ở Bước 4
-[22m[39mWarning: An update to EventWizard inside a test was not wrapped in act(...).
-
-When testing, code that causes React state updates should be wrapped into act(...):
-
-act(() => {
-  /* fire events that update state */
-});
-/* assert on the output */
-
-This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
-    at EventWizard (D:\Documents\Nam4-1\Project1\EvenFlow-debt\apps\web\src\components\organizer\event-wizard.tsx:66:3)
-
- [32m✓[39m src/lib/queue-client.contract.test.ts [2m([22m[2m12 tests[22m[2m)[22m[90m 87[2mms[22m[39m
-[90mstderr[2m | src/components/checkout/payment-handoff-view.test.tsx[2m > [22m[2mPaymentHandoffView component (EVF-114, BR-O2, BR-O5)[2m > [22m[2mgọi onPaymentSuccess khi nhập đầy đủ thông tin và submit thành công (BR-O5)
-[22m[39mWarning: An update to PaymentHandoffView inside a test was not wrapped in act(...).
-
-When testing, code that causes React state updates should be wrapped into act(...):
-
-act(() => {
-  /* fire events that update state */
-});
-/* assert on the output */
-
-This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
-    at PaymentHandoffView (D:\Documents\Nam4-1\Project1\EvenFlow-debt\apps\web\src\components\checkout\payment-handoff-view.tsx:21:3)
-
- [32m✓[39m src/lib/queue-status.test.ts [2m([22m[2m22 tests[22m[2m)[22m[90m 49[2mms[22m[39m
- [32m✓[39m src/components/organizer/event-wizard.test.tsx [2m([22m[2m5 tests[22m[2m)[22m[33m 1342[2mms[22m[39m
-   [33m[2m✓[22m[39m EventWizard component (EV-186, EVF-116, Stitch 10.13, BR-E1, BR-E2, BR-E3)[2m > [22mbắt buộc nhập thông tin cơ bản ở Bước 1 trước khi sang Bước 2 [33m451[2mms[22m[39m
-   [33m[2m✓[22m[39m EventWizard component (EV-186, EVF-116, Stitch 10.13, BR-E1, BR-E2, BR-E3)[2m > [22mkiểm tra validation BR-E2 (sale_start_at >= now + 30m) ở Bước 3 [33m364[2mms[22m[39m
+ [32m✓[39m src/components/organizer/event-wizard.test.tsx [2m([22m[2m5 tests[22m[2m)[22m[33m 1328[2mms[22m[39m
+   [33m[2m✓[22m[39m EventWizard component (EV-186, EVF-116, Stitch 10.13, BR-E1, BR-E2, BR-E3)[2m > [22mbắt buộc nhập thông tin cơ bản ở Bước 1 trước khi sang Bước 2 [33m446[2mms[22m[39m
+   [33m[2m✓[22m[39m EventWizard component (EV-186, EVF-116, Stitch 10.13, BR-E1, BR-E2, BR-E3)[2m > [22mkiểm tra validation BR-E2 (sale_start_at >= now + 30m) ở Bước 3 [33m362[2mms[22m[39m
+ [32m✓[39m src/components/ui/button.test.tsx [2m([22m[2m32 tests[22m[2m)[22m[33m 920[2mms[22m[39m
+ [32m✓[39m src/lib/readiness.test.ts [2m([22m[2m19 tests[22m[2m)[22m[90m 50[2mms[22m[39m
+ [32m✓[39m src/components/queue/waiting-room.test.tsx [2m([22m[2m8 tests[22m[2m)[22m[33m 668[2mms[22m[39m
+ [32m✓[39m src/components/checkout/payment-handoff-view.test.tsx [2m([22m[2m8 tests[22m[2m)[22m[33m 1332[2mms[22m[39m
+   [33m[2m✓[22m[39m PaymentHandoffView component (EVF-114, BR-O2, BR-O5)[2m > [22mrender đầy đủ thông tin đơn hàng, tổng tiền và các cổng thanh toán [33m404[2mms[22m[39m
+ [32m✓[39m src/components/i18n/language-toggle.test.tsx [2m([22m[2m19 tests[22m[2m)[22m[33m 1603[2mms[22m[39m
 [90mstderr[2m | src/app/(organizer)/organizer/events/[eventId]/edit/page.debt.test.tsx[2m > [22m[2mAC-5 lost addTier response[2m > [22m[2man UNRELATED existing tier with the same name but a different price is NOT matched: POST as new, show the server 422 detail
 [22m[39mWarning: An update to OrganizerEventView inside a test was not wrapped in act(...).
 
@@ -1315,8 +1320,6 @@ This ensures that you're testing the behavior the user would see in the browser.
     at OrganizerEventView (D:\Documents\Nam4-1\Project1\EvenFlow-debt\apps\web\src\app\(organizer)\organizer\_lib\organizer-event-view.tsx:18:31)
     at EditEventClient (D:\Documents\Nam4-1\Project1\EvenFlow-debt\apps\web\src\app\(organizer)\organizer\events\[eventId]\edit\edit-event-client.tsx:131:28)
 
- [32m✓[39m src/lib/readiness.test.ts [2m([22m[2m19 tests[22m[2m)[22m[90m 49[2mms[22m[39m
- [32m✓[39m src/components/ui/button.test.tsx [2m([22m[2m32 tests[22m[2m)[22m[33m 920[2mms[22m[39m
 [90mstderr[2m | src/app/(organizer)/organizer/events/[eventId]/edit/page.debt.test.tsx[2m > [22m[2mAC-5 lost addTier response[2m > [22m[2mGUARD: the organizer renamed the lost tier before retrying: no match, POSTed under the new name, 422 detail shown
 [22m[39mWarning: An update to OrganizerEventView inside a test was not wrapped in act(...).
 
@@ -1331,9 +1334,9 @@ This ensures that you're testing the behavior the user would see in the browser.
     at OrganizerEventView (D:\Documents\Nam4-1\Project1\EvenFlow-debt\apps\web\src\app\(organizer)\organizer\_lib\organizer-event-view.tsx:18:31)
     at EditEventClient (D:\Documents\Nam4-1\Project1\EvenFlow-debt\apps\web\src\app\(organizer)\organizer\events\[eventId]\edit\edit-event-client.tsx:131:28)
 
- [32m✓[39m src/components/checkout/payment-handoff-view.test.tsx [2m([22m[2m8 tests[22m[2m)[22m[33m 1387[2mms[22m[39m
-   [33m[2m✓[22m[39m PaymentHandoffView component (EVF-114, BR-O2, BR-O5)[2m > [22mrender đầy đủ thông tin đơn hàng, tổng tiền và các cổng thanh toán [33m436[2mms[22m[39m
- [32m✓[39m src/components/queue/waiting-room.test.tsx [2m([22m[2m8 tests[22m[2m)[22m[33m 706[2mms[22m[39m
+ [32m✓[39m src/components/layout/public-shell.test.tsx [2m([22m[2m14 tests[22m[2m)[22m[33m 722[2mms[22m[39m
+ [32m✓[39m src/components/theme/theme-toggle.test.tsx [2m([22m[2m10 tests[22m[2m)[22m[33m 663[2mms[22m[39m
+ [32m✓[39m src/components/ui/radio.test.tsx [2m([22m[2m18 tests[22m[2m)[22m[33m 801[2mms[22m[39m
 [90mstderr[2m | src/app/(organizer)/organizer/events/[eventId]/edit/page.debt.test.tsx[2m > [22m[2mAC-5 lost addTier response[2m > [22m[2mGUARD (F-3): without any lost response a normal save POSTs the new tier exactly once
 [22m[39mWarning: An update to OrganizerEventView inside a test was not wrapped in act(...).
 
@@ -1348,24 +1351,23 @@ This ensures that you're testing the behavior the user would see in the browser.
     at OrganizerEventView (D:\Documents\Nam4-1\Project1\EvenFlow-debt\apps\web\src\app\(organizer)\organizer\_lib\organizer-event-view.tsx:18:31)
     at EditEventClient (D:\Documents\Nam4-1\Project1\EvenFlow-debt\apps\web\src\app\(organizer)\organizer\events\[eventId]\edit\edit-event-client.tsx:131:28)
 
- [32m✓[39m src/lib/assistant-client.test.ts [2m([22m[2m13 tests[22m[2m)[22m[33m 975[2mms[22m[39m
-   [33m[2m✓[22m[39m assistant-client (EV-185, EVF-115)[2m > [22m5. Mô phỏng luồng Streaming (AC-3)[2m > [22mstream các token tuần tự và gọi onComplete với đầy đủ nội dung [33m947[2mms[22m[39m
- [32m✓[39m src/components/theme/theme-script.test.tsx [2m([22m[2m13 tests[22m[2m)[22m[90m 185[2mms[22m[39m
- [32m✓[39m src/lib/debt/ac4-cross-tab-owner.test.tsx [2m([22m[2m10 tests[22m[2m)[22m[90m 235[2mms[22m[39m
+ [32m✓[39m src/lib/assistant-client.test.ts [2m([22m[2m13 tests[22m[2m)[22m[33m 1020[2mms[22m[39m
+   [33m[2m✓[22m[39m assistant-client (EV-185, EVF-115)[2m > [22m5. Mô phỏng luồng Streaming (AC-3)[2m > [22mstream các token tuần tự và gọi onComplete với đầy đủ nội dung [33m997[2mms[22m[39m
  [32m✓[39m src/lib/hold-client.contract.test.ts [2m([22m[2m23 tests[22m[2m)[22m[33m 2153[2mms[22m[39m
-   [33m[2m✓[22m[39m requestHold: anh xa loi (AC-10)[2m > [22m409 idempotency-in-progress KHONG phai het ve -> AMBIGUOUS [33m2037[2mms[22m[39m
- [32m✓[39m src/components/ui/radio.test.tsx [2m([22m[2m18 tests[22m[2m)[22m[33m 828[2mms[22m[39m
- [32m✓[39m src/app/(organizer)/organizer/events/[eventId]/edit/page.debt.test.tsx [2m([22m[2m7 tests[22m[2m)[22m[33m 2806[2mms[22m[39m
-   [33m[2m✓[22m[39m AC-5 lost addTier response[2m > [22mW-4: retry matches the reloaded server tier: addTier called once in total, no quota PUT, navigates to review-status [33m698[2mms[22m[39m
-   [33m[2m✓[22m[39m AC-5 lost addTier response[2m > [22mmatched tier with a different quota: only the quota is sent, to the server id; still one addTier [33m527[2mms[22m[39m
-   [33m[2m✓[22m[39m AC-5 lost addTier response[2m > [22many 422 from addTier triggers the same lookup: server tier visible only after the failure -> matched, no error shown [33m315[2mms[22m[39m
-   [33m[2m✓[22m[39m AC-5 lost addTier response[2m > [22mGUARD: the organizer renamed the lost tier before retrying: no match, POSTed under the new name, 422 detail shown [33m490[2mms[22m[39m
- [32m✓[39m src/components/theme/theme-toggle.test.tsx [2m([22m[2m10 tests[22m[2m)[22m[33m 703[2mms[22m[39m
- [32m✓[39m src/components/layout/public-shell.test.tsx [2m([22m[2m14 tests[22m[2m)[22m[33m 748[2mms[22m[39m
- [32m✓[39m src/hooks/use-theme.test.tsx [2m([22m[2m13 tests[22m[2m)[22m[90m 118[2mms[22m[39m
- [32m✓[39m src/components/ui/checkbox.test.tsx [2m([22m[2m20 tests[22m[2m)[22m[33m 665[2mms[22m[39m
- [32m✓[39m src/components/layout/skip-link.test.tsx [2m([22m[2m13 tests[22m[2m)[22m[33m 479[2mms[22m[39m
- [32m✓[39m src/components/ui/field.test.tsx [2m([22m[2m16 tests[22m[2m)[22m[33m 334[2mms[22m[39m
+   [33m[2m✓[22m[39m requestHold: anh xa loi (AC-10)[2m > [22m409 idempotency-in-progress KHONG phai het ve -> AMBIGUOUS [33m2025[2mms[22m[39m
+ [32m✓[39m src/components/theme/theme-script.test.tsx [2m([22m[2m13 tests[22m[2m)[22m[90m 180[2mms[22m[39m
+ [32m✓[39m src/lib/debt/ac4-cross-tab-owner.test.tsx [2m([22m[2m10 tests[22m[2m)[22m[33m 337[2mms[22m[39m
+ [32m✓[39m src/components/ui/checkbox.test.tsx [2m([22m[2m20 tests[22m[2m)[22m[33m 753[2mms[22m[39m
+ [32m✓[39m src/components/layout/skip-link.test.tsx [2m([22m[2m13 tests[22m[2m)[22m[33m 499[2mms[22m[39m
+ [32m✓[39m src/hooks/use-theme.test.tsx [2m([22m[2m13 tests[22m[2m)[22m[90m 131[2mms[22m[39m
+ [32m✓[39m src/app/(organizer)/organizer/events/[eventId]/edit/page.debt.test.tsx [2m([22m[2m7 tests[22m[2m)[22m[33m 2913[2mms[22m[39m
+   [33m[2m✓[22m[39m AC-5 lost addTier response[2m > [22mW-4: retry matches the reloaded server tier: addTier called once in total, no quota PUT, navigates to review-status [33m723[2mms[22m[39m
+   [33m[2m✓[22m[39m AC-5 lost addTier response[2m > [22mmatched tier with a different quota: only the quota is sent, to the server id; still one addTier [33m519[2mms[22m[39m
+   [33m[2m✓[22m[39m AC-5 lost addTier response[2m > [22mtrim + case-insensitive: server stored the name as ' HẠNG VÉ #2 ' -> still matched, no second POST [33m327[2mms[22m[39m
+   [33m[2m✓[22m[39m AC-5 lost addTier response[2m > [22many 422 from addTier triggers the same lookup: server tier visible only after the failure -> matched, no error shown [33m302[2mms[22m[39m
+   [33m[2m✓[22m[39m AC-5 lost addTier response[2m > [22mGUARD: the organizer renamed the lost tier before retrying: no match, POSTed under the new name, 422 detail shown [33m530[2mms[22m[39m
+ [32m✓[39m src/components/ui/field.test.tsx [2m([22m[2m16 tests[22m[2m)[22m[33m 349[2mms[22m[39m
+ [32m✓[39m src/components/organizer/moderation-status-card.actions.test.tsx [2m([22m[2m21 tests[22m[2m)[22m[33m 1325[2mms[22m[39m
 [90mstderr[2m | src/components/organizer/event-wizard.fixround1.test.tsx[2m > [22m[2mEventWizard — fix round 1[2m > [22m[2mF-19: mở bán < 30 phút vẫn sang được bước 4 và Lưu nháp gọi onSubmit
 [22m[39mWarning: An update to EventWizard inside a test was not wrapped in act(...).
 
@@ -1379,7 +1381,6 @@ act(() => {
 This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
     at EventWizard (D:\Documents\Nam4-1\Project1\EvenFlow-debt\apps\web\src\components\organizer\event-wizard.tsx:66:3)
 
- [32m✓[39m src/components/organizer/moderation-status-card.actions.test.tsx [2m([22m[2m21 tests[22m[2m)[22m[33m 1240[2mms[22m[39m
 [90mstderr[2m | src/components/organizer/event-wizard.fixround1.test.tsx[2m > [22m[2mEventWizard — fix round 1[2m > [22m[2mF-1: ON_SALE -> chỉ form tăng số lượng vé, trường sự kiện chỉ đọc, chặn giảm
 [22m[39mWarning: An update to EventWizard inside a test was not wrapped in act(...).
 
@@ -1393,17 +1394,18 @@ act(() => {
 This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
     at EventWizard (D:\Documents\Nam4-1\Project1\EvenFlow-debt\apps\web\src\components\organizer\event-wizard.tsx:66:3)
 
- [32m✓[39m src/components/organizer/event-wizard.partial.test.tsx [2m([22m[2m8 tests[22m[2m)[22m[33m 1671[2mms[22m[39m
-   [33m[2m✓[22m[39m EventWizard — lỗi một phần khi tạo (AC-21)[2m > [22mbước hạng vé lỗi: nêu rõ bước nào lỗi và có link tới bản nháp đã tạo [33m625[2mms[22m[39m
- [32m✓[39m src/components/organizer/event-wizard.fixround1.test.tsx [2m([22m[2m9 tests[22m[2m)[22m[33m 1622[2mms[22m[39m
-   [33m[2m✓[22m[39m EventWizard — fix round 1[2m > [22mF-10: SCHEDULED -> không có nút Gửi kiểm duyệt [33m409[2mms[22m[39m
- [32m✓[39m src/lib/debt/ac1-user-switch.test.ts [2m([22m[2m6 tests[22m[2m)[22m[90m 132[2mms[22m[39m
- [32m✓[39m src/app/(organizer)/organizer/events/new/page.test.tsx [2m([22m[2m7 tests[22m[2m)[22m[33m 1793[2mms[22m[39m
+ [32m✓[39m src/components/organizer/event-wizard.partial.test.tsx [2m([22m[2m8 tests[22m[2m)[22m[33m 1738[2mms[22m[39m
+   [33m[2m✓[22m[39m EventWizard — lỗi một phần khi tạo (AC-21)[2m > [22mbước hạng vé lỗi: nêu rõ bước nào lỗi và có link tới bản nháp đã tạo [33m663[2mms[22m[39m
+ [32m✓[39m src/lib/debt/ac1-user-switch.test.ts [2m([22m[2m6 tests[22m[2m)[22m[90m 171[2mms[22m[39m
+ [32m✓[39m src/components/organizer/event-wizard.fixround1.test.tsx [2m([22m[2m9 tests[22m[2m)[22m[33m 1785[2mms[22m[39m
+   [33m[2m✓[22m[39m EventWizard — fix round 1[2m > [22mF-10: SCHEDULED -> không có nút Gửi kiểm duyệt [33m519[2mms[22m[39m
+ [32m✓[39m src/app/(organizer)/organizer/events/new/page.test.tsx [2m([22m[2m7 tests[22m[2m)[22m[33m 1773[2mms[22m[39m
    [33m[2m✓[22m[39m NewEventPage route (/organizer/events/new - AC-21)[2m > [22mtạo và gửi duyệt thành công -> chuyển tới trang review-status của sự kiện vừa tạo [33m532[2mms[22m[39m
- [32m✓[39m src/lib/session.contract.test.ts [2m([22m[2m17 tests[22m[2m)[22m[90m 32[2mms[22m[39m
- [32m✓[39m src/components/ui/spinner.test.tsx [2m([22m[2m17 tests[22m[2m)[22m[33m 476[2mms[22m[39m
- [32m✓[39m src/components/ui/select.test.tsx [2m([22m[2m14 tests[22m[2m)[22m[33m 596[2mms[22m[39m
- [32m✓[39m src/components/assistant/chat-panel.test.tsx [2m([22m[2m8 tests[22m[2m)[22m[33m 673[2mms[22m[39m
+ [32m✓[39m src/components/ui/select.test.tsx [2m([22m[2m14 tests[22m[2m)[22m[33m 586[2mms[22m[39m
+ [32m✓[39m src/components/assistant/chat-panel.test.tsx [2m([22m[2m8 tests[22m[2m)[22m[33m 674[2mms[22m[39m
+ [32m✓[39m src/components/ui/spinner.test.tsx [2m([22m[2m17 tests[22m[2m)[22m[33m 477[2mms[22m[39m
+ [32m✓[39m src/lib/session.contract.test.ts [2m([22m[2m17 tests[22m[2m)[22m[90m 33[2mms[22m[39m
+ [32m✓[39m src/components/organizer/event-list.test.tsx [2m([22m[2m5 tests[22m[2m)[22m[33m 823[2mms[22m[39m
 [90mstderr[2m | src/app/(organizer)/organizer/events/[eventId]/review-status/page.test.tsx[2m > [22m[2mReviewStatusPage route (/organizer/events/[eventId]/review-status - AC-23, AC-24)[2m > [22m[2mhiện trạng thái thật từ API và nhãn dữ liệu mẫu cho chi tiết kiểm duyệt
 [22m[39mWarning: An update to OrganizerEventView inside a test was not wrapped in act(...).
 
@@ -1488,7 +1490,6 @@ This ensures that you're testing the behavior the user would see in the browser.
     at OrganizerEventView (D:\Documents\Nam4-1\Project1\EvenFlow-debt\apps\web\src\app\(organizer)\organizer\_lib\organizer-event-view.tsx:18:31)
     at ReviewStatusClient (D:\Documents\Nam4-1\Project1\EvenFlow-debt\apps\web\src\app\(organizer)\organizer\events\[eventId]\review-status\review-status-client.tsx:10:31)
 
- [32m✓[39m src/components/layout/container.test.tsx [2m([22m[2m13 tests[22m[2m)[22m[90m 264[2mms[22m[39m
 [90mstderr[2m | src/app/(organizer)/organizer/events/[eventId]/review-status/page.test.tsx[2m > [22m[2mReviewStatusPage route (/organizer/events/[eventId]/review-status - AC-23, AC-24)[2m > [22m[2mhuỷ 422: hiện problem detail và vẫn giữ trạng thái cũ
 [22m[39mWarning: An update to OrganizerEventView inside a test was not wrapped in act(...).
 
@@ -1503,8 +1504,8 @@ This ensures that you're testing the behavior the user would see in the browser.
     at OrganizerEventView (D:\Documents\Nam4-1\Project1\EvenFlow-debt\apps\web\src\app\(organizer)\organizer\_lib\organizer-event-view.tsx:18:31)
     at ReviewStatusClient (D:\Documents\Nam4-1\Project1\EvenFlow-debt\apps\web\src\app\(organizer)\organizer\events\[eventId]\review-status\review-status-client.tsx:10:31)
 
- [32m✓[39m src/components/organizer/event-list.test.tsx [2m([22m[2m5 tests[22m[2m)[22m[33m 856[2mms[22m[39m
- [32m✓[39m src/app/(organizer)/organizer/events/[eventId]/review-status/page.test.tsx [2m([22m[2m7 tests[22m[2m)[22m[33m 861[2mms[22m[39m
+ [32m✓[39m src/app/(organizer)/organizer/events/[eventId]/review-status/page.test.tsx [2m([22m[2m7 tests[22m[2m)[22m[33m 826[2mms[22m[39m
+ [32m✓[39m src/components/layout/container.test.tsx [2m([22m[2m13 tests[22m[2m)[22m[90m 266[2mms[22m[39m
 [90mstderr[2m | src/hooks/use-organizer-sales.test.tsx[2m > [22m[2museOrganizerSales — Hook doanh số realtime (AC-4)[2m > [22m[2mdùng initialData nếu được truyền vào để tránh loading skeleton
 [22m[39mWarning: An update to TestComponent inside a test was not wrapped in act(...).
 
@@ -1540,11 +1541,11 @@ act(() => {
 This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
     at TestComponent (D:\Documents\Nam4-1\Project1\EvenFlow-debt\apps\web\node_modules\@testing-library\react\dist\pure.js:307:5)
 
- [32m✓[39m src/hooks/use-organizer-sales.test.tsx [2m([22m[2m6 tests[22m[2m)[22m[90m 97[2mms[22m[39m
  [32m✓[39m src/components/event/ticket-tier-list.test.tsx [2m([22m[2m9 tests[22m[2m)[22m[33m 323[2mms[22m[39m
- [32m✓[39m src/components/organizer/sales-dashboard.test.tsx [2m([22m[2m5 tests[22m[2m)[22m[33m 680[2mms[22m[39m
- [32m✓[39m src/app/(ops)/layout.test.tsx [2m([22m[2m15 tests[22m[2m)[22m[33m 539[2mms[22m[39m
- [32m✓[39m src/lib/queue-token.test.ts [2m([22m[2m16 tests[22m[2m)[22m[90m 29[2mms[22m[39m
+ [32m✓[39m src/components/organizer/sales-dashboard.test.tsx [2m([22m[2m5 tests[22m[2m)[22m[33m 678[2mms[22m[39m
+ [32m✓[39m src/hooks/use-assistant.test.tsx [2m([22m[2m7 tests[22m[2m)[22m[90m 93[2mms[22m[39m
+ [32m✓[39m src/lib/queue-token.test.ts [2m([22m[2m16 tests[22m[2m)[22m[90m 27[2mms[22m[39m
+ [32m✓[39m src/hooks/use-organizer-sales.test.tsx [2m([22m[2m6 tests[22m[2m)[22m[90m 111[2mms[22m[39m
 [90mstderr[2m | src/components/organizer/moderation-status-card.test.tsx[2m > [22m[2mModerationStatusCard component (EV-186, EVF-116, Stitch 10.14, BR-E4, BR-E5)[2m > [22m[2mgọi onResubmit khi người dùng bấm Nộp duyệt lại
 [22m[39mWarning: An update to ModerationStatusCard inside a test was not wrapped in act(...).
 
@@ -1569,17 +1570,17 @@ act(() => {
 This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
     at ModerationStatusCard (D:\Documents\Nam4-1\Project1\EvenFlow-debt\apps\web\src\components\organizer\moderation-status-card.tsx:23:3)
 
- [32m✓[39m src/hooks/use-assistant.test.tsx [2m([22m[2m7 tests[22m[2m)[22m[90m 98[2mms[22m[39m
- [32m✓[39m src/components/organizer/moderation-status-card.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 523[2mms[22m[39m
- [32m✓[39m src/lib/fix1/f7-idempotency-in-progress.test.ts [2m([22m[2m7 tests[22m[2m)[22m[90m 98[2mms[22m[39m
- [32m✓[39m src/lib/fix1/f4-proactive-refresh.test.ts [2m([22m[2m6 tests[22m[2m)[22m[90m 71[2mms[22m[39m
- [32m✓[39m src/hooks/use-order-status.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[90m 73[2mms[22m[39m
- [32m✓[39m src/components/layout/public-footer.test.tsx [2m([22m[2m9 tests[22m[2m)[22m[33m 319[2mms[22m[39m
+ [32m✓[39m src/components/organizer/moderation-status-card.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 513[2mms[22m[39m
+ [32m✓[39m src/app/(ops)/layout.test.tsx [2m([22m[2m15 tests[22m[2m)[22m[33m 549[2mms[22m[39m
+ [32m✓[39m src/lib/fix1/f7-idempotency-in-progress.test.ts [2m([22m[2m7 tests[22m[2m)[22m[90m 92[2mms[22m[39m
+ [32m✓[39m src/lib/fix1/f4-proactive-refresh.test.ts [2m([22m[2m6 tests[22m[2m)[22m[90m 80[2mms[22m[39m
+ [32m✓[39m src/components/layout/public-footer.test.tsx [2m([22m[2m9 tests[22m[2m)[22m[33m 305[2mms[22m[39m
+ [32m✓[39m src/hooks/use-order-status.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[90m 77[2mms[22m[39m
  [32m✓[39m src/hooks/use-payment-session.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[90m 72[2mms[22m[39m
- [32m✓[39m src/components/ui/card.test.tsx [2m([22m[2m11 tests[22m[2m)[22m[33m 326[2mms[22m[39m
- [32m✓[39m src/app/(organizer)/layout.test.tsx [2m([22m[2m14 tests[22m[2m)[22m[33m 570[2mms[22m[39m
- [32m✓[39m src/lib/debt/ac3-locks-errors.test.ts [2m([22m[2m11 tests[22m[2m)[22m[33m 358[2mms[22m[39m
- [32m✓[39m src/hooks/use-auth.contract.test.tsx [2m([22m[2m6 tests[22m[2m)[22m[90m 127[2mms[22m[39m
+ [32m✓[39m src/lib/debt/ac3-locks-errors.test.ts [2m([22m[2m11 tests[22m[2m)[22m[90m 296[2mms[22m[39m
+ [32m✓[39m src/components/ui/card.test.tsx [2m([22m[2m11 tests[22m[2m)[22m[90m 299[2mms[22m[39m
+ [32m✓[39m src/app/(organizer)/layout.test.tsx [2m([22m[2m14 tests[22m[2m)[22m[33m 557[2mms[22m[39m
+ [32m✓[39m src/hooks/use-auth.contract.test.tsx [2m([22m[2m6 tests[22m[2m)[22m[90m 126[2mms[22m[39m
 [90mstderr[2m | src/app/(ops)/ops/events/[eventId]/page.test.tsx[2m > [22m[2mOpsWarRoomPage route (/ops/events/[eventId])[2m > [22m[2mlỗi khác (500): render thông báo lỗi kèm nút 'Thử lại' (M-2)
 [22m[39mWarning: An update to LiveWarRoom inside a test was not wrapped in act(...).
 
@@ -1618,35 +1619,35 @@ This ensures that you're testing the behavior the user would see in the browser.
     at LiveWarRoom (D:\Documents\Nam4-1\Project1\EvenFlow-debt\apps\web\src\components\ops\ops-war-room.tsx:101:3)
     at OpsWarRoom (D:\Documents\Nam4-1\Project1\EvenFlow-debt\apps\web\src\components\ops\ops-war-room.tsx:82:23)
 
- [32m✓[39m src/app/(ops)/ops/events/[eventId]/page.test.tsx [2m([22m[2m7 tests[22m[2m)[22m[33m 452[2mms[22m[39m
-   [33m[2m✓[22m[39m OpsWarRoomPage route (/ops/events/[eventId])[2m > [22msự kiện có thật: render war room với h1 là tên sự kiện và nhãn 'Dữ liệu mẫu' [33m375[2mms[22m[39m
- [32m✓[39m src/components/ui/alert.test.tsx [2m([22m[2m14 tests[22m[2m)[22m[33m 457[2mms[22m[39m
- [32m✓[39m src/components/checkout/order-result-view.fix2.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[33m 591[2mms[22m[39m
- [32m✓[39m src/lib/fix1/f13-issue-tickets.test.tsx [2m([22m[2m8 tests[22m[2m)[22m[33m 818[2mms[22m[39m
- [32m✓[39m src/app/(queue)/layout.test.tsx [2m([22m[2m11 tests[22m[2m)[22m[33m 355[2mms[22m[39m
- [32m✓[39m src/app/(marketing)/layout.test.tsx [2m([22m[2m13 tests[22m[2m)[22m[33m 588[2mms[22m[39m
- [32m✓[39m src/real-api.contract.test.ts [2m([22m[2m9 tests[22m[2m)[22m[90m 25[2mms[22m[39m
- [32m✓[39m src/lib/fix1/f5-auth-required.test.tsx [2m([22m[2m7 tests[22m[2m)[22m[33m 539[2mms[22m[39m
-   [33m[2m✓[22m[39m F-5 CheckoutView[2m > [22m401 shows the sign-in prompt [33m377[2mms[22m[39m
- [32m✓[39m src/lib/event-service.test.ts [2m([22m[2m5 tests[22m[2m)[22m[90m 54[2mms[22m[39m
- [32m✓[39m src/components/i18n/t.test.tsx [2m([22m[2m6 tests[22m[2m)[22m[33m 403[2mms[22m[39m
- [32m✓[39m src/app/(checkout)/layout.test.tsx [2m([22m[2m11 tests[22m[2m)[22m[33m 345[2mms[22m[39m
- [32m✓[39m src/lib/fix1/f6-register-autologin.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 555[2mms[22m[39m
-   [33m[2m✓[22m[39m F-6[2m > [22mform: shows account-created + sign-in link with identifier, never 'OTP khong hop le' [33m522[2mms[22m[39m
- [32m✓[39m src/lib/theme.test.ts [2m([22m[2m11 tests[22m[2m)[22m[90m 21[2mms[22m[39m
- [32m✓[39m src/lib/queue-client.test.ts [2m([22m[2m6 tests[22m[2m)[22m[90m 155[2mms[22m[39m
- [32m✓[39m src/components/organizer/event-list.status.test.tsx [2m([22m[2m6 tests[22m[2m)[22m[33m 941[2mms[22m[39m
-   [33m[2m✓[22m[39m EventList — 9 trạng thái từ API (AC-20)[2m > [22mhiển thị đủ cả 9 sự kiện, mỗi sự kiện một nhãn trạng thái, kể cả COMPLETED [33m325[2mms[22m[39m
- [32m✓[39m src/lib/fix1/f11-waiting-auth.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 540[2mms[22m[39m
- [32m✓[39m src/components/checkout/payment-page-client.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[33m 305[2mms[22m[39m
- [32m✓[39m src/lib/api-base.test.ts [2m([22m[2m7 tests[22m[2m)[22m[90m 22[2mms[22m[39m
- [32m✓[39m src/components/checkout/checkout-view.wp2.test.tsx [2m([22m[2m5 tests[22m[2m)[22m[33m 707[2mms[22m[39m
- [32m✓[39m src/app/(organizer)/organizer/events/page.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 460[2mms[22m[39m
+ [32m✓[39m src/app/(ops)/ops/events/[eventId]/page.test.tsx [2m([22m[2m7 tests[22m[2m)[22m[33m 431[2mms[22m[39m
+   [33m[2m✓[22m[39m OpsWarRoomPage route (/ops/events/[eventId])[2m > [22msự kiện có thật: render war room với h1 là tên sự kiện và nhãn 'Dữ liệu mẫu' [33m353[2mms[22m[39m
+ [32m✓[39m src/components/checkout/order-result-view.fix2.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[33m 577[2mms[22m[39m
+ [32m✓[39m src/lib/event-service.test.ts [2m([22m[2m5 tests[22m[2m)[22m[90m 41[2mms[22m[39m
+ [32m✓[39m src/lib/fix1/f13-issue-tickets.test.tsx [2m([22m[2m8 tests[22m[2m)[22m[33m 790[2mms[22m[39m
+ [32m✓[39m src/components/ui/alert.test.tsx [2m([22m[2m14 tests[22m[2m)[22m[33m 475[2mms[22m[39m
+ [32m✓[39m src/real-api.contract.test.ts [2m([22m[2m9 tests[22m[2m)[22m[90m 23[2mms[22m[39m
+ [32m✓[39m src/lib/fix1/f5-auth-required.test.tsx [2m([22m[2m7 tests[22m[2m)[22m[33m 535[2mms[22m[39m
+   [33m[2m✓[22m[39m F-5 CheckoutView[2m > [22m401 shows the sign-in prompt [33m378[2mms[22m[39m
+ [32m✓[39m src/components/i18n/t.test.tsx [2m([22m[2m6 tests[22m[2m)[22m[33m 381[2mms[22m[39m
+ [32m✓[39m src/app/(checkout)/layout.test.tsx [2m([22m[2m11 tests[22m[2m)[22m[33m 342[2mms[22m[39m
+ [32m✓[39m src/app/(marketing)/layout.test.tsx [2m([22m[2m13 tests[22m[2m)[22m[33m 594[2mms[22m[39m
+ [32m✓[39m src/app/(queue)/layout.test.tsx [2m([22m[2m11 tests[22m[2m)[22m[33m 371[2mms[22m[39m
+ [32m✓[39m src/lib/theme.test.ts [2m([22m[2m11 tests[22m[2m)[22m[90m 23[2mms[22m[39m
+ [32m✓[39m src/lib/fix1/f6-register-autologin.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 500[2mms[22m[39m
+   [33m[2m✓[22m[39m F-6[2m > [22mform: shows account-created + sign-in link with identifier, never 'OTP khong hop le' [33m464[2mms[22m[39m
+ [32m✓[39m src/lib/queue-client.test.ts [2m([22m[2m6 tests[22m[2m)[22m[90m 159[2mms[22m[39m
+ [32m✓[39m src/components/organizer/event-list.status.test.tsx [2m([22m[2m6 tests[22m[2m)[22m[33m 874[2mms[22m[39m
+ [32m✓[39m src/lib/api-base.test.ts [2m([22m[2m7 tests[22m[2m)[22m[90m 21[2mms[22m[39m
+ [32m✓[39m src/components/checkout/payment-page-client.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[90m 299[2mms[22m[39m
+ [32m✓[39m src/app/(organizer)/organizer/events/page.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 442[2mms[22m[39m
+ [32m✓[39m src/lib/fix1/f11-waiting-auth.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 535[2mms[22m[39m
+ [32m✓[39m src/components/checkout/checkout-view.wp2.test.tsx [2m([22m[2m5 tests[22m[2m)[22m[33m 706[2mms[22m[39m
+ [32m✓[39m src/app/(organizer)/organizer/events/[eventId]/sales/page.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[90m 264[2mms[22m[39m
  [32m✓[39m src/components/layout/focus-shell.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[90m 268[2mms[22m[39m
- [32m✓[39m src/app/(organizer)/organizer/events/[eventId]/sales/page.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[90m 274[2mms[22m[39m
+ [32m✓[39m src/components/event/event-loader.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 403[2mms[22m[39m
  [32m✓[39m src/lib/jitter.test.ts [2m([22m[2m7 tests[22m[2m)[22m[90m 32[2mms[22m[39m
- [32m✓[39m src/lib/fix2/g5-g6-payment-key.test.ts [2m([22m[2m2 tests[22m[2m)[22m[90m 58[2mms[22m[39m
- [32m✓[39m src/components/event/event-loader.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 392[2mms[22m[39m
+ [32m✓[39m src/lib/fix2/g5-g6-payment-key.test.ts [2m([22m[2m2 tests[22m[2m)[22m[90m 56[2mms[22m[39m
+ [32m✓[39m src/app/(marketing)/events/page.test.tsx [2m([22m[2m5 tests[22m[2m)[22m[33m 357[2mms[22m[39m
 [90mstderr[2m | src/lib/fix2/g7-signin-prefill.test.tsx[2m > [22m[2mG-7[2m > [22m[2mLoginForm prefills from the one-shot key and removes it
 [22m[39mError: Not implemented: navigation (except hash changes)
     at module.exports (D:\Documents\Nam4-1\Project1\EvenFlow-debt\apps\web\node_modules\jsdom\lib\jsdom\browser\not-implemented.js:9:17)
@@ -1656,86 +1657,84 @@ This ensures that you're testing the behavior the user would see in the browser.
     at listOnTimeout (node:internal/timers:588:17)
     at processTimers (node:internal/timers:523:7) [90mundefined[39m
 
- [32m✓[39m src/app/(marketing)/events/page.test.tsx [2m([22m[2m5 tests[22m[2m)[22m[33m 386[2mms[22m[39m
- [32m✓[39m src/components/ui/badge.test.tsx [2m([22m[2m15 tests[22m[2m)[22m[90m 179[2mms[22m[39m
- [32m✓[39m src/lib/fix3/h2-user-switch.test.ts [2m([22m[2m3 tests[22m[2m)[22m[90m 57[2mms[22m[39m
- [32m✓[39m src/components/assistant/streaming-message.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[90m 234[2mms[22m[39m
- [32m✓[39m src/lib/fix2/g7-signin-prefill.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[33m 562[2mms[22m[39m
-   [33m[2m✓[22m[39m G-7[2m > [22mregister -> sign-in link has no identifier in the URL and stores it one-shot in sessionStorage [33m497[2mms[22m[39m
- [32m✓[39m src/lib/fix1/f15-logout-session-write.test.ts [2m([22m[2m3 tests[22m[2m)[22m[90m 28[2mms[22m[39m
- [32m✓[39m src/lib/debt/ac6-payment-forbidden.test.ts [2m([22m[2m10 tests[22m[2m)[22m[90m 61[2mms[22m[39m
- [32m✓[39m src/components/queue/waiting-room.wp2.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 343[2mms[22m[39m
- [32m✓[39m src/hooks/use-server-time-sync.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[90m 277[2mms[22m[39m
- [32m✓[39m src/lib/debt/fix1-f5-clear-guards.test.ts [2m([22m[2m2 tests[22m[2m)[22m[90m 82[2mms[22m[39m
- [32m✓[39m src/components/queue/progress-ring.test.tsx [2m([22m[2m6 tests[22m[2m)[22m[90m 274[2mms[22m[39m
- [32m✓[39m src/lib/fix1/f8-payment-key.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[90m 107[2mms[22m[39m
- [32m✓[39m src/components/checkout/ticket-qr.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[33m 411[2mms[22m[39m
- [32m✓[39m src/components/checkout/order-result-view.debt.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[90m 220[2mms[22m[39m
- [32m✓[39m src/components/event/events-browser-list.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 442[2mms[22m[39m
- [32m✓[39m src/lib/fix1/f16-google-remember.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 589[2mms[22m[39m
-   [33m[2m✓[22m[39m F-16[2m > [22mremember unchecked -> session stored in sessionStorage only [33m442[2mms[22m[39m
- [32m✓[39m src/components/checkout/order-result-view.fix1.test.tsx [2m([22m[2m1 test[22m[2m)[22m[90m 174[2mms[22m[39m
- [32m✓[39m src/components/assistant/faq-chips.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[33m 415[2mms[22m[39m
- [32m✓[39m src/components/checkout/payment-handoff-view.debt.test.tsx [2m([22m[2m1 test[22m[2m)[22m[33m 515[2mms[22m[39m
-   [33m[2m✓[22m[39m PaymentHandoffView 403 forbidden (AC-6)[2m > [22mshows checkout.forbidden (not the generic HTTP 403 text) and sends exactly one payment POST [33m511[2mms[22m[39m
- [32m✓[39m src/app/(checkout)/checkout/[eventId]/payment/page.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[90m 83[2mms[22m[39m
- [32m✓[39m src/components/showcase/domain-gallery.test.tsx [2m([22m[2m8 tests[22m[2m)[22m[33m 2787[2mms[22m[39m
-   [33m[2m✓[22m[39m DomainGallery — section Trợ lý AI (AC-10)[2m > [22mrender duoc khong throw (AC-10) [33m448[2mms[22m[39m
-   [33m[2m✓[22m[39m DomainGallery — section Trợ lý AI (AC-10)[2m > [22mco heading chua 'Trợ lý' (AC-10) [33m688[2mms[22m[39m
-   [33m[2m✓[22m[39m DomainGallery — section Trợ lý AI (AC-10)[2m > [22mcac section cu van con (khong sua section cu, chi them) (AC-10, §5 rui ro c) [33m421[2mms[22m[39m
- [32m✓[39m src/components/queue/queue-position.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[90m 232[2mms[22m[39m
- [32m✓[39m src/app/(ops)/ops/events/page.test.tsx [2m([22m[2m5 tests[22m[2m)[22m[90m 263[2mms[22m[39m
+ [32m✓[39m src/components/ui/badge.test.tsx [2m([22m[2m15 tests[22m[2m)[22m[90m 188[2mms[22m[39m
+ [32m✓[39m src/lib/fix3/h2-user-switch.test.ts [2m([22m[2m3 tests[22m[2m)[22m[90m 70[2mms[22m[39m
+ [32m✓[39m src/components/assistant/streaming-message.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[90m 226[2mms[22m[39m
+ [32m✓[39m src/lib/fix2/g7-signin-prefill.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[33m 549[2mms[22m[39m
+   [33m[2m✓[22m[39m G-7[2m > [22mregister -> sign-in link has no identifier in the URL and stores it one-shot in sessionStorage [33m487[2mms[22m[39m
+ [32m✓[39m src/lib/debt/ac6-payment-forbidden.test.ts [2m([22m[2m10 tests[22m[2m)[22m[90m 67[2mms[22m[39m
+ [32m✓[39m src/lib/fix1/f15-logout-session-write.test.ts [2m([22m[2m3 tests[22m[2m)[22m[90m 26[2mms[22m[39m
+ [32m✓[39m src/hooks/use-server-time-sync.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[90m 273[2mms[22m[39m
+ [32m✓[39m src/lib/debt/fix1-f5-clear-guards.test.ts [2m([22m[2m2 tests[22m[2m)[22m[90m 92[2mms[22m[39m
+ [32m✓[39m src/components/queue/progress-ring.test.tsx [2m([22m[2m6 tests[22m[2m)[22m[90m 275[2mms[22m[39m
+ [32m✓[39m src/components/queue/waiting-room.wp2.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 386[2mms[22m[39m
+   [33m[2m✓[22m[39m WaitingRoom — loi join co the hanh dong (AC-9)[2m > [22m403 otp-required: huong dan xac thuc OTP + link dang nhap lai [33m317[2mms[22m[39m
+ [32m✓[39m src/lib/fix1/f8-payment-key.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[90m 125[2mms[22m[39m
+ [32m✓[39m src/components/checkout/ticket-qr.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[33m 432[2mms[22m[39m
+ [32m✓[39m src/components/event/events-browser-list.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 392[2mms[22m[39m
+ [32m✓[39m src/components/checkout/order-result-view.debt.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[90m 226[2mms[22m[39m
+ [32m✓[39m src/lib/fix1/f16-google-remember.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 593[2mms[22m[39m
+   [33m[2m✓[22m[39m F-16[2m > [22mremember unchecked -> session stored in sessionStorage only [33m424[2mms[22m[39m
+ [32m✓[39m src/components/checkout/payment-handoff-view.debt.test.tsx [2m([22m[2m1 test[22m[2m)[22m[33m 498[2mms[22m[39m
+   [33m[2m✓[22m[39m PaymentHandoffView 403 forbidden (AC-6)[2m > [22mshows checkout.forbidden (not the generic HTTP 403 text) and sends exactly one payment POST [33m494[2mms[22m[39m
+ [32m✓[39m src/components/assistant/faq-chips.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[33m 426[2mms[22m[39m
+ [32m✓[39m src/components/checkout/order-result-view.fix1.test.tsx [2m([22m[2m1 test[22m[2m)[22m[90m 171[2mms[22m[39m
+ [32m✓[39m src/app/(ops)/ops/events/page.test.tsx [2m([22m[2m5 tests[22m[2m)[22m[90m 279[2mms[22m[39m
+ [32m✓[39m src/components/showcase/domain-gallery.test.tsx [2m([22m[2m8 tests[22m[2m)[22m[33m 2688[2mms[22m[39m
+   [33m[2m✓[22m[39m DomainGallery — section Trợ lý AI (AC-10)[2m > [22mrender duoc khong throw (AC-10) [33m432[2mms[22m[39m
+   [33m[2m✓[22m[39m DomainGallery — section Trợ lý AI (AC-10)[2m > [22mco heading chua 'Trợ lý' (AC-10) [33m659[2mms[22m[39m
+   [33m[2m✓[22m[39m DomainGallery — section Trợ lý AI (AC-10)[2m > [22mcac section cu van con (khong sua section cu, chi them) (AC-10, §5 rui ro c) [33m406[2mms[22m[39m
+ [32m✓[39m src/components/queue/queue-position.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[90m 246[2mms[22m[39m
+ [32m✓[39m src/app/(checkout)/checkout/[eventId]/payment/page.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[90m 78[2mms[22m[39m
  [32m✓[39m src/lib/backoff.test.ts [2m([22m[2m7 tests[22m[2m)[22m[90m 18[2mms[22m[39m
- [32m✓[39m src/components/event/event-list-view.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[90m 279[2mms[22m[39m
- [32m✓[39m src/components/checkout/result-page-client.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[90m 159[2mms[22m[39m
- [32m✓[39m src/hooks/use-payment-session.debt.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[90m 53[2mms[22m[39m
- [32m✓[39m src/lib/fix1/f5-payment-signin.test.tsx [2m([22m[2m1 test[22m[2m)[22m[33m 469[2mms[22m[39m
-   [33m[2m✓[22m[39m F-5 payment page[2m > [22mshows sign-in link on AUTH_REQUIRED [33m465[2mms[22m[39m
-(node:39980) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 SIGINT listeners added to [process]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+ [32m✓[39m src/hooks/use-payment-session.debt.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[90m 54[2mms[22m[39m
+ [32m✓[39m src/components/event/event-list-view.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[90m 268[2mms[22m[39m
+ [32m✓[39m src/components/checkout/result-page-client.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[90m 151[2mms[22m[39m
+ [32m✓[39m src/lib/fix1/f5-payment-signin.test.tsx [2m([22m[2m1 test[22m[2m)[22m[33m 442[2mms[22m[39m
+   [33m[2m✓[22m[39m F-5 payment page[2m > [22mshows sign-in link on AUTH_REQUIRED [33m438[2mms[22m[39m
+ [32m✓[39m src/app/api/readyz/route.test.ts [2m([22m[2m19 tests[22m[2m)[22m[90m 45[2mms[22m[39m
+(node:28432) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 SIGINT listeners added to [process]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
 (Use `node --trace-warnings ...` to show where the warning was created)
- [32m✓[39m src/app/api/readyz/route.test.ts [2m([22m[2m19 tests[22m[2m)[22m[90m 41[2mms[22m[39m
- [32m✓[39m src/instrumentation.test.ts [2m([22m[2m19 tests[22m[2m)[22m[90m 142[2mms[22m[39m
- [32m✓[39m src/app/api/healthz/route.test.ts [2m([22m[2m13 tests[22m[2m)[22m[90m 32[2mms[22m[39m
- [32m✓[39m src/lib/debt/fix1-f2-no-refresh-token.test.ts [2m([22m[2m1 test[22m[2m)[22m[90m 52[2mms[22m[39m
- [32m✓[39m src/app/(checkout)/checkout/[eventId]/result/page.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[90m 72[2mms[22m[39m
- [32m✓[39m src/components/checkout/checkout-view.fix3.test.tsx [2m([22m[2m1 test[22m[2m)[22m[33m 305[2mms[22m[39m
-   [33m[2m✓[22m[39m CheckoutView - G-9[2m > [22mFORBIDDEN shows a distinct message, no 'back to waiting room', token kept [33m302[2mms[22m[39m
- [32m✓[39m src/lib/debt/fix1-f3-empty-user-id.test.ts [2m([22m[2m1 test[22m[2m)[22m[90m 52[2mms[22m[39m
- [32m✓[39m src/lib/fix1/f14-lock-timeout.test.ts [2m([22m[2m1 test[22m[2m)[22m[90m 40[2mms[22m[39m
- [32m✓[39m src/lib/fix2/g4-involuntary-expiry.test.ts [2m([22m[2m2 tests[22m[2m)[22m[90m 43[2mms[22m[39m
- [32m✓[39m src/app/auth/layout.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[90m 214[2mms[22m[39m
- [32m✓[39m src/lib/fix1/f20-max-per-order.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[90m 177[2mms[22m[39m
- [32m✓[39m src/lib/fix1/f12-logout-inflight.test.ts [2m([22m[2m1 test[22m[2m)[22m[90m 36[2mms[22m[39m
+ [32m✓[39m src/instrumentation.test.ts [2m([22m[2m19 tests[22m[2m)[22m[90m 150[2mms[22m[39m
+ [32m✓[39m src/app/api/healthz/route.test.ts [2m([22m[2m13 tests[22m[2m)[22m[90m 30[2mms[22m[39m
+ [32m✓[39m src/components/checkout/checkout-view.fix3.test.tsx [2m([22m[2m1 test[22m[2m)[22m[33m 326[2mms[22m[39m
+   [33m[2m✓[22m[39m CheckoutView - G-9[2m > [22mFORBIDDEN shows a distinct message, no 'back to waiting room', token kept [33m323[2mms[22m[39m
+ [32m✓[39m src/lib/debt/fix1-f2-no-refresh-token.test.ts [2m([22m[2m1 test[22m[2m)[22m[90m 54[2mms[22m[39m
+ [32m✓[39m src/lib/debt/fix1-f3-empty-user-id.test.ts [2m([22m[2m1 test[22m[2m)[22m[90m 60[2mms[22m[39m
+ [32m✓[39m src/app/(checkout)/checkout/[eventId]/result/page.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[90m 77[2mms[22m[39m
+ [32m✓[39m src/lib/fix1/f14-lock-timeout.test.ts [2m([22m[2m1 test[22m[2m)[22m[90m 39[2mms[22m[39m
+ [32m✓[39m src/lib/fix2/g4-involuntary-expiry.test.ts [2m([22m[2m2 tests[22m[2m)[22m[90m 42[2mms[22m[39m
+ [32m✓[39m src/app/auth/layout.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[90m 216[2mms[22m[39m
+ [32m✓[39m src/lib/fix1/f12-logout-inflight.test.ts [2m([22m[2m1 test[22m[2m)[22m[90m 34[2mms[22m[39m
+ [32m✓[39m src/lib/fix1/f20-max-per-order.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[90m 181[2mms[22m[39m
  [32m✓[39m src/lib/cn.test.ts [2m([22m[2m7 tests[22m[2m)[22m[90m 13[2mms[22m[39m
- [32m✓[39m src/components/queue/admit-banner.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[33m 327[2mms[22m[39m
+ [32m✓[39m src/hooks/use-payment-session.fix1.test.tsx [2m([22m[2m1 test[22m[2m)[22m[90m 51[2mms[22m[39m
  [32m✓[39m src/lib/device.test.ts [2m([22m[2m4 tests[22m[2m)[22m[90m 12[2mms[22m[39m
+ [32m✓[39m src/components/queue/admit-banner.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[33m 311[2mms[22m[39m
  [32m✓[39m src/app/(checkout)/checkout/[eventId]/page.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[90m 75[2mms[22m[39m
- [32m✓[39m src/hooks/use-payment-session.fix1.test.tsx [2m([22m[2m1 test[22m[2m)[22m[90m 49[2mms[22m[39m
- [32m✓[39m src/lib/fix1/f17-logout-clears-buyflow.test.ts [2m([22m[2m1 test[22m[2m)[22m[90m 18[2mms[22m[39m
- [32m✓[39m src/app/unauthorized/page.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[90m 221[2mms[22m[39m
- [32m✓[39m src/app/(queue)/waiting/[eventId]/page.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[90m 69[2mms[22m[39m
+ [32m✓[39m src/app/(queue)/waiting/[eventId]/page.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[90m 78[2mms[22m[39m
  [32m✓[39m src/hooks/use-auth.test.ts [2m([22m[2m2 tests[22m[2m)[22m[90m 7[2mms[22m[39m
- [32m✓[39m src/app/api/time/route.test.ts [2m([22m[2m1 test[22m[2m)[22m[90m 15[2mms[22m[39m
- [32m✓[39m src/lib/fix1/f18-availability-url.test.ts [2m([22m[2m1 test[22m[2m)[22m[90m 25[2mms[22m[39m
- [32m✓[39m src/app/(organizer)/organizer/page.test.tsx [2m([22m[2m1 test[22m[2m)[22m[90m 9[2mms[22m[39m
- [32m✓[39m src/app/(ops)/ops/events/[eventId]/not-found.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[90m 72[2mms[22m[39m
- [32m✓[39m src/components/event/lobby-notice.test.tsx [2m([22m[2m1 test[22m[2m)[22m[90m 164[2mms[22m[39m
- [32m✓[39m src/app/(marketing)/page.test.tsx [2m([22m[2m1 test[22m[2m)[22m[90m 164[2mms[22m[39m
+ [32m✓[39m src/lib/fix1/f17-logout-clears-buyflow.test.ts [2m([22m[2m1 test[22m[2m)[22m[90m 18[2mms[22m[39m
+ [32m✓[39m src/app/api/time/route.test.ts [2m([22m[2m1 test[22m[2m)[22m[90m 16[2mms[22m[39m
+ [32m✓[39m src/lib/fix1/f18-availability-url.test.ts [2m([22m[2m1 test[22m[2m)[22m[90m 26[2mms[22m[39m
+ [32m✓[39m src/app/unauthorized/page.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[90m 228[2mms[22m[39m
+ [32m✓[39m src/app/(organizer)/organizer/page.test.tsx [2m([22m[2m1 test[22m[2m)[22m[90m 10[2mms[22m[39m
+ [32m✓[39m src/components/event/lobby-notice.test.tsx [2m([22m[2m1 test[22m[2m)[22m[90m 160[2mms[22m[39m
+ [32m✓[39m src/app/(ops)/ops/events/[eventId]/not-found.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[90m 84[2mms[22m[39m
+ [32m✓[39m src/app/(marketing)/page.test.tsx [2m([22m[2m1 test[22m[2m)[22m[90m 181[2mms[22m[39m
 
 [2m Test Files [22m [1m[32m167 passed[39m[22m[90m (167)[39m
 [2m      Tests [22m [1m[32m2419 passed[39m[22m[90m (2419)[39m
-[2m   Start at [22m 00:44:18
-[2m   Duration [22m 45.35s[2m (transform 13.39s, setup 152.56s, collect 54.61s, tests 89.52s, environment 819.26s, prepare 55.84s)[22m
+[2m   Start at [22m 01:29:41
+[2m   Duration [22m 45.18s[2m (transform 15.02s, setup 150.83s, collect 56.84s, tests 89.93s, environment 813.35s, prepare 55.59s)[22m
 
 [34m % [39m[2mCoverage report from [22m[33mv8[39m
 -------------------|---------|----------|---------|---------|-------------------
 File               | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
 -------------------|---------|----------|---------|---------|-------------------
-All files          |   85.24 |     90.3 |   89.94 |   85.24 |                   
+All files          |   87.01 |    90.33 |    90.1 |   87.01 |                   
  src               |     100 |      100 |     100 |     100 |                   
   ...umentation.ts |     100 |      100 |     100 |     100 |                   
- src/__challenge__ |       0 |        0 |       0 |       0 |                   
-  old-view.tsx     |       0 |        0 |       0 |       0 | 1-331             
  ...app/(checkout) |     100 |      100 |     100 |     100 |                   
   layout.tsx       |     100 |      100 |     100 |     100 |                   
  ...kout/[eventId] |     100 |      100 |     100 |     100 |                   
@@ -1916,13 +1915,13 @@ All files          |   85.24 |     90.3 |   89.94 |   85.24 |
   money.ts         |     100 |    91.66 |     100 |     100 | 7                 
   ops-service.ts   |     100 |      100 |     100 |     100 |                   
   ...er-service.ts |   94.75 |    84.32 |     100 |   94.75 | ...25-526,541-546 
-  ...ent-client.ts |   91.95 |    82.92 |     100 |   91.95 | ...15,437-438,446 
+  ...ent-client.ts |   91.95 |    83.03 |     100 |   91.95 | ...15,437-438,446 
   queue-client.ts  |     100 |      100 |     100 |     100 |                   
   queue-status.ts  |     100 |      100 |     100 |     100 |                   
   queue-token.ts   |   93.33 |     87.5 |     100 |   93.33 | 20-21             
   readiness.ts     |     100 |      100 |     100 |     100 |                   
   server-time.ts   |     100 |      100 |     100 |     100 |                   
-  session.ts       |   93.92 |    77.96 |     100 |   93.92 | ...75,198,216,231 
+  session.ts       |   93.92 |    77.77 |     100 |   93.92 | ...75,198,216,231 
   sse.ts           |     100 |    93.84 |     100 |     100 | 86,108-110,195    
   theme.ts         |     100 |      100 |     100 |     100 |                   
  src/lib/api       |     100 |    86.66 |     100 |     100 |                   

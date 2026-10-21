@@ -101,3 +101,8 @@ No open blocker or major finding. Every to-fix finding is fixed and every deferr
 
 ## 7. Overall verdict
 PASS
+
+## 8. Addendum after merging origin/develop (2026-10-22)
+
+- `origin/develop` (+31 commits from teammates) was merged into the branch at `ac5cda6`. `git diff e91dff0 55cbf1e -- apps/web` is empty, so the verified web code is unchanged.
+- Full gate re-run on the merged head `55cbf1e`: PASS (Vitest 2419/2419, coverage 87.01%, E2E 38/38, Go, audit, tamper `approved TCR-1 only`). One earlier run exited 139 because Node segfaulted after `next build` had finished; the re-run was clean.
