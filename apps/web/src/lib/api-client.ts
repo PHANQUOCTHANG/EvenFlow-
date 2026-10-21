@@ -17,6 +17,7 @@ import {
   sessionFromIdentity,
   setSession,
   type IdentityTokens,
+  type Session,
 } from "@/lib/session";
 
 export interface Problem {
@@ -151,20 +152,20 @@ async function doRefresh(usedRefresh: string | null): Promise<string> {
   if (usedRefresh && cur.refreshToken !== usedRefresh) return cur.accessToken;
   const markerId = writeMarker(cur.refreshToken);
   try {
-    return await refreshCore(cur);
+    return await refreshCore(cur, cur.refreshToken);
   } finally {
     clearMarker(markerId);
   }
 }
 
-async function refreshCore(cur: NonNullable<ReturnType<typeof getSession>> & { refreshToken: string }): Promise<string> {
+async function refreshCore(cur: Session, refreshToken: string): Promise<string> {
   const epoch = getSessionEpoch();
   let res: Response;
   try {
     res = await fetch(`${apiBase()}${REFRESH_PATH}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ refresh_token: cur.refreshToken, device_fingerprint: getDeviceFingerprint() }),
+      body: JSON.stringify({ refresh_token: refreshToken, device_fingerprint: getDeviceFingerprint() }),
     });
   } catch {
     // Mat mang: giu phien, de lan sau thu lai.
@@ -249,7 +250,7 @@ async function withRefreshLock(usedRefresh: string | null): Promise<string> {
         mine = doRefresh(usedRefresh);
         return mine;
       }),
-    ).catch((err: unknown) => {
+    ).catch(async (err: unknown): Promise<string | typeof TIMED_OUT> => {
       if (isAbort(err)) {
         if (!granted) return TIMED_OUT;
         // Khoa bi cuop khi dang refresh: refresh cua chinh minh van chay tiep, cho no xong.

@@ -125,3 +125,4 @@ Nguon: AC-28 (spec.md). Khong xoa, khong skip, khong lam yeu assertion cu; chi d
 | apps/web/src/lib/fix1/f17-logout-clears-buyflow.test.ts | unchanged (explicit logout still clears buy-flow keys); G-4 adds fix2/g4 test that involuntary expiry keeps them | G-4 |
 
 G-9 (403 `/problems/forbidden` -> FORBIDDEN) skipped: conflicts with a protected contract test, see test-change-request-fix2.md.
+| apps/web/src/lib/fix1/f16-google-remember.test.tsx | "F-6: sign-in prefills identifier from ?identifier=" -> prefill from one-shot sessionStorage key `ef:signin:identifier` (removed after read) | G-7 |

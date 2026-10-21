@@ -42,10 +42,10 @@ describe("F-16", () => {
     fireEvent.click(screen.getByText("google"));
     await waitFor(() => expect(localStorage.getItem("ef_token")).not.toBeNull());
   });
-  it("F-6: sign-in prefills identifier from ?identifier=", async () => {
-    window.history.pushState({}, "", "/auth/sign-in?identifier=a%40b.co");
+  it("F-6/G-7: sign-in prefills identifier from the one-shot sessionStorage key (not the URL)", async () => {
+    sessionStorage.setItem("ef:signin:identifier", "a@b.co");
     render(<LoginForm />);
     await waitFor(() => expect(document.getElementById("login-identifier") as HTMLInputElement).toHaveValue("a@b.co"));
-    window.history.pushState({}, "", "/");
+    expect(sessionStorage.getItem("ef:signin:identifier")).toBeNull();
   });
 });
