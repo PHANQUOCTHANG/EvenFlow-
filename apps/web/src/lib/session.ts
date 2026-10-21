@@ -79,6 +79,13 @@ function notify() {
 
 /** Doc phien hien tai (localStorage truoc, roi sessionStorage); null khi chua dang nhap hoac du lieu hong. */
 export function getSession(): Session | null {
+  const s = peekSession();
+  if (s) observeUser(s.user.id);
+  return s;
+}
+
+/** Nhu getSession nhung KHONG doi chieu `ef:lastuid` (khong ghi gi ca): dung cho lop mang (api-client). */
+export function peekSession(): Session | null {
   return readFrom(store("local")) ?? readFrom(store("session"));
 }
 
@@ -93,16 +100,46 @@ export function getSessionPersist(): SessionPersist | null {
  *  het han (G-4) de nhan ra nguoi dung KHAC dang nhap tiep (H-2). Khong chua token. */
 const K_LAST_UID = "ef:lastuid";
 
+/** Tab nay quan sat user `uid` dang luu o kho dung chung: khac `ef:lastuid` cua CHINH tab nay (tab khac da doi user)
+ *  -> xoa khoa luong mua ve cua tab nay. Chua co lastuid -> nhan user, khong xoa. Chi cham sessionStorage cua tab
+ *  (buy-flow + lastuid), khong bao gio cham khoa dang nhap, khong notify, khong goi getSession (tranh de quy). */
+function observeUser(uid: string): void {
+  try {
+    if (typeof window === "undefined" || !uid) return;
+    const ss = window.sessionStorage;
+    const prev = ss.getItem(K_LAST_UID);
+    if (prev === uid) return;
+    if (prev) clearBuyFlowStorage();
+    ss.setItem(K_LAST_UID, uid);
+  } catch {
+    /* bo qua */
+  }
+}
+
 function reconcileBuyFlowOwner(nextUid: string): void {
   try {
     if (typeof window === "undefined") return;
-    const prev = getSession()?.user.id ?? window.sessionStorage.getItem(K_LAST_UID);
+    // Uu tien lastuid cua tab nay; chua co thi dung user dang luu (nguoi dung khac dang nhap tiep trong tab moi).
+    const prev = window.sessionStorage.getItem(K_LAST_UID) ?? readFrom(store("local"))?.user.id ?? readFrom(store("session"))?.user.id;
     if (prev && nextUid && prev !== nextUid) clearBuyFlowStorage();
     if (nextUid) window.sessionStorage.setItem(K_LAST_UID, nextUid);
   } catch {
     /* bo qua */
   }
 }
+
+/** Tab khac doi user (su kien `storage` cho khoa dang nhap): doi chieu voi lastuid cua tab nay. Khong co phien -> bo qua (G-4). */
+let storageObserved = false;
+function observeStorageEvents(): void {
+  if (storageObserved || typeof window === "undefined") return;
+  storageObserved = true;
+  window.addEventListener("storage", (e: StorageEvent) => {
+    if (e.key !== null && e.key !== K_USER && e.key !== K_ACCESS) return;
+    const s = readFrom(store("local")) ?? readFrom(store("session"));
+    if (s) observeUser(s.user.id);
+  });
+}
+observeStorageEvents();
 
 export function setSession(session: Session, opts: { persist?: SessionPersist } = {}): void {
   reconcileBuyFlowOwner(session.user.id);
