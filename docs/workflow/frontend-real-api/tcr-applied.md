@@ -19,3 +19,24 @@ Nguon: `test-change-request.md`. Khong xoa, khong skip, khong lam yeu; chi doi a
 
 Khong can sua: `hooks/use-auth.test.ts` (parseJwtPayload van export), `app/unauthorized/page.test.tsx` (mock useAuth), RoleGuard (khong co test, khong doi), checkout/waiting `page.test.tsx` (mock event-service).
 Chua dong den (thuoc WP khac): organizer-service/payment-client/hold-client/queue-client tests va organizer component tests.
+
+## WP4
+
+| File | Old test -> new test | Ly do |
+|---|---|---|
+| apps/web/src/lib/organizer-service.test.ts | `lay danh sach toan bo su kien cua organizer` -> cung y, fetch mock `GET /api/v1/events` | kho mock da bo |
+| ditto | `lay su kien theo ID hoac Slug` -> `lay su kien theo ID; 404 -> null` | chi tra cuu theo id that (slug khong con duoc ho tro) |
+| ditto | `tao moi su kien thanh cong va luu vao store` -> `tao moi su kien voi submitForReview -> trang thai PENDING_REVIEW tu backend` | tra `{event, failedStep?}`; trang thai do backend quyet dinh, khong con AI scan gia lap |
+| ditto | `tu choi cap nhat giam quota ... ON_SALE (BR-E3)` (updateOrganizerEvent tiers) -> `updateTierQuota` chan o client, khong goi PUT | updateOrganizerEvent khong con nhan tiers; quota qua updateTierQuota |
+| ditto | `resubmitForModeration cap nhat ... SCHEDULED` -> `submitOrganizerEvent chuyen sang PENDING_REVIEW` | ham resubmit gia lap bi bo, thay bang POST /submit |
+| ditto | `getRealtimeSales ...` -> cung assertion tren fetch mock + `isSample === true` | sales giu mau nhung phai co isSample |
+| ditto | bo `resetOrganizerEventsStore`/`beforeEach` store | store mock bi xoa; setup env + session thay the |
+| apps/web/src/components/organizer/event-list.test.tsx | `render cac link hanh dong nhanh ...`: link edit chi cho evt-2, evt-3 (khong cho ON_SALE evt-1) | AC-22: chi DRAFT/SCHEDULED/REJECTED moi duoc sua |
+| apps/web/src/components/organizer/sales-dashboard.test.tsx | fixture them `isSample: true`; `cho phep bat/tat tu dong cap nhat`: mac dinh tat, bam bat truoc | du lieu mau khong polling mac dinh; (moi) test nhan "Du lieu mau" truoc cac khoi so lieu |
+| apps/web/src/hooks/use-organizer-sales.test.tsx | fixture them `isSample: true` | kieu moi |
+| apps/web/src/app/(organizer)/organizer/events/page.test.tsx | `await OrganizerEventsPage()` (server, mock store) -> client fetch voi loading/empty/error + retry | AC-20: lay danh sach client-side |
+| .../events/new/page.test.tsx | (giu) render wizard; (moi) thanh cong, ket qua mot phan failedStep + link ban nhap, loi buoc 1 | AC-21 |
+| .../events/[eventId]/edit/page.test.tsx | `render form chinh sua su kien da co` (id mock) -> fetch mock UUID + them: 404, loi, trang thai khong sua duoc, PUT day du / tiers moi / quota | AC-22 |
+| .../events/[eventId]/review-status/page.test.tsx | `render trang thai kiem duyet` (mock, "Da duyet") -> trang thai that + nhan mau; `non-existent` 404; (moi) submit/cancel + 422 | AC-23, AC-24 |
+| .../events/[eventId]/sales/page.test.tsx | dashboard tu mock store -> fetch client-side + nhan "Du lieu mau"; 404 | AC-24 |
+| apps/web/src/lib/ops-service.test.ts | khong doi (da thay o WP1) | |
