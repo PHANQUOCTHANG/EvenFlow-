@@ -113,3 +113,15 @@ Nguon: AC-28 (spec.md). Khong xoa, khong skip, khong lam yeu assertion cu; chi d
 | File | Old -> new | Why |
 |---|---|---|
 | apps/web/src/components/checkout/order-result-view.test.tsx | WP2 PAID test: synchronous `getByRole("heading", /Vé điện tử của bạn đã sẵn sàng/)` moved to AFTER `await findByRole("img", "Mã QR vé ABCDEF12")` (assertion text unchanged) | F-13 (C-11): the "tickets are ready" headline is now shown only when QR tickets exist; before that the headline is "Thanh toán thành công — đang phát hành vé". The test still asserts the same headline once the QR is rendered. |
+
+## Fix round 2
+
+| File | Old -> new | Why |
+|---|---|---|
+| apps/web/src/app/(organizer)/organizer/events/[eventId]/edit/page.test.tsx | `it.each` of non-editable states: `SOLD_OUT` removed (now opens the quota-only form); added `G-2` tests: SOLD_OUT raises quota via PUT tier only, SOLD_OUT decrease blocked client-side | G-2: backend (event.go) accepts a quota increase on SOLD_OUT and reopens the sale; the old test locked the exclusion |
+| apps/web/src/components/organizer/event-list.status.test.tsx | "F-1" test expected exactly 1 'Tăng số lượng vé' link for [ON_SALE, SOLD_OUT]; now expects 2 links (ON_SALE, SOLD_OUT) and none for CLOSED | G-2 |
+| apps/web/src/lib/fix1/f14-lock-timeout.test.ts | lock never granted: tab refreshed by itself outside the lock -> tab requests the lock with `{steal: true}` and refreshes inside it (fake lock grants a steal request at once) | G-1: refresh must never run outside the Web Lock (refresh-token reuse revokes the family) |
+| apps/web/src/lib/fix1/f6-register-autologin.test.tsx | sign-in link href `/auth/sign-in?identifier=a%40b.co` -> `/auth/sign-in` | G-7: identifier goes through one-shot sessionStorage, not the URL |
+| apps/web/src/lib/fix1/f17-logout-clears-buyflow.test.ts | unchanged (explicit logout still clears buy-flow keys); G-4 adds fix2/g4 test that involuntary expiry keeps them | G-4 |
+
+G-9 (403 `/problems/forbidden` -> FORBIDDEN) skipped: conflicts with a protected contract test, see test-change-request-fix2.md.

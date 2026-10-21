@@ -37,6 +37,8 @@ export interface WizardSubmitResult {
   draftHref?: string;
   /** Tạo mới: bản nháp đã tồn tại, KHÔNG được POST /events lần nữa (khoá nút lưu). */
   blockResubmit?: boolean;
+  /** G-8: hạng vé đã tạo trên máy chủ (id cục bộ -> hạng vé thật); wizard thay thế để chúng thành hạng cũ (chỉ sửa quota). */
+  createdTiers?: Record<string, TicketTierConfig>;
 }
 
 export interface EventWizardProps {
@@ -279,6 +281,7 @@ export function EventWizard({
       if (result && result.error) {
         setPartial(result);
         setErrorMsg(result.error);
+        applyCreatedTiers(result);
       }
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : String(err));
@@ -324,6 +327,7 @@ export function EventWizard({
       if (result && result.error) {
         setPartial(result);
         setErrorMsg(result.error);
+        applyCreatedTiers(result);
       }
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : String(err));
@@ -333,6 +337,13 @@ export function EventWizard({
   };
 
   const blocked = Boolean(partial?.blockResubmit);
+
+  // G-8: hạng vé vừa tạo trên máy chủ thay thế bản cục bộ; hạng chưa lưu giữ nguyên.
+  function applyCreatedTiers(result: WizardSubmitResult) {
+    const created = result.createdTiers;
+    if (!created || Object.keys(created).length === 0) return;
+    setTiers((prev) => prev.map((t) => created[t.id] ?? t));
+  }
 
   if (quotaOnly && initialEvent) {
     return (

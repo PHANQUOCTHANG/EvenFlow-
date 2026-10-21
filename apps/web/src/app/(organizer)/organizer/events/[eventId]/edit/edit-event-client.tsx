@@ -58,6 +58,8 @@ function EditForm({
     return event;
   };
 
+  const createdSnapshot = () => Object.fromEntries(created.current);
+
   const handleSubmit = async (data: CreateEventInput): Promise<WizardSubmitResult | void> => {
     // 1. PUT đầy đủ các trường sự kiện (bỏ qua với ON_SALE: chỉ tăng quota).
     if (fullEdit) await updateOrganizerEvent(eventId, data);
@@ -80,6 +82,7 @@ function EditForm({
         return {
           error: `Hạng vé "${tier.name}": ${err instanceof Error ? err.message : String(err)}`,
           failedStep: "tiers",
+          createdTiers: createdSnapshot(),
         };
       }
     }
@@ -93,6 +96,7 @@ function EditForm({
         return {
           error: err instanceof Error ? err.message : String(err),
           failedStep: "submit",
+          createdTiers: createdSnapshot(),
         };
       }
     }

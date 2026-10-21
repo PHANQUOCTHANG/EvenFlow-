@@ -268,4 +268,47 @@ describe("EditEventPage route (/organizer/events/[eventId]/edit - AC-22)", () =>
     expect(mocks.addTier).toHaveBeenCalledTimes(3);
     expect(mocks.addTier).toHaveBeenLastCalledWith(EVT, expect.objectContaining({ name: "Hạng vé #3" }));
   });
+
+  it("G-8: sau lỗi một phần, hạng vé đã tạo thành hạng cũ (chỉ sửa quota), hạng chưa lưu vẫn sửa được", async () => {
+    const base = event();
+    let srvTier2: { id: string; name: string; price: number; quota: number } | null = null;
+    mocks.update.mockResolvedValue(base);
+    mocks.addTier
+      .mockImplementationOnce(async (_e: string, t: { name: string; price: number; quota: number }) => (srvTier2 = { ...t, id: "srv-new-1" }))
+      .mockRejectedValueOnce(new Error("hạng 3 lỗi"))
+      .mockImplementation(async (_e: string, t: object) => ({ ...t, id: "srv-new-2" }));
+    mocks.getById.mockImplementation(async () => ({ ...base, tiers: srvTier2 ? [...base.tiers, srvTier2] : base.tiers }));
+    mocks.updateQuota.mockResolvedValue({});
+    await renderPage();
+    await screen.findByText("Chỉnh sửa: Rock Fest");
+    next();
+    fireEvent.click(screen.getByRole("button", { name: "+ Thêm hạng vé" }));
+    fireEvent.click(screen.getByRole("button", { name: "+ Thêm hạng vé" }));
+    next();
+    next();
+    fireEvent.click(screen.getByRole("button", { name: "Lưu nháp" }));
+    expect(await screen.findByText(/hạng 3 lỗi/)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "← Quay lại" }));
+    fireEvent.click(screen.getByRole("button", { name: "← Quay lại" }));
+    const names = screen.getAllByLabelText(/Tên hạng vé/) as HTMLInputElement[];
+    // GA (cũ) và hạng #2 (đã tạo trên máy chủ) chỉ đọc; hạng #3 (chưa lưu) vẫn sửa được.
+    expect(names[0].disabled).toBe(true);
+    expect(names[1].disabled).toBe(true);
+    expect(names[2].disabled).toBe(false);
+    expect(screen.getAllByRole("button", { name: "Xoá hạng vé" })).toHaveLength(1);
+    // Hạng đã tạo chỉ đổi được quota -> gọi PUT quota, không bị bỏ qua.
+    const quotas = screen.getAllByLabelText(/Số lượng vé \(Quota\)/) as HTMLInputElement[];
+    fireEvent.change(quotas[1], { target: { value: "300" } });
+    next();
+    next();
+    fireEvent.click(screen.getByRole("button", { name: "Lưu nháp" }));
+    await waitFor(() => expect(mocks.push).toHaveBeenCalled());
+    expect(mocks.updateQuota).toHaveBeenCalledWith(EVT, "srv-new-1", 300);
+    expect(mocks.addTier.mock.calls.map((c) => (c[1] as { name: string }).name)).toEqual([
+      "Hạng vé #2",
+      "Hạng vé #3",
+      "Hạng vé #3",
+    ]);
+  });
 });
