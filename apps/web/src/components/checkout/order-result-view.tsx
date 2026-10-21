@@ -3,6 +3,7 @@
 import Link from "next/link";
 
 import { Alert, Badge, Button, Card, Spinner } from "@/components/ui";
+import { TicketQr } from "@/components/checkout/ticket-qr";
 import { useT } from "@/components/i18n/locale-provider";
 import { useIssuedTickets, useOrderStatus } from "@/hooks/use-order-status";
 import { cn } from "@/lib/cn";
@@ -198,16 +199,11 @@ export function OrderResultView({
                     {/* Khung ma QR: payload da ky tu server (khong co QR demo). role="img": aria-label tren div
                       * khong co role bi axe bao aria-prohibited-attr. */}
                     <div className="mt-md flex flex-col items-center justify-center rounded-control border border-border bg-surface-subtle p-md text-center">
-                      <div
-                        role="img"
-                        aria-label={t("result.qrLabel", { code })}
-                        data-qr-payload={ticket.qrPayload}
-                        className="mb-xs flex max-h-32 w-full items-center justify-center overflow-hidden rounded-card border border-border bg-surface p-xs"
-                      >
-                        <code className="break-all font-mono text-caption text-fg" aria-hidden="true">
-                          {ticket.qrPayload}
-                        </code>
-                      </div>
+                      <TicketQr
+                        payload={ticket.qrPayload}
+                        label={t("result.qrLabel", { code })}
+                        className="mb-xs flex w-full items-center justify-center overflow-hidden rounded-card border border-border bg-surface p-xs"
+                      />
                       <span className="text-caption text-fg-subtle">{t("result.qrHint")}</span>
                     </div>
                   </Card>
