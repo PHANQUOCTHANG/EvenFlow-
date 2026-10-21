@@ -61,3 +61,16 @@ def test_TopologyMacDinh_TrongImageKhongVoLucImport() -> None:
 def test_GeminiThatMaThieuKeyThiTuChoi() -> None:
     with pytest.raises(ValidationError, match="GEMINI_API_KEY"):
         Settings(_env_file=None, gemini_mock=False, gemini_api_key="")
+
+
+def test_CallbackKiemDuyet_MacDinhDiThangEventService() -> None:
+    # Gateway chan /internal/ (404) -> callback qua gateway lam su kien ket PENDING_REVIEW.
+    s = Settings(_env_file=None)
+    assert s.event_api_base == "http://event:8084"
+    assert s.internal_api_base == "http://gateway:8080"  # SystemTools van qua gateway
+
+
+@pytest.mark.parametrize("bad", ["", "event:8084", "ftp://event:8084", "http://"])
+def test_EventApiBaseSaiBiTuChoi(bad) -> None:
+    with pytest.raises(ValidationError, match="EVENT_API_BASE"):
+        Settings(_env_file=None, event_api_base=bad)

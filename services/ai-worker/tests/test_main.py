@@ -56,3 +56,15 @@ def test_ApiTroLyDuocGanVaoApp() -> None:
     assert "/v1/events/{event_id}/assistant/messages" in paths
     assert "/v1/assistant/messages/{job_id}" in paths
     assert "/v1/assistant/messages/{job_id}/stream" in paths
+
+
+async def test_ConsumerKiemDuyetGoiEventApiBase_KhongQuaGateway() -> None:
+    from app.gemini.client import GeminiClient
+    from app.main import build_moderation_consumer
+
+    s = Settings(_env_file=None, event_api_base="http://event-svc:9000/")
+    consumer = build_moderation_consumer(s, GeminiClient(api_key="", mock=True), limiter=None)
+    try:
+        assert consumer.verdict_url("e1") == "http://event-svc:9000/internal/v1/events/e1/ai-verdict"
+    finally:
+        await consumer.aclose()
