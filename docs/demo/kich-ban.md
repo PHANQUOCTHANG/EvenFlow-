@@ -12,7 +12,7 @@ make seed                      # ~5 giây: tạo 4 tài khoản demo
 ```
 
 Mở sẵn 4 tab trình duyệt: **Mailpit** http://localhost:8025 · **RabbitMQ** http://localhost:15672 (`eventflow`/`eventflow`) ·
-**Jaeger** http://localhost:16686 · **Grafana** http://localhost:3001. Một cửa sổ terminal cỡ chữ lớn ở thư mục gốc repo.
+**Jaeger** http://localhost:16686 · **Grafana** http://localhost:3001 (dashboard "EventFlow - Tong quan" co san). Một cửa sổ terminal cỡ chữ lớn ở thư mục gốc repo.
 
 Kiểm nhanh: `curl -s localhost:8080/healthz` trả `ok`. Nếu chưa, đợi thêm 20 giây rồi kiểm lại.
 

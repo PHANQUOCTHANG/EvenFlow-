@@ -149,6 +149,8 @@ func main() {
 
 	// Đăng ký API Đăng nhập / Đăng ký & RBAC
 	identityHttp.RegisterRoutes(mux, authHandler, cfg.JWTSecret, auditRepo)
+	// Prometheus scrape trong mang noi bo. Gateway chi dinh tuyen /api/v1/auth/ toi identity nen /metrics khong ra ngoai duoc.
+	mux.Handle("GET /metrics", otelx.MetricsHandler())
 
 	// Middleware CORS
 	corsMiddleware := func(next http.Handler) http.Handler {

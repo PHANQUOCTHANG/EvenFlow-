@@ -118,6 +118,7 @@ func main() {
 	mux := http.NewServeMux()
 	handler := httpadapter.NewNotificationHandler(orderPaidUC, ticketIssuedUC, refundUC, getHistoryUC)
 	handler.RegisterRoutes(mux)
+	mux.Handle("GET /metrics", otelx.MetricsHandler())
 
 	server := &http.Server{
 		Addr:              cfg.HTTPAddr,

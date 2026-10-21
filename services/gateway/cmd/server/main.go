@@ -56,6 +56,17 @@ func run(log *slog.Logger) error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
+	// /metrics o cong rieng: cong chinh bi chan /metrics tu ben ngoai (routes.go), Prometheus scrape cong nay trong mang noi bo.
+	go func() {
+		addr := os.Getenv("METRICS_ADDR")
+		if addr == "" {
+			addr = ":9094"
+		}
+		if err := otelx.ServeMetrics(ctx, addr, log); err != nil && ctx.Err() == nil {
+			log.Error("metrics server dung", "err", err)
+		}
+	}()
+
 	// Khong dat WriteTimeout (xem httpx.NewServer): queue/stream la SSE song lau.
 	srv := httpx.NewServer(cfg.HTTPAddr, h)
 	upstreams := map[string]string{}

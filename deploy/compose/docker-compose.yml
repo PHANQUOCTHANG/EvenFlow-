@@ -118,7 +118,13 @@ services:
       GF_SECURITY_ADMIN_PASSWORD: eventflow
       GF_AUTH_ANONYMOUS_ENABLED: "true"
     ports: ["3001:3000"]
-    volumes: ["grafanadata:/var/lib/grafana"]
+    volumes:
+      - "grafanadata:/var/lib/grafana"
+      # Datasource Prometheus + dashboard "EventFlow - Tong quan" co san, khong can cau hinh tay.
+      - "../observability/grafana/provisioning:/etc/grafana/provisioning:ro"
+      - "../observability/grafana/dashboards:/var/lib/grafana/dashboards:ro"
+    depends_on:
+      - prometheus
 
   # ---------------------------- SERVICE ----------------------------
 
