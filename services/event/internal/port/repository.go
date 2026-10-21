@@ -30,7 +30,9 @@ type EventRepository interface {
 type ModerationRepository interface {
 	Create(ctx context.Context, review *domain.ModerationReview) error
 	GetLatestByEventID(ctx context.Context, eventID uuid.UUID) (*domain.ModerationReview, error)
-	ListNeedsHuman(ctx context.Context) ([]*domain.ModerationReview, error)
+	// ListPendingHuman: review moi nhat cua moi su kien, AI NEEDS_HUMAN hoac AUTO_REJECTED, chua co
+	// quyet dinh nguoi (EV-121: su kien AI tu choi cung phai lat nguoc duoc, BR-E5).
+	ListPendingHuman(ctx context.Context) ([]*domain.ModerationReview, error)
 	SetHumanDecision(ctx context.Context, reviewID uuid.UUID, humanID uuid.UUID, verdict, note string, decidedAt time.Time) error
 }
 
@@ -47,4 +49,23 @@ type OutboxMessage struct {
 	AggregateID   uuid.UUID
 	RoutingKey    string
 	Payload       any
+}
+
+// ModerationDecision la quyet dinh cua Moderator, ghi trong MOT transaction (EV-121, BR-E5,
+// bat bien 1): trang thai su kien, quyet dinh tren review va audit -- hoac ca ba, hoac khong gi.
+type ModerationDecision struct {
+	Event      *domain.Event      // trang thai MOI
+	PrevStatus domain.EventStatus // dieu kien cap nhat: trang thai da doi -> domain.ErrAlreadyDecided
+	ReviewID   *uuid.UUID         // nil neu su kien chua co review AI
+	HumanID    uuid.UUID
+	Verdict    string // "APPROVED" | "REJECTED"
+	Note       string
+	DecidedAt  time.Time
+	Audit      *domain.AuditLog
+}
+
+// ModerationDecisionStore ghi quyet dinh cua Moderator. Su kien khong con o PrevStatus ->
+// domain.ErrAlreadyDecided: hai Moderator cung quyet tu cung mot trang thai thi dung mot nguoi thang.
+type ModerationDecisionStore interface {
+	ApplyDecision(ctx context.Context, d ModerationDecision) error
 }

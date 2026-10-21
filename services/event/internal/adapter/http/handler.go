@@ -26,8 +26,15 @@ type EventHandler struct {
 	aiVerdictUC app.HandleAiVerdictUseCase
 	modQueueUC  app.ListModerationQueueUseCase
 	modActionUC app.ModeratorActionUseCase
+	modDetailUC app.GetModerationDetailUseCase
 
 	auditRepo port.AuditLogRepository
+}
+
+// WithModerationDetail bat ho so tham dinh cho Moderator (EV-121).
+func (h *EventHandler) WithModerationDetail(uc app.GetModerationDetailUseCase) *EventHandler {
+	h.modDetailUC = uc
+	return h
 }
 
 // WithAudit ghi audit_logs khi tu choi truy cap (EV-114).
@@ -523,6 +530,25 @@ func (h *EventHandler) GetModerationQueue(w http.ResponseWriter, r *http.Request
 	httpx.WriteJSON(w, http.StatusOK, items)
 }
 
+// GET /api/v1/moderation/events/{id} (EV-121): noi dung goc + ket qua AI + 4 truc + lich su audit.
+func (h *EventHandler) GetModerationDetail(w http.ResponseWriter, r *http.Request) {
+	evtID, err := uuid.Parse(r.PathValue("id"))
+	if err != nil {
+		httpx.WriteProblem(w, http.StatusBadRequest, "invalid event_id uuid")
+		return
+	}
+	if h.modDetailUC == nil {
+		httpx.WriteProblem(w, http.StatusNotFound, "moderation detail unavailable")
+		return
+	}
+	d, err := h.modDetailUC.Execute(r.Context(), evtID)
+	if err != nil {
+		h.fail(w, r, err)
+		return
+	}
+	httpx.WriteJSON(w, http.StatusOK, ToModerationDetailResponse(d))
+}
+
 // decodeOptional doc JSON body; body rong khong phai loi (truong trong body da tuy chon).
 func decodeOptional(r *http.Request, v any) error {
 	if err := json.NewDecoder(r.Body).Decode(v); err != nil && !errors.Is(err, io.EOF) {
@@ -537,6 +563,11 @@ func handleDomainError(w http.ResponseWriter, r *http.Request, err error) {
 		errors.Is(err, domain.ErrTierNotFound) ||
 		errors.Is(err, domain.ErrModReviewNotFound):
 		httpx.WriteProblem(w, http.StatusNotFound, err.Error())
+	// EV-121: type rieng de UI hien dung huong dan (yeu cau ly do / ho so vua duoc nguoi khac quyet).
+	case errors.Is(err, domain.ErrOverrideReasonRequired):
+		httpx.WriteProblemType(w, http.StatusUnprocessableEntity, ProblemOverrideReasonRequired, err.Error())
+	case errors.Is(err, domain.ErrAlreadyDecided):
+		httpx.WriteProblemType(w, http.StatusConflict, ProblemAlreadyDecided, err.Error())
 	case errors.Is(err, domain.ErrUnauthorizedOrganizer):
 		httpx.WriteProblem(w, http.StatusForbidden, err.Error())
 	case errors.Is(err, domain.ErrNoValidTicketTiers) ||

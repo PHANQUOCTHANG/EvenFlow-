@@ -52,10 +52,13 @@ func main() {
 
 	aiVerdictUC := app.NewHandleAiVerdictUseCase(repo, modRepo, auditRepo)
 	modQueueUC := app.NewListModerationQueueUseCase(repo, modRepo)
-	modActionUC := app.NewModeratorActionUseCase(repo, modRepo, auditRepo)
+	// EV-121: quyet dinh + review + audit trong MOT transaction.
+	modActionUC := app.NewModeratorActionUseCase(repo, modRepo, postgres.NewModerationDecisionStore(db))
+	modDetailUC := app.NewGetModerationDetailUseCase(repo, modRepo, auditRepo)
 
 	handler := adapterHTTP.NewEventHandler(createUC, updateUC, tiersUC, transitionUC, getUC).
 		WithModeration(aiVerdictUC, modQueueUC, modActionUC).
+		WithModerationDetail(modDetailUC).
 		WithAudit(auditRepo)
 	router := adapterHTTP.NewRouter(handler)
 
