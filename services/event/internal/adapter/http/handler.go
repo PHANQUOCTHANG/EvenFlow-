@@ -139,6 +139,27 @@ func (h *EventHandler) GetEventBySlug(w http.ResponseWriter, r *http.Request) {
 	httpx.WriteJSON(w, http.StatusOK, ToEventResponse(evt))
 }
 
+// publicEventsLimit la so su kien toi da trong danh sach cong khai.
+const publicEventsLimit = 100
+
+// GET /api/v1/events/public
+//
+// Cong khai, khong can danh tinh: su kien SCHEDULED/ON_SALE/SOLD_OUT kem tiers.
+func (h *EventHandler) ListPublicEvents(w http.ResponseWriter, r *http.Request) {
+	events, err := h.getUC.ListPublic(r.Context(), publicEventsLimit)
+	if err != nil {
+		h.fail(w, r, err)
+		return
+	}
+
+	resp := make([]EventResponse, len(events))
+	for i, e := range events {
+		resp[i] = ToEventResponse(e)
+	}
+
+	httpx.WriteJSON(w, http.StatusOK, map[string][]EventResponse{"events": resp})
+}
+
 // GET /api/v1/events[?organizer_id={id}]
 //
 // Organizer: luon la su kien cua chinh minh (organizer_id khac -> 403). Moderator/Ops: bat buoc

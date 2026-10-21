@@ -1,6 +1,6 @@
 import { Badge, type BadgeVariant } from "@/components/ui";
 import { formatVnd } from "@/lib/format";
-import type { TicketTierSnapshot, TierAvailability } from "@/lib/event-service";
+import type { TicketTierSnapshot, TierAvailability } from "@/lib/types/event";
 
 /** id mac dinh cua heading; trang chi tiet su kien dung chung hang nay cho aria-labelledby. */
 export const TICKET_TIERS_HEADING_ID = "ticket-tiers-heading";
@@ -26,6 +26,11 @@ const AVAILABILITY_COPY: Record<
   SOLD_OUT: {
     label: "Hết vé",
     badge: "soldout",
+  },
+  // Chua biet (chua mo ban hoac khong lay duoc ton kho): khong khang dinh con/het ve.
+  UNKNOWN: {
+    label: "Chưa rõ tình trạng",
+    badge: "neutral",
   },
 };
 
@@ -66,11 +71,6 @@ export function TicketTierList({ tiers, className, headingId = TICKET_TIERS_HEAD
                   </span>
                   <Badge variant={status.badge}>{status.label}</Badge>
                 </div>
-                {tier.description && (
-                  <p className="text-body-sm text-fg-muted mt-xs">
-                    {tier.description}
-                  </p>
-                )}
               </div>
 
               <div className="text-left sm:text-right mt-xs sm:mt-0">

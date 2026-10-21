@@ -1,5 +1,7 @@
 import { expect, test as base, type BrowserContext, type Request, type Route } from "@playwright/test";
 
+import eventsFixture from "./events.json";
+
 /**
  * Fixture gia lap backend cho E2E (EV-198, plan 1.4).
  *
@@ -14,11 +16,13 @@ import { expect, test as base, type BrowserContext, type Request, type Route } f
  *        bi nhanh "sandbox" cua payment-client bien thanh thanh cong gia).
  *   Request vi pham duoc tra 599 kem thong bao (co header CORS) de UI khong treo.
  *
- * CORS (plan-review F2): web :3000 va API gia :8080 khac origin; join/status dung
- * `credentials: "include"`, hold gui header tuy bien. Moi phan hoi (ke ca 599) mang
- * Access-Control-Allow-Origin = dung origin cua web, Allow-Credentials, Allow-Headers,
- * Expose-Headers. Preflight OPTIONS: Playwright (Chromium) tu tra 204 cho preflight khi bat
- * interception; handler OPTIONS ben duoi chi la luoi an toan neu preflight lot vao route.
+ * CORS (frontend-real-api AC-28): y het gateway (services/gateway/internal/proxy/gateway.go, CORS):
+ * Allow-Origin = origin cua web, Allow-Headers `Authorization, Content-Type, Idempotency-Key,
+ * X-Request-Id, Last-Event-ID, X-Queue-Token, If-None-Match`, Expose-Headers `X-Request-Id,
+ * Retry-After, ETag, X-Poll-After-Ms`, KHONG co Allow-Credentials (web khong gui cookie).
+ * Playwright tu tra 204 cho preflight khi bat interception nen trinh duyet khong tu chan header la:
+ * fixture tu kiem moi request co header tac gia (Authorization, Idempotency-Key, X-*, If-None-Match...)
+ * nam trong Allow-Headers; ngoai danh sach la VI PHAM (gateway that se chan preflight).
  *
  * Hop dong endpoint -> phan hoi dung trong specs (plan-review F5; khop parser cua frontend):
  *
@@ -29,10 +33,14 @@ import { expect, test as base, type BrowserContext, type Request, type Route } f
  * | GET  /v1/events/{id}/queue/status (lan 1, 200)         | { state:"QUEUED", rank:42, eta_seconds:90, poll_after_ms:3500 } + ETag    | queue-status.ts normalizePosition |
  * | GET  /v1/events/{id}/queue/status (lan 2+, 200)        | { state:"ADMITTED", rank:0, eta_seconds:0, poll_after_ms:3500, expires_at: epoch ms +15') } | idem |
  * | GET  /v1/events/{id}/queue/stream                      | KHONG duoc goi (poll_after_ms 3500 > nguong SSE 3000) -> vi pham          | use-queue-status.ts |
- * | POST /v1/events/{id}/holds (201)                       | { order_id, hold_id, expires_at: ISO = now + 10' tinh LUC NHAN request }  | hold-client.ts requestHold |
+ * | POST /v1/events/{id}/holds (200, nhu gateway that)     | { order_id, hold_id, expires_at: ISO = now + 10' tinh LUC NHAN request }  | hold-client.ts requestHold |
  * | POST /v1/events/{id}/holds (409)                       | { title:"Conflict", detail }                                              | hold-client.ts -> SOLD_OUT |
  * | POST /v1/events/{id}/payments (200)                    | { payment_id, order_id, status:"PENDING", redirect_url: return_url + "&e2e=paid-ok" } | payment-client.ts initiatePayment |
- * | GET  /v1/orders/{orderId} (200)                       | { order_id, event_id, event_title, venue, tier_name, quantity, total_amount, status:"PAID", paid_at, payment_method, issued_tickets:[{ ticketId, ticketCode, tierName, attendeeName, qrPayload }] } | payment-client.ts getOrderDetails (issued_tickets truyen nguyen, nen phan tu dung camelCase) |
+ * | GET  /v1/orders/{orderId} (200)                       | ten truong that cua contracts.md muc 4 (order_id, total_amount, total_cents, items, issued_tickets:[{ticketId,ticketCode,tierName,attendeeName,status}] — KHONG co qrPayload) | payment-client.ts getOrderDetails |
+| POST /v1/orders/{orderId}/issue-tickets (200)         | { order_id, tickets:[{ id, ticket_type_id, status, qr_payload }] }        | payment-client.ts issueTickets |
+| GET /api/v1/events/{uuid}, GET /v1/events/{uuid}/availability, GET /v1/payments/methods, POST /api/v1/auth/login+refresh | registerRealApiDefaults (events.json dung chung voi stub-api.mjs) | event-service.ts, payment-client.ts, api-client.ts |
+| POST /v1/orders/{orderId}/issue-tickets (200)         | { order_id, tickets:[{ id, ticket_type_id, status, qr_payload }] }        | payment-client.ts issueTickets |
+| GET  /api/v1/events/{uuid} ; GET /v1/events/{uuid}/availability ; GET /v1/payments/methods ; POST /api/v1/auth/login|refresh | registerRealApiDefaults (events.json dung chung voi stub-api.mjs) | event-service.ts, payment-client.ts, api-client.ts |
  */
 
 export const WEB_BASE = trimSlash(process.env.BASE_URL ?? "http://localhost:3000");
@@ -76,16 +84,28 @@ interface Registration {
   handler: MockHandler;
 }
 
+/** Danh sach header cho phep — SAO CHEP TU gateway.go (CORS). Doi o do thi doi o day. */
+export const GATEWAY_ALLOW_HEADERS =
+  "Authorization, Content-Type, Idempotency-Key, X-Request-Id, Last-Event-ID, X-Queue-Token, If-None-Match";
+export const GATEWAY_EXPOSE_HEADERS = "X-Request-Id, Retry-After, ETag, X-Poll-After-Ms";
+
 function corsHeaders(): Record<string, string> {
   return {
     "Access-Control-Allow-Origin": WEB_ORIGIN,
-    "Access-Control-Allow-Credentials": "true",
     "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
-    "Access-Control-Allow-Headers":
-      "Content-Type, Idempotency-Key, X-Queue-Token, X-Identity-Id, If-None-Match, Accept",
-    "Access-Control-Expose-Headers": "ETag, X-Poll-After-Ms, Retry-After",
+    "Access-Control-Allow-Headers": GATEWAY_ALLOW_HEADERS,
+    "Access-Control-Expose-Headers": GATEWAY_EXPOSE_HEADERS,
+    "Access-Control-Max-Age": "600",
     Vary: "Origin",
   };
+}
+
+const ALLOWED_REQUEST_HEADERS = new Set(GATEWAY_ALLOW_HEADERS.toLowerCase().split(/\s*,\s*/));
+/** Header tac gia ma trinh duyet se preflight (khong thuoc nhom CORS-safelisted). */
+const AUTHORED_HEADER = /^(authorization|idempotency-key|if-none-match|if-match|last-event-id|x-.+)$/;
+
+function disallowedAuthoredHeaders(headers: Record<string, string>): string[] {
+  return Object.keys(headers).filter((h) => AUTHORED_HEADER.test(h) && !ALLOWED_REQUEST_HEADERS.has(h));
 }
 
 function matches(path: PathMatcher, actual: string): boolean {
@@ -180,6 +200,14 @@ export class ApiMock {
     };
     this.requests.push(recorded);
 
+    const blocked = disallowedAuthoredHeaders(recorded.headers);
+    if (blocked.length > 0) {
+      const message = `${method} ${request.url()} — header ngoai Access-Control-Allow-Headers cua gateway: ${blocked.join(", ")} (gateway that se chan preflight)`;
+      this.violations.push(message);
+      await this.fulfillViolation(route, message);
+      return;
+    }
+
     let registration: Registration | undefined;
     for (let i = this.registrations.length - 1; i >= 0; i -= 1) {
       const r = this.registrations[i];
@@ -250,6 +278,105 @@ async function safeFulfill(route: Route, options: Parameters<Route["fulfill"]>[0
   }
 }
 
+interface FixtureEvent {
+  id: string;
+  slug: string;
+  status: string;
+}
+
+/** Du lieu dung chung voi fixtures/stub-api.mjs (phuc vu fetch phia server cua Next). */
+export const EVENTS_FIXTURE = eventsFixture as unknown as {
+  events: FixtureEvent[];
+  availability: Record<string, unknown>;
+};
+
+const NOT_FOUND = {
+  status: 404,
+  contentType: "application/problem+json",
+  json: { type: "/problems/not-found", title: "Not Found", status: 404, detail: "not found" },
+};
+
+/** Phien dang nhap gia cho luong mua ve (token khong ky, exp xa => web khong tu refresh). */
+export const E2E_USER = { id: "11111111-2222-4333-8444-555555555555", role: "buyer", email: "e2e@example.com" };
+export const E2E_REFRESH_TOKEN = "e2e-refresh-token";
+export const E2E_TIER_ID = "b6f0c2d4-8e13-4a57-9d6c-1a2b3c4d5e6f";
+/** Id ve gia lap. Man hinh ket qua hien ma ve = 8 ky tu dau cua ticketId viet hoa (order-result-view). */
+export const E2E_TICKET_IDS = ["e2e00001-0000-4000-8000-000000000001", "e2e00002-0000-4000-8000-000000000002"];
+export const E2E_TICKET_CODES = E2E_TICKET_IDS.map((id) => id.slice(0, 8).toUpperCase());
+
+export function e2eQrPayload(ticketId: string): string {
+  return `QR-${ticketId.slice(0, 8).toUpperCase()}`;
+}
+
+export function e2eAccessToken(): string {
+  const b64 = (o: unknown) => Buffer.from(JSON.stringify(o)).toString("base64url");
+  return `${b64({ alg: "none", typ: "JWT" })}.${b64({ sub: E2E_USER.id, role: E2E_USER.role, ver: true, exp: 4_102_444_800 })}.e2e`;
+}
+
+/** Cac moi goi tu trinh duyet cua web that (frontend-real-api): su kien theo id, availability,
+ *  cong thanh toan, issue-tickets, login/refresh. Dang ky TRUOC nen test ghi de duoc bang api.on().
+ *  Hold/queue/payments/order do buy-flow-helpers dang ky theo tung kich ban. */
+export function registerRealApiDefaults(api: ApiMock): void {
+  // /events duoc prerender luc build khong co du lieu (khong fetch luc build) nen trinh duyet tu tai danh sach.
+  api.on("GET", "/api/v1/events/public", {
+    status: 200,
+    json: { events: EVENTS_FIXTURE.events.filter((e) => e.status !== "DRAFT") },
+  });
+
+  api.on("GET", /^\/api\/v1\/events\/[0-9a-f-]{36}$/, (req) => {
+    const id = req.path.split("/").pop();
+    const ev = EVENTS_FIXTURE.events.find((e) => e.id === id);
+    return ev ? { status: 200, json: ev } : NOT_FOUND;
+  });
+
+  api.on("GET", /^\/v1\/events\/[0-9a-f-]{36}\/availability$/, (req) => {
+    const av = EVENTS_FIXTURE.availability[req.path.split("/")[3]];
+    return av ? { status: 200, json: av } : NOT_FOUND;
+  });
+
+  api.on("GET", "/v1/payments/methods", {
+    status: 200,
+    json: {
+      methods: [
+        { code: "sandbox", name: "Sandbox", description: "Cổng thanh toán thử nghiệm", enabled: true, icon: "sandbox" },
+        { code: "vnpay", name: "VNPay", description: "VNPay", enabled: false, icon: "vnpay" },
+      ],
+    },
+  });
+
+  const identity = () => ({
+    status: 200,
+    json: {
+      id: E2E_USER.id,
+      email: E2E_USER.email,
+      role: E2E_USER.role,
+      created_at: "2026-08-01T00:00:00Z",
+      access_token: e2eAccessToken(),
+      token: e2eAccessToken(),
+      token_type: "Bearer",
+      expires_in: 900,
+      refresh_token: E2E_REFRESH_TOKEN,
+      refresh_expires_in: 604_800,
+    },
+  });
+  api.on("POST", "/api/v1/auth/login", identity);
+  api.on("POST", "/api/v1/auth/refresh", identity);
+
+  // POST /v1/orders/{id}/issue-tickets (ticketing ticket_handler): QR payload that, goi lai duoc nhieu lan.
+  api.on("POST", /^\/v1\/orders\/[^/]+\/issue-tickets$/, (req) => ({
+    status: 200,
+    json: {
+      order_id: req.path.split("/")[3],
+      tickets: E2E_TICKET_IDS.map((id) => ({
+        id,
+        ticket_type_id: E2E_TIER_ID,
+        status: "ISSUED",
+        qr_payload: e2eQrPayload(id),
+      })),
+    },
+  }));
+}
+
 /** Mot "cong" do test mo: handler gia lap await `wait()` de giu phan hoi cho toi khi test da
  *  quan sat xong trang thai trung gian. Thay cho waitForTimeout (AC-8). */
 export function createGate(): { wait: () => Promise<void>; open: () => void } {
@@ -285,6 +412,7 @@ const UNROUTE_WAIT_MS = 5_000;
 export const test = base.extend<{ api: ApiMock }>({
   api: async ({ context }, use) => {
     const api = new ApiMock();
+    registerRealApiDefaults(api);
     await api.install(context);
     await use(api);
     await finalizeApiMock(api, context);

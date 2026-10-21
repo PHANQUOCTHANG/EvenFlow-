@@ -3,7 +3,9 @@
 import Link from "next/link";
 
 import { Alert, Badge, Button, Card, Spinner } from "@/components/ui";
-import { useOrderStatus } from "@/hooks/use-order-status";
+import { TicketQr } from "@/components/checkout/ticket-qr";
+import { useT } from "@/components/i18n/locale-provider";
+import { useIssuedTickets, useOrderStatus } from "@/hooks/use-order-status";
 import { cn } from "@/lib/cn";
 import { formatMoney } from "@/lib/money";
 import type { OrderDetails } from "@/lib/payment-client";
@@ -12,7 +14,6 @@ export interface OrderResultViewProps {
   eventId: string;
   orderId: string;
   initialOrder?: OrderDetails | null;
-  apiBaseUrl?: string;
   className?: string;
 }
 
@@ -20,21 +21,36 @@ export function OrderResultView({
   eventId,
   orderId,
   initialOrder,
-  apiBaseUrl,
   className,
 }: OrderResultViewProps) {
-  const { order, status, loading, refresh } = useOrderStatus({
+  const t = useT();
+  const { order, status, loading, error, refresh } = useOrderStatus({
     orderId,
     eventId,
     initialDetails: initialOrder,
-    apiBaseUrl,
   });
+  // PAID -> lay ve kem QR that (AC-15). Chua phat hanh thi pending + thu lai co gioi han; khong bao gio QR demo.
+  const issued = useIssuedTickets(orderId, status === "PAID" && order !== null, { onRetry: refresh });
 
-  const eventTitle = order?.eventTitle || "Sự kiện EvenFlow";
-  const venue = order?.venue || "Địa điểm tổ chức";
-  const tierName = order?.tierName || "Vé tham dự";
-  const quantity = order?.quantity || 1;
-  const totalAmount = order?.totalAmount || 0;
+  // Khong bia gia tri: thieu du lieu thi de trong, khong dien ten/so luong mac dinh.
+  const eventTitle = order?.eventTitle ?? "";
+  const venue = order?.venue ?? "";
+  const tierName = order?.tierName ?? "";
+  const quantity = order?.quantity ?? 0;
+  const totalAmount = order?.totalAmount ?? 0;
+  const tierNameById = new Map((order?.items ?? []).map((it) => [it.ticketTypeId, it.tierName]));
+
+  // Thu lai thanh toan can du orderId + holdId + hang ve + so luong (trang thanh toan tu choi neu thieu).
+  const firstItem = order?.items?.[0];
+  const retryPaymentHref =
+    order?.holdId && firstItem
+      ? `/checkout/${eventId}/payment?${new URLSearchParams({
+          orderId,
+          holdId: order.holdId,
+          tierId: firstItem.ticketTypeId,
+          quantity: String(order.quantity),
+        }).toString()}`
+      : `/checkout/${eventId}`;
 
   const handlePrint = () => {
     if (typeof window !== "undefined") {
@@ -51,8 +67,28 @@ export function OrderResultView({
         </p>
       </header>
 
+      {/* 0. Khong lay duoc don (404 / loi mang): bao loi + thu lai, khong bia du lieu (AC-14) */}
+      {order === null && error !== null && (
+        <Card className="space-y-md p-xl text-center">
+          <Alert
+            variant="error"
+            title={error.type === "NOT_FOUND" ? t("result.notFoundTitle") : t("result.loadErrorTitle")}
+            className="text-left"
+          >
+            <p className="text-body-sm">
+              {error.type === "NOT_FOUND" ? t("result.notFoundBody") : t("result.loadErrorBody")}
+            </p>
+          </Alert>
+          {error.type !== "NOT_FOUND" ? (
+            <Button variant="secondary" loading={loading} onClick={refresh}>
+              {t("result.retry")}
+            </Button>
+          ) : null}
+        </Card>
+      )}
+
       {/* 1. Trạng thái PENDING: Webhook chậm hoặc đang chờ cổng phản hồi (AC-4, BR-O6) */}
-      {status === "PENDING" && (
+      {status === "PENDING" && !(order === null && error !== null) && (
         <Card className="space-y-md p-xl text-center">
           <div className="flex justify-center">
             <Spinner size="lg" aria-label="Đang xác nhận" />
@@ -96,10 +132,19 @@ export function OrderResultView({
                     {order?.paidAt ? new Date(order.paidAt).toLocaleString("vi-VN") : "Vừa xong"}
                   </span>
                 </div>
-                <h2 className="text-headline-lg text-fg">Vé điện tử của bạn đã sẵn sàng!</h2>
-                <p className="text-body-md text-fg-muted">
-                  Thông tin vé đã được lưu vào hệ thống EvenFlow và gửi tới email của bạn.
-                </p>
+                {issued.tickets.length > 0 ? (
+                  <>
+                    <h2 className="text-headline-lg text-fg">Vé điện tử của bạn đã sẵn sàng!</h2>
+                    <p className="text-body-md text-fg-muted">
+                      Thông tin vé đã được lưu vào hệ thống EvenFlow và gửi tới email của bạn.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <h2 className="text-headline-lg text-fg">{t("result.paidIssuingTitle")}</h2>
+                    <p className="text-body-md text-fg-muted">{t("result.paidIssuingBody")}</p>
+                  </>
+                )}
               </div>
 
               <div className="flex flex-wrap gap-xs">
@@ -116,73 +161,63 @@ export function OrderResultView({
             </div>
           </Card>
 
-          {/* Chi tiết đơn & Danh sách vé điện tử kèm mã QR demo an toàn (BR-O8) */}
+          {/* Danh sach ve dien tu: moi ve mot khung QR tu qr_payload that (AC-15, BR-O8) */}
           <section aria-label="Danh sách vé điện tử" className="space-y-md">
             <h3 className="text-headline-sm text-fg">Vé điện tử của bạn ({quantity} vé)</h3>
 
+            {issued.pending ? (
+              <Card className="space-y-sm p-lg text-center">
+                <div className="flex justify-center">
+                  <Spinner size="lg" aria-label={t("result.ticketsPendingTitle")} />
+                </div>
+                <p role="status" className="text-headline-sm text-fg">
+                  {t("result.ticketsPendingTitle")}
+                </p>
+                <p className="text-body-sm text-fg-muted">{t("result.ticketsPendingBody")}</p>
+              </Card>
+            ) : null}
+
+            {issued.failed ? (
+              <Alert variant="warning" title={t("result.ticketsFailedTitle")}>
+                <p className="mb-sm text-body-sm">{t("result.ticketsFailedBody")}</p>
+                <Button variant="secondary" onClick={issued.retry}>
+                  {t("result.ticketsRetry")}
+                </Button>
+              </Alert>
+            ) : null}
+
             <div className="grid grid-cols-1 gap-md md:grid-cols-2">
-              {(order?.issuedTickets && order.issuedTickets.length > 0
-                ? order.issuedTickets
-                : Array.from({ length: quantity }).map((_, idx) => ({
-                    ticketId: `tkt_${orderId}_${idx + 1}`,
-                    ticketCode: `EF-${orderId.slice(-6).toUpperCase()}-${idx + 1}`,
-                    tierName,
-                    attendeeName: "Khách tham dự",
-                    qrPayload: `DEMO-TICKET-${orderId}-${idx + 1}`,
-                  }))
-              ).map((ticket) => (
-                <Card key={ticket.ticketId} className="flex flex-col justify-between border-border-strong p-lg">
-                  <div className="space-y-sm">
-                    <div className="flex items-center justify-between border-b border-border pb-xs">
-                      <span className="text-label-md font-semibold text-primary">{ticket.tierName}</span>
-                      <span className="font-mono text-caption text-fg-muted">{ticket.ticketCode}</span>
+              {issued.tickets.map((ticket) => {
+                const code = ticket.ticketId.slice(0, 8).toUpperCase();
+                return (
+                  <Card key={ticket.ticketId} className="flex flex-col justify-between border-border-strong p-lg">
+                    <div className="space-y-sm">
+                      <div className="flex items-center justify-between border-b border-border pb-xs">
+                        <span className="text-label-md font-semibold text-primary">
+                          {tierNameById.get(ticket.ticketTypeId) || tierName}
+                        </span>
+                        <span className="font-mono text-caption text-fg-muted">{code}</span>
+                      </div>
+
+                      <div className="space-y-xxs">
+                        <h4 className="text-headline-sm text-fg">{eventTitle}</h4>
+                        <p className="text-body-sm text-fg-muted">{venue}</p>
+                      </div>
                     </div>
 
-                    <div className="space-y-xxs">
-                      <h4 className="text-headline-sm text-fg">{eventTitle}</h4>
-                      <p className="text-body-sm text-fg-muted">{venue}</p>
+                    {/* Khung ma QR: payload da ky tu server (khong co QR demo). role="img": aria-label tren div
+                      * khong co role bi axe bao aria-prohibited-attr. */}
+                    <div className="mt-md flex flex-col items-center justify-center rounded-control border border-border bg-surface-subtle p-md text-center">
+                      <TicketQr
+                        payload={ticket.qrPayload}
+                        label={t("result.qrLabel", { code })}
+                        className="mb-xs flex w-full items-center justify-center overflow-hidden rounded-card border border-border bg-surface p-xs"
+                      />
+                      <span className="text-caption text-fg-subtle">{t("result.qrHint")}</span>
                     </div>
-
-                    <p className="text-body-sm text-fg">
-                      Người sử dụng: <span className="font-medium">{ticket.attendeeName}</span>
-                    </p>
-                  </div>
-
-                  {/* Khung mã QR demo an toàn (BR-O8, Stitch 10.10: visual placeholder, no PII) */}
-                  <div className="mt-md flex flex-col items-center justify-center rounded-control border border-dashed border-border bg-surface-subtle p-md text-center">
-                    {/* role="img": aria-label tren div khong co role bi axe bao aria-prohibited-attr. */}
-                    <div
-                      role="img"
-                      aria-label={`Mã QR vé ${ticket.ticketCode}`}
-                      className="mb-xs flex size-32 items-center justify-center rounded-card border border-border bg-surface shadow-sm"
-                    >
-                      {/* SVG QR Placeholder Demo */}
-                      <svg
-                        className="size-24 text-fg"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        aria-hidden="true"
-                      >
-                        <rect x="3" y="3" width="7" height="7" />
-                        <rect x="14" y="3" width="7" height="7" />
-                        <rect x="3" y="14" width="7" height="7" />
-                        <rect x="14" y="14" width="3" height="3" />
-                        <line x1="17" y1="17" x2="21" y2="17" />
-                        <line x1="21" y1="17" x2="21" y2="21" />
-                        <line x1="17" y1="21" x2="17" y2="21" />
-                      </svg>
-                    </div>
-                    <span className="font-mono text-caption text-fg-muted">{ticket.ticketCode}</span>
-                    <span className="text-caption text-fg-subtle">
-                      Xuất trình mã này tại cổng sự kiện để check-in &bull; DEMO
-                    </span>
-                  </div>
-                </Card>
-              ))}
+                  </Card>
+                );
+              })}
             </div>
           </section>
         </div>
@@ -203,7 +238,7 @@ export function OrderResultView({
 
           <div className="flex justify-center gap-sm pt-sm">
             <Link
-              href={`/checkout/${eventId}/payment?orderId=${orderId}`}
+              href={retryPaymentHref}
               className="ef-focus-ring inline-flex items-center justify-center rounded-control border border-transparent bg-primary px-md py-sm text-label-md text-primary-fg hover:bg-primary-hover"
             >
               Thử thanh toán lại
@@ -267,6 +302,7 @@ export function OrderResultView({
       )}
 
       {/* Tóm tắt thanh toán chung */}
+      {order !== null ? (
       <section aria-label="Tóm tắt thanh toán" className="mt-lg border-t border-border pt-md">
         <div className="flex flex-col justify-between gap-sm text-body-sm text-fg-muted sm:flex-row sm:items-center">
           <span>
@@ -277,6 +313,7 @@ export function OrderResultView({
           </span>
         </div>
       </section>
+      ) : null}
     </div>
   );
 }

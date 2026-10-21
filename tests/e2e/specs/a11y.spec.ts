@@ -18,6 +18,7 @@ import {
   mockPaidOrder,
   mockPaymentRedirect,
   mockQueue,
+  seedLoggedInSession,
   selectAllAccessTimesTwo,
   waitForHydration,
 } from "../fixtures/buy-flow-helpers";
@@ -130,6 +131,7 @@ for (const theme of THEMES) {
       page,
       api,
     }) => {
+      await seedLoggedInSession(page);
       const admit = mockQueue(api);
       mockHoldCreated(api);
       mockPaymentRedirect(api);
@@ -162,6 +164,7 @@ for (const theme of THEMES) {
     });
 
     test(`phong cho khi join bi 401 | ${theme}`, async ({ page, api }) => {
+      await seedLoggedInSession(page);
       api.on("POST", P.join, { status: 401, json: { title: "Unauthorized", detail: "identity required" } });
       api.forbid("GET", P.status, "khong duoc poll status khi join that bai");
       api.forbid("GET", P.stream, "khong duoc mo stream khi join that bai");

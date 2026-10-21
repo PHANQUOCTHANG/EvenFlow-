@@ -1,0 +1,17 @@
+=== RUN   TestPublicEvents_KhongCanTokenVaChiTraTrangThaiCongKhai
+--- PASS: TestPublicEvents_KhongCanTokenVaChiTraTrangThaiCongKhai (0.00s)
+=== RUN   TestPublicEvents_SapXepSaleStartTangDan
+--- PASS: TestPublicEvents_SapXepSaleStartTangDan (0.00s)
+=== RUN   TestPublicEvents_GioiHan100
+--- PASS: TestPublicEvents_GioiHan100 (0.00s)
+=== RUN   TestPublicEvents_RongLaMangRongKhongPhaiNull
+--- PASS: TestPublicEvents_RongLaMangRongKhongPhaiNull (0.00s)
+=== RUN   TestPublicEvents_BuyerDaDangNhapCungDuoc
+--- PASS: TestPublicEvents_BuyerDaDangNhapCungDuoc (0.00s)
+=== RUN   TestPublicEvents_Loi500KhongLoChiTiet
+2026/10/21 21:16:28 ERROR loi xu ly request event route="GET /api/v1/events/public" err="pq: connection refused to 10.0.0.5"
+--- PASS: TestPublicEvents_Loi500KhongLoChiTiet (0.00s)
+=== RUN   TestPublicEvents_KhongLamHongRouteCu
+--- PASS: TestPublicEvents_KhongLamHongRouteCu (0.00s)
+PASS
+ok  	github.com/eventflow/eventflow/services/event/internal/adapter/http	0.850s

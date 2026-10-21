@@ -14,6 +14,7 @@ func NewRouter(h *EventHandler) http.Handler {
 	})
 
 	// Cong khai: su kien chua duyet chi chu su kien / moderator / ops thay (canSeeUnpublished).
+	mux.HandleFunc("GET /api/v1/events/public", h.ListPublicEvents)
 	mux.HandleFunc("GET /api/v1/events/{id}", h.GetEventByID)
 	mux.HandleFunc("GET /api/v1/events/slug/{slug}", h.GetEventBySlug)
 

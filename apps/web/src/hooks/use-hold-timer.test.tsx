@@ -288,7 +288,7 @@ describe("useHoldTimer — đọc token phòng chờ (EV-198, B1)", () => {
     expect(mockFetch).toHaveBeenCalledTimes(1);
     const [url, init] = mockFetch.mock.calls[0];
     expect(String(url)).toMatch(/\/v1\/events\/evt-tech-summit-2026\/holds$/);
-    expect(init.headers["X-Queue-Token"]).toBe("tok-from-waiting-room");
+    expect(new Headers(init.headers).get("X-Queue-Token")).toBe("tok-from-waiting-room");
     expect(result.current.holdState).toBe("active");
     expect(result.current.hold?.holdId).toBe("hold-b1");
   });
@@ -314,6 +314,6 @@ describe("useHoldTimer — đọc token phòng chờ (EV-198, B1)", () => {
     });
 
     expect(mockFetch).toHaveBeenCalledTimes(1);
-    expect(mockFetch.mock.calls[0][1].headers["X-Queue-Token"]).toBe("tok-from-prop");
+    expect(new Headers(mockFetch.mock.calls[0][1].headers).get("X-Queue-Token")).toBe("tok-from-prop");
   });
 });

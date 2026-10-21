@@ -1,0 +1,10 @@
+## go vet ./...
+exit=0
+## go vet -tags integration ./...
+exit=0
+## go test ./... -count=1
+?   	github.com/eventflow/eventflow/services/gateway/cmd/server	[no test files]
+ok  	github.com/eventflow/eventflow/services/gateway/internal/config	0.683s
+ok  	github.com/eventflow/eventflow/services/gateway/internal/proxy	1.519s
+ok  	github.com/eventflow/eventflow/services/gateway/internal/ratelimit	0.350s
+exit=0
