@@ -19,3 +19,11 @@ Nguon: `test-change-request.md`. Khong xoa, khong skip, khong lam yeu; chi doi a
 
 Khong can sua: `hooks/use-auth.test.ts` (parseJwtPayload van export), `app/unauthorized/page.test.tsx` (mock useAuth), RoleGuard (khong co test, khong doi), checkout/waiting `page.test.tsx` (mock event-service).
 Chua dong den (thuoc WP khac): organizer-service/payment-client/hold-client/queue-client tests va organizer component tests.
+
+## WP3
+
+Khong co test bi loi/phai doi assertion. Chi them test moi (khong xoa/skip/lam yeu):
+- `components/event/events-browser-list.test.tsx` (moi): loading / empty / error + thu lai (AC-17).
+- `components/event/event-list-view.test.tsx` (moi): co du lieu, rong, loi (AC-17).
+- `app/(marketing)/events/[slug]/page.test.tsx`: them gia theo price_cents, availability AVAILABLE + ghi chu tham khao, availability loi -> UNKNOWN trung tinh, SOLD_OUT, SCHEDULED chua toi gio (AC-16).
+- `components/event/event-action-panel.test.tsx`: them `it.each` cac trang thai khong ban duoc khong co CTA vao phong cho.
