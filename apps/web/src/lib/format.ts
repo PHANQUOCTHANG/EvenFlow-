@@ -93,3 +93,15 @@ export function formatTimeVn(iso: string): string {
 
   return `${pad(Math.floor(totalSeconds / 3600))}:${pad(Math.floor((totalSeconds % 3600) / 60))}:${pad(totalSeconds % 60)}`;
 }
+
+/** ISO -> "dd/MM/yyyy HH:mm" theo gio Viet Nam (UTC+7), cung quy tac voi formatTimeVn: chi nhan ISO
+ *  co Z hoac offset, khong toLocale*. Hong -> "--/--/---- --:--". */
+export function formatDateTimeVn(iso: string): string {
+  const EMPTY = "--/--/---- --:--";
+  if (!/(Z|[+-]\d{2}:\d{2})$/i.test(iso)) return EMPTY;
+  const ms = Date.parse(iso);
+  if (Number.isNaN(ms)) return EMPTY;
+  const d = new Date(ms + 7 * 60 * 60 * 1000);
+  const pad = (v: number) => String(v).padStart(2, "0");
+  return `${pad(d.getUTCDate())}/${pad(d.getUTCMonth() + 1)}/${d.getUTCFullYear()} ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}`;
+}

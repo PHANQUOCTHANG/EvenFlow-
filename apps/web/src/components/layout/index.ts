@@ -1,6 +1,7 @@
 export { Container, type ContainerProps, type ContainerVariant } from "./container";
 export { FocusShell } from "./focus-shell";
 export {
+  MODERATOR_NAV,
   OPS_NAV,
   ORGANIZER_NAV,
   PUBLIC_NAV,
