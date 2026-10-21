@@ -18,6 +18,8 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/cn";
 import { formatVnd } from "@/lib/format";
 import {
+  canIncreaseTierQuota,
+  canSubmitEvent,
   validateEventDates,
   validateEventSchedule,
   validateTierQuotaUpdate,
@@ -33,6 +35,8 @@ export interface WizardSubmitResult {
   failedStep?: "tiers" | "submit";
   /** Liên kết tới bản nháp đã tạo để người dùng không mất dữ liệu. */
   draftHref?: string;
+  /** Tạo mới: bản nháp đã tồn tại, KHÔNG được POST /events lần nữa (khoá nút lưu). */
+  blockResubmit?: boolean;
 }
 
 export interface EventWizardProps {
@@ -88,6 +92,10 @@ export function EventWizard({
 }: EventWizardProps) {
   const isEditing = Boolean(initialEvent);
   const isCurrentOnSale = initialEvent?.state === "ON_SALE";
+  // ON_SALE: chỉ được tăng quota; trường sự kiện chỉ đọc (PUT /events không cho phép).
+  const quotaOnly = Boolean(initialEvent && canIncreaseTierQuota(initialEvent.state));
+  // Chỉ DRAFT/REJECTED mới nộp duyệt được (khi tạo mới luôn được).
+  const canSubmit = !initialEvent || canSubmitEvent(initialEvent.state);
   // Hạng vé đã tồn tại trên backend: chỉ được đổi quota (PUT .../tiers/{id} {new_quota}).
   const existingTierIds = new Set((initialEvent?.tiers ?? []).map((t) => t.id));
 
@@ -222,13 +230,7 @@ export function EventWizard({
     }
 
     if (step === 3) {
-      // Validate BR-E2: sale_start_at >= now + 30m
-      const scheduleVal = validateEventSchedule(saleStartAt);
-      if (!scheduleVal.isValid) {
-        setErrorMsg(scheduleVal.error ?? "Thời gian mở bán không hợp lệ.");
-        return;
-      }
-
+      // BR-E2 (>= 30 phút) chỉ chặn "Gửi kiểm duyệt" ở handleSubmit, không chặn lưu nháp/sửa.
       const datesVal = validateEventDates(
         new Date(startsAt).toISOString(),
         new Date(saleStartAt).toISOString(),
@@ -243,6 +245,48 @@ export function EventWizard({
     }
   };
 
+  // ON_SALE: chỉ lưu quota tăng; chặn giảm (BR-E3) trước khi gọi mạng.
+  const handleSaveQuotas = async () => {
+    setErrorMsg(null);
+    setPartial(null);
+    if (!initialEvent) return;
+    const tierVal = validateTiers(tiers);
+    if (!tierVal.isValid) {
+      setErrorMsg(tierVal.error ?? "Cấu hình hạng vé không hợp lệ.");
+      return;
+    }
+    for (const t of tiers) {
+      const old = initialEvent.tiers.find((o) => o.id === t.id);
+      if (!old) continue;
+      const v = validateTierQuotaUpdate(old.quota, t.quota, initialEvent.state);
+      if (!v.isValid) {
+        setErrorMsg(v.error ?? "Không thể giảm quota.");
+        return;
+      }
+    }
+    setIsSubmitting(true);
+    try {
+      const result = await onSubmit({
+        title: initialEvent.title,
+        slug: initialEvent.slug,
+        description: initialEvent.description,
+        venue: initialEvent.venue,
+        startsAt: initialEvent.startsAt,
+        saleStartAt: initialEvent.saleStartAt,
+        tiers,
+        submitForReview: false,
+      });
+      if (result && result.error) {
+        setPartial(result);
+        setErrorMsg(result.error);
+      }
+    } catch (err) {
+      setErrorMsg(err instanceof Error ? err.message : String(err));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleBack = () => {
     setErrorMsg(null);
     if (step > 1) {
@@ -254,6 +298,14 @@ export function EventWizard({
   const handleSubmit = async (submitForReview: boolean) => {
     setErrorMsg(null);
     setPartial(null);
+
+    if (submitForReview) {
+      const scheduleVal = validateEventSchedule(saleStartAt);
+      if (!scheduleVal.isValid) {
+        setErrorMsg(scheduleVal.error ?? "Thời gian mở bán không hợp lệ.");
+        return;
+      }
+    }
     setIsSubmitting(true);
 
     try {
@@ -279,6 +331,80 @@ export function EventWizard({
       setIsSubmitting(false);
     }
   };
+
+  const blocked = Boolean(partial?.blockResubmit);
+
+  if (quotaOnly && initialEvent) {
+    return (
+      <Card className={cn("p-lg max-w-4xl mx-auto space-y-lg", className)}>
+        <div className="border-b border-border pb-md">
+          <h2 className="text-heading-lg font-bold text-fg">
+            Tăng số lượng vé: {initialEvent.title}
+          </h2>
+          <p className="text-body-xs text-fg-muted mt-xs">
+            Sự kiện đang mở bán (ON_SALE): thông tin sự kiện chỉ đọc, chỉ được tăng số lượng vé
+            (BR-E3 cấm giảm).
+          </p>
+        </div>
+
+        {errorMsg && (
+          <Alert variant="error" title="Lỗi">
+            {errorMsg}
+          </Alert>
+        )}
+
+        <div className="space-y-md">
+          {tiers.map((tier, idx) => (
+            <Card key={tier.id} className="p-md space-y-sm border border-border-strong">
+              <span className="font-semibold text-body-sm text-fg">Hạng vé #{idx + 1}</span>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-sm">
+                <Input
+                  id={`tier-name-${tier.id}`}
+                  label="Tên hạng vé"
+                  value={tier.name}
+                  disabled
+                  readOnly
+                />
+                <Input
+                  id={`tier-price-${tier.id}`}
+                  label="Giá vé (VND)"
+                  value={String(tier.price)}
+                  disabled
+                  readOnly
+                />
+                <div className="flex flex-col gap-xs">
+                  <span className="text-label-lg text-fg">
+                    <label htmlFor={`tier-quota-${tier.id}`}>Số lượng vé (Quota)</label>
+                  </span>
+                  <input
+                    id={`tier-quota-${tier.id}`}
+                    type="number"
+                    min={initialEvent.tiers.find((o) => o.id === tier.id)?.quota ?? 1}
+                    value={tier.quota}
+                    onChange={(e) => handleUpdateTier(tier.id, "quota", Number(e.target.value))}
+                    className="ef-focus-ring h-11 w-full rounded-control border border-border-strong bg-surface px-sm text-body-lg text-fg"
+                  />
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+
+        <div className="flex items-center justify-between pt-md border-t border-border">
+          {onCancel ? (
+            <Button variant="tertiary" onClick={onCancel} disabled={isSubmitting}>
+              Huỷ bỏ
+            </Button>
+          ) : (
+            <span />
+          )}
+          <Button variant="primary" onClick={handleSaveQuotas} disabled={isSubmitting}>
+            {isSubmitting ? "Đang xử lý..." : "Lưu số lượng vé"}
+          </Button>
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <Card className={cn("p-lg max-w-4xl mx-auto space-y-lg", className)}>
@@ -353,6 +479,8 @@ export function EventWizard({
             label="Đường dẫn tĩnh (Slug - tuỳ chọn)"
             placeholder="VD: vietnam-tech-summit-2026"
             value={slug}
+            disabled={isEditing}
+            helpText={isEditing ? "Không thể đổi sau khi tạo." : undefined}
             onChange={(e) => setSlug(e.target.value)}
           />
 
@@ -521,6 +649,13 @@ export function EventWizard({
             />
           </div>
 
+          {!validateEventSchedule(saleStartAt).isValid && (
+            <Alert variant="warning" title="Chưa đủ điều kiện gửi kiểm duyệt (BR-E2)">
+              Thời gian mở bán cách hiện tại dưới 30 phút: vẫn lưu nháp được, nhưng không thể gửi
+              kiểm duyệt.
+            </Alert>
+          )}
+
           <Alert variant="info" title="Lưu ý pre-warm hạ tầng">
             Hệ thống phòng chờ công bằng (Fair Waiting Room) sẽ gom khách vào Lobby trước T0 và
             xáo trộn ngẫu nhiên toàn bộ người chờ đúng thời điểm mở bán.
@@ -593,17 +728,19 @@ export function EventWizard({
               <Button
                 variant="secondary"
                 onClick={() => handleSubmit(false)}
-                disabled={isSubmitting}
+                disabled={isSubmitting || blocked}
               >
                 Lưu nháp
               </Button>
-              <Button
-                variant="primary"
-                onClick={() => handleSubmit(true)}
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? "Đang xử lý..." : "🚀 Gửi kiểm duyệt"}
-              </Button>
+              {canSubmit && (
+                <Button
+                  variant="primary"
+                  onClick={() => handleSubmit(true)}
+                  disabled={isSubmitting || blocked}
+                >
+                  {isSubmitting ? "Đang xử lý..." : "🚀 Gửi kiểm duyệt"}
+                </Button>
+              )}
             </>
           )}
         </div>
