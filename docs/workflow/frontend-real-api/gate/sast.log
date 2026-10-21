@@ -1,2 +1,2 @@
-1655:+          dangerouslySetInnerHTML={{ __html: state.svg }}
+1837:+          dangerouslySetInnerHTML={{ __html: state.svg }}
 --- (review moi dong o tren; dangerouslySetInnerHTML chi chap nhan cho SVG do thu vien qrcode sinh)
