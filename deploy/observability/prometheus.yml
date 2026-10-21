@@ -12,6 +12,16 @@ scrape_configs:
     static_configs: [{ targets: ["waitingroom-controller:9091"] }]
   - job_name: ticketing-worker
     static_configs: [{ targets: ["ticketing-worker:9092"] }]
+  - job_name: gateway
+    static_configs: [{ targets: ["gateway:8080"] }]
+  - job_name: identity
+    static_configs: [{ targets: ["identity:8083"] }]
+  - job_name: event
+    static_configs: [{ targets: ["event:8084"] }]
+  - job_name: payment
+    static_configs: [{ targets: ["payment:8085"] }]
+  - job_name: notification
+    static_configs: [{ targets: ["notification:8087"] }]
   - job_name: ai-worker
     static_configs: [{ targets: ["ai-worker:8090"] }]
 
