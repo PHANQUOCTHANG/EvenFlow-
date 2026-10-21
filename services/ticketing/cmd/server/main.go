@@ -117,6 +117,7 @@ func run(log *slog.Logger) error {
 	}
 	issueTicketsUC := app.NewIssueTicketsUseCase(repo, qrEngine, log).WithHoldCleanup(repo, gate)
 	verifyTicketUC := app.NewVerifyTicketUseCase(repo, qrEngine, log)
+	checkInUC := app.NewCheckInTicketUseCase(verifyTicketUC, repo, log)
 
 	// EV-137: queue token ky HMAC, cung secret voi waitingroom. Production thieu secret thi khong khoi dong.
 	queueSecret, devSecret, err := authx.QueueTokenSecretFromEnv()
@@ -131,6 +132,7 @@ func run(log *slog.Logger) error {
 		WithQueueTokens(queueSecret).
 		WithPurchaseLimits(app.NewGetPurchaseLimit(repo)).
 		WithTickets(issueTicketsUC, verifyTicketUC, repo).
+		WithCheckIn(checkInUC).
 		WithOrderOwner(repo).
 		WithOrders(app.NewGetOrder(repo, repo), app.NewCancelHold(repo, gate, log),
 			app.NewGetAvailability(availabilitySource{tiers: repo, stock: gate}))

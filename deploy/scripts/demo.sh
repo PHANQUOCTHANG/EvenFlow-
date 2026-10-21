@@ -193,7 +193,7 @@ mailbox "$EMAIL1" 'Vé điện tử' >/dev/null || die "khong co email ve dien t
 ok "Mailpit co email xac nhan thanh toan va email ve dien tu"
 
 # ---------------------------------------------------------------------------
-step "5. Cong soat ve: kiem ve QR"
+step "5. Cong soat ve: kiem QR, check-in dung mot lan"
 call POST "$GW/v1/orders/$ORDER/issue-tickets" -H "$(auth "$T1")" -H "Idempotency-Key: $(idem issue)"
 expect 200 "lay ve"; QR="$(jget "d['tickets'][0]['qr_payload']")"
 [[ "$(jget "d['already_issued']")" == True ]] || die "goi lai issue-tickets phai idempotent (already_issued)"
@@ -202,6 +202,12 @@ call POST "$GW/v1/tickets/verify" -H "$(auth "$OPS")" -H 'Content-Type: applicat
 expect 200 "kiem ve hop le"; ok "QR hop le: $(jget "d['message']")"
 call POST "$GW/v1/tickets/verify" -H "$(auth "$OPS")" -H 'Content-Type: application/json' -d "{\"qr_payload\":\"${QR%?}x\"}"
 expect 400 "kiem ve gia"; ok "QR bi sua 1 ky tu bi tu choi (400 tampered-qr)"
+call POST "$GW/v1/tickets/check-in" -H "$(auth "$T1")" -H 'Content-Type: application/json' -d "{\"qr_payload\":\"$QR\"}"
+expect 403 "khach tu check-in"; ok "khach khong tu check-in ve duoc (403): chi nhan vien van hanh"
+call POST "$GW/v1/tickets/check-in" -H "$(auth "$OPS")" -H 'Content-Type: application/json' -d "{\"qr_payload\":\"$QR\"}"
+expect 200 "check-in"; ok "check-in lan 1 -> vao cua ($(jget "d['ticket']['status']"))"
+call POST "$GW/v1/tickets/check-in" -H "$(auth "$OPS")" -H 'Content-Type: application/json' -d "{\"qr_payload\":\"$QR\"}"
+expect 409 "check-in lan 2"; ok "quet lai cung ve -> 409 ve da duoc su dung (dung mot lan)"
 
 # ---------------------------------------------------------------------------
 step "6. Khach thu hai: huy giu ghe tra kho"

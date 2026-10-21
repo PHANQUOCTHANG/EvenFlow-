@@ -6,7 +6,10 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
+	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -461,5 +464,67 @@ func TestListOrderHoldIDs(t *testing.T) {
 		if got, err := repo.ListOrderHoldIDs(ctx, bad); err != nil || len(got) != 0 {
 			t.Errorf("%q: %v, %v; muon rong", bad, got, err)
 		}
+	}
+}
+
+// EV-135, BR-O8: 50 may quet cung luc mot ve -> dung mot UPDATE co dieu kien doi duoc ISSUED -> CHECKED_IN;
+// 49 may con lai nhan ErrTicketAlreadyUsed. Ve khac khong bi anh huong.
+func TestUpdateTicketStatus_CheckInDungMotLan(t *testing.T) {
+	repo, pool := setupPostgresTest(t)
+	ctx := context.Background()
+	fix := seedTestEvent(t, pool, 320)
+	out, err := repo.PersistHold(ctx, port.PersistHoldParams{
+		EventID: fix.EventID, TicketTypeID: fix.TicketTypeID, IdentityID: fix.IdentityID,
+		HoldID: domain.NewID(), Bucket: 2, Quantity: 2, UnitCents: 1,
+		ExpiresAt: time.Now().Add(10 * time.Minute), MaxPerIdentity: 4,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	ids := []string{uuid.NewString(), uuid.NewString()}
+	for i, id := range ids {
+		if _, err := pool.Exec(ctx, `INSERT INTO tickets (id, order_id, ticket_type_id, jti, qr_sig, status)
+			VALUES ($1::uuid, $2::uuid, $3::uuid, $4, 'sig', 'ISSUED')`, id, out.OrderID, fix.TicketTypeID,
+			fmt.Sprintf("jti-%d-%s", i, id)); err != nil {
+			t.Fatalf("seed ve: %v", err)
+		}
+	}
+
+	const scanners = 50
+	var wins, used atomic.Int32
+	var wg sync.WaitGroup
+	now := time.Now().UTC()
+	for i := 0; i < scanners; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			err := repo.UpdateTicketStatus(ctx, ids[0], domain.TicketStatusIssued, domain.TicketStatusCheckedIn, &now)
+			switch {
+			case err == nil:
+				wins.Add(1)
+			case errors.Is(err, domain.ErrTicketAlreadyUsed):
+				used.Add(1)
+			default:
+				t.Errorf("loi bat ngo: %v", err)
+			}
+		}()
+	}
+	wg.Wait()
+	if wins.Load() != 1 || used.Load() != scanners-1 {
+		t.Fatalf("thang %d, bi tu choi %d; muon 1 va %d", wins.Load(), used.Load(), scanners-1)
+	}
+
+	var st string
+	var at *time.Time
+	_ = pool.QueryRow(ctx, `SELECT status, checked_in_at FROM tickets WHERE id = $1::uuid`, ids[0]).Scan(&st, &at)
+	if st != "CHECKED_IN" || at == nil {
+		t.Errorf("ve 1 = %s, checked_in_at %v", st, at)
+	}
+	_ = pool.QueryRow(ctx, `SELECT status FROM tickets WHERE id = $1::uuid`, ids[1]).Scan(&st)
+	if st != "ISSUED" {
+		t.Errorf("ve 2 bi anh huong: %s", st)
+	}
+	if err := repo.UpdateTicketStatus(ctx, uuid.NewString(), domain.TicketStatusIssued, domain.TicketStatusCheckedIn, &now); !errors.Is(err, domain.ErrTicketNotFound) {
+		t.Errorf("ve khong ton tai: %v, muon ErrTicketNotFound", err)
 	}
 }

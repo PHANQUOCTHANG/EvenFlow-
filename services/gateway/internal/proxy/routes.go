@@ -57,6 +57,8 @@ func Routes() []Route {
 		{Pattern: "/v1/holds/", Upstream: config.Ticketing, Access: Authenticated, Rate: config.RateDefault},
 		// Muc con ve cong khai (khong lo so chinh xac); ticketing gom request va dat Cache-Control.
 		{Pattern: "GET /v1/events/{eventID}/availability", Upstream: config.Ticketing, Access: Public, Rate: config.RateDefault},
+		// Check-in doi trang thai ve: chi nhan vien van hanh (ops), con lai khach chi duoc /verify.
+		{Pattern: "POST /v1/tickets/check-in", Upstream: config.Ticketing, Access: Authenticated, Roles: []string{"ops"}, Rate: config.RateDefault},
 		{Pattern: "/v1/tickets/", Upstream: config.Ticketing, Access: Authenticated, Rate: config.RateDefault},
 
 		// Payment. Webhook cong khai vi cong thanh toan goi vao; payment tu xac minh chu ky.

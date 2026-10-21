@@ -208,6 +208,13 @@ Content-Type: application/json
 
 {"qr_payload": "{{qr}}"}
 
+### Check-in (chi ops): lan 1 -> 200 CHECKED_IN, lan 2 -> 409 ve da duoc su dung
+POST {{gw}}/v1/tickets/check-in
+Authorization: Bearer {{ops}}
+Content-Type: application/json
+
+{"qr_payload": "{{qr}}"}
+
 ###########################################################################
 # 7. Bao mat
 ###########################################################################

@@ -28,13 +28,13 @@ Chạy `make demo`. Mỗi bước in `ok` khi xong; nói trong lúc nó chạy, 
 | 2–6 | 2. Organizer tạo sự kiện, nộp duyệt | "AI kiểm duyệt nội dung trong ~1 giây; sự kiện đáng ngờ mới chuyển cho Moderator." | Terminal |
 | 6–80 | 3. Chờ giờ mở bán | **Đây là lúc nói về kiến trúc** (xem "Lời dẫn khi chờ" bên dưới). Khách đã vào phòng chờ nhưng chưa ai được mua | RabbitMQ (hàng đợi `payment.events.sink.q`, `ai.*`), Grafana, Jaeger |
 | 80 | Đến giờ mở bán | "Bốc thăm xong: người bấm sớm không có lợi thế. Sự kiện tự chuyển `ON_SALE`, không ai bấm tay." | Terminal: `ADMITTED`, `ON_SALE` |
-| 80–84 | 4–5. Giữ ghế → thanh toán → **vé tự phát** → email → kiểm QR | "Webhook thanh toán ghi `order.paid` cùng transaction với đơn; relay đưa lên RabbitMQ, ticketing tự phát vé, notification tự gửi mail. QR sửa 1 ký tự là bị từ chối." | **Mailpit: 2 mail mới** (xác nhận thanh toán, vé điện tử). Tab RabbitMQ: số message tăng rồi về 0 |
+| 80–84 | 4–5. Giữ ghế → thanh toán → **vé tự phát** → email → kiểm QR → check-in | "Webhook thanh toán ghi `order.paid` cùng transaction với đơn; relay đưa lên RabbitMQ, ticketing tự phát vé, notification tự gửi mail. QR sửa 1 ký tự bị từ chối; check-in chỉ nhân viên làm được và quét lại lần hai là 409." | **Mailpit: 2 mail mới** (xác nhận thanh toán, vé điện tử). Tab RabbitMQ: số message tăng rồi về 0 |
 | 84–88 | 6. Khách 2 huỷ giữ ghế | "Huỷ trả kho đúng một lần dù gọi lại." | Terminal |
 | 88 | 7. Bảo mật | "Giả header danh tính, xem đơn người khác, dùng token của người khác: đều bị chặn." | Terminal |
 | 88–89 | 8. Trợ lý AI | "Khách chờ có thể hỏi trợ lý; có giới hạn tốc độ để không chạm trần Gemini." (Đang chạy chế độ giả lập `GEMINI_MOCK=1`) | Terminal |
 | 89–101 | 9. Hết vé | "Hết vé thì người đang chờ được báo ngay, không bị đẩy vào hàng vô vọng." | Terminal |
 
-Kết thúc: dòng `[demo] DAT: 33 buoc trong ~100s`.
+Kết thúc: dòng `[demo] DAT: 36 buoc trong ~95s`.
 
 ### Lời dẫn khi chờ giờ mở bán (~70 giây)
 
