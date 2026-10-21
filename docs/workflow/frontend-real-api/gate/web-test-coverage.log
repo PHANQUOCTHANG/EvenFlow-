@@ -1,0 +1,1670 @@
+[33mThe CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.[39m
+
+[1m[7m[36m RUN [39m[27m[22m [36mv2.1.8 [39m[90mD:/Documents/Nam4-1/Project1/EvenFlow-fe/apps/web[39m
+      [2mCoverage enabled with [22m[33mv8[39m
+
+ [32m✓[39m src/lib/format.test.ts [2m([22m[2m94 tests[22m[2m)[22m[90m 33[2mms[22m[39m
+ [32m✓[39m src/lib/ops-service.test.ts [2m([22m[2m53 tests[22m[2m)[22m[90m 45[2mms[22m[39m
+[90mstderr[2m | src/hooks/use-server-countdown.test.tsx[2m > [22m[2museServerCountdown — chua co moc thi KHONG phai het han (AC-4, hop dong §5)[2m > [22m[2mstring khong parse duoc -> giong null: remainingMs 0, expired FALSE
+[22m[39m[server-time] moc thoi han "soon" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+[server-time] moc thoi han "soon" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+ [32m✓[39m src/hooks/use-ops-war-room.test.tsx [2m([22m[2m34 tests[22m[2m)[22m[90m 164[2mms[22m[39m
+[90mstderr[2m | src/hooks/use-server-countdown.test.tsx[2m > [22m[2museServerCountdown — chua co moc thi KHONG phai het han (AC-4, hop dong §5)[2m > [22m[2mstring rong cung khong phai het han
+[22m[39m[server-time] moc thoi han "" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+[server-time] moc thoi han "" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+[90mstderr[2m | src/hooks/use-server-countdown.test.tsx[2m > [22m[2museServerCountdown — chua co moc thi KHONG phai het han (AC-4, hop dong §5)[2m > [22m[2mstring khong parse duoc + thoi gian troi van khong thanh expired
+[22m[39m[server-time] moc thoi han "not-a-date" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+[server-time] moc thoi han "not-a-date" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+[90mstderr[2m | src/hooks/use-server-countdown.test.tsx[2m > [22m[2museServerCountdown — ready sau khi mount (AC-4)[2m > [22m[2mmoc khong doc duoc () -> ready FALSE va expired FALSE
+[22m[39m[server-time] moc thoi han "" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+[server-time] moc thoi han "" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+[90mstderr[2m | src/hooks/use-server-countdown.test.tsx[2m > [22m[2museServerCountdown — ready sau khi mount (AC-4)[2m > [22m[2mmoc khong doc duoc (soon) -> ready FALSE va expired FALSE
+[22m[39m[server-time] moc thoi han "soon" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+[server-time] moc thoi han "soon" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+[90mstderr[2m | src/hooks/use-server-countdown.test.tsx[2m > [22m[2museServerCountdown — ready sau khi mount (AC-4)[2m > [22m[2mmoc khong doc duoc (2026-10-03) -> ready FALSE va expired FALSE
+[22m[39m[server-time] moc thoi han "2026-10-03" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+[server-time] moc thoi han "2026-10-03" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+[90mstderr[2m | src/hooks/use-server-countdown.test.tsx[2m > [22m[2museServerCountdown — ready sau khi mount (AC-4)[2m > [22m[2mmoc khong doc duoc (2026-10-03T09:00:00) -> ready FALSE va expired FALSE
+[22m[39m[server-time] moc thoi han "2026-10-03T09:00:00" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+[server-time] moc thoi han "2026-10-03T09:00:00" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+ [32m✓[39m src/components/ui/toast.test.tsx [2m([22m[2m18 tests[22m[2m)[22m[90m 252[2mms[22m[39m
+[90mstderr[2m | src/hooks/use-server-countdown.test.tsx[2m > [22m[2museServerCountdown — ready sau khi mount (AC-4)[2m > [22m[2mready khong bao gio true cung luc voi moc khong doc duoc, du thoi gian troi
+[22m[39m[server-time] moc thoi han "khong-phai-ngay" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+[server-time] moc thoi han "khong-phai-ngay" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+ [32m✓[39m src/hooks/use-server-countdown.test.tsx [2m([22m[2m48 tests[22m[2m)[22m[90m 159[2mms[22m[39m
+ [32m✓[39m src/lib/hold-client.test.ts [2m([22m[2m14 tests[22m[2m)[22m[33m 344[2mms[22m[39m
+ [32m✓[39m src/lib/i18n/messages.test.ts [2m([22m[2m55 tests[22m[2m)[22m[90m 32[2mms[22m[39m
+[90mstderr[2m | src/hooks/use-hold-timer.test.tsx[2m > [22m[2museHoldTimer (EVF-113, BR-O2, BR-O5)[2m > [22m[2mBấm đặt nhiều lần không tạo hold trùng (BR-O5)
+[22m[39mWarning: An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at TestComponent (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\node_modules\@testing-library\react\dist\pure.js:307:5)
+Warning: An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at TestComponent (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\node_modules\@testing-library\react\dist\pure.js:307:5)
+
+ [32m✓[39m src/hooks/use-hold-timer.test.tsx [2m([22m[2m12 tests[22m[2m)[22m[90m 89[2mms[22m[39m
+ [32m✓[39m src/lib/api/auth.contract.test.ts [2m([22m[2m20 tests[22m[2m)[22m[90m 70[2mms[22m[39m
+ [32m✓[39m src/lib/payment-client.contract.test.ts [2m([22m[2m29 tests[22m[2m)[22m[90m 84[2mms[22m[39m
+ [32m✓[39m src/lib/sse.test.ts [2m([22m[2m17 tests[22m[2m)[22m[90m 49[2mms[22m[39m
+ [32m✓[39m src/lib/api-client.contract.test.ts [2m([22m[2m33 tests[22m[2m)[22m[90m 159[2mms[22m[39m
+ [32m✓[39m src/components/layout/nav-config.test.ts [2m([22m[2m48 tests[22m[2m)[22m[90m 20[2mms[22m[39m
+ [32m✓[39m src/lib/payment-client.test.ts [2m([22m[2m11 tests[22m[2m)[22m[33m 409[2mms[22m[39m
+ [32m✓[39m src/lib/organizer-service.test.ts [2m([22m[2m22 tests[22m[2m)[22m[90m 74[2mms[22m[39m
+ [32m✓[39m src/hooks/use-queue-status.test.tsx [2m([22m[2m10 tests[22m[2m)[22m[90m 100[2mms[22m[39m
+ [32m✓[39m src/components/i18n/locale-provider.test.tsx [2m([22m[2m23 tests[22m[2m)[22m[33m 553[2mms[22m[39m
+ [32m✓[39m src/lib/organizer-service.contract.test.ts [2m([22m[2m28 tests[22m[2m)[22m[90m 100[2mms[22m[39m
+[90mstderr[2m | src/components/ui/server-expiry-countdown.test.tsx[2m > [22m[2mServerExpiryCountdown — truoc khi biet moc: unknown + '--:--' (AC-5, M1)[2m > [22m[2mmoc khong doc duoc (string rac) -> unknown va '--:--', khong phai 00:00
+[22m[39m[server-time] moc thoi han "soon" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+[server-time] moc thoi han "soon" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+[90mstderr[2m | src/components/ui/server-expiry-countdown.test.tsx[2m > [22m[2mServerExpiryCountdown — truoc khi biet moc: unknown + '--:--' (AC-5, M1)[2m > [22m[2mchuoi khong co mui gio bi coi la chua biet moc (khong doan lech 7 tieng)
+[22m[39m[server-time] moc thoi han "2026-10-03T09:00:00" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+[server-time] moc thoi han "2026-10-03T09:00:00" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+[90mstderr[2m | src/components/ui/server-expiry-countdown.test.tsx[2m > [22m[2mServerExpiryCountdown — truoc khi biet moc: unknown + '--:--' (AC-5, M1)[2m > [22m[2munknown KHONG BAO GIO thanh warning, du nguong lon the nao
+[22m[39m[server-time] moc thoi han "soon" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+[server-time] moc thoi han "soon" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+[90mstderr[2m | src/components/ui/server-expiry-countdown.test.tsx[2m > [22m[2mServerExpiryCountdown — truoc khi biet moc: unknown + '--:--' (AC-5, M1)[2m > [22m[2munknown khong thong bao gi cho screen reader (vung live rong)
+[22m[39m[server-time] moc thoi han "soon" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+[server-time] moc thoi han "soon" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+[90mstderr[2m | src/components/ui/server-expiry-countdown.test.tsx[2m > [22m[2mServerExpiryCountdown — truoc khi biet moc: unknown + '--:--' (AC-5, M1)[2m > [22m[2munknown khong hien so am va khong hien 'NaN'
+[22m[39m[server-time] moc thoi han "soon" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+[server-time] moc thoi han "soon" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+ [32m✓[39m src/components/ui/server-expiry-countdown.test.tsx [2m([22m[2m43 tests[22m[2m)[22m[33m 388[2mms[22m[39m
+[90mstderr[2m | src/components/event/event-action-panel.test.tsx[2m > [22m[2mEventActionPanel (EVF-111, BR-Q5, BR-O2)[2m > [22m[2mSCHEDULED va chua toi gio mo ban: hien thi countdown va nut disabled
+[22m[39mWarning: An update to EventActionPanel inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at EventActionPanel (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\components\event\event-action-panel.tsx:19:3)
+
+ [32m✓[39m src/components/layout/nav-link.test.tsx [2m([22m[2m37 tests[22m[2m)[22m[33m 515[2mms[22m[39m
+[90mstderr[2m | src/components/event/event-card.test.tsx[2m > [22m[2mEventCard — thoi diem bat dau: khong bao gio ro ri 'NaN'/'Invalid Date' (AC-2)[2m > [22m[2mmoc khong doc duoc -> khong hien 'NaN'/'Invalid Date', va van hien ten su kien
+[22m[39m[server-time] moc thoi han "khong-phai-ngay" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+ [32m✓[39m src/components/event/event-card.test.tsx [2m([22m[2m41 tests[22m[2m)[22m[33m 552[2mms[22m[39m
+ [32m✓[39m src/components/checkout/ticket-tier-card.test.tsx [2m([22m[2m52 tests[22m[2m)[22m[33m 444[2mms[22m[39m
+[90mstderr[2m | src/components/event/event-action-panel.test.tsx[2m > [22m[2mEventActionPanel (EVF-111, BR-Q5, BR-O2)[2m > [22m[2mSOLD_OUT: nut bi vo hieu hoa voi thong bao het ve
+[22m[39mWarning: An update to EventActionPanel inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at EventActionPanel (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\components\event\event-action-panel.tsx:19:3)
+
+[90mstderr[2m | src/components/event/event-action-panel.test.tsx[2m > [22m[2mEventActionPanel (EVF-111, BR-Q5, BR-O2)[2m > [22m[2mCANCELLED: nut bi vo hieu hoa voi thong bao su kien da huy
+[22m[39mWarning: An update to EventActionPanel inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at EventActionPanel (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\components\event\event-action-panel.tsx:19:3)
+
+[90mstderr[2m | src/components/event/event-action-panel.test.tsx[2m > [22m[2mEventActionPanel (EVF-111, BR-Q5, BR-O2)[2m > [22m[2mCLOSED: nut bi vo hieu hoa voi thong bao da dong ban
+[22m[39mWarning: An update to EventActionPanel inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at EventActionPanel (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\components\event\event-action-panel.tsx:19:3)
+
+[90mstderr[2m | src/components/event/event-action-panel.test.tsx[2m > [22m[2mEventActionPanel — chi ON_SALE moi co nut vao phong cho (AC-16)[2m > [22m[2mDRAFT: khong co nut vao phong cho, chi nut vo hieu hoa
+[22m[39mWarning: An update to EventActionPanel inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at EventActionPanel (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\components\event\event-action-panel.tsx:19:3)
+
+[90mstderr[2m | src/components/event/event-action-panel.test.tsx[2m > [22m[2mEventActionPanel — chi ON_SALE moi co nut vao phong cho (AC-16)[2m > [22m[2mPENDING_REVIEW: khong co nut vao phong cho, chi nut vo hieu hoa
+[22m[39mWarning: An update to EventActionPanel inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at EventActionPanel (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\components\event\event-action-panel.tsx:19:3)
+
+[90mstderr[2m | src/components/event/event-action-panel.test.tsx[2m > [22m[2mEventActionPanel — chi ON_SALE moi co nut vao phong cho (AC-16)[2m > [22m[2mREJECTED: khong co nut vao phong cho, chi nut vo hieu hoa
+[22m[39mWarning: An update to EventActionPanel inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at EventActionPanel (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\components\event\event-action-panel.tsx:19:3)
+
+[90mstderr[2m | src/components/event/event-action-panel.test.tsx[2m > [22m[2mEventActionPanel — chi ON_SALE moi co nut vao phong cho (AC-16)[2m > [22m[2mCOMPLETED: khong co nut vao phong cho, chi nut vo hieu hoa
+[22m[39mWarning: An update to EventActionPanel inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at EventActionPanel (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\components\event\event-action-panel.tsx:19:3)
+
+[90mstderr[2m | src/components/event/event-action-panel.test.tsx[2m > [22m[2mEventActionPanel — chi ON_SALE moi co nut vao phong cho (AC-16)[2m > [22m[2mCLOSED: khong co nut vao phong cho, chi nut vo hieu hoa
+[22m[39mWarning: An update to EventActionPanel inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at EventActionPanel (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\components\event\event-action-panel.tsx:19:3)
+
+[90mstderr[2m | src/components/event/event-action-panel.test.tsx[2m > [22m[2mEventActionPanel — chi ON_SALE moi co nut vao phong cho (AC-16)[2m > [22m[2mCANCELLED: khong co nut vao phong cho, chi nut vo hieu hoa
+[22m[39mWarning: An update to EventActionPanel inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at EventActionPanel (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\components\event\event-action-panel.tsx:19:3)
+
+[90mstderr[2m | src/components/event/event-action-panel.test.tsx[2m > [22m[2mEventActionPanel — chi ON_SALE moi co nut vao phong cho (AC-16)[2m > [22m[2mSOLD_OUT: khong co nut vao phong cho, chi nut vo hieu hoa
+[22m[39mWarning: An update to EventActionPanel inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at EventActionPanel (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\components\event\event-action-panel.tsx:19:3)
+
+[90mstderr[2m | src/components/event/event-action-panel.test.tsx[2m > [22m[2mEventActionPanel — i18n (EV-188 AC-8)[2m > [22m[2mtrang thai ON_SALE, khong provider: phan tu goc co lang="vi"
+[22m[39mWarning: An update to EventActionPanel inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at EventActionPanel (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\components\event\event-action-panel.tsx:19:3)
+
+[90mstderr[2m | src/components/event/event-action-panel.test.tsx[2m > [22m[2mEventActionPanel — i18n (EV-188 AC-8)[2m > [22m[2mtrang thai SOLD_OUT, khong provider: phan tu goc co lang="vi"
+[22m[39mWarning: An update to EventActionPanel inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at EventActionPanel (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\components\event\event-action-panel.tsx:19:3)
+
+[90mstderr[2m | src/components/event/event-action-panel.test.tsx[2m > [22m[2mEventActionPanel — i18n (EV-188 AC-8)[2m > [22m[2mtrang thai CANCELLED, khong provider: phan tu goc co lang="vi"
+[22m[39mWarning: An update to EventActionPanel inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at EventActionPanel (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\components\event\event-action-panel.tsx:19:3)
+
+[90mstderr[2m | src/components/event/event-action-panel.test.tsx[2m > [22m[2mEventActionPanel — i18n (EV-188 AC-8)[2m > [22m[2mtrang thai CLOSED, khong provider: phan tu goc co lang="vi"
+[22m[39mWarning: An update to EventActionPanel inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at EventActionPanel (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\components\event\event-action-panel.tsx:19:3)
+
+[90mstderr[2m | src/components/event/event-action-panel.test.tsx[2m > [22m[2mEventActionPanel — i18n (EV-188 AC-8)[2m > [22m[2mtrang thai SCHEDULED, khong provider: phan tu goc co lang="vi"
+[22m[39mWarning: An update to EventActionPanel inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at EventActionPanel (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\components\event\event-action-panel.tsx:19:3)
+
+[90mstderr[2m | src/components/checkout/order-result-view.test.tsx[2m > [22m[2mOrderResultView — phat hanh ve va loi (AC-14, AC-15)[2m > [22m[2mchua phat hanh (rong): hien trang thai cho, KHONG ve QR nao, thanh cong khi thu lai
+[22m[39mWarning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to TicketQr inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at TicketQr (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\components\checkout\ticket-qr.tsx:8:21)
+    at div
+    at div
+    at div
+    at Card2 (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\components\ui\card.tsx:7:64)
+    at div
+    at section
+    at div
+    at div
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to TicketQr inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at TicketQr (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\components\checkout\ticket-qr.tsx:8:21)
+    at div
+    at div
+    at div
+    at Card2 (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\components\ui\card.tsx:7:64)
+    at div
+    at section
+    at div
+    at div
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+
+[90mstderr[2m | src/components/checkout/order-result-view.test.tsx[2m > [22m[2mOrderResultView — phat hanh ve va loi (AC-14, AC-15)[2m > [22m[2mhet luot thu lai van chua co ve: bao loi + nut lay ve lai, van khong co QR, so lan thu co gioi han
+[22m[39mWarning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to ForwardRef(LinkComponent) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at LinkComponent (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\node_modules\next\dist\client\link.js:138:19)
+    at div
+    at div
+    at div
+    at div
+    at Card2 (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\components\ui\card.tsx:7:64)
+    at div
+    at div
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+
+[90mstderr[2m | src/components/checkout/order-result-view.test.tsx[2m > [22m[2mOrderResultView — phat hanh ve va loi (AC-14, AC-15)[2m > [22m[2mhet luot thu lai van chua co ve: bao loi + nut lay ve lai, van khong co QR, so lan thu co gioi han
+[22m[39mWarning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+
+[90mstderr[2m | src/components/checkout/order-result-view.test.tsx[2m > [22m[2mOrderResultView — phat hanh ve va loi (AC-14, AC-15)[2m > [22m[2mhet luot thu lai van chua co ve: bao loi + nut lay ve lai, van khong co QR, so lan thu co gioi han
+[22m[39mWarning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+
+[90mstderr[2m | src/components/checkout/order-result-view.test.tsx[2m > [22m[2mOrderResultView — phat hanh ve va loi (AC-14, AC-15)[2m > [22m[2mhet luot thu lai van chua co ve: bao loi + nut lay ve lai, van khong co QR, so lan thu co gioi han
+[22m[39mWarning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+
+[90mstderr[2m | src/components/checkout/order-result-view.test.tsx[2m > [22m[2mOrderResultView — phat hanh ve va loi (AC-14, AC-15)[2m > [22m[2mhet luot thu lai van chua co ve: bao loi + nut lay ve lai, van khong co QR, so lan thu co gioi han
+[22m[39mWarning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+
+[90mstderr[2m | src/components/checkout/order-result-view.test.tsx[2m > [22m[2mOrderResultView — phat hanh ve va loi (AC-14, AC-15)[2m > [22m[2mhet luot thu lai van chua co ve: bao loi + nut lay ve lai, van khong co QR, so lan thu co gioi han
+[22m[39mWarning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+
+ [32m✓[39m src/components/checkout/order-summary.test.tsx [2m([22m[2m74 tests[22m[2m)[22m[33m 1032[2mms[22m[39m
+ [32m✓[39m src/components/event/event-action-panel.test.tsx [2m([22m[2m28 tests[22m[2m)[22m[33m 994[2mms[22m[39m
+ [32m✓[39m src/components/checkout/order-result-view.test.tsx [2m([22m[2m12 tests[22m[2m)[22m[33m 894[2mms[22m[39m
+[90mstderr[2m | src/components/queue/queue-status-panel.test.tsx[2m > [22m[2mQueueStatusPanel — so rac phai bi coi nhu KHONG CO (AC-8, M2)[2m > [22m[2madmissionExpiresAt la chuoi rac -> khong lo 'NaN'/'Invalid Date' ra UI
+[22m[39m[server-time] moc thoi han "soon" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+[server-time] moc thoi han "soon" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+[server-time] moc thoi han "soon" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+[server-time] moc thoi han "soon" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+ [32m✓[39m src/components/checkout/checkout-view.test.tsx [2m([22m[2m11 tests[22m[2m)[22m[33m 1298[2mms[22m[39m
+   [33m[2m✓[22m[39m CheckoutView (EVF-113, EV-183)[2m > [22mrender danh sách hạng vé và nhãn định tính không lộ số tồn kho (BR-O1) [33m542[2mms[22m[39m
+ [32m✓[39m src/components/queue/queue-status-panel.test.tsx [2m([22m[2m112 tests[22m[2m)[22m[33m 1536[2mms[22m[39m
+[90mstderr[2m | src/components/layout/workspace-shell.test.tsx[2m > [22m[2mWorkspaceShell — m4 bam link trong nav thi dong menu[2m > [22m[2mbam link ready: true -> menu dong, KE CA khi pathname khong doi
+[22m[39mError: Not implemented: navigation (except hash changes)
+    at module.exports (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\node_modules\jsdom\lib\jsdom\browser\not-implemented.js:9:17)
+    at navigateFetch (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\node_modules\jsdom\lib\jsdom\living\window\navigation.js:77:3)
+    at exports.navigate (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\node_modules\jsdom\lib\jsdom\living\window\navigation.js:55:3)
+    at Timeout._onTimeout (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\node_modules\jsdom\lib\jsdom\living\nodes\HTMLHyperlinkElementUtils-impl.js:81:7)
+    at listOnTimeout (node:internal/timers:588:17)
+    at processTimers (node:internal/timers:523:7) [90mundefined[39m
+
+[90mstderr[2m | src/components/layout/public-header.test.tsx[2m > [22m[2mPublicHeader — m4 bam link trong nav thi dong menu[2m > [22m[2mbam link ready: true -> menu dong, KE CA khi pathname khong doi
+[22m[39mError: Not implemented: navigation (except hash changes)
+    at module.exports (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\node_modules\jsdom\lib\jsdom\browser\not-implemented.js:9:17)
+    at navigateFetch (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\node_modules\jsdom\lib\jsdom\living\window\navigation.js:77:3)
+    at exports.navigate (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\node_modules\jsdom\lib\jsdom\living\window\navigation.js:55:3)
+    at Timeout._onTimeout (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\node_modules\jsdom\lib\jsdom\living\nodes\HTMLHyperlinkElementUtils-impl.js:81:7)
+    at listOnTimeout (node:internal/timers:588:17)
+    at processTimers (node:internal/timers:523:7) [90mundefined[39m
+
+[90mstderr[2m | src/components/layout/workspace-shell.test.tsx[2m > [22m[2mWorkspaceShell — m4 bam link trong nav thi dong menu[2m > [22m[2mbam link sang route KHAC cung dong menu
+[22m[39mError: Not implemented: navigation (except hash changes)
+    at module.exports (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\node_modules\jsdom\lib\jsdom\browser\not-implemented.js:9:17)
+    at navigateFetch (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\node_modules\jsdom\lib\jsdom\living\window\navigation.js:77:3)
+    at exports.navigate (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\node_modules\jsdom\lib\jsdom\living\window\navigation.js:55:3)
+    at Timeout._onTimeout (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\node_modules\jsdom\lib\jsdom\living\nodes\HTMLHyperlinkElementUtils-impl.js:81:7)
+    at listOnTimeout (node:internal/timers:588:17)
+    at processTimers (node:internal/timers:523:7) [90mundefined[39m
+
+[90mstderr[2m | src/components/layout/public-header.test.tsx[2m > [22m[2mPublicHeader — m4 bam link trong nav thi dong menu[2m > [22m[2mbam link sang route KHAC cung dong menu
+[22m[39mError: Not implemented: navigation (except hash changes)
+    at module.exports (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\node_modules\jsdom\lib\jsdom\browser\not-implemented.js:9:17)
+    at navigateFetch (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\node_modules\jsdom\lib\jsdom\living\window\navigation.js:77:3)
+    at exports.navigate (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\node_modules\jsdom\lib\jsdom\living\window\navigation.js:55:3)
+    at Timeout._onTimeout (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\node_modules\jsdom\lib\jsdom\living\nodes\HTMLHyperlinkElementUtils-impl.js:81:7)
+    at listOnTimeout (node:internal/timers:588:17)
+    at processTimers (node:internal/timers:523:7) [90mundefined[39m
+
+ [32m✓[39m src/components/assistant/assistant-panel.test.tsx [2m([22m[2m180 tests[22m[2m)[22m[33m 2547[2mms[22m[39m
+[90mstderr[2m | src/components/layout/workspace-shell.test.tsx[2m > [22m[2mWorkspaceShell — m4 bam link trong nav thi dong menu[2m > [22m[2mmenu dang dong thi bam link khong gay loi, van dong
+[22m[39mError: Not implemented: navigation (except hash changes)
+    at module.exports (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\node_modules\jsdom\lib\jsdom\browser\not-implemented.js:9:17)
+    at navigateFetch (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\node_modules\jsdom\lib\jsdom\living\window\navigation.js:77:3)
+    at exports.navigate (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\node_modules\jsdom\lib\jsdom\living\window\navigation.js:55:3)
+    at Timeout._onTimeout (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\node_modules\jsdom\lib\jsdom\living\nodes\HTMLHyperlinkElementUtils-impl.js:81:7)
+    at listOnTimeout (node:internal/timers:588:17)
+    at processTimers (node:internal/timers:523:7) [90mundefined[39m
+
+[90mstderr[2m | src/components/layout/public-header.test.tsx[2m > [22m[2mPublicHeader — m4 bam link trong nav thi dong menu[2m > [22m[2mmenu dang dong thi bam link khong gay loi, van dong
+[22m[39mError: Not implemented: navigation (except hash changes)
+    at module.exports (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\node_modules\jsdom\lib\jsdom\browser\not-implemented.js:9:17)
+    at navigateFetch (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\node_modules\jsdom\lib\jsdom\living\window\navigation.js:77:3)
+    at exports.navigate (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\node_modules\jsdom\lib\jsdom\living\window\navigation.js:55:3)
+    at Timeout._onTimeout (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\node_modules\jsdom\lib\jsdom\living\nodes\HTMLHyperlinkElementUtils-impl.js:81:7)
+    at listOnTimeout (node:internal/timers:588:17)
+    at processTimers (node:internal/timers:523:7) [90mundefined[39m
+
+ [32m✓[39m src/components/layout/workspace-shell.test.tsx [2m([22m[2m47 tests[22m[2m)[22m[33m 2215[2mms[22m[39m
+ [32m✓[39m src/components/layout/public-header.test.tsx [2m([22m[2m43 tests[22m[2m)[22m[33m 2936[2mms[22m[39m
+ [32m✓[39m src/components/i18n/language-toggle.test.tsx [2m([22m[2m19 tests[22m[2m)[22m[33m 1089[2mms[22m[39m
+ [32m✓[39m src/components/ops/ops-war-room.test.tsx [2m([22m[2m74 tests[22m[2m)[22m[33m 3773[2mms[22m[39m
+   [33m[2m✓[22m[39m OpsWarRoom — AC-1 một màn hình đủ số liệu[2m > [22mh1 là tên sự kiện, có trạng thái bán [33m341[2mms[22m[39m
+ [32m✓[39m src/lib/hold-client.contract.test.ts [2m([22m[2m23 tests[22m[2m)[22m[90m 58[2mms[22m[39m
+[90mstderr[2m | src/lib/server-time.test.ts[2m > [22m[2mtoEpochMs — chi nhan moc co mui gio tuong minh (AC-3)[2m > [22m[2mtu choi '2026-10-03' (chi co ngay, ECMA hieu la UTC) -> null
+[22m[39m[server-time] moc thoi han "2026-10-03" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+[90mstderr[2m | src/lib/server-time.test.ts[2m > [22m[2mtoEpochMs — chi nhan moc co mui gio tuong minh (AC-3)[2m > [22m[2mtu choi '2026-10-03T09:00:00' (co gio nhung khong co offset -> gio dia phuong) -> null
+[22m[39m[server-time] moc thoi han "2026-10-03T09:00:00" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+[90mstderr[2m | src/lib/server-time.test.ts[2m > [22m[2mtoEpochMs — chi nhan moc co mui gio tuong minh (AC-3)[2m > [22m[2mtu choi '2026-10-03T09:00:00.500' (co milisecond nhung van khong co offset) -> null
+[22m[39m[server-time] moc thoi han "2026-10-03T09:00:00.500" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+[90mstderr[2m | src/lib/server-time.test.ts[2m > [22m[2mtoEpochMs — chi nhan moc co mui gio tuong minh (AC-3)[2m > [22m[2mtu choi '2026-10-03 09:00:00' (dang co dau cach, khong co offset) -> null
+[22m[39m[server-time] moc thoi han "2026-10-03 09:00:00" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+[90mstderr[2m | src/lib/server-time.test.ts[2m > [22m[2mtoEpochMs — chi nhan moc co mui gio tuong minh (AC-3)[2m > [22m[2mchuoi rac '' -> null, khong throw
+[22m[39m[server-time] moc thoi han "" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+[server-time] moc thoi han "" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+[90mstderr[2m | src/lib/server-time.test.ts[2m > [22m[2mtoEpochMs — chi nhan moc co mui gio tuong minh (AC-3)[2m > [22m[2mchuoi rac '   ' -> null, khong throw
+[22m[39m[server-time] moc thoi han "" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+[server-time] moc thoi han "" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+[90mstderr[2m | src/lib/server-time.test.ts[2m > [22m[2mtoEpochMs — chi nhan moc co mui gio tuong minh (AC-3)[2m > [22m[2mchuoi rac 'soon' -> null, khong throw
+[22m[39m[server-time] moc thoi han "soon" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+[server-time] moc thoi han "soon" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+[90mstderr[2m | src/lib/server-time.test.ts[2m > [22m[2mtoEpochMs — chi nhan moc co mui gio tuong minh (AC-3)[2m > [22m[2mchuoi rac 'not-a-date' -> null, khong throw
+[22m[39m[server-time] moc thoi han "not-a-date" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+[server-time] moc thoi han "not-a-date" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+ [32m✓[39m src/components/ui/input.test.tsx [2m([22m[2m23 tests[22m[2m)[22m[33m 668[2mms[22m[39m
+ [32m✓[39m src/lib/server-time.test.ts [2m([22m[2m39 tests[22m[2m)[22m[90m 38[2mms[22m[39m
+[90mstderr[2m | src/app/(organizer)/organizer/events/[eventId]/edit/page.test.tsx[2m > [22m[2mEditEventPage route (/organizer/events/[eventId]/edit - AC-22)[2m > [22m[2mtải sự kiện từ API rồi hiện form chỉnh sửa
+[22m[39mWarning: An update to OrganizerEventView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrganizerEventView (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\app\(organizer)\organizer\_lib\organizer-event-view.tsx:18:31)
+    at EditEventClient (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\app\(organizer)\organizer\events\[eventId]\edit\edit-event-client.tsx:78:28)
+
+ [32m✓[39m src/lib/queue-status.test.ts [2m([22m[2m22 tests[22m[2m)[22m[90m 28[2mms[22m[39m
+[90mstderr[2m | src/app/(organizer)/organizer/events/[eventId]/edit/page.test.tsx[2m > [22m[2mEditEventPage route (/organizer/events/[eventId]/edit - AC-22)[2m > [22m[2m404 -> thẻ không tìm thấy sự kiện
+[22m[39mWarning: An update to OrganizerEventView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrganizerEventView (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\app\(organizer)\organizer\_lib\organizer-event-view.tsx:18:31)
+    at EditEventClient (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\app\(organizer)\organizer\events\[eventId]\edit\edit-event-client.tsx:78:28)
+
+[90mstderr[2m | src/app/(organizer)/organizer/events/[eventId]/edit/page.test.tsx[2m > [22m[2mEditEventPage route (/organizer/events/[eventId]/edit - AC-22)[2m > [22m[2mlỗi mạng/5xx -> thông báo lỗi và nút Thử lại
+[22m[39mWarning: An update to OrganizerEventView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrganizerEventView (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\app\(organizer)\organizer\_lib\organizer-event-view.tsx:18:31)
+    at EditEventClient (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\app\(organizer)\organizer\events\[eventId]\edit\edit-event-client.tsx:78:28)
+
+[90mstderr[2m | src/app/(organizer)/organizer/events/[eventId]/edit/page.test.tsx[2m > [22m[2mEditEventPage route (/organizer/events/[eventId]/edit - AC-22)[2m > [22m[2mtrạng thái PENDING_REVIEW không được chỉnh sửa: không hiện form
+[22m[39mWarning: An update to OrganizerEventView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrganizerEventView (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\app\(organizer)\organizer\_lib\organizer-event-view.tsx:18:31)
+    at EditEventClient (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\app\(organizer)\organizer\events\[eventId]\edit\edit-event-client.tsx:78:28)
+
+[90mstderr[2m | src/app/(organizer)/organizer/events/[eventId]/edit/page.test.tsx[2m > [22m[2mEditEventPage route (/organizer/events/[eventId]/edit - AC-22)[2m > [22m[2mtrạng thái ON_SALE không được chỉnh sửa: không hiện form
+[22m[39mWarning: An update to OrganizerEventView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrganizerEventView (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\app\(organizer)\organizer\_lib\organizer-event-view.tsx:18:31)
+    at EditEventClient (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\app\(organizer)\organizer\events\[eventId]\edit\edit-event-client.tsx:78:28)
+
+[90mstderr[2m | src/app/(organizer)/organizer/events/[eventId]/edit/page.test.tsx[2m > [22m[2mEditEventPage route (/organizer/events/[eventId]/edit - AC-22)[2m > [22m[2mtrạng thái SOLD_OUT không được chỉnh sửa: không hiện form
+[22m[39mWarning: An update to OrganizerEventView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrganizerEventView (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\app\(organizer)\organizer\_lib\organizer-event-view.tsx:18:31)
+    at EditEventClient (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\app\(organizer)\organizer\events\[eventId]\edit\edit-event-client.tsx:78:28)
+
+[90mstderr[2m | src/app/(organizer)/organizer/events/[eventId]/edit/page.test.tsx[2m > [22m[2mEditEventPage route (/organizer/events/[eventId]/edit - AC-22)[2m > [22m[2mtrạng thái CLOSED không được chỉnh sửa: không hiện form
+[22m[39mWarning: An update to OrganizerEventView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrganizerEventView (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\app\(organizer)\organizer\_lib\organizer-event-view.tsx:18:31)
+    at EditEventClient (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\app\(organizer)\organizer\events\[eventId]\edit\edit-event-client.tsx:78:28)
+
+[90mstderr[2m | src/app/(organizer)/organizer/events/[eventId]/edit/page.test.tsx[2m > [22m[2mEditEventPage route (/organizer/events/[eventId]/edit - AC-22)[2m > [22m[2mtrạng thái COMPLETED không được chỉnh sửa: không hiện form
+[22m[39mWarning: An update to OrganizerEventView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrganizerEventView (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\app\(organizer)\organizer\_lib\organizer-event-view.tsx:18:31)
+    at EditEventClient (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\app\(organizer)\organizer\events\[eventId]\edit\edit-event-client.tsx:78:28)
+
+[90mstderr[2m | src/app/(organizer)/organizer/events/[eventId]/edit/page.test.tsx[2m > [22m[2mEditEventPage route (/organizer/events/[eventId]/edit - AC-22)[2m > [22m[2mtrạng thái CANCELLED không được chỉnh sửa: không hiện form
+[22m[39mWarning: An update to OrganizerEventView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrganizerEventView (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\app\(organizer)\organizer\_lib\organizer-event-view.tsx:18:31)
+    at EditEventClient (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\app\(organizer)\organizer\events\[eventId]\edit\edit-event-client.tsx:78:28)
+
+[90mstderr[2m | src/app/(organizer)/organizer/events/[eventId]/edit/page.test.tsx[2m > [22m[2mEditEventPage route (/organizer/events/[eventId]/edit - AC-22)[2m > [22m[2mtrạng thái DRAFT có form chỉnh sửa
+[22m[39mWarning: An update to OrganizerEventView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrganizerEventView (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\app\(organizer)\organizer\_lib\organizer-event-view.tsx:18:31)
+    at EditEventClient (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\app\(organizer)\organizer\events\[eventId]\edit\edit-event-client.tsx:78:28)
+
+[90mstderr[2m | src/app/(organizer)/organizer/events/[eventId]/edit/page.test.tsx[2m > [22m[2mEditEventPage route (/organizer/events/[eventId]/edit - AC-22)[2m > [22m[2mtrạng thái SCHEDULED có form chỉnh sửa
+[22m[39mWarning: An update to OrganizerEventView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrganizerEventView (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\app\(organizer)\organizer\_lib\organizer-event-view.tsx:18:31)
+    at EditEventClient (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\app\(organizer)\organizer\events\[eventId]\edit\edit-event-client.tsx:78:28)
+
+[90mstderr[2m | src/components/checkout/payment-handoff-view.test.tsx[2m > [22m[2mPaymentHandoffView component (EVF-114, BR-O2, BR-O5)[2m > [22m[2mgọi onPaymentSuccess khi nhập đầy đủ thông tin và submit thành công (BR-O5)
+[22m[39mWarning: An update to PaymentHandoffView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at PaymentHandoffView (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\components\checkout\payment-handoff-view.tsx:21:3)
+
+ [32m✓[39m src/lib/money.test.ts [2m([22m[2m24 tests[22m[2m)[22m[90m 26[2mms[22m[39m
+[90mstderr[2m | src/app/(organizer)/organizer/events/[eventId]/edit/page.test.tsx[2m > [22m[2mEditEventPage route (/organizer/events/[eventId]/edit - AC-22)[2m > [22m[2mtrạng thái REJECTED có form chỉnh sửa
+[22m[39mWarning: An update to OrganizerEventView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrganizerEventView (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\app\(organizer)\organizer\_lib\organizer-event-view.tsx:18:31)
+    at EditEventClient (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\app\(organizer)\organizer\events\[eventId]\edit\edit-event-client.tsx:78:28)
+
+ [32m✓[39m src/lib/event-service.contract.test.ts [2m([22m[2m18 tests[22m[2m)[22m[90m 76[2mms[22m[39m
+[90mstderr[2m | src/app/(organizer)/organizer/events/[eventId]/edit/page.test.tsx[2m > [22m[2mEditEventPage route (/organizer/events/[eventId]/edit - AC-22)[2m > [22m[2mlưu: PUT đầy đủ -> quota hạng cũ đổi -> hạng mới POST -> về review-status
+[22m[39mWarning: An update to OrganizerEventView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrganizerEventView (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\app\(organizer)\organizer\_lib\organizer-event-view.tsx:18:31)
+    at EditEventClient (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\app\(organizer)\organizer\events\[eventId]\edit\edit-event-client.tsx:78:28)
+
+ [32m✓[39m src/app/(marketing)/events/[slug]/page.test.tsx [2m([22m[2m13 tests[22m[2m)[22m[33m 521[2mms[22m[39m
+ [32m✓[39m src/lib/readiness.test.ts [2m([22m[2m19 tests[22m[2m)[22m[90m 155[2mms[22m[39m
+[90mstderr[2m | src/app/(organizer)/organizer/events/[eventId]/edit/page.test.tsx[2m > [22m[2mEditEventPage route (/organizer/events/[eventId]/edit - AC-22)[2m > [22m[2mquota không đổi thì không gọi PUT hạng vé
+[22m[39mWarning: An update to OrganizerEventView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrganizerEventView (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\app\(organizer)\organizer\_lib\organizer-event-view.tsx:18:31)
+    at EditEventClient (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\app\(organizer)\organizer\events\[eventId]\edit\edit-event-client.tsx:78:28)
+
+[90mstderr[2m | src/app/(organizer)/organizer/events/[eventId]/edit/page.test.tsx[2m > [22m[2mEditEventPage route (/organizer/events/[eventId]/edit - AC-22)[2m > [22m[2mgửi kiểm duyệt sau khi lưu
+[22m[39mWarning: An update to OrganizerEventView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrganizerEventView (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\app\(organizer)\organizer\_lib\organizer-event-view.tsx:18:31)
+    at EditEventClient (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\app\(organizer)\organizer\events\[eventId]\edit\edit-event-client.tsx:78:28)
+
+ [32m✓[39m src/components/checkout/payment-handoff-view.test.tsx [2m([22m[2m8 tests[22m[2m)[22m[33m 928[2mms[22m[39m
+[90mstderr[2m | src/app/(organizer)/organizer/events/[eventId]/edit/page.test.tsx[2m > [22m[2mEditEventPage route (/organizer/events/[eventId]/edit - AC-22)[2m > [22m[2mPUT thất bại (422): hiện detail, không đổi hạng vé, không điều hướng
+[22m[39mWarning: An update to OrganizerEventView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrganizerEventView (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\app\(organizer)\organizer\_lib\organizer-event-view.tsx:18:31)
+    at EditEventClient (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\app\(organizer)\organizer\events\[eventId]\edit\edit-event-client.tsx:78:28)
+
+ [32m✓[39m src/components/ui/radio.test.tsx [2m([22m[2m18 tests[22m[2m)[22m[33m 611[2mms[22m[39m
+[90mstderr[2m | src/components/organizer/event-wizard.test.tsx[2m > [22m[2mEventWizard component (EV-186, EVF-116, Stitch 10.13, BR-E1, BR-E2, BR-E3)[2m > [22m[2mgọi onSubmit với submitForReview=true khi bấm Gửi kiểm duyệt ở Bước 4
+[22m[39mWarning: An update to EventWizard inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at EventWizard (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\components\organizer\event-wizard.tsx:66:3)
+
+ [32m✓[39m src/components/organizer/event-wizard.test.tsx [2m([22m[2m5 tests[22m[2m)[22m[33m 920[2mms[22m[39m
+ [32m✓[39m src/lib/queue-client.contract.test.ts [2m([22m[2m12 tests[22m[2m)[22m[90m 87[2mms[22m[39m
+[90mstderr[2m | src/app/(organizer)/organizer/events/[eventId]/edit/page.test.tsx[2m > [22m[2mEditEventPage route (/organizer/events/[eventId]/edit - AC-22)[2m > [22m[2mđổi quota hạng vé thất bại: báo bước hạng vé, kèm link mở lại bản nháp
+[22m[39mWarning: An update to OrganizerEventView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrganizerEventView (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\app\(organizer)\organizer\_lib\organizer-event-view.tsx:18:31)
+    at EditEventClient (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\app\(organizer)\organizer\events\[eventId]\edit\edit-event-client.tsx:78:28)
+
+ [32m✓[39m src/components/theme/theme-script.test.tsx [2m([22m[2m13 tests[22m[2m)[22m[90m 133[2mms[22m[39m
+ [32m✓[39m src/app/(organizer)/organizer/events/[eventId]/edit/page.test.tsx [2m([22m[2m17 tests[22m[2m)[22m[33m 1305[2mms[22m[39m
+ [32m✓[39m src/hooks/use-theme.test.tsx [2m([22m[2m13 tests[22m[2m)[22m[90m 82[2mms[22m[39m
+ [32m✓[39m src/components/ui/checkbox.test.tsx [2m([22m[2m20 tests[22m[2m)[22m[33m 428[2mms[22m[39m
+ [32m✓[39m src/components/ui/button.test.tsx [2m([22m[2m32 tests[22m[2m)[22m[33m 880[2mms[22m[39m
+ [32m✓[39m src/components/queue/waiting-room.test.tsx [2m([22m[2m8 tests[22m[2m)[22m[33m 645[2mms[22m[39m
+ [32m✓[39m src/components/theme/theme-toggle.test.tsx [2m([22m[2m10 tests[22m[2m)[22m[33m 737[2mms[22m[39m
+ [32m✓[39m src/lib/assistant-client.test.ts [2m([22m[2m13 tests[22m[2m)[22m[33m 1117[2mms[22m[39m
+   [33m[2m✓[22m[39m assistant-client (EV-185, EVF-115)[2m > [22m5. Mô phỏng luồng Streaming (AC-3)[2m > [22mstream các token tuần tự và gọi onComplete với đầy đủ nội dung [33m1098[2mms[22m[39m
+ [32m✓[39m src/components/ui/select.test.tsx [2m([22m[2m14 tests[22m[2m)[22m[33m 465[2mms[22m[39m
+ [32m✓[39m src/components/layout/skip-link.test.tsx [2m([22m[2m13 tests[22m[2m)[22m[33m 342[2mms[22m[39m
+ [32m✓[39m src/components/ui/field.test.tsx [2m([22m[2m16 tests[22m[2m)[22m[90m 239[2mms[22m[39m
+ [32m✓[39m src/components/layout/public-shell.test.tsx [2m([22m[2m14 tests[22m[2m)[22m[33m 627[2mms[22m[39m
+ [32m✓[39m src/components/ui/spinner.test.tsx [2m([22m[2m17 tests[22m[2m)[22m[33m 847[2mms[22m[39m
+   [33m[2m✓[22m[39m Spinner[2m > [22mco khai bao prefers-reduced-motion trong source de tat animation [33m564[2mms[22m[39m
+ [32m✓[39m src/lib/session.contract.test.ts [2m([22m[2m17 tests[22m[2m)[22m[90m 22[2mms[22m[39m
+ [32m✓[39m src/components/organizer/event-list.test.tsx [2m([22m[2m5 tests[22m[2m)[22m[33m 556[2mms[22m[39m
+ [32m✓[39m src/components/organizer/moderation-status-card.actions.test.tsx [2m([22m[2m20 tests[22m[2m)[22m[33m 891[2mms[22m[39m
+ [32m✓[39m src/components/organizer/event-wizard.partial.test.tsx [2m([22m[2m8 tests[22m[2m)[22m[33m 1323[2mms[22m[39m
+   [33m[2m✓[22m[39m EventWizard — lỗi một phần khi tạo (AC-21)[2m > [22mbước hạng vé lỗi: nêu rõ bước nào lỗi và có link tới bản nháp đã tạo [33m476[2mms[22m[39m
+ [32m✓[39m src/components/assistant/chat-panel.test.tsx [2m([22m[2m8 tests[22m[2m)[22m[33m 598[2mms[22m[39m
+[90mstderr[2m | src/app/(organizer)/organizer/events/[eventId]/review-status/page.test.tsx[2m > [22m[2mReviewStatusPage route (/organizer/events/[eventId]/review-status - AC-23, AC-24)[2m > [22m[2mhiện trạng thái thật từ API và nhãn dữ liệu mẫu cho chi tiết kiểm duyệt
+[22m[39mWarning: An update to OrganizerEventView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrganizerEventView (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\app\(organizer)\organizer\_lib\organizer-event-view.tsx:18:31)
+    at ReviewStatusClient (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\app\(organizer)\organizer\events\[eventId]\review-status\review-status-client.tsx:10:31)
+
+[90mstderr[2m | src/app/(organizer)/organizer/events/[eventId]/review-status/page.test.tsx[2m > [22m[2mReviewStatusPage route (/organizer/events/[eventId]/review-status - AC-23, AC-24)[2m > [22m[2m404 -> thẻ không tìm thấy sự kiện
+[22m[39mWarning: An update to OrganizerEventView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrganizerEventView (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\app\(organizer)\organizer\_lib\organizer-event-view.tsx:18:31)
+    at ReviewStatusClient (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\app\(organizer)\organizer\events\[eventId]\review-status\review-status-client.tsx:10:31)
+
+[90mstderr[2m | src/app/(organizer)/organizer/events/[eventId]/review-status/page.test.tsx[2m > [22m[2mReviewStatusPage route (/organizer/events/[eventId]/review-status - AC-23, AC-24)[2m > [22m[2mlỗi tải: hiện lỗi và nút Thử lại
+[22m[39mWarning: An update to OrganizerEventView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrganizerEventView (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\app\(organizer)\organizer\_lib\organizer-event-view.tsx:18:31)
+    at ReviewStatusClient (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\app\(organizer)\organizer\events\[eventId]\review-status\review-status-client.tsx:10:31)
+
+[90mstderr[2m | src/app/(organizer)/organizer/events/[eventId]/review-status/page.test.tsx[2m > [22m[2mReviewStatusPage route (/organizer/events/[eventId]/review-status - AC-23, AC-24)[2m > [22m[2mnộp duyệt lại sự kiện bị từ chối: gọi submit và cập nhật trạng thái trên màn hình
+[22m[39mWarning: An update to OrganizerEventView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrganizerEventView (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\app\(organizer)\organizer\_lib\organizer-event-view.tsx:18:31)
+    at ReviewStatusClient (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\app\(organizer)\organizer\events\[eventId]\review-status\review-status-client.tsx:10:31)
+
+[90mstderr[2m | src/app/(organizer)/organizer/events/[eventId]/review-status/page.test.tsx[2m > [22m[2mReviewStatusPage route (/organizer/events/[eventId]/review-status - AC-23, AC-24)[2m > [22m[2msubmit 422: hiện problem detail
+[22m[39mWarning: An update to OrganizerEventView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrganizerEventView (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\app\(organizer)\organizer\_lib\organizer-event-view.tsx:18:31)
+    at ReviewStatusClient (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\app\(organizer)\organizer\events\[eventId]\review-status\review-status-client.tsx:10:31)
+
+[90mstderr[2m | src/app/(organizer)/organizer/events/[eventId]/review-status/page.test.tsx[2m > [22m[2mReviewStatusPage route (/organizer/events/[eventId]/review-status - AC-23, AC-24)[2m > [22m[2mhuỷ có xác nhận rồi làm mới trạng thái thành CANCELLED
+[22m[39mWarning: An update to OrganizerEventView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrganizerEventView (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\app\(organizer)\organizer\_lib\organizer-event-view.tsx:18:31)
+    at ReviewStatusClient (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\app\(organizer)\organizer\events\[eventId]\review-status\review-status-client.tsx:10:31)
+
+[90mstderr[2m | src/app/(organizer)/organizer/events/[eventId]/review-status/page.test.tsx[2m > [22m[2mReviewStatusPage route (/organizer/events/[eventId]/review-status - AC-23, AC-24)[2m > [22m[2mhuỷ 422: hiện problem detail và vẫn giữ trạng thái cũ
+[22m[39mWarning: An update to OrganizerEventView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrganizerEventView (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\app\(organizer)\organizer\_lib\organizer-event-view.tsx:18:31)
+    at ReviewStatusClient (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\app\(organizer)\organizer\events\[eventId]\review-status\review-status-client.tsx:10:31)
+
+ [32m✓[39m src/app/(organizer)/organizer/events/[eventId]/review-status/page.test.tsx [2m([22m[2m7 tests[22m[2m)[22m[33m 541[2mms[22m[39m
+ [32m✓[39m src/components/layout/container.test.tsx [2m([22m[2m13 tests[22m[2m)[22m[90m 175[2mms[22m[39m
+ [32m✓[39m src/app/(organizer)/organizer/events/new/page.test.tsx [2m([22m[2m6 tests[22m[2m)[22m[33m 982[2mms[22m[39m
+[90mstderr[2m | src/components/organizer/moderation-status-card.test.tsx[2m > [22m[2mModerationStatusCard component (EV-186, EVF-116, Stitch 10.14, BR-E4, BR-E5)[2m > [22m[2mgọi onResubmit khi người dùng bấm Nộp duyệt lại
+[22m[39mWarning: An update to ModerationStatusCard inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at ModerationStatusCard (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\components\organizer\moderation-status-card.tsx:23:3)
+Warning: An update to ModerationStatusCard inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at ModerationStatusCard (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\components\organizer\moderation-status-card.tsx:23:3)
+
+ [32m✓[39m src/hooks/use-assistant.test.tsx [2m([22m[2m7 tests[22m[2m)[22m[90m 60[2mms[22m[39m
+ [32m✓[39m src/components/organizer/moderation-status-card.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 343[2mms[22m[39m
+ [32m✓[39m src/components/organizer/sales-dashboard.test.tsx [2m([22m[2m5 tests[22m[2m)[22m[33m 482[2mms[22m[39m
+ [32m✓[39m src/lib/queue-token.test.ts [2m([22m[2m16 tests[22m[2m)[22m[90m 16[2mms[22m[39m
+ [32m✓[39m src/app/(ops)/layout.test.tsx [2m([22m[2m15 tests[22m[2m)[22m[33m 406[2mms[22m[39m
+[90mstderr[2m | src/hooks/use-organizer-sales.test.tsx[2m > [22m[2museOrganizerSales — Hook doanh số realtime (AC-4)[2m > [22m[2mdùng initialData nếu được truyền vào để tránh loading skeleton
+[22m[39mWarning: An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at TestComponent (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\node_modules\@testing-library\react\dist\pure.js:307:5)
+Warning: An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at TestComponent (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\node_modules\@testing-library\react\dist\pure.js:307:5)
+Warning: An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at TestComponent (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\node_modules\@testing-library\react\dist\pure.js:307:5)
+
+ [32m✓[39m src/hooks/use-organizer-sales.test.tsx [2m([22m[2m6 tests[22m[2m)[22m[90m 72[2mms[22m[39m
+ [32m✓[39m src/components/ui/card.test.tsx [2m([22m[2m11 tests[22m[2m)[22m[90m 165[2mms[22m[39m
+ [32m✓[39m src/hooks/use-order-status.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[90m 44[2mms[22m[39m
+ [32m✓[39m src/components/event/ticket-tier-list.test.tsx [2m([22m[2m9 tests[22m[2m)[22m[90m 236[2mms[22m[39m
+ [32m✓[39m src/app/(organizer)/layout.test.tsx [2m([22m[2m14 tests[22m[2m)[22m[33m 315[2mms[22m[39m
+ [32m✓[39m src/hooks/use-payment-session.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[90m 62[2mms[22m[39m
+ [32m✓[39m src/components/layout/public-footer.test.tsx [2m([22m[2m9 tests[22m[2m)[22m[90m 270[2mms[22m[39m
+ [32m✓[39m src/hooks/use-auth.contract.test.tsx [2m([22m[2m6 tests[22m[2m)[22m[90m 105[2mms[22m[39m
+[90mstderr[2m | src/app/(ops)/ops/events/[eventId]/page.test.tsx[2m > [22m[2mOpsWarRoomPage route (/ops/events/[eventId])[2m > [22m[2mlỗi khác (500): render thông báo lỗi kèm nút 'Thử lại' (M-2)
+[22m[39mWarning: An update to LiveWarRoom inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at LiveWarRoom (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\components\ops\ops-war-room.tsx:101:3)
+    at OpsWarRoom (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\components\ops\ops-war-room.tsx:82:23)
+Warning: An update to LiveWarRoom inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at LiveWarRoom (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\components\ops\ops-war-room.tsx:101:3)
+    at OpsWarRoom (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\components\ops\ops-war-room.tsx:82:23)
+Warning: An update to LiveWarRoom inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at LiveWarRoom (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\components\ops\ops-war-room.tsx:101:3)
+    at OpsWarRoom (D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\src\components\ops\ops-war-room.tsx:82:23)
+
+ [32m✓[39m src/lib/theme.test.ts [2m([22m[2m11 tests[22m[2m)[22m[90m 11[2mms[22m[39m
+ [32m✓[39m src/app/(ops)/ops/events/[eventId]/page.test.tsx [2m([22m[2m7 tests[22m[2m)[22m[33m 322[2mms[22m[39m
+ [32m✓[39m src/components/i18n/t.test.tsx [2m([22m[2m6 tests[22m[2m)[22m[90m 263[2mms[22m[39m
+ [32m✓[39m src/app/(queue)/layout.test.tsx [2m([22m[2m11 tests[22m[2m)[22m[90m 205[2mms[22m[39m
+ [32m✓[39m src/lib/event-service.test.ts [2m([22m[2m5 tests[22m[2m)[22m[90m 25[2mms[22m[39m
+ [32m✓[39m src/lib/api-base.test.ts [2m([22m[2m7 tests[22m[2m)[22m[90m 19[2mms[22m[39m
+ [32m✓[39m src/lib/queue-client.test.ts [2m([22m[2m6 tests[22m[2m)[22m[90m 128[2mms[22m[39m
+ [32m✓[39m src/components/ui/alert.test.tsx [2m([22m[2m14 tests[22m[2m)[22m[33m 393[2mms[22m[39m
+ [32m✓[39m src/real-api.contract.test.ts [2m([22m[2m9 tests[22m[2m)[22m[90m 15[2mms[22m[39m
+ [32m✓[39m src/app/(checkout)/layout.test.tsx [2m([22m[2m11 tests[22m[2m)[22m[90m 263[2mms[22m[39m
+ [32m✓[39m src/app/(marketing)/layout.test.tsx [2m([22m[2m13 tests[22m[2m)[22m[33m 441[2mms[22m[39m
+ [32m✓[39m src/components/checkout/checkout-view.wp2.test.tsx [2m([22m[2m5 tests[22m[2m)[22m[33m 478[2mms[22m[39m
+ [32m✓[39m src/components/checkout/payment-page-client.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[90m 243[2mms[22m[39m
+ [32m✓[39m src/app/(organizer)/organizer/events/page.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[33m 356[2mms[22m[39m
+ [32m✓[39m src/app/(organizer)/organizer/events/[eventId]/sales/page.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[90m 192[2mms[22m[39m
+ [32m✓[39m src/components/organizer/event-list.status.test.tsx [2m([22m[2m5 tests[22m[2m)[22m[33m 658[2mms[22m[39m
+ [32m✓[39m src/components/layout/focus-shell.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[90m 199[2mms[22m[39m
+ [32m✓[39m src/components/event/event-loader.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[90m 233[2mms[22m[39m
+ [32m✓[39m src/app/(marketing)/events/page.test.tsx [2m([22m[2m5 tests[22m[2m)[22m[90m 223[2mms[22m[39m
+ [32m✓[39m src/components/assistant/streaming-message.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[90m 129[2mms[22m[39m
+ [32m✓[39m src/lib/jitter.test.ts [2m([22m[2m7 tests[22m[2m)[22m[90m 19[2mms[22m[39m
+ [32m✓[39m src/components/ui/badge.test.tsx [2m([22m[2m15 tests[22m[2m)[22m[90m 125[2mms[22m[39m
+ [32m✓[39m src/components/queue/waiting-room.wp2.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[90m 214[2mms[22m[39m
+ [32m✓[39m src/components/queue/progress-ring.test.tsx [2m([22m[2m6 tests[22m[2m)[22m[90m 146[2mms[22m[39m
+(node:109848) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 SIGINT listeners added to [process]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(Use `node --trace-warnings ...` to show where the warning was created)
+ [32m✓[39m src/instrumentation.test.ts [2m([22m[2m19 tests[22m[2m)[22m[90m 131[2mms[22m[39m
+ [32m✓[39m src/app/api/healthz/route.test.ts [2m([22m[2m13 tests[22m[2m)[22m[90m 24[2mms[22m[39m
+ [32m✓[39m src/app/api/readyz/route.test.ts [2m([22m[2m19 tests[22m[2m)[22m[90m 48[2mms[22m[39m
+ [32m✓[39m src/components/event/events-browser-list.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[90m 231[2mms[22m[39m
+ [32m✓[39m src/hooks/use-server-time-sync.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[90m 265[2mms[22m[39m
+ [32m✓[39m src/app/(ops)/ops/events/page.test.tsx [2m([22m[2m5 tests[22m[2m)[22m[90m 154[2mms[22m[39m
+ [32m✓[39m src/app/(checkout)/checkout/[eventId]/payment/page.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[90m 49[2mms[22m[39m
+ [32m✓[39m src/components/checkout/ticket-qr.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[90m 295[2mms[22m[39m
+ [32m✓[39m src/lib/backoff.test.ts [2m([22m[2m7 tests[22m[2m)[22m[90m 8[2mms[22m[39m
+ [32m✓[39m src/components/assistant/faq-chips.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[90m 264[2mms[22m[39m
+ [32m✓[39m src/components/queue/queue-position.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[90m 204[2mms[22m[39m
+ [32m✓[39m src/components/checkout/result-page-client.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[90m 97[2mms[22m[39m
+ [32m✓[39m src/app/(checkout)/checkout/[eventId]/result/page.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[90m 50[2mms[22m[39m
+ [32m✓[39m src/components/queue/admit-banner.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[90m 200[2mms[22m[39m
+ [32m✓[39m src/app/(checkout)/checkout/[eventId]/page.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[90m 47[2mms[22m[39m
+ [32m✓[39m src/lib/cn.test.ts [2m([22m[2m7 tests[22m[2m)[22m[90m 7[2mms[22m[39m
+ [32m✓[39m src/components/event/event-list-view.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[90m 168[2mms[22m[39m
+ [32m✓[39m src/components/showcase/domain-gallery.test.tsx [2m([22m[2m8 tests[22m[2m)[22m[33m 1898[2mms[22m[39m
+   [33m[2m✓[22m[39m DomainGallery — section Trợ lý AI (AC-10)[2m > [22mrender duoc khong throw (AC-10) [33m310[2mms[22m[39m
+   [33m[2m✓[22m[39m DomainGallery — section Trợ lý AI (AC-10)[2m > [22mco heading chua 'Trợ lý' (AC-10) [33m474[2mms[22m[39m
+ [32m✓[39m src/hooks/use-auth.test.ts [2m([22m[2m2 tests[22m[2m)[22m[90m 4[2mms[22m[39m
+ [32m✓[39m src/app/auth/layout.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[90m 132[2mms[22m[39m
+ [32m✓[39m src/app/unauthorized/page.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[90m 145[2mms[22m[39m
+ [32m✓[39m src/lib/device.test.ts [2m([22m[2m4 tests[22m[2m)[22m[90m 8[2mms[22m[39m
+ [32m✓[39m src/app/(queue)/waiting/[eventId]/page.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[90m 45[2mms[22m[39m
+ [32m✓[39m src/app/api/time/route.test.ts [2m([22m[2m1 test[22m[2m)[22m[90m 9[2mms[22m[39m
+ [32m✓[39m src/app/(organizer)/organizer/page.test.tsx [2m([22m[2m1 test[22m[2m)[22m[90m 5[2mms[22m[39m
+ [32m✓[39m src/app/(ops)/ops/events/[eventId]/not-found.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[90m 56[2mms[22m[39m
+ [32m✓[39m src/components/event/lobby-notice.test.tsx [2m([22m[2m1 test[22m[2m)[22m[90m 87[2mms[22m[39m
+ [32m✓[39m src/app/(marketing)/page.test.tsx [2m([22m[2m1 test[22m[2m)[22m[90m 86[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m130 passed[39m[22m[90m (130)[39m
+[2m      Tests [22m [1m[32m2255 passed[39m[22m[90m (2255)[39m
+[2m   Start at [22m 17:19:04
+[2m   Duration [22m 25.60s[2m (transform 10.53s, setup 87.17s, collect 37.87s, tests 52.59s, environment 432.86s, prepare 33.33s)[22m
+
+[34m % [39m[2mCoverage report from [22m[33mv8[39m
+-------------------|---------|----------|---------|---------|-------------------
+File               | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+-------------------|---------|----------|---------|---------|-------------------
+All files          |    82.2 |    89.98 |    91.5 |    82.2 |                   
+ src               |     100 |      100 |     100 |     100 |                   
+  ...umentation.ts |     100 |      100 |     100 |     100 |                   
+ ...app/(checkout) |     100 |      100 |     100 |     100 |                   
+  layout.tsx       |     100 |      100 |     100 |     100 |                   
+ ...kout/[eventId] |     100 |      100 |     100 |     100 |                   
+  page.tsx         |     100 |      100 |     100 |     100 |                   
+ ...entId]/payment |     100 |      100 |     100 |     100 |                   
+  page.tsx         |     100 |      100 |     100 |     100 |                   
+ ...ventId]/result |     100 |      100 |     100 |     100 |                   
+  page.tsx         |     100 |      100 |     100 |     100 |                   
+ ...pp/(marketing) |     100 |      100 |     100 |     100 |                   
+  layout.tsx       |     100 |      100 |     100 |     100 |                   
+  page.tsx         |     100 |      100 |     100 |     100 |                   
+ ...keting)/events |     100 |      100 |     100 |     100 |                   
+  page.tsx         |     100 |      100 |     100 |     100 |                   
+ .../events/[slug] |   97.24 |    88.88 |     100 |   97.24 |                   
+  page.tsx         |   97.24 |    88.88 |     100 |   97.24 | 92-94             
+ ...ting)/showcase |       0 |        0 |       0 |       0 |                   
+  page.tsx         |       0 |        0 |       0 |       0 | 1-43              
+ src/app/(ops)     |     100 |      100 |     100 |     100 |                   
+  layout.tsx       |     100 |      100 |     100 |     100 |                   
+ ...ps)/ops/events |     100 |      100 |     100 |     100 |                   
+  page.tsx         |     100 |      100 |     100 |     100 |                   
+ ...ents/[eventId] |     100 |      100 |     100 |     100 |                   
+  not-found.tsx    |     100 |      100 |     100 |     100 |                   
+  page.tsx         |     100 |      100 |     100 |     100 |                   
+ ...pp/(organizer) |     100 |      100 |     100 |     100 |                   
+  layout.tsx       |     100 |      100 |     100 |     100 |                   
+ ...zer)/organizer |     100 |      100 |     100 |     100 |                   
+  page.tsx         |     100 |      100 |     100 |     100 |                   
+ ...organizer/_lib |     100 |    94.44 |     100 |     100 |                   
+  ...vent-view.tsx |     100 |    94.11 |     100 |     100 | 38                
+  ...izer-only.tsx |     100 |      100 |     100 |     100 |                   
+ ...ganizer/events |     100 |     92.3 |     100 |     100 |                   
+  ...ts-client.tsx |     100 |    91.66 |     100 |     100 | 30                
+  page.tsx         |     100 |      100 |     100 |     100 |                   
+ ...[eventId]/edit |   87.87 |    88.88 |   83.33 |   87.87 |                   
+  ...nt-client.tsx |   85.18 |    88.23 |      80 |   85.18 | 60-65,71-72       
+  page.tsx         |     100 |      100 |     100 |     100 |                   
+ .../review-status |     100 |      100 |     100 |     100 |                   
+  page.tsx         |     100 |      100 |     100 |     100 |                   
+  ...us-client.tsx |     100 |      100 |     100 |     100 |                   
+ ...eventId]/sales |     100 |      100 |     100 |     100 |                   
+  page.tsx         |     100 |      100 |     100 |     100 |                   
+  sales-client.tsx |     100 |      100 |     100 |     100 |                   
+ ...zer/events/new |   92.85 |      100 |   66.66 |   92.85 |                   
+  page.tsx         |   92.85 |      100 |   66.66 |   92.85 | 31-32             
+ src/app/(queue)   |     100 |      100 |     100 |     100 |                   
+  layout.tsx       |     100 |      100 |     100 |     100 |                   
+ ...ting/[eventId] |     100 |      100 |     100 |     100 |                   
+  page.tsx         |     100 |      100 |     100 |     100 |                   
+ ...pp/api/healthz |     100 |      100 |     100 |     100 |                   
+  route.ts         |     100 |      100 |     100 |     100 |                   
+ ...app/api/readyz |     100 |      100 |     100 |     100 |                   
+  route.ts         |     100 |      100 |     100 |     100 |                   
+ src/app/api/time  |     100 |      100 |     100 |     100 |                   
+  route.ts         |     100 |      100 |     100 |     100 |                   
+ src/app/auth      |     100 |      100 |     100 |     100 |                   
+  layout.tsx       |     100 |      100 |     100 |     100 |                   
+ ...orgot-password |       0 |        0 |       0 |       0 |                   
+  page.tsx         |       0 |        0 |       0 |       0 | 1-29              
+ ...p/auth/sign-in |       0 |        0 |       0 |       0 |                   
+  page.tsx         |       0 |        0 |       0 |       0 | 1-29              
+ ...p/auth/sign-up |       0 |        0 |       0 |       0 |                   
+  page.tsx         |       0 |        0 |       0 |       0 | 1-29              
+ ...p/unauthorized |   93.47 |       50 |      50 |   93.47 |                   
+  page.tsx         |   93.47 |       50 |      50 |   93.47 | 36-38             
+ ...ents/assistant |   98.41 |    96.51 |      96 |   98.41 |                   
+  ...ant-panel.tsx |     100 |       99 |     100 |     100 | 389               
+  chat-panel.tsx   |   96.38 |     91.3 |   83.33 |   96.38 | 50-51,238-243,288 
+  faq-chips.tsx    |   95.55 |    85.71 |     100 |   95.55 | 23-24             
+  index.ts         |     100 |      100 |     100 |     100 |                   
+  ...g-message.tsx |     100 |      100 |     100 |     100 |                   
+ ...omponents/auth |    1.29 |    16.66 |   16.66 |    1.29 |                   
+  AuthLayout.tsx   |       0 |        0 |       0 |       0 | 1-66              
+  ...swordForm.tsx |       0 |        0 |       0 |       0 | 1-454             
+  LoginForm.tsx    |       0 |        0 |       0 |       0 | 1-315             
+  ...ification.tsx |       0 |        0 |       0 |       0 | 1-199             
+  RegisterForm.tsx |       0 |        0 |       0 |       0 | 1-649             
+  RoleGuard.tsx    |      60 |    28.57 |     100 |      60 | ...33,37-42,45-46 
+ ...nents/checkout |   98.22 |    93.75 |   92.85 |   98.22 |                   
+  ...ge-client.tsx |       0 |        0 |       0 |       0 | 1-9               
+  ...kout-view.tsx |   97.22 |    88.46 |     100 |   97.22 | 101,115-117,128   
+  ...sult-view.tsx |     100 |      100 |     100 |     100 |                   
+  ...r-summary.tsx |     100 |      100 |     100 |     100 |                   
+  ...doff-view.tsx |    96.2 |    86.66 |    87.5 |    96.2 | ...88,126-128,226 
+  ...ge-client.tsx |     100 |    91.66 |     100 |     100 | 59                
+  ...ge-client.tsx |     100 |      100 |     100 |     100 |                   
+  ticket-qr.tsx    |     100 |      100 |     100 |     100 |                   
+  ...tier-card.tsx |     100 |    97.43 |     100 |     100 | 68                
+ ...mponents/event |   99.73 |    94.73 |     100 |   99.73 |                   
+  ...ion-panel.tsx |   99.07 |     90.9 |     100 |   99.07 | 121               
+  event-card.tsx   |     100 |       92 |     100 |     100 | 131,158           
+  ...list-view.tsx |     100 |      100 |     100 |     100 |                   
+  event-loader.tsx |     100 |      100 |     100 |     100 |                   
+  ...wser-list.tsx |     100 |      100 |     100 |     100 |                   
+  lobby-notice.tsx |     100 |      100 |     100 |     100 |                   
+  ...tier-list.tsx |     100 |      100 |     100 |     100 |                   
+ ...omponents/i18n |     100 |      100 |     100 |     100 |                   
+  ...ge-toggle.tsx |     100 |      100 |     100 |     100 |                   
+  ...-provider.tsx |     100 |      100 |     100 |     100 |                   
+  t.tsx            |     100 |      100 |     100 |     100 |                   
+ ...ponents/layout |     100 |      100 |     100 |     100 |                   
+  container.tsx    |     100 |      100 |     100 |     100 |                   
+  focus-shell.tsx  |     100 |      100 |     100 |     100 |                   
+  index.ts         |     100 |      100 |     100 |     100 |                   
+  nav-config.ts    |     100 |      100 |     100 |     100 |                   
+  nav-link.tsx     |     100 |      100 |     100 |     100 |                   
+  ...ic-footer.tsx |     100 |      100 |     100 |     100 |                   
+  ...ic-header.tsx |     100 |      100 |     100 |     100 |                   
+  public-shell.tsx |     100 |      100 |     100 |     100 |                   
+  skip-link.tsx    |     100 |      100 |     100 |     100 |                   
+  ...ace-shell.tsx |     100 |      100 |     100 |     100 |                   
+ ...components/ops |     100 |      100 |     100 |     100 |                   
+  index.ts         |     100 |      100 |     100 |     100 |                   
+  ops-panels.tsx   |     100 |      100 |     100 |     100 |                   
+  ops-war-room.tsx |     100 |      100 |     100 |     100 |                   
+ ...ents/organizer |   96.84 |    87.33 |   69.44 |   96.84 |                   
+  event-list.tsx   |   96.62 |    96.77 |      75 |   96.62 | 140-142,156-158   
+  event-wizard.tsx |   96.06 |    91.26 |   63.63 |   96.06 | ...18,247-251,464 
+  index.ts         |       0 |        0 |       0 |       0 | 1-4               
+  ...atus-card.tsx |   99.14 |     88.7 |     100 |   99.14 | 187,210           
+  ...dashboard.tsx |   97.76 |    65.62 |      75 |   97.76 | ...10,260,263,344 
+ ...mponents/queue |    94.7 |     93.7 |      60 |    94.7 |                   
+  admit-banner.tsx |     100 |      100 |     100 |     100 |                   
+  index.ts         |       0 |        0 |       0 |       0 | 1                 
+  ...ress-ring.tsx |     100 |      100 |     100 |     100 |                   
+  ...-position.tsx |     100 |    92.85 |     100 |     100 | 73                
+  ...tus-panel.tsx |     100 |    97.72 |     100 |     100 | 135               
+  ...ge-client.tsx |       0 |        0 |       0 |       0 | 1-17              
+  waiting-room.tsx |   91.51 |    92.75 |   42.85 |   91.51 | ...11,243,256-261 
+ ...nents/showcase |   60.16 |       88 |    62.5 |   60.16 |                   
+  ...n-gallery.tsx |     100 |      100 |      75 |     100 |                   
+  ...e-gallery.tsx |       0 |        0 |       0 |       0 | 1-142             
+  section.tsx      |     100 |    66.66 |     100 |     100 | 20                
+  ...n-gallery.tsx |       0 |        0 |       0 |       0 | 1-103             
+ ...mponents/theme |     100 |      100 |     100 |     100 |                   
+  theme-script.tsx |     100 |      100 |     100 |     100 |                   
+  theme-toggle.tsx |     100 |      100 |     100 |     100 |                   
+ src/components/ui |   99.48 |    99.39 |     100 |   99.48 |                   
+  alert.tsx        |     100 |      100 |     100 |     100 |                   
+  badge.tsx        |     100 |      100 |     100 |     100 |                   
+  button.tsx       |   94.73 |       90 |     100 |   94.73 | 52-54             
+  card.tsx         |     100 |      100 |     100 |     100 |                   
+  checkbox.tsx     |     100 |      100 |     100 |     100 |                   
+  field.tsx        |     100 |      100 |     100 |     100 |                   
+  index.ts         |     100 |      100 |     100 |     100 |                   
+  input.tsx        |     100 |      100 |     100 |     100 |                   
+  radio.tsx        |     100 |      100 |     100 |     100 |                   
+  select.tsx       |     100 |      100 |     100 |     100 |                   
+  ...countdown.tsx |     100 |      100 |     100 |     100 |                   
+  spinner.tsx      |     100 |      100 |     100 |     100 |                   
+  toast.tsx        |     100 |      100 |     100 |     100 |                   
+ src/hooks         |    93.7 |    87.94 |   87.17 |    93.7 |                   
+  use-assistant.ts |   83.57 |    88.23 |     100 |   83.57 | ...09-218,238-250 
+  use-auth.ts      |   84.28 |    90.47 |   66.66 |   84.28 | 39-40,62-65,76-81 
+  use-event.ts     |     100 |       90 |     100 |     100 | 27                
+  ...hold-timer.ts |   95.91 |    83.33 |     100 |   95.91 | 74-76,117         
+  ...s-war-room.ts |     100 |    94.33 |     100 |     100 | 120,137-138       
+  ...der-status.ts |     100 |    90.38 |     100 |     100 | 59,67,101,162,170 
+  ...izer-sales.ts |     100 |       88 |     100 |     100 | 61,69,76          
+  ...nt-methods.ts |     100 |      100 |     100 |     100 |                   
+  ...nt-session.ts |    93.1 |    82.75 |     100 |    93.1 | ...46-147,149-150 
+  ...eue-status.ts |   91.27 |    76.56 |   92.85 |   91.27 | ...82-190,215-217 
+  ...-countdown.ts |     100 |      100 |     100 |     100 |                   
+  ...-time-sync.ts |     100 |    91.66 |      40 |     100 | 67                
+  use-theme.ts     |     100 |      100 |     100 |     100 |                   
+ src/lib           |   93.03 |    85.38 |     100 |   93.03 |                   
+  api-base.ts      |     100 |      100 |     100 |     100 |                   
+  api-client.ts    |   91.79 |    84.94 |     100 |   91.79 | ...26-128,157-158 
+  ...ant-client.ts |   85.98 |    79.03 |     100 |   85.98 | ...30-335,365-367 
+  backoff.ts       |     100 |      100 |     100 |     100 |                   
+  cn.ts            |     100 |      100 |     100 |     100 |                   
+  device.ts        |    86.2 |    66.66 |     100 |    86.2 | 14-15,23-24       
+  event-service.ts |   98.78 |    83.33 |     100 |   98.78 | 58                
+  format.ts        |     100 |      100 |     100 |     100 |                   
+  hold-client.ts   |   83.51 |    75.38 |     100 |   83.51 | ...24,237-241,262 
+  jitter.ts        |     100 |      100 |     100 |     100 |                   
+  money.ts         |     100 |    91.66 |     100 |     100 | 7                 
+  ops-service.ts   |     100 |      100 |     100 |     100 |                   
+  ...er-service.ts |   94.66 |    83.46 |     100 |   94.66 | ...14-515,530-535 
+  ...ent-client.ts |   88.75 |    67.67 |     100 |   88.75 | ...50,372-373,381 
+  queue-client.ts  |     100 |      100 |     100 |     100 |                   
+  queue-status.ts  |     100 |      100 |     100 |     100 |                   
+  queue-token.ts   |   93.33 |     87.5 |     100 |   93.33 | 20-21             
+  readiness.ts     |     100 |      100 |     100 |     100 |                   
+  server-time.ts   |     100 |      100 |     100 |     100 |                   
+  session.ts       |   91.35 |    65.95 |     100 |   91.35 | 36-37,62,78-80,96 
+  sse.ts           |     100 |    93.84 |     100 |     100 | 86,108-110,195    
+  theme.ts         |     100 |      100 |     100 |     100 |                   
+ src/lib/api       |     100 |     92.3 |     100 |     100 |                   
+  auth.ts          |     100 |     92.3 |     100 |     100 | 53,100            
+ src/lib/i18n      |     100 |      100 |     100 |     100 |                   
+  messages.ts      |     100 |      100 |     100 |     100 |                   
+ ...ib/sample-data |     100 |      100 |     100 |     100 |                   
+  events.ts        |     100 |      100 |     100 |     100 |                   
+ src/lib/types     |       0 |        0 |       0 |       0 |                   
+  event.ts         |       0 |        0 |       0 |       0 |                   
+ src/test-utils    |   95.58 |       70 |     100 |   95.58 |                   
+  fetch-mock.ts    |   95.58 |       70 |     100 |   95.58 | 31,98-99          
+-------------------|---------|----------|---------|---------|-------------------
