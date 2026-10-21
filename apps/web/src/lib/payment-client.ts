@@ -135,6 +135,17 @@ export function generateIdempotencyKey(): string {
 }
 
 const PAY_KEY_PREFIX = "ef:pay:";
+
+/** Bam FNV-1a 32 bit (chi de phan biet noi dung yeu cau trong khoa sessionStorage, khong phai bao mat). */
+function bodyHash(parts: ReadonlyArray<string | number>): string {
+  const text = JSON.stringify(parts);
+  let h = 0x811c9dc5;
+  for (let i = 0; i < text.length; i++) {
+    h ^= text.charCodeAt(i);
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
+  return h.toString(16);
+}
 const ORDER_STORAGE_PREFIX = "evenflow_order_";
 
 /** Luu thong tin don hang cuc bo (chi de debug / tuong thich); KHONG bao gio duoc doc lai nhu du lieu song. */
@@ -204,7 +215,8 @@ export async function initiatePayment(
     returnUrl,
   } = params;
   // Khoa on dinh theo don (F-8): thu lai sau NETWORK_ERROR dung lai khoa cu; xoa khi thanh cong / loi dinh doat.
-  const keyStorage = `${PAY_KEY_PREFIX}${orderId}`;
+  // G-5: khoa gan voi noi dung yeu cau (phuong thuc, nguoi mua, so tien): doi noi dung -> khoa moi; thu lai y het -> khoa cu.
+  const keyStorage = `${PAY_KEY_PREFIX}${orderId}:${bodyHash([method, buyerName, buyerEmail, buyerPhone, amount, holdId])}`;
   const idempotencyKey = params.idempotencyKey ?? stableKey(keyStorage);
 
   if (!idempotencyKey) {
@@ -250,6 +262,8 @@ export async function initiatePayment(
     await sleep(retryAfterMs(response));
     response = await send();
   }
+  // G-6: co "dang xu ly" chi tinh theo phan hoi CUOI; 409 roi 4xx dinh doat thi van phai xoa khoa.
+  if (response.status !== 409) inProgress = false;
 
   if (!params.idempotencyKey && (response.ok || (isDefinitiveStatus(response.status) && !inProgress))) {
     forgetKey(keyStorage);
