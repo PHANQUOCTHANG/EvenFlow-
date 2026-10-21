@@ -132,7 +132,7 @@ export function CheckoutView({
 
   // F-5: moi loi khac chua co banner rieng phai hien thi (khong bao gio im lang).
   const showGenericError =
-    !!error && !["NOT_ADMITTED", "QUEUE_TOKEN_INVALID", "AUTH_REQUIRED", "PER_IDENTITY_LIMIT", "QUANTITY_NOT_ALLOWED", "SOLD_OUT", "AMBIGUOUS"].includes(error.type);
+    !!error && !["NOT_ADMITTED", "FORBIDDEN", "QUEUE_TOKEN_INVALID", "AUTH_REQUIRED", "PER_IDENTITY_LIMIT", "QUANTITY_NOT_ALLOWED", "SOLD_OUT", "AMBIGUOUS"].includes(error.type);
 
   useEffect(() => {
     if (isTokenInvalid) clearQueueToken(event.id);
@@ -160,6 +160,12 @@ export function CheckoutView({
           >
             {t("checkout.signInAction")}
           </Link>
+        </Alert>
+      ) : null}
+
+      {error?.type === "FORBIDDEN" ? (
+        <Alert variant="error" className="mb-md">
+          {t("checkout.forbidden")}
         </Alert>
       ) : null}
 

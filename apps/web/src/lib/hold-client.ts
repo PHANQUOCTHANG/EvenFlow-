@@ -37,6 +37,7 @@ export interface HoldResult {
 export type HoldClientErrorType =
   | "MISSING_IDEMPOTENCY_KEY"
   | "NOT_ADMITTED" // 403 (chua duoc admit)
+  | "FORBIDDEN" // 403 /problems/forbidden: khong du quyen (khac chua duoc admit)
   | "QUEUE_TOKEN_INVALID" // 401/403 queue-token-expired|invalid|mismatch: quay lai phong cho (AC-10)
   | "SOLD_OUT" // 409
   | "PER_IDENTITY_LIMIT" // 422 /problems/per-identity-limit
@@ -216,6 +217,9 @@ export async function requestHold(params: CreateHoldParams): Promise<HoldResult>
 
   switch (response.status) {
     case 403:
+      if (problemType === "/problems/forbidden") {
+        throw new HoldClientError("Tài khoản của bạn không có quyền thực hiện thao tác này", "FORBIDDEN", 403);
+      }
       throw new HoldClientError(
         "Bạn chưa được cấp quyền mua vé, vui lòng quay lại phòng chờ",
         "NOT_ADMITTED",

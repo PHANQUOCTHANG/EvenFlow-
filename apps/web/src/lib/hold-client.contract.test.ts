@@ -80,7 +80,7 @@ describe("requestHold: anh xa loi (AC-10)", () => {
     [422, "/problems/per-identity-limit", "PER_IDENTITY_LIMIT"],
     [422, "/problems/quantity-not-allowed", "QUANTITY_NOT_ALLOWED"],
     [403, "about:blank", "NOT_ADMITTED"],
-    [403, "/problems/forbidden", "NOT_ADMITTED"],
+    [403, "/problems/forbidden", "FORBIDDEN"],
     [409, "about:blank", "SOLD_OUT"],
   ])("%i %s -> %s", async (status, type, code) => {
     installFetch(() => problem(status, type));
