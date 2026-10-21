@@ -1,0 +1,632 @@
+{
+ "commit": "2970b7f0e8d2187ecda28bd63e6564d07e940697",
+ "vitest": {
+  "files": 109,
+  "passed": 1946,
+  "failed": 0,
+  "note": "baseline truoc test moi; co 1 unhandled error san co trong event-action-panel.test.tsx (khong lam fail)"
+ },
+ "vitest_after_new_tests": {
+  "contract_files": 11,
+  "tests_enumerated": 145,
+  "failed": 108,
+  "passed_at_baseline": 37,
+  "files_failing_on_missing_module": [
+   "src/lib/session.contract.test.ts",
+   "src/lib/api-client.contract.test.ts"
+  ]
+ },
+ "go": {
+  "gateway": "ok (config, proxy, ratelimit)",
+  "event": "ok (adapter/http, app, domain, worker)",
+  "new_go_red": {
+   "gateway_fail": 2,
+   "gateway_pass_at_baseline": 3,
+   "event_http_fail": 7,
+   "event_integration": "compile error (ListPublic undefined)"
+  }
+ },
+ "passes_at_baseline_guards": "37 vitest + 3 gateway test pass truoc khi implement: la regression guard cho hanh vi hien huu (vd 403/409 hold, 5xx payment, route /public tinh co khop /{id} cua gateway). Xem bao cao.",
+ "red_check": [
+  {
+   "test": "src/real-api.contract.test.ts::khong con mock trong ma san xuat (AC-19) khong module san xuat nao chua MOCK_EVENTS (doi ten SAMPLE_EVENTS, chuyen sang lib/sample-data)",
+   "status": "fail",
+   "reason": "AssertionError: expected [ 'lib/event-service.ts' ] to deeply equal []"
+  },
+  {
+   "test": "src/real-api.contract.test.ts::khong con mock trong ma san xuat (AC-19) lib/sample-data/events.ts ton tai va chi duoc import boi ops-service",
+   "status": "fail",
+   "reason": "AssertionError: expected false to be true // Object.is equality"
+  },
+  {
+   "test": "src/real-api.contract.test.ts::khong con mock trong ma san xuat (AC-19) organizer-service khong con kho mock (INITIAL_ORGANIZER_EVENTS / resetOrganizerEventsStore)",
+   "status": "fail",
+   "reason": "AssertionError: expected [ 'lib/organizer-service.ts' ] to deeply equal []"
+  },
+  {
+   "test": "src/real-api.contract.test.ts::khong con mock trong ma san xuat (AC-19) payment-client khong con nhanh gia thanh cong / gia gia tri mac dinh",
+   "status": "fail",
+   "reason": "AssertionError: expected '/** Client API khoi tao thanh toan va…' not to match /mock_pay_/"
+  },
+  {
+   "test": "src/real-api.contract.test.ts::khong credentials include, khong X-Identity-* (AC-3) khong file san xuat nao dung credentials: 'include'",
+   "status": "fail",
+   "reason": "AssertionError: expected [ 'lib/queue-client.ts', …(2) ] to deeply equal []"
+  },
+  {
+   "test": "src/real-api.contract.test.ts::khong credentials include, khong X-Identity-* (AC-3) khong file san xuat nao gui header X-Identity-*",
+   "status": "fail",
+   "reason": "AssertionError: expected [ 'lib/hold-client.ts' ] to deeply equal []"
+  },
+  {
+   "test": "src/real-api.contract.test.ts::mot bien moi truong NEXT_PUBLIC_API_BASE (AC-1, AC-27) khong file san xuat nao con NEXT_PUBLIC_API_URL hoac cong 8083",
+   "status": "fail",
+   "reason": "AssertionError: expected [ 'lib/api/auth.ts' ] to deeply equal []"
+  },
+  {
+   "test": "src/real-api.contract.test.ts::mot bien moi truong NEXT_PUBLIC_API_BASE (AC-1, AC-27) .env.example tai liệu hoa NEXT_PUBLIC_API_BASE va khong con NEXT_PUBLIC_API_URL",
+   "status": "fail",
+   "reason": "AssertionError: expected 'NEXT_PUBLIC_FIREBASE_API_KEY=\"your-ap…' to match /NEXT_PUBLIC_API_BASE/"
+  },
+  {
+   "test": "src/hooks/use-auth.contract.test.tsx::useAuth (AC-7) tra {id, role, email} tu ef_user",
+   "status": "fail",
+   "reason": "AssertionError: expected { id: 'u-1', role: 'buyer', …(1) } to deeply equal { id: 'u-1', role: 'organizer', …(1) }"
+  },
+  {
+   "test": "src/hooks/use-auth.contract.test.tsx::useAuth (AC-7) KHONG doc email tu JWT: ef_user khong co email thi email undefined",
+   "status": "fail",
+   "reason": "AssertionError: expected 'from-jwt@example.com' to be undefined"
+  },
+  {
+   "test": "src/hooks/use-auth.contract.test.tsx::useAuth (AC-7) access token da het han nhung con refresh token -> van dang nhap (refresh o lan goi ke tiep)",
+   "status": "fail",
+   "reason": "AssertionError: expected false to be true // Object.is equality"
+  },
+  {
+   "test": "src/hooks/use-auth.contract.test.tsx::useAuth (AC-7) token khong phai JWT (opaque) nhung co ef_user -> van dang nhap (khong quyet dinh han o client)",
+   "status": "fail",
+   "reason": "AssertionError: expected null to deeply equal { id: 'u-9', role: 'ops' }"
+  },
+  {
+   "test": "src/hooks/use-auth.contract.test.tsx::useAuth (AC-7) hasRole dung vai tro tu ef_user",
+   "status": "fail",
+   "reason": "AssertionError: expected false to be true // Object.is equality"
+  },
+  {
+   "test": "src/lib/event-service.contract.test.ts::getEventBySlug (AC-16) GET {base}/api/v1/events/slug/{slug} va anh xa EventResponse -> EventDetailSnapshot",
+   "status": "fail",
+   "reason": "TypeError: Cannot read properties of undefined (reading 'url')"
+  },
+  {
+   "test": "src/lib/event-service.contract.test.ts::getEventBySlug (AC-16) gia ve = price_cents (VND nguyen, khong chia 100)",
+   "status": "fail",
+   "reason": "AssertionError: expected undefined to deeply equal [ [ …(3) ], [ …(3) ] ]"
+  },
+  {
+   "test": "src/lib/event-service.contract.test.ts::getEventBySlug (AC-16) ON_SALE: goi GET /v1/events/{id}/availability va join theo tier.id == ticket_type_id",
+   "status": "fail",
+   "reason": "AssertionError: expected undefined to be defined"
+  },
+  {
+   "test": "src/lib/event-service.contract.test.ts::getEventBySlug (AC-16) availability that bai (404) -> availability 'unknown', KHONG gia AVAILABLE/SOLD_OUT, trang van render",
+   "status": "fail",
+   "reason": "AssertionError: expected null not to be null"
+  },
+  {
+   "test": "src/lib/event-service.contract.test.ts::getEventBySlug (AC-16) availability loi mang -> khong lam hong ca trang",
+   "status": "fail",
+   "reason": "AssertionError: Target cannot be null or undefined."
+  },
+  {
+   "test": "src/lib/event-service.contract.test.ts::getEventBySlug (AC-16) su kien khong ON_SALE (SCHEDULED) -> KHONG goi availability",
+   "status": "fail",
+   "reason": "AssertionError: expected undefined to be 'SCHEDULED' // Object.is equality"
+  },
+  {
+   "test": "src/lib/event-service.contract.test.ts::getEventBySlug (AC-16) 404 -> null, khong goi them endpoint nao (khong fallback mock/cache)",
+   "status": "fail",
+   "reason": "AssertionError: expected [] to have a length of 1 but got +0"
+  },
+  {
+   "test": "src/lib/event-service.contract.test.ts::getEventBySlug (AC-16) slug da tung tai thanh cong roi 404 -> van null (khong phuc vu ban nho)",
+   "status": "fail",
+   "reason": "AssertionError: expected null not to be null"
+  },
+  {
+   "test": "src/lib/event-service.contract.test.ts::getEventBySlug (AC-16) slug chi co tren server van duoc tra (khong doc du lieu mau)",
+   "status": "fail",
+   "reason": "AssertionError: expected undefined to be 'slug-chi-co-tren-server' // Object.is equality"
+  },
+  {
+   "test": "src/lib/event-service.contract.test.ts::getEventBySlug (AC-16) 5xx -> reject (khong bien thanh 404 / null)",
+   "status": "fail",
+   "reason": "AssertionError: expected undefined to be an instance of Error"
+  },
+  {
+   "test": "src/lib/event-service.contract.test.ts::getEventById (AC-18) GET {base}/api/v1/events/{id}",
+   "status": "fail",
+   "reason": "TypeError: Cannot read properties of undefined (reading 'url')"
+  },
+  {
+   "test": "src/lib/event-service.contract.test.ts::getEventById (AC-18) 400 (id khong phai UUID, vd id mau cu) -> null de UI goi notFound()",
+   "status": "fail",
+   "reason": "AssertionError: expected { id: 'evt-grand-concert-2026', …(8) } to be null"
+  },
+  {
+   "test": "src/lib/event-service.contract.test.ts::getEventById (AC-18) 5xx -> reject",
+   "status": "fail",
+   "reason": "AssertionError: expected undefined to be an instance of Error"
+  },
+  {
+   "test": "src/lib/event-service.contract.test.ts::getAllPublicEvents (AC-17) GET {base}/api/v1/events/public va anh xa {events:[...]}",
+   "status": "fail",
+   "reason": "TypeError: Cannot read properties of undefined (reading 'url')"
+  },
+  {
+   "test": "src/lib/event-service.contract.test.ts::getAllPublicEvents (AC-17) danh sach rong -> [] (UI hien empty state)",
+   "status": "fail",
+   "reason": "AssertionError: expected [ { …(9) }, { …(9) }, { …(9) } ] to deeply equal []"
+  },
+  {
+   "test": "src/lib/event-service.contract.test.ts::getAllPublicEvents (AC-17) events null -> [] (khong nem)",
+   "status": "fail",
+   "reason": "AssertionError: expected [ { …(9) }, { …(9) }, { …(9) } ] to deeply equal []"
+  },
+  {
+   "test": "src/lib/event-service.contract.test.ts::getAllPublicEvents (AC-17) loi server / mang -> reject (UI hien error state), KHONG tra du lieu mau",
+   "status": "fail",
+   "reason": "AssertionError: expected undefined to be an instance of Error"
+  },
+  {
+   "test": "src/lib/hold-client.contract.test.ts::requestHold: request (AC-3, AC-10) POST {base}/v1/events/{id}/holds voi Idempotency-Key, X-Queue-Token, Bearer; body {ticket_type_id, quantity}",
+   "status": "fail",
+   "reason": "AssertionError: expected null to be 'Bearer acc-1' // Object.is equality"
+  },
+  {
+   "test": "src/lib/hold-client.contract.test.ts::requestHold: request (AC-3, AC-10) khong bao gio gui X-Identity-Id (ke ca khi caller van truyen identityId cu) va khong credentials include",
+   "status": "fail",
+   "reason": "AssertionError: expected true to be false // Object.is equality"
+  },
+  {
+   "test": "src/lib/hold-client.contract.test.ts::requestHold: anh xa loi (AC-10) 403 /problems/queue-token-expired -> QUEUE_TOKEN_INVALID",
+   "status": "fail",
+   "reason": "AssertionError: expected 'NOT_ADMITTED' to be 'QUEUE_TOKEN_INVALID' // Object.is equality"
+  },
+  {
+   "test": "src/lib/hold-client.contract.test.ts::requestHold: anh xa loi (AC-10) 403 /problems/queue-token-invalid -> QUEUE_TOKEN_INVALID",
+   "status": "fail",
+   "reason": "AssertionError: expected 'NOT_ADMITTED' to be 'QUEUE_TOKEN_INVALID' // Object.is equality"
+  },
+  {
+   "test": "src/lib/hold-client.contract.test.ts::requestHold: anh xa loi (AC-10) 403 /problems/queue-token-mismatch -> QUEUE_TOKEN_INVALID",
+   "status": "fail",
+   "reason": "AssertionError: expected 'NOT_ADMITTED' to be 'QUEUE_TOKEN_INVALID' // Object.is equality"
+  },
+  {
+   "test": "src/lib/hold-client.contract.test.ts::requestHold: anh xa loi (AC-10) 422 /problems/per-identity-limit -> PER_IDENTITY_LIMIT",
+   "status": "fail",
+   "reason": "AssertionError: expected 'LIMIT_EXCEEDED' to be 'PER_IDENTITY_LIMIT' // Object.is equality"
+  },
+  {
+   "test": "src/lib/hold-client.contract.test.ts::requestHold: anh xa loi (AC-10) 422 /problems/quantity-not-allowed -> QUANTITY_NOT_ALLOWED",
+   "status": "fail",
+   "reason": "AssertionError: expected 'LIMIT_EXCEEDED' to be 'QUANTITY_NOT_ALLOWED' // Object.is equality"
+  },
+  {
+   "test": "src/lib/hold-client.contract.test.ts::requestHold: anh xa loi (AC-10) MUTATION: per-identity-limit KHONG duoc map sang QUANTITY_NOT_ALLOWED va nguoc lai",
+   "status": "fail",
+   "reason": "AssertionError: expected 'LIMIT_EXCEEDED' to be 'PER_IDENTITY_LIMIT' // Object.is equality"
+  },
+  {
+   "test": "src/lib/hold-client.contract.test.ts::requestHold + refresh (AC-4) 401 token-expired -> refresh 1 lan roi retry voi CUNG Idempotency-Key va X-Queue-Token",
+   "status": "fail",
+   "reason": "HoldClientError: Lỗi hệ thống khi giữ vé (HTTP 401)"
+  },
+  {
+   "test": "src/lib/hold-client.contract.test.ts::requestHold + refresh (AC-4) queue-token het han (401) KHONG refresh, map QUEUE_TOKEN_INVALID",
+   "status": "fail",
+   "reason": "AssertionError: expected 'UNKNOWN' to be 'QUEUE_TOKEN_INVALID' // Object.is equality"
+  },
+  {
+   "test": "src/lib/hold-client.contract.test.ts::cancelHold (AC-11) DELETE {base}/v1/holds/{holdId} voi Idempotency-Key va Bearer",
+   "status": "fail",
+   "reason": "TypeError: __vite_ssr_import_1__.cancelHold is not a function"
+  },
+  {
+   "test": "src/lib/hold-client.contract.test.ts::cancelHold (AC-11) HTTP 204 -> resolve va xoa hold luu cuc bo",
+   "status": "fail",
+   "reason": "TypeError: __vite_ssr_import_1__.cancelHold is not a function"
+  },
+  {
+   "test": "src/lib/hold-client.contract.test.ts::cancelHold (AC-11) HTTP 404 -> resolve va xoa hold luu cuc bo",
+   "status": "fail",
+   "reason": "TypeError: __vite_ssr_import_1__.cancelHold is not a function"
+  },
+  {
+   "test": "src/lib/hold-client.contract.test.ts::cancelHold (AC-11) khong xoa hold cua su kien khac (holdId khac)",
+   "status": "fail",
+   "reason": "TypeError: __vite_ssr_import_1__.cancelHold is not a function"
+  },
+  {
+   "test": "src/lib/hold-client.contract.test.ts::cancelHold (AC-11) 409 hold-not-cancellable -> reject, giu hold cuc bo",
+   "status": "fail",
+   "reason": "TypeError: __vite_ssr_import_1__.cancelHold is not a function"
+  },
+  {
+   "test": "src/lib/organizer-service.contract.test.ts::getOrganizerEvents / getOrganizerEventById (AC-20) GET {base}/api/v1/events voi Bearer, khong yeu cau tiers",
+   "status": "fail",
+   "reason": "TypeError: Cannot read properties of undefined (reading 'url')"
+  },
+  {
+   "test": "src/lib/organizer-service.contract.test.ts::getOrganizerEvents / getOrganizerEventById (AC-20) hien du ca 9 trang thai, ke ca COMPLETED",
+   "status": "fail",
+   "reason": "AssertionError: expected [ 'ON_SALE', 'SCHEDULED', …(3) ] to deeply equal [ 'DRAFT', 'PENDING_REVIEW', …(7) ]"
+  },
+  {
+   "test": "src/lib/organizer-service.contract.test.ts::getOrganizerEvents / getOrganizerEventById (AC-20) danh sach rong -> []",
+   "status": "fail",
+   "reason": "AssertionError: expected [ { …(13) }, { …(13) }, …(3) ] to deeply equal []"
+  },
+  {
+   "test": "src/lib/organizer-service.contract.test.ts::getOrganizerEvents / getOrganizerEventById (AC-20) danh sach null -> []",
+   "status": "fail",
+   "reason": "AssertionError: expected [ { …(13) }, { …(13) }, …(3) ] to deeply equal []"
+  },
+  {
+   "test": "src/lib/organizer-service.contract.test.ts::getOrganizerEvents / getOrganizerEventById (AC-20) loi server -> reject, khong tra du lieu mock",
+   "status": "fail",
+   "reason": "AssertionError: expected undefined to be an instance of Error"
+  },
+  {
+   "test": "src/lib/organizer-service.contract.test.ts::getOrganizerEvents / getOrganizerEventById (AC-20) getOrganizerEventById: GET /api/v1/events/{id}; 404 -> null",
+   "status": "fail",
+   "reason": "TypeError: Cannot read properties of undefined (reading 'url')"
+  },
+  {
+   "test": "src/lib/organizer-service.contract.test.ts::createOrganizerEvent (AC-21) POST /api/v1/events -> POST tiers cho tung hang ve -> khong submit neu khong chon",
+   "status": "fail",
+   "reason": "AssertionError: expected [] to deeply equal [ 'POST /api/v1/events', …(2) ]"
+  },
+  {
+   "test": "src/lib/organizer-service.contract.test.ts::createOrganizerEvent (AC-21) submitForReview=true -> goi them POST /submit sau khi tao xong tiers",
+   "status": "fail",
+   "reason": "AssertionError: expected [] to deeply equal [ 'POST /api/v1/events', …(3) ]"
+  },
+  {
+   "test": "src/lib/organizer-service.contract.test.ts::createOrganizerEvent (AC-21) slug duoc gui khi nguoi dung nhap",
+   "status": "fail",
+   "reason": "TypeError: Cannot read properties of undefined (reading 'body')"
+  },
+  {
+   "test": "src/lib/organizer-service.contract.test.ts::createOrganizerEvent (AC-21) tier thu 2 loi 422 -> failedStep 'tiers', co error, tra ban nhap da tao, KHONG goi submit",
+   "status": "fail",
+   "reason": "AssertionError: expected undefined to be 'tiers' // Object.is equality"
+  },
+  {
+   "test": "src/lib/organizer-service.contract.test.ts::createOrganizerEvent (AC-21) submit loi 422 -> failedStep 'submit', error chua detail, van tra ban nhap",
+   "status": "fail",
+   "reason": "AssertionError: expected undefined to be 'submit' // Object.is equality"
+  },
+  {
+   "test": "src/lib/organizer-service.contract.test.ts::createOrganizerEvent (AC-21) validate truoc khi goi mang: starts_at == sale_start_at",
+   "status": "fail",
+   "reason": "AssertionError: expected undefined to be truthy"
+  },
+  {
+   "test": "src/lib/organizer-service.contract.test.ts::createOrganizerEvent (AC-21) validate truoc khi goi mang: starts_at < sale_start_at",
+   "status": "fail",
+   "reason": "AssertionError: expected undefined to be truthy"
+  },
+  {
+   "test": "src/lib/organizer-service.contract.test.ts::updateOrganizerEvent (AC-22) PUT /api/v1/events/{id} voi DAY DU truong, khong slug, khong tiers",
+   "status": "fail",
+   "reason": "Error: Không tìm thấy sự kiện với ID: 0b6d3b52-6f6e-4f0e-9d36-2a2f1c0a9a11"
+  },
+  {
+   "test": "src/lib/organizer-service.contract.test.ts::updateOrganizerEvent (AC-22) cap nhat mot phan ({title}) -> van PUT day du: lay phan con lai tu su kien hien tai",
+   "status": "fail",
+   "reason": "Error: Không tìm thấy sự kiện với ID: 0b6d3b52-6f6e-4f0e-9d36-2a2f1c0a9a11"
+  },
+  {
+   "test": "src/lib/organizer-service.contract.test.ts::updateOrganizerEvent (AC-22) 422 trang thai khong cho sua -> reject voi detail",
+   "status": "fail",
+   "reason": "AssertionError: expected 'Không tìm thấy sự kiện với ID: 0b6d3b…' to contain 'su kien khong the chinh sua'"
+  },
+  {
+   "test": "src/lib/organizer-service.contract.test.ts::tiers (AC-22) addTier: POST /api/v1/events/{id}/tiers {name, price_cents, quota}",
+   "status": "fail",
+   "reason": "TypeError: __vite_ssr_import_1__.addTier is not a function"
+  },
+  {
+   "test": "src/lib/organizer-service.contract.test.ts::tiers (AC-22) updateTierQuota: PUT /api/v1/events/{id}/tiers/{tierId} chi {new_quota}",
+   "status": "fail",
+   "reason": "TypeError: __vite_ssr_import_1__.updateTierQuota is not a function"
+  },
+  {
+   "test": "src/lib/organizer-service.contract.test.ts::tiers (AC-22) ON_SALE: giam quota bi chan o client (khong goi PUT); tang quota duoc phep",
+   "status": "fail",
+   "reason": "TypeError: __vite_ssr_import_1__.updateTierQuota is not a function"
+  },
+  {
+   "test": "src/lib/organizer-service.contract.test.ts::submit / cancel (AC-23) submitOrganizerEvent: POST /api/v1/events/{id}/submit -> PENDING_REVIEW",
+   "status": "fail",
+   "reason": "TypeError: __vite_ssr_import_1__.submitOrganizerEvent is not a function"
+  },
+  {
+   "test": "src/lib/organizer-service.contract.test.ts::submit / cancel (AC-23) cancelOrganizerEvent: POST /api/v1/events/{id}/cancel -> CANCELLED",
+   "status": "fail",
+   "reason": "TypeError: __vite_ssr_import_1__.cancelOrganizerEvent is not a function"
+  },
+  {
+   "test": "src/lib/organizer-service.contract.test.ts::submit / cancel (AC-23) submit 422 -> reject voi problem detail",
+   "status": "fail",
+   "reason": "TypeError: __vite_ssr_import_1__.submitOrganizerEvent is not a function"
+  },
+  {
+   "test": "src/lib/organizer-service.contract.test.ts::submit / cancel (AC-23) cancel 422 -> reject voi problem detail",
+   "status": "fail",
+   "reason": "TypeError: __vite_ssr_import_1__.cancelOrganizerEvent is not a function"
+  },
+  {
+   "test": "src/lib/payment-client.contract.test.ts::initiatePayment: request (AC-3, AC-12) POST {base}/v1/events/{id}/payments dung header va body theo contract",
+   "status": "fail",
+   "reason": "AssertionError: expected null to be 'Bearer acc-1' // Object.is equality"
+  },
+  {
+   "test": "src/lib/payment-client.contract.test.ts::initiatePayment: khong bao gio gia thanh cong (AC-12) loi mang voi method sandbox -> PaymentClientError NETWORK_ERROR, khong tra paymentId",
+   "status": "fail",
+   "reason": "AssertionError: expected undefined to be an instance of PaymentClientError"
+  },
+  {
+   "test": "src/lib/payment-client.contract.test.ts::initiatePayment: khong bao gio gia thanh cong (AC-12) 2xx nhung thieu payment_id -> reject, KHONG tu sinh payment_id",
+   "status": "fail",
+   "reason": "AssertionError: expected undefined to be an instance of PaymentClientError"
+  },
+  {
+   "test": "src/lib/payment-client.contract.test.ts::initiatePayment: khong bao gio gia thanh cong (AC-12) apiBase() rong trong moi truong dev cung khong gia thanh cong",
+   "status": "fail",
+   "reason": "AssertionError: expected undefined to be an instance of PaymentClientError"
+  },
+  {
+   "test": "src/lib/payment-client.contract.test.ts::getOrderDetails (AC-14) anh xa day du truong that: items, expiresAt, holdId, status, tong tien",
+   "status": "fail",
+   "reason": "AssertionError: expected { orderId: 'ord-1', …(11) } to match object { orderId: 'ord-1', …(10) }"
+  },
+  {
+   "test": "src/lib/payment-client.contract.test.ts::getOrderDetails (AC-14) KHONG bia quantity / tier_name / event_title khi server khong tra",
+   "status": "fail",
+   "reason": "AssertionError: expected 1 not to be 1 // Object.is equality"
+  },
+  {
+   "test": "src/lib/payment-client.contract.test.ts::getOrderDetails (AC-14) 404 -> reject NOT_FOUND, KHONG phuc vu cache sessionStorage nhu du lieu song",
+   "status": "fail",
+   "reason": "AssertionError: expected undefined to be an instance of PaymentClientError"
+  },
+  {
+   "test": "src/lib/payment-client.contract.test.ts::getOrderDetails (AC-14) loi mang -> reject NETWORK_ERROR, khong tra cache",
+   "status": "fail",
+   "reason": "AssertionError: expected undefined to be an instance of PaymentClientError"
+  },
+  {
+   "test": "src/lib/payment-client.contract.test.ts::getOrderDetails (AC-14) 401 token-expired -> refresh roi retry GET don hang",
+   "status": "fail",
+   "reason": "PaymentClientError: Lỗi máy chủ HTTP 401"
+  },
+  {
+   "test": "src/lib/payment-client.contract.test.ts::listPaymentMethods (AC-13) GET {base}/v1/payments/methods, tra mang PaymentMethodInfo",
+   "status": "fail",
+   "reason": "TypeError: __vite_ssr_import_1__.listPaymentMethods is not a function"
+  },
+  {
+   "test": "src/lib/payment-client.contract.test.ts::listPaymentMethods (AC-13) loi server -> reject (UI hien loi + thu lai), KHONG tra danh sach cung",
+   "status": "fail",
+   "reason": "TypeError: __vite_ssr_import_1__.listPaymentMethods is not a function"
+  },
+  {
+   "test": "src/lib/payment-client.contract.test.ts::listPaymentMethods (AC-13) loi mang -> reject",
+   "status": "fail",
+   "reason": "TypeError: __vite_ssr_import_1__.listPaymentMethods is not a function"
+  },
+  {
+   "test": "src/lib/payment-client.contract.test.ts::issueTickets (AC-15) POST {base}/v1/orders/{id}/issue-tickets voi Idempotency-Key va Bearer",
+   "status": "fail",
+   "reason": "TypeError: __vite_ssr_import_1__.issueTickets is not a function"
+  },
+  {
+   "test": "src/lib/payment-client.contract.test.ts::issueTickets (AC-15) tra IssuedTicketQR[] {ticketId, ticketTypeId, status, qrPayload} tu qr_payload that",
+   "status": "fail",
+   "reason": "TypeError: __vite_ssr_import_1__.issueTickets is not a function"
+  },
+  {
+   "test": "src/lib/payment-client.contract.test.ts::issueTickets (AC-15) luu key o sessionStorage `ef:issue:{orderId}` va dung lai CUNG key khi goi lai (reload)",
+   "status": "fail",
+   "reason": "TypeError: __vite_ssr_import_1__.issueTickets is not a function"
+  },
+  {
+   "test": "src/lib/payment-client.contract.test.ts::issueTickets (AC-15) don khac -> key khac",
+   "status": "fail",
+   "reason": "TypeError: __vite_ssr_import_1__.issueTickets is not a function"
+  },
+  {
+   "test": "src/lib/payment-client.contract.test.ts::issueTickets (AC-15) 422 order-not-paid -> reject (khong tra ve QR gia)",
+   "status": "fail",
+   "reason": "TypeError: __vite_ssr_import_1__.issueTickets is not a function"
+  },
+  {
+   "test": "src/lib/payment-client.contract.test.ts::issueTickets (AC-15) khong bao gio tra QR demo khi server khong tra qr_payload",
+   "status": "fail",
+   "reason": "TypeError: __vite_ssr_import_1__.issueTickets is not a function"
+  },
+  {
+   "test": "src/lib/queue-client.contract.test.ts::joinQueue (AC-3, AC-9) POST {base}/v1/events/{id}/queue/join voi Bearer, khong credentials include, khong X-Identity-*",
+   "status": "fail",
+   "reason": "AssertionError: expected '/v1/events/evt-1/queue/join' to be 'http://gw.test/v1/events/evt-1/queue/…' // Object.is equality"
+  },
+  {
+   "test": "src/lib/queue-client.contract.test.ts::joinQueue (AC-3, AC-9) 401 token-expired -> refresh roi join thanh cong",
+   "status": "fail",
+   "reason": "QueueError: chi tiet loi"
+  },
+  {
+   "test": "src/lib/queue-client.contract.test.ts::joinQueue (AC-3, AC-9) 403 otp-required va device-required cho ma loi RIENG BIET, khac 403 chung",
+   "status": "fail",
+   "reason": "AssertionError: expected 'undefined' to be 'string' // Object.is equality"
+  },
+  {
+   "test": "src/lib/queue-client.contract.test.ts::fetchQueueStatus (AC-3, AC-5, AC-9) GET {base}/v1/events/{id}/queue/status voi Bearer + X-Queue-Token + If-None-Match, khong credentials include",
+   "status": "fail",
+   "reason": "AssertionError: expected null to be 'Bearer acc-1' // Object.is equality"
+  },
+  {
+   "test": "src/lib/queue-client.contract.test.ts::fetchQueueStatus (AC-3, AC-5, AC-9) 401 token-expired (access token) -> refresh 1 lan roi poll lai thanh cong",
+   "status": "fail",
+   "reason": "QueueError: chi tiet loi"
+  },
+  {
+   "test": "src/lib/queue-client.contract.test.ts::connectSse (AC-9) gui Bearer, khong credentials include, giu header cua caller (X-Queue-Token)",
+   "status": "fail",
+   "reason": "AssertionError: expected null to be 'Bearer acc-1' // Object.is equality"
+  },
+  {
+   "test": "src/lib/api/auth.contract.test.ts::loginUser (AC-1) POST {base}/api/v1/auth/login {identifier, password, device_fingerprint}",
+   "status": "fail",
+   "reason": "AssertionError: expected 'http://localhost:8083/api/v1/auth/log…' to be 'http://gw.test/api/v1/auth/login' // Object.is equality"
+  },
+  {
+   "test": "src/lib/api/auth.contract.test.ts::loginUser (AC-1) khong goi :8083 hay NEXT_PUBLIC_API_URL",
+   "status": "fail",
+   "reason": "AssertionError: expected false to be true // Object.is equality"
+  },
+  {
+   "test": "src/lib/api/auth.contract.test.ts::loginUser (AC-1) luu access token, refresh token va {id, role, email} vao phien",
+   "status": "fail",
+   "reason": "AssertionError: expected null to be 'acc-new' // Object.is equality"
+  },
+  {
+   "test": "src/lib/api/auth.contract.test.ts::registration (AC-2) requestRegistrationOTP: POST /api/v1/auth/register/request-otp {identifier}",
+   "status": "fail",
+   "reason": "AssertionError: expected 'http://localhost:8083/api/v1/auth/reg…' to be 'http://gw.test/api/v1/auth/register/r…' // Object.is equality"
+  },
+  {
+   "test": "src/lib/api/auth.contract.test.ts::registration (AC-2) verify 201 khong co token -> dang nhap tiep voi cung identifier/password va luu phien",
+   "status": "fail",
+   "reason": "AssertionError: expected [ '/api/v1/auth/register/verify' ] to deeply equal [ Array(2) ]"
+  },
+  {
+   "test": "src/lib/api/auth.contract.test.ts::forgot password (giu nguyen, doi sang gateway) request-otp va reset dung URL gateway",
+   "status": "fail",
+   "reason": "AssertionError: expected 'http://localhost:8083/api/v1/auth/for…' to be 'http://gw.test/api/v1/auth/forgot-pas…' // Object.is equality"
+  },
+  {
+   "test": "src/lib/api/auth.contract.test.ts::loginWithGoogle (AC-8) goi google -> devices {fingerprint} (Bearer access google) -> refresh {refresh_token, device_fingerprint}",
+   "status": "fail",
+   "reason": "AssertionError: expected [ '/api/v1/auth/google' ] to deeply equal [ '/api/v1/auth/google', …(2) ]"
+  },
+  {
+   "test": "src/lib/api/auth.contract.test.ts::loginWithGoogle (AC-8) luu cap token DA REFRESH (da gan thiet bi), khong phai cap google ban dau",
+   "status": "fail",
+   "reason": "AssertionError: expected null to be 'r-acc' // Object.is equality"
+  },
+  {
+   "test": "src/lib/api/auth.contract.test.ts::loginWithGoogle (AC-8) goi devices that bai -> van luu phien tu dang nhap google va khong nem",
+   "status": "fail",
+   "reason": "AssertionError: expected null to be 'g-acc' // Object.is equality"
+  },
+  {
+   "test": "src/lib/api/auth.contract.test.ts::refreshSession POST /api/v1/auth/refresh voi refresh token dang luu va luu cap moi",
+   "status": "fail",
+   "reason": "TypeError: __vite_ssr_import_1__.refreshSession is not a function"
+  },
+  {
+   "test": "src/lib/api/auth.contract.test.ts::refreshSession refresh bi tu choi (401) -> reject",
+   "status": "fail",
+   "reason": "TypeError: __vite_ssr_import_1__.refreshSession is not a function"
+  },
+  {
+   "test": "src/lib/api/auth.contract.test.ts::logout (AC-6) POST /api/v1/auth/logout {refresh_token} roi xoa phien",
+   "status": "fail",
+   "reason": "TypeError: __vite_ssr_import_1__.logout is not a function"
+  },
+  {
+   "test": "src/lib/api/auth.contract.test.ts::logout (AC-6) server loi 500 -> van xoa phien",
+   "status": "fail",
+   "reason": "TypeError: __vite_ssr_import_1__.logout is not a function"
+  },
+  {
+   "test": "src/lib/api/auth.contract.test.ts::logout (AC-6) mat mang -> van xoa phien",
+   "status": "fail",
+   "reason": "TypeError: __vite_ssr_import_1__.logout is not a function"
+  },
+  {
+   "test": "src/lib/api/auth.contract.test.ts::logout (AC-6) khong co phien -> khong nem loi",
+   "status": "fail",
+   "reason": "TypeError: __vite_ssr_import_1__.logout is not a function"
+  },
+  {
+   "test": "src/lib/api/auth.contract.test.ts::fetchMe GET /api/v1/auth/me voi Bearer, tra {id, role}",
+   "status": "fail",
+   "reason": "TypeError: __vite_ssr_import_1__.fetchMe is not a function"
+  },
+  {
+   "test": "apps/web/src/lib/session.contract.test.ts::* (all tests in file)",
+   "status": "fail",
+   "reason": "Failed to resolve import @/lib/session (module not created yet)"
+  },
+  {
+   "test": "apps/web/src/lib/api-client.contract.test.ts::* (all tests in file)",
+   "status": "fail",
+   "reason": "Failed to resolve import @/lib/api-client (module not created yet)"
+  },
+  {
+   "test": "services/gateway/internal/proxy/frontend_real_api_contract_test.go::TestGateway_CORS_PreflightChoPhepHeaderCuaPhongCho",
+   "status": "fail",
+   "reason": "Allow-Headers thieu X-Queue-Token, If-None-Match"
+  },
+  {
+   "test": "services/gateway/internal/proxy/frontend_real_api_contract_test.go::TestGateway_CORS_ExposeHeaders",
+   "status": "fail",
+   "reason": "Expose-Headers thieu ETag, X-Poll-After-Ms"
+  },
+  {
+   "test": "services/event/internal/adapter/http/public_events_contract_test.go::TestPublicEvents_KhongCanTokenVaChiTraTrangThaiCongKhai",
+   "status": "fail",
+   "reason": "GET /api/v1/events/public hien route sang /{id} -> 400 invalid event uuid"
+  },
+  {
+   "test": "services/event/internal/adapter/http/public_events_contract_test.go::TestPublicEvents_SapXepSaleStartTangDan",
+   "status": "fail",
+   "reason": "GET /api/v1/events/public hien route sang /{id} -> 400 invalid event uuid"
+  },
+  {
+   "test": "services/event/internal/adapter/http/public_events_contract_test.go::TestPublicEvents_GioiHan100",
+   "status": "fail",
+   "reason": "GET /api/v1/events/public hien route sang /{id} -> 400 invalid event uuid"
+  },
+  {
+   "test": "services/event/internal/adapter/http/public_events_contract_test.go::TestPublicEvents_RongLaMangRongKhongPhaiNull",
+   "status": "fail",
+   "reason": "GET /api/v1/events/public hien route sang /{id} -> 400 invalid event uuid"
+  },
+  {
+   "test": "services/event/internal/adapter/http/public_events_contract_test.go::TestPublicEvents_BuyerDaDangNhapCungDuoc",
+   "status": "fail",
+   "reason": "GET /api/v1/events/public hien route sang /{id} -> 400 invalid event uuid"
+  },
+  {
+   "test": "services/event/internal/adapter/http/public_events_contract_test.go::TestPublicEvents_Loi500KhongLoChiTiet",
+   "status": "fail",
+   "reason": "GET /api/v1/events/public hien route sang /{id} -> 400 invalid event uuid"
+  },
+  {
+   "test": "services/event/internal/adapter/http/public_events_contract_test.go::TestPublicEvents_KhongLamHongRouteCu",
+   "status": "fail",
+   "reason": "GET /api/v1/events/public hien route sang /{id} -> 400 invalid event uuid"
+  },
+  {
+   "test": "services/event/internal/adapter/postgres/list_public_integration_test.go::TestTichHop_ListPublic_*",
+   "status": "fail",
+   "reason": "compile error: repo.ListPublic undefined (go vet -tags integration); khong chay duoc vi can Docker"
+  }
+ ]
+}

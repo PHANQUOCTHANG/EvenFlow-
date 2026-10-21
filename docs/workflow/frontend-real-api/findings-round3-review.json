@@ -1,0 +1,103 @@
+{
+  "review": {
+    "round": 3,
+    "base": "e2d9b75",
+    "head": "badd78b",
+    "scope": "incremental re-review of fix round 2 (G-1..G-8): correctness/regression + security"
+  },
+  "verdicts": [
+    {
+      "id": "G-1",
+      "status": "fixed",
+      "evidence": "api-client.ts:218-294 withRefreshLock: POST /refresh now only runs inside a lock callback (normal grant :246-252, or steal:true :269-275). After LOCK_WAIT_MS it re-reads storage (:265-266), steals the lock and, inside it, waitForRotation (:204-213) waits while a fresh cross-tab marker (ef_refresh_inflight, :108-141, written by doRefresh :153 and cleared in finally :157) exists for the same refresh token. A holder whose lock is stolen keeps awaiting its own refresh (:254-258). HARD_DEADLINE_MS 45 s -> NETWORK_ERROR without clearSession (:227-233). The no-Web-Locks fallback (:220) is unchanged (single tab-safe only, acceptable). Regression tests: fix2/g1-lock-refresh.test.ts 'slow lock holder (12 s) + a waiting tab' (two module instances, identity server with reuse detection; asserts postsWith('r1') === 1, both tabs 200, session and buy-flow keys kept) - this is exactly Y-1(a)/R2-3; 'suspended lock holder + two waiting tabs' asserts one POST and zero REUSE (Y-1(b)); 'another tab rotated the pair' asserts zero POSTs; 'hard deadline' asserts NETWORK_ERROR, no POST, session kept. Residual race/privacy issues of the marker: R3-1, R3-2, R3-3."
+    },
+    {
+      "id": "G-2",
+      "status": "fixed",
+      "evidence": "organizer-service.ts:293-295 canIncreaseTierQuota includes SOLD_OUT; validateTierQuotaUpdate :194-199 blocks decreases for ON_SALE and SOLD_OUT; event-wizard.tsx:96 isCurrentOnSale includes SOLD_OUT (handleSaveQuotas :213 path); edit-event-client.tsx:41 copy updated. Backend services/event/internal/domain/event.go accepts the increase and reopens the sale. Tests: edit/page.test.tsx 'G-2: SOLD_OUT -> form tăng số lượng vé, chỉ gọi PUT tier quota' (asserts updateQuota(EVT,'tier-a',500), update/addTier not called) and 'G-2: SOLD_OUT giảm quota bị chặn phía client'; SOLD_OUT removed from the 'không được chỉnh sửa' it.each; event-list.status.test.tsx now expects 2 links (ON_SALE + SOLD_OUT) and none for CLOSED."
+    },
+    {
+      "id": "G-3",
+      "status": "fixed",
+      "evidence": "At badd78b api-client.ts contains 0 NUL bytes and 0 CR (checked with tr -cd); pairKey uses JSON.stringify([access, refresh]) (:102-104). `git diff --numstat 7e56ce2 badd78b -- apps/web/src/lib/api-client.ts` reports '5 4' (text). The stat line 'Bin 9927 -> 13792' in the e2d9b75..badd78b diff only reflects the binary BASE. No test needed (repo-hygiene)."
+    },
+    {
+      "id": "G-4",
+      "status": "fixed",
+      "evidence": "session.ts:168-174 clearSession(opts) wipes buy-flow storage only with {buyFlow:true}; the only such call is the explicit logout (api/auth.ts:135). Involuntary paths in api-client.ts (:149, :177, :191) keep ef:queue:token:*, evenflow_hold_*, ef:pay:*, ef:hold:*, ef:issue:*. Tests: fix2/g4-involuntary-expiry.test.ts 'refresh rejected (401) -> auth keys cleared, buy-flow keys kept' (asserts getSession() null and all 5 keys still 'x') and 'explicit logout still clears buy-flow keys'. Side effect: R3-4 (keys survive into a different account's session in the same tab)."
+    },
+    {
+      "id": "G-5",
+      "status": "fixed",
+      "evidence": "payment-client.ts:139-148 FNV-1a 32-bit bodyHash; :218 key storage 'ef:pay:{orderId}:{hash(method,buyerName,buyerEmail,buyerPhone,amount,holdId)}'. Only the hash is in the key name (no PII in plain text); collisions are irrelevant (32-bit space scoped to one orderId within one tab; a collision only reproduces the pre-fix behaviour, a 422 key-reused). return_url is not hashed but is deterministic (default derived from eventId/orderId; no caller passes returnUrl). Test: fix2/g5-g6-payment-key.test.ts 'G-5: identical retry after NETWORK_ERROR reuses the key; a changed method/phone/amount gets a new key' (asserts keys[1]===keys[0], keys[2]/keys[3] differ, returning to the first body reuses keys[0]). Behavioural note R3-5 (backend returns the existing payment with its original provider)."
+    },
+    {
+      "id": "G-6",
+      "status": "fixed",
+      "evidence": "payment-client.ts:265-266 `if (response.status !== 409) inProgress = false;` after the 409 loop, so a final definitive 4xx forgets the key (:268-270). Test: fix2/g5-g6-payment-key.test.ts 'G-6: 409 in-progress followed by a definitive 4xx forgets the key' (409 in-progress then 422 -> INVALID_INPUT; next attempt carries a different Idempotency-Key) - this is exactly the Y-8 repro."
+    },
+    {
+      "id": "G-7",
+      "status": "fixed",
+      "evidence": "RegisterForm.tsx:420-428 link href is the bare '/auth/sign-in'; onClick stores the identifier in sessionStorage 'ef:signin:identifier'; LoginForm.tsx:86-96 reads it once and removes it; URLSearchParams read removed. Tests: fix2/g7-signin-prefill.test.tsx (href contains neither 'identifier' nor 'a%40b.co'; click stores the key; LoginForm prefills and deletes the key), fix1/f6 and f16 updated accordingly. Minor residuals: middle-click/open-in-new-tab skips onClick so no prefill; the key lingers in that tab if the link is clicked but sign-in is never mounted (tab-scoped, not PII-in-URL, acceptable)."
+    },
+    {
+      "id": "G-8",
+      "status": "fixed",
+      "evidence": "edit-event-client.tsx:61,85,99 returns createdTiers = snapshot of created.current (local id -> server tier) on both failure branches and setEvent(await reload()) refreshes initialEvent; event-wizard.tsx:284,330,341-346 applyCreatedTiers swaps local tiers for their server tiers, so existingTierIds (:102, recomputed from the reloaded initialEvent each render) contains them -> name/price disabled, no remove button; a retry diffs by server id and sends only PUT quota. Swap is keyed by LOCAL id, so a tier already swapped in an earlier attempt is never overwritten with a stale creation-time snapshot. Test: edit/page.test.tsx 'G-8: sau lỗi một phần, hạng vé đã tạo thành hạng cũ...' (asserts tier #2 name disabled, only 1 'Xoá hạng vé', quota change -> updateQuota(EVT,'srv-new-1',300), addTier never re-POSTs #2) - matches the R2-4/Y-11 repro. Residual edge: if reload() fails (network) after the partial failure, initialEvent stays stale, existingTierIds lacks srv id, and the swapped tier is editable again (name/price edit dropped on retry). Low probability, not filed separately."
+    }
+  ],
+  "new_findings": [
+    {
+      "id": "R3-1",
+      "severity": "major",
+      "file": "apps/web/src/lib/api-client.ts",
+      "line": 116,
+      "title": "The cross-tab refresh marker stores the raw refresh token in localStorage, including for 'remember me' OFF sessions, and is never removed if the tab dies mid-refresh",
+      "evidence": "writeMarker(rt) does localStorage.setItem('ef_refresh_inflight', JSON.stringify({ rt, at, id })) with rt = cur.refreshToken (doRefresh :153). spec.md:25-26 puts the session in sessionStorage when 'remember me' is off, so the token is meant to die with the tab; the marker copies it into persistent localStorage. It is removed only by clearMarker(id) in the finally of the same tab (:157); clearSession()/wipe() (session.ts) and logout do not touch it, and the 30 s TTL only governs markerFresh(), not deletion. If the tab/browser is closed or crashes while the refresh is in flight (or the request is cancelled on unload before it reaches the server), the raw refresh token persists on disk indefinitely. Only a hash or opaque fingerprint is needed for the comparison m.rt === rt (:137).",
+      "repro": "Sign in with 'Ghi nhớ' off on a shared computer. Let the access token expire and trigger a refresh, then close the browser before the response arrives (or kill the renderer). Reopen the browser: sessionStorage is gone but localStorage.ef_refresh_inflight still holds {\"rt\":\"<refresh token>\"}. If the POST never reached identity, that token is still valid and can be exchanged at /api/v1/auth/refresh by the next user of the machine (account takeover until refresh expiry); if it was consumed, replaying it revokes the victim's whole family.",
+      "fix": "Store a non-reversible fingerprint instead of the token (e.g. SHA-256 via crypto.subtle, or at least FNV/hash of the token plus the user id) and compare fingerprints in markerFresh; also remove ef_refresh_inflight in clearSession() and on load drop markers older than the TTL. Add a test asserting localStorage never contains the refresh token value after/during a refresh with persist='session'."
+    },
+    {
+      "id": "R3-2",
+      "severity": "minor",
+      "file": "apps/web/src/lib/api-client.ts",
+      "line": 269,
+      "title": "Steal path is not mutually exclusive: a tab whose stolen-lock callback keeps running, and two near-simultaneous stealers, can both see 'no fresh marker' and both POST the same refresh token",
+      "evidence": "Per the Web Locks spec a stolen holder's callback keeps running. In the steal callback (:269-275) the stealer runs waitForRotation then doRefresh; if another tab steals from it, its locks.request rejects (the catch :277-283 starts a second poller) but the callback itself continues and will call doRefresh once the marker expires/disappears. The only guard is a check-then-write on localStorage (markerFresh then writeMarker), which is not atomic across renderer processes. Tabs share ef_expires_at, so their proactive refreshes and 10 s lock timeouts fire at nearly the same moment, which is the case the steal path exists for. The FIFO stub in g1-lock-refresh.test.ts runs both tabs on one JS thread, so the race cannot show there.",
+      "repro": "Holder H frozen mid-refresh (marker fresh). Tabs B and C start waiting within a few ms; at ~10 s B steals, then C steals from B. At H's marker expiry (30 s) B's still-running callback and C's callback poll on 250 ms grids; if both read the marker as stale before either write propagates, both POST r1 -> REUSE -> family revoked. Same window when H's marker is absent and B/C time out together.",
+      "fix": "Inside the steal callback, record a per-request 'stolen' flag set by the outer request's AbortError and check it before doRefresh (a stolen callback must never POST); after writing the marker, re-read it after a short delay and back off if another tab's id is present (last-writer-wins handshake), or only steal when document.visibilityState/heartbeat shows the holder is gone."
+    },
+    {
+      "id": "R3-3",
+      "severity": "minor",
+      "file": "apps/web/src/lib/api-client.ts",
+      "line": 137,
+      "title": "Marker freshness is a fixed 30 s from write with no heartbeat and no negative-age guard",
+      "evidence": "markerFresh: Date.now() - m.at < MARKER_TTL_MS. (a) A holder refresh slower than 30 s (fetch has no timeout; R2-3 cited on-sale spikes) makes the marker look stale while the holder's POST is still in flight -> stealer POSTs the same token -> reuse -> all tabs logged out (the original G-1 failure, shifted from 10 s to 30 s). (b) If the wall clock moves backwards (NTP step, manual change) after a crash left a marker, Date.now() - at is negative and the marker stays 'fresh' until the clock catches up; every stealer then waits to HARD_DEADLINE_MS (45 s) and returns NETWORK_ERROR without refreshing. Tabs share one clock, so inter-tab skew itself is not an issue.",
+      "repro": "(a) Throttle /auth/refresh to 35 s, two tabs with an expired token: second tab steals at 10 s, marker stale at 30 s, second POST with r1. (b) Leave a marker {rt:r1, at: now+3600000}: every refresh in another tab ends in NETWORK_ERROR for an hour.",
+      "fix": "Bound the holder's refresh with an AbortController timeout shorter than MARKER_TTL_MS (e.g. 25 s) so a stale marker really means the holder has given up, or refresh 'at' while waiting; treat at > Date.now() + small slack as stale."
+    },
+    {
+      "id": "R3-4",
+      "severity": "minor",
+      "file": "apps/web/src/lib/session.ts",
+      "line": 172,
+      "title": "After an involuntary expiry the previous user's buy-flow keys survive into a different account's session in the same tab (F-17 intent partly undone)",
+      "evidence": "G-4 keeps ef:queue:token:*, evenflow_hold_{eventId}, evenflow_order_*, ef:pay:*, ef:hold:*, ef:issue:* on expiry; nothing clears them when the next setSession is for a different user id (clearBuyFlowStorage is exported but only called from clearSession({buyFlow:true})). R2-2 offered 'or only when the next session belongs to a different user id'.",
+      "repro": "User A holds seats for e1, session expires (refresh 401). User B signs in in the same tab and opens /checkout/e1: the hold view resumes A's evenflow_hold_e1 (order id, hold id, expiry) and the queue token A was issued; server calls then fail with 403/404 and B sees A's order id.",
+      "fix": "In the login/setSession paths, if the previous auth user id (keep it in a small non-secret marker such as ef_last_uid) differs from the new user id, call clearBuyFlowStorage() before storing the new session. Add a test: expiry with user A, login as B -> buy-flow keys gone; login as A again -> kept."
+    },
+    {
+      "id": "R3-5",
+      "severity": "minor",
+      "file": "apps/web/src/lib/payment-client.ts",
+      "line": 218,
+      "title": "Body-scoped payment key: changing the method after an ambiguous failure no longer gets the idem 422 but the backend silently returns the existing payment with the ORIGINAL provider; concurrent initiations with different bodies are no longer serialised by the idem in-progress lock",
+      "evidence": "services/payment/internal/app/initiate_payment.go:84-112: when the order is already PAYMENT_PENDING it returns the existing payment re-initiated with existing.Provider, ignoring the new method. With per-body keys, the idem middleware (in-progress 409) no longer protects against a second POST with a different body while the first is still being processed (order still HELD), so the dedupe relies on the order-status transition in the payment service.",
+      "repro": "POST with sandbox, response lost (NETWORK_ERROR). Choose momo and pay: 200 with the sandbox redirect_url (user lands on a different gateway than selected). If the second click happens while the first is still in the service (order still HELD), both reach gw.InitiatePayment.",
+      "fix": "Acceptable trade-off if documented; preferably show 'Đơn hàng đã có phiên thanh toán đang chờ' when the returned payment's provider/redirect differs from the requested method, and confirm the order HELD->PAYMENT_PENDING transition is a conditional update (backend)."
+    }
+  ],
+  "g9_opinion": "Apply the TCR rather than defer. The gateway emits 403 /problems/forbidden for role/authorisation failures (services/gateway/internal/proxy/gateway.go:28, contracts.md:16), which re-joining the waiting room cannot fix, so mapping it to NOT_ADMITTED ('quay lại phòng chờ') sends e.g. an organizer/moderator account into a pointless queue loop. The change is small and isolated (new FORBIDDEN code, one row of hold-client.contract.test.ts:83, checkout-view/use-hold-timer exclusion lists). Note spec.md:66 also says 'other 403 -> NOT_ADMITTED', so the approval must amend that spec line together with the protected test; keep [403, about:blank] -> NOT_ADMITTED. If the owner will not approve a protected-test change this round, deferring is acceptable (minor, no data loss), but record it in the deferred list with the spec line."
+}

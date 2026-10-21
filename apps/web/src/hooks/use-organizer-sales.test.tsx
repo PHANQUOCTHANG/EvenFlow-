@@ -7,6 +7,7 @@ import { useOrganizerSales } from "./use-organizer-sales";
 
 describe("useOrganizerSales — Hook doanh số realtime (AC-4)", () => {
   const mockSnapshot: organizerService.RealtimeSalesSnapshot = {
+    isSample: true,
     eventId: "evt-tech-summit-2026",
     timestamp: "12:00:00",
     grossRevenue: 150000000,

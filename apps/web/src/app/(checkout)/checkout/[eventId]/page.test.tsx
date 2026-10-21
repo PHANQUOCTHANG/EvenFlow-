@@ -1,65 +1,30 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-import CheckoutPage, { generateMetadata } from "./page";
+import CheckoutPage, { metadata } from "./page";
 
-vi.mock("@/components/checkout/checkout-view", () => ({
-  CheckoutView: ({ event }: { event: { id: string; title: string } }) => (
-    <div data-testid="checkout-view">
-      <span>Event: {event.id}</span>
-      <span>Title: {event.title}</span>
-    </div>
-  ),
+// WP2 (AC-18): trang la vo server mong, su kien duoc tai phia client trong CheckoutPageClient.
+vi.mock("@/components/checkout/checkout-page-client", () => ({
+  CheckoutPageClient: ({ eventId }: { eventId: string }) => <div data-testid="checkout-client">Event: {eventId}</div>,
 }));
 
 vi.mock("@/lib/event-service", () => ({
-  getEventById: vi.fn(async (id: string) => {
-    if (id === "evt-1") {
-      return {
-        id: "evt-1",
-        title: "EvenFlow Grand Concert",
-        venue: "Sân vận động Mỹ Đình",
-        tiers: [],
-      };
-    }
-    return null;
+  getEventById: vi.fn(() => {
+    throw new Error("server shell khong duoc goi backend");
   }),
 }));
 
-vi.mock("next/navigation", () => ({
-  notFound: vi.fn(() => {
-    throw new Error("NEXT_NOT_FOUND");
-  }),
-}));
-
-describe("CheckoutPage (EV-183, EVF-113)", () => {
-  it("render CheckoutView component khi tìm thấy sự kiện", async () => {
-    const params = Promise.resolve({ eventId: "evt-1" });
-    const Component = await CheckoutPage({ params });
+describe("CheckoutPage (EV-183, EVF-113, AC-18)", () => {
+  it("render client component voi eventId tu URL, khong goi backend phia server", async () => {
+    const Component = await CheckoutPage({ params: Promise.resolve({ eventId: "evt-1" }) });
     render(Component);
 
-    expect(screen.getByTestId("checkout-view")).toBeInTheDocument();
+    expect(screen.getByTestId("checkout-client")).toBeInTheDocument();
     expect(screen.getByText("Event: evt-1")).toBeInTheDocument();
-    expect(screen.getByText("Title: EvenFlow Grand Concert")).toBeInTheDocument();
   });
 
-  it("gọi notFound khi không tìm thấy sự kiện", async () => {
-    const params = Promise.resolve({ eventId: "evt-not-found" });
-    await expect(CheckoutPage({ params })).rejects.toThrow("NEXT_NOT_FOUND");
-  });
-
-  it("generateMetadata tạo title chính xác và noindex", async () => {
-    const params = Promise.resolve({ eventId: "evt-1" });
-    const meta = await generateMetadata({ params });
-
-    expect(meta.title).toBe("Chọn vé: EvenFlow Grand Concert | EvenFlow");
-    expect(meta.robots).toEqual({ index: false, follow: false });
-  });
-
-  it("generateMetadata fallback khi không tìm thấy event", async () => {
-    const params = Promise.resolve({ eventId: "unknown-id" });
-    const meta = await generateMetadata({ params });
-
-    expect(meta.title).toBe("Chọn vé | EvenFlow");
+  it("metadata tinh co noindex", () => {
+    expect(metadata.title).toBe("Chọn vé | EvenFlow");
+    expect(metadata.robots).toEqual({ index: false, follow: false });
   });
 });

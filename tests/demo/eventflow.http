@@ -115,6 +115,8 @@ Idempotency-Key: http-approve-1
 ### Khach an danh thay su kien trong danh sach cong khai:
 GET {{gw}}/api/v1/events/public
 
+
+
 ###
 GET {{gw}}/api/v1/events/{{eventId}}
 

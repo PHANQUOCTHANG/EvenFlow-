@@ -1,0 +1,16 @@
+mutation 6 applied to payment-client.ts
+diff --git a/apps/web/src/lib/payment-client.ts b/apps/web/src/lib/payment-client.ts
+index b4b285a..8f45e8c 100644
+--- a/apps/web/src/lib/payment-client.ts
++++ b/apps/web/src/lib/payment-client.ts
+@@ -339,6 +339,9 @@ export async function getOrderDetails(orderId: string, eventId: string): Promise
+   );
+ 
+   if (res.status === 404) {
++    /* MUTANT 6: serve cached order on 404 */
++    const cached = getRecentOrder(orderId);
++    if (cached) return cached;
+     throw new PaymentClientError("Không tìm thấy đơn hàng", "NOT_FOUND", 404);
+   }
+   if (!res.ok) {
+### npx vitest run src/lib (testTimeout 15000)

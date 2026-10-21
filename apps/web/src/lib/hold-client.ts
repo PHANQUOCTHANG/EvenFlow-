@@ -7,16 +7,23 @@
  * 4. Error mapping dung ma loi backend Go.
  */
 
-import { apiBase } from "@/lib/api-base";
+import { ApiError, apiFetch, readProblem } from "@/lib/api-client";
+import {
+  forgetKey,
+  IDEMPOTENCY_IN_PROGRESS,
+  IN_PROGRESS_MAX_ATTEMPTS,
+  isDefinitiveStatus,
+  retryAfterMs,
+  sleep,
+  stableKey,
+} from "@/lib/idempotency";
 
 export interface CreateHoldParams {
   eventId: string;
   ticketTypeId: string;
   quantity: number;
   queueToken: string;
-  identityId?: string;
   idempotencyKey?: string;
-  apiBaseUrl?: string;
 }
 
 export interface HoldResult {
@@ -29,20 +36,28 @@ export interface HoldResult {
 
 export type HoldClientErrorType =
   | "MISSING_IDEMPOTENCY_KEY"
-  | "NOT_ADMITTED" // 403
+  | "NOT_ADMITTED" // 403 (chua duoc admit)
+  | "FORBIDDEN" // 403 /problems/forbidden: khong du quyen (khac chua duoc admit)
+  | "QUEUE_TOKEN_INVALID" // 401/403 queue-token-expired|invalid|mismatch: quay lai phong cho (AC-10)
   | "SOLD_OUT" // 409
-  | "LIMIT_EXCEEDED" // 422
+  | "PER_IDENTITY_LIMIT" // 422 /problems/per-identity-limit
+  | "QUANTITY_NOT_ALLOWED" // 422 /problems/quantity-not-allowed
+  | "LIMIT_EXCEEDED" // 422 khac
+  | "AUTH_REQUIRED" // phien het han, refresh that bai
   | "AMBIGUOUS" // network failure / timeout / 503 (BR-O5)
   | "UNKNOWN";
 
 export class HoldClientError extends Error {
   readonly type: HoldClientErrorType;
+  /** Cung gia tri voi `type`, de goi chung voi ApiError (`code`). */
+  readonly code: HoldClientErrorType;
   readonly status?: number;
 
   constructor(message: string, type: HoldClientErrorType, status?: number) {
     super(message);
     this.name = "HoldClientError";
     this.type = type;
+    this.code = type;
     this.status = status;
   }
 }
@@ -98,32 +113,25 @@ export function clearActiveHold(eventId: string): void {
   }
 }
 
-/** RFC 7807 `type` ma middleware idempotency cua ticketing tra khi cung Idempotency-Key dang duoc xu ly. */
-const IDEMPOTENCY_IN_PROGRESS = "urn:eventflow:problem:idempotency-in-progress";
-
-/** Doc `type` cua loi problem+json; khong co body hoac body khong phai JSON thi tra undefined. */
-async function problemType(response: Response): Promise<string | undefined> {
-  try {
-    if (typeof response.json !== "function") return undefined;
-    const body: unknown = await response.json();
-    const type = (body as { type?: unknown } | null)?.type;
-    return typeof type === "string" ? type : undefined;
-  } catch {
-    return undefined;
-  }
+/** Khoa Idempotency-Key on dinh theo lan thu (event + hang ve + so luong): giu qua cac lan nguoi dung thu lai
+ *  cho toi khi thanh cong hoac gap loi dinh doat (F-7). */
+const HOLD_KEY_PREFIX = "ef:hold:";
+function holdKeyStorage(p: { eventId: string; ticketTypeId: string; quantity: number }): string {
+  return `${HOLD_KEY_PREFIX}${p.eventId}:${p.ticketTypeId}:${p.quantity}`;
 }
 
-/** Goi API backend POST /v1/events/{id}/holds. */
+const QUEUE_TOKEN_PROBLEMS = new Set([
+  "/problems/queue-token-expired",
+  "/problems/queue-token-invalid",
+  "/problems/queue-token-mismatch",
+]);
+
+/** Goi API backend POST /v1/events/{id}/holds. Di qua apiFetch: Bearer tu phien, khong cookie, khong header danh tinh gia. */
 export async function requestHold(params: CreateHoldParams): Promise<HoldResult> {
-  const {
-    eventId,
-    ticketTypeId,
-    quantity,
-    queueToken,
-    identityId = "guest-user",
-    idempotencyKey = generateIdempotencyKey(),
-    apiBaseUrl = apiBase(),
-  } = params;
+  const { eventId, ticketTypeId, quantity, queueToken } = params;
+  const keyStorage = holdKeyStorage(params);
+  const callerKey = params.idempotencyKey;
+  const idempotencyKey = callerKey ?? stableKey(keyStorage);
 
   if (!idempotencyKey) {
     throw new HoldClientError(
@@ -133,33 +141,54 @@ export async function requestHold(params: CreateHoldParams): Promise<HoldResult>
     );
   }
 
-  const url = `${apiBaseUrl}/v1/events/${encodeURIComponent(eventId)}/holds`;
-
   let response: Response;
-  try {
-    response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Idempotency-Key": idempotencyKey,
-        "X-Queue-Token": queueToken,
-        "X-Identity-Id": identityId,
-      },
-      body: JSON.stringify({
-        ticket_type_id: ticketTypeId,
-        quantity,
-      }),
-    });
-  } catch {
-    // BR-O5: Loi mang hoac timeout khi goi API ghi -> khong the xac dinh backend da nhan va ghi chua.
-    // Chuyen ve trang thai AMBIGUOUS de bao ve nguoi dung va kho ve.
-    throw new HoldClientError(
-      "Không nhận được phản hồi từ máy chủ khi tạo hold",
-      "AMBIGUOUS",
-    );
+  let attempt = 0;
+  for (;;) {
+    attempt += 1;
+    try {
+      response = await apiFetch(`/v1/events/${encodeURIComponent(eventId)}/holds`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Idempotency-Key": idempotencyKey,
+          "X-Queue-Token": queueToken,
+        },
+        body: JSON.stringify({
+          ticket_type_id: ticketTypeId,
+          quantity,
+        }),
+      });
+    } catch (err) {
+      if (err instanceof ApiError && err.code === "AUTH_REQUIRED") {
+        throw new HoldClientError("Phiên đăng nhập đã hết hạn", "AUTH_REQUIRED", 401);
+      }
+      // BR-O5: Loi mang hoac timeout khi goi API ghi -> khong the xac dinh backend da nhan va ghi chua.
+      // Giu nguyen khoa de lan thu lai la idempotent.
+      throw new HoldClientError(
+        "Không nhận được phản hồi từ máy chủ khi tạo hold",
+        "AMBIGUOUS",
+      );
+    }
+    // 409 "cung khoa dang duoc xu ly": cho Retry-After roi gui lai CUNG khoa (toi da 3 lan gui).
+    if (response.status === 409 && attempt < IN_PROGRESS_MAX_ATTEMPTS) {
+      if ((await readProblem(response)).type === IDEMPOTENCY_IN_PROGRESS) {
+        await sleep(retryAfterMs(response));
+        continue;
+      }
+    }
+    break;
   }
 
-  if (response.ok) {
+  if (!callerKey) {
+    if (response.ok || isDefinitiveStatus(response.status)) {
+      if (!(response.status === 409 && (await readProblem(response)).type === IDEMPOTENCY_IN_PROGRESS)) {
+        forgetKey(keyStorage);
+      }
+    }
+  }
+
+  // 200 (theo contract) va 201 deu la thanh cong.
+  if (response.status === 200 || response.status === 201) {
     const data = await response.json();
     return {
       orderId: data.order_id,
@@ -170,9 +199,27 @@ export async function requestHold(params: CreateHoldParams): Promise<HoldResult>
     };
   }
 
-  // Xu ly cac ma loi nghiep vu
+  const problemType = (await readProblem(response)).type;
+
+  // Queue token het han/sai: khong phai loi dang nhap -> UI dua nguoi dung ve phong cho (AC-10).
+  if ((response.status === 401 || response.status === 403) && problemType && QUEUE_TOKEN_PROBLEMS.has(problemType)) {
+    throw new HoldClientError(
+      "Mã xếp hàng không còn hiệu lực, vui lòng quay lại phòng chờ",
+      "QUEUE_TOKEN_INVALID",
+      response.status,
+    );
+  }
+
+  // 401 khong phai cua queue token (khong refresh duoc / retry van 401): can dang nhap lai.
+  if (response.status === 401) {
+    throw new HoldClientError("Phiên đăng nhập đã hết hạn", "AUTH_REQUIRED", 401);
+  }
+
   switch (response.status) {
     case 403:
+      if (problemType === "/problems/forbidden") {
+        throw new HoldClientError("Tài khoản của bạn không có quyền thực hiện thao tác này", "FORBIDDEN", 403);
+      }
       throw new HoldClientError(
         "Bạn chưa được cấp quyền mua vé, vui lòng quay lại phòng chờ",
         "NOT_ADMITTED",
@@ -181,7 +228,7 @@ export async function requestHold(params: CreateHoldParams): Promise<HoldResult>
     case 409: {
       // Hai loai 409: "het ve" (nghiep vu) va "cung Idempotency-Key dang duoc xu ly" (BR-O5, vd khach
       // bam dup). Loai sau KHONG phai het ve: yeu cau dau co the van thanh cong.
-      if ((await problemType(response)) === IDEMPOTENCY_IN_PROGRESS) {
+      if (problemType === IDEMPOTENCY_IN_PROGRESS) {
         throw new HoldClientError(
           "Yêu cầu giữ vé đang được xử lý, vui lòng chờ giây lát",
           "AMBIGUOUS",
@@ -195,6 +242,12 @@ export async function requestHold(params: CreateHoldParams): Promise<HoldResult>
       );
     }
     case 422:
+      if (problemType === "/problems/per-identity-limit") {
+        throw new HoldClientError("Bạn đã đạt giới hạn số vé cho sự kiện này", "PER_IDENTITY_LIMIT", 422);
+      }
+      if (problemType === "/problems/quantity-not-allowed") {
+        throw new HoldClientError("Số lượng vé không được phép cho một đơn", "QUANTITY_NOT_ALLOWED", 422);
+      }
       throw new HoldClientError(
         "Số lượng vé vượt quá giới hạn cho phép",
         "LIMIT_EXCEEDED",
@@ -215,5 +268,45 @@ export async function requestHold(params: CreateHoldParams): Promise<HoldResult>
         "UNKNOWN",
         response.status,
       );
+  }
+}
+
+/** Huy hold dang giu (DELETE /v1/holds/{holdId}, AC-11). 204 va 404 deu coi la xong va xoa hold luu cuc bo. */
+export async function cancelHold(holdId: string): Promise<void> {
+  let response: Response;
+  try {
+    response = await apiFetch(`/v1/holds/${encodeURIComponent(holdId)}`, {
+      method: "DELETE",
+      headers: { "Idempotency-Key": generateIdempotencyKey() },
+    });
+  } catch (err) {
+    if (err instanceof ApiError && err.code === "AUTH_REQUIRED") {
+      throw new HoldClientError("Phiên đăng nhập đã hết hạn", "AUTH_REQUIRED", 401);
+    }
+    throw new HoldClientError("Không nhận được phản hồi từ máy chủ khi huỷ giữ vé", "AMBIGUOUS");
+  }
+
+  if (response.status === 204 || response.status === 404 || response.ok) {
+    clearActiveHoldById(holdId);
+    return;
+  }
+  if (response.status === 401) {
+    throw new HoldClientError("Phiên đăng nhập đã hết hạn", "AUTH_REQUIRED", 401);
+  }
+  throw new HoldClientError(`Không thể huỷ giữ vé (HTTP ${response.status})`, "UNKNOWN", response.status);
+}
+
+/** Xoa hold luu cuc bo co holdId khop (khong dung toi hold cua su kien khac). */
+function clearActiveHoldById(holdId: string): void {
+  if (typeof window === "undefined" || !window.sessionStorage) return;
+  try {
+    for (let i = sessionStorage.length - 1; i >= 0; i--) {
+      const key = sessionStorage.key(i);
+      if (!key || !key.startsWith(HOLD_STORAGE_PREFIX)) continue;
+      const parsed = JSON.parse(sessionStorage.getItem(key) ?? "null") as { holdId?: string } | null;
+      if (parsed?.holdId === holdId) sessionStorage.removeItem(key);
+    }
+  } catch {
+    // bo qua loi storage
   }
 }

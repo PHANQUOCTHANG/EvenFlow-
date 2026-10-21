@@ -8,7 +8,7 @@ Ngày chạy: 2026-10-21. Windows 11, Docker Desktop 28.4.0, Go 1.26.9, Python 3
 | `go vet` + `go vet -tags=integration`, unit `-race` cả 9 module Go | PASS |
 | Tích hợp waitingroom (`test/leader`, `test/queuetoken`, `test/soldout`) | PASS |
 | Tích hợp ticketing `internal/...` (Postgres 16 + Redis 7) | PASS |
-| Tích hợp event `adapter/postgres` (`ListPublic`, `OpenDueSales`) | PASS |
+| Tích hợp event `adapter/postgres` (`OpenDueSales`; `ListPublic` do PR #85) | PASS, kể cả sau khi gộp `develop` (2026-10-21) |
 | Tích hợp `libs/go/activeevents`, `libs/go/leader` | PASS |
 | ai-worker `pytest` (trừ `tests/integration`) | 203 PASS, gồm test đối chiếu `definitions.json` |
 | Chưa chạy | Cổng oversell 10.000 goroutine (đường giữ ghế không đổi); k6 |

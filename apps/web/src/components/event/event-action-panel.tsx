@@ -3,11 +3,11 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-import type { EventPublicState } from "@/components/event/event-card";
 import { useLocale, useT } from "@/components/i18n/locale-provider";
 import { Button, ServerExpiryCountdown, Spinner } from "@/components/ui";
 import { useServerCountdown } from "@/hooks/use-server-countdown";
 import { useServerTimeSync } from "@/hooks/use-server-time-sync";
+import type { EventStatus } from "@/lib/types/event";
 import {
   type JitterOptions,
   type JitterProgress,
@@ -16,7 +16,7 @@ import {
 
 export interface EventActionPanelProps {
   eventId: string;
-  state: EventPublicState;
+  state: EventStatus;
   saleStartAt: string;
   onJoinQueue?: (eventId: string) => void;
   jitterOptions?: JitterOptions;
@@ -86,7 +86,8 @@ export function EventActionPanel({
     );
   }
 
-  if (state === "CLOSED" || state === "COMPLETED") {
+  // CLOSED / COMPLETED va moi trang thai khong ban duoc (DRAFT, PENDING_REVIEW, REJECTED) deu hien "da dong".
+  if (state !== "SCHEDULED" && state !== "ON_SALE") {
     return (
       <div className={className} lang={locale}>
         <Button variant="secondary" disabled className="w-full">

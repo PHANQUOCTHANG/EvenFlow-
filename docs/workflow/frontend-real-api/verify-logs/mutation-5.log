@@ -1,0 +1,17 @@
+mutation 5 applied to payment-client.ts
+diff --git a/apps/web/src/lib/payment-client.ts b/apps/web/src/lib/payment-client.ts
+index b4b285a..d87c16d 100644
+--- a/apps/web/src/lib/payment-client.ts
++++ b/apps/web/src/lib/payment-client.ts
+@@ -273,6 +273,10 @@ export async function initiatePayment(
+     throw new PaymentClientError("Yêu cầu thanh toán đang được xử lý, vui lòng chờ giây lát", "AMBIGUOUS", 409);
+   }
+ 
++  if (!response.ok) {
++    /* MUTANT 5: fake payment success on error */
++    return { paymentId: `mock_pay_${Date.now()}`, orderId, redirectUrl: effectiveReturnUrl, status: "PENDING", providerTxnId: `txn_${Date.now()}` };
++  }
+   if (response.ok) {
+     const data = (await response.json().catch(() => null)) as Record<string, unknown> | null;
+     if (!data || typeof data.payment_id !== "string" || !data.payment_id) {
+### npx vitest run src/lib (testTimeout 15000)

@@ -2,7 +2,7 @@
 
 Unit: `ticketing/internal/worker/event_discovery_test.go` (`D:`), `waitingroom/internal/app/event_supervisor_test.go` (`S:`),
 `event/internal/worker/sale_opener_test.go` (`O:`), `event/internal/domain/event_lead_test.go` (`L:`),
-`event/internal/adapter/http/public_events_test.go` (`P:`), `event/internal/app/list_public_test.go` (`U:`),
+`event/internal/adapter/http/public_events_contract_test.go` (`P:`, từ PR #85),
 `gateway/internal/proxy/gateway_test.go` (`G:`), `ai-worker/tests/test_config.py` (`A:`).
 Tích hợp: `ticketing/internal/adapter/{postgres,redis}/active_events_integration_test.go` (`TI:`),
 `event/internal/adapter/postgres/event_repo_integration_test.go` (`EI:`), `libs/go/activeevents/integration_test.go` (`AI:`).
@@ -17,6 +17,6 @@ Kịch bản trên compose: `ORG` (organizer → khách mua), xem evidence.md.
 | AC-5 | D: `PostgresLoiGiuDanhSachCuKhongGhiRedis`, `RedisLoiVanCapNhatDanhSachTrongWorker` · S: `DocDanhSachLoiGiuNguyen` |
 | AC-6 | TI: `PublishActiveEvents_GhiTapVaT0` (chưa có / tương lai / đã qua / không T0) |
 | AC-7 | ORG đăng nhập 3 vai · kiểm tay 4 tài khoản 200, sai mật khẩu 401 |
-| AC-8 | P: `AnDanhChiThaySuKienDaDuyet`, `LimitSai` · U: `KepLimit` · EI: `ListPublic_LocTrangThaiVaThuTu` · G: `DinhTuyenDungService` |
+| AC-8 | P: `PublicEvents_KhongCanTokenVaChiTraTrangThaiCongKhai` · `event/internal/adapter/postgres/list_public_integration_test.go` (PR #85) · G: `DinhTuyenDungService` |
 | AC-9 | L: `KhoangBRE2CauHinhDuoc` |
 | AC-10 | A: `KiemDuyetGoiThangEventServiceKhiCauHinh` · ORG bước 3 (`AUTO_APPROVED` sau 1 giây) |

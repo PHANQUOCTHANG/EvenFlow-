@@ -1,6 +1,16 @@
 import type { Locator, Page } from "@playwright/test";
 
-import { type ApiMock, createGate, expect } from "./api-mock";
+import {
+  type ApiMock,
+  E2E_REFRESH_TOKEN,
+  E2E_TICKET_CODES,
+  E2E_TICKET_IDS,
+  E2E_TIER_ID,
+  E2E_USER,
+  createGate,
+  e2eAccessToken,
+  expect,
+} from "./api-mock";
 
 /**
  * Helper dung chung cho luong mua ve tren backend gia lap (EV-198, tach ra o EV-188 plan §1.4 + §6 M4).
@@ -18,16 +28,16 @@ import { type ApiMock, createGate, expect } from "./api-mock";
  * - Cho hydrate truoc khi tuong tac voi trang SSR: doi phan tu co thuoc tinh React `__reactProps$*`.
  */
 
-export const EVENT_ID = "evt-tech-summit-2026";
+export const EVENT_ID = "3f2c8a10-5b7e-4d21-9c3a-0e1f2a3b4c5d"; // events.json (UUID that: backend tu choi id khong phai UUID)
 export const EVENT_SLUG = "vietnam-tech-summit-2026";
-export const TIER_ID = "tier-all-access";
+export const TIER_ID = E2E_TIER_ID; // events.json: All-Access Executive Pass
 export const TIER_NAME = "All-Access Executive Pass";
 export const QUANTITY = 2;
 export const TOTAL_TEXT = "5.000.000 đ"; // lib/format.ts formatVnd(5_000_000)
 export const QUEUE_TOKEN = "qt-e2e-7f3c2a91";
-export const ORDER_ID = "ord-e2e-0001";
-export const HOLD_ID = "hold-e2e-0001";
-export const TICKET_CODES = ["E2E-TKT-0001", "E2E-TKT-0002"];
+export const ORDER_ID = "5b0e7c3a-91d4-4f62-a8e1-2c9d4b6f8a01";
+export const HOLD_ID = "9e4a1d72-06b3-4c85-b7f9-3a1c5e8d2b04";
+export const TICKET_CODES = E2E_TICKET_CODES;
 export const RANK = 42;
 
 export const P = {
@@ -95,10 +105,10 @@ export function mockQueue(api: ApiMock) {
   return admit;
 }
 
-/** Hold 201: expires_at tinh luc nhan request (now + 10 phut). */
+/** Hold 200 (gateway/ticketing that tra 200, khong phai 201): expires_at tinh luc nhan request (now + 10 phut). */
 export function mockHoldCreated(api: ApiMock) {
   api.on("POST", P.holds, () => ({
-    status: 201,
+    status: 200,
     json: {
       order_id: ORDER_ID,
       hold_id: HOLD_ID,
@@ -126,7 +136,8 @@ export function mockPaymentRedirect(api: ApiMock) {
   });
 }
 
-/** Order 200 da thanh toan, kem ve dien tu. */
+/** Order 200 da thanh toan, dung ten truong that cua GET /v1/orders/{id} (contracts.md 4).
+ *  issued_tickets KHONG co qrPayload (backend khong tra); QR den tu POST issue-tickets (api-mock defaults). */
 export function mockPaidOrder(api: ApiMock) {
   api.on("GET", P.order, {
     status: 200,
@@ -138,19 +149,43 @@ export function mockPaidOrder(api: ApiMock) {
       tier_name: TIER_NAME,
       quantity: QUANTITY,
       total_amount: 5_000_000,
+      total_cents: 5_000_000,
+      currency: "VND",
       status: "PAID",
+      order_status: "PAID",
+      hold_id: HOLD_ID,
+      expires_at: "2026-10-13T03:10:00Z",
+      created_at: "2026-10-13T02:55:00Z",
       paid_at: "2026-10-13T03:00:00Z",
       payment_method: "sandbox",
-      // payment-client.ts truyen nguyen issued_tickets; order-result-view doc ticketCode (camelCase).
-      issued_tickets: TICKET_CODES.map((code, i) => ({
-        ticketId: `tkt-e2e-${i + 1}`,
-        ticketCode: code,
+      items: [{ ticket_type_id: TIER_ID, tier_name: TIER_NAME, quantity: QUANTITY, unit_cents: 2_500_000 }],
+      issued_tickets: E2E_TICKET_IDS.map((id, i) => ({
+        ticketId: id,
+        ticketCode: TICKET_CODES[i],
         tierName: TIER_NAME,
         attendeeName: "Nguyen Van E2E",
-        qrPayload: `QR-${code}`,
+        status: "ISSUED",
       })),
     },
   });
+}
+
+/** Phien dang nhap cho luong mua ve: ghi ef_token / ef_refresh / ef_user vao localStorage TRUOC khi
+ *  trang tai (addInitScript). Don gian va tat dinh hon lai di qua form dang nhap; POST /auth/login
+ *  van duoc mock trong api-mock (registerRealApiDefaults) cho test nao muon di qua form. */
+export async function seedLoggedInSession(page: Page): Promise<void> {
+  await page.addInitScript(
+    ({ token, refresh, user }) => {
+      try {
+        window.localStorage.setItem("ef_token", token);
+        window.localStorage.setItem("ef_refresh", refresh);
+        window.localStorage.setItem("ef_user", JSON.stringify(user));
+      } catch {
+        /* storage bi chan: bo qua */
+      }
+    },
+    { token: e2eAccessToken(), refresh: E2E_REFRESH_TOKEN, user: E2E_USER },
+  );
 }
 
 /** Mo trang su kien, cho nut vao phong cho hydrate, bam, cho URL phong cho. */

@@ -21,11 +21,9 @@ func NewRouter(h *EventHandler) http.Handler {
 	mux.Handle("GET /metrics", otelx.MetricsHandler())
 
 	// Cong khai: su kien chua duyet chi chu su kien / moderator / ops thay (canSeeUnpublished).
+	mux.HandleFunc("GET /api/v1/events/public", h.ListPublicEvents)
 	mux.HandleFunc("GET /api/v1/events/{id}", h.GetEventByID)
 	mux.HandleFunc("GET /api/v1/events/slug/{slug}", h.GetEventBySlug)
-	// Danh sach cong khai: chi su kien da duyet (domain.PublicStatuses). "GET /api/v1/events" van la
-	// danh sach "cua toi" cho organizer/moderator/ops.
-	mux.HandleFunc("GET /api/v1/events/public", h.ListPublicEvents)
 
 	// Organizer: tao/sua su kien cua minh.
 	mux.Handle("POST /api/v1/events", h.require(h.CreateEvent, roleOrganizer))
