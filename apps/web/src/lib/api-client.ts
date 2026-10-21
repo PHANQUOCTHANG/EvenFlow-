@@ -2,7 +2,7 @@
  *
  * - URL = apiBase() + path. Co phien -> `Authorization: Bearer <access>`; khong co -> khong gui.
  * - Khong bao gio dung `credentials` va khong tu gui header danh tinh (gateway tu chen tu token).
- * - 401 `/problems/token-expired` -> refresh DUNG 1 lan (single-flight trong tab + Web Locks giua cac tab),
+ * - 401 `/problems/token-expired` -> refresh DUNG 1 lan (single-flight trong tab + Web Locks giua cac tab, khong timeout POST),
  *   roi retry request goc dung 1 lan. Refresh hong -> xoa phien, nem ApiError AUTH_REQUIRED.
  * - 401/403 cua queue token KHONG phai loi dang nhap -> khong refresh, tra nguyen Response.
  * - Truoc khi gui, neu exp cua access token <= 30s thi refresh chu dong (exp chi la goi y, khong tin de xac thuc). */
@@ -97,47 +97,11 @@ let inflight: Promise<string> | null = null;
  *  tranh lap lai trong 30 s khi cung mot cap con trong storage. Cap khac (tab khac xoay) -> khong bi chan. */
 let lastProactive: { pair: string; at: number } | null = null;
 
-const LOCK_WAIT_MS = 10_000;
+const HARD_DEADLINE_MS = 45_000;
+const LOCK_NAME = "ef-auth-refresh";
 
 function pairKey(s: { accessToken: string; refreshToken: string | null }): string {
   return JSON.stringify([s.accessToken, s.refreshToken ?? ""]);
-}
-
-/** Danh dau "dang refresh" cheo tab (G-1): tab dang POST /refresh ghi danh dau truoc khi gui; tab khac cuop khoa
- *  thay danh dau con moi cho cung refresh token thi cho ket qua thay vi POST lan hai (tranh reuse -> thu hoi ca ho token). */
-const MARKER_KEY = "ef_refresh_inflight";
-const MARKER_TTL_MS = 30_000;
-const POLL_MS = 250;
-const HARD_DEADLINE_MS = 45_000;
-
-function writeMarker(rt: string): string {
-  const id = Math.random().toString(36).slice(2);
-  try {
-    localStorage.setItem(MARKER_KEY, JSON.stringify({ rt, at: Date.now(), id }));
-  } catch {
-    /* bo qua */
-  }
-  return id;
-}
-
-function clearMarker(id: string): void {
-  try {
-    const raw = localStorage.getItem(MARKER_KEY);
-    if (raw && (JSON.parse(raw) as { id?: string }).id === id) localStorage.removeItem(MARKER_KEY);
-  } catch {
-    /* bo qua */
-  }
-}
-
-function markerFresh(rt: string): boolean {
-  try {
-    const raw = localStorage.getItem(MARKER_KEY);
-    if (!raw) return false;
-    const m = JSON.parse(raw) as { rt?: string; at?: number };
-    return m.rt === rt && typeof m.at === "number" && Date.now() - m.at < MARKER_TTL_MS;
-  } catch {
-    return false;
-  }
 }
 
 const networkError = () => new ApiError("NETWORK_ERROR", 0, {}, "Khong ket noi duoc may chu");
@@ -150,12 +114,7 @@ async function doRefresh(usedRefresh: string | null): Promise<string> {
     throw new ApiError("AUTH_REQUIRED", 401, {}, "Phien dang nhap da het han");
   }
   if (usedRefresh && cur.refreshToken !== usedRefresh) return cur.accessToken;
-  const markerId = writeMarker(cur.refreshToken);
-  try {
-    return await refreshCore(cur, cur.refreshToken);
-  } finally {
-    clearMarker(markerId);
-  }
+  return refreshCore(cur, cur.refreshToken);
 }
 
 async function refreshCore(cur: Session, refreshToken: string): Promise<string> {
@@ -195,26 +154,11 @@ async function refreshCore(cur: Session, refreshToken: string): Promise<string> 
   return next.accessToken;
 }
 
-const TIMED_OUT = Symbol("lock-timeout");
-const isAbort = (err: unknown): boolean => (err as { name?: string } | null)?.name === "AbortError";
-const LOCK_NAME = "ef-auth-refresh";
-
-/** Cho cap token doi (tab khac xoay xong) khi danh dau "dang refresh" con moi. Tra access token moi, hoac null
- *  (danh dau het/het han, phien mat, hoac qua han) -> nguoi goi quyet dinh. */
-async function waitForRotation(usedRefresh: string | null, abandoned: () => boolean): Promise<string | null> {
-  while (!abandoned()) {
-    const cur = getSession();
-    if (!cur || !cur.refreshToken) return null;
-    if (usedRefresh && cur.refreshToken !== usedRefresh) return cur.accessToken;
-    if (!markerFresh(cur.refreshToken)) return null;
-    await new Promise((r) => setTimeout(r, POLL_MS));
-  }
-  return null;
-}
-
-/** Refresh luon nam trong Web Lock (G-1). Qua LOCK_WAIT_MS ma chua co khoa: doc lai storage (cap doi -> dung),
- *  khong thi cuop khoa (`steal`) va chi POST khi khong tab nao dang refresh cung token; qua HARD_DEADLINE_MS
- *  -> NETWORK_ERROR (khong xoa phien). */
+/** Refresh luon nam trong Web Lock (H-1). Khoa do trinh duyet tha khi tab dong/crash nen khoa dang giu luon cua tab
+ *  song: ben trong khoa doc lai storage (cap khac -> dung luon, khong POST), neu khong POST /refresh dung 1 lan,
+ *  KHONG timeout/abort POST (abort sau khi server da xoay se gay reuse -> thu hoi ca ho token).
+ *  Cho khoa co han cung HARD_DEADLINE_MS (AbortSignal): het han -> NETWORK_ERROR, khong clearSession, khong POST;
+ *  yeu cau da bo khong bao gio duoc cap khoa de POST. */
 async function withRefreshLock(usedRefresh: string | null): Promise<string> {
   const locks = typeof navigator !== "undefined" ? (navigator as Navigator & { locks?: LockManager }).locks : undefined;
   if (!(locks && typeof locks.request === "function")) return doRefresh(usedRefresh);
@@ -222,73 +166,33 @@ async function withRefreshLock(usedRefresh: string | null): Promise<string> {
   let abandoned = false;
   let granted = false;
   const ac = typeof AbortController !== "undefined" ? new AbortController() : null;
-  let waitTimer: ReturnType<typeof setTimeout> | undefined;
   let deadlineTimer: ReturnType<typeof setTimeout> | undefined;
   const deadline = new Promise<never>((_, reject) => {
     deadlineTimer = setTimeout(() => {
+      if (granted) return; // da co khoa: refresh cua chinh minh chay den het, khong bo giua chung
       abandoned = true;
       ac?.abort();
       reject(networkError());
     }, HARD_DEADLINE_MS);
   });
   deadline.catch(() => undefined);
-  const timeout = new Promise<typeof TIMED_OUT>((resolve) => {
-    waitTimer = setTimeout(() => {
-      if (granted) return;
-      ac?.abort();
-      resolve(TIMED_OUT);
-    }, LOCK_WAIT_MS);
+
+  const locked = Promise.resolve(
+    locks.request(LOCK_NAME, ac ? { signal: ac.signal } : {}, () => {
+      if (abandoned) throw networkError();
+      granted = true;
+      clearTimeout(deadlineTimer);
+      return doRefresh(usedRefresh);
+    }),
+  ).catch((err: unknown) => {
+    if ((err as { name?: string } | null)?.name === "AbortError") throw networkError();
+    throw err;
   });
-
-  const run = async (): Promise<string> => {
-    let mine: Promise<string> | null = null;
-    const locked = Promise.resolve(
-      locks.request(LOCK_NAME, ac ? { signal: ac.signal } : {}, () => {
-        granted = true;
-        clearTimeout(waitTimer);
-        if (abandoned) return Promise.reject(networkError());
-        mine = doRefresh(usedRefresh);
-        return mine;
-      }),
-    ).catch(async (err: unknown): Promise<string | typeof TIMED_OUT> => {
-      if (isAbort(err)) {
-        if (!granted) return TIMED_OUT;
-        // Khoa bi cuop khi dang refresh: refresh cua chinh minh van chay tiep, cho no xong.
-        if (mine) return mine;
-      }
-      throw err;
-    });
-    const out = await Promise.race([locked as Promise<string | typeof TIMED_OUT>, timeout]);
-    if (out !== TIMED_OUT) return out;
-
-    // Het han cho khoa: tab khac co the da xoay cap token.
-    const cur = getSession();
-    if (cur?.refreshToken && usedRefresh && cur.refreshToken !== usedRefresh) return cur.accessToken;
-    try {
-      return await Promise.resolve(
-        locks.request(LOCK_NAME, { steal: true }, async () => {
-          if (abandoned) throw networkError();
-          const rotated = await waitForRotation(usedRefresh, () => abandoned);
-          if (rotated) return rotated;
-          if (abandoned) throw networkError();
-          return doRefresh(usedRefresh);
-        }),
-      );
-    } catch (err) {
-      if (isAbort(err)) {
-        // Bi tab khac cuop khoa: cho no xoay xong thay vi POST them.
-        const rotated = await waitForRotation(usedRefresh, () => abandoned);
-        if (rotated) return rotated;
-        throw networkError();
-      }
-      throw err;
-    }
-  };
+  locked.catch(() => undefined);
 
   try {
-    return await Promise.race([run(), deadline]);
+    return await Promise.race([locked as Promise<string>, deadline]);
   } finally {
-    clearTimeout(waitTimer);
     clearTimeout(deadlineTimer);
   }
 }

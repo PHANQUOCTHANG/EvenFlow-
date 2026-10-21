@@ -126,3 +126,11 @@ Nguon: AC-28 (spec.md). Khong xoa, khong skip, khong lam yeu assertion cu; chi d
 
 G-9 (403 `/problems/forbidden` -> FORBIDDEN) skipped: conflicts with a protected contract test, see test-change-request-fix2.md.
 | apps/web/src/lib/fix1/f16-google-remember.test.tsx | "F-6: sign-in prefills identifier from ?identifier=" -> prefill from one-shot sessionStorage key `ef:signin:identifier` (removed after read) | G-7 |
+
+## Fix round 3
+
+| File | Old -> new | Why |
+|---|---|---|
+| apps/web/src/lib/hold-client.contract.test.ts | row `[403, "/problems/forbidden", "NOT_ADMITTED"]` -> `[403, "/problems/forbidden", "FORBIDDEN"]` (only that row) | G-9, human-approved in test-change-request-fix2.md |
+| apps/web/src/lib/fix2/g1-lock-refresh.test.ts | marker/steal tests (slow holder 12 s w/ steal, suspended holder + stealers, steal-aware FIFO stub) replaced by tests of the simplified lock: holder 40 s (1 POST per token), holder 60 s (waiter NETWORK_ERROR at 45 s, abandoned request never POSTs), two waiters timing out together (0 POSTs), own 401 -> AUTH_REQUIRED, no refresh token outside `ef_refresh` (local and session), in-tab single-flight without Web Locks | H-1: marker and steal path removed; same intent (one POST per token, no family revocation) |
+| apps/web/src/lib/fix1/f14-lock-timeout.test.ts | "lock never granted -> tab steals the lock and refreshes inside it" -> "after the deadline NETWORK_ERROR, no POST, session kept" | H-1: steal removed |
