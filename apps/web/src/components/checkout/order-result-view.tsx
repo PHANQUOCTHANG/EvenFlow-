@@ -54,7 +54,7 @@ export function OrderResultView({
 
   // 403 forbidden: hien thong bao ke ca khi da co don PENDING tren man hinh (khong spinner, khong nut kiem tra, khong poll).
   const blocked = error?.type === "FORBIDDEN";
-  const showErrorCard = error !== null && (blocked || order === null);
+  const showErrorCard = error !== null && (blocked || order === null) && (order === null || status === "PENDING");
 
   const handlePrint = () => {
     if (typeof window !== "undefined") {
