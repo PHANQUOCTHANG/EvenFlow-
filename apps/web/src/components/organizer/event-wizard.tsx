@@ -8,6 +8,7 @@
  * - BR-E3: Sau khi ON_SALE, CẤM giảm quota của hạng vé; chỉ được phép tăng.
  */
 
+import Link from "next/link";
 import React, { useState } from "react";
 
 import { Alert } from "@/components/ui/alert";
@@ -17,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/cn";
 import { formatVnd } from "@/lib/format";
 import {
+  validateEventDates,
   validateEventSchedule,
   validateTierQuotaUpdate,
   validateTiers,
@@ -25,9 +27,17 @@ import {
   type TicketTierConfig,
 } from "@/lib/organizer-service";
 
+/** Kết quả một phần: bản nháp đã được tạo nhưng một bước sau đó lỗi (AC-21). */
+export interface WizardSubmitResult {
+  error?: string;
+  failedStep?: "tiers" | "submit";
+  /** Liên kết tới bản nháp đã tạo để người dùng không mất dữ liệu. */
+  draftHref?: string;
+}
+
 export interface EventWizardProps {
   initialEvent?: OrganizerEvent;
-  onSubmit: (data: CreateEventInput) => Promise<void>;
+  onSubmit: (data: CreateEventInput) => Promise<void | WizardSubmitResult>;
   onCancel?: () => void;
   className?: string;
 }
@@ -78,6 +88,8 @@ export function EventWizard({
 }: EventWizardProps) {
   const isEditing = Boolean(initialEvent);
   const isCurrentOnSale = initialEvent?.state === "ON_SALE";
+  // Hạng vé đã tồn tại trên backend: chỉ được đổi quota (PUT .../tiers/{id} {new_quota}).
+  const existingTierIds = new Set((initialEvent?.tiers ?? []).map((t) => t.id));
 
   const [step, setStep] = useState<WizardStep>(1);
 
@@ -88,7 +100,7 @@ export function EventWizard({
   const [venue, setVenue] = useState(initialEvent?.venue ?? "");
   const [startsAt, setStartsAt] = useState(
     initialEvent?.startsAt
-      ? initialEvent.startsAt.slice(0, 16)
+      ? toLocalDatetimeString(new Date(initialEvent.startsAt))
       : toLocalDatetimeString(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)),
   );
 
@@ -110,12 +122,13 @@ export function EventWizard({
   // Step 3: Lịch mở bán
   const [saleStartAt, setSaleStartAt] = useState(
     initialEvent?.saleStartAt
-      ? initialEvent.saleStartAt.slice(0, 16)
+      ? toLocalDatetimeString(new Date(initialEvent.saleStartAt))
       : toLocalDatetimeString(new Date(Date.now() + 2 * 60 * 60 * 1000)), // 2 giờ sau
   );
 
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [partial, setPartial] = useState<WizardSubmitResult | null>(null);
 
   // Xử lý thêm hạng vé mới
   const handleAddTier = () => {
@@ -216,6 +229,15 @@ export function EventWizard({
         return;
       }
 
+      const datesVal = validateEventDates(
+        new Date(startsAt).toISOString(),
+        new Date(saleStartAt).toISOString(),
+      );
+      if (!datesVal.isValid) {
+        setErrorMsg(datesVal.error ?? "Thời gian sự kiện không hợp lệ.");
+        return;
+      }
+
       setStep(4);
       return;
     }
@@ -231,6 +253,7 @@ export function EventWizard({
   // Nộp form
   const handleSubmit = async (submitForReview: boolean) => {
     setErrorMsg(null);
+    setPartial(null);
     setIsSubmitting(true);
 
     try {
@@ -245,7 +268,11 @@ export function EventWizard({
         submitForReview,
       };
 
-      await onSubmit(data);
+      const result = await onSubmit(data);
+      if (result && result.error) {
+        setPartial(result);
+        setErrorMsg(result.error);
+      }
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : String(err));
     } finally {
@@ -285,9 +312,27 @@ export function EventWizard({
       </div>
 
       {/* Hiển thị lỗi nếu có */}
-      {errorMsg && (
+      {errorMsg && !partial && (
         <Alert variant="error" title="Lỗi xác thực quy tắc nghiệp vụ">
           {errorMsg}
+        </Alert>
+      )}
+
+      {partial && (
+        <Alert
+          variant="error"
+          title={`${isEditing ? "Đã lưu thông tin sự kiện" : "Đã tạo bản nháp"} nhưng bước ${
+            partial.failedStep === "submit" ? "gửi kiểm duyệt" : "tạo hạng vé"
+          } thất bại`}
+        >
+          <p>{errorMsg}</p>
+          {partial.draftHref && (
+            <p className="mt-xs">
+              <Link href={partial.draftHref} className="underline font-semibold">
+                Mở bản nháp đã lưu để hoàn tất
+              </Link>
+            </p>
+          )}
         </Alert>
       )}
 
@@ -373,7 +418,12 @@ export function EventWizard({
                   <span className="font-semibold text-body-sm text-fg">
                     Hạng vé #{idx + 1}
                   </span>
-                  {tiers.length > 1 && (
+                  {existingTierIds.has(tier.id) ? (
+                    <span className="text-body-xs text-fg-muted">
+                      Hạng vé đã tạo — chỉ được đổi số lượng
+                    </span>
+                  ) : (
+                    tiers.length > 1 && (
                     <button
                       type="button"
                       onClick={() => handleRemoveTier(tier.id)}
@@ -381,6 +431,7 @@ export function EventWizard({
                     >
                       Xoá hạng vé
                     </button>
+                    )
                   )}
                 </div>
 
@@ -390,6 +441,7 @@ export function EventWizard({
                     label="Tên hạng vé"
                     required
                     value={tier.name}
+                    disabled={existingTierIds.has(tier.id)}
                     onChange={(e) => handleUpdateTier(tier.id, "name", e.target.value)}
                     placeholder="VD: VIP"
                   />
@@ -407,6 +459,7 @@ export function EventWizard({
                       min={0}
                       required
                       value={tier.price}
+                      disabled={existingTierIds.has(tier.id)}
                       onChange={(e) =>
                         handleUpdateTier(tier.id, "price", Number(e.target.value))
                       }
@@ -507,9 +560,9 @@ export function EventWizard({
           </div>
 
           <Alert variant="info" title="Quy trình kiểm duyệt AI (BR-E4 & BR-E5)">
-            Khi bấm &ldquo;Gửi kiểm duyệt&rdquo;, sự kiện sẽ được quét tự động qua AI theo 4 trục: Nội dung
-            cấm, Sai lệch/lừa đảo, Bản quyền hình ảnh và Thông tin thiếu. Điểm rủi ro &lt; 0.3 sẽ
-            tự động chuyển sang trạng thái SCHEDULED.
+            Khi bấm &ldquo;Gửi kiểm duyệt&rdquo;, sự kiện chuyển sang trạng thái PENDING_REVIEW để chờ
+            kiểm duyệt (AI 4 trục: Nội dung cấm, Sai lệch/lừa đảo, Bản quyền hình ảnh và Thông tin
+            thiếu). Kết quả duyệt sẽ được cập nhật ở trang trạng thái kiểm duyệt.
           </Alert>
         </div>
       )}

@@ -1,20 +1,25 @@
 "use client";
 
-import { useState } from "react";
-
 import { ModerationStatusCard } from "@/components/organizer/moderation-status-card";
-import {
-  resubmitForModeration,
-  type OrganizerEvent,
-} from "@/lib/organizer-service";
+import { cancelOrganizerEvent, submitOrganizerEvent } from "@/lib/organizer-service";
 
-export function ReviewStatusClient({ initialEvent }: { initialEvent: OrganizerEvent }) {
-  const [event, setEvent] = useState<OrganizerEvent>(initialEvent);
+import { OrganizerEventView } from "../../../_lib/organizer-event-view";
 
-  const handleResubmit = async (id: string) => {
-    const updated = await resubmitForModeration(id);
-    setEvent(updated);
-  };
-
-  return <ModerationStatusCard event={event} onResubmit={handleResubmit} />;
+export function ReviewStatusClient({ eventId }: { eventId: string }) {
+  return (
+    <OrganizerEventView eventId={eventId}>
+      {(event, setEvent) => (
+        <ModerationStatusCard
+          event={event}
+          onResubmit={async (id) => {
+            // Giữ hạng vé đã tải: phản hồi submit không kèm tiers.
+            setEvent({ ...(await submitOrganizerEvent(id)), tiers: event.tiers });
+          }}
+          onCancel={async (id) => {
+            setEvent({ ...(await cancelOrganizerEvent(id)), tiers: event.tiers });
+          }}
+        />
+      )}
+    </OrganizerEventView>
+  );
 }
