@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 import type { ConnectionState } from "@/components/queue/queue-status-panel";
 import { backoffDelay } from "@/lib/backoff";
+import { ApiError } from "@/lib/api-client";
 import { QueueError } from "@/lib/queue-client";
 import {
   DEFAULT_POLL_MS,
@@ -233,6 +234,12 @@ export function useQueueStatus({
         schedule(result.pollAfterMs);
       } catch (err) {
         if (disposed || abort.signal.aborted) return;
+
+        // Phien dang nhap het han va refresh that bai (F-11): retry khong giup duoc, dung han va de UI moi dang nhap.
+        if (err instanceof ApiError && err.code === "AUTH_REQUIRED") {
+          update({ error: new QueueError(401, err.message, "AUTH_REQUIRED"), transport: "idle" });
+          return;
+        }
 
         if (err instanceof QueueError && err.status >= 400 && err.status < 500 && err.status !== 429) {
           // Token sai/het han, chua dang nhap...: retry khong lam no dung len duoc.
