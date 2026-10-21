@@ -9,6 +9,15 @@
  */
 
 import { ApiError, apiFetch, readProblem, type ApiFetchInit } from "@/lib/api-client";
+import {
+  forgetKey,
+  IDEMPOTENCY_IN_PROGRESS,
+  IN_PROGRESS_MAX_ATTEMPTS,
+  isDefinitiveStatus,
+  retryAfterMs,
+  sleep,
+  stableKey,
+} from "@/lib/idempotency";
 
 export type PaymentMethod = "vnpay" | "momo" | "sandbox" | "stripe";
 
@@ -125,6 +134,7 @@ export function generateIdempotencyKey(): string {
   });
 }
 
+const PAY_KEY_PREFIX = "ef:pay:";
 const ORDER_STORAGE_PREFIX = "evenflow_order_";
 
 /** Luu thong tin don hang cuc bo (chi de debug / tuong thich); KHONG bao gio duoc doc lai nhu du lieu song. */
@@ -162,8 +172,14 @@ export function clearRecentOrder(orderId: string): void {
 /** Goi apiFetch va doi loi ha tang thanh PaymentClientError (khong bao gio nuot loi thanh thanh cong). */
 async function paymentFetch(path: string, init: ApiFetchInit, networkMessage: string): Promise<Response> {
   try {
-    return await apiFetch(path, init);
+    const res = await apiFetch(path, init);
+    // 401 con lai sau khi apiFetch da thu refresh (hoac khong co phien): can dang nhap lai (F-5).
+    if (res.status === 401 && init.auth !== false) {
+      throw new PaymentClientError("Phiên đăng nhập đã hết hạn", "AUTH_REQUIRED", 401);
+    }
+    return res;
   } catch (err) {
+    if (err instanceof PaymentClientError) throw err;
     if (err instanceof ApiError && err.code === "AUTH_REQUIRED") {
       throw new PaymentClientError("Phiên đăng nhập đã hết hạn", "AUTH_REQUIRED", 401);
     }
@@ -185,9 +201,11 @@ export async function initiatePayment(
     buyerName,
     buyerEmail,
     buyerPhone,
-    idempotencyKey = generateIdempotencyKey(),
     returnUrl,
   } = params;
+  // Khoa on dinh theo don (F-8): thu lai sau NETWORK_ERROR dung lai khoa cu; xoa khi thanh cong / loi dinh doat.
+  const keyStorage = `${PAY_KEY_PREFIX}${orderId}`;
+  const idempotencyKey = params.idempotencyKey ?? stableKey(keyStorage);
 
   if (!idempotencyKey) {
     throw new PaymentClientError(
@@ -200,27 +218,46 @@ export async function initiatePayment(
   const effectiveReturnUrl =
     returnUrl || `/checkout/${encodeURIComponent(eventId)}/result?orderId=${encodeURIComponent(orderId)}`;
 
-  const response = await paymentFetch(
-    `/v1/events/${encodeURIComponent(eventId)}/payments`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Idempotency-Key": idempotencyKey,
+  const send = () =>
+    paymentFetch(
+      `/v1/events/${encodeURIComponent(eventId)}/payments`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Idempotency-Key": idempotencyKey,
+        },
+        body: JSON.stringify({
+          order_id: orderId,
+          hold_id: holdId,
+          amount,
+          method,
+          buyer_name: buyerName,
+          buyer_email: buyerEmail,
+          buyer_phone: buyerPhone,
+          return_url: effectiveReturnUrl,
+        }),
       },
-      body: JSON.stringify({
-        order_id: orderId,
-        hold_id: holdId,
-        amount,
-        method,
-        buyer_name: buyerName,
-        buyer_email: buyerEmail,
-        buyer_phone: buyerPhone,
-        return_url: effectiveReturnUrl,
-      }),
-    },
-    "Không thể kết nối đến máy chủ thanh toán (BR-O5)",
-  );
+      "Không thể kết nối đến máy chủ thanh toán (BR-O5)",
+    );
+
+  let response = await send();
+  // 409 "cung khoa dang duoc xu ly": cho Retry-After roi gui lai CUNG khoa (toi da 3 lan gui).
+  let inProgress = false;
+  for (let attempt = 1; response.status === 409; attempt++) {
+    inProgress = (await readProblem(response)).type === IDEMPOTENCY_IN_PROGRESS;
+    if (!inProgress || attempt >= IN_PROGRESS_MAX_ATTEMPTS) break;
+    await sleep(retryAfterMs(response));
+    response = await send();
+  }
+
+  if (!params.idempotencyKey && (response.ok || (isDefinitiveStatus(response.status) && !inProgress))) {
+    forgetKey(keyStorage);
+  }
+
+  if (inProgress && response.status === 409) {
+    throw new PaymentClientError("Yêu cầu thanh toán đang được xử lý, vui lòng chờ giây lát", "AMBIGUOUS", 409);
+  }
 
   if (response.ok) {
     const data = (await response.json().catch(() => null)) as Record<string, unknown> | null;
@@ -373,7 +410,7 @@ function issueKeyFor(orderId: string): string {
   }
 }
 
-function forgetIssueKey(orderId: string): void {
+export function forgetIssueKey(orderId: string): void {
   try {
     sessionStorage.removeItem(`${ISSUE_KEY_PREFIX}${orderId}`);
   } catch {
@@ -397,7 +434,7 @@ export async function issueTickets(orderId: string): Promise<IssuedTicketQR[]> {
   }
   const data = (await res.json().catch(() => null)) as { tickets?: unknown } | null;
   const list = Array.isArray(data?.tickets) ? (data.tickets as Array<Record<string, unknown>>) : [];
-  return list
+  const tickets = list
     .filter((t) => typeof t.qr_payload === "string" && t.qr_payload !== "")
     .map((t) => ({
       ticketId: String(t.id),
@@ -405,4 +442,7 @@ export async function issueTickets(orderId: string): Promise<IssuedTicketQR[]> {
       status: String(t.status ?? ""),
       qrPayload: t.qr_payload as string,
     }));
+  // 2xx nhung chua co ve QR: middleware idempotency se phat lai dung phan hoi rong cho cung khoa -> doi khoa (F-13).
+  if (tickets.length === 0) forgetIssueKey(orderId);
+  return tickets;
 }

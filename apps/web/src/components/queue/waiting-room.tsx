@@ -12,6 +12,7 @@ import { useT } from "@/components/i18n/locale-provider";
 import { Badge, Button, Spinner } from "@/components/ui";
 import { useQueueStatus } from "@/hooks/use-queue-status";
 import { useServerTimeSync } from "@/hooks/use-server-time-sync";
+import { ApiError } from "@/lib/api-client";
 import { joinQueue, QueueError } from "@/lib/queue-client";
 import { cn } from "@/lib/cn";
 import { clearQueueToken, readQueueToken, saveQueueToken } from "@/lib/queue-token";
@@ -24,7 +25,7 @@ export interface WaitingRoomProps {
 }
 
 /** Loi join co the hanh dong duoc (AC-9): otp-required / device-required co huong dan rieng. */
-type JoinFailure = { kind: "otp" | "device" | "generic"; message?: string };
+type JoinFailure = { kind: "otp" | "device" | "auth" | "generic"; message?: string };
 
 export function WaitingRoom({
   eventId,
@@ -74,7 +75,9 @@ export function WaitingRoom({
         }
       } catch (err) {
         if (!cancelled) {
-          if (err instanceof QueueError) {
+          if (err instanceof ApiError && err.code === "AUTH_REQUIRED") {
+            setJoinError({ kind: "auth" });
+          } else if (err instanceof QueueError) {
             if (err.code === "OTP_REQUIRED") {
               setJoinError({ kind: "otp" });
             } else if (err.code === "DEVICE_REQUIRED") {
@@ -116,7 +119,7 @@ export function WaitingRoom({
   // 401 tu status = queue token khong con hop le (het han 24 gio, hoac cap truoc khi doi sang token ky,
   // EV-137). Vao lai hang dung MOT lan; lan hai van loi thi hien man loi de khach tu quyet dinh.
   useEffect(() => {
-    if (error?.status === 401 && !rejoinedRef.current) {
+    if (error?.status === 401 && error.code !== "AUTH_REQUIRED" && !rejoinedRef.current) {
       rejoinedRef.current = true;
       clearQueueToken(eventId);
       setToken(null);
@@ -140,6 +143,27 @@ export function WaitingRoom({
       <div className={cn("flex flex-col items-center justify-center p-2xl gap-md", className)}>
         <Spinner size="lg" />
         <p className="text-body-lg text-fg font-medium">Đang đăng ký vào phòng chờ...</p>
+      </div>
+    );
+  }
+
+  // Phien dang nhap het han (join hoac poll): moi dang nhap lai thay vi bao loi mang (F-11).
+  if (joinError?.kind === "auth" || error?.code === "AUTH_REQUIRED") {
+    return (
+      <div
+        role="alert"
+        className={cn(
+          "flex flex-col items-center justify-center p-xl gap-md rounded-container border border-danger bg-danger-soft text-center",
+          className
+        )}
+      >
+        <p className="text-body-md text-fg">{t("waiting.signInRequired")}</p>
+        <Link
+          href="/auth/sign-in"
+          className="ef-focus-ring inline-flex items-center justify-center rounded-control border border-transparent bg-primary px-md py-sm text-label-md text-primary-fg hover:bg-primary-hover"
+        >
+          {t("checkout.signInAction")}
+        </Link>
       </div>
     );
   }

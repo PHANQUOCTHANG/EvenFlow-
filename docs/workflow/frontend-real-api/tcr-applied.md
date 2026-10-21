@@ -108,3 +108,8 @@ Nguon: AC-28 (spec.md). Khong xoa, khong skip, khong lam yeu assertion cu; chi d
 | apps/web/src/app/(organizer)/organizer/events/[eventId]/edit/page.test.tsx | partial tier failure test: no longer asserts the "Mo ban nhap" link (`/edit` on the same page); asserts the event is reloaded instead | F-3: a link to the current route never reloaded; retry now diffs against freshly loaded server tiers |
 | apps/web/src/components/organizer/event-wizard.test.tsx | BR-E2 test: step 3 with <30 min shows the BR-E2 warning and still advances; "Gui kiem duyet" is blocked with BR-E2 | F-19: gate belongs to submit-for-review only (matches createOrganizerEvent) |
 | apps/web/src/components/organizer/event-wizard.test.tsx | ON_SALE decrease test goes through the quota-only form ("Luu so luong ve") instead of wizard step 2 | F-1: ON_SALE renders quota-only mode; BR-E3 message unchanged |
+## Fix round 1 (flow)
+
+| File | Old -> new | Why |
+|---|---|---|
+| apps/web/src/components/checkout/order-result-view.test.tsx | WP2 PAID test: synchronous `getByRole("heading", /Vé điện tử của bạn đã sẵn sàng/)` moved to AFTER `await findByRole("img", "Mã QR vé ABCDEF12")` (assertion text unchanged) | F-13 (C-11): the "tickets are ready" headline is now shown only when QR tickets exist; before that the headline is "Thanh toán thành công — đang phát hành vé". The test still asserts the same headline once the QR is rendered. |

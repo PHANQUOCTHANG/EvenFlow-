@@ -51,6 +51,7 @@ export function PaymentHandoffView({
     submitting,
     holdExpired,
     error,
+    authRequired,
     submitPayment,
   } = usePaymentSession({
     eventId,
@@ -123,8 +124,21 @@ export function PaymentHandoffView({
 
       {/* Lỗi submit khác nếu có */}
       {error && !holdExpired ? (
-        <Alert variant="error" title="Không thể khởi tạo thanh toán" className="mb-md">
-          {error}
+        <Alert
+          variant="error"
+          title={authRequired ? t("checkout.authRequired") : "Không thể khởi tạo thanh toán"}
+          className="mb-md"
+        >
+          {authRequired ? (
+            <Link
+              href="/auth/sign-in"
+              className="ef-focus-ring inline-flex items-center justify-center rounded-control border border-border-strong bg-surface px-md py-sm text-label-md text-fg hover:bg-surface-subtle"
+            >
+              {t("checkout.signInAction")}
+            </Link>
+          ) : (
+            error
+          )}
         </Alert>
       ) : null}
 
