@@ -574,7 +574,7 @@ func TestTichHop_PublishRetryLoiKhongMatMessage(t *testing.T) {
 
 func TestTichHop_DeclareTopologyThatHaiLan(t *testing.T) {
 	conn := dial(t)
-	top := Merge(AITopology(), TicketingTopology(), NotificationTopology())
+	top := Merge(AITopology(), PaymentTopology(), TicketingTopology(), NotificationTopology())
 	ch := channel(t, conn)
 	for i := 0; i < 2; i++ {
 		if err := Declare(ch, top); err != nil {
@@ -585,5 +585,73 @@ func TestTichHop_DeclareTopologyThatHaiLan(t *testing.T) {
 		if n := depth(t, conn, q.Name); n != 0 {
 			t.Errorf("%s co %d message", q.Name, n)
 		}
+	}
+}
+
+// --- Topology su kien that (EV-131/EV-133): payment.events -> ticketing + notification ---
+
+// Message loi o consumer ticketing di qua hang tre roi quay lai DUNG hang ticketing, handler van
+// thay routing key goc; consumer notification cung nghe order.paid KHONG nhan ban lap. Key chua
+// co consumer nao (ticketing.hold.created) van publish duoc nho sink.
+func TestTichHop_TopologySuKien_RetryVeDungHangGiuKeyGoc(t *testing.T) {
+	conn := dial(t)
+	if err := Declare(channel(t, conn), Merge(PaymentTopology(), TicketingTopology(), NotificationTopology())); err != nil {
+		t.Fatalf("Declare: %v", err)
+	}
+	pub := newPublisher(t, conn)
+
+	var mu sync.Mutex
+	var keys []string
+	var attempts []int
+	run := runConsumer(t, conn, ConsumerConfig{
+		Queue:              TicketingOrderPaidQueue,
+		MaxAttempts:        3,
+		RetryExchange:      TicketingRetryExchange,
+		RetryKey:           TicketingOrderPaidKey,
+		DeadLetterExchange: TicketingDeadLetterEx,
+		DeadLetterKey:      TicketingOrderPaidKey,
+	}, func(_ context.Context, d Delivery) error {
+		mu.Lock()
+		defer mu.Unlock()
+		keys = append(keys, d.RoutingKey)
+		attempts = append(attempts, d.Attempt)
+		if len(keys) == 1 {
+			return errors.New("db tam mat")
+		}
+		return nil
+	})
+
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+	if err := pub.Publish(ctx, "payment.events", "order.paid", Message{Body: []byte(`{"order_id":"o-1"}`)}); err != nil {
+		t.Fatalf("Publish order.paid: %v", err)
+	}
+	if err := pub.Publish(ctx, "ticketing.events", "ticketing.hold.created", Message{Body: []byte(`{}`)}); err != nil {
+		t.Fatalf("key chua co consumer phai publish duoc nho sink, nhan: %v", err)
+	}
+
+	eventually(t, 20*time.Second, "handler ticketing chay lan 2 sau retry", func() bool {
+		mu.Lock()
+		defer mu.Unlock()
+		return len(keys) == 2
+	})
+	_ = run.stop()
+
+	mu.Lock()
+	defer mu.Unlock()
+	if keys[0] != "order.paid" || keys[1] != "order.paid" {
+		t.Errorf("routing key handler thay = %v, muon [order.paid order.paid]", keys)
+	}
+	if attempts[0] != 1 || attempts[1] != 2 {
+		t.Errorf("attempts = %v, muon [1 2]", attempts)
+	}
+	if n := depth(t, conn, NotificationEventsQueue); n != 1 {
+		t.Errorf("hang notification co %d message, muon 1 (retry cua ticketing khong duoc lap sang)", n)
+	}
+	if n := depth(t, conn, TicketingDeadLetterQueue); n != 0 {
+		t.Errorf("DLQ ticketing co %d message, muon 0", n)
+	}
+	if n := depth(t, conn, "ticketing.events.sink.q"); n != 1 {
+		t.Errorf("sink ticketing co %d message, muon 1", n)
 	}
 }

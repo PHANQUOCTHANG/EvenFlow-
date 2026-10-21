@@ -6,6 +6,7 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -15,6 +16,7 @@ import (
 
 	"github.com/eventflow/eventflow/libs/go/httpx"
 	"github.com/eventflow/eventflow/libs/go/idem"
+	"github.com/eventflow/eventflow/libs/go/mq"
 	"github.com/eventflow/eventflow/libs/go/otelx"
 	gatewayadapter "github.com/eventflow/eventflow/services/payment/internal/adapter/gateway"
 	httpadapter "github.com/eventflow/eventflow/services/payment/internal/adapter/http"
@@ -24,9 +26,11 @@ import (
 	"github.com/eventflow/eventflow/services/payment/internal/config"
 	"github.com/eventflow/eventflow/services/payment/internal/domain"
 	"github.com/eventflow/eventflow/services/payment/internal/port"
+	"github.com/eventflow/eventflow/services/payment/internal/worker"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/prometheus/client_golang/prometheus"
+	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 type uuidGenerator struct{}
@@ -54,6 +58,7 @@ func main() {
 
 	var repo port.PaymentRepository
 	var idemStore idem.Store
+	var dbPool *pgxpool.Pool // nil khi chay memory repository
 
 	pool, err := pgxpool.New(ctx, cfg.DatabaseURL)
 	if err != nil {
@@ -66,6 +71,7 @@ func main() {
 		log.Info("ket noi postgres thanh cong")
 		repo = postgres.NewRepository(pool)
 		idemStore = idem.NewPostgresStore(pool)
+		dbPool = pool
 		defer pool.Close()
 	}
 
@@ -146,9 +152,17 @@ func main() {
 
 	handler.Routes(mux, idemMiddleware)
 
+	// EV-103: noi tiep traceparent do gateway chuyen toi.
+	shutdownTrace, err := otelx.Init(context.Background(), "payment")
+	if err != nil {
+		log.Error("khoi tao trace that bai", "err", err)
+		os.Exit(1)
+	}
+	defer func() { _ = shutdownTrace(context.Background()) }()
+
 	server := &http.Server{
 		Addr:         cfg.HTTPAddr,
-		Handler:      mux,
+		Handler:      httpx.Chain(mux, otelx.HTTP("payment")),
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
 	}
@@ -215,6 +229,18 @@ func main() {
 		}
 	}()
 
+	// Relay outbox: order.paid -> ticketing phat ve + notification gui email (EV-131).
+	if rabbitURL := os.Getenv("RABBITMQ_URL"); rabbitURL == "" || dbPool == nil {
+		log.Warn("khong chay relay outbox: thieu RABBITMQ_URL hoac Postgres; su kien thanh toan nam lai trong outbox_events")
+	} else {
+		closeMQ, err := startOutboxRelay(workerCtx, dbPool, rabbitURL, log)
+		if err != nil {
+			log.Error("khoi dong relay outbox that bai", "err", err)
+			os.Exit(1)
+		}
+		defer closeMQ()
+	}
+
 	stopChan := make(chan os.Signal, 1)
 	signal.Notify(stopChan, os.Interrupt, syscall.SIGTERM)
 
@@ -238,4 +264,41 @@ func main() {
 	}
 
 	log.Info("payment-svc da tat an toan")
+}
+
+// startOutboxRelay ket noi RabbitMQ, khai bao PaymentTopology va chay relay trong goroutine.
+// Mat ket noi thi thoat process de compose/k8s khoi dong lai: relay chay tren kenh da dong se
+// bao loi mai ma khong bao gio phat lai duoc.
+func startOutboxRelay(ctx context.Context, pool *pgxpool.Pool, url string, log *slog.Logger) (func(), error) {
+	conn, err := amqp.Dial(url)
+	if err != nil {
+		return nil, fmt.Errorf("ket noi rabbitmq: %w", err)
+	}
+	ch, err := conn.Channel()
+	if err != nil {
+		_ = conn.Close()
+		return nil, fmt.Errorf("mo channel: %w", err)
+	}
+	if err := mq.Declare(ch, mq.PaymentTopology()); err != nil {
+		_ = conn.Close()
+		return nil, fmt.Errorf("khai bao topology: %w", err)
+	}
+	pub, err := mq.NewPublisher(ch)
+	if err != nil {
+		_ = conn.Close()
+		return nil, fmt.Errorf("tao publisher: %w", err)
+	}
+
+	closed := conn.NotifyClose(make(chan *amqp.Error, 1))
+	go func() {
+		if e, ok := <-closed; ok && ctx.Err() == nil {
+			log.Error("mat ket noi rabbitmq, thoat de khoi dong lai", "err", e)
+			os.Exit(1)
+		}
+	}()
+
+	relay := worker.NewOutboxRelay(pool, pub, worker.DefaultOutboxRelayConfig(), log)
+	go func() { _ = relay.Run(ctx) }()
+	log.Info("relay outbox payment dang chay", "exchange", worker.Exchange, "routing_keys", worker.PaymentRoutingKeys)
+	return func() { _ = conn.Close() }, nil
 }

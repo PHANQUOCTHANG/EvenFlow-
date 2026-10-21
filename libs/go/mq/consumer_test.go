@@ -557,3 +557,27 @@ func TestConsumeWiring_CoRetryExchangeLoiDauDiRetry(t *testing.T) {
 		t.Errorf("%s = %v, muon 2", AttemptHeader, pf.lastPublished(t).Headers[AttemptHeader])
 	}
 }
+
+// Qua hang retry, broker giao lai message voi routing key cua hang tre. Handler van phai thay
+// key goc, ke ca sau nhieu lan chuyen tiep.
+func TestRoutingKeyGoc_GiuQuaRetry(t *testing.T) {
+	first := amqp.Delivery{RoutingKey: "order.paid", Body: []byte("b")}
+	fm := forwardMessage(first, 2)
+	if fm.Headers[RoutingKeyHeader] != "order.paid" {
+		t.Fatalf("%s = %v, muon order.paid", RoutingKeyHeader, fm.Headers[RoutingKeyHeader])
+	}
+
+	// Broker dead-letter ve hang goc qua default exchange: routing key = ten hang.
+	redelivered := amqp.Delivery{RoutingKey: "notification.events.q", Headers: amqp.Table(fm.Headers), Body: fm.Body}
+	if got := newDelivery(redelivered).RoutingKey; got != "order.paid" {
+		t.Errorf("RoutingKey sau retry = %q, muon order.paid", got)
+	}
+	if got := forwardMessage(redelivered, 3).Headers[RoutingKeyHeader]; got != "order.paid" {
+		t.Errorf("chuyen tiep lan 2 doi key goc thanh %v", got)
+	}
+
+	// Message chua tung chuyen tiep: dung routing key cua lan giao.
+	if got := newDelivery(amqp.Delivery{RoutingKey: "chat"}).RoutingKey; got != "chat" {
+		t.Errorf("RoutingKey = %q, muon chat", got)
+	}
+}

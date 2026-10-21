@@ -6,6 +6,7 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -13,7 +14,13 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgxpool"
+	amqp "github.com/rabbitmq/amqp091-go"
+
+	"github.com/eventflow/eventflow/libs/go/mq"
+	"github.com/eventflow/eventflow/libs/go/otelx"
 	httpadapter "github.com/eventflow/eventflow/services/notification/internal/adapter/http"
+	pgadapter "github.com/eventflow/eventflow/services/notification/internal/adapter/postgres"
 	"github.com/eventflow/eventflow/services/notification/internal/adapter/rabbitmq"
 	"github.com/eventflow/eventflow/services/notification/internal/adapter/sender"
 	"github.com/eventflow/eventflow/services/notification/internal/adapter/store"
@@ -35,6 +42,14 @@ func main() {
 		"email_provider", cfg.EmailProvider,
 		"sms_provider", cfg.SMSProvider,
 	)
+
+	// EV-103: span cua consumer (mq.Consume) noi tiep trace cua payment/ticketing qua header AMQP.
+	shutdownTrace, err := otelx.Init(context.Background(), "notification")
+	if err != nil {
+		log.Error("khoi tao trace that bai", "err", err)
+		os.Exit(1)
+	}
+	defer func() { _ = shutdownTrace(context.Background()) }()
 
 	// 1. Khoi tao Template Renderer tieng Viet
 	renderer, err := template.NewGoTemplateRenderer()
@@ -72,13 +87,38 @@ func main() {
 	refundUC := app.NewProcessRefundUseCase(emailSender, smsSender, renderer, memStore, log)
 	getHistoryUC := app.NewGetNotificationHistoryUseCase(memStore)
 
-	// 6. Khoi tao Consumer RabbitMQ
-	_ = rabbitmq.NewNotificationEventConsumer(orderPaidUC, ticketIssuedUC, refundUC, log)
+	// 6. Consumer RabbitMQ: order.paid, payment.refunded, ticketing.ticket.issued -> email/SMS.
+	// Payment/ticketing chi phat identity_id, email lay tu Postgres (DATABASE_URL).
+	consumer := rabbitmq.NewNotificationEventConsumer(orderPaidUC, ticketIssuedUC, refundUC, log)
+	consumeCtx, stopConsume := context.WithCancel(context.Background())
+	defer stopConsume()
+	if cfg.DatabaseURL != "" {
+		pool, err := pgxpool.New(consumeCtx, cfg.DatabaseURL)
+		if err != nil {
+			log.Error("ket noi postgres that bai", "err", err)
+			os.Exit(1)
+		}
+		defer pool.Close()
+		consumer.WithDirectory(pgadapter.NewDirectory(pool))
+	} else {
+		log.Warn("khong co DATABASE_URL: chi gui duoc message da mang san recipient_email")
+	}
+	if os.Getenv("AMQP_URL") == "" {
+		log.Warn("khong co AMQP_URL: notification khong nghe RabbitMQ, chi nhan qua HTTP")
+	} else {
+		closeMQ, err := startConsumer(consumeCtx, cfg.AMQPURL, consumer, log)
+		if err != nil {
+			log.Error("khoi dong consumer rabbitmq that bai", "err", err)
+			os.Exit(1)
+		}
+		defer closeMQ()
+	}
 
 	// 7. Khoi tao HTTP Server
 	mux := http.NewServeMux()
 	handler := httpadapter.NewNotificationHandler(orderPaidUC, ticketIssuedUC, refundUC, getHistoryUC)
 	handler.RegisterRoutes(mux)
+	mux.Handle("GET /metrics", otelx.MetricsHandler())
 
 	server := &http.Server{
 		Addr:              cfg.HTTPAddr,
@@ -103,6 +143,7 @@ func main() {
 
 	<-stop
 	log.Info("nhan tin hieu tat, dang dung server gracefully...")
+	stopConsume()
 
 	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer shutdownCancel()
@@ -112,4 +153,55 @@ func main() {
 	}
 
 	log.Info("notification server da tat an toan")
+}
+
+// startConsumer ket noi RabbitMQ, khai bao topology (kem exchange nguon payment.events va
+// ticketing.events) va consume notification.events.q trong goroutine. Consumer dung hoac mat
+// ket noi thi thoat process de compose/k8s khoi dong lai.
+func startConsumer(ctx context.Context, url string, c *rabbitmq.NotificationEventConsumer, log *slog.Logger) (func(), error) {
+	conn, err := amqp.Dial(url)
+	if err != nil {
+		return nil, fmt.Errorf("ket noi rabbitmq: %w", err)
+	}
+	fail := func(what string, err error) (func(), error) {
+		_ = conn.Close()
+		return nil, fmt.Errorf("%s: %w", what, err)
+	}
+	declCh, err := conn.Channel()
+	if err != nil {
+		return fail("mo channel", err)
+	}
+	if err := mq.Declare(declCh, mq.Merge(mq.PaymentTopology(), mq.TicketingTopology(), mq.NotificationTopology())); err != nil {
+		return fail("khai bao topology", err)
+	}
+	consumeCh, err := conn.Channel()
+	if err != nil {
+		return fail("mo channel consume", err)
+	}
+	forwardCh, err := conn.Channel()
+	if err != nil {
+		return fail("mo channel retry", err)
+	}
+	forwardPub, err := mq.NewPublisher(forwardCh)
+	if err != nil {
+		return fail("tao publisher retry", err)
+	}
+
+	cfg := mq.ConsumerConfig{
+		Queue:              mq.NotificationEventsQueue,
+		MaxAttempts:        5,
+		RetryExchange:      mq.NotificationRetryExchange,
+		RetryKey:           mq.NotificationEventsKey,
+		DeadLetterExchange: mq.NotificationDeadLetterEx,
+		DeadLetterKey:      mq.NotificationEventsKey,
+	}
+	go func() {
+		err := mq.Consume(ctx, consumeCh, forwardPub, cfg, c.HandleDelivery)
+		if ctx.Err() == nil {
+			log.Error("consumer rabbitmq dung, thoat de khoi dong lai", "err", err)
+			os.Exit(1)
+		}
+	}()
+	log.Info("consumer rabbitmq dang chay", "queue", cfg.Queue)
+	return func() { _ = conn.Close() }, nil
 }

@@ -13,6 +13,7 @@ import (
 	"github.com/eventflow/eventflow/services/notification/internal/adapter/template"
 	"github.com/eventflow/eventflow/services/notification/internal/app"
 	"github.com/eventflow/eventflow/services/notification/internal/domain"
+	"github.com/eventflow/eventflow/services/notification/internal/port"
 )
 
 func setupConsumerTest() (*NotificationEventConsumer, *sender.MockEmailSender, *sender.MockSMSSender, *store.MemoryNotificationStore) {
@@ -186,5 +187,77 @@ func TestConsumer_TransientError_TriggersRetry(t *testing.T) {
 	// Transient error MUST NOT be ErrPermanent so that libs/go/mq will retry!
 	if errors.Is(err, mq.ErrPermanent) {
 		t.Errorf("transient error must not be ErrPermanent, got: %v", err)
+	}
+}
+
+type fakeDirectory struct {
+	r     port.Recipient
+	err   error
+	calls int
+}
+
+func (f *fakeDirectory) Lookup(_ context.Context, _, _ string) (port.Recipient, error) {
+	f.calls++
+	return f.r, f.err
+}
+
+// Payload that ma ticketing (OutboxTicketIssuedPayload) va payment (OutboxOrderPaidPayload) phat:
+// khong co recipient_email. Consumer phai tra email theo identity_id roi moi gui.
+func TestConsumer_TraEmailKhiMessageKhongMangSan(t *testing.T) {
+	cases := map[string]string{
+		"ticketing.ticket.issued": `{"order_id":"o-1","event_id":"e-1","identity_id":"u-1","ticket_count":1,
+			"tickets":[{"id":"t-1","order_id":"o-1","ticket_type_id":"tt-1","jti":"j-1","qr_sig":"sig","status":"ISSUED"}],
+			"issued_at":"2026-10-21T12:00:00Z"}`,
+		"order.paid": `{"order_id":"o-1","event_id":"e-1","identity_id":"u-1","payment_id":"p-1","provider":"sandbox",
+			"provider_txn_id":"x","amount_cents":50000000,"currency":"VND","paid_at":"2026-10-21T12:00:00Z"}`,
+	}
+	for key, body := range cases {
+		consumer, emailSender, _, _ := setupConsumerTest()
+		dir := &fakeDirectory{r: port.Recipient{Email: "buyer@example.com", EventTitle: "EventFlow Demo Concert"}}
+		consumer.WithDirectory(dir)
+
+		err := consumer.HandleDelivery(context.Background(), mq.Delivery{RoutingKey: key, Body: []byte(body), Attempt: 1})
+		if err != nil {
+			t.Fatalf("%s: HandleDelivery = %v", key, err)
+		}
+		sent := emailSender.GetSentEmails()
+		if len(sent) != 1 || sent[0].To != "buyer@example.com" {
+			t.Fatalf("%s: email da gui = %+v", key, sent)
+		}
+		if dir.calls != 1 {
+			t.Errorf("%s: Lookup goi %d lan, muon 1", key, dir.calls)
+		}
+	}
+}
+
+// Message da co email (vd goi qua HTTP noi bo): khong can tra cuu.
+func TestConsumer_CoEmailVaTenThiKhongTraCuu(t *testing.T) {
+	consumer, emailSender, _, _ := setupConsumerTest()
+	dir := &fakeDirectory{}
+	consumer.WithDirectory(dir)
+	body := `{"order_id":"o-1","event_id":"e-1","event_title":"T","identity_id":"u-1","recipient_email":"a@example.com","paid_at":"2026-10-21T12:00:00Z"}`
+	if err := consumer.HandleDelivery(context.Background(), mq.Delivery{RoutingKey: "order.paid", Body: []byte(body)}); err != nil {
+		t.Fatalf("HandleDelivery = %v", err)
+	}
+	if dir.calls != 0 || len(emailSender.GetSentEmails()) != 1 {
+		t.Errorf("calls = %d, emails = %d", dir.calls, len(emailSender.GetSentEmails()))
+	}
+}
+
+func TestConsumer_TraCuuLoiThiRetryKhongTimThayThiDLQ(t *testing.T) {
+	body := []byte(`{"order_id":"o-1","event_id":"e-1","identity_id":"u-1","paid_at":"2026-10-21T12:00:00Z"}`)
+
+	consumer, _, _, _ := setupConsumerTest()
+	consumer.WithDirectory(&fakeDirectory{err: errors.New("db mat ket noi")})
+	err := consumer.HandleDelivery(context.Background(), mq.Delivery{RoutingKey: "order.paid", Body: body})
+	if err == nil || errors.Is(err, mq.ErrPermanent) {
+		t.Errorf("DB loi: err = %v, muon loi thuong de retry", err)
+	}
+
+	consumer, _, _, _ = setupConsumerTest()
+	consumer.WithDirectory(&fakeDirectory{})
+	err = consumer.HandleDelivery(context.Background(), mq.Delivery{RoutingKey: "order.paid", Body: body})
+	if !errors.Is(err, mq.ErrPermanent) {
+		t.Errorf("khong tim thay identity: err = %v, muon ErrPermanent", err)
 	}
 }

@@ -30,6 +30,7 @@ type Handler struct {
 	limits         PurchaseLimitReader
 	ticketIssuer   TicketIssuer
 	ticketVerifier TicketVerifier
+	ticketChecker  TicketChecker
 	ticketReader   TicketReader
 	orderAPI       // API don hang (EV-NEW-2), xem order_handler.go
 	log            *slog.Logger
@@ -69,6 +70,12 @@ func (h *Handler) WithTickets(issuer TicketIssuer, verifier TicketVerifier, read
 	return h
 }
 
+// WithCheckIn dang ky use case check-in ve (EV-135).
+func (h *Handler) WithCheckIn(c TicketChecker) *Handler {
+	h.ticketChecker = c
+	return h
+}
+
 // Loai loi BR-O4. Cung 422 nhung client xu ly khac nhau: so luong sai thi chon lai, vuot han muc
 // ca nhan thi khong mua them duoc nua.
 const (
@@ -94,6 +101,10 @@ func (h *Handler) Routes(mux *http.ServeMux, idempotency httpx.Middleware) {
 	}
 	if h.ticketVerifier != nil {
 		mux.HandleFunc("POST /v1/tickets/verify", h.verifyTicket)
+	}
+	if h.ticketChecker != nil {
+		// Doi trang thai ve, nhung idempotent theo ban chat (lan hai tra 409), nen khong can Idempotency-Key.
+		mux.HandleFunc("POST /v1/tickets/check-in", h.checkInTicket)
 	}
 }
 

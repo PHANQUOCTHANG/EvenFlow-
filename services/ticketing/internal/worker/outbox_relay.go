@@ -11,6 +11,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/eventflow/eventflow/libs/go/mq"
+	"github.com/eventflow/eventflow/libs/go/otelx"
 )
 
 // TicketingRoutingKeyPrefix: relay ticketing chi phat dong co routing key thuoc domain cua
@@ -173,7 +174,12 @@ func (r *OutboxRelay) relay(ctx context.Context) error {
 			msg.CorrelationID = *item.traceID
 		}
 
-		pubCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+		// Noi tiep trace cua tien trinh da ghi dong outbox nay (EV-103).
+		var tp string
+		if item.traceID != nil {
+			tp = *item.traceID
+		}
+		pubCtx, cancel := context.WithTimeout(otelx.ContextWithTraceparent(ctx, tp), 5*time.Second)
 		err := r.pub.Publish(pubCtx, r.exchange, item.routingKey, msg)
 		cancel()
 

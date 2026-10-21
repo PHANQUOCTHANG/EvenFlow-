@@ -66,6 +66,8 @@ type bucketKey struct {
 // ReconcilerConfig cau hinh job doi soat.
 type ReconcilerConfig struct {
 	EventIDs []string
+	// Events (neu co) thay EventIDs: danh sach dong tu EventDiscovery (EV-118).
+	Events func() []string
 	// Interval la chu ky doi soat (10 giay). Mot do lech that duoc sua sau toi da 2 chu ky.
 	Interval time.Duration
 	// LockTTL phai nho hon Interval de instance giu khoa o chu ky nay khong chan chu ky sau, va
@@ -125,7 +127,7 @@ func (r *InventoryReconciler) Run(ctx context.Context) error {
 
 // ReconcileAll chay mot chu ky cho moi su kien. Loi o mot su kien khong chan cac su kien con lai.
 func (r *InventoryReconciler) ReconcileAll(ctx context.Context) {
-	for _, ev := range r.cfg.EventIDs {
+	for _, ev := range r.cfg.events() {
 		cctx, cancel := context.WithTimeout(ctx, r.cfg.Interval)
 		if err := r.Reconcile(cctx, ev); err != nil {
 			r.log.Error("doi soat ton kho that bai", "event", ev, "err", err)
@@ -278,4 +280,12 @@ func abs(n int) int {
 		return -n
 	}
 	return n
+}
+
+// events tra danh sach su kien can phuc vu o lan quet nay.
+func (c ReconcilerConfig) events() []string {
+	if c.Events != nil {
+		return c.Events()
+	}
+	return c.EventIDs
 }

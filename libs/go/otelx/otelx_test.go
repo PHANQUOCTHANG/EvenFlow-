@@ -285,3 +285,61 @@ func TestMetricsHandler_PhucVuMetric(t *testing.T) {
 		t.Errorf("thieu metric trong /metrics (status %d)", rec.Code)
 	}
 }
+
+// InjectHTTP ghi traceparent cua span hien tai vao header; khong co span thi khong ghi gi.
+func TestInjectHTTP_GhiTraceparentCuaSpanHienTai(t *testing.T) {
+	shutdown, err := Init(context.Background(), "inject-test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = shutdown(context.Background()) })
+
+	h := http.Header{}
+	InjectHTTP(context.Background(), h)
+	if got := h.Get("traceparent"); got != "" {
+		t.Fatalf("khong co span ma van ghi traceparent %q", got)
+	}
+
+	ctx, span := otel.Tracer("test").Start(context.Background(), "goc")
+	defer span.End()
+	InjectHTTP(ctx, h)
+	want := span.SpanContext().TraceID().String()
+	if parts := strings.Split(h.Get("traceparent"), "-"); len(parts) != 4 || parts[1] != want {
+		t.Fatalf("traceparent = %q, muon trace %s", h.Get("traceparent"), want)
+	}
+}
+
+// Traceparent luu duoc vao DB roi khoi phuc thanh span cha o tien trinh khac (relay outbox): cung trace ID.
+// Chuoi rong / hong (ma request cu) thi ctx giu nguyen, khong panic va khong tao span ma.
+func TestTraceparent_LuuRoiKhoiPhuc(t *testing.T) {
+	shutdown, err := Init(context.Background(), "tp-test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = shutdown(context.Background()) })
+
+	if got := Traceparent(context.Background()); got != "" {
+		t.Fatalf("khong co span ma Traceparent = %q", got)
+	}
+	ctx, span := otel.Tracer("test").Start(context.Background(), "webhook")
+	defer span.End()
+	stored := Traceparent(ctx)
+	if stored == "" {
+		t.Fatal("Traceparent rong du ctx co span")
+	}
+
+	restored := trace.SpanContextFromContext(ContextWithTraceparent(context.Background(), stored))
+	if !restored.IsValid() || restored.TraceID() != span.SpanContext().TraceID() {
+		t.Fatalf("khoi phuc = %v, muon trace %s", restored, span.SpanContext().TraceID())
+	}
+	if !restored.IsRemote() {
+		t.Error("span cha khoi phuc tu DB phai la remote")
+	}
+
+	for _, bad := range []string{"", "8027108cd73783fd", "00-xyz", "refund-http-ev-123"} {
+		base := context.Background()
+		if got := ContextWithTraceparent(base, bad); trace.SpanContextFromContext(got).IsValid() {
+			t.Errorf("%q: tao duoc span context tu chuoi hong", bad)
+		}
+	}
+}

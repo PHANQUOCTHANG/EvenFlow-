@@ -6,6 +6,7 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/eventflow/eventflow/libs/go/authx"
 	"github.com/eventflow/eventflow/libs/go/httpx"
 	"github.com/eventflow/eventflow/services/ticketing/internal/domain"
 	"github.com/eventflow/eventflow/services/ticketing/internal/port"
@@ -18,6 +19,11 @@ type TicketIssuer interface {
 
 // TicketVerifier dinh nghia use case xac thuc chu ky va trang thai ve.
 type TicketVerifier interface {
+	Execute(ctx context.Context, in port.VerifyTicketParams) (port.VerifyTicketResult, error)
+}
+
+// TicketChecker check-in ve: kiem QR roi doi ISSUED -> CHECKED_IN dung mot lan (app.CheckInTicketUseCase).
+type TicketChecker interface {
 	Execute(ctx context.Context, in port.VerifyTicketParams) (port.VerifyTicketResult, error)
 }
 
@@ -97,6 +103,11 @@ func (h *Handler) verifyTicket(w http.ResponseWriter, r *http.Request) {
 		TraceID:   traceID,
 	})
 
+	h.writeVerifyResult(w, res, err)
+}
+
+// writeVerifyResult anh xa ket qua kiem/check-in ve sang HTTP; dung chung cho /verify va /check-in.
+func (h *Handler) writeVerifyResult(w http.ResponseWriter, res port.VerifyTicketResult, err error) {
 	switch {
 	case err == nil:
 		httpx.WriteJSON(w, http.StatusOK, res)
@@ -116,7 +127,27 @@ func (h *Handler) verifyTicket(w http.ResponseWriter, r *http.Request) {
 	case errors.Is(err, domain.ErrTicketRefunded):
 		httpx.WriteProblem(w, http.StatusForbidden, "ve da duoc hoan tien")
 	default:
-		h.log.Error("xac thuc ve that bai", "err", err)
-		httpx.WriteProblem(w, http.StatusInternalServerError, "xac thuc ve that bai")
+		h.log.Error("xu ly ve that bai", "err", err)
+		httpx.WriteProblem(w, http.StatusInternalServerError, "xu ly ve that bai")
 	}
+}
+
+// checkInTicket: POST /v1/tickets/check-in. Doi trang thai ve nen CHI nhan vien van hanh (ops): gateway da
+// gioi han role, day la lop thu hai de goi thang service khong qua mat.
+func (h *Handler) checkInTicket(w http.ResponseWriter, r *http.Request) {
+	p, ok := authx.PrincipalFromHeaders(r.Header)
+	if !ok || p.Role != "ops" {
+		httpx.WriteProblem(w, http.StatusForbidden, "chi nhan vien van hanh moi duoc check-in ve")
+		return
+	}
+	var req verifyTicketRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		httpx.WriteProblem(w, http.StatusBadRequest, "body khong hop le, can co qr_payload")
+		return
+	}
+	res, err := h.ticketChecker.Execute(r.Context(), port.VerifyTicketParams{
+		QRPayload: req.QRPayload,
+		TraceID:   r.Header.Get("X-Trace-Id"),
+	})
+	h.writeVerifyResult(w, res, err)
 }

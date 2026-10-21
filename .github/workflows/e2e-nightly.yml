@@ -27,6 +27,15 @@ jobs:
       # thay vi thanh mot test UI do.
       - name: make smoke
         run: make smoke
+      # Tai khoan demo (organizer/moderator/ops) cho make demo. Smoke da tu tao su kien rieng nen seed
+      # chi can cho tai khoan; su kien demo 20.000 ve khong anh huong make demo (no tu tao su kien).
+      - name: make seed
+        run: make seed
+      # Luong day du qua gateway: dang ky + OTP (Mailpit) -> organizer tao su kien -> AI kiem duyet ->
+      # tu mo ban -> xep hang -> giu ghe -> thanh toan -> ve tu phat + email -> kiem QR -> huy hold ->
+      # bao mat -> tro ly AI -> het ve. Mat ~2 phut vi cho gio mo ban.
+      - name: make demo
+        run: make demo
       - name: cho web san sang
         run: |
           for _ in $(seq 1 30); do

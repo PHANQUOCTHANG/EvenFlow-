@@ -41,10 +41,14 @@ redis_run() {
 if [[ "$RESET" == "1" ]]; then
   echo "[seed] RESET su kien $EVENT_ID"
   psql_run -v event_id="$EVENT_ID" <<'SQL'
+-- Thu tu theo khoa ngoai: ve va thanh toan tham chieu orders (khong cascade).
+DELETE FROM tickets WHERE order_id IN (SELECT id FROM orders WHERE event_id = :'event_id'::uuid);
+DELETE FROM payments WHERE order_id IN (SELECT id FROM orders WHERE event_id = :'event_id'::uuid);
 DELETE FROM seat_holds WHERE order_id IN (SELECT id FROM orders WHERE event_id = :'event_id'::uuid);
 DELETE FROM order_items WHERE order_id IN (SELECT id FROM orders WHERE event_id = :'event_id'::uuid);
 DELETE FROM orders WHERE event_id = :'event_id'::uuid;
 DELETE FROM queue_sessions WHERE event_id = :'event_id'::uuid;
+DELETE FROM sale_reports WHERE event_id = :'event_id'::uuid;
 DELETE FROM events WHERE id = :'event_id'::uuid;   -- cascade: ticket_types, ticket_inventory
 SQL
   # Moi key cua su kien deu mang hash tag {<event>} (xem docs/03 muc 7).
@@ -53,13 +57,26 @@ SQL
 fi
 
 echo "[seed] su kien $EVENT_ID  quota=$QUOTA/hang  ttl=${HOLD_TTL_SECONDS}s"
+# Mat khau demo: Demo@123456 (xem bang tai khoan trong README).
+DEMO_HASH='$argon2id$v=19$m=65536,t=1,p=4$SNfL47joN/7qcjsostbq9Q$X0K2Go1H8WqzythnUGb1UwzGFMo2H8pTsw87fGFFe/E'
 psql_run -v event_id="$EVENT_ID" -v quota="$QUOTA" -v ttl="$HOLD_TTL_SECONDS" \
-         -v sale_in="$SALE_START_IN_SECONDS" <<'SQL'
--- Nguoi dung: 1 organizer + 10 buyer, UUID co dinh de script/k6 tham chieu duoc.
--- password_hash = '!' khong khop bat ky mat khau nao: tai khoan khong dang nhap duoc.
+         -v sale_in="$SALE_START_IN_SECONDS" -v demo_hash="$DEMO_HASH" <<'SQL'
+-- Tai khoan demo DANG NHAP DUOC qua gateway, mat khau chung Demo@123456 (chi cho local/demo):
+--   demo@eventflow.local (buyer), organizer@eventflow.local (chu su kien demo),
+--   moderator@eventflow.local, ops@eventflow.local.
+-- Hash argon2id sinh bang domain.NewArgon2idHasher() cua identity. Ghi de khi chay lai de tai khoan
+-- organizer cu (hash '!') cung dang nhap duoc.
 INSERT INTO identities (id, email, password_hash, role, otp_verified_at)
-VALUES ('00000000-0000-4000-8000-0000000000a0', 'organizer@eventflow.local', '!', 'organizer', now())
-ON CONFLICT DO NOTHING;
+VALUES
+  ('00000000-0000-4000-8000-0000000000a0', 'organizer@eventflow.local', :'demo_hash', 'organizer', now()),
+  ('00000000-0000-4000-8000-0000000000b0', 'demo@eventflow.local',      :'demo_hash', 'buyer',     now()),
+  ('00000000-0000-4000-8000-0000000000c0', 'moderator@eventflow.local', :'demo_hash', 'moderator', now()),
+  ('00000000-0000-4000-8000-0000000000d0', 'ops@eventflow.local',       :'demo_hash', 'ops',       now())
+ON CONFLICT (id) DO UPDATE
+  SET password_hash = EXCLUDED.password_hash, role = EXCLUDED.role, otp_verified_at = EXCLUDED.otp_verified_at;
+
+-- 10 buyer cho script/k6 (UUID co dinh, goi thang service bang header). password_hash = '!' khong
+-- khop mat khau nao: khong dang nhap duoc.
 
 INSERT INTO identities (id, email, password_hash, role, otp_verified_at)
 SELECT ('00000000-0000-4000-8000-' || lpad(n::text, 12, '0'))::uuid,

@@ -11,13 +11,17 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
 
+	"github.com/eventflow/eventflow/libs/go/httpx"
 	"github.com/eventflow/eventflow/libs/go/mq"
+	"github.com/eventflow/eventflow/libs/go/otelx"
 	adapterHTTP "github.com/eventflow/eventflow/services/event/internal/adapter/http"
 	"github.com/eventflow/eventflow/services/event/internal/adapter/postgres"
 	"github.com/eventflow/eventflow/services/event/internal/app"
+	"github.com/eventflow/eventflow/services/event/internal/domain"
 	"github.com/eventflow/eventflow/services/event/internal/worker"
 	_ "github.com/lib/pq"
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -40,6 +44,20 @@ func main() {
 		db.SetConnMaxLifetime(5 * time.Minute)
 	}
 
+	// BR-E2: khoang toi thieu giua luc duyet va T0. Mac dinh 30 phut; moi truong demo ha xuong de
+	// duyet va mo ban trong vai phut.
+	if raw := os.Getenv("MIN_SALE_LEAD_SECONDS"); raw != "" {
+		n, perr := strconv.Atoi(raw)
+		if perr != nil || n < 0 {
+			log.Error("MIN_SALE_LEAD_SECONDS phai la so nguyen >= 0", "value", raw)
+			os.Exit(1)
+		}
+		domain.SetMinSaleLead(time.Duration(n) * time.Second)
+		if domain.MinSaleLead() < domain.DefaultMinSaleLead {
+			log.Warn("BR-E2 dang ngan hon mac dinh: chi dung cho demo/local", "min_sale_lead", domain.MinSaleLead().String())
+		}
+	}
+
 	repo := postgres.NewEventRepository(db)
 	modRepo := postgres.NewModerationRepository(db)
 	auditRepo := postgres.NewAuditLogRepository(db)
@@ -59,6 +77,13 @@ func main() {
 		WithAudit(auditRepo)
 	router := adapterHTTP.NewRouter(handler)
 
+	// EV-103: noi tiep traceparent do gateway chuyen toi; OTEL_EXPORTER_OTLP_ENDPOINT trong thi khong xuat di dau.
+	shutdownTrace, err := otelx.Init(context.Background(), "event")
+	if err != nil {
+		log.Error("khoi tao trace that bai", "err", err)
+		os.Exit(1)
+	}
+
 	addr := os.Getenv("HTTP_ADDR")
 	if addr == "" {
 		addr = ":8084"
@@ -66,7 +91,7 @@ func main() {
 
 	server := &http.Server{
 		Addr:         addr,
-		Handler:      router,
+		Handler:      httpx.Chain(router, otelx.HTTP("event")),
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
 	}
@@ -96,8 +121,17 @@ func main() {
 		log.Warn("RABBITMQ_URL trong: job kiem duyet AI se nam trong outbox_events, KHONG duoc phat")
 	}
 
+	// EV-118: mo ban dung T0 (SCHEDULED -> ON_SALE), khong can Ops goi /publish.
+	openerCtx, stopOpener := context.WithCancel(context.Background())
+	if db != nil {
+		go func() {
+			_ = worker.NewSaleOpener(postgres.NewSaleScheduleRepository(db), time.Second, log).Run(openerCtx)
+		}()
+	}
+
 	<-stop
 	log.Info("dang tat event service...")
+	stopOpener()
 	stopRelay()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -109,6 +143,7 @@ func main() {
 	if db != nil {
 		_ = db.Close()
 	}
+	_ = shutdownTrace(ctx)
 	log.Info("event service da tat an toan")
 }
 

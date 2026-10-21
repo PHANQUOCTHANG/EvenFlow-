@@ -61,3 +61,11 @@ def test_TopologyMacDinh_TrongImageKhongVoLucImport() -> None:
 def test_GeminiThatMaThieuKeyThiTuChoi() -> None:
     with pytest.raises(ValidationError, match="GEMINI_API_KEY"):
         Settings(_env_file=None, gemini_mock=False, gemini_api_key="")
+
+
+def test_KiemDuyetGoiThangEventServiceKhiCauHinh() -> None:
+    # Gateway chan /internal/*: verdict phai di thang event-service khi co MODERATION_API_BASE.
+    assert Settings(_env_file=None).moderation_base == "http://gateway:8080"
+    s = Settings(_env_file=None, moderation_api_base="http://event:8084")
+    assert s.moderation_base == "http://event:8084"
+    assert s.internal_api_base == "http://gateway:8080"

@@ -86,26 +86,130 @@ func AITopology() Topology {
 	return t
 }
 
-// TicketingTopology tra ve topology cua ticketing.
-func TicketingTopology() Topology {
+// sinkMaxLength: hang sink chi giu ban moi nhat de tra cuu khi debug, khong phai de xu ly.
+const sinkMaxLength int64 = 1000
+
+// sinkTopology gan mot hang "#" vao exchange topic. Publisher bat mandatory: message khong co
+// hang nao nhan bi broker tra ve va Publish bao loi. Relay outbox dung o dong loi dau tien de
+// giu thu tu, nen MOT routing key chua co consumer (vd ticketing.hold.created) se chan moi su
+// kien phia sau no mai mai. Sink bao dam moi key luon co it nhat mot hang nhan.
+func sinkTopology(exchange string) ([]Queue, []Binding) {
+	q := exchange + ".sink.q"
+	return []Queue{{Name: q, Durable: true, Args: map[string]any{
+			"x-queue-type": "quorum",
+			"x-max-length": sinkMaxLength,
+			"x-overflow":   "drop-head",
+		}}},
+		[]Binding{{Source: exchange, Destination: q, RoutingKey: "#"}}
+}
+
+// consumerQueues la bo hang cho mot consumer co retry: hang goc <name>.q, hang tre <name>.retry
+// (het TTL thi dead-letter ve hang goc qua default exchange) va binding retry theo key = name.
+// Hang goc nhan message tu cac binding nguon do topology goi tu khai bao.
+func consumerQueues(name, retryExchange string, delayTTL int64) ([]Queue, []Binding) {
+	work, retry := name+".q", name+".retry"
+	return []Queue{
+			{Name: work, Durable: true, Args: map[string]any{"x-queue-type": "quorum"}},
+			{Name: retry, Durable: true, Args: map[string]any{
+				"x-queue-type":  "quorum",
+				"x-message-ttl": delayTTL,
+				// Default exchange (""): routing key la ten hang goc, nen message chi quay lai
+				// dung hang nay, khong lap sang consumer khac cung binding nguon.
+				"x-dead-letter-exchange":    "",
+				"x-dead-letter-routing-key": work,
+				"x-dead-letter-strategy":    "at-least-once",
+				"x-overflow":                "reject-publish",
+			}},
+		},
+		[]Binding{
+			{Source: retryExchange, Destination: retry, RoutingKey: name},
+		}
+}
+
+// PaymentTopology tra ve topology cua payment: exchange su kien va hang sink.
+// Consumer cua order.paid / payment.refunded tu khai bao binding toi exchange nay.
+func PaymentTopology() Topology {
+	q, b := sinkTopology("payment.events")
 	return Topology{
-		Exchanges: []Exchange{{Name: "ticketing.events", Kind: "topic", Durable: true}},
+		Exchanges: []Exchange{{Name: "payment.events", Kind: "topic", Durable: true}},
+		Queues:    q,
+		Bindings:  b,
+	}
+}
+
+// Ten consumer phat ve khi nhan order.paid (ConsumerConfig dung cac ten nay).
+const (
+	TicketingOrderPaidQueue  = "ticketing.order-paid.q"
+	TicketingOrderPaidKey    = "ticketing.order-paid"
+	TicketingRetryExchange   = "ticketing.retry"
+	TicketingDeadLetterEx    = "ticketing.dlx"
+	TicketingDeadLetterQueue = "ticketing.dlq"
+)
+
+// TicketingTopology tra ve topology cua ticketing: exchange su kien, hang hold.released, sink,
+// va consumer order.paid -> phat ve. Binding toi payment.events can PaymentTopology khai bao
+// exchange truoc: goi Declare(ch, Merge(PaymentTopology(), TicketingTopology())).
+func TicketingTopology() Topology {
+	sinkQ, sinkB := sinkTopology("ticketing.events")
+	consQ, consB := consumerQueues("ticketing.order-paid", TicketingRetryExchange, 5_000)
+	t := Topology{
+		Exchanges: []Exchange{
+			{Name: "ticketing.events", Kind: "topic", Durable: true},
+			{Name: TicketingRetryExchange, Kind: "direct", Durable: true},
+			{Name: TicketingDeadLetterEx, Kind: "direct", Durable: true},
+		},
 		Queues: []Queue{{Name: "ticketing.hold.released.q", Durable: true,
 			Args: map[string]any{"x-queue-type": "quorum"}}},
 		Bindings: []Binding{{Source: "ticketing.events", Destination: "ticketing.hold.released.q",
 			RoutingKey: "ticketing.hold.released"}},
 	}
+	t.Queues = append(t.Queues, sinkQ...)
+	t.Queues = append(t.Queues, consQ...)
+	t.Queues = append(t.Queues, Queue{Name: TicketingDeadLetterQueue, Durable: true, Args: map[string]any{"x-queue-type": "quorum"}})
+	t.Bindings = append(t.Bindings, sinkB...)
+	t.Bindings = append(t.Bindings, consB...)
+	t.Bindings = append(t.Bindings,
+		Binding{Source: "payment.events", Destination: TicketingOrderPaidQueue, RoutingKey: "order.paid"},
+		Binding{Source: TicketingDeadLetterEx, Destination: TicketingDeadLetterQueue, RoutingKey: TicketingOrderPaidKey},
+	)
+	return t
 }
 
-// NotificationTopology tra ve topology cua notification.
+// Ten consumer su kien cua notification (email/SMS xac nhan don, ve, hoan tien).
+const (
+	NotificationEventsQueue     = "notification.events.q"
+	NotificationEventsKey       = "notification.events"
+	NotificationRetryExchange   = "notification.retry"
+	NotificationDeadLetterEx    = "notification.dlx"
+	NotificationDeadLetterQueue = "notification.dlq"
+)
+
+// NotificationTopology tra ve topology cua notification: hang email cu va consumer su kien
+// nghe payment.events + ticketing.events. Can khai bao kem PaymentTopology va TicketingTopology
+// (exchange nguon): Declare(ch, Merge(PaymentTopology(), TicketingTopology(), NotificationTopology())).
 func NotificationTopology() Topology {
-	return Topology{
-		Exchanges: []Exchange{{Name: "notification.direct", Kind: "direct", Durable: true}},
+	consQ, consB := consumerQueues("notification.events", NotificationRetryExchange, 10_000)
+	t := Topology{
+		Exchanges: []Exchange{
+			{Name: "notification.direct", Kind: "direct", Durable: true},
+			{Name: NotificationRetryExchange, Kind: "direct", Durable: true},
+			{Name: NotificationDeadLetterEx, Kind: "direct", Durable: true},
+		},
 		Queues: []Queue{{Name: "notification.email.q", Durable: true,
 			Args: map[string]any{"x-queue-type": "quorum"}}},
 		Bindings: []Binding{{Source: "notification.direct", Destination: "notification.email.q",
 			RoutingKey: "email"}},
 	}
+	t.Queues = append(t.Queues, consQ...)
+	t.Queues = append(t.Queues, Queue{Name: NotificationDeadLetterQueue, Durable: true, Args: map[string]any{"x-queue-type": "quorum"}})
+	t.Bindings = append(t.Bindings, consB...)
+	t.Bindings = append(t.Bindings,
+		Binding{Source: "payment.events", Destination: NotificationEventsQueue, RoutingKey: "order.paid"},
+		Binding{Source: "payment.events", Destination: NotificationEventsQueue, RoutingKey: "payment.refunded"},
+		Binding{Source: "ticketing.events", Destination: NotificationEventsQueue, RoutingKey: "ticketing.ticket.issued"},
+		Binding{Source: NotificationDeadLetterEx, Destination: NotificationDeadLetterQueue, RoutingKey: NotificationEventsKey},
+	)
+	return t
 }
 
 // Merge noi cac topology theo thu tu, khong loai trung.

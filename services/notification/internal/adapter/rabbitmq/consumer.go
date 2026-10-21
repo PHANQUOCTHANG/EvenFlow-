@@ -10,6 +10,7 @@ import (
 	"github.com/eventflow/eventflow/libs/go/mq"
 	"github.com/eventflow/eventflow/services/notification/internal/app"
 	"github.com/eventflow/eventflow/services/notification/internal/domain"
+	"github.com/eventflow/eventflow/services/notification/internal/port"
 )
 
 // NotificationEventConsumer dieu phoi tiep nhan va xu ly cac message tu RabbitMQ.
@@ -17,7 +18,34 @@ type NotificationEventConsumer struct {
 	orderPaidUC    *app.ProcessOrderPaidUseCase
 	ticketIssuedUC *app.ProcessTicketIssuedUseCase
 	refundUC       *app.ProcessRefundUseCase
+	directory      port.RecipientDirectory // nil: chi dung nguoi nhan co san trong message
 	logger         *slog.Logger
+}
+
+// WithDirectory bat tra cuu email + ten su kien cho message khong mang san (payment, ticketing
+// chi phat identity_id/event_id).
+func (c *NotificationEventConsumer) WithDirectory(d port.RecipientDirectory) *NotificationEventConsumer {
+	c.directory = d
+	return c
+}
+
+// enrich dien email va ten su kien con thieu. Loi tra cuu la loi tam thoi (retry); khong tim
+// thay thi de nguyen, use case se tu choi vi thieu nguoi nhan (DLQ).
+func (c *NotificationEventConsumer) enrich(ctx context.Context, identityID, eventID string, email, title *string) error {
+	if c.directory == nil || (*email != "" && *title != "") {
+		return nil
+	}
+	r, err := c.directory.Lookup(ctx, identityID, eventID)
+	if err != nil {
+		return err
+	}
+	if *email == "" {
+		*email = r.Email
+	}
+	if *title == "" {
+		*title = r.EventTitle
+	}
+	return nil
 }
 
 func NewNotificationEventConsumer(
@@ -54,6 +82,9 @@ func (c *NotificationEventConsumer) HandleDelivery(ctx context.Context, d mq.Del
 			c.logger.Error("failed to unmarshal order.paid payload (poison pill, route to DLQ)", "err", err)
 			return fmt.Errorf("%w: unmarshal order.paid: %w", mq.ErrPermanent, err)
 		}
+		if err := c.enrich(ctx, evt.IdentityID, evt.EventID, &evt.RecipientEmail, &evt.EventTitle); err != nil {
+			return err
+		}
 
 		_, err := c.orderPaidUC.Execute(ctx, evt)
 		if err != nil {
@@ -70,6 +101,9 @@ func (c *NotificationEventConsumer) HandleDelivery(ctx context.Context, d mq.Del
 			c.logger.Error("failed to unmarshal ticket.issued payload (poison pill, route to DLQ)", "err", err)
 			return fmt.Errorf("%w: unmarshal ticket.issued: %w", mq.ErrPermanent, err)
 		}
+		if err := c.enrich(ctx, evt.IdentityID, evt.EventID, &evt.RecipientEmail, &evt.EventTitle); err != nil {
+			return err
+		}
 
 		_, err := c.ticketIssuedUC.Execute(ctx, evt)
 		if err != nil {
@@ -85,6 +119,9 @@ func (c *NotificationEventConsumer) HandleDelivery(ctx context.Context, d mq.Del
 		if err := json.Unmarshal(d.Body, &evt); err != nil {
 			c.logger.Error("failed to unmarshal payment.refunded payload (poison pill, route to DLQ)", "err", err)
 			return fmt.Errorf("%w: unmarshal payment.refunded: %w", mq.ErrPermanent, err)
+		}
+		if err := c.enrich(ctx, evt.IdentityID, evt.EventID, &evt.RecipientEmail, &evt.EventTitle); err != nil {
+			return err
 		}
 
 		_, err := c.refundUC.Execute(ctx, evt)

@@ -28,7 +28,11 @@ func NewSMTPNotifier(host string, port int, user string, password string, fromNa
 
 func (s *smtpNotifier) SendOTP(ctx context.Context, to string, otp string) error {
 	m := gomail.NewMessage()
-	m.SetHeader("From", fmt.Sprintf("%s <%s>", s.fromName, s.user))
+	from := s.user
+	if from == "" {
+		from = "no-reply@eventflow.local"
+	}
+	m.SetHeader("From", fmt.Sprintf("%s <%s>", s.fromName, from))
 	m.SetHeader("To", to)
 	m.SetHeader("Subject", "[EventFlow] Mã Xác Nhận Đăng Ký")
 	

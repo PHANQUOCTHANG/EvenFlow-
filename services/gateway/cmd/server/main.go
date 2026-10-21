@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/eventflow/eventflow/libs/go/httpx"
+	"github.com/eventflow/eventflow/libs/go/otelx"
 	"github.com/eventflow/eventflow/services/gateway/internal/config"
 	"github.com/eventflow/eventflow/services/gateway/internal/proxy"
 )
@@ -34,6 +35,19 @@ func run(log *slog.Logger) error {
 		log.Warn("JWT_SECRET chua dat, dang dung secret mac dinh cho moi truong dev")
 	}
 
+	// Trace: OTEL_EXPORTER_OTLP_ENDPOINT trong thi khong xuat di dau (xem otelx.Init).
+	shutdownTrace, err := otelx.Init(context.Background(), "gateway")
+	if err != nil {
+		return err
+	}
+	defer func() {
+		sh, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if err := shutdownTrace(sh); err != nil {
+			log.Warn("tat trace loi", "err", err)
+		}
+	}()
+
 	h, err := proxy.New(cfg, log)
 	if err != nil {
 		return err
@@ -41,6 +55,17 @@ func run(log *slog.Logger) error {
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
+
+	// /metrics o cong rieng: cong chinh bi chan /metrics tu ben ngoai (routes.go), Prometheus scrape cong nay trong mang noi bo.
+	go func() {
+		addr := os.Getenv("METRICS_ADDR")
+		if addr == "" {
+			addr = ":9094"
+		}
+		if err := otelx.ServeMetrics(ctx, addr, log); err != nil && ctx.Err() == nil {
+			log.Error("metrics server dung", "err", err)
+		}
+	}()
 
 	// Khong dat WriteTimeout (xem httpx.NewServer): queue/stream la SSE song lau.
 	srv := httpx.NewServer(cfg.HTTPAddr, h)

@@ -308,3 +308,25 @@ func (r *Repository) UpdateTicketStatus(
 }
 
 var _ port.TicketRepository = (*Repository)(nil)
+
+// ListOrderHoldIDs tra id moi hold (seat_holds) cua don, ke ca hold da consumed: dung de don hold con
+// sot trong Redis sau khi phat ve. Id khong phai UUID hop le thi coi nhu don khong co hold.
+func (r *Repository) ListOrderHoldIDs(ctx context.Context, orderID string) ([]string, error) {
+	if !uuidRE.MatchString(orderID) {
+		return nil, nil
+	}
+	rows, err := r.pool.Query(ctx, `SELECT id::text FROM seat_holds WHERE order_id = $1::uuid`, orderID)
+	if err != nil {
+		return nil, fmt.Errorf("liet ke hold cua don: %w", err)
+	}
+	defer rows.Close()
+	var ids []string
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
+	return ids, rows.Err()
+}

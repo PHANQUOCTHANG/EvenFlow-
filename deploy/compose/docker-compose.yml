@@ -20,7 +20,9 @@ services:
     ports: ["5432:5432"]
     volumes: ["pgdata:/var/lib/postgresql/data"]
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U eventflow"]
+      # Phai kiem qua TCP (-h): luc khoi tao DB lan dau, entrypoint chay mot server tam chi nghe unix socket;
+      # pg_isready qua socket bao "healthy" ngay do, migrate/pgbouncer noi TCP thi "connection refused".
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U eventflow -d eventflow"]
       interval: 5s
       timeout: 3s
       retries: 10
@@ -72,10 +74,14 @@ services:
       - "rabbitdata:/var/lib/rabbitmq"
       - "../rabbitmq/definitions.json:/etc/rabbitmq/definitions.json:ro"
     healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      # `ping` chi bao node Erlang song, luc do cong AMQP 5672 chua mo: service phu thuoc se bi
+      # "connection refused". check_port_connectivity kiem cac listener da nhan ket noi.
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "check_port_connectivity"]
       interval: 10s
-      timeout: 5s
-      retries: 10
+      timeout: 10s
+      retries: 15
+      # Khoi dong lanh co the mat > 100s (nap definitions, tao queue); loi trong start_period khong tinh.
+      start_period: 60s
 
   minio:
     image: pgsty/minio:latest
@@ -85,6 +91,11 @@ services:
       MINIO_ROOT_PASSWORD: eventflow123
     ports: ["9000:9000", "9001:9001"]
     volumes: ["miniodata:/data"]
+
+  # SMTP gia cho dev/demo: bat moi email (OTP, xac nhan don, ve) va hien tren giao dien web.
+  mailpit:
+    image: axllent/mailpit:v1.21
+    ports: ["8025:8025", "1025:1025"]
 
   jaeger:
     image: jaegertracing/all-in-one:1.60
@@ -107,7 +118,13 @@ services:
       GF_SECURITY_ADMIN_PASSWORD: eventflow
       GF_AUTH_ANONYMOUS_ENABLED: "true"
     ports: ["3001:3000"]
-    volumes: ["grafanadata:/var/lib/grafana"]
+    volumes:
+      - "grafanadata:/var/lib/grafana"
+      # Datasource Prometheus + dashboard "EventFlow - Tong quan" co san, khong can cau hinh tay.
+      - "../observability/grafana/provisioning:/etc/grafana/provisioning:ro"
+      - "../observability/grafana/dashboards:/var/lib/grafana/dashboards:ro"
+    depends_on:
+      - prometheus
 
   # ---------------------------- SERVICE ----------------------------
 
@@ -128,7 +145,9 @@ services:
       HTTP_ADDR: ":8081"
       REDIS_ADDR: "redis:6379"
       OTEL_EXPORTER_OTLP_ENDPOINT: "http://jaeger:4318"
-    ports: ["8081:8081"]
+      QUEUE_TOKEN_SECRET: "${QUEUE_TOKEN_SECRET:-dev-queue-token-secret-change-me}"
+    # Chi loopback: ai goi thang service se gia danh duoc X-Identity-Id. Cong ra ngoai la gateway:8080.
+    ports: ["127.0.0.1:8081:8081"]
     depends_on:
       redis: {condition: service_healthy}
 
@@ -166,7 +185,10 @@ services:
       # Qua PgBouncer, khong noi thang Postgres -- giong production.
       DATABASE_URL: "postgres://eventflow:eventflow@pgbouncer:5432/eventflow?sslmode=disable"
       AMQP_URL: "amqp://eventflow:eventflow@rabbitmq:5672/"
-    ports: ["8082:8082"]
+      QUEUE_TOKEN_SECRET: "${QUEUE_TOKEN_SECRET:-dev-queue-token-secret-change-me}"
+      HMAC_QR_SECRET: "${HMAC_QR_SECRET:-dev-qr-hmac-secret-change-me-32bytes!}"
+    # Chi loopback, xem ghi chu o waitingroom.
+    ports: ["127.0.0.1:8082:8082"]
     depends_on:
       redis: {condition: service_healthy}
       rabbitmq: {condition: service_healthy}
@@ -184,9 +206,15 @@ services:
       REDIS_ADDR: "redis:6379"
       OTEL_EXPORTER_OTLP_ENDPOINT: "http://jaeger:4318"
       DATABASE_URL: "postgres://eventflow:eventflow@pgbouncer:5432/eventflow?sslmode=disable"
+      # Thieu bien nay thi relay outbox chi ghi log, khong phat len RabbitMQ.
+      RABBITMQ_URL: "amqp://eventflow:eventflow@rabbitmq:5672/"
+      # Worker phat ve khi nhan order.paid: phai CUNG secret voi ticketing, neu khong
+      # QR ky o day bi POST /v1/tickets/verify tu choi.
+      HMAC_QR_SECRET: "${HMAC_QR_SECRET:-dev-qr-hmac-secret-change-me-32bytes!}"
       ACTIVE_EVENT_IDS: "${ACTIVE_EVENT_IDS:-11111111-1111-4111-8111-111111111111,22222222-2222-4222-8222-222222222222}"
     depends_on:
       redis: {condition: service_healthy}
+      rabbitmq: {condition: service_healthy}
       migrate: {condition: service_completed_successfully}
     restart: unless-stopped
 
@@ -209,10 +237,128 @@ services:
       ANOMALY_CONSUMERS: "1"
       REPORT_CONSUMERS: "1"
       INTERNAL_API_BASE: "http://gateway:8080"
+      # Ket qua kiem duyet AI goi PATCH /internal/... cua event-service. Gateway chan /internal/*
+      # tu ben ngoai, nen goi thang event trong mang compose.
+      MODERATION_API_BASE: "http://event:8084"
+    # RabbitMQ co the mo cong cham hon luc ai-worker khoi dong; tu thu lai thay vi chet han.
+    restart: unless-stopped
     ports: ["8090:8090"]
     depends_on:
       redis: {condition: service_healthy}
       rabbitmq: {condition: service_healthy}
+
+  # ---- Cac service Go don binary (cung mot Dockerfile, khac ARG SERVICE) ----
+  # Cong ra ngoai DUY NHAT la gateway:8080; cac service con lai chi nghe trong mang compose.
+
+  identity:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/go-service.Dockerfile
+      args: {SERVICE: identity}
+    environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://jaeger:4318"
+      HTTP_ADDR: ":8083"
+      # NOI THANG Postgres, khong qua PgBouncer: service nay dung lib/pq, ma lib/pq chuan bi cau lenh nhieu
+      # vong (Parse/Describe roi Bind/Execute); PgBouncer che do transaction co the doi ket noi giua hai
+      # vong va tra "pq: unnamed prepared statement does not exist" (da lam mat ket qua kiem duyet AI).
+      # Dat binary_parameters=yes khong an toan vi cot jsonb cua outbox nhan []byte. Service nong
+      # (ticketing, payment) dung pgx nen van qua PgBouncer.
+      DATABASE_URL: "postgres://eventflow:eventflow@postgres:5432/eventflow?sslmode=disable"
+      REDIS_ADDR: "redis:6379"
+      JWT_SECRET: "${JWT_SECRET:-dev-jwt-secret-change-me-0123456789}"
+      SMTP_HOST: "mailpit"
+      SMTP_PORT: "1025"
+    depends_on:
+      redis: {condition: service_healthy}
+      migrate: {condition: service_completed_successfully}
+      mailpit: {condition: service_started}
+    restart: unless-stopped
+
+  event:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/go-service.Dockerfile
+      args: {SERVICE: event}
+    environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://jaeger:4318"
+      HTTP_ADDR: ":8084"
+      # NOI THANG Postgres, khong qua PgBouncer: service nay dung lib/pq, ma lib/pq chuan bi cau lenh nhieu
+      # vong (Parse/Describe roi Bind/Execute); PgBouncer che do transaction co the doi ket noi giua hai
+      # vong va tra "pq: unnamed prepared statement does not exist" (da lam mat ket qua kiem duyet AI).
+      # Dat binary_parameters=yes khong an toan vi cot jsonb cua outbox nhan []byte. Service nong
+      # (ticketing, payment) dung pgx nen van qua PgBouncer.
+      DATABASE_URL: "postgres://eventflow:eventflow@postgres:5432/eventflow?sslmode=disable"
+      RABBITMQ_URL: "amqp://eventflow:eventflow@rabbitmq:5672/"
+      # BR-E2 mac dinh 30 phut giua luc duyet va gio mo ban. Demo ha xuong 60 giay de organizer tao,
+      # duyet va mo ban trong mot buoi trinh bay. Production KHONG dat bien nay.
+      MIN_SALE_LEAD_SECONDS: "${MIN_SALE_LEAD_SECONDS:-60}"
+    depends_on:
+      rabbitmq: {condition: service_healthy}
+      migrate: {condition: service_completed_successfully}
+    restart: unless-stopped
+
+  payment:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/go-service.Dockerfile
+      args: {SERVICE: payment}
+    environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://jaeger:4318"
+      HTTP_ADDR: ":8085"
+      DATABASE_URL: "postgres://eventflow:eventflow@pgbouncer:5432/eventflow?sslmode=disable"
+      PAYMENT_SANDBOX_MODE: "true"
+      PAYMENT_DEFAULT_PROVIDER: "sandbox"
+      # Relay outbox: order.paid -> ticketing phat ve + notification gui email.
+      RABBITMQ_URL: "amqp://eventflow:eventflow@rabbitmq:5672/"
+    depends_on:
+      rabbitmq: {condition: service_healthy}
+      migrate: {condition: service_completed_successfully}
+    restart: unless-stopped
+
+  notification:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/go-service.Dockerfile
+      args: {SERVICE: notification}
+    environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://jaeger:4318"
+      HTTP_ADDR: ":8087"
+      DATABASE_URL: "postgres://eventflow:eventflow@pgbouncer:5432/eventflow?sslmode=disable"
+      AMQP_URL: "amqp://eventflow:eventflow@rabbitmq:5672/"
+      EMAIL_PROVIDER: "smtp"
+      SMTP_HOST: "mailpit"
+      SMTP_PORT: "1025"
+      SMTP_FROM: "no-reply@eventflow.local"
+    depends_on:
+      rabbitmq: {condition: service_healthy}
+      mailpit: {condition: service_started}
+    restart: unless-stopped
+
+  gateway:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/go-service.Dockerfile
+      args: {SERVICE: gateway}
+    environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://jaeger:4318"
+      HTTP_ADDR: ":8080"
+      JWT_SECRET: "${JWT_SECRET:-dev-jwt-secret-change-me-0123456789}"
+      IDENTITY_URL: "http://identity:8083"
+      EVENT_URL: "http://event:8084"
+      WAITINGROOM_URL: "http://waitingroom:8081"
+      TICKETING_URL: "http://ticketing:8082"
+      PAYMENT_URL: "http://payment:8085"
+      ASSISTANT_URL: "http://ai-worker:8090"
+      CORS_ALLOWED_ORIGINS: "http://localhost:3000"
+    ports: ["8080:8080"]
+    depends_on:
+      - identity
+      - event
+      - waitingroom
+      - ticketing
+      - payment
+      - ai-worker
+    restart: unless-stopped
 
   web:
     build:

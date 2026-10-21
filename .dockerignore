@@ -15,3 +15,6 @@
 # `COPY apps/web ./` keo vao build stage mot cach vo ich.
 docs
 apps/web/doc
+
+# Binary build tay tren may host
+**/*.exe

@@ -48,6 +48,8 @@ func (s *HoldSweeper) WithMetrics(m SweeperMetrics) *HoldSweeper {
 type SweeperConfig struct {
 	// Danh sach su kien dang mo ban can quet. Trong thuc te lay tu event-svc.
 	EventIDs []string
+	// Events (neu co) thay EventIDs: danh sach dong tu EventDiscovery (EV-118).
+	Events   func() []string
 	Interval time.Duration // 1 giay: khach da doi het 10 phut, khong nen bat doi them
 	Batch    int
 }
@@ -71,7 +73,7 @@ func (s *HoldSweeper) Run(ctx context.Context) error {
 		case <-ctx.Done():
 			return ctx.Err()
 		case <-t.C:
-			for _, ev := range s.cfg.EventIDs {
+			for _, ev := range s.cfg.events() {
 				if err := s.sweep(ctx, ev); err != nil {
 					// Loi mot vong quet khong duoc lam chet sweeper: ngung quet
 					// dong nghia voi ve bi khoa vinh vien.
@@ -124,4 +126,12 @@ func (s *HoldSweeper) sweep(ctx context.Context, eventID string) error {
 			"so_luong", released, "da_quet", len(holdIDs))
 	}
 	return nil
+}
+
+// events tra danh sach su kien can phuc vu o lan quet nay.
+func (c SweeperConfig) events() []string {
+	if c.Events != nil {
+		return c.Events()
+	}
+	return c.EventIDs
 }

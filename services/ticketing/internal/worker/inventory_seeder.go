@@ -29,6 +29,8 @@ type InventorySeeder struct {
 
 type SeederConfig struct {
 	EventIDs []string
+	// Events (neu co) thay EventIDs: danh sach dong tu EventDiscovery (EV-118).
+	Events   func() []string
 	Interval time.Duration
 }
 
@@ -58,7 +60,7 @@ func (s *InventorySeeder) Run(ctx context.Context) error {
 }
 
 func (s *InventorySeeder) seedAll(ctx context.Context) {
-	for _, ev := range s.cfg.EventIDs {
+	for _, ev := range s.cfg.events() {
 		// Loi o mot su kien khong duoc chan cac su kien con lai.
 		if err := s.seed(ctx, ev); err != nil {
 			s.log.Error("nap ton kho that bai", "event", ev, "err", err)
@@ -94,4 +96,12 @@ func (s *InventorySeeder) seed(ctx context.Context, eventID string) error {
 			"hang_ve", len(byType), "so_bucket", len(rows))
 	}
 	return nil
+}
+
+// events tra danh sach su kien can phuc vu o lan quet nay.
+func (c SeederConfig) events() []string {
+	if c.Events != nil {
+		return c.Events()
+	}
+	return c.EventIDs
 }

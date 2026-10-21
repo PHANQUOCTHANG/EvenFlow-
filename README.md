@@ -28,16 +28,36 @@ make up          # toan bo ha tang + service
 make migrate
 make seed        # 1 su kien ON_SALE, 20.000 ve
 make smoke       # chay tron mot luong mua ve
+make demo        # ~2 phut: dang ky -> organizer tao su kien -> mua ve -> ve + email (qua gateway)
 ```
 
 | Dịch vụ | URL |
 |---|---|
 | Web | http://localhost:3000 |
+| API (gateway, cong ra ngoai duy nhat) | http://localhost:8080 |
+| Mailpit (email OTP, xac nhan don, ve) | http://localhost:8025 |
 | RabbitMQ | http://localhost:15672 (`eventflow` / `eventflow`) |
 | Jaeger | http://localhost:16686 |
 | Grafana | http://localhost:3001 |
 
 Dev không cần API key Gemini: `GEMINI_MOCK=1` (mặc định) dùng client giả lập.
+
+### Tài khoản demo
+
+`make seed` tạo sẵn 4 tài khoản đã xác thực OTP, đăng nhập qua `POST http://localhost:8080/api/v1/auth/login`.
+Mật khẩu chung `Demo@123456` — **chỉ dùng cho local/demo**.
+
+| Email | Vai trò |
+|---|---|
+| `demo@eventflow.local` | buyer |
+| `organizer@eventflow.local` | organizer (chủ sự kiện demo) |
+| `moderator@eventflow.local` | moderator |
+| `ops@eventflow.local` | ops |
+
+Sự kiện organizer tạo mới tự vào bán, không cần sửa `ACTIVE_EVENT_IDS` hay khởi động lại container:
+được duyệt (`SCHEDULED`) thì trong vài giây phòng chờ và ticketing đã nhận, đến giờ mở bán thì tự chuyển `ON_SALE`.
+Compose đặt `MIN_SALE_LEAD_SECONDS=60` (BR-E2 mặc định 30 phút giữa lúc duyệt và giờ mở bán) để demo được trong một buổi;
+production không đặt biến này.
 
 ## Tài liệu
 
@@ -49,6 +69,7 @@ Dev không cần API key Gemini: `GEMINI_MOCK=1` (mặc định) dùng client gi
 | [docs/03-cau-truc-src.md](docs/03-cau-truc-src.md) | Cấu trúc thư mục, quy ước |
 | [docs/04-jira-backlog.md](docs/04-jira-backlog.md) | 10 epic, 89 story/task, 461 SP — kèm `docs/jira-import.csv` |
 | [docs/08-stitch-ui-ux-handoff.md](docs/08-stitch-ui-ux-handoff.md) | Product/UI context, design direction và prompt Stitch theo page/component |
+| [docs/demo/kich-ban.md](docs/demo/kich-ban.md) | Kịch bản trình bày `make demo` (≈ 5 phút), xử lý sự cố |
 | [docs/09-ke-hoach-hoan-thien-backend.md](docs/09-ke-hoach-hoan-thien-backend.md) | Kế hoạch hoàn thiện backend theo 10 giai đoạn, kèm trạng thái |
 
 ## Cấu trúc
