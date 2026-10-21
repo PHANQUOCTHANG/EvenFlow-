@@ -93,7 +93,7 @@ describe("EditEventPage route (/organizer/events/[eventId]/edit - AC-22)", () =>
     expect(await screen.findByText("Chỉnh sửa: Rock Fest")).toBeInTheDocument();
   });
 
-  it.each(["PENDING_REVIEW", "SOLD_OUT", "CLOSED", "COMPLETED", "CANCELLED"] as const)(
+  it.each(["PENDING_REVIEW", "CLOSED", "COMPLETED", "CANCELLED"] as const)(
     "trạng thái %s không được chỉnh sửa: không hiện form",
     async (state) => {
       mocks.getById.mockResolvedValue(event(state));
@@ -203,6 +203,30 @@ describe("EditEventPage route (/organizer/events/[eventId]/edit - AC-22)", () =>
     expect(mocks.update).not.toHaveBeenCalled();
     expect(mocks.addTier).not.toHaveBeenCalled();
     expect(mocks.submit).not.toHaveBeenCalled();
+  });
+
+  it("G-2: SOLD_OUT -> form tăng số lượng vé, chỉ gọi PUT tier quota", async () => {
+    mocks.getById.mockResolvedValue(event("SOLD_OUT"));
+    mocks.updateQuota.mockResolvedValue({});
+    await renderPage();
+    expect(await screen.findByText(/Tăng số lượng vé/)).toBeInTheDocument();
+    expect(screen.queryByText("Không thể chỉnh sửa sự kiện")).not.toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText(/Số lượng vé \(Quota\)/), { target: { value: "500" } });
+    fireEvent.click(screen.getByRole("button", { name: "Lưu số lượng vé" }));
+    await waitFor(() => expect(mocks.push).toHaveBeenCalledWith(`/organizer/events/${EVT}/review-status`));
+    expect(mocks.updateQuota).toHaveBeenCalledWith(EVT, "tier-a", 500);
+    expect(mocks.update).not.toHaveBeenCalled();
+    expect(mocks.addTier).not.toHaveBeenCalled();
+  });
+
+  it("G-2: SOLD_OUT giảm quota bị chặn phía client", async () => {
+    mocks.getById.mockResolvedValue(event("SOLD_OUT"));
+    await renderPage();
+    await screen.findByText(/Tăng số lượng vé/);
+    fireEvent.change(screen.getByLabelText(/Số lượng vé \(Quota\)/), { target: { value: "10" } });
+    fireEvent.click(screen.getByRole("button", { name: "Lưu số lượng vé" }));
+    expect(screen.getByText(/Tuyệt đối cấm giảm số lượng vé/)).toBeInTheDocument();
+    expect(mocks.updateQuota).not.toHaveBeenCalled();
   });
 
   it("F-1: ON_SALE giảm quota bị chặn phía client", async () => {

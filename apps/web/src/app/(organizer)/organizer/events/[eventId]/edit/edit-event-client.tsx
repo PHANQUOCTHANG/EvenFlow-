@@ -38,7 +38,7 @@ function EditForm({
       <Card className="p-xl text-center space-y-sm my-lg">
         <h1 className="text-heading-md font-bold text-fg">Không thể chỉnh sửa sự kiện</h1>
         <p className="text-body-sm text-fg-muted">
-          Chỉ sự kiện ở trạng thái DRAFT, SCHEDULED hoặc REJECTED mới được chỉnh sửa, và ON_SALE chỉ
+          Chỉ sự kiện ở trạng thái DRAFT, SCHEDULED hoặc REJECTED mới được chỉnh sửa, và ON_SALE / SOLD_OUT chỉ
           được tăng số lượng vé (hiện tại: {event.state}).
         </p>
       </Card>

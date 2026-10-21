@@ -91,7 +91,7 @@ export function EventWizard({
   className,
 }: EventWizardProps) {
   const isEditing = Boolean(initialEvent);
-  const isCurrentOnSale = initialEvent?.state === "ON_SALE";
+  const isCurrentOnSale = initialEvent?.state === "ON_SALE" || initialEvent?.state === "SOLD_OUT";
   // ON_SALE: chỉ được tăng quota; trường sự kiện chỉ đọc (PUT /events không cho phép).
   const quotaOnly = Boolean(initialEvent && canIncreaseTierQuota(initialEvent.state));
   // Chỉ DRAFT/REJECTED mới nộp duyệt được (khi tạo mới luôn được).
@@ -342,7 +342,7 @@ export function EventWizard({
             Tăng số lượng vé: {initialEvent.title}
           </h2>
           <p className="text-body-xs text-fg-muted mt-xs">
-            Sự kiện đang mở bán (ON_SALE): thông tin sự kiện chỉ đọc, chỉ được tăng số lượng vé
+            Sự kiện đang mở bán hoặc đã hết vé ({initialEvent.state}): thông tin sự kiện chỉ đọc, chỉ được tăng số lượng vé
             (BR-E3 cấm giảm).
           </p>
         </div>

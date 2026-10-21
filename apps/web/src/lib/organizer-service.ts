@@ -191,10 +191,10 @@ export function validateTierQuotaUpdate(
   newQuota: number,
   eventState: EventLifecycleState,
 ): ValidationResult {
-  if (eventState === "ON_SALE" && newQuota < oldQuota) {
+  if ((eventState === "ON_SALE" || eventState === "SOLD_OUT") && newQuota < oldQuota) {
     return {
       isValid: false,
-      error: `Sự kiện đang mở bán (ON_SALE). Tuyệt đối cấm giảm số lượng vé của hạng vé từ ${oldQuota} xuống ${newQuota} (BR-E3); chỉ được phép tăng quota.`,
+      error: `Sự kiện ${eventState === "ON_SALE" ? "đang mở bán" : "đã hết vé"} (${eventState}). Tuyệt đối cấm giảm số lượng vé của hạng vé từ ${oldQuota} xuống ${newQuota} (BR-E3); chỉ được phép tăng quota.`,
     };
   }
   return { isValid: true };
@@ -288,9 +288,10 @@ export function canEditEvent(state: EventLifecycleState): boolean {
   return EDITABLE_STATES.includes(state);
 }
 
-/** ON_SALE: chi duoc TANG quota hang ve (PUT .../tiers/{id} {new_quota}); cac truong su kien chi doc. */
+/** ON_SALE / SOLD_OUT: chi duoc TANG quota hang ve (PUT .../tiers/{id} {new_quota}); cac truong su kien chi doc.
+ *  Backend (event.go) cho tang quota khi SOLD_OUT va mo ban lai (G-2). */
 export function canIncreaseTierQuota(state: EventLifecycleState): boolean {
-  return state === "ON_SALE";
+  return state === "ON_SALE" || state === "SOLD_OUT";
 }
 
 /** Co loi vao trang sua (day du hoac chi tang quota). */
