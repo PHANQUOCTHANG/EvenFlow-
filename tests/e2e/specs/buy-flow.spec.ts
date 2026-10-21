@@ -21,6 +21,7 @@ import {
   mockPaidOrder,
   mockPaymentRedirect,
   mockQueue,
+  seedLoggedInSession,
   selectAllAccessTimesTwo,
 } from "../fixtures/buy-flow-helpers";
 
@@ -35,6 +36,8 @@ import {
 test.beforeEach(async ({ page }) => {
   // AC-8: jitter tat dinh = 0.
   await installDeterministicJitter(page);
+  // frontend-real-api: web that gui Bearer; luong mua ve bat dau o trang thai da dang nhap.
+  await seedLoggedInSession(page);
 });
 
 test.describe("EV-198 luong mua ve (backend gia lap)", () => {
@@ -92,6 +95,11 @@ test.describe("EV-198 luong mua ve (backend gia lap)", () => {
       for (const code of TICKET_CODES) {
         await expect(tickets.getByText(code, { exact: true }).first()).toBeVisible();
       }
+      // AC-15: QR den tu POST issue-tickets (payload ky that), hien thanh chu trong khung QR.
+      for (const code of TICKET_CODES) {
+        await expect(tickets.getByText(`QR-${code}`, { exact: true })).toBeVisible();
+      }
+      expect(api.calls("POST", `/v1/orders/${ORDER_ID}/issue-tickets`).length).toBeGreaterThanOrEqual(1);
     });
 
     await test.step("AC-3: request thanh toan dung don", async () => {
