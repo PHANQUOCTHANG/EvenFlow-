@@ -132,7 +132,7 @@ export async function logout(): Promise<void> {
   } catch {
     /* mat mang / 5xx: van dang xuat o client */
   } finally {
-    clearSession();
+    clearSession({ buyFlow: true });
   }
 }
 

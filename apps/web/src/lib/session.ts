@@ -150,7 +150,7 @@ export function getStoredRefreshToken(): string | null {
 /** Tien to khoa sessionStorage cua luong mua ve; xoa khi dang xuat de nguoi dung sau khong doc duoc (F-17). */
 const BUY_FLOW_PREFIXES = ["ef:queue:token:", "evenflow_hold_", "evenflow_order_", "ef:issue:", "ef:pay:", "ef:hold:"];
 
-function clearBuyFlowStorage(): void {
+export function clearBuyFlowStorage(): void {
   try {
     if (typeof window === "undefined") return;
     const ss = window.sessionStorage;
@@ -163,11 +163,13 @@ function clearBuyFlowStorage(): void {
   }
 }
 
-export function clearSession(): void {
+/** Xoa phien. Mac dinh CHI xoa khoa dang nhap (het han/refresh hong khong duoc lam mat khoa idempotency va hold dang
+ *  mua - G-4); chi dang xuat chu dong moi truyen `{ buyFlow: true }`. */
+export function clearSession(opts: { buyFlow?: boolean } = {}): void {
   sessionEpoch += 1;
   wipe(store("local"));
   wipe(store("session"));
-  clearBuyFlowStorage();
+  if (opts.buyFlow) clearBuyFlowStorage();
   notify();
 }
 
