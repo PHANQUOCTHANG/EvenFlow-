@@ -450,7 +450,7 @@
       },
       {
         "id": "G-9",
-        "status": "to_fix",
+        "status": "to_fix_round3",
         "severity": "minor",
         "sources": [
           "F-5 gap"
@@ -474,6 +474,62 @@
           "F-17 gap"
         ],
         "reason": "sessionStorage is per tab by design; other tabs lose access on next call via AUTH_REQUIRED"
+      }
+    ]
+  },
+  "round3": {
+    "review_commit": "badd78b",
+    "items": [
+      {
+        "id": "H-1",
+        "severity": "major",
+        "sources": [
+          "R3-1",
+          "Z-1",
+          "Z-2",
+          "Z-3",
+          "R3-2",
+          "R3-3"
+        ],
+        "title": "Cross-tab refresh marker stores the raw refresh token and its fixed 30 s TTL/steal path still allows double refresh -> family revocation",
+        "status": "to_fix"
+      },
+      {
+        "id": "H-2",
+        "severity": "minor",
+        "sources": [
+          "Z-4",
+          "R3-4"
+        ],
+        "title": "Different user signing in on the same tab inherits buy-flow keys",
+        "status": "to_fix"
+      },
+      {
+        "id": "H-3",
+        "severity": "minor",
+        "sources": [
+          "Z-5"
+        ],
+        "title": "G-8 read-only state depends on reload success; duplicate tier POST if reload fails",
+        "status": "to_fix"
+      },
+      {
+        "id": "G-9",
+        "severity": "minor",
+        "sources": [
+          "G-9"
+        ],
+        "title": "403 forbidden -> FORBIDDEN (TCR approved)",
+        "status": "to_fix"
+      },
+      {
+        "id": "D-R3-5",
+        "severity": "minor",
+        "sources": [
+          "R3-5"
+        ],
+        "status": "deferred",
+        "reason": "changing method after a lost response returns the existing payment; acceptable, backend is source of truth"
       }
     ]
   }

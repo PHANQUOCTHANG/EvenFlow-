@@ -6,4 +6,4 @@
 - Finding G-9 wants `/problems/forbidden` -> a distinct `FORBIDDEN` code/message (other 403s per contracts.md s9: `about:blank` -> NOT_ADMITTED).
 - Required change to the contract test: replace the row with `[403, "/problems/forbidden", "FORBIDDEN"]` (keep `[403, "about:blank", "NOT_ADMITTED"]`).
 - Source change that would follow (not applied): add `"FORBIDDEN"` to `HoldClientErrorType`, map in `requestHold` before the generic 403 case, add FORBIDDEN to the exclusion list and a distinct message in `checkout-view.tsx` (line ~135), and `use-hold-timer.ts` error list.
-- Status: NOT applied. Awaiting an approved edit of the protected test.
+- Status: APPROVED by the human (TranDinhVo) on 2026-10-21 in the Claude Code session; spec.md AC-10 amended accordingly. Apply in fix round 3.

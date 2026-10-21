@@ -63,7 +63,7 @@ ownership check in payment service (reported only); token storage hardening (htt
   HTTP 200 (and 201) as success returning `{order_id, hold_id, expires_at}`; maps problem types to distinct codes:
   queue-token expired/invalid/mismatch → `QUEUE_TOKEN_INVALID` (UI sends the user back to the waiting room),
   `/problems/per-identity-limit` → `PER_IDENTITY_LIMIT`, `/problems/quantity-not-allowed` → `QUANTITY_NOT_ALLOWED`,
-  409 → `SOLD_OUT`, other 403 → `NOT_ADMITTED`.
+  409 → `SOLD_OUT`, 403 `/problems/forbidden` → `FORBIDDEN` (amended 2026-10-21, human-approved G-9), other 403 → `NOT_ADMITTED`.
 - **AC-11** A new `cancelHold(holdId)` calls `DELETE /v1/holds/{holdId}` with an Idempotency-Key; 204 and 404 both
   clear the locally stored hold.
 
