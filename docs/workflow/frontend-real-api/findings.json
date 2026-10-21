@@ -9,7 +9,7 @@
   "items": [
     {
       "id": "F-1",
-      "status": "to_fix",
+      "status": "fixed",
       "severity": "major",
       "sources": [
         "C-1",
@@ -19,11 +19,12 @@
       "files": [
         "apps/web/src/app/(organizer)/organizer/events/[eventId]/edit/edit-event-client.tsx"
       ],
-      "fix": "Add a quota-only mode for ON_SALE (and SOLD_OUT if the backend allows it). Either render the wizard tier step with the event fields read-only, skip updateOrganizerEvent (PUT /events is not allowed on ON_SALE), and call only updateTierQuota; or add a small 'Tăng số lượng vé' form on review-status. Show the edit link for ON_SALE events, and update the it.each test so ON_SALE expects the quota-only form. | For ON_SALE (and other non-editable states that still allow tier ops) render a tiers-only mode: fields of step 1/3 read-only, PUT /events skipped, only addTier/updateTierQuota calls; keep the full block only for COMPLETED/CANCELLED."
+      "fix": "Add a quota-only mode for ON_SALE (and SOLD_OUT if the backend allows it). Either render the wizard tier step with the event fields read-only, skip updateOrganizerEvent (PUT /events is not allowed on ON_SALE), and call only updateTierQuota; or add a small 'Tăng số lượng vé' form on review-status. Show the edit link for ON_SALE events, and update the it.each test so ON_SALE expects the quota-only form. | For ON_SALE (and other non-editable states that still allow tier ops) render a tiers-only mode: fields of step 1/3 read-only, PUT /events skipped, only addTier/updateTierQuota calls; keep the full block only for COMPLETED/CANCELLED.",
+      "verified_in": "findings-round2-review.json + findings-round2-challenge.json (F-1 completed as G-2)"
     },
     {
       "id": "F-2",
-      "status": "to_fix",
+      "status": "fixed",
       "severity": "major",
       "sources": [
         "C-2"
@@ -32,11 +33,12 @@
       "files": [
         "apps/web/src/app/(organizer)/organizer/events/new/page.tsx"
       ],
-      "fix": "When the result has a draftHref (or failedStep), disable the submit buttons and leave only the 'Mở bản nháp' link, or redirect to the edit page automatically. Alternatively, keep the created event id in page state and resume (tiers/submit) against it instead of creating again."
+      "fix": "When the result has a draftHref (or failedStep), disable the submit buttons and leave only the 'Mở bản nháp' link, or redirect to the edit page automatically. Alternatively, keep the created event id in page state and resume (tiers/submit) against it instead of creating again.",
+      "verified_in": "findings-round2-review.json + findings-round2-challenge.json (F-1 completed as G-2)"
     },
     {
       "id": "F-3",
-      "status": "to_fix",
+      "status": "fixed",
       "severity": "major",
       "sources": [
         "C-3"
@@ -45,11 +47,12 @@
       "files": [
         "apps/web/src/app/(organizer)/organizer/events/[eventId]/edit/edit-event-client.tsx"
       ],
-      "fix": "After a partial failure, reload the event (call OrganizerEventView's load/setEvent with fresh data, or router.refresh plus a key change) and map created tiers back to their server ids. At minimum, record the tiers created in this session and skip them on retry. Point draftHref somewhere that forces a reload, or drop it on the edit page."
+      "fix": "After a partial failure, reload the event (call OrganizerEventView's load/setEvent with fresh data, or router.refresh plus a key change) and map created tiers back to their server ids. At minimum, record the tiers created in this session and skip them on retry. Point draftHref somewhere that forces a reload, or drop it on the edit page.",
+      "verified_in": "findings-round2-review.json + findings-round2-challenge.json (F-1 completed as G-2)"
     },
     {
       "id": "F-4",
-      "status": "to_fix",
+      "status": "fixed",
       "severity": "major",
       "sources": [
         "X-1",
@@ -60,11 +63,12 @@
       "files": [
         "apps/web/src/lib/api-client.ts"
       ],
-      "fix": "Do not decide expiry from the client clock alone: estimate skew from the issued token (iat vs Date.now() at receipt, or a Date response header) and only refresh early when (exp - skew - now) <= 30 s; alternatively drop proactive refresh entirely and rely on the reactive 401 path, or make the guard token-independent (any refresh in the last N seconds seen via storage timestamp, e.g. persist `ef_refreshed_at` so all tabs share it). | Catch NETWORK_ERROR from the proactive refresh and fall through to sending the request with the current token (the reactive 401 path still covers true expiry). | Wrap the proactive refresh in try/catch. On a non-AUTH_REQUIRED error, continue with the current token and let the 401 token-expired path handle real expiry."
+      "fix": "Do not decide expiry from the client clock alone: estimate skew from the issued token (iat vs Date.now() at receipt, or a Date response header) and only refresh early when (exp - skew - now) <= 30 s; alternatively drop proactive refresh entirely and rely on the reactive 401 path, or make the guard token-independent (any refresh in the last N seconds seen via storage timestamp, e.g. persist `ef_refreshed_at` so all tabs share it). | Catch NETWORK_ERROR from the proactive refresh and fall through to sending the request with the current token (the reactive 401 path still covers true expiry). | Wrap the proactive refresh in try/catch. On a non-AUTH_REQUIRED error, continue with the current token and let the 401 token-expired path handle real expiry.",
+      "verified_in": "findings-round2-review.json + findings-round2-challenge.json (F-1 completed as G-2)"
     },
     {
       "id": "F-5",
-      "status": "to_fix",
+      "status": "fixed",
       "severity": "major",
       "sources": [
         "X-2",
@@ -75,11 +79,12 @@
         "apps/web/src/lib/hold-client.ts",
         "apps/web/src/components/checkout/checkout-view.tsx"
       ],
-      "fix": "In requestHold/cancelHold/initiatePayment/getOrderDetails/issueTickets map `response.status === 401 && !QUEUE_TOKEN_PROBLEMS.has(type)` to AUTH_REQUIRED (and 403 /problems/forbidden to a distinct code) so the UI shows the sign-in alert. | Add a fallback `<Alert variant=\"error\">{error.message}</Alert>` for any error type not handled explicitly (UNKNOWN/LIMIT_EXCEEDED/AMBIGUOUS message), and together with X-2 show the sign-in alert for 401."
+      "fix": "In requestHold/cancelHold/initiatePayment/getOrderDetails/issueTickets map `response.status === 401 && !QUEUE_TOKEN_PROBLEMS.has(type)` to AUTH_REQUIRED (and 403 /problems/forbidden to a distinct code) so the UI shows the sign-in alert. | Add a fallback `<Alert variant=\"error\">{error.message}</Alert>` for any error type not handled explicitly (UNKNOWN/LIMIT_EXCEEDED/AMBIGUOUS message), and together with X-2 show the sign-in alert for 401.",
+      "verified_in": "findings-round2-review.json + findings-round2-challenge.json (F-1 completed as G-2)"
     },
     {
       "id": "F-6",
-      "status": "to_fix",
+      "status": "fixed",
       "severity": "major",
       "sources": [
         "X-4"
@@ -88,11 +93,12 @@
       "files": [
         "apps/web/src/lib/api/auth.ts"
       ],
-      "fix": "Make verifyRegistrationOTP return `{registered:true, session:null, loginError}` (or throw an ApiError with code REGISTERED_LOGIN_FAILED) when verify succeeded but login failed; RegisterForm then shows SUCCESS with a 'Đăng nhập' link instead of an OTP error."
+      "fix": "Make verifyRegistrationOTP return `{registered:true, session:null, loginError}` (or throw an ApiError with code REGISTERED_LOGIN_FAILED) when verify succeeded but login failed; RegisterForm then shows SUCCESS with a 'Đăng nhập' link instead of an OTP error.",
+      "verified_in": "findings-round2-review.json + findings-round2-challenge.json (F-1 completed as G-2)"
     },
     {
       "id": "F-7",
-      "status": "to_fix",
+      "status": "fixed",
       "severity": "major",
       "sources": [
         "X-5",
@@ -103,11 +109,12 @@
         "apps/web/src/lib/hold-client.ts",
         "apps/web/src/lib/payment-client.ts"
       ],
-      "fix": "Persist the key per (eventId, ticketTypeId, quantity) in sessionStorage (like issueKeyFor) and reuse it until a 2xx/4xx terminal answer; on 409 in-progress wait Retry-After (default 1 s, bounded attempts) and re-send the SAME key instead of surfacing AMBIGUOUS. | Read the problem type. For idempotency-in-progress, throw AMBIGUOUS, or wait Retry-After and retry once with the same key. Keep HOLD_EXPIRED for the other 409s."
+      "fix": "Persist the key per (eventId, ticketTypeId, quantity) in sessionStorage (like issueKeyFor) and reuse it until a 2xx/4xx terminal answer; on 409 in-progress wait Retry-After (default 1 s, bounded attempts) and re-send the SAME key instead of surfacing AMBIGUOUS. | Read the problem type. For idempotency-in-progress, throw AMBIGUOUS, or wait Retry-After and retry once with the same key. Keep HOLD_EXPIRED for the other 409s.",
+      "verified_in": "findings-round2-review.json + findings-round2-challenge.json (F-1 completed as G-2)"
     },
     {
       "id": "F-8",
-      "status": "to_fix",
+      "status": "fixed",
       "severity": "major",
       "sources": [
         "X-6"
@@ -116,11 +123,12 @@
       "files": [
         "apps/web/src/hooks/use-payment-session.ts"
       ],
-      "fix": "Generate the key once per (orderId, holdId) in the hook (useRef / sessionStorage `ef:pay:{orderId}`) and pass it to initiatePayment on every retry; rotate only after a definitive 4xx."
+      "fix": "Generate the key once per (orderId, holdId) in the hook (useRef / sessionStorage `ef:pay:{orderId}`) and pass it to initiatePayment on every retry; rotate only after a definitive 4xx.",
+      "verified_in": "findings-round2-review.json + findings-round2-challenge.json (F-1 completed as G-2)"
     },
     {
       "id": "F-9",
-      "status": "to_fix",
+      "status": "fixed",
       "severity": "major",
       "sources": [
         "X-7"
@@ -129,11 +137,12 @@
       "files": [
         "apps/web/src/components/organizer/event-wizard.tsx"
       ],
-      "fix": "Disable the slug input when `isEditing` (read-only hint 'không thể đổi sau khi tạo'), or throw in updateOrganizerEvent when input.slug differs from existing.slug."
+      "fix": "Disable the slug input when `isEditing` (read-only hint 'không thể đổi sau khi tạo'), or throw in updateOrganizerEvent when input.slug differs from existing.slug.",
+      "verified_in": "findings-round2-review.json + findings-round2-challenge.json (F-1 completed as G-2)"
     },
     {
       "id": "F-10",
-      "status": "to_fix",
+      "status": "fixed",
       "severity": "minor",
       "sources": [
         "C-4",
@@ -143,11 +152,12 @@
       "files": [
         "apps/web/src/components/organizer/event-wizard.tsx"
       ],
-      "fix": "Pass a canSubmit prop (canSubmitEvent(initialEvent.state)) to the wizard and hide or disable the submit-for-review button when it is false. | Hide/disable the submit button when `initialEvent && !canSubmitEvent(initialEvent.state)`."
+      "fix": "Pass a canSubmit prop (canSubmitEvent(initialEvent.state)) to the wizard and hide or disable the submit-for-review button when it is false. | Hide/disable the submit button when `initialEvent && !canSubmitEvent(initialEvent.state)`.",
+      "verified_in": "findings-round2-review.json + findings-round2-challenge.json (F-1 completed as G-2)"
     },
     {
       "id": "F-11",
-      "status": "to_fix",
+      "status": "fixed",
       "severity": "minor",
       "sources": [
         "C-5",
@@ -157,11 +167,12 @@
       "files": [
         "apps/web/src/components/queue/waiting-room.tsx"
       ],
-      "fix": "In waiting-room, handle err instanceof ApiError && err.code === 'AUTH_REQUIRED' (show t('waiting.signInRequired') with a sign-in link). In use-queue-status, treat AUTH_REQUIRED as terminal (update error, transport idle). | In initQueueToken's catch, check `err instanceof ApiError && err.code === 'AUTH_REQUIRED'` and show the sign-in action (same as kind 'device'/'otp')."
+      "fix": "In waiting-room, handle err instanceof ApiError && err.code === 'AUTH_REQUIRED' (show t('waiting.signInRequired') with a sign-in link). In use-queue-status, treat AUTH_REQUIRED as terminal (update error, transport idle). | In initQueueToken's catch, check `err instanceof ApiError && err.code === 'AUTH_REQUIRED'` and show the sign-in action (same as kind 'device'/'otp').",
+      "verified_in": "findings-round2-review.json + findings-round2-challenge.json (F-1 completed as G-2)"
     },
     {
       "id": "F-12",
-      "status": "to_fix",
+      "status": "fixed",
       "severity": "minor",
       "sources": [
         "C-8"
@@ -170,11 +181,12 @@
       "files": [
         "apps/web/src/lib/api-client.ts"
       ],
-      "fix": "Before setSession in doRefresh, re-read storage. If there is no session, or its refresh token is no longer cur.refreshToken, discard the result and throw AUTH_REQUIRED. Alternatively, keep a logout epoch counter and compare it."
+      "fix": "Before setSession in doRefresh, re-read storage. If there is no session, or its refresh token is no longer cur.refreshToken, discard the result and throw AUTH_REQUIRED. Alternatively, keep a logout epoch counter and compare it.",
+      "verified_in": "findings-round2-review.json + findings-round2-challenge.json (F-1 completed as G-2)"
     },
     {
       "id": "F-13",
-      "status": "to_fix",
+      "status": "fixed",
       "severity": "minor",
       "sources": [
         "C-10",
@@ -187,11 +199,12 @@
         "apps/web/src/components/checkout/order-result-view.tsx",
         "apps/web/src/hooks/use-order-status.ts"
       ],
-      "fix": "Call forgetIssueKey(orderId) when the filtered list is empty, and also in useIssuedTickets.retry(). | Show 'đã sẵn sàng' only when issued.tickets.length > 0. Otherwise show 'Thanh toán thành công — đang phát hành vé'. | Stop retrying (set failed) when err.type is AUTH_REQUIRED or NOT_FOUND."
+      "fix": "Call forgetIssueKey(orderId) when the filtered list is empty, and also in useIssuedTickets.retry(). | Show 'đã sẵn sàng' only when issued.tickets.length > 0. Otherwise show 'Thanh toán thành công — đang phát hành vé'. | Stop retrying (set failed) when err.type is AUTH_REQUIRED or NOT_FOUND.",
+      "verified_in": "findings-round2-review.json + findings-round2-challenge.json (F-1 completed as G-2)"
     },
     {
       "id": "F-14",
-      "status": "to_fix",
+      "status": "fixed",
       "severity": "minor",
       "sources": [
         "X-10"
@@ -200,11 +213,12 @@
       "files": [
         "apps/web/src/lib/api-client.ts"
       ],
-      "fix": "Pass an AbortSignal with a timeout (e.g. 10 s) to locks.request and fall back to doRefresh without the lock when it aborts; or use `steal: true` after a timeout."
+      "fix": "Pass an AbortSignal with a timeout (e.g. 10 s) to locks.request and fall back to doRefresh without the lock when it aborts; or use `steal: true` after a timeout.",
+      "verified_in": "findings-round2-review.json + findings-round2-challenge.json (F-1 completed as G-2)"
     },
     {
       "id": "F-15",
-      "status": "to_fix",
+      "status": "fixed",
       "severity": "minor",
       "sources": [
         "X-12",
@@ -215,11 +229,12 @@
         "apps/web/src/lib/api/auth.ts",
         "apps/web/src/lib/session.ts"
       ],
-      "fix": "logout() should read ef_refresh directly from both storages (not via getSession) before clearing; or session.readFrom should keep returning the tokens with a placeholder user when only ef_user is corrupt. | Write the three keys first (try/catch), and only wipe the OTHER store / old values after a successful write; on failure restore the previous values."
+      "fix": "logout() should read ef_refresh directly from both storages (not via getSession) before clearing; or session.readFrom should keep returning the tokens with a placeholder user when only ef_user is corrupt. | Write the three keys first (try/catch), and only wipe the OTHER store / old values after a successful write; on failure restore the previous values.",
+      "verified_in": "findings-round2-review.json + findings-round2-challenge.json (F-1 completed as G-2)"
     },
     {
       "id": "F-16",
-      "status": "to_fix",
+      "status": "fixed",
       "severity": "minor",
       "sources": [
         "S-1"
@@ -228,11 +243,12 @@
       "files": [
         "apps/web/src/components/auth/LoginForm.tsx"
       ],
-      "fix": "Pass { persist: remember ? 'local' : 'session' } to loginWithGoogle in LoginForm. RegisterForm has no checkbox, so pick one default on purpose and document it."
+      "fix": "Pass { persist: remember ? 'local' : 'session' } to loginWithGoogle in LoginForm. RegisterForm has no checkbox, so pick one default on purpose and document it.",
+      "verified_in": "findings-round2-review.json + findings-round2-challenge.json (F-1 completed as G-2)"
     },
     {
       "id": "F-17",
-      "status": "to_fix",
+      "status": "fixed",
       "severity": "minor",
       "sources": [
         "S-3"
@@ -241,11 +257,12 @@
       "files": [
         "apps/web/src/lib/api/auth.ts"
       ],
-      "fix": "Remove saveRecentOrder, or at least stop calling it from getOrderDetails, since nothing reads it. On logout, also clear the ef:queue:token:*, hold, evenflow_order_* and ef:issue:* sessionStorage keys, or call sessionStorage.clear() for the app's prefixes."
+      "fix": "Remove saveRecentOrder, or at least stop calling it from getOrderDetails, since nothing reads it. On logout, also clear the ef:queue:token:*, hold, evenflow_order_* and ef:issue:* sessionStorage keys, or call sessionStorage.clear() for the app's prefixes.",
+      "verified_in": "findings-round2-review.json + findings-round2-challenge.json (F-1 completed as G-2)"
     },
     {
       "id": "F-18",
-      "status": "to_fix",
+      "status": "fixed",
       "severity": "minor",
       "sources": [
         "S-7"
@@ -254,11 +271,12 @@
       "files": [
         "apps/web/src/lib/event-service.ts"
       ],
-      "fix": "Use encodeURIComponent(eventId) for consistency."
+      "fix": "Use encodeURIComponent(eventId) for consistency.",
+      "verified_in": "findings-round2-review.json + findings-round2-challenge.json (F-1 completed as G-2)"
     },
     {
       "id": "F-19",
-      "status": "to_fix",
+      "status": "fixed",
       "severity": "minor",
       "sources": [
         "X-16"
@@ -267,11 +285,12 @@
       "files": [
         "apps/web/src/components/organizer/event-wizard.tsx"
       ],
-      "fix": "Move the BR-E2 check from handleNext(step 3) into handleSubmit(submitForReview === true) only; show it as a warning on step 3."
+      "fix": "Move the BR-E2 check from handleNext(step 3) into handleSubmit(submitForReview === true) only; show it as a warning on step 3.",
+      "verified_in": "findings-round2-review.json + findings-round2-challenge.json (F-1 completed as G-2)"
     },
     {
       "id": "F-20",
-      "status": "to_fix",
+      "status": "fixed",
       "severity": "minor",
       "sources": [
         "X-18"
@@ -280,7 +299,8 @@
       "files": [
         "apps/web/src/components/checkout/checkout-view.tsx"
       ],
-      "fix": "Pass `maxSelectablePerOrder={event.maxPerOrder || 4}` from CheckoutPageClient."
+      "fix": "Pass `maxSelectablePerOrder={event.maxPerOrder || 4}` from CheckoutPageClient.",
+      "verified_in": "findings-round2-review.json + findings-round2-challenge.json (F-1 completed as G-2)"
     },
     {
       "id": "D-C-6",
@@ -372,90 +392,99 @@
     "items": [
       {
         "id": "G-1",
-        "status": "to_fix",
+        "status": "fixed",
         "severity": "major",
         "sources": [
           "Y-1",
           "R2-3"
         ],
-        "title": "Lock-timeout fallback refreshes outside the Web Lock -> refresh-token reuse -> family revoked -> all tabs logged out"
+        "title": "Lock-timeout fallback refreshes outside the Web Lock -> refresh-token reuse -> family revoked -> all tabs logged out",
+        "verified_in": "findings-round3-review.json + findings-round3-challenge.json (G-9 in round 3)"
       },
       {
         "id": "G-2",
-        "status": "to_fix",
+        "status": "fixed",
         "severity": "major",
         "sources": [
           "Y-10",
           "R2-5",
           "F-1 partial"
         ],
-        "title": "SOLD_OUT events cannot raise tier quota although backend allows it"
+        "title": "SOLD_OUT events cannot raise tier quota although backend allows it",
+        "verified_in": "findings-round3-review.json + findings-round3-challenge.json (G-9 in round 3)"
       },
       {
         "id": "G-3",
-        "status": "to_fix",
+        "status": "fixed",
         "severity": "minor",
         "sources": [
           "R2-1",
           "Y-13"
         ],
-        "title": "NUL byte + CRLF in api-client.ts makes git treat it as binary"
+        "title": "NUL byte + CRLF in api-client.ts makes git treat it as binary",
+        "verified_in": "findings-round3-review.json + findings-round3-challenge.json (G-9 in round 3)"
       },
       {
         "id": "G-4",
-        "status": "to_fix",
+        "status": "fixed",
         "severity": "minor",
         "sources": [
           "R2-2"
         ],
-        "title": "Involuntary session expiry wipes buy-flow idempotency keys and hold mid-checkout"
+        "title": "Involuntary session expiry wipes buy-flow idempotency keys and hold mid-checkout",
+        "verified_in": "findings-round3-review.json + findings-round3-challenge.json (G-9 in round 3)"
       },
       {
         "id": "G-5",
-        "status": "to_fix",
+        "status": "fixed",
         "severity": "minor",
         "sources": [
           "Y-7",
           "R2-7"
         ],
-        "title": "Payment idempotency key not scoped to request body"
+        "title": "Payment idempotency key not scoped to request body",
+        "verified_in": "findings-round3-review.json + findings-round3-challenge.json (G-9 in round 3)"
       },
       {
         "id": "G-6",
-        "status": "to_fix",
+        "status": "fixed",
         "severity": "minor",
         "sources": [
           "Y-8"
         ],
-        "title": "Stale in-progress flag keeps payment key after definitive 4xx"
+        "title": "Stale in-progress flag keeps payment key after definitive 4xx",
+        "verified_in": "findings-round3-review.json + findings-round3-challenge.json (G-9 in round 3)"
       },
       {
         "id": "G-7",
-        "status": "to_fix",
+        "status": "fixed",
         "severity": "minor",
         "sources": [
           "R2-6"
         ],
-        "title": "Identifier (email/phone) passed in sign-in URL query"
+        "title": "Identifier (email/phone) passed in sign-in URL query",
+        "verified_in": "findings-round3-review.json + findings-round3-challenge.json (G-9 in round 3)"
       },
       {
         "id": "G-8",
-        "status": "to_fix",
+        "status": "fixed",
         "severity": "minor",
         "sources": [
           "R2-4",
           "Y-11"
         ],
-        "title": "Tier created during failed edit stays editable; rename/reprice silently dropped on retry"
+        "title": "Tier created during failed edit stays editable; rename/reprice silently dropped on retry",
+        "verified_in": "findings-round3-review.json + findings-round3-challenge.json (G-9 in round 3)"
       },
       {
         "id": "G-9",
-        "status": "to_fix_round3",
+        "status": "fixed",
         "severity": "minor",
         "sources": [
           "F-5 gap"
         ],
-        "title": "403 /problems/forbidden mapped to NOT_ADMITTED"
+        "title": "403 /problems/forbidden mapped to NOT_ADMITTED",
+        "verified_in": "findings-round3-review.json + findings-round3-challenge.json (G-9 in round 3)"
       },
       {
         "id": "D-F16",
@@ -492,7 +521,8 @@
           "R3-3"
         ],
         "title": "Cross-tab refresh marker stores the raw refresh token and its fixed 30 s TTL/steal path still allows double refresh -> family revocation",
-        "status": "to_fix"
+        "status": "fixed",
+        "verified_in": "findings-round4-review.json + findings-round4-challenge.json"
       },
       {
         "id": "H-2",
@@ -502,7 +532,8 @@
           "R3-4"
         ],
         "title": "Different user signing in on the same tab inherits buy-flow keys",
-        "status": "to_fix"
+        "status": "fixed",
+        "verified_in": "findings-round4-review.json + findings-round4-challenge.json"
       },
       {
         "id": "H-3",
@@ -511,7 +542,8 @@
           "Z-5"
         ],
         "title": "G-8 read-only state depends on reload success; duplicate tier POST if reload fails",
-        "status": "to_fix"
+        "status": "fixed",
+        "verified_in": "findings-round4-review.json + findings-round4-challenge.json"
       },
       {
         "id": "G-9",
@@ -520,7 +552,8 @@
           "G-9"
         ],
         "title": "403 forbidden -> FORBIDDEN (TCR approved)",
-        "status": "to_fix"
+        "status": "fixed",
+        "verified_in": "findings-round4-review.json + findings-round4-challenge.json"
       },
       {
         "id": "D-R3-5",

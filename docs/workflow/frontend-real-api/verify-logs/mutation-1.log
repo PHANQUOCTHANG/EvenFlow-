@@ -1,0 +1,15 @@
+mutation 1 applied to api-client.ts
+diff --git a/apps/web/src/lib/api-client.ts b/apps/web/src/lib/api-client.ts
+index ae84cca..7dad62f 100644
+--- a/apps/web/src/lib/api-client.ts
++++ b/apps/web/src/lib/api-client.ts
+@@ -253,7 +253,7 @@ export async function apiFetch(path: string, init: ApiFetchInit = {}): Promise<R
+   const res = await fetch(url, withBearer(base, sentAccess));
+ 
+   if (res.status !== 401 || !sentAccess) return res;
+-  if ((await readProblem(res)).type !== TOKEN_EXPIRED) return res;
++  /* MUTANT 1: refresh on any 401 type */
+ 
+   const fresh = await refreshAccessToken(sentRefresh);
+   // Retry dung 1 lan; neu van 401 thi tra nguyen Response (khong refresh lan hai).
+### npx vitest run src/lib (testTimeout 15000)
