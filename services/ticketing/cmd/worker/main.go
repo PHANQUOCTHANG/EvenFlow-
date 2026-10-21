@@ -3,6 +3,7 @@
 //   - inventory seeder: nap ton kho tu Postgres vao Redis vao bucket con thieu (nhanh, 5 giay)
 //   - inventory reconciler: so Redis voi Postgres moi 10 giay va sua lech (EV-132)
 //   - outbox relay: relay su kien tu outbox_events sang RabbitMQ (EV-131, EVF-36)
+//   - order.paid consumer: thanh toan xong thi tu phat ve (EV-133)
 //
 // Tach khoi server la co y: mot dot tra kho lon khong duoc phep lam cham
 // duong di nong cua khach dang mua ve.
@@ -26,12 +27,14 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/redis/go-redis/v9"
 
+	"github.com/eventflow/eventflow/libs/go/authx"
 	"github.com/eventflow/eventflow/libs/go/mq"
 	"github.com/eventflow/eventflow/libs/go/otelx"
 	metricsadapter "github.com/eventflow/eventflow/services/ticketing/internal/adapter/metrics"
 	mqadapter "github.com/eventflow/eventflow/services/ticketing/internal/adapter/mq"
 	postgresadapter "github.com/eventflow/eventflow/services/ticketing/internal/adapter/postgres"
 	redisadapter "github.com/eventflow/eventflow/services/ticketing/internal/adapter/redis"
+	"github.com/eventflow/eventflow/services/ticketing/internal/app"
 	"github.com/eventflow/eventflow/services/ticketing/internal/port"
 	"github.com/eventflow/eventflow/services/ticketing/internal/worker"
 )
@@ -87,6 +90,7 @@ func run(log *slog.Logger) error {
 
 	var pub port.Publisher = logPublisher{log}
 	var outboxRelay *worker.OutboxRelay
+	var runOrderPaid func(context.Context) error
 
 	if rabbitURL := os.Getenv("RABBITMQ_URL"); rabbitURL != "" {
 		amqpConn, err := amqp.Dial(rabbitURL)
@@ -109,9 +113,20 @@ func run(log *slog.Logger) error {
 			}
 		}()
 
-		if err := mq.Declare(ch, mq.TicketingTopology()); err != nil {
+		// Kem PaymentTopology: hang order-paid bind vao payment.events, exchange phai co truoc.
+		if err := mq.Declare(ch, mq.Merge(mq.PaymentTopology(), mq.TicketingTopology())); err != nil {
 			return fmt.Errorf("declare ticketing topology: %w", err)
 		}
+
+		// Mat ket noi thi dung worker (compose/k8s khoi dong lai): relay va consumer tren kenh
+		// da dong se loi mai ma khong tu noi lai.
+		connClosed := amqpConn.NotifyClose(make(chan *amqp.Error, 1))
+		go func() {
+			if e, ok := <-connClosed; ok && ctx.Err() == nil {
+				log.Error("mat ket noi rabbitmq, dung worker", "err", e)
+				stop()
+			}
+		}()
 
 		mqPub, err := mq.NewPublisher(ch)
 		if err != nil {
@@ -127,6 +142,30 @@ func run(log *slog.Logger) error {
 			log,
 		)
 		log.Info("da khoi tao rabbitmq publisher va outbox relay", "exchange", "ticketing.events")
+
+		// Consumer order.paid: kenh consume va kenh publish retry/DLQ rieng (libs/go/mq doc.go).
+		consumeCh, err := amqpConn.Channel()
+		if err != nil {
+			return fmt.Errorf("mo channel consume: %w", err)
+		}
+		forwardCh, err := amqpConn.Channel()
+		if err != nil {
+			return fmt.Errorf("mo channel retry: %w", err)
+		}
+		forwardPub, err := mq.NewPublisher(forwardCh)
+		if err != nil {
+			return fmt.Errorf("tao publisher retry: %w", err)
+		}
+		// Cung secret voi ticketing server, neu khong QR phat o day se bi /tickets/verify tu choi.
+		qrEngine, err := authx.NewQREngine([]byte(env("HMAC_QR_SECRET", "evenflow-default-development-secret-key-32b!")))
+		if err != nil {
+			return fmt.Errorf("khoi tao qr engine: %w", err)
+		}
+		handler := worker.NewOrderPaidHandler(app.NewIssueTicketsUseCase(repo, qrEngine, log), log)
+		runOrderPaid = func(ctx context.Context) error {
+			return mq.Consume(ctx, consumeCh, forwardPub, worker.OrderPaidConsumerConfig(), handler.Handle)
+		}
+		log.Info("consumer order.paid san sang", "queue", mq.TicketingOrderPaidQueue)
 	} else {
 		log.Info("khong co RABBITMQ_URL; dung logPublisher cho dev")
 	}
@@ -155,7 +194,7 @@ func run(log *slog.Logger) error {
 		"chu_ky_quet", time.Second, "chu_ky_nap_kho", worker.DefaultSeederConfig(nil).Interval,
 		"chu_ky_doi_soat", worker.DefaultReconcilerConfig(nil).Interval)
 
-	errs := make(chan error, 6)
+	errs := make(chan error, 7)
 	var wg sync.WaitGroup
 
 	wg.Add(1)
@@ -193,6 +232,14 @@ func run(log *slog.Logger) error {
 		go func() {
 			defer wg.Done()
 			errs <- outboxRelay.Run(ctx)
+		}()
+	}
+
+	if runOrderPaid != nil {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			errs <- runOrderPaid(ctx)
 		}()
 	}
 

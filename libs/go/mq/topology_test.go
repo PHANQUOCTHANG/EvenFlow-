@@ -253,13 +253,18 @@ func TestAITopology_Bindings(t *testing.T) {
 
 // Moi binding phai tro toi exchange/queue co trong cung topology (khong binding mo coi).
 func TestAITopology_BindingKhongMoCoi(t *testing.T) {
-	for name, top := range map[string]Topology{
-		"ai": AITopology(), "ticketing": TicketingTopology(), "notification": NotificationTopology(),
-	} {
-		ex := map[string]bool{}
+	tops := map[string]Topology{
+		"ai": AITopology(), "payment": PaymentTopology(), "ticketing": TicketingTopology(), "notification": NotificationTopology(),
+	}
+	// Exchange nguon co the do topology khac khai bao (vd ticketing nghe payment.events);
+	// hang dich thi phai la cua chinh topology do.
+	ex := map[string]bool{}
+	for _, top := range tops {
 		for _, e := range top.Exchanges {
 			ex[e.Name] = true
 		}
+	}
+	for name, top := range tops {
 		qs := map[string]bool{}
 		for _, q := range top.Queues {
 			qs[q.Name] = true
@@ -272,35 +277,92 @@ func TestAITopology_BindingKhongMoCoi(t *testing.T) {
 	}
 }
 
-// --- Ticketing / Notification giu nguyen nhu definitions.json cu ---
+// --- Ticketing / Notification / Payment ---
 
-func TestTicketingTopology_GiuNguyen(t *testing.T) {
+func hasBinding(top Topology, want Binding) bool {
+	for _, b := range top.Bindings {
+		if b == want {
+			return true
+		}
+	}
+	return false
+}
+
+func TestTicketingTopology_HoldReleasedGiuNguyen(t *testing.T) {
 	top := TicketingTopology()
-	if len(top.Exchanges) != 1 || top.Exchanges[0] != (Exchange{Name: "ticketing.events", Kind: "topic", Durable: true}) {
-		t.Errorf("exchanges = %+v", top.Exchanges)
-	}
-	if len(top.Queues) != 1 || top.Queues[0].Name != "ticketing.hold.released.q" || !top.Queues[0].Durable {
-		t.Fatalf("queues = %+v", top.Queues)
-	}
-	assertArgs(t, "ticketing.hold.released.q", top.Queues[0].Args, map[string]any{"x-queue-type": "quorum"})
-	want := Binding{Source: "ticketing.events", Destination: "ticketing.hold.released.q", RoutingKey: "ticketing.hold.released"}
-	if len(top.Bindings) != 1 || top.Bindings[0] != want {
-		t.Errorf("bindings = %+v, muon [%+v]", top.Bindings, want)
+	assertArgs(t, "ticketing.hold.released.q", findQueue(t, top, "ticketing.hold.released.q").Args,
+		map[string]any{"x-queue-type": "quorum"})
+	if !hasBinding(top, Binding{Source: "ticketing.events", Destination: "ticketing.hold.released.q", RoutingKey: "ticketing.hold.released"}) {
+		t.Errorf("mat binding hold.released: %+v", top.Bindings)
 	}
 }
 
-func TestNotificationTopology_GiuNguyen(t *testing.T) {
+func TestNotificationTopology_EmailGiuNguyen(t *testing.T) {
 	top := NotificationTopology()
-	if len(top.Exchanges) != 1 || top.Exchanges[0] != (Exchange{Name: "notification.direct", Kind: "direct", Durable: true}) {
+	assertArgs(t, "notification.email.q", findQueue(t, top, "notification.email.q").Args,
+		map[string]any{"x-queue-type": "quorum"})
+	if !hasBinding(top, Binding{Source: "notification.direct", Destination: "notification.email.q", RoutingKey: "email"}) {
+		t.Errorf("mat binding email: %+v", top.Bindings)
+	}
+}
+
+// Moi exchange su kien phai co sink "#": publisher bat mandatory, key chua co consumer ma bi
+// tra ve thi relay outbox ket vinh vien o dong do.
+func TestSink_MoiExchangeSuKienCoHangNhanMoiKey(t *testing.T) {
+	for ex, top := range map[string]Topology{"payment.events": PaymentTopology(), "ticketing.events": TicketingTopology()} {
+		q := findQueue(t, top, ex+".sink.q")
+		assertArgs(t, q.Name, q.Args, map[string]any{"x-queue-type": "quorum", "x-max-length": int64(1000), "x-overflow": "drop-head"})
+		if !hasBinding(top, Binding{Source: ex, Destination: q.Name, RoutingKey: "#"}) {
+			t.Errorf("%s thieu binding #", q.Name)
+		}
+	}
+}
+
+// Hang tre dead-letter ve default exchange voi key = ten hang goc: message chi quay lai dung
+// consumer da loi, khong lap sang consumer khac cung nghe exchange nguon.
+func TestConsumer_RetryQuayVeDungHangGoc(t *testing.T) {
+	cases := []struct {
+		top                                 Topology
+		work, retry, key, retryEx, dlq, dlx string
+		ttl                                 int64
+		sources                             []Binding
+	}{
+		{TicketingTopology(), TicketingOrderPaidQueue, "ticketing.order-paid.retry", TicketingOrderPaidKey,
+			TicketingRetryExchange, TicketingDeadLetterQueue, TicketingDeadLetterEx, 5000,
+			[]Binding{{Source: "payment.events", Destination: TicketingOrderPaidQueue, RoutingKey: "order.paid"}}},
+		{NotificationTopology(), NotificationEventsQueue, "notification.events.retry", NotificationEventsKey,
+			NotificationRetryExchange, NotificationDeadLetterQueue, NotificationDeadLetterEx, 10000,
+			[]Binding{
+				{Source: "payment.events", Destination: NotificationEventsQueue, RoutingKey: "order.paid"},
+				{Source: "payment.events", Destination: NotificationEventsQueue, RoutingKey: "payment.refunded"},
+				{Source: "ticketing.events", Destination: NotificationEventsQueue, RoutingKey: "ticketing.ticket.issued"},
+			}},
+	}
+	for _, c := range cases {
+		assertArgs(t, c.work, findQueue(t, c.top, c.work).Args, map[string]any{"x-queue-type": "quorum"})
+		assertArgs(t, c.retry, findQueue(t, c.top, c.retry).Args, map[string]any{
+			"x-queue-type":              "quorum",
+			"x-message-ttl":             c.ttl,
+			"x-dead-letter-exchange":    "",
+			"x-dead-letter-routing-key": c.work,
+			"x-dead-letter-strategy":    "at-least-once",
+			"x-overflow":                "reject-publish",
+		})
+		findQueue(t, c.top, c.dlq)
+		for _, want := range append(c.sources,
+			Binding{Source: c.retryEx, Destination: c.retry, RoutingKey: c.key},
+			Binding{Source: c.dlx, Destination: c.dlq, RoutingKey: c.key}) {
+			if !hasBinding(c.top, want) {
+				t.Errorf("thieu binding %+v", want)
+			}
+		}
+	}
+}
+
+func TestPaymentTopology_Exchange(t *testing.T) {
+	top := PaymentTopology()
+	if len(top.Exchanges) != 1 || top.Exchanges[0] != (Exchange{Name: "payment.events", Kind: "topic", Durable: true}) {
 		t.Errorf("exchanges = %+v", top.Exchanges)
-	}
-	if len(top.Queues) != 1 || top.Queues[0].Name != "notification.email.q" || !top.Queues[0].Durable {
-		t.Fatalf("queues = %+v", top.Queues)
-	}
-	assertArgs(t, "notification.email.q", top.Queues[0].Args, map[string]any{"x-queue-type": "quorum"})
-	want := Binding{Source: "notification.direct", Destination: "notification.email.q", RoutingKey: "email"}
-	if len(top.Bindings) != 1 || top.Bindings[0] != want {
-		t.Errorf("bindings = %+v, muon [%+v]", top.Bindings, want)
 	}
 }
 
@@ -427,7 +489,7 @@ func TestDeclare_LoiChiOQueueDeclareKhongBiNuot(t *testing.T) {
 var _ Declarer = (*amqp.Channel)(nil)
 
 func TestDeclare_ThuTuVaDoiSo(t *testing.T) {
-	top := Merge(AITopology(), TicketingTopology(), NotificationTopology())
+	top := Merge(AITopology(), PaymentTopology(), TicketingTopology(), NotificationTopology())
 	f := &fakeDeclarer{}
 	if err := Declare(f, top); err != nil {
 		t.Fatalf("Declare: %v", err)
@@ -488,7 +550,7 @@ func TestDeclare_LoiBocTenDoiTuongVaDungLai(t *testing.T) {
 }
 
 func TestDeclare_GoiHaiLanKhongLoi(t *testing.T) {
-	top := Merge(AITopology(), TicketingTopology(), NotificationTopology())
+	top := Merge(AITopology(), PaymentTopology(), TicketingTopology(), NotificationTopology())
 	f := &fakeDeclarer{}
 	if err := Declare(f, top); err != nil {
 		t.Fatalf("lan 1: %v", err)
@@ -638,7 +700,7 @@ func TestDefinitionsJSON_KhopTopologyCode(t *testing.T) {
 	if err != nil {
 		t.Fatalf("definitions.json: %v", err)
 	}
-	code := Merge(AITopology(), TicketingTopology(), NotificationTopology())
+	code := Merge(AITopology(), PaymentTopology(), TicketingTopology(), NotificationTopology())
 
 	// Exchanges
 	var fileEx, codeEx uniqueIndex[exSpec]

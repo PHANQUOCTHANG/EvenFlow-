@@ -28,6 +28,11 @@ import (
 // AttemptHeader la header thu vien dung dem so lan xu ly (bat dau tu 1).
 const AttemptHeader = "x-ef-attempt"
 
+// RoutingKeyHeader giu routing key luc message duoc publish lan dau. Khi qua hang retry,
+// broker dead-letter message ve hang goc voi routing key cua hang tre, nen neu khong co
+// header nay handler chon nhanh theo RoutingKey se thay mot key la sau lan thu lai dau tien.
+const RoutingKeyHeader = "x-ef-routing-key"
+
 const (
 	defaultMaxAttempts = 3
 	defaultPrefetch    = 10
@@ -282,22 +287,33 @@ func forward(ctx context.Context, span trace.Span, pub *Publisher, d amqp.Delive
 	return ackDelivery(d, queue)
 }
 
-// newDelivery dung Delivery cho handler; Headers la ban sao.
+// newDelivery dung Delivery cho handler; Headers la ban sao. RoutingKey la key luc publish
+// lan dau (RoutingKeyHeader) neu message da di qua retry/DLQ.
 func newDelivery(d amqp.Delivery) Delivery {
 	return Delivery{
 		Body:       d.Body,
 		Headers:    cloneHeaders(d.Headers),
-		RoutingKey: d.RoutingKey,
+		RoutingKey: originalRoutingKey(d),
 		MessageID:  d.MessageId,
 		Attempt:    attemptOf(d.Headers),
 	}
 }
 
+// originalRoutingKey tra RoutingKeyHeader neu co (message da duoc chuyen tiep), nguoc lai
+// routing key cua lan giao nay.
+func originalRoutingKey(d amqp.Delivery) string {
+	if k, ok := d.Headers[RoutingKeyHeader].(string); ok && k != "" {
+		return k
+	}
+	return d.RoutingKey
+}
+
 // forwardMessage dung ban sao retry/DLQ: giu body va property, header da bo header
-// cua broker/publish-id, AttemptHeader = attempt (int32 co dau).
+// cua broker/publish-id, AttemptHeader = attempt (int32 co dau), RoutingKeyHeader = key goc.
 func forwardMessage(d amqp.Delivery, attempt int) Message {
 	headers := copyHeaders(d.Headers)
 	headers[AttemptHeader] = int32(attempt)
+	headers[RoutingKeyHeader] = originalRoutingKey(d)
 	return Message{
 		Body:            d.Body,
 		ContentType:     d.ContentType,

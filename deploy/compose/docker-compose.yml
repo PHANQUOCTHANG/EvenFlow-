@@ -200,6 +200,9 @@ services:
       DATABASE_URL: "postgres://eventflow:eventflow@pgbouncer:5432/eventflow?sslmode=disable"
       # Thieu bien nay thi relay outbox chi ghi log, khong phat len RabbitMQ.
       RABBITMQ_URL: "amqp://eventflow:eventflow@rabbitmq:5672/"
+      # Worker phat ve khi nhan order.paid: phai CUNG secret voi ticketing, neu khong
+      # QR ky o day bi POST /v1/tickets/verify tu choi.
+      HMAC_QR_SECRET: "${HMAC_QR_SECRET:-dev-qr-hmac-secret-change-me-32bytes!}"
       ACTIVE_EVENT_IDS: "${ACTIVE_EVENT_IDS:-11111111-1111-4111-8111-111111111111,22222222-2222-4222-8222-222222222222}"
     depends_on:
       redis: {condition: service_healthy}
@@ -278,7 +281,10 @@ services:
       DATABASE_URL: "postgres://eventflow:eventflow@pgbouncer:5432/eventflow?sslmode=disable"
       PAYMENT_SANDBOX_MODE: "true"
       PAYMENT_DEFAULT_PROVIDER: "sandbox"
+      # Relay outbox: order.paid -> ticketing phat ve + notification gui email.
+      RABBITMQ_URL: "amqp://eventflow:eventflow@rabbitmq:5672/"
     depends_on:
+      rabbitmq: {condition: service_healthy}
       migrate: {condition: service_completed_successfully}
     restart: unless-stopped
 
