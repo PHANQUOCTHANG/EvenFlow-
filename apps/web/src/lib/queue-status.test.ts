@@ -21,6 +21,7 @@ function json(body: unknown, init: { status?: number; headers?: Record<string, s
 
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.unstubAllEnvs();
 });
 
 describe("sanitizePollAfterMs — AC-1 khong bao gio poll nhanh hon server", () => {
@@ -116,27 +117,29 @@ describe("isTerminalState", () => {
 
 describe("fetchQueueStatus", () => {
   it("200 -> updated, gui X-Queue-Token va If-None-Match, doc ETag moi", async () => {
+    vi.stubEnv("NEXT_PUBLIC_API_BASE", "https://api");
     const fetchMock = vi
       .spyOn(globalThis, "fetch")
       .mockResolvedValue(
         json({ state: "QUEUED", rank: 120, eta_seconds: 30, poll_after_ms: 3000 }, { headers: { ETag: 'W/"Q-1"' } }),
       );
 
-    const r = await fetchQueueStatus("evt 1", "tok", { etag: 'W/"Q-0"', baseUrl: "https://api" });
+    const r = await fetchQueueStatus("evt 1", "tok", { etag: 'W/"Q-0"' });
 
     expect(r).toMatchObject({ kind: "updated", etag: 'W/"Q-1"', pollAfterMs: 3000 });
     const [url, init] = fetchMock.mock.calls[0];
     expect(String(url)).toBe("https://api/v1/events/evt%201/queue/status");
-    const headers = init?.headers as Record<string, string>;
-    expect(headers["X-Queue-Token"]).toBe("tok");
-    expect(headers["If-None-Match"]).toBe('W/"Q-0"');
+    // WP2: di qua apiFetch -> doc header bang Headers (goc API lay tu NEXT_PUBLIC_API_BASE, khong con baseUrl).
+    const headers = new Headers(init?.headers);
+    expect(headers.get("X-Queue-Token")).toBe("tok");
+    expect(headers.get("If-None-Match")).toBe('W/"Q-0"');
   });
 
   it("khong co ETag truoc do -> khong gui If-None-Match", async () => {
     const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(json({ state: "LOBBY" }));
     await fetchQueueStatus("e", "tok");
-    const headers = fetchMock.mock.calls[0][1]?.headers as Record<string, string>;
-    expect(headers["If-None-Match"]).toBeUndefined();
+    const headers = new Headers(fetchMock.mock.calls[0][1]?.headers);
+    expect(headers.has("If-None-Match")).toBe(false);
   });
 
   it("304 -> not-modified, nhip lay tu X-Poll-After-Ms, giu ETag cu neu server khong gui lai", async () => {

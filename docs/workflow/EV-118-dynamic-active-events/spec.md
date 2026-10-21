@@ -41,8 +41,8 @@
   Một lệnh có điều kiện nên nhiều instance chạy cùng lúc vẫn chỉ mở mỗi sự kiện một lần. Lottery/admit không phụ thuộc trạng thái
   này (chạy theo `sale_start_ms`); `ON_SALE` phục vụ trang sự kiện và danh sách.
 - BR-E2 cấu hình được: `MIN_SALE_LEAD_SECONDS` (mặc định 30 phút, cảnh báo khi ngắn hơn). Compose đặt 60 giây cho demo.
-- `GET /api/v1/events/public?limit=n`: công khai, chỉ `SCHEDULED`/`ON_SALE`/`SOLD_OUT`, gần mở bán nhất trước, `limit` mặc định 50,
-  trần 100, `Cache-Control: public, max-age=10`. Gateway khai báo route công khai riêng.
+- Danh sách công khai `GET /api/v1/events/public`: dùng bản của PR #85 (frontend-real-api) đã vào `develop`: trả `{events:[…]}` kèm hạng vé, chỉ
+  `SCHEDULED`/`ON_SALE`/`SOLD_OUT`, xếp theo giờ mở bán, tối đa 100. Bản tôi viết trước đó (mảng trần, `?limit`) trùng đường dẫn nên đã bỏ khi gộp `develop`.
 
 **ai-worker:** `MODERATION_API_BASE` (compose: `http://event:8084`) cho callback kiểm duyệt; tool tra cứu vẫn đi qua gateway.
 
@@ -60,7 +60,7 @@ xoá `tickets`, `payments`, `sale_reports` theo đúng thứ tự khoá ngoại.
 | AC-5 | Postgres/Redis lỗi không gỡ sự kiện đang chạy |
 | AC-6 | T0 đã qua không bị ghi đè; T0 tương lai được cập nhật khi đổi lịch |
 | AC-7 | 4 tài khoản demo đăng nhập được; sai mật khẩu 401 |
-| AC-8 | Danh sách công khai không lộ DRAFT/PENDING_REVIEW/REJECTED/CANCELLED; "của tôi" vẫn cần đăng nhập; limit bị kẹp |
+| AC-8 | Danh sách công khai không lộ DRAFT/PENDING_REVIEW/REJECTED/CANCELLED; "của tôi" vẫn cần đăng nhập (test do PR #85 thêm) |
 | AC-9 | BR-E2 mặc định 30 phút; chỉ đổi khi đặt `MIN_SALE_LEAD_SECONDS` |
 | AC-10 | Kết quả kiểm duyệt AI tới được event-service |
 

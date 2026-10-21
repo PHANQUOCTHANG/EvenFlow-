@@ -5,14 +5,15 @@
  * so lieu mau cu the. Cac bat bien kiem o day:
  *   - hinh dang snapshot dung kieu da chot, isSample = true (AC-3);
  *   - so lieu tat dinh (khong Math.random) — hai lan goi chi khac generatedAt;
- *   - su kien mau lay tu getAllPublicEvents (khong chep tay);
+ *   - su kien mau lay tu SAMPLE_EVENTS (lib/sample-data, khong chep tay, khong goi API);
  *   - 404 = OpsServiceError(status 404);
  *   - BR-O1 (tierInventoryViolation), tuoi du lieu (snapshotAgeMs), hang so 5s / 2s;
  *   - __setOpsSampleOverride: patch / ep loi / reset.
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { getAllPublicEvents, type EventDetailSnapshot } from "./event-service";
+import { SAMPLE_EVENTS } from "./sample-data/events";
+import type { EventDetailSnapshot } from "./types/event";
 import {
   OPS_POLL_INTERVAL_MS,
   OpsServiceError,
@@ -26,8 +27,8 @@ import {
   type OpsWarRoomSnapshot,
 } from "./ops-service";
 
-/* Them 3 su kien gia cho cac trang thai cong khai ma MOCK_EVENTS chua co (COMPLETED,
- * CANCELLED, CLOSED) de kiem bang map trang thai (plan §6 M-4). Van giu nguyen MOCK_EVENTS. */
+/* Them 3 su kien gia cho cac trang thai cong khai ma SAMPLE_EVENTS chua co (COMPLETED,
+ * CANCELLED, CLOSED) de kiem bang map trang thai (plan §6 M-4). Van giu nguyen SAMPLE_EVENTS. */
 const { EXTRA_EVENTS } = vi.hoisted(() => ({
   EXTRA_EVENTS: (
   [
@@ -44,20 +45,14 @@ const { EXTRA_EVENTS } = vi.hoisted(() => ({
   startsAt: "2026-12-01T19:00:00+07:00",
   saleStartAt: "2026-10-01T10:00:00+07:00",
   state,
-  tiers: [{ id: `${id}-tier`, name: "Vé thử", price: 100000, availability: "AVAILABLE" }],
+  maxPerOrder: 4,
+  tiers: [{ id: `${id}-tier`, name: "Vé thử", price: 100000, currency: "VND", availability: "AVAILABLE" }],
 })) as EventDetailSnapshot[],
 }));
 
-vi.mock("./event-service", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("./event-service")>();
-  const all = () => [...actual.MOCK_EVENTS, ...EXTRA_EVENTS];
-  return {
-    ...actual,
-    getAllPublicEvents: vi.fn(async () => all()),
-    getEventById: vi.fn(async (id: string) => all().find((e) => e.id === id || e.slug === id) ?? null),
-    getEventBySlug: vi.fn(async (slug: string) => all().find((e) => e.slug === slug) ?? null),
-    getAllEventSlugs: vi.fn(async () => all().map((e) => e.slug)),
-  };
+vi.mock("./sample-data/events", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./sample-data/events")>();
+  return { ...actual, SAMPLE_EVENTS: [...actual.SAMPLE_EVENTS, ...EXTRA_EVENTS] };
 });
 
 const SALE_STATES = ["SCHEDULED", "ON_SALE", "SOLD_OUT", "CLOSED"];
@@ -121,9 +116,9 @@ describe("ops-service — hằng số độ tươi (AC-2)", () => {
   });
 });
 
-describe("ops-service — listOpsEvents lấy sự kiện mẫu từ getAllPublicEvents", () => {
-  it("trả về đúng tập id và tên của getAllPublicEvents (không chép tay)", async () => {
-    const publicEvents = await getAllPublicEvents();
+describe("ops-service — listOpsEvents lấy sự kiện mẫu từ SAMPLE_EVENTS", () => {
+  it("trả về đúng tập id và tên của SAMPLE_EVENTS (không chép tay)", async () => {
+    const publicEvents = SAMPLE_EVENTS;
     const list = await listOpsEvents();
 
     expect(list.map((e) => e.eventId).sort()).toEqual(publicEvents.map((e) => e.id).sort());
@@ -162,7 +157,7 @@ describe("ops-service — listOpsEvents lấy sự kiện mẫu từ getAllPubli
 
 describe("ops-service — getOpsWarRoom hình dạng snapshot (spec §2)", () => {
   it("trả đủ các nhóm trường với kiểu đúng cho mọi sự kiện mẫu", async () => {
-    const publicEvents = await getAllPublicEvents();
+    const publicEvents = SAMPLE_EVENTS;
 
     for (const pub of publicEvents) {
       const s = await getOpsWarRoom(pub.id);
@@ -201,7 +196,7 @@ describe("ops-service — getOpsWarRoom hình dạng snapshot (spec §2)", () =>
   });
 
   it("hạng vé tồn kho lấy từ hạng vé của sự kiện công khai (id và tên)", async () => {
-    const publicEvents = await getAllPublicEvents();
+    const publicEvents = SAMPLE_EVENTS;
 
     for (const pub of publicEvents) {
       const s = await getOpsWarRoom(pub.id);

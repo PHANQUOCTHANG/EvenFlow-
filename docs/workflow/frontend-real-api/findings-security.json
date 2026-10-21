@@ -1,0 +1,98 @@
+[
+  {
+    "id": "S-1",
+    "reviewer": "security",
+    "severity": "minor",
+    "ac": "AC-8",
+    "file": "apps/web/src/components/auth/LoginForm.tsx",
+    "line": 274,
+    "title": "Google sign-in ignores the 'remember me' choice and always persists the session in localStorage",
+    "evidence": "Password login passes { persist: remember ? 'local' : 'session' } (line 113), but the Google onSuccess handler calls loginWithGoogle(credential) with no opts (LoginForm ~line 274, RegisterForm ~line 610). loginWithGoogle -> storeFromIdentity(data, undefined) -> setSession(..., persist 'local'). The refresh token, which this diff stores for the first time, lands in localStorage and survives closing the browser.",
+    "repro": "Untick 'remember me', sign in with Google, close the browser, reopen /events: still signed in. ef_refresh is in localStorage.",
+    "fix": "Pass { persist: remember ? 'local' : 'session' } to loginWithGoogle in LoginForm. RegisterForm has no checkbox, so pick one default on purpose and document it."
+  },
+  {
+    "id": "S-2",
+    "reviewer": "security",
+    "severity": "minor",
+    "ac": "AC-1",
+    "file": "apps/web/src/lib/session.ts",
+    "line": 1,
+    "title": "XSS amplification: a long-lived refresh token is now kept in web storage (accepted risk, recorded here)",
+    "evidence": "Before this diff (2970b7f) only the access token (ef_token) was in web storage; old auth.ts stored no refresh token. Now ef_refresh is written to localStorage by default. Any XSS can take a renewable credential instead of one short-lived access token. The spec (AC-1, data model line 25) and the human accepted web storage, and session.ts:4 documents this. The diff adds no new XSS sink: ticket-qr's dangerouslySetInnerHTML only renders qrcode's own SVG output, which contains path data and fixed colours and never the payload text.",
+    "repro": "N/A (risk acceptance)",
+    "fix": "Nothing needed for this task. Follow-up: move the refresh token to an HttpOnly SameSite cookie on the gateway refresh endpoint, or keep it in sessionStorage only. Add a CSP that blocks inline script except the theme script, using a nonce or hash."
+  },
+  {
+    "id": "S-3",
+    "reviewer": "security",
+    "severity": "minor",
+    "ac": "AC-6",
+    "file": "apps/web/src/lib/api/auth.ts",
+    "line": 112,
+    "title": "Logout clears only the auth keys; per-user order, ticket and queue data stays in sessionStorage",
+    "evidence": "clearSession() removes ef_token, ef_refresh and ef_user only. getOrderDetails() -> saveRecentOrder() writes the full order to sessionStorage evenflow_order_{id}, including issued_tickets (ticketCode, attendeeName), and nothing ever reads it (getRecentOrder has no callers). The queue token (ef:queue:token:*), active holds and ef:issue:* keys also survive logout. On a shared kiosk tab the next user can read the previous buyer's ticket codes and names in devtools. The server still enforces ownership, so this is local data exposure only.",
+    "repro": "Buy a ticket, open the result page, log out in the same tab, inspect sessionStorage: evenflow_order_<id> holds the ticket codes and attendee names.",
+    "fix": "Remove saveRecentOrder, or at least stop calling it from getOrderDetails, since nothing reads it. On logout, also clear the ef:queue:token:*, hold, evenflow_order_* and ef:issue:* sessionStorage keys, or call sessionStorage.clear() for the app's prefixes."
+  },
+  {
+    "id": "S-4",
+    "reviewer": "security",
+    "severity": "minor",
+    "ac": "AC-12",
+    "file": "apps/web/src/components/checkout/payment-handoff-view.tsx",
+    "line": 66,
+    "title": "Server-supplied redirect_url is assigned to window.location without a scheme/host check; the server echoes client return_url unvalidated",
+    "evidence": "window.location.href = result.redirectUrl, where redirectUrl is data.redirect_url verbatim (payment-client.ts:233). Server side, payment/internal/adapter/http/handler.go passes req.ReturnURL straight to the gateways (sandbox.go:62, momo.go:50, vnpay.go:49, stripe.go:45) with no allow-list. The client now always sends a relative return_url. The client sink predates this diff, and a third party cannot forge the request because it needs the victim's Bearer token (no cookies), so impact is low. Defence in depth is still missing for a javascript: URL or an off-site redirect if the payment service or a provider response is compromised.",
+    "repro": "Make the payment service return redirect_url 'javascript:alert(document.domain)' (or 'https://evil.example'). Submitting payment navigates there.",
+    "fix": "Client: accept redirectUrl only if new URL(u, location.origin) has protocol http: or https: and its origin is either the app origin or one of a small allow-list of provider hosts; otherwise go to the result page. Server (follow-up): accept return_url only as a path, or check it against a configured allow-list."
+  },
+  {
+    "id": "S-5",
+    "reviewer": "security",
+    "severity": "minor",
+    "ac": "AC-26",
+    "file": "services/event/internal/adapter/http/handler.go",
+    "line": 148,
+    "title": "New unauthenticated bulk list exposes organizer_id plus tier quota/bucket_count for up to 100 events per call",
+    "evidence": "ListPublicEvents returns ToEventResponse, which includes organizer_id, max_per_identity, created_at/updated_at and domain.TicketTier with quota and bucket_count. The SQL filter (status IN SCHEDULED, ON_SALE, SOLD_OUT) is correct, and DRAFT, PENDING_REVIEW and REJECTED never appear. The exposure matches the existing public GET /events/{id} (canSeeUnpublished), so this adds no new kind of data, but one anonymous call now enumerates every organizer UUID and the internal bucket sharding. limit=100 is a hard-coded constant (not caller-controlled), the gateway route applies RateDefault, and the tier query is parameterised (only $n placeholders are concatenated), so no SQLi and only bounded DoS.",
+    "repro": "curl -s http://localhost:8080/api/v1/events/public | jq '.events[] | {organizer_id, tiers: [.tiers[] | {quota, bucket_count}]}'",
+    "fix": "Optional: use a public DTO (no organizer_id or bucket_count) for the public list and the public GET by id/slug. The frontend mapEvent for public events does not read these fields."
+  },
+  {
+    "id": "S-6",
+    "reviewer": "security",
+    "severity": "minor",
+    "ac": "AC-4",
+    "file": "apps/web/src/lib/api-client.ts",
+    "line": 137,
+    "title": "Without Web Locks, concurrent refresh across tabs can reuse a rotated refresh token and trigger family revocation (forced logout)",
+    "evidence": "withRefreshLock falls back to an unlocked doRefresh when navigator.locks is absent (older Safari <15.4, some embedded webviews). Two tabs sharing localStorage can both POST /auth/refresh with the same token. The second hits reuse detection, the server revokes the family and both tabs log out. In-tab single-flight and the re-read check (cur.refreshToken !== usedRefresh) cover the common case. This fails safe (logout, no token leak).",
+    "repro": "Stub navigator.locks = undefined, open two tabs with an expired access token, and fire requests at the same moment in both.",
+    "fix": "Accept and document this, or add a localStorage-based lease (ef_refresh_lock with a timestamp) as the fallback."
+  },
+  {
+    "id": "S-7",
+    "reviewer": "security",
+    "severity": "minor",
+    "ac": null,
+    "file": "apps/web/src/lib/event-service.ts",
+    "line": 108,
+    "title": "Availability path interpolates eventId without encodeURIComponent",
+    "evidence": "getPublic(`/v1/events/${eventId}/availability`) is the only path in the changed clients built without encodeURIComponent. Every other id or slug path (organizer-service, hold-client, queue-client, queue-status, payment-client, event-service by id/slug) encodes. The value is wire.id from the server (a UUID), and the call is auth:false, so a token cannot leak. Low risk, but inconsistent.",
+    "repro": "N/A (a server-sourced UUID cannot be steered by the client)",
+    "fix": "Use encodeURIComponent(eventId) for consistency."
+  },
+  {
+    "id": "S-8",
+    "reviewer": "security",
+    "severity": "minor",
+    "ac": null,
+    "file": "apps/web/package.json",
+    "line": 19,
+    "title": "Supply chain: qrcode@1.5.4 adds 26 transitive packages (yargs CLI tree, pngjs, dijkstrajs) with no new advisories",
+    "evidence": "The lockfile diff adds qrcode, @types/qrcode, yargs, yargs-parser, cliui, y18n, pngjs, dijkstrajs, camelcase, decamelize and others. All resolve from registry.npmjs.org with sha512 integrity, and none has hasInstallScript. The version is pinned exactly. audit-head.json shows 3 vulnerabilities (next moderate via postcss, postcss high, source-map-js high), all already present before this diff; none involve the new packages. yargs and pngjs are needed only by qrcode's CLI and PNG paths. ticket-qr uses toString(type svg) in the browser.",
+    "repro": "npm ls qrcode --all; npm audit --json (see gate/audit-head.json)",
+    "fix": "No action needed. Optionally import the browser build so the CLI dependencies stay out of any server bundle, and track the pre-existing next/postcss upgrade on its own."
+  }
+]

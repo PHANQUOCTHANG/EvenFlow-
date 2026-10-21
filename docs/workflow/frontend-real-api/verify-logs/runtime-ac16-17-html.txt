@@ -1,0 +1,33 @@
+## /events ev1: titles found:
+  Vietnam Tech Summit 2026: 0
+  EvenFlow Grand Concert 2026: 0
+  Indie Acoustic Night: 0
+## /events ev2: titles found:
+  Vietnam Tech Summit 2026: 2
+  EvenFlow Grand Concert 2026: 2
+  Indie Acoustic Night: 2
+## /events/vietnam-tech-summit-2026: <title>
+<title>Vietnam Tech Summit 2026 — Kỷ Nguyên AI &amp; Cloud Scale | EvenFlow</title>
+2.500.000 đ
+900.000 đ
+## /events/evenflow-grand-concert-2026: <title>
+<title>EvenFlow Grand Concert 2026 — Đêm Nhạc Ánh Sáng | EvenFlow</title>
+650.000 đ
+## /events/indie-acoustic-night-hanoi: <title>
+<title>Indie Acoustic Night — Giai Điệu Mùa Thu | EvenFlow</title>
+450.000 đ
+## 404 page title
+<title>EventFlow</title>
+404
+404
+404
+D:/Documents/Nam4-1/Project1/EvenFlow-verify/apps/web/src/app/(marketing)/events/page.tsx:8:export const revalidate = 60;
+D:/Documents/Nam4-1/Project1/EvenFlow-verify/apps/web/src/app/(marketing)/events/page.tsx:18:  // Luc chay, ISR (revalidate = 60) goi backend; loi -> error state, khong bao gio du lieu mau.
+D:/Documents/Nam4-1/Project1/EvenFlow-verify/apps/web/src/app/(marketing)/events/page.tsx:24:      events = await getAllPublicEvents({ revalidate: 60 });
+D:/Documents/Nam4-1/Project1/EvenFlow-verify/apps/web/src/app/(marketing)/events/[slug]/page.tsx:12:export const revalidate = 60;
+D:/Documents/Nam4-1/Project1/EvenFlow-verify/apps/web/src/app/(marketing)/events/[slug]/page.tsx:18:/** Khong doc backend luc build: trang sinh theo yeu cau dau tien roi ISR (revalidate = 60). */
+D:/Documents/Nam4-1/Project1/EvenFlow-verify/apps/web/src/app/(marketing)/events/[slug]/page.tsx:23:/** Ton kho chi mang tinh goi y: fetch availability bao lam moi 10s (trang van revalidate = 60). */
+D:/Documents/Nam4-1/Project1/EvenFlow-verify/apps/web/src/app/(marketing)/events/[slug]/page.tsx:24:const FETCH_OPTS = { revalidate: 10 } as const;
+D:/Documents/Nam4-1/Project1/EvenFlow-verify/apps/web/src/lib/event-service.ts:18:  revalidate?: number;
+D:/Documents/Nam4-1/Project1/EvenFlow-verify/apps/web/src/lib/event-service.ts:68:      ...(opts.revalidate !== undefined ? { next: { revalidate: opts.revalidate } } : {}),
+D:/Documents/Nam4-1/Project1/EvenFlow-verify/apps/web/src/lib/event-service.ts:108:    const res = await getPublic(`/v1/events/${encodeURIComponent(eventId)}/availability`, { revalidate: opts.revalidate });

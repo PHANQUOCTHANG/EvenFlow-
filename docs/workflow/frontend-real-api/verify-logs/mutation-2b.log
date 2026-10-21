@@ -1,0 +1,18 @@
+mutation 2b applied
+diff --git a/apps/web/src/lib/api-client.ts b/apps/web/src/lib/api-client.ts
+index ae84cca..f727e3a 100644
+--- a/apps/web/src/lib/api-client.ts
++++ b/apps/web/src/lib/api-client.ts
+@@ -257,5 +257,11 @@ export async function apiFetch(path: string, init: ApiFetchInit = {}): Promise<R
+ 
+   const fresh = await refreshAccessToken(sentRefresh);
+   // Retry dung 1 lan; neu van 401 thi tra nguyen Response (khong refresh lan hai).
+-  return fetch(url, withBearer(base, fresh));
++  /* MUTANT 2b: retry guard removed, bounded to one extra refresh+retry */
++  const r2 = await fetch(url, withBearer(base, fresh));
++  if (r2.status === 401 && (await readProblem(r2)).type === TOKEN_EXPIRED) {
++    const f2 = await refreshAccessToken(getSession()?.refreshToken ?? null);
++    return fetch(url, withBearer(base, f2));
++  }
++  return r2;
+ }

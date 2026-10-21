@@ -1,0 +1,25 @@
+  API Version: 1.51
+  Operating System: Docker Desktop (containerized)
+  Total Memory: 15885 MB
+  Labels:
+    com.docker.desktop.address=npipe://\\.\pipe\docker_cli
+  Testcontainers for Go Version: v0.44.0
+  Resolved Docker Host: npipe:////./pipe/docker_engine
+  Resolved Docker Socket Path: //./pipe/docker_engine
+  Test SessionID: 3a33cf7065022a003e4412a19318ad7ca1e956c3c34c0783d1a9a7fefc2af914
+  Test ProcessID: 3a70f332-c3bf-4641-a93e-2b6e107c836d
+2026/10/21 21:17:17 🐳 Creating container for image postgres:16-alpine
+2026/10/21 21:17:17 ✅ Container created: 6f42b6fd117a
+2026/10/21 21:17:18 🐳 Starting container: 6f42b6fd117a
+2026/10/21 21:17:18 ✅ Container started: 6f42b6fd117a
+2026/10/21 21:17:18 ⏳ Waiting for container id 6f42b6fd117a image: postgres:16-alpine. Waiting for: all of: [log message "database system is ready to accept connections" (occurrence: 2), port 5432/tcp to be listening]
+2026/10/21 21:17:21 🔔 Container is ready: 6f42b6fd117a
+--- PASS: TestTichHop_ListPublic_LocTrangThaiSapXepVaTiers (4.56s)
+=== RUN   TestTichHop_ListPublic_CatTheoLimit
+--- PASS: TestTichHop_ListPublic_CatTheoLimit (0.04s)
+PASS
+2026/10/21 21:17:22 🐳 Stopping container: 6f42b6fd117a
+2026/10/21 21:17:22 ✅ Container stopped: 6f42b6fd117a
+2026/10/21 21:17:22 🐳 Terminating container: 6f42b6fd117a
+2026/10/21 21:17:22 🚫 Container terminated: 6f42b6fd117a
+ok  	github.com/eventflow/eventflow/services/event/internal/adapter/postgres	7.109s

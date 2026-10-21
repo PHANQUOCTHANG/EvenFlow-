@@ -18,6 +18,8 @@
  *    (vong lap, backoff, dung han khi gap 4xx).
  */
 
+import { apiFetch, readProblem } from "@/lib/api-client";
+
 export type QueueState = "LOBBY" | "QUEUED" | "ADMITTED" | "EXPIRED" | "SOLD_OUT" | "UNKNOWN";
 
 export interface JoinResponse {
@@ -29,7 +31,6 @@ export interface JoinResponse {
   poll_after_ms: number;
 }
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "";
 const MAX_JITTER_MS = 5000;
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -54,35 +55,48 @@ export async function joinQueue(
     await sleep(jitterDelay());
   }
 
-  const res = await fetch(`${API_BASE}/v1/events/${eventId}/queue/join`, {
+  // Di qua apiFetch: Bearer tu phien dang nhap (AC-3, AC-9); khong cookie.
+  const res = await apiFetch(`/v1/events/${encodeURIComponent(eventId)}/queue/join`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ signals }),
-    credentials: "include",
     signal: opts.signal,
   });
 
   if (!res.ok) {
-    throw new QueueError(res.status, await safeDetail(res));
+    throw await queueErrorFrom(res);
   }
   return res.json();
+}
+
+/** Ma loi cua QueueError. 403 otp-required / device-required duoc tach rieng de UI huong dan nguoi dung (AC-9). */
+export type QueueErrorCode = "OTP_REQUIRED" | "DEVICE_REQUIRED" | "FORBIDDEN" | "UNAUTHORIZED" | string;
+
+const PROBLEM_OTP_REQUIRED = "/problems/otp-required";
+const PROBLEM_DEVICE_REQUIRED = "/problems/device-required";
+
+/** Doi Response loi thanh QueueError (status + detail + code theo `type` cua RFC 7807). */
+export async function queueErrorFrom(res: Response): Promise<QueueError> {
+  const p = await readProblem(res);
+  const detail = p.detail ?? p.title ?? res.statusText;
+  let code: QueueErrorCode = p.type ?? `HTTP_${res.status}`;
+  if (res.status === 403) {
+    if (p.type === PROBLEM_OTP_REQUIRED) code = "OTP_REQUIRED";
+    else if (p.type === PROBLEM_DEVICE_REQUIRED) code = "DEVICE_REQUIRED";
+    else code = "FORBIDDEN";
+  } else if (res.status === 401 && !p.type) {
+    code = "UNAUTHORIZED";
+  }
+  return new QueueError(res.status, detail, code);
 }
 
 export class QueueError extends Error {
   constructor(
     public readonly status: number,
     message: string,
+    public readonly code: QueueErrorCode = `HTTP_${status}`,
   ) {
     super(message);
     this.name = "QueueError";
-  }
-}
-
-async function safeDetail(res: Response): Promise<string> {
-  try {
-    const body = await res.json();
-    return body.detail ?? body.title ?? res.statusText;
-  } catch {
-    return res.statusText;
   }
 }
