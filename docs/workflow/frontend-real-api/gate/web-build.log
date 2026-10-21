@@ -19,7 +19,7 @@
 \\?\D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\node_modules\@next\swc-win32-x64-msvc\next-swc.win32-x64-msvc.node
  ⚠ Attempted to load @next/swc-win32-x64-msvc, but an error occurred: A dynamic link library (DLL) initialization routine failed.
 \\?\D:\Documents\Nam4-1\Project1\EvenFlow-fe\apps\web\node_modules\@next\swc-win32-x64-msvc\next-swc.win32-x64-msvc.node
- ✓ Compiled successfully in 5.1s
+ ✓ Compiled successfully in 4.5s
    Linting and checking validity of types ...
 
 ./src/components/auth/ForgotPasswordForm.tsx
@@ -71,21 +71,21 @@ Route (app)                                       Size  First Load JS  Revalidat
 ├ ○ /auth/forgot-password                       6.4 kB         161 kB
 ├ ○ /auth/sign-in                                 3 kB         125 kB
 ├ ○ /auth/sign-up                              6.57 kB         164 kB
-├ ƒ /checkout/[eventId]                        6.88 kB         127 kB
-├ ƒ /checkout/[eventId]/payment                6.95 kB         127 kB
+├ ƒ /checkout/[eventId]                        6.96 kB         126 kB
+├ ƒ /checkout/[eventId]/payment                7.01 kB         126 kB
 ├ ƒ /checkout/[eventId]/result                 15.7 kB         135 kB
-├ ○ /events                                    3.73 kB         118 kB          1m      1y
-├ ● /events/[slug]                             5.94 kB         117 kB
+├ ○ /events                                    3.73 kB         117 kB          1m      1y
+├ ● /events/[slug]                             5.98 kB         117 kB
 ├ ƒ /ops/events                                  165 B         106 kB
 ├ ƒ /ops/events/[eventId]                        128 B         114 kB
 ├ ○ /organizer                                   140 B         103 kB
-├ ○ /organizer/events                            737 B         120 kB
-├ ƒ /organizer/events/[eventId]/edit           1.53 kB         122 kB
+├ ○ /organizer/events                            737 B         119 kB
+├ ƒ /organizer/events/[eventId]/edit           1.54 kB         122 kB
 ├ ƒ /organizer/events/[eventId]/review-status  3.56 kB         122 kB
-├ ƒ /organizer/events/[eventId]/sales          4.16 kB         120 kB
+├ ƒ /organizer/events/[eventId]/sales          4.16 kB         119 kB
 ├ ○ /organizer/events/new                        477 B         121 kB
 ├ ○ /showcase                                  10.1 kB         129 kB
-├ ○ /unauthorized                              2.42 kB         112 kB
+├ ○ /unauthorized                              2.42 kB         111 kB
 └ ƒ /waiting/[eventId]                         7.25 kB         135 kB
 + First Load JS shared by all                   103 kB
   ├ chunks/1255-5cd2fe06309409a0.js            46.5 kB
