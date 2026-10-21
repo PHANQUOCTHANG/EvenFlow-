@@ -1,4 +1,6 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+
+import { installFetch, json, problem, resetEnv, seedSession, setupEnv } from "@/test-utils/fetch-mock";
 
 import {
   createOrganizerEvent,
@@ -6,9 +8,8 @@ import {
   getOrganizerEventById,
   getOrganizerEvents,
   getRealtimeSales,
-  resetOrganizerEventsStore,
-  resubmitForModeration,
-  updateOrganizerEvent,
+  submitOrganizerEvent,
+  updateTierQuota,
   validateEventSchedule,
   validateTierQuotaUpdate,
   validateTiers,
@@ -18,8 +19,10 @@ import {
 
 describe("organizer-service — Business Rules & Validation", () => {
   beforeEach(() => {
-    resetOrganizerEventsStore();
+    setupEnv();
+    seedSession("acc-org", "ref-org", "organizer");
   });
+  afterEach(resetEnv);
 
   describe("validateEventSchedule — BR-E2 (Lịch mở bán >= now + 30m)", () => {
     const fixedNow = new Date("2026-10-11T10:00:00Z");
@@ -182,30 +185,51 @@ describe("organizer-service — Business Rules & Validation", () => {
     });
   });
 
-  describe("Repository & Operations", () => {
-    it("lấy danh sách toàn bộ sự kiện của organizer", async () => {
+  describe("Repository & Operations (qua API mock)", () => {
+    const EVT = "0b6d3b52-6f6e-4f0e-9d36-2a2f1c0a9a11";
+    const wire = (over: Record<string, unknown> = {}) => ({
+      id: EVT,
+      organizer_id: "org-1",
+      slug: "tech-summit",
+      title: "Tech Summit",
+      description: "Mo ta",
+      venue: "Ha Noi",
+      starts_at: "2027-12-01T12:00:00Z",
+      sale_start_at: "2027-11-01T03:00:00Z",
+      status: "ON_SALE",
+      created_at: "2026-10-01T00:00:00Z",
+      updated_at: "2026-10-01T00:00:00Z",
+      tiers: [
+        { id: "t-1", event_id: EVT, name: "Standard", price_cents: 900000, quota: 1200 },
+        { id: "t-2", event_id: EVT, name: "VIP", price_cents: 2500000, quota: 300 },
+      ],
+      ...over,
+    });
+
+    it("lấy danh sách toàn bộ sự kiện của organizer từ API", async () => {
+      installFetch(() => json([wire(), wire({ id: "e2", status: "DRAFT" })]));
       const events = await getOrganizerEvents();
-      expect(events.length).toBeGreaterThanOrEqual(5);
-      const onSale = events.find((e) => e.state === "ON_SALE");
-      expect(onSale).toBeDefined();
+      expect(events).toHaveLength(2);
+      expect(events.find((e) => e.state === "ON_SALE")).toBeDefined();
     });
 
-    it("lấy sự kiện theo ID hoặc Slug", async () => {
-      const byId = await getOrganizerEventById("evt-tech-summit-2026");
-      expect(byId?.slug).toBe("vietnam-tech-summit-2026");
-
-      const bySlug = await getOrganizerEventById("vietnam-tech-summit-2026");
-      expect(bySlug?.id).toBe("evt-tech-summit-2026");
-
-      const notFound = await getOrganizerEventById("non-existent-id");
-      expect(notFound).toBeNull();
+    it("lấy sự kiện theo ID; 404 -> null", async () => {
+      installFetch(() => json(wire()));
+      const byId = await getOrganizerEventById(EVT);
+      expect(byId?.slug).toBe("tech-summit");
+      installFetch(() => problem(404, "/problems/not-found"));
+      await expect(getOrganizerEventById("non-existent-id")).resolves.toBeNull();
     });
 
-    it("tạo mới sự kiện thành công và lưu vào store", async () => {
-      const futureSale = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // 1 giờ sau
+    it("tạo mới sự kiện với submitForReview -> trạng thái PENDING_REVIEW từ backend", async () => {
+      const futureSale = new Date(Date.now() + 60 * 60 * 1000).toISOString();
       const futureStart = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-
-      const created = await createOrganizerEvent({
+      installFetch((c) => {
+        if (c.path.endsWith("/submit")) return json(wire({ status: "PENDING_REVIEW" }));
+        if (c.path.endsWith("/tiers")) return json({ id: "srv-1", event_id: EVT, name: "Vé Thường", price_cents: 100000, quota: 200 }, 201);
+        return json(wire({ status: "DRAFT", tiers: [] }), 201);
+      });
+      const result = await createOrganizerEvent({
         title: "Test Event Demo 2026",
         description: "Mô tả test event",
         venue: "Hà Nội",
@@ -214,44 +238,29 @@ describe("organizer-service — Business Rules & Validation", () => {
         tiers: [{ id: "tier-1", name: "Vé Thường", price: 100000, quota: 200 }],
         submitForReview: true,
       });
-
-      expect(created.id).toBeDefined();
-      expect(created.state).toBe("SCHEDULED"); // Auto-approved do test input hợp lệ
-      expect(created.moderation?.decision).toBe("AUTO_APPROVED");
-
-      const fetched = await getOrganizerEventById(created.id);
-      expect(fetched?.title).toBe("Test Event Demo 2026");
+      expect(result.failedStep).toBeUndefined();
+      expect(result.event.state).toBe("PENDING_REVIEW");
+      expect(result.event.tiers).toHaveLength(1);
     });
 
-    it("từ chối cập nhật giảm quota của sự kiện đang ON_SALE (BR-E3)", async () => {
-      await expect(
-        updateOrganizerEvent("evt-tech-summit-2026", {
-          tiers: [
-            { id: "tier-standard-pass", name: "Standard Pass", price: 900000, quota: 100 }, // giảm từ 1200 xuống 100
-            { id: "tier-all-access", name: "All-Access Executive Pass", price: 2500000, quota: 300 },
-          ],
-        }),
-      ).rejects.toThrow(/BR-E3/);
+    it("từ chối cập nhật giảm quota của sự kiện đang ON_SALE (BR-E3) mà không gọi PUT", async () => {
+      const { calls } = installFetch(() => json(wire()));
+      await expect(updateTierQuota(EVT, "t-1", 100)).rejects.toThrow(/BR-E3/);
+      expect(calls.some((c) => c.method === "PUT")).toBe(false);
     });
 
-    it("resubmitForModeration cập nhật trạng thái sự kiện bị từ chối sang SCHEDULED hoặc PENDING_REVIEW", async () => {
-      const rejectedEvent = await getOrganizerEventById("evt-secret-underground-party");
-      expect(rejectedEvent?.state).toBe("REJECTED");
-
-      // Cập nhật lại thời gian hợp lệ trước khi resubmit
-      const futureSale = new Date(Date.now() + 60 * 60 * 1000).toISOString();
-      await updateOrganizerEvent("evt-secret-underground-party", {
-        saleStartAt: futureSale,
-      });
-
-      const resubmitted = await resubmitForModeration("evt-secret-underground-party");
-      expect(resubmitted.state).toBe("SCHEDULED");
-      expect(resubmitted.moderation?.decision).toBe("AUTO_APPROVED");
+    it("submitOrganizerEvent chuyển sự kiện bị từ chối sang PENDING_REVIEW (thay resubmitForModeration)", async () => {
+      const { calls } = installFetch(() => json(wire({ status: "PENDING_REVIEW" })));
+      const submitted = await submitOrganizerEvent(EVT);
+      expect(calls[0].path).toBe(`/api/v1/events/${EVT}/submit`);
+      expect(submitted.state).toBe("PENDING_REVIEW");
     });
 
-    it("getRealtimeSales tính toán đúng doanh số, tỉ lệ lấp đầy và báo cáo sau bán", async () => {
-      const sales = await getRealtimeSales("evt-tech-summit-2026");
-      expect(sales.eventId).toBe("evt-tech-summit-2026");
+    it("getRealtimeSales là dữ liệu mẫu (isSample) suy từ quota thật, vẫn tính đúng doanh số", async () => {
+      installFetch(() => json(wire()));
+      const sales = await getRealtimeSales(EVT);
+      expect(sales.isSample).toBe(true);
+      expect(sales.eventId).toBe(EVT);
       expect(sales.grossRevenue).toBeGreaterThan(0);
       expect(sales.totalTicketsSold).toBeGreaterThan(0);
       expect(sales.tierSales.length).toBe(2);

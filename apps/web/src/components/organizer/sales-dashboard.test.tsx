@@ -25,6 +25,7 @@ describe("SalesDashboard component (EV-186, EVF-116, AC-4, AC-5, Stitch 10.14)",
   };
 
   const mockSnapshot: RealtimeSalesSnapshot = {
+    isSample: true,
     eventId: "evt-tech-summit",
     timestamp: "12:30:00",
     grossRevenue: 950000000,
@@ -65,6 +66,18 @@ describe("SalesDashboard component (EV-186, EVF-116, AC-4, AC-5, Stitch 10.14)",
       },
     },
   };
+
+  it("gắn nhãn Dữ liệu mẫu rõ ràng trước các khối số liệu (AC-24)", () => {
+    render(<SalesDashboard event={mockEvent} initialSalesData={mockSnapshot} />);
+
+    const label = screen.getByText("Dữ liệu mẫu — chưa khả dụng từ hệ thống");
+    expect(label).toBeInTheDocument();
+    expect(
+      label.compareDocumentPosition(screen.getByText("Tổng doanh thu")) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(screen.queryByText("98.6%")).not.toBeInTheDocument();
+  });
 
   it("render tiêu đề, huy hiệu Realtime (≤ 5s) và các thẻ chỉ số (AC-4)", () => {
     render(<SalesDashboard event={mockEvent} initialSalesData={mockSnapshot} />);
@@ -111,9 +124,10 @@ describe("SalesDashboard component (EV-186, EVF-116, AC-4, AC-5, Stitch 10.14)",
   it("cho phép bật/tắt tự động cập nhật", () => {
     render(<SalesDashboard event={mockEvent} initialSalesData={mockSnapshot} />);
 
-    const toggleBtn = screen.getByRole("button", { name: /Tắt tự động cập nhật/ });
+    // Dữ liệu mẫu: mặc định không tự động gọi API, người dùng có thể bật.
+    const toggleBtn = screen.getByRole("button", { name: /Bật tự động/ });
     fireEvent.click(toggleBtn);
 
-    expect(screen.getByRole("button", { name: /Bật tự động/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Tắt tự động cập nhật/ })).toBeInTheDocument();
   });
 });

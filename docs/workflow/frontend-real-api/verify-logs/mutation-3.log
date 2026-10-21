@@ -1,0 +1,15 @@
+mutation 3 applied to api-client.ts
+diff --git a/apps/web/src/lib/api-client.ts b/apps/web/src/lib/api-client.ts
+index ae84cca..5571d4b 100644
+--- a/apps/web/src/lib/api-client.ts
++++ b/apps/web/src/lib/api-client.ts
+@@ -199,7 +199,7 @@ async function withRefreshLock(usedRefresh: string | null): Promise<string> {
+ 
+ /** Refresh (hoac dung lai cap token tab khac vua xoay). Single-flight trong tab. Tra access token moi. */
+ export function refreshAccessToken(usedRefresh: string | null = getSession()?.refreshToken ?? null): Promise<string> {
+-  if (!inflight) {
++  if (true /* MUTANT 3: no single-flight reuse */) {
+     inflight = withRefreshLock(usedRefresh).finally(() => {
+       inflight = null;
+     });
+### npx vitest run src/lib (testTimeout 15000)

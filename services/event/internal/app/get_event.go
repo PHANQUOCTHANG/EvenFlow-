@@ -12,6 +12,7 @@ type GetEventUseCase interface {
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.Event, error)
 	GetBySlug(ctx context.Context, slug string) (*domain.Event, error)
 	ListByOrganizer(ctx context.Context, organizerID uuid.UUID) ([]*domain.Event, error)
+	ListPublic(ctx context.Context, limit int) ([]*domain.Event, error)
 }
 
 type getEventUseCase struct {
@@ -46,4 +47,9 @@ func (uc *getEventUseCase) GetBySlug(ctx context.Context, slug string) (*domain.
 
 func (uc *getEventUseCase) ListByOrganizer(ctx context.Context, organizerID uuid.UUID) ([]*domain.Event, error) {
 	return uc.repo.ListByOrganizer(ctx, organizerID)
+}
+
+// ListPublic tra danh sach su kien cong khai (da kem tiers), khong can danh tinh.
+func (uc *getEventUseCase) ListPublic(ctx context.Context, limit int) ([]*domain.Event, error) {
+	return uc.repo.ListPublic(ctx, limit)
 }

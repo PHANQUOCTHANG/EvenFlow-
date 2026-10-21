@@ -1,0 +1,800 @@
+
+> @eventflow/web@0.1.0 test
+> vitest run
+
+The CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.
+
+ RUN  v2.1.8 D:/Documents/Nam4-1/Project1/EvenFlow-verify/apps/web
+
+ ✓ src/lib/i18n/messages.test.ts (55 tests) 42ms
+ ✓ src/lib/ops-service.test.ts (53 tests) 63ms
+stderr | src/hooks/use-server-countdown.test.tsx > useServerCountdown — chua co moc thi KHONG phai het han (AC-4, hop dong §5) > string khong parse duoc -> giong null: remainingMs 0, expired FALSE
+[server-time] moc thoi han "soon" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+[server-time] moc thoi han "soon" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+stderr | src/hooks/use-server-countdown.test.tsx > useServerCountdown — chua co moc thi KHONG phai het han (AC-4, hop dong §5) > string rong cung khong phai het han
+[server-time] moc thoi han "" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+[server-time] moc thoi han "" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+stderr | src/hooks/use-server-countdown.test.tsx > useServerCountdown — chua co moc thi KHONG phai het han (AC-4, hop dong §5) > string khong parse duoc + thoi gian troi van khong thanh expired
+[server-time] moc thoi han "not-a-date" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+[server-time] moc thoi han "not-a-date" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+stderr | src/hooks/use-server-countdown.test.tsx > useServerCountdown — ready sau khi mount (AC-4) > moc khong doc duoc () -> ready FALSE va expired FALSE
+[server-time] moc thoi han "" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+[server-time] moc thoi han "" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+stderr | src/hooks/use-server-countdown.test.tsx > useServerCountdown — ready sau khi mount (AC-4) > moc khong doc duoc (soon) -> ready FALSE va expired FALSE
+[server-time] moc thoi han "soon" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+[server-time] moc thoi han "soon" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+stderr | src/hooks/use-server-countdown.test.tsx > useServerCountdown — ready sau khi mount (AC-4) > moc khong doc duoc (2026-10-03) -> ready FALSE va expired FALSE
+[server-time] moc thoi han "2026-10-03" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+[server-time] moc thoi han "2026-10-03" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+stderr | src/hooks/use-server-countdown.test.tsx > useServerCountdown — ready sau khi mount (AC-4) > moc khong doc duoc (2026-10-03T09:00:00) -> ready FALSE va expired FALSE
+[server-time] moc thoi han "2026-10-03T09:00:00" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+[server-time] moc thoi han "2026-10-03T09:00:00" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+stderr | src/hooks/use-server-countdown.test.tsx > useServerCountdown — ready sau khi mount (AC-4) > ready khong bao gio true cung luc voi moc khong doc duoc, du thoi gian troi
+[server-time] moc thoi han "khong-phai-ngay" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+[server-time] moc thoi han "khong-phai-ngay" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+ ✓ src/hooks/use-server-countdown.test.tsx (48 tests) 144ms
+ ✓ src/lib/format.test.ts (94 tests) 36ms
+ ✓ src/lib/sse.test.ts (17 tests) 48ms
+ ✓ src/lib/hold-client.test.ts (14 tests) 97ms
+stderr | src/hooks/use-hold-timer.test.tsx > useHoldTimer (EVF-113, BR-O2, BR-O5) > Bấm đặt nhiều lần không tạo hold trùng (BR-O5)
+Warning: An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at TestComponent (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\node_modules\@testing-library\react\dist\pure.js:307:5)
+Warning: An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at TestComponent (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\node_modules\@testing-library\react\dist\pure.js:307:5)
+
+ ✓ src/lib/payment-client.test.ts (12 tests) 155ms
+ ✓ src/components/layout/nav-config.test.ts (48 tests) 29ms
+ ✓ src/hooks/use-hold-timer.test.tsx (12 tests) 87ms
+ ✓ src/lib/money.test.ts (24 tests) 22ms
+ ✓ src/lib/organizer-service.test.ts (22 tests) 63ms
+ ✓ src/hooks/use-queue-status.test.tsx (10 tests) 114ms
+ ✓ src/hooks/use-ops-war-room.test.tsx (34 tests) 224ms
+ ✓ src/components/ui/toast.test.tsx (18 tests) 388ms
+stderr | src/components/ui/server-expiry-countdown.test.tsx > ServerExpiryCountdown — truoc khi biet moc: unknown + '--:--' (AC-5, M1) > moc khong doc duoc (string rac) -> unknown va '--:--', khong phai 00:00
+[server-time] moc thoi han "soon" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+[server-time] moc thoi han "soon" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+stderr | src/components/ui/server-expiry-countdown.test.tsx > ServerExpiryCountdown — truoc khi biet moc: unknown + '--:--' (AC-5, M1) > chuoi khong co mui gio bi coi la chua biet moc (khong doan lech 7 tieng)
+[server-time] moc thoi han "2026-10-03T09:00:00" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+[server-time] moc thoi han "2026-10-03T09:00:00" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+stderr | src/components/ui/server-expiry-countdown.test.tsx > ServerExpiryCountdown — truoc khi biet moc: unknown + '--:--' (AC-5, M1) > unknown KHONG BAO GIO thanh warning, du nguong lon the nao
+[server-time] moc thoi han "soon" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+[server-time] moc thoi han "soon" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+stderr | src/components/ui/server-expiry-countdown.test.tsx > ServerExpiryCountdown — truoc khi biet moc: unknown + '--:--' (AC-5, M1) > unknown khong thong bao gi cho screen reader (vung live rong)
+[server-time] moc thoi han "soon" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+[server-time] moc thoi han "soon" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+stderr | src/components/ui/server-expiry-countdown.test.tsx > ServerExpiryCountdown — truoc khi biet moc: unknown + '--:--' (AC-5, M1) > unknown khong hien so am va khong hien 'NaN'
+[server-time] moc thoi han "soon" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+[server-time] moc thoi han "soon" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+ ✓ src/components/ui/server-expiry-countdown.test.tsx (43 tests) 394ms
+stderr | src/components/event/event-action-panel.test.tsx > EventActionPanel (EVF-111, BR-Q5, BR-O2) > SCHEDULED va chua toi gio mo ban: hien thi countdown va nut disabled
+Warning: An update to EventActionPanel inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at EventActionPanel (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\src\components\event\event-action-panel.tsx:19:3)
+
+ ✓ src/components/checkout/ticket-tier-card.test.tsx (52 tests) 440ms
+stderr | src/components/event/event-action-panel.test.tsx > EventActionPanel (EVF-111, BR-Q5, BR-O2) > SOLD_OUT: nut bi vo hieu hoa voi thong bao het ve
+Warning: An update to EventActionPanel inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at EventActionPanel (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\src\components\event\event-action-panel.tsx:19:3)
+
+stderr | src/components/event/event-action-panel.test.tsx > EventActionPanel (EVF-111, BR-Q5, BR-O2) > CANCELLED: nut bi vo hieu hoa voi thong bao su kien da huy
+Warning: An update to EventActionPanel inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at EventActionPanel (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\src\components\event\event-action-panel.tsx:19:3)
+
+stderr | src/components/event/event-action-panel.test.tsx > EventActionPanel (EVF-111, BR-Q5, BR-O2) > CLOSED: nut bi vo hieu hoa voi thong bao da dong ban
+Warning: An update to EventActionPanel inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at EventActionPanel (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\src\components\event\event-action-panel.tsx:19:3)
+
+stderr | src/components/event/event-action-panel.test.tsx > EventActionPanel — i18n (EV-188 AC-8) > trang thai ON_SALE, khong provider: phan tu goc co lang="vi"
+Warning: An update to EventActionPanel inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at EventActionPanel (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\src\components\event\event-action-panel.tsx:19:3)
+
+stderr | src/components/event/event-action-panel.test.tsx > EventActionPanel — i18n (EV-188 AC-8) > trang thai SOLD_OUT, khong provider: phan tu goc co lang="vi"
+Warning: An update to EventActionPanel inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at EventActionPanel (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\src\components\event\event-action-panel.tsx:19:3)
+
+stderr | src/components/event/event-action-panel.test.tsx > EventActionPanel — i18n (EV-188 AC-8) > trang thai CANCELLED, khong provider: phan tu goc co lang="vi"
+Warning: An update to EventActionPanel inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at EventActionPanel (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\src\components\event\event-action-panel.tsx:19:3)
+
+stderr | src/components/event/event-action-panel.test.tsx > EventActionPanel — i18n (EV-188 AC-8) > trang thai CLOSED, khong provider: phan tu goc co lang="vi"
+Warning: An update to EventActionPanel inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at EventActionPanel (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\src\components\event\event-action-panel.tsx:19:3)
+
+stderr | src/components/event/event-action-panel.test.tsx > EventActionPanel — i18n (EV-188 AC-8) > trang thai SCHEDULED, khong provider: phan tu goc co lang="vi"
+Warning: An update to EventActionPanel inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at EventActionPanel (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\src\components\event\event-action-panel.tsx:19:3)
+
+ ✓ src/components/ui/button.test.tsx (32 tests) 727ms
+stderr | src/components/event/event-card.test.tsx > EventCard — thoi diem bat dau: khong bao gio ro ri 'NaN'/'Invalid Date' (AC-2) > moc khong doc duoc -> khong hien 'NaN'/'Invalid Date', va van hien ten su kien
+[server-time] moc thoi han "khong-phai-ngay" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+ ✓ src/components/event/event-card.test.tsx (41 tests) 577ms
+ ✓ src/components/ui/input.test.tsx (23 tests) 893ms
+ ✓ src/components/layout/nav-link.test.tsx (37 tests) 610ms
+ ✓ src/components/event/event-action-panel.test.tsx (21 tests) 679ms
+ ✓ src/components/i18n/locale-provider.test.tsx (23 tests) 954ms
+   ✓ LocaleProvider — setLocale (AC-6) > doi chu, ghi localStorage, dat html lang 379ms
+ ✓ src/components/checkout/checkout-view.test.tsx (11 tests) 852ms
+   ✓ CheckoutView (EVF-113, EV-183) > render danh sách hạng vé và nhãn định tính không lộ số tồn kho (BR-O1) 334ms
+stderr | src/components/organizer/event-wizard.test.tsx > EventWizard component (EV-186, EVF-116, Stitch 10.13, BR-E1, BR-E2, BR-E3) > gọi onSubmit với submitForReview=true khi bấm Gửi kiểm duyệt ở Bước 4
+Warning: An update to EventWizard inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at EventWizard (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\src\components\organizer\event-wizard.tsx:64:3)
+
+ ✓ src/components/organizer/event-wizard.test.tsx (5 tests) 1122ms
+   ✓ EventWizard component (EV-186, EVF-116, Stitch 10.13, BR-E1, BR-E2, BR-E3) > bắt buộc nhập thông tin cơ bản ở Bước 1 trước khi sang Bước 2 408ms
+ ✓ src/components/checkout/order-summary.test.tsx (74 tests) 1037ms
+ ✓ src/components/i18n/language-toggle.test.tsx (19 tests) 1331ms
+stderr | src/components/queue/queue-status-panel.test.tsx > QueueStatusPanel — so rac phai bi coi nhu KHONG CO (AC-8, M2) > admissionExpiresAt la chuoi rac -> khong lo 'NaN'/'Invalid Date' ra UI
+[server-time] moc thoi han "soon" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+[server-time] moc thoi han "soon" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+[server-time] moc thoi han "soon" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+[server-time] moc thoi han "soon" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+ ✓ src/components/queue/queue-status-panel.test.tsx (112 tests) 1286ms
+stderr | src/components/layout/public-header.test.tsx > PublicHeader — m4 bam link trong nav thi dong menu > bam link ready: true -> menu dong, KE CA khi pathname khong doi
+Error: Not implemented: navigation (except hash changes)
+    at module.exports (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\node_modules\jsdom\lib\jsdom\browser\not-implemented.js:9:17)
+    at navigateFetch (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\node_modules\jsdom\lib\jsdom\living\window\navigation.js:77:3)
+    at exports.navigate (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\node_modules\jsdom\lib\jsdom\living\window\navigation.js:55:3)
+    at Timeout._onTimeout (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\node_modules\jsdom\lib\jsdom\living\nodes\HTMLHyperlinkElementUtils-impl.js:81:7)
+    at listOnTimeout (node:internal/timers:588:17)
+    at processTimers (node:internal/timers:523:7) undefined
+
+stderr | src/components/layout/workspace-shell.test.tsx > WorkspaceShell — m4 bam link trong nav thi dong menu > bam link ready: true -> menu dong, KE CA khi pathname khong doi
+Error: Not implemented: navigation (except hash changes)
+    at module.exports (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\node_modules\jsdom\lib\jsdom\browser\not-implemented.js:9:17)
+    at navigateFetch (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\node_modules\jsdom\lib\jsdom\living\window\navigation.js:77:3)
+    at exports.navigate (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\node_modules\jsdom\lib\jsdom\living\window\navigation.js:55:3)
+    at Timeout._onTimeout (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\node_modules\jsdom\lib\jsdom\living\nodes\HTMLHyperlinkElementUtils-impl.js:81:7)
+    at listOnTimeout (node:internal/timers:588:17)
+    at processTimers (node:internal/timers:523:7) undefined
+
+ ✓ src/components/assistant/assistant-panel.test.tsx (180 tests) 1923ms
+stderr | src/components/layout/public-header.test.tsx > PublicHeader — m4 bam link trong nav thi dong menu > bam link sang route KHAC cung dong menu
+Error: Not implemented: navigation (except hash changes)
+    at module.exports (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\node_modules\jsdom\lib\jsdom\browser\not-implemented.js:9:17)
+    at navigateFetch (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\node_modules\jsdom\lib\jsdom\living\window\navigation.js:77:3)
+    at exports.navigate (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\node_modules\jsdom\lib\jsdom\living\window\navigation.js:55:3)
+    at Timeout._onTimeout (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\node_modules\jsdom\lib\jsdom\living\nodes\HTMLHyperlinkElementUtils-impl.js:81:7)
+    at listOnTimeout (node:internal/timers:588:17)
+    at processTimers (node:internal/timers:523:7) undefined
+
+stderr | src/components/layout/workspace-shell.test.tsx > WorkspaceShell — m4 bam link trong nav thi dong menu > bam link sang route KHAC cung dong menu
+Error: Not implemented: navigation (except hash changes)
+    at module.exports (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\node_modules\jsdom\lib\jsdom\browser\not-implemented.js:9:17)
+    at navigateFetch (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\node_modules\jsdom\lib\jsdom\living\window\navigation.js:77:3)
+    at exports.navigate (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\node_modules\jsdom\lib\jsdom\living\window\navigation.js:55:3)
+    at Timeout._onTimeout (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\node_modules\jsdom\lib\jsdom\living\nodes\HTMLHyperlinkElementUtils-impl.js:81:7)
+    at listOnTimeout (node:internal/timers:588:17)
+    at processTimers (node:internal/timers:523:7) undefined
+
+stderr | src/components/layout/public-header.test.tsx > PublicHeader — m4 bam link trong nav thi dong menu > menu dang dong thi bam link khong gay loi, van dong
+Error: Not implemented: navigation (except hash changes)
+    at module.exports (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\node_modules\jsdom\lib\jsdom\browser\not-implemented.js:9:17)
+    at navigateFetch (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\node_modules\jsdom\lib\jsdom\living\window\navigation.js:77:3)
+    at exports.navigate (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\node_modules\jsdom\lib\jsdom\living\window\navigation.js:55:3)
+    at Timeout._onTimeout (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\node_modules\jsdom\lib\jsdom\living\nodes\HTMLHyperlinkElementUtils-impl.js:81:7)
+    at listOnTimeout (node:internal/timers:588:17)
+    at processTimers (node:internal/timers:523:7) undefined
+
+stderr | src/components/layout/workspace-shell.test.tsx > WorkspaceShell — m4 bam link trong nav thi dong menu > menu dang dong thi bam link khong gay loi, van dong
+Error: Not implemented: navigation (except hash changes)
+    at module.exports (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\node_modules\jsdom\lib\jsdom\browser\not-implemented.js:9:17)
+    at navigateFetch (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\node_modules\jsdom\lib\jsdom\living\window\navigation.js:77:3)
+    at exports.navigate (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\node_modules\jsdom\lib\jsdom\living\window\navigation.js:55:3)
+    at Timeout._onTimeout (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\node_modules\jsdom\lib\jsdom\living\nodes\HTMLHyperlinkElementUtils-impl.js:81:7)
+    at listOnTimeout (node:internal/timers:588:17)
+    at processTimers (node:internal/timers:523:7) undefined
+
+ ✓ src/components/layout/workspace-shell.test.tsx (47 tests) 2137ms
+ ✓ src/components/layout/public-header.test.tsx (43 tests) 2436ms
+ ✓ src/components/ops/ops-war-room.test.tsx (74 tests) 2827ms
+stderr | src/lib/server-time.test.ts > toEpochMs — chi nhan moc co mui gio tuong minh (AC-3) > tu choi '2026-10-03' (chi co ngay, ECMA hieu la UTC) -> null
+[server-time] moc thoi han "2026-10-03" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+stderr | src/lib/server-time.test.ts > toEpochMs — chi nhan moc co mui gio tuong minh (AC-3) > tu choi '2026-10-03T09:00:00' (co gio nhung khong co offset -> gio dia phuong) -> null
+[server-time] moc thoi han "2026-10-03T09:00:00" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+stderr | src/lib/server-time.test.ts > toEpochMs — chi nhan moc co mui gio tuong minh (AC-3) > tu choi '2026-10-03T09:00:00.500' (co milisecond nhung van khong co offset) -> null
+[server-time] moc thoi han "2026-10-03T09:00:00.500" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+stderr | src/lib/server-time.test.ts > toEpochMs — chi nhan moc co mui gio tuong minh (AC-3) > tu choi '2026-10-03 09:00:00' (dang co dau cach, khong co offset) -> null
+[server-time] moc thoi han "2026-10-03 09:00:00" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+stderr | src/lib/server-time.test.ts > toEpochMs — chi nhan moc co mui gio tuong minh (AC-3) > chuoi rac '' -> null, khong throw
+[server-time] moc thoi han "" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+[server-time] moc thoi han "" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+stderr | src/lib/server-time.test.ts > toEpochMs — chi nhan moc co mui gio tuong minh (AC-3) > chuoi rac '   ' -> null, khong throw
+[server-time] moc thoi han "" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+[server-time] moc thoi han "" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+stderr | src/lib/server-time.test.ts > toEpochMs — chi nhan moc co mui gio tuong minh (AC-3) > chuoi rac 'soon' -> null, khong throw
+[server-time] moc thoi han "soon" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+[server-time] moc thoi han "soon" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+stderr | src/lib/server-time.test.ts > toEpochMs — chi nhan moc co mui gio tuong minh (AC-3) > chuoi rac 'not-a-date' -> null, khong throw
+[server-time] moc thoi han "not-a-date" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+[server-time] moc thoi han "not-a-date" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+ ✓ src/lib/server-time.test.ts (39 tests) 33ms
+ ✓ src/components/queue/waiting-room.test.tsx (8 tests) 333ms
+ ✓ src/lib/queue-status.test.ts (22 tests) 37ms
+ ✓ src/lib/readiness.test.ts (19 tests) 44ms
+ ✓ src/components/checkout/order-result-view.test.tsx (7 tests) 534ms
+ ✓ src/components/theme/theme-script.test.tsx (13 tests) 168ms
+ ✓ src/hooks/use-theme.test.tsx (13 tests) 108ms
+ ✓ src/lib/assistant-client.test.ts (13 tests) 989ms
+   ✓ assistant-client (EV-185, EVF-115) > 5. Mô phỏng luồng Streaming (AC-3) > stream các token tuần tự và gọi onComplete với đầy đủ nội dung 968ms
+ ✓ src/components/layout/skip-link.test.tsx (13 tests) 369ms
+ ✓ src/components/ui/field.test.tsx (16 tests) 293ms
+ ✓ src/components/layout/public-shell.test.tsx (14 tests) 591ms
+ ✓ src/components/ui/checkbox.test.tsx (20 tests) 552ms
+ ✓ src/components/theme/theme-toggle.test.tsx (10 tests) 631ms
+ ✓ src/components/layout/container.test.tsx (13 tests) 240ms
+ ✓ src/components/ui/radio.test.tsx (18 tests) 665ms
+ ✓ src/components/ui/select.test.tsx (14 tests) 558ms
+ ✓ src/lib/queue-token.test.ts (16 tests) 25ms
+stderr | src/hooks/use-organizer-sales.test.tsx > useOrganizerSales — Hook doanh số realtime (AC-4) > dùng initialData nếu được truyền vào để tránh loading skeleton
+Warning: An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at TestComponent (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\node_modules\@testing-library\react\dist\pure.js:307:5)
+Warning: An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at TestComponent (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\node_modules\@testing-library\react\dist\pure.js:307:5)
+Warning: An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at TestComponent (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\node_modules\@testing-library\react\dist\pure.js:307:5)
+
+ ✓ src/hooks/use-assistant.test.tsx (7 tests) 91ms
+ ✓ src/hooks/use-organizer-sales.test.tsx (6 tests) 95ms
+ ✓ src/components/assistant/chat-panel.test.tsx (8 tests) 628ms
+ ✓ src/components/ui/spinner.test.tsx (17 tests) 836ms
+   ✓ Spinner > co khai bao prefers-reduced-motion trong source de tat animation 488ms
+ ✓ src/components/layout/public-footer.test.tsx (9 tests) 263ms
+stderr | src/components/organizer/moderation-status-card.test.tsx > ModerationStatusCard component (EV-186, EVF-116, Stitch 10.14, BR-E4, BR-E5) > gọi onResubmit khi người dùng bấm Nộp duyệt lại
+Warning: An update to ModerationStatusCard inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at ModerationStatusCard (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\src\components\organizer\moderation-status-card.tsx:19:3)
+Warning: An update to ModerationStatusCard inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at ModerationStatusCard (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\src\components\organizer\moderation-status-card.tsx:19:3)
+
+ ✓ src/components/organizer/moderation-status-card.test.tsx (3 tests) 443ms
+ ✓ src/components/event/ticket-tier-list.test.tsx (8 tests) 305ms
+ ✓ src/components/organizer/event-list.test.tsx (5 tests) 781ms
+ ✓ src/app/(ops)/layout.test.tsx (15 tests) 444ms
+ ✓ src/app/(organizer)/layout.test.tsx (14 tests) 436ms
+stderr | src/app/(marketing)/events/[slug]/page.test.tsx > EventDetailPage (EVF-111, BR-A4, BR-Q1) > render day du thong tin su kien, notice va ticket tiers
+Warning: An update to EventActionPanel inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at EventActionPanel (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\src\components\event\event-action-panel.tsx:19:3)
+    at div
+    at article
+
+stderr | src/app/(marketing)/events/[slug]/page.test.tsx > EventDetailPage — section hang ve co ten (EV-188 I1) > co hang ve: section la region co ten 'Các hạng vé', khong tham chieu id hong
+Warning: An update to EventActionPanel inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at EventActionPanel (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\src\components\event\event-action-panel.tsx:19:3)
+    at div
+    at article
+
+stderr | src/app/(marketing)/events/[slug]/page.test.tsx > EventDetailPage — section hang ve co ten (EV-188 I1) > khong co hang ve: section KHONG co aria-labelledby, khong tham chieu id hong
+Warning: An update to EventActionPanel inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at EventActionPanel (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\src\components\event\event-action-panel.tsx:19:3)
+    at div
+    at article
+
+ ✓ src/app/(marketing)/events/[slug]/page.test.tsx (7 tests) 331ms
+ ✓ src/components/ui/card.test.tsx (11 tests) 275ms
+stderr | src/app/(ops)/ops/events/[eventId]/page.test.tsx > OpsWarRoomPage route (/ops/events/[eventId]) > lỗi khác (500): render thông báo lỗi kèm nút 'Thử lại' (M-2)
+Warning: An update to LiveWarRoom inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at LiveWarRoom (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\src\components\ops\ops-war-room.tsx:101:3)
+    at OpsWarRoom (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\src\components\ops\ops-war-room.tsx:82:23)
+Warning: An update to LiveWarRoom inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at LiveWarRoom (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\src\components\ops\ops-war-room.tsx:101:3)
+    at OpsWarRoom (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\src\components\ops\ops-war-room.tsx:82:23)
+Warning: An update to LiveWarRoom inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at LiveWarRoom (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\src\components\ops\ops-war-room.tsx:101:3)
+    at OpsWarRoom (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\src\components\ops\ops-war-room.tsx:82:23)
+
+ ✓ src/app/(ops)/ops/events/[eventId]/page.test.tsx (7 tests) 340ms
+stderr | src/components/organizer/sales-dashboard.test.tsx > SalesDashboard component (EV-186, EVF-116, AC-4, AC-5, Stitch 10.14) > render tiêu đề, huy hiệu Realtime (≤ 5s) và các thẻ chỉ số (AC-4)
+Warning: An update to SalesDashboard inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at SalesDashboard (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\src\components\organizer\sales-dashboard.tsx:25:3)
+Warning: An update to SalesDashboard inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at SalesDashboard (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\src\components\organizer\sales-dashboard.tsx:25:3)
+Warning: An update to SalesDashboard inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at SalesDashboard (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\src\components\organizer\sales-dashboard.tsx:25:3)
+
+stderr | src/components/organizer/sales-dashboard.test.tsx > SalesDashboard component (EV-186, EVF-116, AC-4, AC-5, Stitch 10.14) > render bảng chi tiết theo từng hạng vé và thanh tiến độ lấp đầy
+Warning: An update to SalesDashboard inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at SalesDashboard (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\src\components\organizer\sales-dashboard.tsx:25:3)
+Warning: An update to SalesDashboard inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at SalesDashboard (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\src\components\organizer\sales-dashboard.tsx:25:3)
+Warning: An update to SalesDashboard inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at SalesDashboard (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\src\components\organizer\sales-dashboard.tsx:25:3)
+
+stderr | src/components/organizer/sales-dashboard.test.tsx > SalesDashboard component (EV-186, EVF-116, AC-4, AC-5, Stitch 10.14) > chuyển sang tab Báo cáo tổng kết sau bán (AC-5)
+Warning: An update to SalesDashboard inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at SalesDashboard (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\src\components\organizer\sales-dashboard.tsx:25:3)
+Warning: An update to SalesDashboard inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at SalesDashboard (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\src\components\organizer\sales-dashboard.tsx:25:3)
+Warning: An update to SalesDashboard inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at SalesDashboard (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\src\components\organizer\sales-dashboard.tsx:25:3)
+
+stderr | src/components/organizer/sales-dashboard.test.tsx > SalesDashboard component (EV-186, EVF-116, AC-4, AC-5, Stitch 10.14) > cho phép bật/tắt tự động cập nhật
+Warning: An update to SalesDashboard inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at SalesDashboard (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\src\components\organizer\sales-dashboard.tsx:25:3)
+Warning: An update to SalesDashboard inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at SalesDashboard (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\src\components\organizer\sales-dashboard.tsx:25:3)
+Warning: An update to SalesDashboard inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at SalesDashboard (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\src\components\organizer\sales-dashboard.tsx:25:3)
+
+ ✓ src/components/organizer/sales-dashboard.test.tsx (4 tests) 561ms
+ ✓ src/hooks/use-order-status.test.tsx (3 tests) 63ms
+ ✓ src/hooks/use-payment-session.test.tsx (4 tests) 65ms
+ ✓ src/components/ui/alert.test.tsx (14 tests) 318ms
+ ✓ src/app/(marketing)/layout.test.tsx (13 tests) 386ms
+stderr | src/components/checkout/payment-handoff-view.test.tsx > PaymentHandoffView component (EVF-114, BR-O2, BR-O5) > gọi onPaymentSuccess khi nhập đầy đủ thông tin và submit thành công (BR-O5)
+Warning: An update to PaymentHandoffView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at PaymentHandoffView (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\src\components\checkout\payment-handoff-view.tsx:15:3)
+
+ ✓ src/components/checkout/payment-handoff-view.test.tsx (4 tests) 505ms
+ ✓ src/components/i18n/t.test.tsx (6 tests) 358ms
+ ✓ src/lib/theme.test.ts (11 tests) 21ms
+ ✓ src/app/(queue)/layout.test.tsx (11 tests) 345ms
+ ✓ src/lib/queue-client.test.ts (6 tests) 136ms
+ ✓ src/app/(checkout)/layout.test.tsx (11 tests) 293ms
+ ✓ src/lib/api-base.test.ts (7 tests) 24ms
+ ✓ src/lib/jitter.test.ts (7 tests) 27ms
+ ✓ src/components/layout/focus-shell.test.tsx (4 tests) 283ms
+ ✓ src/components/assistant/streaming-message.test.tsx (4 tests) 230ms
+ ✓ src/app/(checkout)/checkout/[eventId]/page.test.tsx (4 tests) 76ms
+ ✓ src/hooks/use-server-time-sync.test.tsx (3 tests) 268ms
+ ✓ src/components/ui/badge.test.tsx (15 tests) 147ms
+ ✓ src/components/queue/progress-ring.test.tsx (6 tests) 250ms
+ ✓ src/lib/backoff.test.ts (7 tests) 16ms
+ ✓ src/components/assistant/faq-chips.test.tsx (4 tests) 367ms
+ ✓ src/components/queue/queue-position.test.tsx (4 tests) 230ms
+ ✓ src/app/(queue)/waiting/[eventId]/page.test.tsx (3 tests) 74ms
+ ✓ src/lib/event-service.test.ts (5 tests) 14ms
+ ✓ src/lib/cn.test.ts (7 tests) 12ms
+ ✓ src/app/(ops)/ops/events/page.test.tsx (5 tests) 239ms
+ ✓ src/app/auth/layout.test.tsx (2 tests) 187ms
+ ✓ src/lib/device.test.ts (4 tests) 12ms
+ ✓ src/app/unauthorized/page.test.tsx (2 tests) 212ms
+ ✓ src/app/(organizer)/organizer/events/[eventId]/review-status/page.test.tsx (2 tests) 170ms
+ ✓ src/components/queue/admit-banner.test.tsx (4 tests) 277ms
+stderr | src/app/(organizer)/organizer/events/[eventId]/sales/page.test.tsx > OrganizerSalesPage route (/organizer/events/[eventId]/sales - AC-4) > render trang dashboard doanh số realtime cho sự kiện hợp lệ
+Warning: An update to SalesDashboard inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at SalesDashboard (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\src\components\organizer\sales-dashboard.tsx:25:3)
+    at div
+Warning: An update to SalesDashboard inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at SalesDashboard (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\src\components\organizer\sales-dashboard.tsx:25:3)
+    at div
+Warning: An update to SalesDashboard inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at SalesDashboard (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\src\components\organizer\sales-dashboard.tsx:25:3)
+    at div
+Warning: An update to SalesDashboard inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at SalesDashboard (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\src\components\organizer\sales-dashboard.tsx:25:3)
+    at div
+Warning: An update to SalesDashboard inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at SalesDashboard (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\src\components\organizer\sales-dashboard.tsx:25:3)
+    at div
+
+ ✓ src/app/(organizer)/organizer/events/[eventId]/sales/page.test.tsx (2 tests) 211ms
+ ✓ src/app/(checkout)/checkout/[eventId]/payment/page.test.tsx (2 tests) 240ms
+ ✓ src/components/showcase/domain-gallery.test.tsx (8 tests) 1656ms
+   ✓ DomainGallery — section Trợ lý AI (AC-10) > render duoc khong throw (AC-10) 348ms
+   ✓ DomainGallery — section Trợ lý AI (AC-10) > co heading chua 'Trợ lý' (AC-10) 521ms
+(node:49300) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 SIGINT listeners added to [process]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ src/app/api/readyz/route.test.ts (19 tests) 36ms
+ ✓ src/instrumentation.test.ts (19 tests) 174ms
+ ✓ src/app/api/healthz/route.test.ts (13 tests) 30ms
+ ✓ src/hooks/use-auth.test.ts (2 tests) 5ms
+ ✓ src/app/api/time/route.test.ts (1 test) 9ms
+ ✓ src/app/(ops)/ops/events/[eventId]/not-found.test.tsx (2 tests) 75ms
+stderr | src/app/(checkout)/checkout/[eventId]/result/page.test.tsx > OrderResultPage route (EVF-114, EV-184) > render trang kết quả đơn hàng với mã đơn
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-verify\apps\web\src\components\checkout\order-result-view.tsx:15:3)
+
+ ✓ src/app/(checkout)/checkout/[eventId]/result/page.test.tsx (2 tests) 157ms
+ ✓ src/app/(organizer)/organizer/events/[eventId]/edit/page.test.tsx (1 test) 80ms
+ ✓ src/app/(organizer)/organizer/page.test.tsx (1 test) 8ms
+ ✓ src/app/(organizer)/organizer/events/new/page.test.tsx (1 test) 76ms
+ ✓ src/components/event/lobby-notice.test.tsx (1 test) 103ms
+ ✓ src/app/(marketing)/events/page.test.tsx (1 test) 134ms
+ ✓ src/app/(organizer)/organizer/events/page.test.tsx (1 test) 127ms
+ ✓ src/app/(marketing)/page.test.tsx (1 test) 124ms
+
+ Test Files  109 passed (109)
+      Tests  1946 passed (1946)
+   Start at  21:24:03
+   Duration  27.33s (transform 11.14s, setup 100.99s, collect 36.27s, tests 42.58s, environment 518.73s, prepare 37.92s)
+
+npm test exit=0

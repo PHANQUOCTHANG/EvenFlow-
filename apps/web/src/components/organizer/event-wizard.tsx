@@ -8,6 +8,7 @@
  * - BR-E3: Sau khi ON_SALE, CẤM giảm quota của hạng vé; chỉ được phép tăng.
  */
 
+import Link from "next/link";
 import React, { useState } from "react";
 
 import { Alert } from "@/components/ui/alert";
@@ -17,6 +18,9 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/cn";
 import { formatVnd } from "@/lib/format";
 import {
+  canIncreaseTierQuota,
+  canSubmitEvent,
+  validateEventDates,
   validateEventSchedule,
   validateTierQuotaUpdate,
   validateTiers,
@@ -25,9 +29,21 @@ import {
   type TicketTierConfig,
 } from "@/lib/organizer-service";
 
+/** Kết quả một phần: bản nháp đã được tạo nhưng một bước sau đó lỗi (AC-21). */
+export interface WizardSubmitResult {
+  error?: string;
+  failedStep?: "tiers" | "submit";
+  /** Liên kết tới bản nháp đã tạo để người dùng không mất dữ liệu. */
+  draftHref?: string;
+  /** Tạo mới: bản nháp đã tồn tại, KHÔNG được POST /events lần nữa (khoá nút lưu). */
+  blockResubmit?: boolean;
+  /** G-8: hạng vé đã tạo trên máy chủ (id cục bộ -> hạng vé thật); wizard thay thế để chúng thành hạng cũ (chỉ sửa quota). */
+  createdTiers?: Record<string, TicketTierConfig>;
+}
+
 export interface EventWizardProps {
   initialEvent?: OrganizerEvent;
-  onSubmit: (data: CreateEventInput) => Promise<void>;
+  onSubmit: (data: CreateEventInput) => Promise<void | WizardSubmitResult>;
   onCancel?: () => void;
   className?: string;
 }
@@ -77,7 +93,15 @@ export function EventWizard({
   className,
 }: EventWizardProps) {
   const isEditing = Boolean(initialEvent);
-  const isCurrentOnSale = initialEvent?.state === "ON_SALE";
+  const isCurrentOnSale = initialEvent?.state === "ON_SALE" || initialEvent?.state === "SOLD_OUT";
+  // ON_SALE: chỉ được tăng quota; trường sự kiện chỉ đọc (PUT /events không cho phép).
+  const quotaOnly = Boolean(initialEvent && canIncreaseTierQuota(initialEvent.state));
+  // Chỉ DRAFT/REJECTED mới nộp duyệt được (khi tạo mới luôn được).
+  const canSubmit = !initialEvent || canSubmitEvent(initialEvent.state);
+  // Hạng vé đã tồn tại trên backend: chỉ được đổi quota (PUT .../tiers/{id} {new_quota}).
+  // H-3: cong them hang ve da tao trong phien nay (id may chu) de khong phu thuoc viec tai lai thanh cong.
+  const [createdIds, setCreatedIds] = useState<ReadonlySet<string>>(() => new Set());
+  const existingTierIds = new Set([...(initialEvent?.tiers ?? []).map((t) => t.id), ...createdIds]);
 
   const [step, setStep] = useState<WizardStep>(1);
 
@@ -88,7 +112,7 @@ export function EventWizard({
   const [venue, setVenue] = useState(initialEvent?.venue ?? "");
   const [startsAt, setStartsAt] = useState(
     initialEvent?.startsAt
-      ? initialEvent.startsAt.slice(0, 16)
+      ? toLocalDatetimeString(new Date(initialEvent.startsAt))
       : toLocalDatetimeString(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)),
   );
 
@@ -110,12 +134,13 @@ export function EventWizard({
   // Step 3: Lịch mở bán
   const [saleStartAt, setSaleStartAt] = useState(
     initialEvent?.saleStartAt
-      ? initialEvent.saleStartAt.slice(0, 16)
+      ? toLocalDatetimeString(new Date(initialEvent.saleStartAt))
       : toLocalDatetimeString(new Date(Date.now() + 2 * 60 * 60 * 1000)), // 2 giờ sau
   );
 
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [partial, setPartial] = useState<WizardSubmitResult | null>(null);
 
   // Xử lý thêm hạng vé mới
   const handleAddTier = () => {
@@ -209,15 +234,61 @@ export function EventWizard({
     }
 
     if (step === 3) {
-      // Validate BR-E2: sale_start_at >= now + 30m
-      const scheduleVal = validateEventSchedule(saleStartAt);
-      if (!scheduleVal.isValid) {
-        setErrorMsg(scheduleVal.error ?? "Thời gian mở bán không hợp lệ.");
+      // BR-E2 (>= 30 phút) chỉ chặn "Gửi kiểm duyệt" ở handleSubmit, không chặn lưu nháp/sửa.
+      const datesVal = validateEventDates(
+        new Date(startsAt).toISOString(),
+        new Date(saleStartAt).toISOString(),
+      );
+      if (!datesVal.isValid) {
+        setErrorMsg(datesVal.error ?? "Thời gian sự kiện không hợp lệ.");
         return;
       }
 
       setStep(4);
       return;
+    }
+  };
+
+  // ON_SALE: chỉ lưu quota tăng; chặn giảm (BR-E3) trước khi gọi mạng.
+  const handleSaveQuotas = async () => {
+    setErrorMsg(null);
+    setPartial(null);
+    if (!initialEvent) return;
+    const tierVal = validateTiers(tiers);
+    if (!tierVal.isValid) {
+      setErrorMsg(tierVal.error ?? "Cấu hình hạng vé không hợp lệ.");
+      return;
+    }
+    for (const t of tiers) {
+      const old = initialEvent.tiers.find((o) => o.id === t.id);
+      if (!old) continue;
+      const v = validateTierQuotaUpdate(old.quota, t.quota, initialEvent.state);
+      if (!v.isValid) {
+        setErrorMsg(v.error ?? "Không thể giảm quota.");
+        return;
+      }
+    }
+    setIsSubmitting(true);
+    try {
+      const result = await onSubmit({
+        title: initialEvent.title,
+        slug: initialEvent.slug,
+        description: initialEvent.description,
+        venue: initialEvent.venue,
+        startsAt: initialEvent.startsAt,
+        saleStartAt: initialEvent.saleStartAt,
+        tiers,
+        submitForReview: false,
+      });
+      if (result && result.error) {
+        setPartial(result);
+        setErrorMsg(result.error);
+        applyCreatedTiers(result);
+      }
+    } catch (err) {
+      setErrorMsg(err instanceof Error ? err.message : String(err));
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -231,6 +302,15 @@ export function EventWizard({
   // Nộp form
   const handleSubmit = async (submitForReview: boolean) => {
     setErrorMsg(null);
+    setPartial(null);
+
+    if (submitForReview) {
+      const scheduleVal = validateEventSchedule(saleStartAt);
+      if (!scheduleVal.isValid) {
+        setErrorMsg(scheduleVal.error ?? "Thời gian mở bán không hợp lệ.");
+        return;
+      }
+    }
     setIsSubmitting(true);
 
     try {
@@ -245,13 +325,100 @@ export function EventWizard({
         submitForReview,
       };
 
-      await onSubmit(data);
+      const result = await onSubmit(data);
+      if (result && result.error) {
+        setPartial(result);
+        setErrorMsg(result.error);
+        applyCreatedTiers(result);
+      }
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : String(err));
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  const blocked = Boolean(partial?.blockResubmit);
+
+  // G-8: hạng vé vừa tạo trên máy chủ thay thế bản cục bộ; hạng chưa lưu giữ nguyên.
+  function applyCreatedTiers(result: WizardSubmitResult) {
+    const created = result.createdTiers;
+    if (!created || Object.keys(created).length === 0) return;
+    setTiers((prev) => prev.map((t) => created[t.id] ?? t));
+    setCreatedIds((prev) => new Set([...prev, ...Object.values(created).map((t) => t.id)]));
+  }
+
+  if (quotaOnly && initialEvent) {
+    return (
+      <Card className={cn("p-lg max-w-4xl mx-auto space-y-lg", className)}>
+        <div className="border-b border-border pb-md">
+          <h2 className="text-heading-lg font-bold text-fg">
+            Tăng số lượng vé: {initialEvent.title}
+          </h2>
+          <p className="text-body-xs text-fg-muted mt-xs">
+            Sự kiện đang mở bán hoặc đã hết vé ({initialEvent.state}): thông tin sự kiện chỉ đọc, chỉ được tăng số lượng vé
+            (BR-E3 cấm giảm).
+          </p>
+        </div>
+
+        {errorMsg && (
+          <Alert variant="error" title="Lỗi">
+            {errorMsg}
+          </Alert>
+        )}
+
+        <div className="space-y-md">
+          {tiers.map((tier, idx) => (
+            <Card key={tier.id} className="p-md space-y-sm border border-border-strong">
+              <span className="font-semibold text-body-sm text-fg">Hạng vé #{idx + 1}</span>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-sm">
+                <Input
+                  id={`tier-name-${tier.id}`}
+                  label="Tên hạng vé"
+                  value={tier.name}
+                  disabled
+                  readOnly
+                />
+                <Input
+                  id={`tier-price-${tier.id}`}
+                  label="Giá vé (VND)"
+                  value={String(tier.price)}
+                  disabled
+                  readOnly
+                />
+                <div className="flex flex-col gap-xs">
+                  <span className="text-label-lg text-fg">
+                    <label htmlFor={`tier-quota-${tier.id}`}>Số lượng vé (Quota)</label>
+                  </span>
+                  <input
+                    id={`tier-quota-${tier.id}`}
+                    type="number"
+                    min={initialEvent.tiers.find((o) => o.id === tier.id)?.quota ?? 1}
+                    value={tier.quota}
+                    onChange={(e) => handleUpdateTier(tier.id, "quota", Number(e.target.value))}
+                    className="ef-focus-ring h-11 w-full rounded-control border border-border-strong bg-surface px-sm text-body-lg text-fg"
+                  />
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+
+        <div className="flex items-center justify-between pt-md border-t border-border">
+          {onCancel ? (
+            <Button variant="tertiary" onClick={onCancel} disabled={isSubmitting}>
+              Huỷ bỏ
+            </Button>
+          ) : (
+            <span />
+          )}
+          <Button variant="primary" onClick={handleSaveQuotas} disabled={isSubmitting}>
+            {isSubmitting ? "Đang xử lý..." : "Lưu số lượng vé"}
+          </Button>
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <Card className={cn("p-lg max-w-4xl mx-auto space-y-lg", className)}>
@@ -285,9 +452,27 @@ export function EventWizard({
       </div>
 
       {/* Hiển thị lỗi nếu có */}
-      {errorMsg && (
+      {errorMsg && !partial && (
         <Alert variant="error" title="Lỗi xác thực quy tắc nghiệp vụ">
           {errorMsg}
+        </Alert>
+      )}
+
+      {partial && (
+        <Alert
+          variant="error"
+          title={`${isEditing ? "Đã lưu thông tin sự kiện" : "Đã tạo bản nháp"} nhưng bước ${
+            partial.failedStep === "submit" ? "gửi kiểm duyệt" : "tạo hạng vé"
+          } thất bại`}
+        >
+          <p>{errorMsg}</p>
+          {partial.draftHref && (
+            <p className="mt-xs">
+              <Link href={partial.draftHref} className="underline font-semibold">
+                Mở bản nháp đã lưu để hoàn tất
+              </Link>
+            </p>
+          )}
         </Alert>
       )}
 
@@ -308,6 +493,8 @@ export function EventWizard({
             label="Đường dẫn tĩnh (Slug - tuỳ chọn)"
             placeholder="VD: vietnam-tech-summit-2026"
             value={slug}
+            disabled={isEditing}
+            helpText={isEditing ? "Không thể đổi sau khi tạo." : undefined}
             onChange={(e) => setSlug(e.target.value)}
           />
 
@@ -373,7 +560,12 @@ export function EventWizard({
                   <span className="font-semibold text-body-sm text-fg">
                     Hạng vé #{idx + 1}
                   </span>
-                  {tiers.length > 1 && (
+                  {existingTierIds.has(tier.id) ? (
+                    <span className="text-body-xs text-fg-muted">
+                      Hạng vé đã tạo — chỉ được đổi số lượng
+                    </span>
+                  ) : (
+                    tiers.length > 1 && (
                     <button
                       type="button"
                       onClick={() => handleRemoveTier(tier.id)}
@@ -381,6 +573,7 @@ export function EventWizard({
                     >
                       Xoá hạng vé
                     </button>
+                    )
                   )}
                 </div>
 
@@ -390,6 +583,7 @@ export function EventWizard({
                     label="Tên hạng vé"
                     required
                     value={tier.name}
+                    disabled={existingTierIds.has(tier.id)}
                     onChange={(e) => handleUpdateTier(tier.id, "name", e.target.value)}
                     placeholder="VD: VIP"
                   />
@@ -407,6 +601,7 @@ export function EventWizard({
                       min={0}
                       required
                       value={tier.price}
+                      disabled={existingTierIds.has(tier.id)}
                       onChange={(e) =>
                         handleUpdateTier(tier.id, "price", Number(e.target.value))
                       }
@@ -468,6 +663,13 @@ export function EventWizard({
             />
           </div>
 
+          {!validateEventSchedule(saleStartAt).isValid && (
+            <Alert variant="warning" title="Chưa đủ điều kiện gửi kiểm duyệt (BR-E2)">
+              Thời gian mở bán cách hiện tại dưới 30 phút: vẫn lưu nháp được, nhưng không thể gửi
+              kiểm duyệt.
+            </Alert>
+          )}
+
           <Alert variant="info" title="Lưu ý pre-warm hạ tầng">
             Hệ thống phòng chờ công bằng (Fair Waiting Room) sẽ gom khách vào Lobby trước T0 và
             xáo trộn ngẫu nhiên toàn bộ người chờ đúng thời điểm mở bán.
@@ -507,9 +709,9 @@ export function EventWizard({
           </div>
 
           <Alert variant="info" title="Quy trình kiểm duyệt AI (BR-E4 & BR-E5)">
-            Khi bấm &ldquo;Gửi kiểm duyệt&rdquo;, sự kiện sẽ được quét tự động qua AI theo 4 trục: Nội dung
-            cấm, Sai lệch/lừa đảo, Bản quyền hình ảnh và Thông tin thiếu. Điểm rủi ro &lt; 0.3 sẽ
-            tự động chuyển sang trạng thái SCHEDULED.
+            Khi bấm &ldquo;Gửi kiểm duyệt&rdquo;, sự kiện chuyển sang trạng thái PENDING_REVIEW để chờ
+            kiểm duyệt (AI 4 trục: Nội dung cấm, Sai lệch/lừa đảo, Bản quyền hình ảnh và Thông tin
+            thiếu). Kết quả duyệt sẽ được cập nhật ở trang trạng thái kiểm duyệt.
           </Alert>
         </div>
       )}
@@ -540,17 +742,19 @@ export function EventWizard({
               <Button
                 variant="secondary"
                 onClick={() => handleSubmit(false)}
-                disabled={isSubmitting}
+                disabled={isSubmitting || blocked}
               >
                 Lưu nháp
               </Button>
-              <Button
-                variant="primary"
-                onClick={() => handleSubmit(true)}
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? "Đang xử lý..." : "🚀 Gửi kiểm duyệt"}
-              </Button>
+              {canSubmit && (
+                <Button
+                  variant="primary"
+                  onClick={() => handleSubmit(true)}
+                  disabled={isSubmitting || blocked}
+                >
+                  {isSubmitting ? "Đang xử lý..." : "🚀 Gửi kiểm duyệt"}
+                </Button>
+              )}
             </>
           )}
         </div>

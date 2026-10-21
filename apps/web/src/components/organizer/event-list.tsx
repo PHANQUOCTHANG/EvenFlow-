@@ -18,7 +18,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/cn";
 import { formatVnd } from "@/lib/format";
-import type { EventLifecycleState, OrganizerEvent } from "@/lib/organizer-service";
+import { canEditEvent, canOpenEventEditor, type EventLifecycleState, type OrganizerEvent } from "@/lib/organizer-service";
 
 export interface EventListProps {
   events: OrganizerEvent[];
@@ -36,6 +36,7 @@ export const LIFECYCLE_BADGE_CONFIG: Record<
   REJECTED: { label: "Bị từ chối", variant: "failed" },
   SOLD_OUT: { label: "Hết vé", variant: "soldout" },
   CLOSED: { label: "Đã đóng", variant: "neutral" },
+  COMPLETED: { label: "Đã kết thúc", variant: "neutral" },
   CANCELLED: { label: "Đã huỷ", variant: "failed" },
 };
 
@@ -95,6 +96,10 @@ export function EventList({ events, className }: EventListProps) {
               { id: "PENDING_REVIEW", label: "Chờ duyệt" },
               { id: "REJECTED", label: "Bị từ chối" },
               { id: "DRAFT", label: "Bản nháp" },
+              { id: "SOLD_OUT", label: "Hết vé" },
+              { id: "CLOSED", label: "Đã đóng" },
+              { id: "COMPLETED", label: "Đã kết thúc" },
+              { id: "CANCELLED", label: "Đã huỷ" },
             ].map((tab) => {
               const isActive = selectedState === tab.id;
               return (
@@ -151,11 +156,10 @@ export function EventList({ events, className }: EventListProps) {
               label: event.state,
               variant: "neutral",
             };
+            // GET /events không kèm hạng vé: chỉ hiện thông tin vé khi đã có dữ liệu.
+            const hasTiers = event.tiers.length > 0;
             const totalQuota = event.tiers.reduce((acc, t) => acc + t.quota, 0);
-            const lowestPrice =
-              event.tiers.length > 0
-                ? Math.min(...event.tiers.map((t) => t.price))
-                : 0;
+            const lowestPrice = hasTiers ? Math.min(...event.tiers.map((t) => t.price)) : 0;
 
             return (
               <Card
@@ -180,12 +184,14 @@ export function EventList({ events, className }: EventListProps) {
                   </p>
 
                   <div className="flex flex-wrap gap-md text-label-sm text-fg-muted pt-xs">
-                    <span>
-                      🎟️ {event.tiers.length} hạng vé (Tổng {totalQuota.toLocaleString("vi-VN")} vé)
-                    </span>
-                    <span>
-                      💵 Giá từ: {formatVnd(lowestPrice)}
-                    </span>
+                    {hasTiers && (
+                      <>
+                        <span>
+                          🎟️ {event.tiers.length} hạng vé (Tổng {totalQuota.toLocaleString("vi-VN")} vé)
+                        </span>
+                        <span>💵 Giá từ: {formatVnd(lowestPrice)}</span>
+                      </>
+                    )}
                     <span>
                       ⏰ Mở bán:{" "}
                       {new Date(event.saleStartAt).toLocaleTimeString("vi-VN", {
@@ -219,11 +225,13 @@ export function EventList({ events, className }: EventListProps) {
                     </Button>
                   </Link>
 
-                  <Link href={`/organizer/events/${event.id}/edit`}>
-                    <Button variant="tertiary" className="text-body-xs">
-                      ✏️ Chỉnh sửa
-                    </Button>
-                  </Link>
+                  {canOpenEventEditor(event.state) && (
+                    <Link href={`/organizer/events/${event.id}/edit`}>
+                      <Button variant="tertiary" className="text-body-xs">
+                        {canEditEvent(event.state) ? "✏️ Chỉnh sửa" : "✏️ Tăng số lượng vé"}
+                      </Button>
+                    </Link>
+                  )}
                 </div>
               </Card>
             );

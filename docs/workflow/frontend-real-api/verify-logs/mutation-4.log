@@ -1,0 +1,15 @@
+mutation 4 applied to api-client.ts
+diff --git a/apps/web/src/lib/api-client.ts b/apps/web/src/lib/api-client.ts
+index ae84cca..1e51da2 100644
+--- a/apps/web/src/lib/api-client.ts
++++ b/apps/web/src/lib/api-client.ts
+@@ -133,7 +133,7 @@ async function refreshCore(cur: Session, refreshToken: string): Promise<string>
+   if (!res.ok) {
+     if (res.status === 400 || res.status === 401 || res.status === 403) {
+       // Dang xuat/xoay trong luc cho: khong xoa phien cua nguoi khac.
+-      if (epoch === getSessionEpoch() && getSession()?.refreshToken === cur.refreshToken) clearSession();
++      /* MUTANT 4: skip clearSession on refresh failure */
+       throw new ApiError("AUTH_REQUIRED", 401, await readProblem(res), "Phien dang nhap da het han");
+     }
+     throw await toApiError(res);
+### npx vitest run src/lib (testTimeout 15000)

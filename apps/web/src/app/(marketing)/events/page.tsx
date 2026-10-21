@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 
-import { EventCard } from "@/components/event/event-card";
+import { EventListView } from "@/components/event/event-list-view";
+import { EventsBrowserList } from "@/components/event/events-browser-list";
 import { getAllPublicEvents } from "@/lib/event-service";
+import type { EventDetailSnapshot } from "@/lib/types/event";
 
 export const revalidate = 60;
 
@@ -12,7 +14,18 @@ export const metadata: Metadata = {
 };
 
 export default async function EventsListPage() {
-  const events = await getAllPublicEvents();
+  // Luc `next build` khong goi backend: prerender vo trang, danh sach duoc tai o trinh duyet.
+  // Luc chay, ISR (revalidate = 60) goi backend; loi -> error state, khong bao gio du lieu mau.
+  const isBuild = process.env.NEXT_PHASE === "phase-production-build";
+  let events: EventDetailSnapshot[] = [];
+  let failed = false;
+  if (!isBuild) {
+    try {
+      events = await getAllPublicEvents({ revalidate: 60 });
+    } catch {
+      failed = true;
+    }
+  }
 
   return (
     <div className="py-xl">
@@ -25,18 +38,7 @@ export default async function EventsListPage() {
         </p>
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-lg">
-        {events.map((event) => (
-          <EventCard
-            key={event.id}
-            title={event.title}
-            venue={event.venue}
-            startsAt={event.startsAt}
-            state={event.state}
-            href={`/events/${event.slug}`}
-          />
-        ))}
-      </div>
+      {isBuild ? <EventsBrowserList /> : <EventListView events={events} error={failed} />}
     </div>
   );
 }

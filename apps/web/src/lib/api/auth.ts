@@ -1,4 +1,19 @@
-import { getDeviceFingerprint } from '@/lib/device';
+/** Client dinh danh qua gateway: `${NEXT_PUBLIC_API_BASE}/api/v1/auth/...` (AC-1, AC-2, AC-6, AC-8, AC-27).
+ *
+ * Moi loi HTTP duoc nem thanh ApiError (lib/api-client) mang `status`, `type`, `detail` cua problem. */
+
+import { ApiError, apiFetch, refreshAccessToken, toApiError } from "@/lib/api-client";
+import { getDeviceFingerprint } from "@/lib/device";
+import {
+  clearSession,
+  getSession,
+  getSessionPersist,
+  getStoredRefreshToken,
+  sessionFromIdentity,
+  setSession,
+  type Session,
+  type SessionPersist,
+} from "@/lib/session";
 
 export interface IdentityResponse {
   id: string;
@@ -6,94 +21,122 @@ export interface IdentityResponse {
   role: string;
   created_at: string;
   token?: string;
+  access_token?: string;
+  token_type?: string;
+  expires_in?: number;
+  refresh_token?: string;
+  refresh_expires_in?: number;
 }
 
-export interface ApiError {
-  type: string;
-  title: string;
-  status: number;
-  detail: string;
+export interface LoginOptions {
+  /** "ghi nho toi" tat -> "session" (sessionStorage). Mac dinh "local". */
+  persist?: SessionPersist;
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8083/api/v1';
+const AUTH = "/api/v1/auth";
+
+/** `ApiError.code` khi register/verify thanh cong nhung dang nhap tu dong that bai (tai khoan da ton tai). */
+export const REGISTERED_LOGIN_FAILED = "REGISTERED_LOGIN_FAILED";
+
+async function postJson(path: string, body: unknown, auth = false): Promise<Response> {
+  return apiFetch(`${AUTH}${path}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+    auth,
+  });
+}
+
+async function expectOk(res: Response): Promise<Response> {
+  if (!res.ok) throw await toApiError(res);
+  return res;
+}
+
+function storeFromIdentity(data: IdentityResponse, persist?: SessionPersist): Session {
+  const session = sessionFromIdentity(data);
+  if (!session) throw new Error("Phan hoi dang nhap khong co access token");
+  setSession(session, { persist });
+  return session;
+}
 
 export async function requestRegistrationOTP(identifier: string): Promise<void> {
-  const res = await fetch(`${API_BASE_URL}/auth/register/request-otp`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ identifier }),
-  });
+  await expectOk(await postJson("/register/request-otp", { identifier }));
+}
 
-  if (!res.ok) {
-    const data = await res.json();
-    throw data as ApiError;
+/** Dang ky: verify tra 201 KHONG co token -> dang nhap tiep voi cung identifier/password (AC-2). */
+export async function verifyRegistrationOTP(
+  identifier: string,
+  password: string,
+  otp: string,
+  opts: LoginOptions = {},
+): Promise<IdentityResponse> {
+  await expectOk(await postJson("/register/verify", { identifier, password, otp }));
+  try {
+    return await loginUser(identifier, password, opts);
+  } catch (err) {
+    // Tai khoan DA duoc tao: dang nhap tu dong that bai khong phai loi OTP (F-6, AC-2).
+    const cause = err instanceof ApiError ? err : null;
+    throw new ApiError(
+      REGISTERED_LOGIN_FAILED,
+      cause?.status ?? 0,
+      { type: cause?.type, title: cause?.title, detail: cause?.detail },
+      "Tai khoan da duoc tao nhung dang nhap tu dong that bai",
+    );
   }
 }
 
-export async function verifyRegistrationOTP(identifier: string, password: string, otp: string): Promise<IdentityResponse> {
-  const res = await fetch(`${API_BASE_URL}/auth/register/verify`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ identifier, password, otp }),
-  });
-
-  const data = await res.json();
-  if (!res.ok) {
-    throw data as ApiError;
-  }
-  return data as IdentityResponse;
-}
-export async function loginUser(identifier: string, password: string): Promise<IdentityResponse> {
-  const res = await fetch(`${API_BASE_URL}/auth/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    // Backend gan phien voi thiet bi; phong cho yeu cau thiet bi moi cho xep hang (EV-113 / EV-137).
-    body: JSON.stringify({ identifier, password, device_fingerprint: getDeviceFingerprint() }),
-  });
-
-  const data = await res.json();
-  if (!res.ok) {
-    throw data as ApiError;
-  }
-  return data as IdentityResponse;
+export async function loginUser(identifier: string, password: string, opts: LoginOptions = {}): Promise<IdentityResponse> {
+  // Backend gan phien voi thiet bi; phong cho yeu cau thiet bi moi cho xep hang (EV-113 / EV-137).
+  const res = await expectOk(await postJson("/login", { identifier, password, device_fingerprint: getDeviceFingerprint() }));
+  const data = (await res.json()) as IdentityResponse;
+  storeFromIdentity(data, opts.persist);
+  return data;
 }
 
 export async function requestResetPasswordOTP(identifier: string): Promise<void> {
-  const res = await fetch(`${API_BASE_URL}/auth/forgot-password/request-otp`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ identifier }),
-  });
-
-  if (!res.ok) {
-    const data = await res.json();
-    throw data as ApiError;
-  }
+  await expectOk(await postJson("/forgot-password/request-otp", { identifier }));
 }
 
 export async function resetPassword(identifier: string, otp: string, newPassword: string): Promise<void> {
-  const res = await fetch(`${API_BASE_URL}/auth/forgot-password/reset`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ identifier, otp, newPassword }),
-  });
+  await expectOk(await postJson("/forgot-password/reset", { identifier, otp, newPassword }));
+}
 
-  if (!res.ok) {
-    const data = await res.json();
-    throw data as ApiError;
+/** Google khong gan thiet bi -> goi /devices roi /refresh de lay cap token co `did` (AC-8). */
+export async function loginWithGoogle(credential: string, opts: LoginOptions = {}): Promise<IdentityResponse> {
+  const res = await expectOk(await postJson("/google", { credential }));
+  const data = (await res.json()) as IdentityResponse;
+  const googleSession = storeFromIdentity(data, opts.persist);
+
+  try {
+    await expectOk(await postJson("/devices", { fingerprint: getDeviceFingerprint() }, true));
+    await refreshSession();
+  } catch {
+    // Gan thiet bi that bai: giu phien tu dang nhap Google (join queue se bao device-required).
+    setSession(googleSession, { persist: opts.persist ?? getSessionPersist() ?? "local" });
+  }
+  return data;
+}
+
+/** Doi refresh token lay cap token moi (AC-4). Reject neu bi tu choi. */
+export async function refreshSession(): Promise<Session | null> {
+  await refreshAccessToken();
+  return getSession();
+}
+
+/** Dang xuat: bao server thu hoi refresh token, nhung LUON xoa phien du loi (AC-6). */
+export async function logout(): Promise<void> {
+  // Doc truc tiep tu storage: ef_user hong van khong duoc bo qua viec thu hoi refresh token (F-15).
+  const refreshToken = getStoredRefreshToken();
+  try {
+    if (refreshToken) await postJson("/logout", { refresh_token: refreshToken });
+  } catch {
+    /* mat mang / 5xx: van dang xuat o client */
+  } finally {
+    clearSession({ buyFlow: true });
   }
 }
 
-export async function loginWithGoogle(credential: string): Promise<IdentityResponse> {
-  const res = await fetch(`${API_BASE_URL}/auth/google`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ credential }),
-  });
-
-  const data = await res.json();
-  if (!res.ok) {
-    throw data as ApiError;
-  }
-  return data as IdentityResponse;
+export async function fetchMe(): Promise<{ id: string; role: string }> {
+  const res = await expectOk(await apiFetch(`${AUTH}/me`, { method: "GET" }));
+  return (await res.json()) as { id: string; role: string };
 }

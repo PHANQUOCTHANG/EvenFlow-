@@ -1,0 +1,23 @@
+{
+  "task": "frontend-debt-r4",
+  "branch": "feature/frontend-debt-r4",
+  "base_commit": "43375eb",
+  "tier": "high-risk",
+  "rule_hits": [
+    "auth: token refresh, session ownership across tabs (apps/web/src/lib/api-client.ts, lib/session.ts)",
+    "payments: payment client error mapping (apps/web/src/lib/payment-client.ts)"
+  ],
+  "llm_assessment": "high-risk (agrees with rules; cannot lower)",
+  "user_override": null,
+  "source": "deferred minor findings of frontend-real-api: R4-1/W-3, R4-2/W-2, R4-3/W-1, R4-4, W-4, W-5 (docs/workflow/frontend-real-api/findings.json round4)",
+  "consequences": [
+    "human approves spec.md before implementation",
+    "plan review mandatory",
+    "correctness + security review and a challenge on a different model",
+    "mutation test on changed refresh logic + rollback check",
+    "human sign-off before merge to develop"
+  ],
+  "no_migrations": true,
+  "no_new_dependencies": true,
+  "no_backend_changes": true
+}

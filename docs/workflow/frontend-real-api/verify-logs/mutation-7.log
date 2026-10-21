@@ -1,0 +1,15 @@
+mutation 7 applied to hold-client.ts
+diff --git a/apps/web/src/lib/hold-client.ts b/apps/web/src/lib/hold-client.ts
+index b928717..3419945 100644
+--- a/apps/web/src/lib/hold-client.ts
++++ b/apps/web/src/lib/hold-client.ts
+@@ -243,7 +243,7 @@ export async function requestHold(params: CreateHoldParams): Promise<HoldResult>
+     }
+     case 422:
+       if (problemType === "/problems/per-identity-limit") {
+-        throw new HoldClientError("Bạn đã đạt giới hạn số vé cho sự kiện này", "PER_IDENTITY_LIMIT", 422);
++        throw new HoldClientError("Bạn đã đạt giới hạn số vé cho sự kiện này", "QUANTITY_NOT_ALLOWED", 422); /* MUTANT 7 */
+       }
+       if (problemType === "/problems/quantity-not-allowed") {
+         throw new HoldClientError("Số lượng vé không được phép cho một đơn", "QUANTITY_NOT_ALLOWED", 422);
+### npx vitest run src/lib (testTimeout 15000)

@@ -72,7 +72,6 @@ describe("hold-client (EVF-113, BR-O2, BR-O5)", () => {
         ticketTypeId: "tier-vip",
         quantity: 3,
         queueToken: "token-secret-123",
-        identityId: "user-456",
         idempotencyKey: "fixed-uuid-key",
       });
 
@@ -80,10 +79,12 @@ describe("hold-client (EVF-113, BR-O2, BR-O5)", () => {
       const [url, init] = mockFetch.mock.calls[0];
       expect(url).toBe("/v1/events/evt-grand-concert/holds");
       expect(init.method).toBe("POST");
-      expect(init.headers["Content-Type"]).toBe("application/json");
-      expect(init.headers["Idempotency-Key"]).toBe("fixed-uuid-key");
-      expect(init.headers["X-Queue-Token"]).toBe("token-secret-123");
-      expect(init.headers["X-Identity-Id"]).toBe("user-456");
+      // WP2: di qua apiFetch -> headers co the la Headers; AC-10: khong bao gio gui header danh tinh gia.
+      const headers = new Headers(init.headers);
+      expect(headers.get("Content-Type")).toBe("application/json");
+      expect(headers.get("Idempotency-Key")).toBe("fixed-uuid-key");
+      expect(headers.get("X-Queue-Token")).toBe("token-secret-123");
+      expect(headers.has("X-Identity-Id")).toBe(false);
       expect(JSON.parse(init.body)).toEqual({
         ticket_type_id: "tier-vip",
         quantity: 3,
@@ -118,8 +119,9 @@ describe("hold-client (EVF-113, BR-O2, BR-O5)", () => {
       });
 
       const init = mockFetch.mock.calls[0][1];
-      expect(init.headers["Idempotency-Key"]).toBeTruthy();
-      expect(init.headers["Idempotency-Key"]).toMatch(
+      const key = new Headers(init.headers).get("Idempotency-Key");
+      expect(key).toBeTruthy();
+      expect(key).toMatch(
         /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
       );
     });
@@ -167,14 +169,12 @@ describe("hold-client (EVF-113, BR-O2, BR-O5)", () => {
     });
 
     it("409 do cùng Idempotency-Key đang xử lý là AMBIGUOUS, không phải SOLD_OUT (BR-O5)", async () => {
-      globalThis.fetch = vi.fn().mockResolvedValue({
-        ok: false,
-        status: 409,
-        json: async () => ({
-          type: "urn:eventflow:problem:idempotency-in-progress",
-          status: 409,
-        }),
-      });
+      globalThis.fetch = vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({ type: "urn:eventflow:problem:idempotency-in-progress", status: 409 }),
+          { status: 409, headers: { "Content-Type": "application/problem+json" } },
+        ),
+      );
 
       await expect(
         requestHold({
@@ -207,7 +207,7 @@ describe("hold-client (EVF-113, BR-O2, BR-O5)", () => {
       );
     });
 
-    it("chuyển lỗi 422 thành LIMIT_EXCEEDED", async () => {
+    it("422 không có problem type nhận diện được vẫn là LIMIT_EXCEEDED (PER_IDENTITY_LIMIT / QUANTITY_NOT_ALLOWED tách riêng theo type, xem hold-client.contract.test)", async () => {
       globalThis.fetch = vi.fn().mockResolvedValue({
         ok: false,
         status: 422,
@@ -293,7 +293,7 @@ describe("hold-client — mặc định apiBaseUrl theo NEXT_PUBLIC_API_BASE (EV
     );
   });
 
-  it("apiBaseUrl truyền tường minh vẫn thắng biến môi trường", async () => {
+  it("WP2: tham số apiBaseUrl đã bỏ — gốc API luôn lấy từ NEXT_PUBLIC_API_BASE qua apiFetch", async () => {
     vi.stubEnv("NEXT_PUBLIC_API_BASE", "http://localhost:8080");
     vi.resetModules();
     const { requestHold: requestHoldFresh } = await import("./hold-client");
@@ -306,10 +306,11 @@ describe("hold-client — mặc định apiBaseUrl theo NEXT_PUBLIC_API_BASE (EV
       ticketTypeId: "tier-1",
       quantity: 1,
       queueToken: "tok",
+      // Caller cu van truyen: phai bi bo qua, khong doi URL.
       apiBaseUrl: "https://explicit.example",
-    });
+    } as never);
 
-    expect(mockFetch.mock.calls[0][0]).toBe("https://explicit.example/v1/events/evt-1/holds");
+    expect(mockFetch.mock.calls[0][0]).toBe("http://localhost:8080/v1/events/evt-1/holds");
   });
 
   it("không đặt NEXT_PUBLIC_API_BASE thì vẫn gọi URL tương đối như cũ", async () => {

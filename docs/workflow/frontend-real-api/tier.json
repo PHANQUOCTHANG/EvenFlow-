@@ -1,0 +1,23 @@
+{
+  "task": "frontend-real-api",
+  "branch": "feature/frontend-real-api",
+  "base_commit": "2970b7f",
+  "tier": "high-risk",
+  "rule_hits": [
+    "auth: token storage, refresh rotation, logout (apps/web/src/lib/api/auth.ts, hooks/use-auth.ts)",
+    "payments: payment initiation client, removal of fake-success fallback (apps/web/src/lib/payment-client.ts)",
+    "permissions: gateway CORS allow/expose headers and a new Public route (services/gateway/internal/proxy)",
+    "new public read endpoint in event service (services/event/internal/adapter/http)"
+  ],
+  "llm_assessment": "high-risk (agrees with rules; cannot lower)",
+  "user_override": null,
+  "consequences": [
+    "human approves spec.md before implementation",
+    "plan review mandatory",
+    "3 parallel reviewers; challenge uses a different model than the implementer",
+    "mutation test on new client logic + rollback check",
+    "human sign-off before merge to develop"
+  ],
+  "no_migrations": true,
+  "no_new_dependencies": true
+}

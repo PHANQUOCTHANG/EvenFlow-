@@ -37,6 +37,8 @@ func Routes() []Route {
 		{Pattern: "/api/v1/auth/", Upstream: config.Identity, Access: Public, Rate: config.RateAuth},
 
 		// Event: xem chi tiet cong khai; tao/sua/nop duyet/duyet can dang nhap.
+		// Danh sach cong khai (SCHEDULED/ON_SALE/SOLD_OUT); khai bao ro du {id} cung khop.
+		{Pattern: "GET /api/v1/events/public", Upstream: config.Event, Access: Public, Rate: config.RateDefault},
 		{Pattern: "GET /api/v1/events/{id}", Upstream: config.Event, Access: Public, Rate: config.RateDefault},
 		{Pattern: "GET /api/v1/events/slug/{slug}", Upstream: config.Event, Access: Public, Rate: config.RateDefault},
 		{Pattern: "/api/v1/events", Upstream: config.Event, Access: Authenticated, Rate: config.RateDefault},
