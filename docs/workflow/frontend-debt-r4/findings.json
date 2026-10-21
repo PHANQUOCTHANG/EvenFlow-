@@ -1,0 +1,97 @@
+{
+  "review_commit": "da2a1fb",
+  "round": 1,
+  "items": [
+    {
+      "id": "F-1",
+      "severity": "major",
+      "sources": [
+        "X-1"
+      ],
+      "status": "to_fix",
+      "title": "Order poll 403 forbidden invisible when a PENDING order is already on screen"
+    },
+    {
+      "id": "F-2",
+      "severity": "minor",
+      "sources": [
+        "R-1"
+      ],
+      "status": "to_fix",
+      "title": "doRefresh clears session (no refresh token) before the user check -> wipes user B"
+    },
+    {
+      "id": "F-3",
+      "severity": "minor",
+      "sources": [
+        "R-2"
+      ],
+      "status": "to_fix",
+      "title": "user guard is truthiness; empty id skips it"
+    },
+    {
+      "id": "F-4",
+      "severity": "minor",
+      "sources": [
+        "R-4",
+        "X-2"
+      ],
+      "status": "to_fix",
+      "title": "forbidden flag never reset in submitPayment"
+    },
+    {
+      "id": "F-5",
+      "severity": "minor",
+      "sources": [
+        "X-3"
+      ],
+      "status": "to_fix",
+      "title": "clearSession guards (120 s abort, POST-401) lack user-id equality"
+    },
+    {
+      "id": "D-R-3",
+      "severity": "minor",
+      "sources": [
+        "R-3"
+      ],
+      "status": "deferred",
+      "reason": "pre-existing: 200 refresh whose body read fails keeps old token -> possible reuse; needs design (treat as AUTH_REQUIRED?)"
+    },
+    {
+      "id": "D-X-4",
+      "severity": "minor",
+      "sources": [
+        "X-4"
+      ],
+      "status": "deferred",
+      "reason": "designed outcome per plan m3-2; optional reuse of same-user pair on abort"
+    },
+    {
+      "id": "D-X-5",
+      "severity": "minor",
+      "sources": [
+        "X-5"
+      ],
+      "status": "deferred",
+      "reason": "same end state as approved 422 path; adoption cannot distinguish own lost response from a colleague tier"
+    },
+    {
+      "id": "D-X-S1",
+      "severity": "minor",
+      "sources": [
+        "X-S1"
+      ],
+      "status": "deferred",
+      "reason": "pre-existing at 43375eb"
+    },
+    {
+      "id": "D-X-S2",
+      "severity": "minor",
+      "sources": [
+        "X-S2"
+      ],
+      "status": "deferred",
+      "reason": "hypothetical lock manager behaviour"
+    }
+  ]
+}

@@ -1,0 +1,50 @@
+[
+  {
+    "id": "R-1",
+    "reviewer": "correctness",
+    "severity": "minor",
+    "ac": "AC-1",
+    "file": "apps/web/src/lib/api-client.ts",
+    "line": 123,
+    "title": "doRefresh wipes another user's session when that session has no refresh token (user check runs after the clear)",
+    "evidence": "doRefresh checks `if (!cur || !cur.refreshToken) { clearSession(); throw }` (l.123-126) BEFORE the AC-1 guard `if (sentUserId && cur.user.id !== sentUserId) throw userChanged()` (l.128). storeFromIdentity (lib/api/auth.ts:55) / sessionFromIdentity (session.ts:257) accept an identity response without refresh_token, so user B can be stored with refreshToken=null. clearSession() is unguarded (no epoch/owner check).",
+    "repro": "Tab T: A's request gets 401 token-expired and waits for the lock. Tab U: sign out A, sign in B with an identity response lacking refresh_token. T gets the lock: cur = B, cur.refreshToken null -> clearSession() removes B's ef_token/ef_user from localStorage. AC-1 requires 'B's stored session is left untouched'.",
+    "fix": "Move the user check above the no-refresh-token branch, or only clearSession() when `!sentUserId || cur.user.id === sentUserId`; otherwise throw userChanged() without clearing."
+  },
+  {
+    "id": "R-2",
+    "reviewer": "correctness",
+    "severity": "minor",
+    "ac": "AC-1",
+    "file": "apps/web/src/lib/api-client.ts",
+    "line": 128,
+    "title": "Pre-POST user guard is skipped when the sent user id is an empty string",
+    "evidence": "`if (sentUserId && cur.user.id !== sentUserId)` is a truthiness test. sessionFromIdentity builds `id: res.id ?? prev?.id ?? \"\"` (session.ts:259), and readFrom accepts any string id, so a stored user can have id \"\". With sentUserId \"\" the guard is skipped and l.129 `if (usedRefresh && cur.refreshToken !== usedRefresh) return cur.accessToken` returns the other user's access token; apiFetch (l.335-337) then retries A's request with B's token. The empty key \"\" is also shared with the null-user key in the inflight map (l.273).",
+    "repro": "Only reachable if an identity response omits `id`; then switch user in another tab while the 401 refresh waits for the lock.",
+    "fix": "Use `sentUserId !== null && cur.user.id !== sentUserId`, and treat an empty user id as no session (reject in readFrom or sessionFromIdentity)."
+  },
+  {
+    "id": "R-3",
+    "reviewer": "correctness",
+    "severity": "minor",
+    "ac": "AC-2",
+    "file": "apps/web/src/lib/api-client.ts",
+    "line": 173,
+    "title": "Body-read failure after a 200 refresh keeps the session, so the next refresh re-POSTs an already rotated token (pre-existing behavior)",
+    "evidence": "After `res.ok`, `await res.json()` (l.173) can reject because of a connection drop or non-JSON body while the abort timer has not fired. refreshCore maps that to NETWORK_ERROR and keeps the session (l.145-146). The server has already rotated the refresh token on a 2xx, so the next 401 POSTs the old token again. That is reuse and can revoke the whole token family. This is the same reason AC-2 gives for clearing on the 120 s abort. Before this change the raw error also kept the session, so this is not a regression. It still breaks the 'exactly one POST per refresh token' invariant.",
+    "repro": "Stub the refresh fetch to return 200 with body 'not json' (or a stream that errors). apiFetch rejects with NETWORK_ERROR, ef_refresh is unchanged, and the next 401 sends a second POST with the same refresh_token.",
+    "fix": "Out of scope here, so record it as debt. Treat any failure after `res.ok` like the abort: guarded clearSession (epoch + same refresh token) and AUTH_REQUIRED."
+  },
+  {
+    "id": "R-4",
+    "reviewer": "correctness",
+    "severity": "minor",
+    "ac": "AC-6",
+    "file": "apps/web/src/hooks/use-payment-session.ts",
+    "line": 126,
+    "title": "`forbidden` flag is never reset on a new submit, so later errors show the forbidden text",
+    "evidence": "submitPayment resets `setError(null)` and `setAuthRequired(false)` (l.126-127) but not `forbidden`. payment-handoff-view.tsx:133 renders `forbidden ? t('checkout.forbidden') : authRequired ? <sign-in link> : error`, so a stale forbidden=true hides the real message and the sign-in link.",
+    "repro": "Submit and get 403 /problems/forbidden. Submit again and get a NETWORK_ERROR or AUTH_REQUIRED. The alert still shows checkout.forbidden (for AUTH_REQUIRED the title says auth-required but the sign-in link is missing).",
+    "fix": "Add `setForbidden(false)` next to `setAuthRequired(false)` at the start of submitPayment."
+  }
+]
