@@ -89,7 +89,23 @@ export function getSessionPersist(): SessionPersist | null {
   return null;
 }
 
+/** User id cua phien gan nhat TRONG TAB NAY (sessionStorage, cung pham vi voi khoa luong mua ve). Con lai sau khi phien
+ *  het han (G-4) de nhan ra nguoi dung KHAC dang nhap tiep (H-2). Khong chua token. */
+const K_LAST_UID = "ef:lastuid";
+
+function reconcileBuyFlowOwner(nextUid: string): void {
+  try {
+    if (typeof window === "undefined") return;
+    const prev = getSession()?.user.id ?? window.sessionStorage.getItem(K_LAST_UID);
+    if (prev && nextUid && prev !== nextUid) clearBuyFlowStorage();
+    if (nextUid) window.sessionStorage.setItem(K_LAST_UID, nextUid);
+  } catch {
+    /* bo qua */
+  }
+}
+
 export function setSession(session: Session, opts: { persist?: SessionPersist } = {}): void {
+  reconcileBuyFlowOwner(session.user.id);
   const persist = opts.persist ?? "local";
   const target = store(persist);
   const other = store(persist === "local" ? "session" : "local");
@@ -169,7 +185,14 @@ export function clearSession(opts: { buyFlow?: boolean } = {}): void {
   sessionEpoch += 1;
   wipe(store("local"));
   wipe(store("session"));
-  if (opts.buyFlow) clearBuyFlowStorage();
+  if (opts.buyFlow) {
+    clearBuyFlowStorage();
+    try {
+      if (typeof window !== "undefined") window.sessionStorage.removeItem(K_LAST_UID);
+    } catch {
+      /* bo qua */
+    }
+  }
   notify();
 }
 
