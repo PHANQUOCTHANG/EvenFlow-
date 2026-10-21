@@ -12,6 +12,7 @@ import { getDeviceFingerprint } from "@/lib/device";
 import {
   clearSession,
   getSession,
+  peekSession,
   getSessionEpoch,
   getSessionPersist,
   sessionFromIdentity,
@@ -19,6 +20,9 @@ import {
   type IdentityTokens,
   type Session,
 } from "@/lib/session";
+
+// Lop mang dung peekSession (khong ghi gi); khi nap module ghi nhan chu so huu luong mua ve cua tab (ef:lastuid) mot lan.
+if (typeof window !== "undefined") getSession();
 
 export interface Problem {
   type?: string;
@@ -115,7 +119,7 @@ const userChanged = () => new ApiError("AUTH_REQUIRED", 401, {}, "Phien dang nha
 
 async function doRefresh(usedRefresh: string | null, sentUserId: string | null): Promise<string> {
   // Doc lai storage ngay truoc khi refresh: tab khac co the da xoay cap token (refresh token cu bi thu hoi).
-  const cur = getSession();
+  const cur = peekSession();
   if (!cur || !cur.refreshToken) {
     clearSession();
     throw new ApiError("AUTH_REQUIRED", 401, {}, "Phien dang nhap da het han");
@@ -135,7 +139,7 @@ async function refreshCore(cur: Session, refreshToken: string): Promise<string> 
   } catch (err) {
     if (controller.signal.aborted) {
       // Server co the da xoay token roi: khong bao gio POST lai. Chi xoa neu phien van la phien da POST.
-      if (epoch === getSessionEpoch() && getSession()?.refreshToken === cur.refreshToken) clearSession();
+      if (epoch === getSessionEpoch() && peekSession()?.refreshToken === cur.refreshToken) clearSession();
       throw new ApiError("AUTH_REQUIRED", 401, {}, "Phien dang nhap da het han");
     }
     if (err instanceof ApiError) throw err;
@@ -161,14 +165,14 @@ async function refreshPost(cur: Session, refreshToken: string, epoch: number, co
   if (!res.ok) {
     if (res.status === 400 || res.status === 401 || res.status === 403) {
       // Dang xuat/xoay trong luc cho: khong xoa phien cua nguoi khac.
-      if (epoch === getSessionEpoch() && getSession()?.refreshToken === cur.refreshToken) clearSession();
+      if (epoch === getSessionEpoch() && peekSession()?.refreshToken === cur.refreshToken) clearSession();
       throw new ApiError("AUTH_REQUIRED", 401, await readProblem(res), "Phien dang nhap da het han");
     }
     throw await toApiError(res);
   }
   const body = (await res.json()) as IdentityTokens;
   // F-12: dang xuat (cung tab hoac tab khac) trong luc refresh dang bay -> bo ket qua, khong hoi sinh phien.
-  const after = getSession();
+  const after = peekSession();
   if (epoch !== getSessionEpoch() || !after) {
     throw new ApiError("AUTH_REQUIRED", 401, {}, "Phien dang nhap da ket thuc");
   }
@@ -263,8 +267,8 @@ function joinInflight(p: Promise<string>): Promise<string> {
 /** Refresh (hoac dung lai cap token tab khac vua xoay). Single-flight trong tab. Tra access token moi.
  *  Nguoi goi dau tien so huu POST (cho toi da REFRESH_POST_TIMEOUT_MS); nguoi vao sau cho toi da 45 s. */
 export function refreshAccessToken(
-  usedRefresh: string | null = getSession()?.refreshToken ?? null,
-  userId: string | null = getSession()?.user.id ?? null,
+  usedRefresh: string | null = peekSession()?.refreshToken ?? null,
+  userId: string | null = peekSession()?.user.id ?? null,
 ): Promise<string> {
   const key = userId ?? "";
   const existing = inflight.get(key);
@@ -305,7 +309,7 @@ export async function apiFetch(path: string, init: ApiFetchInit = {}): Promise<R
   const url = `${apiBase()}${path}`;
   if (!auth) return fetch(url, rest);
 
-  let session = getSession();
+  let session = peekSession();
   const startUserId = session?.user.id ?? null;
   if (session?.refreshToken && shouldRefreshEarly(session)) {
     lastProactive = { pair: pairKey(session), at: Date.now() };
@@ -315,7 +319,7 @@ export async function apiFetch(path: string, init: ApiFetchInit = {}): Promise<R
       // Loi tam thoi (mang/5xx/429): han chi la goi y -> van gui request voi token hien tai, 401 se duoc xu ly sau.
       if (err instanceof ApiError && err.code === "AUTH_REQUIRED") throw err;
     }
-    session = getSession();
+    session = peekSession();
     // Doi user trong luc refresh (ke ca khi loi tam thoi bi nuot): khong gui request cua A bang token cua B.
     if (session && session.user.id !== startUserId) throw userChanged();
   }
