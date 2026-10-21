@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import type { TicketTierSnapshot } from "@/lib/event-service";
+import type { TicketTierSnapshot } from "@/lib/types/event";
 import { TICKET_TIERS_HEADING_ID, TicketTierList } from "./ticket-tier-list";
 
 describe("TicketTierList (BR-A4, EVF-111)", () => {
@@ -10,19 +10,21 @@ describe("TicketTierList (BR-A4, EVF-111)", () => {
       id: "t1",
       name: "Standard Ticket",
       price: 500000,
-      description: "Vé phổ thông",
+      currency: "VND",
       availability: "AVAILABLE",
     },
     {
       id: "t2",
       name: "VIP Ticket",
       price: 1500000,
+      currency: "VND",
       availability: "FEW_LEFT",
     },
     {
       id: "t3",
       name: "VVIP Ticket",
       price: 3000000,
+      currency: "VND",
       availability: "SOLD_OUT",
     },
   ];
@@ -50,6 +52,17 @@ describe("TicketTierList (BR-A4, EVF-111)", () => {
     expect(screen.queryByText(/còn \d+/i)).not.toBeInTheDocument();
   });
 
+  it("availability UNKNOWN: hien nhan trung tinh, khong khang dinh con/het ve", () => {
+    render(
+      <TicketTierList
+        tiers={[{ id: "t9", name: "Hang chua ro", price: 100000, currency: "VND", availability: "UNKNOWN" }]}
+      />,
+    );
+    expect(screen.getByText("Chưa rõ tình trạng")).toBeInTheDocument();
+    expect(screen.queryByText("Còn vé")).not.toBeInTheDocument();
+    expect(screen.queryByText("Hết vé")).not.toBeInTheDocument();
+  });
+
   it("render thong bao khi danh sach trong", () => {
     render(<TicketTierList tiers={[]} />);
     expect(
@@ -64,7 +77,7 @@ describe("TicketTierList (BR-A4, EVF-111)", () => {
 // ---------------------------------------------------------------------------
 describe("TicketTierList — heading lam ten cho section (EV-188 I1)", () => {
   const tiers: TicketTierSnapshot[] = [
-    { id: "t1", name: "Standard Ticket", price: 500000, availability: "AVAILABLE" },
+    { id: "t1", name: "Standard Ticket", price: 500000, currency: "VND", availability: "AVAILABLE" },
   ];
 
   it('co hang ve: heading cap 2 "Các hạng vé" mang id="ticket-tiers-heading"', () => {
@@ -85,7 +98,7 @@ describe("TicketTierList — heading lam ten cho section (EV-188 I1)", () => {
 // ---------------------------------------------------------------------------
 describe("TicketTierList — prop headingId (EV-188 m3)", () => {
   const tiers: TicketTierSnapshot[] = [
-    { id: "t1", name: "Standard Ticket", price: 500000, availability: "AVAILABLE" },
+    { id: "t1", name: "Standard Ticket", price: 500000, currency: "VND", availability: "AVAILABLE" },
   ];
 
   it('hang so TICKET_TIERS_HEADING_ID = "ticket-tiers-heading" va la gia tri mac dinh', () => {
