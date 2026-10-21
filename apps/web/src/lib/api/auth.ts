@@ -2,7 +2,7 @@
  *
  * Moi loi HTTP duoc nem thanh ApiError (lib/api-client) mang `status`, `type`, `detail` cua problem. */
 
-import { apiFetch, refreshAccessToken, toApiError } from "@/lib/api-client";
+import { ApiError, apiFetch, refreshAccessToken, toApiError } from "@/lib/api-client";
 import { getDeviceFingerprint } from "@/lib/device";
 import {
   clearSession,
@@ -34,6 +34,9 @@ export interface LoginOptions {
 }
 
 const AUTH = "/api/v1/auth";
+
+/** `ApiError.code` khi register/verify thanh cong nhung dang nhap tu dong that bai (tai khoan da ton tai). */
+export const REGISTERED_LOGIN_FAILED = "REGISTERED_LOGIN_FAILED";
 
 async function postJson(path: string, body: unknown, auth = false): Promise<Response> {
   return apiFetch(`${AUTH}${path}`, {
@@ -68,7 +71,18 @@ export async function verifyRegistrationOTP(
   opts: LoginOptions = {},
 ): Promise<IdentityResponse> {
   await expectOk(await postJson("/register/verify", { identifier, password, otp }));
-  return loginUser(identifier, password, opts);
+  try {
+    return await loginUser(identifier, password, opts);
+  } catch (err) {
+    // Tai khoan DA duoc tao: dang nhap tu dong that bai khong phai loi OTP (F-6, AC-2).
+    const cause = err instanceof ApiError ? err : null;
+    throw new ApiError(
+      REGISTERED_LOGIN_FAILED,
+      cause?.status ?? 0,
+      { type: cause?.type, title: cause?.title, detail: cause?.detail },
+      "Tai khoan da duoc tao nhung dang nhap tu dong that bai",
+    );
+  }
 }
 
 export async function loginUser(identifier: string, password: string, opts: LoginOptions = {}): Promise<IdentityResponse> {

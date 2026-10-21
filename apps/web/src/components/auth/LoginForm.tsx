@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { loginUser, loginWithGoogle } from "@/lib/api/auth";
@@ -82,6 +82,15 @@ export default function LoginForm() {
   const { toast } = useToast();
 
   const [identifier, setIdentifier] = useState("");
+  // Sau dang ky (dang nhap tu dong that bai) trang nay duoc mo kem ?identifier=... de dien san (F-6).
+  useEffect(() => {
+    try {
+      const prefill = new URLSearchParams(window.location.search).get("identifier");
+      if (prefill) setIdentifier(prefill);
+    } catch {
+      /* bo qua */
+    }
+  }, []);
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(true);
@@ -271,7 +280,7 @@ export default function LoginForm() {
                   try {
                     setLoading(true);
                     // loginWithGoogle luu phien va gan thiet bi (AC-8)
-                    await loginWithGoogle(credentialResponse.credential);
+                    await loginWithGoogle(credentialResponse.credential, { persist: remember ? "local" : "session" });
                     toast({
                       variant: "success",
                       title: "Đăng nhập thành công!",
