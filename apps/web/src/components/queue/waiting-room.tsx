@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
@@ -7,6 +8,7 @@ import { AdmitBanner } from "@/components/queue/admit-banner";
 import { QueuePosition } from "@/components/queue/queue-position";
 import { QueueStatusPanel } from "@/components/queue/queue-status-panel";
 import { ChatPanel } from "@/components/assistant/chat-panel";
+import { useT } from "@/components/i18n/locale-provider";
 import { Badge, Button, Spinner } from "@/components/ui";
 import { useQueueStatus } from "@/hooks/use-queue-status";
 import { useServerTimeSync } from "@/hooks/use-server-time-sync";
@@ -21,6 +23,9 @@ export interface WaitingRoomProps {
   className?: string;
 }
 
+/** Loi join co the hanh dong duoc (AC-9): otp-required / device-required co huong dan rieng. */
+type JoinFailure = { kind: "otp" | "device" | "generic"; message?: string };
+
 export function WaitingRoom({
   eventId,
   eventTitle,
@@ -28,11 +33,12 @@ export function WaitingRoom({
   className,
 }: WaitingRoomProps) {
   const router = useRouter();
+  const t = useT();
   const { offsetMs } = useServerTimeSync();
 
   const [token, setToken] = useState<string | null>(null);
   const [isJoining, setIsJoining] = useState(false);
-  const [joinError, setJoinError] = useState<string | null>(null);
+  const [joinError, setJoinError] = useState<JoinFailure | null>(null);
   const [isAssistantOpen, setIsAssistantOpen] = useState(false);
   // Het ve han luc join (EV-146): khong co token de poll, nen trang thai den thang tu ket qua join.
   const [soldOut, setSoldOut] = useState(false);
@@ -69,15 +75,22 @@ export function WaitingRoom({
       } catch (err) {
         if (!cancelled) {
           if (err instanceof QueueError) {
-            if (err.status === 401) {
-              setJoinError("Bạn cần đăng nhập và xác thực OTP trước khi vào phòng chờ.");
+            if (err.code === "OTP_REQUIRED") {
+              setJoinError({ kind: "otp" });
+            } else if (err.code === "DEVICE_REQUIRED") {
+              setJoinError({ kind: "device" });
+            } else if (err.status === 401) {
+              setJoinError({ kind: "generic", message: "Bạn cần đăng nhập và xác thực OTP trước khi vào phòng chờ." });
             } else if (err.status === 403) {
-              setJoinError("Yêu cầu cần xác minh thêm trước khi vào phòng chờ.");
+              setJoinError({ kind: "generic", message: "Yêu cầu cần xác minh thêm trước khi vào phòng chờ." });
             } else {
-              setJoinError(err.message || "Không thể kết nối vào phòng chờ. Vui lòng thử lại.");
+              setJoinError({
+                kind: "generic",
+                message: err.message || "Không thể kết nối vào phòng chờ. Vui lòng thử lại.",
+              });
             }
           } else {
-            setJoinError("Đã xảy ra lỗi mạng khi tham gia phòng chờ. Vui lòng thử lại.");
+            setJoinError({ kind: "generic", message: "Đã xảy ra lỗi mạng khi tham gia phòng chờ. Vui lòng thử lại." });
           }
         }
       } finally {
@@ -141,8 +154,28 @@ export function WaitingRoom({
           className
         )}
       >
-        <span className="text-headline-md font-bold text-danger">Không thể vào phòng chờ</span>
-        <p className="text-body-md text-fg">{joinError}</p>
+        <span className="text-headline-md font-bold text-danger">
+          {joinError.kind === "otp"
+            ? t("waiting.otpRequiredTitle")
+            : joinError.kind === "device"
+              ? t("waiting.deviceRequiredTitle")
+              : "Không thể vào phòng chờ"}
+        </span>
+        <p className="text-body-md text-fg">
+          {joinError.kind === "otp"
+            ? t("waiting.otpRequiredBody")
+            : joinError.kind === "device"
+              ? t("waiting.deviceRequiredBody")
+              : joinError.message}
+        </p>
+        {joinError.kind !== "generic" ? (
+          <Link
+            href="/auth/sign-in"
+            className="ef-focus-ring inline-flex items-center justify-center rounded-control border border-transparent bg-primary px-md py-sm text-label-md text-primary-fg hover:bg-primary-hover"
+          >
+            {joinError.kind === "otp" ? t("waiting.otpRequiredAction") : t("waiting.deviceRequiredAction")}
+          </Link>
+        ) : null}
         <Button
           variant="secondary"
           onClick={() => {
