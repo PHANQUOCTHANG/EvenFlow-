@@ -59,11 +59,13 @@ function mapTierAvailability(availability: string): TierAvailability | undefined
 export function CheckoutView({
   event,
   initialQueueToken,
-  maxSelectablePerOrder = 4,
+  maxSelectablePerOrder: maxSelectableProp,
   onProceedToPayment,
   className,
 }: CheckoutViewProps) {
   const t = useT();
+  // F-20: gioi han moi don theo su kien (max_per_order); thieu/0 -> 4.
+  const maxSelectablePerOrder = maxSelectableProp ?? (event.maxPerOrder > 0 ? event.maxPerOrder : 4);
   const { offsetMs } = useServerTimeSync();
   const {
     hold,
@@ -128,6 +130,10 @@ export function CheckoutView({
         ? t("checkout.quantityNotAllowed")
         : null;
 
+  // F-5: moi loi khac chua co banner rieng phai hien thi (khong bao gio im lang).
+  const showGenericError =
+    !!error && !["NOT_ADMITTED", "QUEUE_TOKEN_INVALID", "AUTH_REQUIRED", "PER_IDENTITY_LIMIT", "QUANTITY_NOT_ALLOWED", "SOLD_OUT", "AMBIGUOUS"].includes(error.type);
+
   useEffect(() => {
     if (isTokenInvalid) clearQueueToken(event.id);
   }, [isTokenInvalid, event.id]);
@@ -154,6 +160,12 @@ export function CheckoutView({
           >
             {t("checkout.signInAction")}
           </Link>
+        </Alert>
+      ) : null}
+
+      {showGenericError ? (
+        <Alert variant="error" className="mb-md">
+          {error?.message}
         </Alert>
       ) : null}
 

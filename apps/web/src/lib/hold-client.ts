@@ -8,6 +8,15 @@
  */
 
 import { ApiError, apiFetch, readProblem } from "@/lib/api-client";
+import {
+  forgetKey,
+  IDEMPOTENCY_IN_PROGRESS,
+  IN_PROGRESS_MAX_ATTEMPTS,
+  isDefinitiveStatus,
+  retryAfterMs,
+  sleep,
+  stableKey,
+} from "@/lib/idempotency";
 
 export interface CreateHoldParams {
   eventId: string;
@@ -103,8 +112,13 @@ export function clearActiveHold(eventId: string): void {
   }
 }
 
-/** RFC 7807 `type` ma middleware idempotency cua ticketing tra khi cung Idempotency-Key dang duoc xu ly. */
-const IDEMPOTENCY_IN_PROGRESS = "urn:eventflow:problem:idempotency-in-progress";
+/** Khoa Idempotency-Key on dinh theo lan thu (event + hang ve + so luong): giu qua cac lan nguoi dung thu lai
+ *  cho toi khi thanh cong hoac gap loi dinh doat (F-7). */
+const HOLD_KEY_PREFIX = "ef:hold:";
+function holdKeyStorage(p: { eventId: string; ticketTypeId: string; quantity: number }): string {
+  return `${HOLD_KEY_PREFIX}${p.eventId}:${p.ticketTypeId}:${p.quantity}`;
+}
+
 const QUEUE_TOKEN_PROBLEMS = new Set([
   "/problems/queue-token-expired",
   "/problems/queue-token-invalid",
@@ -113,7 +127,10 @@ const QUEUE_TOKEN_PROBLEMS = new Set([
 
 /** Goi API backend POST /v1/events/{id}/holds. Di qua apiFetch: Bearer tu phien, khong cookie, khong header danh tinh gia. */
 export async function requestHold(params: CreateHoldParams): Promise<HoldResult> {
-  const { eventId, ticketTypeId, quantity, queueToken, idempotencyKey = generateIdempotencyKey() } = params;
+  const { eventId, ticketTypeId, quantity, queueToken } = params;
+  const keyStorage = holdKeyStorage(params);
+  const callerKey = params.idempotencyKey;
+  const idempotencyKey = callerKey ?? stableKey(keyStorage);
 
   if (!idempotencyKey) {
     throw new HoldClientError(
@@ -124,29 +141,49 @@ export async function requestHold(params: CreateHoldParams): Promise<HoldResult>
   }
 
   let response: Response;
-  try {
-    response = await apiFetch(`/v1/events/${encodeURIComponent(eventId)}/holds`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Idempotency-Key": idempotencyKey,
-        "X-Queue-Token": queueToken,
-      },
-      body: JSON.stringify({
-        ticket_type_id: ticketTypeId,
-        quantity,
-      }),
-    });
-  } catch (err) {
-    if (err instanceof ApiError && err.code === "AUTH_REQUIRED") {
-      throw new HoldClientError("Phiên đăng nhập đã hết hạn", "AUTH_REQUIRED", 401);
+  let attempt = 0;
+  for (;;) {
+    attempt += 1;
+    try {
+      response = await apiFetch(`/v1/events/${encodeURIComponent(eventId)}/holds`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Idempotency-Key": idempotencyKey,
+          "X-Queue-Token": queueToken,
+        },
+        body: JSON.stringify({
+          ticket_type_id: ticketTypeId,
+          quantity,
+        }),
+      });
+    } catch (err) {
+      if (err instanceof ApiError && err.code === "AUTH_REQUIRED") {
+        throw new HoldClientError("Phiên đăng nhập đã hết hạn", "AUTH_REQUIRED", 401);
+      }
+      // BR-O5: Loi mang hoac timeout khi goi API ghi -> khong the xac dinh backend da nhan va ghi chua.
+      // Giu nguyen khoa de lan thu lai la idempotent.
+      throw new HoldClientError(
+        "Không nhận được phản hồi từ máy chủ khi tạo hold",
+        "AMBIGUOUS",
+      );
     }
-    // BR-O5: Loi mang hoac timeout khi goi API ghi -> khong the xac dinh backend da nhan va ghi chua.
-    // Chuyen ve trang thai AMBIGUOUS de bao ve nguoi dung va kho ve.
-    throw new HoldClientError(
-      "Không nhận được phản hồi từ máy chủ khi tạo hold",
-      "AMBIGUOUS",
-    );
+    // 409 "cung khoa dang duoc xu ly": cho Retry-After roi gui lai CUNG khoa (toi da 3 lan gui).
+    if (response.status === 409 && attempt < IN_PROGRESS_MAX_ATTEMPTS) {
+      if ((await readProblem(response)).type === IDEMPOTENCY_IN_PROGRESS) {
+        await sleep(retryAfterMs(response));
+        continue;
+      }
+    }
+    break;
+  }
+
+  if (!callerKey) {
+    if (response.ok || isDefinitiveStatus(response.status)) {
+      if (!(response.status === 409 && (await readProblem(response)).type === IDEMPOTENCY_IN_PROGRESS)) {
+        forgetKey(keyStorage);
+      }
+    }
   }
 
   // 200 (theo contract) va 201 deu la thanh cong.
@@ -170,6 +207,11 @@ export async function requestHold(params: CreateHoldParams): Promise<HoldResult>
       "QUEUE_TOKEN_INVALID",
       response.status,
     );
+  }
+
+  // 401 khong phai cua queue token (khong refresh duoc / retry van 401): can dang nhap lai.
+  if (response.status === 401) {
+    throw new HoldClientError("Phiên đăng nhập đã hết hạn", "AUTH_REQUIRED", 401);
   }
 
   switch (response.status) {
@@ -243,6 +285,9 @@ export async function cancelHold(holdId: string): Promise<void> {
   if (response.status === 204 || response.status === 404 || response.ok) {
     clearActiveHoldById(holdId);
     return;
+  }
+  if (response.status === 401) {
+    throw new HoldClientError("Phiên đăng nhập đã hết hạn", "AUTH_REQUIRED", 401);
   }
   throw new HoldClientError(`Không thể huỷ giữ vé (HTTP ${response.status})`, "UNKNOWN", response.status);
 }
