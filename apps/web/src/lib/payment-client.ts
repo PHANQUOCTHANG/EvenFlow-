@@ -410,7 +410,7 @@ function issueKeyFor(orderId: string): string {
   }
 }
 
-function forgetIssueKey(orderId: string): void {
+export function forgetIssueKey(orderId: string): void {
   try {
     sessionStorage.removeItem(`${ISSUE_KEY_PREFIX}${orderId}`);
   } catch {
@@ -434,7 +434,7 @@ export async function issueTickets(orderId: string): Promise<IssuedTicketQR[]> {
   }
   const data = (await res.json().catch(() => null)) as { tickets?: unknown } | null;
   const list = Array.isArray(data?.tickets) ? (data.tickets as Array<Record<string, unknown>>) : [];
-  return list
+  const tickets = list
     .filter((t) => typeof t.qr_payload === "string" && t.qr_payload !== "")
     .map((t) => ({
       ticketId: String(t.id),
@@ -442,4 +442,7 @@ export async function issueTickets(orderId: string): Promise<IssuedTicketQR[]> {
       status: String(t.status ?? ""),
       qrPayload: t.qr_payload as string,
     }));
+  // 2xx nhung chua co ve QR: middleware idempotency se phat lai dung phan hoi rong cho cung khoa -> doi khoa (F-13).
+  if (tickets.length === 0) forgetIssueKey(orderId);
+  return tickets;
 }

@@ -99,3 +99,9 @@ Nguon: AC-28 (spec.md). Khong xoa, khong skip, khong lam yeu assertion cu; chi d
 | File | Change | Why |
 |---|---|---|
 | tests/e2e/specs/buy-flow.spec.ts | `getByText("QR-<code>")` → `[data-qr-payload="QR-<code>"][data-qr-state="ready"] svg` visible | The result page now draws a scannable SVG QR from the payload (human-approved `qrcode` dependency) instead of printing the payload text; the new assertion is stronger (payload bound to the element AND an SVG rendered) |
+
+## Fix round 1 (flow)
+
+| File | Old -> new | Why |
+|---|---|---|
+| apps/web/src/components/checkout/order-result-view.test.tsx | WP2 PAID test: synchronous `getByRole("heading", /Vé điện tử của bạn đã sẵn sàng/)` moved to AFTER `await findByRole("img", "Mã QR vé ABCDEF12")` (assertion text unchanged) | F-13 (C-11): the "tickets are ready" headline is now shown only when QR tickets exist; before that the headline is "Thanh toán thành công — đang phát hành vé". The test still asserts the same headline once the QR is rendered. |

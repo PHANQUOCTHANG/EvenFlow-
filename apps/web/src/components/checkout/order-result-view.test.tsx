@@ -65,8 +65,9 @@ describe("OrderResultView component (EVF-114, BR-O2, BR-O6, BR-O8)", () => {
     );
 
     expect(screen.getByText(/Đã thanh toán thành công/i)).toBeDefined();
-    expect(screen.getByRole("heading", { level: 2, name: /Vé điện tử của bạn đã sẵn sàng/i })).toBeDefined();
+    // F-13: tieu de "da san sang" chi xuat hien khi da co ve QR (truoc do la "dang phat hanh ve").
     expect(await screen.findByRole("img", { name: "Mã QR vé ABCDEF12" })).toBeDefined();
+    expect(screen.getByRole("heading", { level: 2, name: /Vé điện tử của bạn đã sẵn sàng/i })).toBeDefined();
     expect(issue).toHaveBeenCalledWith("ord-paid-1");
     expect(container.querySelector('[data-qr-payload="QR.SIGNED.PAYLOAD-001"]')).not.toBeNull();
     expect(screen.queryByText(/DEMO/)).toBeNull();

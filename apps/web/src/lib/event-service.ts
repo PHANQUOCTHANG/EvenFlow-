@@ -105,7 +105,7 @@ function mapEvent(w: WireEvent, availability?: Map<string, TierAvailability>): E
 async function fetchAvailability(eventId: string, opts: EventFetchOptions): Promise<Map<string, TierAvailability>> {
   const map = new Map<string, TierAvailability>();
   try {
-    const res = await getPublic(`/v1/events/${eventId}/availability`, { revalidate: opts.revalidate });
+    const res = await getPublic(`/v1/events/${encodeURIComponent(eventId)}/availability`, { revalidate: opts.revalidate });
     if (!res.ok) return map;
     const body = (await res.json()) as WireAvailability;
     for (const t of body.tiers ?? []) map.set(t.ticket_type_id, toAvailability(t.availability));

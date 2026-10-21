@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
+  forgetIssueKey,
   getOrderDetails,
   issueTickets,
   PaymentClientError,
@@ -166,8 +167,14 @@ export function useIssuedTickets(
         }
         throw new Error("not-issued-yet");
       })
-      .catch(() => {
+      .catch((err: unknown) => {
         if (cancelled) return;
+        // Het phien / khong thay don: thu lai khong the thanh cong -> dung han, de UI hien nut thu lai thu cong (F-13).
+        if (err instanceof PaymentClientError && (err.type === "AUTH_REQUIRED" || err.type === "NOT_FOUND")) {
+          attemptsRef.current = maxAttempts;
+          setAttempts(maxAttempts);
+          return;
+        }
         // Dem lan that bai; con luot thi hen thu lai (khong dat side effect trong updater cua setState).
         const next = attemptsRef.current + 1;
         attemptsRef.current = next;
@@ -187,10 +194,12 @@ export function useIssuedTickets(
   }, [orderId, paid, run, baseDelayMs, maxAttempts]);
 
   const retry = useCallback(() => {
+    // Khoa cu co the da duoc middleware ghi nho cung phan hoi rong/loi: thu lai bang khoa moi (F-13).
+    forgetIssueKey(orderId);
     attemptsRef.current = 0;
     setAttempts(0);
     setRun((r) => r + 1);
-  }, []);
+  }, [orderId]);
 
   const hasTickets = tickets.length > 0;
   const exhausted = attempts >= maxAttempts;

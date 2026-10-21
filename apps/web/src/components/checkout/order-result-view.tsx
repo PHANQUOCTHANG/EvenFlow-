@@ -132,10 +132,19 @@ export function OrderResultView({
                     {order?.paidAt ? new Date(order.paidAt).toLocaleString("vi-VN") : "Vừa xong"}
                   </span>
                 </div>
-                <h2 className="text-headline-lg text-fg">Vé điện tử của bạn đã sẵn sàng!</h2>
-                <p className="text-body-md text-fg-muted">
-                  Thông tin vé đã được lưu vào hệ thống EvenFlow và gửi tới email của bạn.
-                </p>
+                {issued.tickets.length > 0 ? (
+                  <>
+                    <h2 className="text-headline-lg text-fg">Vé điện tử của bạn đã sẵn sàng!</h2>
+                    <p className="text-body-md text-fg-muted">
+                      Thông tin vé đã được lưu vào hệ thống EvenFlow và gửi tới email của bạn.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <h2 className="text-headline-lg text-fg">{t("result.paidIssuingTitle")}</h2>
+                    <p className="text-body-md text-fg-muted">{t("result.paidIssuingBody")}</p>
+                  </>
+                )}
               </div>
 
               <div className="flex flex-wrap gap-xs">
