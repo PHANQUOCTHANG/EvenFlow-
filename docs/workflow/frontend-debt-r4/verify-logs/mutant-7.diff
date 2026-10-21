@@ -1,0 +1,13 @@
+diff --git a/apps/web/src/lib/api-client.ts b/apps/web/src/lib/api-client.ts
+index 17b6299..4b5e1be 100644
+--- a/apps/web/src/lib/api-client.ts
++++ b/apps/web/src/lib/api-client.ts
+@@ -146,7 +146,7 @@ async function refreshCore(cur: Session, refreshToken: string): Promise<string>
+   } catch (err) {
+     if (controller.signal.aborted) {
+       // Server co the da xoay token roi: khong bao gio POST lai. Chi xoa neu phien van la phien da POST.
+-      if (isSamePostedSession(epoch, cur)) clearSession();
++      clearSession();
+       throw new ApiError("AUTH_REQUIRED", 401, {}, "Phien dang nhap da het han");
+     }
+     if (err instanceof ApiError) throw err;

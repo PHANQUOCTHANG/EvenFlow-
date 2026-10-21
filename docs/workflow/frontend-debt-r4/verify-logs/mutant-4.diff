@@ -1,0 +1,13 @@
+diff --git a/apps/web/src/lib/api-client.ts b/apps/web/src/lib/api-client.ts
+index 17b6299..89bbe0b 100644
+--- a/apps/web/src/lib/api-client.ts
++++ b/apps/web/src/lib/api-client.ts
+@@ -228,7 +228,7 @@ async function withRefreshLock(usedRefresh: string | null, sentUserId: string |
+       locksUnusable = true;
+       return doRefresh(usedRefresh, sentUserId);
+     }
+-    throw networkError();
++    throw err;
+   };
+ 
+   let locked: Promise<string>;

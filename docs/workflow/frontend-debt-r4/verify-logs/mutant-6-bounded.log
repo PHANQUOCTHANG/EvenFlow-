@@ -1,0 +1,35 @@
+[33mThe CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.[39m
+
+[1m[7m[36m RUN [39m[27m[22m [36mv2.1.8 [39m[90mD:/Documents/Nam4-1/Project1/EvenFlow-debt-verify/apps/web[39m
+
+ [31m❯[39m src/lib/debt/zz-verify-probe.test.ts [2m([22m[2m2 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[90m 119[2mms[22m[39m
+[31m   [31m×[31m VERIFY probe (bounded)[2m > [22mP-6: no locks, never-answering POST: joiner times out at 91 s, call at 100 s does NOT start a 2nd POST[90m 28[2mms[22m[31m[39m
+[31m     → expected [ { …(7) }, { …(7) } ] to have a length of 1 but got 2[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[1m[7m Failed Tests 1 [27m[22m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[31m[1m[7m FAIL [27m[22m[39m src/lib/debt/zz-verify-probe.test.ts[2m > [22mVERIFY probe (bounded)[2m > [22mP-6: no locks, never-answering POST: joiner times out at 91 s, call at 100 s does NOT start a 2nd POST
+[31m[1mAssertionError[22m: expected [ { …(7) }, { …(7) } ] to have a length of 1 but got 2[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 1[39m
+[31m+ 2[39m
+
+[36m [2m❯[22m src/lib/debt/zz-verify-probe.test.ts:[2m57:41[22m[39m
+    [90m 55| [39m    [35mconst[39m j2 [33m=[39m [34mtrack[39m([34moutcome[39m([32m"j2"[39m[33m,[39m tab[33m.[39mapi[33m.[39m[34mapiFetch[39m([32m"/v1/orders/o3"[39m)))[33m;[39m
+    [90m 56| [39m    [35mawait[39m vi[33m.[39m[34madvanceTimersByTimeAsync[39m([34m1_000[39m)[33m;[39m
+    [90m 57| [39m    [34mexpect[39m(srv[33m.[39mcalls[33m.[39m[34mfilter[39m(isRefresh))[33m.[39m[34mtoHaveLength[39m([34m1[39m)[33m;[39m
+    [90m   | [39m                                        [31m^[39m
+    [90m 58| [39m    [35mawait[39m vi[33m.[39m[34madvanceTimersByTimeAsync[39m([34m20_000[39m)[33m;[39m [90m// t = 121 s[39m
+    [90m 59| [39m    [34mexpect[39m(owner[33m.[39mv)[33m.[39m[34mtoBe[39m([32m"owner:AUTH_REQUIRED"[39m)[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯[22m[39m
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m1 passed[39m[22m[90m (2)[39m
+[2m   Start at [22m 01:04:56
+[2m   Duration [22m 2.69s[2m (transform 141ms, setup 438ms, collect 65ms, tests 119ms, environment 1.27s, prepare 176ms)[22m
+
+exit=1

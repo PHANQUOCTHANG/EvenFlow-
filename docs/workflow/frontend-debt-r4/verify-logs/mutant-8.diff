@@ -1,0 +1,13 @@
+diff --git a/apps/web/src/app/(organizer)/organizer/events/[eventId]/edit/edit-event-client.tsx b/apps/web/src/app/(organizer)/organizer/events/[eventId]/edit/edit-event-client.tsx
+index bafffb4..3555035 100644
+--- a/apps/web/src/app/(organizer)/organizer/events/[eventId]/edit/edit-event-client.tsx
++++ b/apps/web/src/app/(organizer)/organizer/events/[eventId]/edit/edit-event-client.tsx
+@@ -80,7 +80,7 @@ function EditForm({
+         referenced.add(v.id);
+       }
+       const hits = serverTiers.filter(
+-        (s) => !referenced.has(s.id) && s.price === tier.price && normName(s.name) === normName(tier.name),
++        (s) => normName(s.name) === normName(tier.name),
+       );
+       return hits.length === 1 ? hits[0] : null;
+     };

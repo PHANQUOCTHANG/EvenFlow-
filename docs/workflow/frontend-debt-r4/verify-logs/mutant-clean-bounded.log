@@ -1,0 +1,12 @@
+[33mThe CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.[39m
+
+[1m[7m[36m RUN [39m[27m[22m [36mv2.1.8 [39m[90mD:/Documents/Nam4-1/Project1/EvenFlow-debt-verify/apps/web[39m
+
+ [32m✓[39m src/lib/debt/zz-verify-probe.test.ts [2m([22m[2m2 tests[22m[2m)[22m[90m 115[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m1 passed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[32m2 passed[39m[22m[90m (2)[39m
+[2m   Start at [22m 01:04:44
+[2m   Duration [22m 2.60s[2m (transform 153ms, setup 441ms, collect 65ms, tests 115ms, environment 1.18s, prepare 210ms)[22m
+
+exit=0

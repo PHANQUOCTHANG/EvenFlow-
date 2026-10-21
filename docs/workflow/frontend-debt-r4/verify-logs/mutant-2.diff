@@ -1,0 +1,13 @@
+diff --git a/apps/web/src/lib/api-client.ts b/apps/web/src/lib/api-client.ts
+index 17b6299..a6717cb 100644
+--- a/apps/web/src/lib/api-client.ts
++++ b/apps/web/src/lib/api-client.ts
+@@ -279,7 +279,7 @@ export function refreshAccessToken(
+ ): Promise<string> {
+   const key = userId ?? "";
+   const existing = inflight.get(key);
+-  if (existing) return joinInflight(existing);
++  if (existing) return existing;
+   const p: Promise<string> = withRefreshLock(usedRefresh, userId).finally(() => {
+     if (inflight.get(key) === p) inflight.delete(key);
+   });

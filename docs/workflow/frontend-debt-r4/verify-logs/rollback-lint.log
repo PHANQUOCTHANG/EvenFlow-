@@ -1,0 +1,47 @@
+
+> @eventflow/web@0.1.0 lint
+> next lint
+
+`next lint` is deprecated and will be removed in Next.js 16.
+For new projects, use create-next-app to choose your preferred linter.
+For existing projects, migrate to the ESLint CLI:
+npx @next/codemod@canary next-lint-to-eslint-cli .
+
+ ⚠ Warning: Next.js inferred your workspace root, but it may not be correct.
+ We detected multiple lockfiles and selected the directory of D:\Documents\Nam4-1\Project1\EvenFlow-debt-rollback\package-lock.json as the root directory.
+ To silence this warning, set `outputFileTracingRoot` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
+   See https://nextjs.org/docs/app/api-reference/config/next-config-js/output#caveats for more information.
+ Detected additional lockfiles: 
+   * D:\Documents\Nam4-1\Project1\EvenFlow-debt-rollback\apps\web\package-lock.json
+
+
+./src/components/auth/ForgotPasswordForm.tsx
+3:28  Warning: 'useEffect' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+125:19  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+209:19  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+259:19  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./src/components/auth/LoginForm.tsx
+8:10  Warning: 'Alert' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+60:10  Warning: 'GoogleIcon' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+101:10  Warning: 'errorMessage' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+104:9  Warning: 'handleGoogleLogin' is assigned a value but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+135:19  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+295:33  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./src/components/auth/OTPVerification.tsx
+5:18  Warning: 'Alert' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+90:19  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+111:19  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./src/components/auth/RegisterForm.tsx
+11:10  Warning: 'Alert' is defined but never used. Allowed unused vars must match /^_/u.  @typescript-eslint/no-unused-vars
+201:19  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+233:13  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+352:19  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+367:19  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+391:19  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+644:33  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/app/api-reference/config/eslint#disabling-rules
+exit=0

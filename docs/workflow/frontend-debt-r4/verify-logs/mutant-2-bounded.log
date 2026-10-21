@@ -1,0 +1,35 @@
+[33mThe CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.[39m
+
+[1m[7m[36m RUN [39m[27m[22m [36mv2.1.8 [39m[90mD:/Documents/Nam4-1/Project1/EvenFlow-debt-verify/apps/web[39m
+
+ [31m❯[39m src/lib/debt/zz-verify-probe.test.ts [2m([22m[2m2 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[90m 121[2mms[22m[39m
+[31m   [31m×[31m VERIFY probe (bounded)[2m > [22mP-2: same-tab joiner started at 1 s has settled NETWORK_ERROR by 47 s (no await on pending)[90m 100[2mms[22m[31m[39m
+[31m     → expected null to be 'J:NETWORK_ERROR' // Object.is equality[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[1m[7m Failed Tests 1 [27m[22m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[31m[1m[7m FAIL [27m[22m[39m src/lib/debt/zz-verify-probe.test.ts[2m > [22mVERIFY probe (bounded)[2m > [22mP-2: same-tab joiner started at 1 s has settled NETWORK_ERROR by 47 s (no await on pending)
+[31m[1mAssertionError[22m: expected null to be 'J:NETWORK_ERROR' // Object.is equality[39m
+
+[32m- Expected:[39m 
+"J:NETWORK_ERROR"
+
+[31m+ Received:[39m 
+null
+
+[36m [2m❯[22m src/lib/debt/zz-verify-probe.test.ts:[2m42:17[22m[39m
+    [90m 40| [39m    [35mconst[39m j [33m=[39m [34mtrack[39m([34moutcome[39m([32m"J"[39m[33m,[39m tab[33m.[39mapi[33m.[39m[34mapiFetch[39m([32m"/v1/orders/o1b"[39m)))[33m;[39m
+    [90m 41| [39m    [35mawait[39m vi[33m.[39m[34madvanceTimersByTimeAsync[39m([34m46_000[39m)[33m;[39m
+    [90m 42| [39m    [34mexpect[39m(j[33m.[39mv)[33m.[39m[34mtoBe[39m([32m"J:NETWORK_ERROR"[39m)[33m;[39m
+    [90m   | [39m                [31m^[39m
+    [90m 43| [39m    [35mawait[39m vi[33m.[39m[34madvanceTimersByTimeAsync[39m([34m200_000[39m)[33m;[39m [90m// drain[39m
+    [90m 44| [39m  })[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯[22m[39m
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m1 passed[39m[22m[90m (2)[39m
+[2m   Start at [22m 01:04:50
+[2m   Duration [22m 2.59s[2m (transform 150ms, setup 434ms, collect 66ms, tests 121ms, environment 1.17s, prepare 206ms)[22m
+
+exit=1
