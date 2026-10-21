@@ -8,8 +8,9 @@
       "sources": [
         "X-1"
       ],
-      "status": "to_fix",
-      "title": "Order poll 403 forbidden invisible when a PENDING order is already on screen"
+      "status": "fixed",
+      "title": "Order poll 403 forbidden invisible when a PENDING order is already on screen",
+      "verified_in": "findings-round2-review.json + findings-round2-challenge.json"
     },
     {
       "id": "F-2",
@@ -17,8 +18,9 @@
       "sources": [
         "R-1"
       ],
-      "status": "to_fix",
-      "title": "doRefresh clears session (no refresh token) before the user check -> wipes user B"
+      "status": "fixed",
+      "title": "doRefresh clears session (no refresh token) before the user check -> wipes user B",
+      "verified_in": "findings-round2-review.json + findings-round2-challenge.json"
     },
     {
       "id": "F-3",
@@ -26,8 +28,9 @@
       "sources": [
         "R-2"
       ],
-      "status": "to_fix",
-      "title": "user guard is truthiness; empty id skips it"
+      "status": "fixed",
+      "title": "user guard is truthiness; empty id skips it",
+      "verified_in": "findings-round2-review.json + findings-round2-challenge.json"
     },
     {
       "id": "F-4",
@@ -36,8 +39,9 @@
         "R-4",
         "X-2"
       ],
-      "status": "to_fix",
-      "title": "forbidden flag never reset in submitPayment"
+      "status": "fixed",
+      "title": "forbidden flag never reset in submitPayment",
+      "verified_in": "findings-round2-review.json + findings-round2-challenge.json"
     },
     {
       "id": "F-5",
@@ -45,8 +49,9 @@
       "sources": [
         "X-3"
       ],
-      "status": "to_fix",
-      "title": "clearSession guards (120 s abort, POST-401) lack user-id equality"
+      "status": "fixed",
+      "title": "clearSession guards (120 s abort, POST-401) lack user-id equality",
+      "verified_in": "findings-round2-review.json + findings-round2-challenge.json"
     },
     {
       "id": "D-R-3",
@@ -93,5 +98,58 @@
       "status": "deferred",
       "reason": "hypothetical lock manager behaviour"
     }
-  ]
+  ],
+  "round2": {
+    "review_commit": "0f85023",
+    "blocker": 0,
+    "major": 0,
+    "items": [
+      {
+        "id": "G-1",
+        "severity": "minor",
+        "sources": [
+          "N-1",
+          "R2-2"
+        ],
+        "status": "to_fix",
+        "title": "Forbidden card shown above PAID/FAILED/EXPIRED/CANCELLED sections (double message) — introduced by F-1"
+      },
+      {
+        "id": "G-2",
+        "severity": "minor",
+        "sources": [
+          "R2-1"
+        ],
+        "status": "to_fix",
+        "title": "NOT_FOUND / AUTH_REQUIRED on a poll with a PENDING order on screen leave a silent spinner (pre-existing, same code path as F-1)"
+      },
+      {
+        "id": "D-R2-3",
+        "severity": "minor",
+        "sources": [
+          "R2-3"
+        ],
+        "status": "deferred",
+        "reason": "pre-existing at 99fe35e; persist=session tab vs local-first peekSession; needs a storage-mode-aware guard"
+      },
+      {
+        "id": "D-R2-4",
+        "severity": "minor",
+        "sources": [
+          "R2-4"
+        ],
+        "status": "deferred",
+        "reason": "twin of D-X-4; designed outcome"
+      },
+      {
+        "id": "D-R2-S1",
+        "severity": "minor",
+        "sources": [
+          "R2-S1"
+        ],
+        "status": "deferred",
+        "reason": "unreachable with server-issued tokens"
+      }
+    ]
+  }
 }
