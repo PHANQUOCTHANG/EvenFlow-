@@ -51,7 +51,7 @@ export default function UnauthorizedPage() {
           </Link>
 
           <button
-            onClick={logout}
+            onClick={() => void logout()}
             className="inline-flex items-center justify-center rounded-xl border border-slate-700 bg-slate-800/80 px-5 py-2.5 text-sm font-medium text-slate-300 transition-all hover:bg-slate-700 hover:text-white focus:outline-none focus:ring-2 focus:ring-slate-500"
           >
             Đổi tài khoản khác

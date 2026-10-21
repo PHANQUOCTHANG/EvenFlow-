@@ -606,10 +606,8 @@ function TelegramOTPVerification({
               onSuccess={async (credentialResponse) => {
                 if (credentialResponse.credential) {
                   try {
-                    const res = await loginWithGoogle(credentialResponse.credential);
-                    if (res.token) {
-                      localStorage.setItem("ef_token", res.token);
-                    }
+                    // loginWithGoogle luu phien va gan thiet bi (AC-8)
+                    await loginWithGoogle(credentialResponse.credential);
                     toast({
                       variant: "success",
                       title: "Đăng nhập thành công!",

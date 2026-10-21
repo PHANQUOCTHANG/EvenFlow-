@@ -109,16 +109,8 @@ export default function LoginForm() {
     setErrorMessage("");
 
     try {
-      const res = await loginUser(identifier, password);
-      
-      // Save token (Task EV-112)
-      if (res.token) {
-        if (remember) {
-          localStorage.setItem("ef_token", res.token);
-        } else {
-          sessionStorage.setItem("ef_token", res.token);
-        }
-      }
+      // loginUser luu phien (access + refresh + user); "ghi nho toi" tat -> sessionStorage (Task EV-112)
+      await loginUser(identifier, password, { persist: remember ? "local" : "session" });
 
       toast({
         variant: "success",
@@ -278,10 +270,8 @@ export default function LoginForm() {
                 if (credentialResponse.credential) {
                   try {
                     setLoading(true);
-                    const res = await loginWithGoogle(credentialResponse.credential);
-                    if (res.token) {
-                      localStorage.setItem("ef_token", res.token);
-                    }
+                    // loginWithGoogle luu phien va gan thiet bi (AC-8)
+                    await loginWithGoogle(credentialResponse.credential);
                     toast({
                       variant: "success",
                       title: "Đăng nhập thành công!",
