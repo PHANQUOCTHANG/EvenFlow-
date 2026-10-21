@@ -1,54 +1,43 @@
 import { render, screen } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
-import { installFetch, json, resetEnv, setupEnv } from "@/test-utils/fetch-mock";
-
-import OrderResultPage, { generateMetadata } from "./page";
+import OrderResultPage, { metadata } from "./page";
 
 const EVT = "0b6d3b52-6f6e-4f0e-9d36-2a2f1c0a9a11";
 
-beforeEach(() => {
-  setupEnv();
-  installFetch((c) =>
-    c.path.endsWith("/availability")
-      ? json({ event_id: EVT, tiers: [] })
-      : json({
-          id: EVT,
-          slug: "vietnam-tech-summit-2026",
-          title: "Vietnam Tech Summit 2026",
-          description: "",
-          venue: "Hà Nội",
-          starts_at: "2026-12-05T01:30:00Z",
-          sale_start_at: "2026-09-01T02:00:00Z",
-          status: "ON_SALE",
-          max_per_order: 4,
-          tiers: [{ id: "11111111-1111-4111-8111-111111111111", name: "Standard Pass", price_cents: 900000, currency: "VND" }],
-        }),
-  );
-});
-afterEach(resetEnv);
+// WP2 (AC-18): trang la vo server mong; su kien va don duoc tai phia client.
+vi.mock("@/components/checkout/result-page-client", () => ({
+  ResultPageClient: (props: Record<string, string | undefined>) => (
+    <div data-testid="result-client">{JSON.stringify(props)}</div>
+  ),
+}));
 
-describe("OrderResultPage route (EVF-114, EV-184)", () => {
-  it("generateMetadata tạo tiêu đề chứa tên sự kiện", async () => {
-    const meta = await generateMetadata({
-      params: Promise.resolve({ eventId: "0b6d3b52-6f6e-4f0e-9d36-2a2f1c0a9a11" }),
-      searchParams: Promise.resolve({}),
-    });
-
-    expect(meta.title).toContain("EvenFlow");
-  });
-
-  it("render trang kết quả đơn hàng với mã đơn", async () => {
+describe("OrderResultPage route (EVF-114, EV-184, AC-18)", () => {
+  it("chuyen eventId va orderId cho client component", async () => {
     const pageComponent = await OrderResultPage({
-      params: Promise.resolve({ eventId: "0b6d3b52-6f6e-4f0e-9d36-2a2f1c0a9a11" }),
-      searchParams: Promise.resolve({
-        orderId: "ord-test-999",
-      }),
+      params: Promise.resolve({ eventId: EVT }),
+      searchParams: Promise.resolve({ orderId: "ord-test-123" }),
     });
-
     render(pageComponent);
 
-    expect(screen.getByRole("heading", { level: 1, name: /Kết quả đơn hàng/i })).toBeDefined();
-    expect(screen.getByText(/ord-test-999/i)).toBeDefined();
+    expect(JSON.parse(screen.getByTestId("result-client").textContent ?? "{}")).toEqual({
+      eventId: EVT,
+      orderId: "ord-test-123",
+    });
+  });
+
+  it("khong tu bia ma don khi URL thieu orderId", async () => {
+    const pageComponent = await OrderResultPage({
+      params: Promise.resolve({ eventId: EVT }),
+      searchParams: Promise.resolve({}),
+    });
+    render(pageComponent);
+
+    expect(JSON.parse(screen.getByTestId("result-client").textContent ?? "{}")).toEqual({ eventId: EVT });
+  });
+
+  it("metadata tinh co noindex", () => {
+    expect(metadata.title).toBe("Kết quả đơn hàng | EvenFlow");
+    expect(metadata.robots).toEqual({ index: false, follow: false });
   });
 });

@@ -19,6 +19,7 @@ describe("payment-client (EVF-114, BR-O2, BR-O5, BR-O6)", () => {
 
   afterEach(() => {
     sessionStorage.clear();
+    vi.unstubAllEnvs();
     vi.restoreAllMocks();
   });
 
@@ -45,6 +46,7 @@ describe("payment-client (EVF-114, BR-O2, BR-O5, BR-O6)", () => {
         }),
       });
       global.fetch = mockFetch;
+      vi.stubEnv("NEXT_PUBLIC_API_BASE", "https://api.evenflow.test");
 
       const result = await initiatePayment({
         eventId: "evt-rock-2026",
@@ -55,14 +57,13 @@ describe("payment-client (EVF-114, BR-O2, BR-O5, BR-O6)", () => {
         buyerName: "Nguyen Van A",
         buyerEmail: "a@example.com",
         buyerPhone: "0901234567",
-        apiBaseUrl: "https://api.evenflow.test",
       });
 
       expect(mockFetch).toHaveBeenCalledTimes(1);
       const [url, options] = mockFetch.mock.calls[0];
       expect(url).toBe("https://api.evenflow.test/v1/events/evt-rock-2026/payments");
       expect(options.method).toBe("POST");
-      expect(options.headers["Idempotency-Key"]).toBeDefined();
+      expect(new Headers(options.headers).get("Idempotency-Key")).toBeTruthy();
       expect(JSON.parse(options.body)).toEqual({
         order_id: "ord_456",
         hold_id: "hld_789",
@@ -126,23 +127,21 @@ describe("payment-client (EVF-114, BR-O2, BR-O5, BR-O6)", () => {
       }
     });
 
-    it("chế độ sandbox mock trả về kết quả redirect thành công khi không có backend", async () => {
+    it("WP2 (AC-12): chế độ sandbox khi không có backend KHÔNG giả thành công — reject NETWORK_ERROR", async () => {
       global.fetch = vi.fn().mockRejectedValue(new Error("Network failed"));
 
-      const result = await initiatePayment({
-        eventId: "evt-rock-2026",
-        orderId: "ord_sandbox_1",
-        holdId: "hld_sandbox_1",
-        amount: 250000,
-        method: "sandbox",
-        buyerName: "Tester",
-        buyerEmail: "test@example.com",
-        buyerPhone: "0911222333",
-      });
-
-      expect(result.orderId).toBe("ord_sandbox_1");
-      expect(result.status).toBe("PENDING");
-      expect(result.redirectUrl).toContain("/checkout/evt-rock-2026/result?orderId=ord_sandbox_1");
+      await expect(
+        initiatePayment({
+          eventId: "evt-rock-2026",
+          orderId: "ord_sandbox_1",
+          holdId: "hld_sandbox_1",
+          amount: 250000,
+          method: "sandbox",
+          buyerName: "Tester",
+          buyerEmail: "test@example.com",
+          buyerPhone: "0911222333",
+        }),
+      ).rejects.toMatchObject({ name: "PaymentClientError", type: "NETWORK_ERROR" });
     });
   });
 
@@ -165,7 +164,6 @@ describe("payment-client (EVF-114, BR-O2, BR-O5, BR-O6)", () => {
             ticketCode: "EF-VIP-001",
             tierName: "VIP",
             attendeeName: "Nguyen Van A",
-            qrPayload: "DEMO-TICKET-EF-VIP-001",
           },
         ],
       };
@@ -187,7 +185,7 @@ describe("payment-client (EVF-114, BR-O2, BR-O5, BR-O6)", () => {
         }),
       });
 
-      const details = await getOrderDetails("ord_999", "evt-rock-2026", "https://api.test");
+      const details = await getOrderDetails("ord_999", "evt-rock-2026");
       expect(details.orderId).toBe("ord_999");
       expect(details.status).toBe("PAID");
       expect(details.issuedTickets).toHaveLength(1);
@@ -197,7 +195,7 @@ describe("payment-client (EVF-114, BR-O2, BR-O5, BR-O6)", () => {
       expect(cached).toEqual(details);
     });
 
-    it("lấy từ sessionStorage khi fetch bị lỗi mạng", async () => {
+    it("WP2 (AC-14): lỗi mạng KHÔNG phục vụ cache sessionStorage như dữ liệu sống — reject NETWORK_ERROR", async () => {
       const mockOrder: OrderDetails = {
         orderId: "ord_offline",
         eventId: "evt-rock-2026",
@@ -212,9 +210,10 @@ describe("payment-client (EVF-114, BR-O2, BR-O5, BR-O6)", () => {
 
       global.fetch = vi.fn().mockRejectedValue(new Error("Offline"));
 
-      const res = await getOrderDetails("ord_offline", "evt-rock-2026", "https://api.test");
-      expect(res.orderId).toBe("ord_offline");
-      expect(res.status).toBe("PENDING");
+      await expect(getOrderDetails("ord_offline", "evt-rock-2026")).rejects.toMatchObject({
+        name: "PaymentClientError",
+        type: "NETWORK_ERROR",
+      });
 
       clearRecentOrder("ord_offline");
       expect(getRecentOrder("ord_offline")).toBeNull();
@@ -274,7 +273,7 @@ describe("payment-client — mặc định apiBaseUrl theo NEXT_PUBLIC_API_BASE 
     );
   });
 
-  it("initiatePayment: apiBaseUrl truyền tường minh vẫn thắng biến môi trường", async () => {
+  it("WP2: initiatePayment bỏ qua apiBaseUrl truyền vào — gốc API luôn từ NEXT_PUBLIC_API_BASE", async () => {
     vi.stubEnv("NEXT_PUBLIC_API_BASE", "http://localhost:8080");
     const fresh = await loadFresh();
 
@@ -288,7 +287,7 @@ describe("payment-client — mặc định apiBaseUrl theo NEXT_PUBLIC_API_BASE 
     await fresh.initiatePayment({ ...paymentParams, apiBaseUrl: "https://explicit.example" });
 
     expect(mockFetch.mock.calls[0][0]).toBe(
-      "https://explicit.example/v1/events/evt-tech-summit-2026/payments",
+      "http://localhost:8080/v1/events/evt-tech-summit-2026/payments",
     );
   });
 
@@ -320,32 +319,15 @@ describe("payment-client — mặc định apiBaseUrl theo NEXT_PUBLIC_API_BASE 
     });
     globalThis.fetch = mockFetch;
 
-    window.localStorage.removeItem("ef_token");
-    window.sessionStorage.removeItem("ef_token");
-    await fresh.getOrderDetails("ord-b2", "evt-1", "https://api.test");
-    expect(mockFetch.mock.calls[0][1].headers.Authorization).toBeUndefined();
+    window.localStorage.clear();
+    window.sessionStorage.clear();
+    await fresh.getOrderDetails("ord-b2", "evt-1");
+    expect(new Headers(mockFetch.mock.calls[0][1].headers).has("Authorization")).toBe(false);
 
-    window.sessionStorage.setItem("ef_token", "tok-abc");
-    await fresh.getOrderDetails("ord-b2", "evt-1", "https://api.test");
-    expect(mockFetch.mock.calls[1][1].headers.Authorization).toBe("Bearer tok-abc");
-    window.sessionStorage.removeItem("ef_token");
-  });
-
-  it("getOrderDetails: apiBaseUrl truyền tường minh vẫn thắng biến môi trường", async () => {
-    vi.stubEnv("NEXT_PUBLIC_API_BASE", "http://localhost:8080");
-    const fresh = await loadFresh();
-
-    const mockFetch = vi.fn().mockResolvedValue({
-      ok: true,
-      status: 200,
-      json: async () => ({ order_id: "ord-b2", status: "PAID" }),
-    });
-    globalThis.fetch = mockFetch;
-
-    await fresh.getOrderDetails("ord-b2", "evt-1", "https://explicit.example");
-
-    expect(mockFetch.mock.calls[0][0]).toBe(
-      "https://explicit.example/v1/orders/ord-b2",
-    );
+    window.localStorage.setItem("ef_token", "tok-abc");
+    window.localStorage.setItem("ef_user", JSON.stringify({ id: "u-1", role: "buyer" }));
+    await fresh.getOrderDetails("ord-b2", "evt-1");
+    expect(new Headers(mockFetch.mock.calls[1][1].headers).get("Authorization")).toBe("Bearer tok-abc");
+    window.localStorage.clear();
   });
 });
