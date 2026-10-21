@@ -257,7 +257,6 @@ services:
       # Dat binary_parameters=yes khong an toan vi cot jsonb cua outbox nhan []byte. Service nong
       # (ticketing, payment) dung pgx nen van qua PgBouncer.
       DATABASE_URL: "postgres://eventflow:eventflow@postgres:5432/eventflow?sslmode=disable"
-      DATABASE_URL: "postgres://eventflow:eventflow@pgbouncer:5432/eventflow?sslmode=disable"
       REDIS_ADDR: "redis:6379"
       JWT_SECRET: "${JWT_SECRET:-dev-jwt-secret-change-me-0123456789}"
       SMTP_HOST: "mailpit"
@@ -275,8 +274,16 @@ services:
       args: {SERVICE: event}
     environment:
       HTTP_ADDR: ":8084"
-      DATABASE_URL: "postgres://eventflow:eventflow@pgbouncer:5432/eventflow?sslmode=disable"
+      # NOI THANG Postgres, khong qua PgBouncer: service nay dung lib/pq, ma lib/pq chuan bi cau lenh nhieu
+      # vong (Parse/Describe roi Bind/Execute); PgBouncer che do transaction co the doi ket noi giua hai
+      # vong va tra "pq: unnamed prepared statement does not exist" (da lam mat ket qua kiem duyet AI).
+      # Dat binary_parameters=yes khong an toan vi cot jsonb cua outbox nhan []byte. Service nong
+      # (ticketing, payment) dung pgx nen van qua PgBouncer.
+      DATABASE_URL: "postgres://eventflow:eventflow@postgres:5432/eventflow?sslmode=disable"
       RABBITMQ_URL: "amqp://eventflow:eventflow@rabbitmq:5672/"
+      # BR-E2 mac dinh 30 phut giua luc duyet va gio mo ban. Demo ha xuong 60 giay de organizer tao,
+      # duyet va mo ban trong mot buoi trinh bay. Production KHONG dat bien nay.
+      MIN_SALE_LEAD_SECONDS: "${MIN_SALE_LEAD_SECONDS:-60}"
     depends_on:
       rabbitmq: {condition: service_healthy}
       migrate: {condition: service_completed_successfully}
@@ -292,7 +299,10 @@ services:
       DATABASE_URL: "postgres://eventflow:eventflow@pgbouncer:5432/eventflow?sslmode=disable"
       PAYMENT_SANDBOX_MODE: "true"
       PAYMENT_DEFAULT_PROVIDER: "sandbox"
+      # Relay outbox: order.paid -> ticketing phat ve + notification gui email.
+      RABBITMQ_URL: "amqp://eventflow:eventflow@rabbitmq:5672/"
     depends_on:
+      rabbitmq: {condition: service_healthy}
       migrate: {condition: service_completed_successfully}
     restart: unless-stopped
 
