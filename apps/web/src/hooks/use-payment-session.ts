@@ -125,6 +125,7 @@ export function usePaymentSession({
     setSubmitting(true);
     setError(null);
     setAuthRequired(false);
+    setForbidden(false);
 
     try {
       const params: InitiatePaymentParams = {
