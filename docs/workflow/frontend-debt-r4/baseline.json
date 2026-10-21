@@ -1,0 +1,351 @@
+{
+ "commit": "5dc4713",
+ "vitest": {
+  "files": 152,
+  "passed": 2342,
+  "failed": 0
+ },
+ "command": "npx vitest run --exclude src/lib/debt/** --exclude **/*.debt.test.tsx",
+ "new_tests": {
+  "total": 67,
+  "red": 37,
+  "green_guard": 30
+ },
+ "red_check": [
+  {
+   "test": "src/hooks/use-payment-session.debt.test.tsx > usePaymentSession forbidden (AC-6) FORBIDDEN error -> forbidden flag true, not authRequired, not holdExpired",
+   "status": "red",
+   "reason": "AssertionError: expected undefined to be true // Object.is equality"
+  },
+  {
+   "test": "src/hooks/use-payment-session.debt.test.tsx > usePaymentSession forbidden (AC-6) GUARD: UNKNOWN 403 leaves forbidden false",
+   "status": "green-guard",
+   "reason": "regression guard (passes on current code)"
+  },
+  {
+   "test": "src/components/checkout/order-result-view.debt.test.tsx > OrderResultView 403 forbidden (AC-6) order poll 403: shows checkout.forbidden, no retry button, and does not poll again (1 GET over 120 s)",
+   "status": "red",
+   "reason": "TestingLibraryElementError: Unable to find an element with the text: Tài khoản của bạn không có quyền mua vé cho sự kiện này.. This could be"
+  },
+  {
+   "test": "src/components/checkout/order-result-view.debt.test.tsx > OrderResultView 403 forbidden (AC-6) issue-tickets 403 on a PAID order: shows checkout.forbidden and stops after 1 POST (no 6-attempt retry loop)",
+   "status": "red",
+   "reason": "TestingLibraryElementError: Unable to find an element with the text: Tài khoản của bạn không có quyền mua vé cho sự kiện này.. This could be"
+  },
+  {
+   "test": "src/components/checkout/payment-handoff-view.debt.test.tsx > PaymentHandoffView 403 forbidden (AC-6) shows checkout.forbidden (not the generic HTTP 403 text) and sends exactly one payment POST",
+   "status": "red",
+   "reason": "Error: Unable to find an element with the text: Tài khoản của bạn không có quyền mua vé cho sự kiện này.. This could be because the text is "
+  },
+  {
+   "test": "src/lib/debt/ac1-user-switch.test.ts > AC-1 session ownership during the lock wait another tab signs out u-1 and signs in u-2: AUTH_REQUIRED, u-2 session untouched, 0 POST, no retry with u-2 token",
+   "status": "red",
+   "reason": "AssertionError: expected 'A:200' to be 'A:AUTH_REQUIRED' // Object.is equality"
+  },
+  {
+   "test": "src/lib/debt/ac1-user-switch.test.ts > AC-1 session ownership during the lock wait u-2 holds the SAME refresh string but a different user id: still AUTH_REQUIRED (identity decides, not token)",
+   "status": "red",
+   "reason": "AssertionError: expected 'A:401' to be 'A:AUTH_REQUIRED' // Object.is equality"
+  },
+  {
+   "test": "src/lib/debt/ac1-user-switch.test.ts > AC-1 session ownership during the lock wait GUARD: the other tab rotated the pair for the SAME user: reused, request succeeds, no POST",
+   "status": "green-guard",
+   "reason": "regression guard (passes on current code)"
+  },
+  {
+   "test": "src/lib/debt/ac1-user-switch.test.ts > AC-1 session ownership during the lock wait GUARD: the other tab signed out and nobody signed in: AUTH_REQUIRED, 0 POST",
+   "status": "green-guard",
+   "reason": "regression guard (passes on current code)"
+  },
+  {
+   "test": "src/lib/debt/ac1-user-switch.test.ts > AC-1 session ownership during the lock wait u-1 -> u-2 -> u-1 within one wait: same user id again, so reuse is allowed (no POST)",
+   "status": "green-guard",
+   "reason": "regression guard (passes on current code)"
+  },
+  {
+   "test": "src/lib/debt/ac1-user-switch.test.ts > AC-1 user switch WHILE the refresh POST is in flight (plan M2-2) other tab signs in u-2 during u-1's POST, POST then succeeds: request NOT retried with u-2 token, AUTH_REQUIRED, u-2 session intact",
+   "status": "red",
+   "reason": "AssertionError: expected 'A:200' to be 'A:AUTH_REQUIRED' // Object.is equality"
+  },
+  {
+   "test": "src/lib/debt/ac2-refresh-deadlines.test.ts > AC-2 non-owner callers are bounded at 45 s W-3: other tab waiting on the lock rejects NETWORK_ERROR at 45 s each time; 1 POST total; owner still waiting; session kept",
+   "status": "green-guard",
+   "reason": "regression guard (passes on current code)"
+  },
+  {
+   "test": "src/lib/debt/ac2-refresh-deadlines.test.ts > AC-2 non-owner callers are bounded at 45 s a later same-tab caller joins the in-flight refresh and rejects NETWORK_ERROR at 45 s; a call at 50 s joins too (still 1 POST)",
+   "status": "red",
+   "reason": "Error: Test timed out in 5000ms."
+  },
+  {
+   "test": "src/lib/debt/ac2-refresh-deadlines.test.ts > AC-2 non-owner callers are bounded at 45 s GUARD (Z-1b): the owner whose POST answers at 60 s gets 200; the abandoned waiter never POSTs afterwards",
+   "status": "green-guard",
+   "reason": "regression guard (passes on current code)"
+  },
+  {
+   "test": "src/lib/debt/ac2-refresh-deadlines.test.ts > AC-2 non-owner callers are bounded at 45 s after a joiner gave up, the POST that finally answers (60 s) still stores the pair and frees the lock for another tab (no 2nd POST)",
+   "status": "red",
+   "reason": "Error: Test timed out in 5000ms."
+  },
+  {
+   "test": "src/lib/debt/ac2-refresh-deadlines.test.ts > AC-2 the POST is aborted at 120 s exports REFRESH_POST_TIMEOUT_MS = 120_000",
+   "status": "red",
+   "reason": "AssertionError: expected undefined to be 120000 // Object.is equality"
+  },
+  {
+   "test": "src/lib/debt/ac2-refresh-deadlines.test.ts > AC-2 the POST is aborted at 120 s owner pending at 119 s, signal aborted and AUTH_REQUIRED at 121 s, session cleared, r1 POSTed once",
+   "status": "red",
+   "reason": "AssertionError: expected [] to have a length of 1 but got +0"
+  },
+  {
+   "test": "src/lib/debt/ac2-refresh-deadlines.test.ts > AC-2 the POST is aborted at 120 s abort guard (other tab): another tab signed in as u-2 during the POST -> AUTH_REQUIRED but u-2's session is left intact",
+   "status": "red",
+   "reason": "AssertionError: expected 'pending' to be 'AUTH_REQUIRED' // Object.is equality"
+  },
+  {
+   "test": "src/lib/debt/ac2-refresh-deadlines.test.ts > AC-2 the POST is aborted at 120 s abort guard (same tab): sign-out and new sign-in in this tab during the POST (epoch changed) -> the new session is left intact",
+   "status": "red",
+   "reason": "AssertionError: expected 'pending' to be 'AUTH_REQUIRED' // Object.is equality"
+  },
+  {
+   "test": "src/lib/debt/ac2-refresh-deadlines.test.ts > AC-2 the POST is aborted at 120 s after the abort the lock is released: user signs in again (r9); a request in another tab refreshes normally; r1 never POSTed twice",
+   "status": "red",
+   "reason": "Error: Test timed out in 5000ms."
+  },
+  {
+   "test": "src/lib/debt/ac2-refresh-deadlines.test.ts > AC-2 the POST is aborted at 120 s GUARD: a plain network failure of the POST (not an abort) keeps the session -> NETWORK_ERROR",
+   "status": "green-guard",
+   "reason": "regression guard (passes on current code)"
+  },
+  {
+   "test": "src/lib/debt/ac2-refresh-deadlines.test.ts > AC-2 the POST is aborted at 120 s GUARD (Z-3): POST answered 401 within the window -> AUTH_REQUIRED, session cleared",
+   "status": "green-guard",
+   "reason": "regression guard (passes on current code)"
+  },
+  {
+   "test": "src/lib/debt/ac2-refresh-deadlines.test.ts > AC-2 / plan m-1: the in-flight refresh is keyed by user a u-2 caller in the same tab does not join u-1's hung refresh; it POSTs with its own token and succeeds",
+   "status": "red",
+   "reason": "Error: Test timed out in 5000ms."
+  },
+  {
+   "test": "src/lib/debt/ac2-refresh-deadlines.test.ts > AC-2 never-answering POST, no navigator.locks calls at 0 s, 46 s and 100 s -> exactly 1 POST; joiner at 46 s NETWORK_ERROR at 91 s; owner AUTH_REQUIRED at 121 s; session cleared",
+   "status": "red",
+   "reason": "Error: Test timed out in 5000ms."
+  },
+  {
+   "test": "src/lib/debt/ac2-refresh-deadlines.test.ts > AC-2 never-answering POST, locks.request rejects SecurityError calls at 0 s, 46 s and 100 s -> exactly 1 POST; joiner at 46 s NETWORK_ERROR at 91 s; owner AUTH_REQUIRED at 121 s; session cleared",
+   "status": "red",
+   "reason": "AssertionError: expected true to be false // Object.is equality"
+  },
+  {
+   "test": "src/lib/debt/ac2-refresh-deadlines.test.ts > AC-2 timer hygiene: vi.getTimerCount() returns to its starting value after every outcome success",
+   "status": "green-guard",
+   "reason": "regression guard (passes on current code)"
+  },
+  {
+   "test": "src/lib/debt/ac2-refresh-deadlines.test.ts > AC-2 timer hygiene: vi.getTimerCount() returns to its starting value after every outcome 401 on the POST",
+   "status": "green-guard",
+   "reason": "regression guard (passes on current code)"
+  },
+  {
+   "test": "src/lib/debt/ac2-refresh-deadlines.test.ts > AC-2 timer hygiene: vi.getTimerCount() returns to its starting value after every outcome network error on the POST",
+   "status": "green-guard",
+   "reason": "regression guard (passes on current code)"
+  },
+  {
+   "test": "src/lib/debt/ac2-refresh-deadlines.test.ts > AC-2 timer hygiene: vi.getTimerCount() returns to its starting value after every outcome 120 s abort",
+   "status": "red",
+   "reason": "Error: Test timed out in 5000ms."
+  },
+  {
+   "test": "src/lib/debt/ac3-locks-errors.test.ts > AC-3 lock failures reject InvalidStateError -> ApiError NETWORK_ERROR, 0 POST, session kept, no pending timer",
+   "status": "red",
+   "reason": "AssertionError: expected DOMException{ stack: 'InvalidStateEr…', …(1) } to be an instance of ApiError"
+  },
+  {
+   "test": "src/lib/debt/ac3-locks-errors.test.ts > AC-3 lock failures reject NotSupportedError -> ApiError NETWORK_ERROR, 0 POST, session kept, no pending timer",
+   "status": "red",
+   "reason": "AssertionError: expected DOMException{ stack: 'NotSupportedEr…', …(1) } to be an instance of ApiError"
+  },
+  {
+   "test": "src/lib/debt/ac3-locks-errors.test.ts > AC-3 lock failures reject AbortError -> ApiError NETWORK_ERROR, 0 POST, session kept, no pending timer",
+   "status": "green-guard",
+   "reason": "regression guard (passes on current code)"
+  },
+  {
+   "test": "src/lib/debt/ac3-locks-errors.test.ts > AC-3 lock failures reject TypeError -> ApiError NETWORK_ERROR, 0 POST, session kept, no pending timer",
+   "status": "red",
+   "reason": "AssertionError: expected TypeError: boom to be an instance of ApiError"
+  },
+  {
+   "test": "src/lib/debt/ac3-locks-errors.test.ts > AC-3 lock failures throw InvalidStateError -> ApiError NETWORK_ERROR, 0 POST, session kept, no pending timer",
+   "status": "red",
+   "reason": "AssertionError: expected DOMException{ stack: 'InvalidStateEr…', …(1) } to be an instance of ApiError"
+  },
+  {
+   "test": "src/lib/debt/ac3-locks-errors.test.ts > AC-3 lock failures throw NotSupportedError -> ApiError NETWORK_ERROR, 0 POST, session kept, no pending timer",
+   "status": "red",
+   "reason": "AssertionError: expected DOMException{ stack: 'NotSupportedEr…', …(1) } to be an instance of ApiError"
+  },
+  {
+   "test": "src/lib/debt/ac3-locks-errors.test.ts > AC-3 lock failures throw TypeError -> ApiError NETWORK_ERROR, 0 POST, session kept, no pending timer",
+   "status": "red",
+   "reason": "AssertionError: expected TypeError: boom to be an instance of ApiError"
+  },
+  {
+   "test": "src/lib/debt/ac3-locks-errors.test.ts > AC-3 lock failures SecurityError (reject) -> in-tab single-flight: exactly 1 POST, request succeeds",
+   "status": "red",
+   "reason": "SecurityError: lock failure"
+  },
+  {
+   "test": "src/lib/debt/ac3-locks-errors.test.ts > AC-3 lock failures SecurityError (throw) -> in-tab single-flight: exactly 1 POST, request succeeds",
+   "status": "red",
+   "reason": "SecurityError: lock failure"
+  },
+  {
+   "test": "src/lib/debt/ac3-locks-errors.test.ts > AC-3 lock failures W-2: the lock error also reaches hold-client as a classified (AMBIGUOUS) error, not a raw DOMException",
+   "status": "green-guard",
+   "reason": "regression guard (passes on current code)"
+  },
+  {
+   "test": "src/lib/debt/ac3-locks-errors.test.ts > AC-3 lock failures GUARD: a lock error does not clear buy-flow keys or the session",
+   "status": "green-guard",
+   "reason": "regression guard (passes on current code)"
+  },
+  {
+   "test": "src/lib/debt/ac4-cross-tab-owner.test.tsx > AC-4 user switch made in another tab getSession(): stored user id differs from this tab's ef:lastuid -> buy-flow keys cleared, lastuid updated",
+   "status": "red",
+   "reason": "AssertionError: expected [ 'ef:queue:token:e1', …(5) ] to deeply equal []"
+  },
+  {
+   "test": "src/lib/debt/ac4-cross-tab-owner.test.tsx > AC-4 user switch made in another tab W-1 setSession(): this tab then signs in as u-B (shared storage already holds u-B) -> keys of u-A are cleared",
+   "status": "red",
+   "reason": "AssertionError: expected [ 'ef:queue:token:e1', …(5) ] to deeply equal []"
+  },
+  {
+   "test": "src/lib/debt/ac4-cross-tab-owner.test.tsx > AC-4 user switch made in another tab storage event for ef_user (no getSession call by the test) -> keys cleared once the tab observes it",
+   "status": "red",
+   "reason": "AssertionError: expected [ 'ef:queue:token:e1', …(5) ] to deeply equal []"
+  },
+  {
+   "test": "src/lib/debt/ac4-cross-tab-owner.test.tsx > AC-4 user switch made in another tab GUARD: same user signed in by the other tab (token rotation) keeps the keys on getSession and on a storage event",
+   "status": "green-guard",
+   "reason": "regression guard (passes on current code)"
+  },
+  {
+   "test": "src/lib/debt/ac4-cross-tab-owner.test.tsx > AC-4 user switch made in another tab GUARD (G-4): other tab signs out (no new user): getSession() is null and the keys / lastuid are kept",
+   "status": "green-guard",
+   "reason": "regression guard (passes on current code)"
+  },
+  {
+   "test": "src/lib/debt/ac4-cross-tab-owner.test.tsx > AC-4 user switch made in another tab A -> B -> A in the other tab before this tab observes anything: same uid as lastuid, keys are kept",
+   "status": "green-guard",
+   "reason": "regression guard (passes on current code)"
+  },
+  {
+   "test": "src/lib/debt/ac4-cross-tab-owner.test.tsx > AC-4 user switch made in another tab a storage event for an unrelated key does not touch buy-flow keys",
+   "status": "green-guard",
+   "reason": "regression guard (passes on current code)"
+  },
+  {
+   "test": "src/lib/debt/ac4-cross-tab-owner.test.tsx > AC-4 user switch made in another tab reconciliation never touches the auth keys in localStorage (safe while a refresh is in flight)",
+   "status": "green-guard",
+   "reason": "regression guard (passes on current code)"
+  },
+  {
+   "test": "src/lib/debt/ac4-cross-tab-owner.test.tsx > AC-4 user switch made in another tab an explicit logout (buyFlow:true) still clears keys and lastuid (unchanged behaviour)",
+   "status": "green-guard",
+   "reason": "regression guard (passes on current code)"
+  },
+  {
+   "test": "src/lib/debt/ac4-cross-tab-owner.test.tsx > AC-4 user switch made in another tab ef:lastuid absent (fresh tab, session already stored): getSession adopts the stored user id and KEEPS the keys",
+   "status": "red",
+   "reason": "AssertionError: expected null to be 'u-B' // Object.is equality"
+  },
+  {
+   "test": "src/lib/debt/ac6-payment-forbidden.test.ts > AC-6 403 /problems/forbidden initiatePayment -> FORBIDDEN (type + code + status 403), one call only",
+   "status": "red",
+   "reason": "AssertionError: expected 'UNKNOWN' to be 'FORBIDDEN' // Object.is equality"
+  },
+  {
+   "test": "src/lib/debt/ac6-payment-forbidden.test.ts > AC-6 403 /problems/forbidden getOrderDetails -> FORBIDDEN (type + code + status 403), one call only",
+   "status": "red",
+   "reason": "AssertionError: expected 'UNKNOWN' to be 'FORBIDDEN' // Object.is equality"
+  },
+  {
+   "test": "src/lib/debt/ac6-payment-forbidden.test.ts > AC-6 403 /problems/forbidden issueTickets -> FORBIDDEN (type + code + status 403), one call only",
+   "status": "red",
+   "reason": "AssertionError: expected 'UNKNOWN' to be 'FORBIDDEN' // Object.is equality"
+  },
+  {
+   "test": "src/lib/debt/ac6-payment-forbidden.test.ts > AC-6 403 /problems/forbidden GUARD: initiatePayment with 403 about:blank keeps the generic mapping (UNKNOWN)",
+   "status": "green-guard",
+   "reason": "regression guard (passes on current code)"
+  },
+  {
+   "test": "src/lib/debt/ac6-payment-forbidden.test.ts > AC-6 403 /problems/forbidden GUARD: getOrderDetails with 403 about:blank keeps the generic mapping (UNKNOWN)",
+   "status": "green-guard",
+   "reason": "regression guard (passes on current code)"
+  },
+  {
+   "test": "src/lib/debt/ac6-payment-forbidden.test.ts > AC-6 403 /problems/forbidden GUARD: issueTickets with 403 about:blank keeps the generic mapping (UNKNOWN)",
+   "status": "green-guard",
+   "reason": "regression guard (passes on current code)"
+  },
+  {
+   "test": "src/lib/debt/ac6-payment-forbidden.test.ts > AC-6 403 /problems/forbidden GUARD: initiatePayment with 403 and an empty body keeps the generic mapping (UNKNOWN)",
+   "status": "green-guard",
+   "reason": "regression guard (passes on current code)"
+  },
+  {
+   "test": "src/lib/debt/ac6-payment-forbidden.test.ts > AC-6 403 /problems/forbidden GUARD: getOrderDetails with 403 and an empty body keeps the generic mapping (UNKNOWN)",
+   "status": "green-guard",
+   "reason": "regression guard (passes on current code)"
+  },
+  {
+   "test": "src/lib/debt/ac6-payment-forbidden.test.ts > AC-6 403 /problems/forbidden GUARD: issueTickets with 403 and an empty body keeps the generic mapping (UNKNOWN)",
+   "status": "green-guard",
+   "reason": "regression guard (passes on current code)"
+  },
+  {
+   "test": "src/lib/debt/ac6-payment-forbidden.test.ts > AC-6 403 /problems/forbidden GUARD: getOrderDetails 404 is still NOT_FOUND and initiatePayment 422 still INVALID_INPUT",
+   "status": "green-guard",
+   "reason": "regression guard (passes on current code)"
+  },
+  {
+   "test": "src/app/(organizer)/organizer/events/[eventId]/edit/page.debt.test.tsx > AC-5 lost addTier response W-4: retry matches the reloaded server tier: addTier called once in total, no quota PUT, navigates to review-status",
+   "status": "red",
+   "reason": "AssertionError: expected [ 'Hạng vé #2', 'Hạng vé #2' ] to deeply equal [ 'Hạng vé #2' ]"
+  },
+  {
+   "test": "src/app/(organizer)/organizer/events/[eventId]/edit/page.debt.test.tsx > AC-5 lost addTier response matched tier with a different quota: only the quota is sent, to the server id; still one addTier",
+   "status": "red",
+   "reason": "AssertionError: expected [ 'Hạng vé #2', 'Hạng vé #2' ] to deeply equal [ 'Hạng vé #2' ]"
+  },
+  {
+   "test": "src/app/(organizer)/organizer/events/[eventId]/edit/page.debt.test.tsx > AC-5 lost addTier response trim + case-insensitive: server stored the name as ' HẠNG VÉ #2 ' -> still matched, no second POST",
+   "status": "red",
+   "reason": "AssertionError: expected [ 'Hạng vé #2', 'Hạng vé #2' ] to deeply equal [ 'Hạng vé #2' ]"
+  },
+  {
+   "test": "src/app/(organizer)/organizer/events/[eventId]/edit/page.debt.test.tsx > AC-5 lost addTier response any 422 from addTier triggers the same lookup: server tier visible only after the failure -> matched, no error shown",
+   "status": "red",
+   "reason": "AssertionError: expected \"spy\" to be called at least once"
+  },
+  {
+   "test": "src/app/(organizer)/organizer/events/[eventId]/edit/page.debt.test.tsx > AC-5 lost addTier response an UNRELATED existing tier with the same name but a different price is NOT matched: POST as new, show the server 422 detail",
+   "status": "green-guard",
+   "reason": "regression guard (passes on current code)"
+  },
+  {
+   "test": "src/app/(organizer)/organizer/events/[eventId]/edit/page.debt.test.tsx > AC-5 lost addTier response GUARD: the organizer renamed the lost tier before retrying: no match, POSTed under the new name, 422 detail shown",
+   "status": "green-guard",
+   "reason": "regression guard (passes on current code)"
+  },
+  {
+   "test": "src/app/(organizer)/organizer/events/[eventId]/edit/page.debt.test.tsx > AC-5 lost addTier response GUARD (F-3): without any lost response a normal save POSTs the new tier exactly once",
+   "status": "green-guard",
+   "reason": "regression guard (passes on current code)"
+  }
+ ]
+}
