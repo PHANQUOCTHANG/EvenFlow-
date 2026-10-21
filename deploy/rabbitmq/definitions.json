@@ -20,7 +20,18 @@
     "",
     "x-message-ttl cua ai.chat.q la 60s va la CO Y: cau tra loi den sau khi",
     "khach da duoc admit vao mua ve thi khong con gia tri gi. Het TTL thi message",
-    "bi BO, khong di retry."
+    "bi BO, khong di retry.",
+    "",
+    "Su kien nghiep vu (payment.events, ticketing.events -- exchange topic):",
+    "- Moi exchange co hang <exchange>.sink.q bind '#', giu 1000 ban moi nhat.",
+    "  Publisher bat mandatory; khong co sink thi mot routing key chua co consumer",
+    "  bi broker tra ve va relay outbox (dung o dong loi dau tien) ket vinh vien.",
+    "- Consumer co retry theo mau AI nhung hang tre dead-letter ve default",
+    "  exchange voi key = ten hang goc, nen message khong lap sang consumer khac.",
+    "  Routing key goc giu trong header x-ef-routing-key.",
+    "  ticketing.order-paid.q: order.paid -> phat ve (retry 5s).",
+    "  notification.events.q: order.paid, payment.refunded, ticketing.ticket.issued",
+    "  -> email/SMS (retry 10s)."
   ],
   "vhosts": [{ "name": "/" }],
   "exchanges": [
@@ -28,7 +39,12 @@
     { "name": "ai.retry", "vhost": "/", "type": "direct", "durable": true },
     { "name": "ai.dlx", "vhost": "/", "type": "direct", "durable": true },
     { "name": "ticketing.events", "vhost": "/", "type": "topic", "durable": true },
-    { "name": "notification.direct", "vhost": "/", "type": "direct", "durable": true }
+    { "name": "notification.direct", "vhost": "/", "type": "direct", "durable": true },
+    { "name": "payment.events", "vhost": "/", "type": "topic", "durable": true },
+    { "name": "ticketing.retry", "vhost": "/", "type": "direct", "durable": true },
+    { "name": "ticketing.dlx", "vhost": "/", "type": "direct", "durable": true },
+    { "name": "notification.retry", "vhost": "/", "type": "direct", "durable": true },
+    { "name": "notification.dlx", "vhost": "/", "type": "direct", "durable": true }
   ],
   "queues": [
     {
@@ -114,6 +130,60 @@
     {
       "name": "notification.email.q", "vhost": "/", "durable": true,
       "arguments": { "x-queue-type": "quorum" }
+    },
+    {
+      "name": "payment.events.sink.q", "vhost": "/", "durable": true,
+      "arguments": {
+        "x-queue-type": "quorum",
+        "x-max-length": 1000,
+        "x-overflow": "drop-head"
+      }
+    },
+    {
+      "name": "ticketing.events.sink.q", "vhost": "/", "durable": true,
+      "arguments": {
+        "x-queue-type": "quorum",
+        "x-max-length": 1000,
+        "x-overflow": "drop-head"
+      }
+    },
+    {
+      "name": "ticketing.order-paid.q", "vhost": "/", "durable": true,
+      "arguments": { "x-queue-type": "quorum" }
+    },
+    {
+      "name": "ticketing.order-paid.retry", "vhost": "/", "durable": true,
+      "arguments": {
+        "x-queue-type": "quorum",
+        "x-message-ttl": 5000,
+        "x-dead-letter-exchange": "",
+        "x-dead-letter-routing-key": "ticketing.order-paid.q",
+        "x-dead-letter-strategy": "at-least-once",
+        "x-overflow": "reject-publish"
+      }
+    },
+    {
+      "name": "ticketing.dlq", "vhost": "/", "durable": true,
+      "arguments": { "x-queue-type": "quorum" }
+    },
+    {
+      "name": "notification.events.q", "vhost": "/", "durable": true,
+      "arguments": { "x-queue-type": "quorum" }
+    },
+    {
+      "name": "notification.events.retry", "vhost": "/", "durable": true,
+      "arguments": {
+        "x-queue-type": "quorum",
+        "x-message-ttl": 10000,
+        "x-dead-letter-exchange": "",
+        "x-dead-letter-routing-key": "notification.events.q",
+        "x-dead-letter-strategy": "at-least-once",
+        "x-overflow": "reject-publish"
+      }
+    },
+    {
+      "name": "notification.dlq", "vhost": "/", "durable": true,
+      "arguments": { "x-queue-type": "quorum" }
     }
   ],
   "bindings": [
@@ -130,7 +200,17 @@
     { "source": "ai.retry", "vhost": "/", "destination": "ai.report.retry", "destination_type": "queue", "routing_key": "report" },
     { "source": "ai.dlx", "vhost": "/", "destination": "ai.dlq", "destination_type": "queue", "routing_key": "report" },
     { "source": "ticketing.events", "vhost": "/", "destination": "ticketing.hold.released.q", "destination_type": "queue", "routing_key": "ticketing.hold.released" },
-    { "source": "notification.direct", "vhost": "/", "destination": "notification.email.q", "destination_type": "queue", "routing_key": "email" }
+    { "source": "notification.direct", "vhost": "/", "destination": "notification.email.q", "destination_type": "queue", "routing_key": "email" },
+    { "source": "payment.events", "vhost": "/", "destination": "payment.events.sink.q", "destination_type": "queue", "routing_key": "#" },
+    { "source": "ticketing.events", "vhost": "/", "destination": "ticketing.events.sink.q", "destination_type": "queue", "routing_key": "#" },
+    { "source": "ticketing.retry", "vhost": "/", "destination": "ticketing.order-paid.retry", "destination_type": "queue", "routing_key": "ticketing.order-paid" },
+    { "source": "payment.events", "vhost": "/", "destination": "ticketing.order-paid.q", "destination_type": "queue", "routing_key": "order.paid" },
+    { "source": "ticketing.dlx", "vhost": "/", "destination": "ticketing.dlq", "destination_type": "queue", "routing_key": "ticketing.order-paid" },
+    { "source": "notification.retry", "vhost": "/", "destination": "notification.events.retry", "destination_type": "queue", "routing_key": "notification.events" },
+    { "source": "payment.events", "vhost": "/", "destination": "notification.events.q", "destination_type": "queue", "routing_key": "order.paid" },
+    { "source": "payment.events", "vhost": "/", "destination": "notification.events.q", "destination_type": "queue", "routing_key": "payment.refunded" },
+    { "source": "ticketing.events", "vhost": "/", "destination": "notification.events.q", "destination_type": "queue", "routing_key": "ticketing.ticket.issued" },
+    { "source": "notification.dlx", "vhost": "/", "destination": "notification.dlq", "destination_type": "queue", "routing_key": "notification.events" }
   ],
   "users": [], "permissions": [], "policies": [], "parameters": []
 }

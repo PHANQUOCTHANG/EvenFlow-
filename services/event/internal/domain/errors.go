@@ -7,7 +7,7 @@ var (
 	ErrTierNotFound            = errors.New("ticket tier not found")
 	ErrInvalidStateTransition  = errors.New("invalid event state transition")
 	ErrNoValidTicketTiers      = errors.New("event must have at least one ticket tier with quota > 0 and price >= 0")
-	ErrSaleStartTimeTooEarly   = errors.New("sale_start_at must be at least 30 minutes after approval time")
+	ErrSaleStartTimeTooEarly   = errors.New("sale_start_at is too close to approval time (BR-E2)")
 	ErrCannotReduceQuotaOnSale = errors.New("cannot reduce ticket tier quota after event is ON_SALE")
 	ErrDuplicateTierName       = errors.New("ticket tier name already exists for this event")
 	ErrEventNotEditable        = errors.New("event can only be edited in DRAFT or SCHEDULED state")

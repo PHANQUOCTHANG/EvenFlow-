@@ -200,6 +200,9 @@ services:
       DATABASE_URL: "postgres://eventflow:eventflow@pgbouncer:5432/eventflow?sslmode=disable"
       # Thieu bien nay thi relay outbox chi ghi log, khong phat len RabbitMQ.
       RABBITMQ_URL: "amqp://eventflow:eventflow@rabbitmq:5672/"
+      # Worker phat ve khi nhan order.paid: phai CUNG secret voi ticketing, neu khong
+      # QR ky o day bi POST /v1/tickets/verify tu choi.
+      HMAC_QR_SECRET: "${HMAC_QR_SECRET:-dev-qr-hmac-secret-change-me-32bytes!}"
       ACTIVE_EVENT_IDS: "${ACTIVE_EVENT_IDS:-11111111-1111-4111-8111-111111111111,22222222-2222-4222-8222-222222222222}"
     depends_on:
       redis: {condition: service_healthy}
@@ -226,6 +229,9 @@ services:
       ANOMALY_CONSUMERS: "1"
       REPORT_CONSUMERS: "1"
       INTERNAL_API_BASE: "http://gateway:8080"
+      # Ket qua kiem duyet AI goi PATCH /internal/... cua event-service. Gateway chan /internal/*
+      # tu ben ngoai, nen goi thang event trong mang compose.
+      MODERATION_API_BASE: "http://event:8084"
     # RabbitMQ co the mo cong cham hon luc ai-worker khoi dong; tu thu lai thay vi chet han.
     restart: unless-stopped
     ports: ["8090:8090"]
@@ -263,6 +269,9 @@ services:
       HTTP_ADDR: ":8084"
       DATABASE_URL: "postgres://eventflow:eventflow@pgbouncer:5432/eventflow?sslmode=disable"
       RABBITMQ_URL: "amqp://eventflow:eventflow@rabbitmq:5672/"
+      # BR-E2 mac dinh 30 phut giua luc duyet va gio mo ban. Demo ha xuong 60 giay de organizer tao,
+      # duyet va mo ban trong mot buoi trinh bay. Production KHONG dat bien nay.
+      MIN_SALE_LEAD_SECONDS: "${MIN_SALE_LEAD_SECONDS:-60}"
     depends_on:
       rabbitmq: {condition: service_healthy}
       migrate: {condition: service_completed_successfully}
@@ -278,7 +287,10 @@ services:
       DATABASE_URL: "postgres://eventflow:eventflow@pgbouncer:5432/eventflow?sslmode=disable"
       PAYMENT_SANDBOX_MODE: "true"
       PAYMENT_DEFAULT_PROVIDER: "sandbox"
+      # Relay outbox: order.paid -> ticketing phat ve + notification gui email.
+      RABBITMQ_URL: "amqp://eventflow:eventflow@rabbitmq:5672/"
     depends_on:
+      rabbitmq: {condition: service_healthy}
       migrate: {condition: service_completed_successfully}
     restart: unless-stopped
 

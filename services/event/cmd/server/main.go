@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
 
@@ -18,6 +19,7 @@ import (
 	adapterHTTP "github.com/eventflow/eventflow/services/event/internal/adapter/http"
 	"github.com/eventflow/eventflow/services/event/internal/adapter/postgres"
 	"github.com/eventflow/eventflow/services/event/internal/app"
+	"github.com/eventflow/eventflow/services/event/internal/domain"
 	"github.com/eventflow/eventflow/services/event/internal/worker"
 	_ "github.com/lib/pq"
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -38,6 +40,20 @@ func main() {
 		db.SetMaxOpenConns(50)
 		db.SetMaxIdleConns(10)
 		db.SetConnMaxLifetime(5 * time.Minute)
+	}
+
+	// BR-E2: khoang toi thieu giua luc duyet va T0. Mac dinh 30 phut; moi truong demo ha xuong de
+	// duyet va mo ban trong vai phut.
+	if raw := os.Getenv("MIN_SALE_LEAD_SECONDS"); raw != "" {
+		n, perr := strconv.Atoi(raw)
+		if perr != nil || n < 0 {
+			log.Error("MIN_SALE_LEAD_SECONDS phai la so nguyen >= 0", "value", raw)
+			os.Exit(1)
+		}
+		domain.SetMinSaleLead(time.Duration(n) * time.Second)
+		if domain.MinSaleLead() < domain.DefaultMinSaleLead {
+			log.Warn("BR-E2 dang ngan hon mac dinh: chi dung cho demo/local", "min_sale_lead", domain.MinSaleLead().String())
+		}
 	}
 
 	repo := postgres.NewEventRepository(db)
@@ -96,8 +112,17 @@ func main() {
 		log.Warn("RABBITMQ_URL trong: job kiem duyet AI se nam trong outbox_events, KHONG duoc phat")
 	}
 
+	// EV-118: mo ban dung T0 (SCHEDULED -> ON_SALE), khong can Ops goi /publish.
+	openerCtx, stopOpener := context.WithCancel(context.Background())
+	if db != nil {
+		go func() {
+			_ = worker.NewSaleOpener(postgres.NewSaleScheduleRepository(db), time.Second, log).Run(openerCtx)
+		}()
+	}
+
 	<-stop
 	log.Info("dang tat event service...")
+	stopOpener()
 	stopRelay()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)

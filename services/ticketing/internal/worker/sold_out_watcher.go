@@ -37,6 +37,8 @@ type SoldOutWatcher struct {
 // SoldOutWatcherConfig cau hinh watcher.
 type SoldOutWatcherConfig struct {
 	EventIDs []string
+	// Events (neu co) thay EventIDs: danh sach dong tu EventDiscovery (EV-118).
+	Events func() []string
 	// Interval la chu ky kiem tra. 1 giay: khach thay SOLD_OUT trong vai giay sau khi ve cuoi het.
 	Interval time.Duration
 	// ConfirmTicks la so lan lien tiep thay kho 0 va khong hold truoc khi bao SoldOut: loc nhiu khi
@@ -105,7 +107,7 @@ func (w *SoldOutWatcher) Run(ctx context.Context) error {
 
 // CheckAll kiem tra moi su kien mot lan. Loi o mot su kien khong chan cac su kien khac.
 func (w *SoldOutWatcher) CheckAll(ctx context.Context) {
-	for _, ev := range w.cfg.EventIDs {
+	for _, ev := range w.cfg.events() {
 		if err := w.Check(ctx, ev); err != nil {
 			w.log.Error("kiem tra het ve that bai", "event", ev, "err", err)
 		}
@@ -167,4 +169,12 @@ func (w *SoldOutWatcher) Check(ctx context.Context, eventID string) error {
 		w.log.Info("kho co ve tro lai", "event", eventID)
 	}
 	return nil
+}
+
+// events tra danh sach su kien can phuc vu o lan quet nay.
+func (c SoldOutWatcherConfig) events() []string {
+	if c.Events != nil {
+		return c.Events()
+	}
+	return c.EventIDs
 }

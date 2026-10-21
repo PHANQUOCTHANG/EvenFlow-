@@ -55,7 +55,16 @@ class Settings(BaseSettings):
     # Thoi gian cho handler dang chay xong khi tat; qua han thi huy, message quay lai hang.
     shutdown_grace_seconds: float = Field(default=20.0, gt=0)
 
+    # API cong khai qua gateway (tool tra cuu thu hang, tinh trang ve, su kien).
     internal_api_base: str = "http://gateway:8080"
+    # Noi gui ket qua kiem duyet: PATCH /internal/v1/events/{id}/ai-verdict cua event-service.
+    # Gateway CHAN /internal/* tu ben ngoai, nen phai goi thang event-service trong mang noi bo.
+    # Rong thi dung internal_api_base (giu hanh vi cu).
+    moderation_api_base: str = ""
+
+    @property
+    def moderation_base(self) -> str:
+        return self.moderation_api_base or self.internal_api_base
 
     @model_validator(mode="after")
     def _gemini_that_can_key(self) -> Settings:

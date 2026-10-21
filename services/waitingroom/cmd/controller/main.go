@@ -15,7 +15,10 @@
 // Gioi han hien tai:
 //   - Suc khoe tinh chung cho moi su kien; moi su kien co controller va tran rieng, nen nhieu su
 //     kien mo ban cung luc se cong don toi tong cac tran. Ngan sach nhip chung la viec tiep theo.
-//   - Danh sach su kien lay tu ACTIVE_EVENT_IDS; event-svc se thay the.
+//
+// Danh sach su kien (EV-118): tap Redis wr:active_events do ticketing-worker quet tu Postgres
+// (libs/go/activeevents), cong ACTIVE_EVENT_IDS (tuy chon: smoke, k6). EventSupervisor doc lai moi
+// EVENTS_REFRESH_SECONDS (mac dinh 5): su kien moi duoc dieu khien ngay, su kien het ban thi dung.
 package main
 
 import (
@@ -27,6 +30,7 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
+	"strconv"
 	"sync"
 	"syscall"
 	"time"
@@ -34,6 +38,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/redis/go-redis/v9"
 
+	"github.com/eventflow/eventflow/libs/go/activeevents"
 	"github.com/eventflow/eventflow/libs/go/leader"
 	"github.com/eventflow/eventflow/libs/go/loadsignal"
 	"github.com/eventflow/eventflow/libs/go/otelx"
@@ -58,13 +63,14 @@ func run(log *slog.Logger) error {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	eventIDs := config.SplitCSV(os.Getenv("ACTIVE_EVENT_IDS"))
-	if len(eventIDs) == 0 {
-		return errors.New("thieu ACTIVE_EVENT_IDS: khong co su kien nao de dieu khien")
+	staticIDs := config.SplitCSV(os.Getenv("ACTIVE_EVENT_IDS"))
+	refresh, err := refreshInterval(os.Getenv("EVENTS_REFRESH_SECONDS"))
+	if err != nil {
+		return err
 	}
 
 	// Kiem tra cau hinh TRUOC khi cham vao ha tang: sai thi chet ngay.
-	if _, err := config.AdmitConfig(os.Getenv, eventIDs[0], time.Time{}); err != nil {
+	if _, err := config.AdmitConfig(os.Getenv, "kiem-tra-cau-hinh", time.Time{}); err != nil {
 		return err
 	}
 	leaderCfg, err := config.LeaderConfig(os.Getenv)
@@ -131,20 +137,24 @@ func run(log *slog.Logger) error {
 			log.Error("metrics server dung", "err", err)
 		}
 	}()
-	for _, ev := range eventIDs {
-		wg.Add(1)
-		go func(eventID string) {
-			defer wg.Done()
-			// Loi o mot su kien khong duoc keo chet cac su kien khac.
-			if err := runEvent(ctx, log, rdb, queue, probe, prom, leaderCfg, instance, eventID); err != nil &&
-				!errors.Is(err, context.Canceled) {
-				log.Error("controller cua su kien dung", "event", eventID, "err", err)
-			}
-		}(ev)
+	list := func(ctx context.Context) ([]string, error) {
+		ids, err := activeevents.Read(ctx, rdb)
+		if err != nil {
+			return nil, err
+		}
+		return activeevents.Union(staticIDs, ids), nil
 	}
-	log.Info("controller bat dau", "so_su_kien", len(eventIDs))
+	runOne := func(ctx context.Context, eventID string) {
+		// Loi o mot su kien khong duoc keo chet cac su kien khac; supervisor chay lai o vong sau.
+		if err := runEvent(ctx, log, rdb, queue, probe, prom, leaderCfg, instance, eventID); err != nil &&
+			!errors.Is(err, context.Canceled) {
+			log.Error("controller cua su kien dung", "event", eventID, "err", err)
+		}
+	}
+	log.Info("controller bat dau", "su_kien_co_dinh", staticIDs, "chu_ky_doc_danh_sach", refresh.String())
+	err = app.NewEventSupervisor(list, runOne, refresh, log).Run(ctx)
 	wg.Wait()
-	return ctx.Err()
+	return err
 }
 
 // runEvent tranh quyen leader cua mot su kien va, moi nhiem ky, chay controller duoi epoch cua no.
@@ -239,4 +249,16 @@ func env(k, def string) string {
 		return v
 	}
 	return def
+}
+
+// refreshInterval doc EVENTS_REFRESH_SECONDS (mac dinh 5).
+func refreshInterval(raw string) (time.Duration, error) {
+	if raw == "" {
+		return 5 * time.Second, nil
+	}
+	n, err := strconv.Atoi(raw)
+	if err != nil || n < 1 {
+		return 0, fmt.Errorf("EVENTS_REFRESH_SECONDS=%q phai la so nguyen >= 1", raw)
+	}
+	return time.Duration(n) * time.Second, nil
 }
