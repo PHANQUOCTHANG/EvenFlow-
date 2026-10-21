@@ -263,3 +263,70 @@ The B-1 clarification is sound. Round-1 M-2, M-3 and M-4 are resolved.
   logout.
 - Reconciliation on the read path: there is no recursion if `readFrom` is used and nothing calls `notify()` or
   `setSession`. A `storage` event during a refresh only touches buy-flow keys, so it does not disturb the refresh.
+
+## Round 3
+
+Reviewer: plan reviewer, clean context, round 3 of 3 (v3 step 2b, High-risk). Inputs: `spec.md` (AC-2 now carries
+the abort-clear ownership guard), `plan.md` §1-§7, round 1-2 of this file. Code read-only at base 43375eb:
+`lib/api-client.ts`, `lib/session.ts`, `lib/api/auth.ts`, `lib/payment-client.ts`, `hooks/use-payment-session.ts`,
+`hooks/use-order-status.ts`, `components/checkout/payment-handoff-view.tsx`, organizer `edit-event-client.tsx`.
+Nothing executed, no git writes.
+
+### Verdict: **PASS**
+
+No blocker and no major. Both round-2 majors are resolved. Five minors follow; the implementer should apply them
+while writing the tests. None of them needs another plan round.
+
+### Round-2 resolutions
+
+| Finding | Status | Note |
+|---|---|---|
+| M2-1 | resolved | The settle rule is traced per path below. Each path either settles after the POST and its body read, or settles at abandonment, where `abandoned` (`api-client.ts:182`) prevents a later POST. Neither path can clear `inflight` while a POST is still pending. |
+| M2-2 | resolved | The plan covers all three stored-token read points: `doRefresh:116`, `refreshCore:147` and the proactive re-read `apiFetch:248`. On a mismatch it throws AUTH_REQUIRED with no clear and no rotated-pair write. `apiFetch:258` is then never reached, because the throw happens first. Mutation (9) is added. See m3-3 for the proactive path. |
+| m2-1 | resolved (accepted risk) | Recorded in §7. §3 Risks would be the more natural place for it, but this is not blocking. |
+| m2-2 | resolved | This matches the existing `prev && nextUid && prev !== nextUid` guard (`session.ts:100`). |
+| m2-3 | resolved | |
+| m2-4 | resolved | The `created` map (`edit-event-client.tsx:34,78-79`) and the reloaded `current.tiers` (`:68-69`) exist as described. The client field is `price`. |
+| m2-5 | resolved | `use-payment-session.ts` exposes only `authRequired` (`:41,91,183`), so adding a `forbidden` flag there is the right place. `checkout.forbidden` already exists (`messages.ts:60,142`). |
+| m2-6 | resolved | Spec AC-2 bullet 2 now has "(only if it is still the same session and refresh token that was POSTed)". |
+| m2-7 | resolved | The default user key comes from `getSession()?.user.id`, and `loginWithGoogle` → `refreshSession` → `refreshAccessToken()` (`auth.ts:121-124`) keys on the Google session that was just stored. With no session, behaviour is unchanged: `doRefresh:112-114` clears the session and throws AUTH_REQUIRED. |
+
+### How `inflight` settles on each path
+
+In every path below, `inflight[user]` is cleared exactly when the shared promise settles.
+
+| Path | When the shared promise settles | Can a second POST start? |
+|---|---|---|
+| Lock granted | When the POST and its body read settle (up to 120 s abort). The deadline is a no-op once `granted` (`:172`) and is cleared at `:184`. | No. Joiners wait on the same promise. |
+| Lock wait abandoned at 45 s | At abandonment, with NETWORK_ERROR and no POST. If the callback still runs later, it throws at `:182`. | No POST is pending, so a later call that takes the lock and POSTs is the first POST. |
+| SecurityError, then fallback | §7 sets `granted`, clears the deadline and sets `locksUnusable`, then the promise settles when the POST settles. | No. Later calls skip the lock and join the in-tab promise. |
+| No `navigator.locks` (or `locksUnusable`) | When the POST settles (`:164`). | No. |
+| No-POST outcomes inside the lock (reuse of a rotated pair, user mismatch, no session) | When `doRefresh` returns. See m3-4. | No. |
+
+This is consistent with §6 (B-1, M-2, M-3) and with the clarified AC-2:
+- The owner's wait is bounded by the 120 s abort.
+- Each joiner's wait is bounded by its own 45 s timer.
+- The abort clear is guarded by the session epoch and the POSTed refresh token.
+
+### Minor
+
+- **m3-1 (SecurityError after abandonment)** The fallback must also check `!abandoned` before calling `doRefresh`.
+  A SecurityError arrives synchronously or immediately in practice, but a late rejection after the 45 s deadline
+  would otherwise start a POST nobody waits for.
+  - Fix: `if (abandoned) throw networkError();` at the top of the fallback, as at `:182`.
+- **m3-2 (§7 M2-1 test expectation)** In "joiners get NETWORK_ERROR at their own 45 s", the joiner that starts at
+  100 s has its 45 s timer at 145 s, which is after the 120 s abort. That joiner should get AUTH_REQUIRED at 120 s,
+  when the shared promise settles first. AC-2's "at most 45 s" still holds.
+  - Fix: write the 100 s joiner's expectation as AUTH_REQUIRED at 120 s. Expect NETWORK_ERROR only for the 46 s
+    joiner, at 91 s.
+- **m3-3 (proactive path, error branch)** `apiFetch:242-248` swallows any error other than AUTH_REQUIRED, including
+  a joiner's 45 s NETWORK_ERROR, and then re-reads `getSession()` at `:248`. The user check must run on that re-read
+  whether the refresh resolved or was swallowed. Otherwise, after a switch to B, the request goes out under B.
+  - Fix: put the `user.id === sentUserId` check on the `:248` re-read itself, not on the refresh result.
+- **m3-4 (settle-rule wording)** Cases (a) and (b) in §7 M2-1 leave out the no-POST settle inside the lock: reuse of
+  a rotated pair, user mismatch, and no session. The trailing "cleared exactly when that promise settles" covers
+  them.
+  - Fix: add "(c) when `doRefresh` returns or throws without a POST".
+- **m3-5 (stale §6 sentence)** §6 M-1 still says "`inflight` is cleared only in the POST's own `finally`". On the
+  abandoned path that contradicts §7.
+  - Fix: mark the sentence "superseded by §7 M2-1" so the implementer does not apply both.

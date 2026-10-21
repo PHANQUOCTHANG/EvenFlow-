@@ -70,3 +70,11 @@ NETWORK_ERROR without clearing. (4) Rethrow the raw locks error. (5) Compare aga
 | m2-5 AC-6 files | Add `hooks/use-payment-session.ts`: expose a `forbidden` flag for the payment view |
 | m2-6 spec wording | spec AC-2 notes the ownership guard on the abort clear (§6 M-2) |
 | m2-7 `refreshAccessToken()` in `lib/api/auth.ts:122` | Default user key = the stored session's user id at call time |
+
+## 8. Round-3 minors (plan-review.md round 3: PASS)
+
+- m3-1: the SecurityError fallback checks `!abandoned` before calling `doRefresh`.
+- m3-2: correction to §7: a call that starts at 100 s joins the pending POST and gets `AUTH_REQUIRED` at 120 s, when the POST is aborted, not `NETWORK_ERROR` at its own 45 s.
+- m3-3: the proactive-path user check sits on the `getSession()` re-read in `apiFetch` (~:248), so it also covers the branch where a `NETWORK_ERROR` was swallowed.
+- m3-4: the settle rule gains case (c): `doRefresh` returns or throws without sending a POST (re-read reuse, user mismatch, no session).
+- m3-5: in §6 M-1, "cleared only in the POST's own finally" is superseded by the §7 settle rule.
