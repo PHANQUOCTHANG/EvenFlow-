@@ -33,6 +33,8 @@ make smoke       # chay tron mot luong mua ve
 | Dịch vụ | URL |
 |---|---|
 | Web | http://localhost:3000 |
+| API (gateway, cong ra ngoai duy nhat) | http://localhost:8080 |
+| Mailpit (email OTP, xac nhan don, ve) | http://localhost:8025 |
 | RabbitMQ | http://localhost:15672 (`eventflow` / `eventflow`) |
 | Jaeger | http://localhost:16686 |
 | Grafana | http://localhost:3001 |

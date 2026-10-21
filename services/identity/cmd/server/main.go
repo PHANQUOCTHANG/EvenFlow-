@@ -91,7 +91,8 @@ func main() {
 
 	// - Notifier
 	var notifier domain.OTPNotifier
-	if cfg.SMTPUser != "" && cfg.SMTPPass != "" {
+	// Chi can SMTP_HOST: relay noi bo (Mailpit) khong dung dang nhap; co user/pass thi gomail tu xac thuc.
+	if cfg.SMTPHost != "" {
 		log.Info("SMTP duoc cau hinh, se gui email that.")
 		notifier = smtp.NewSMTPNotifier(cfg.SMTPHost, cfg.SMTPPort, cfg.SMTPUser, cfg.SMTPPass, "EventFlow Secure")
 	} else {
