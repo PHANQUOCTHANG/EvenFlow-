@@ -42,7 +42,6 @@ export interface UseQueueStatusOptions {
   token: string | null;
   enableSse?: boolean;
   sseThresholdMs?: number;
-  baseUrl?: string;
 }
 
 export interface QueueStatusView {
@@ -101,7 +100,6 @@ export function useQueueStatus({
   token,
   enableSse = true,
   sseThresholdMs = SSE_THRESHOLD_MS,
-  baseUrl,
 }: UseQueueStatusOptions): QueueStatusView {
   const [view, setView] = useState<QueueStatusView>(INITIAL_VIEW);
 
@@ -111,7 +109,6 @@ export function useQueueStatus({
       return;
     }
     const queueToken = token;
-    const base = baseUrl ?? process.env.NEXT_PUBLIC_API_BASE ?? "";
 
     let disposed = false;
     let timer: ReturnType<typeof setTimeout> | null = null;
@@ -161,7 +158,7 @@ export function useQueueStatus({
     function startSse() {
       update({ transport: "sse" });
       const conn = connectSse({
-        url: `${base}/v1/events/${encodeURIComponent(eventId)}/queue/stream`,
+        url: `/v1/events/${encodeURIComponent(eventId)}/queue/stream`,
         headers: { "X-Queue-Token": queueToken },
         onOpen: () => update({ connection: "live" }),
         onRetry: () => update({ connection: "reconnecting" }),
@@ -197,7 +194,7 @@ export function useQueueStatus({
     async function poll() {
       if (disposed) return;
       try {
-        const result = await fetchQueueStatus(eventId, queueToken, { etag, signal: abort.signal, baseUrl: base });
+        const result = await fetchQueueStatus(eventId, queueToken, { etag, signal: abort.signal });
         if (disposed) return;
 
         if (result.kind === "throttled") {
@@ -260,7 +257,7 @@ export function useQueueStatus({
       abort.abort();
       sse?.close();
     };
-  }, [eventId, token, enableSse, sseThresholdMs, baseUrl]);
+  }, [eventId, token, enableSse, sseThresholdMs]);
 
   return view;
 }

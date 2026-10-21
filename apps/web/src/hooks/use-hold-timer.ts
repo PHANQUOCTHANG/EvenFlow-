@@ -18,9 +18,7 @@ import type { HoldState } from "@/components/checkout/order-summary";
 export interface UseHoldTimerOptions {
   eventId: string;
   queueToken?: string | null;
-  identityId?: string;
   offsetMs?: number;
-  apiBaseUrl?: string;
 }
 
 export interface UseHoldTimerReturn {
@@ -43,9 +41,7 @@ export interface UseHoldTimerReturn {
 export function useHoldTimer({
   eventId,
   queueToken: propQueueToken,
-  identityId,
   offsetMs = 0,
-  apiBaseUrl,
 }: UseHoldTimerOptions): UseHoldTimerReturn {
   const [hold, setHold] = useState<HoldResult | null>(null);
   const [holdState, setHoldState] = useState<HoldState>("idle");
@@ -108,8 +104,6 @@ export function useHoldTimer({
           ticketTypeId,
           quantity,
           queueToken: effectiveToken,
-          identityId,
-          apiBaseUrl,
         });
 
         setHold(result);
@@ -137,7 +131,7 @@ export function useHoldTimer({
         isCreatingRef.current = false;
       }
     },
-    [holdState, propQueueToken, eventId, identityId, apiBaseUrl],
+    [holdState, propQueueToken, eventId],
   );
 
   const resetHold = useCallback(() => {

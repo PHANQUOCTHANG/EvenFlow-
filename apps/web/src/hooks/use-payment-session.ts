@@ -26,7 +26,6 @@ export interface UsePaymentSessionOptions {
   amount: number;
   expiresAt?: string;
   offsetMs?: number;
-  apiBaseUrl?: string;
   onSuccess?: (result: PaymentInitiationResult) => void;
 }
 
@@ -75,7 +74,6 @@ export function usePaymentSession({
   amount,
   expiresAt,
   offsetMs = 0,
-  apiBaseUrl,
   onSuccess,
 }: UsePaymentSessionOptions): UsePaymentSessionReturn {
   const [formData, setFormData] = useState<PaymentFormData>({
@@ -131,7 +129,6 @@ export function usePaymentSession({
         buyerName: formData.buyerName.trim(),
         buyerEmail: formData.buyerEmail.trim(),
         buyerPhone: formData.buyerPhone.trim(),
-        apiBaseUrl,
       };
 
       const result = await initiatePayment(params);
@@ -165,7 +162,6 @@ export function usePaymentSession({
     orderId,
     holdId,
     amount,
-    apiBaseUrl,
     onSuccess,
   ]);
 
