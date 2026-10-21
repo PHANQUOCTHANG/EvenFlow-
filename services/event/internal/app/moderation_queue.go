@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/eventflow/eventflow/services/event/internal/domain"
@@ -43,7 +44,7 @@ func (uc *listModerationQueueUseCase) Execute(ctx context.Context) ([]*Moderatio
 		return []*ModerationQueueItem{}, nil
 	}
 
-	reviews, err := uc.modRepo.ListNeedsHuman(ctx)
+	reviews, err := uc.modRepo.ListPendingHuman(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +52,15 @@ func (uc *listModerationQueueUseCase) Execute(ctx context.Context) ([]*Moderatio
 	items := make([]*ModerationQueueItem, 0, len(reviews))
 	for _, rev := range reviews {
 		evt, err := uc.eventRepo.GetByID(ctx, rev.EventID)
+		if errors.Is(err, domain.ErrEventNotFound) {
+			continue
+		}
 		if err != nil {
+			return nil, err
+		}
+		// Review chi con hieu luc khi su kien van o trang thai ma AI de lai: BTC sua va nop lai
+		// (ve DRAFT/PENDING moi) thi review cu khong con la viec cua Moderator.
+		if !reviewStillActionable(rev.AiVerdict, evt.Status) {
 			continue
 		}
 		items = append(items, &ModerationQueueItem{
@@ -66,4 +75,15 @@ func (uc *listModerationQueueUseCase) Execute(ctx context.Context) ([]*Moderatio
 	}
 
 	return items, nil
+}
+
+func reviewStillActionable(v domain.AiVerdict, status domain.EventStatus) bool {
+	switch v {
+	case domain.VerdictNeedsHuman:
+		return status == domain.StatusPendingReview
+	case domain.VerdictAutoRejected:
+		return status == domain.StatusRejected
+	default:
+		return false
+	}
 }

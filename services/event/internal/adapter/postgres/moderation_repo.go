@@ -124,13 +124,18 @@ func (r *moderationRepository) GetLatestByEventID(ctx context.Context, eventID u
 	return &rev, nil
 }
 
-func (r *moderationRepository) ListNeedsHuman(ctx context.Context) ([]*domain.ModerationReview, error) {
+// ListPendingHuman: review MOI NHAT cua moi su kien (BTC nop lai thi co review moi), AI de lai
+// NEEDS_HUMAN hoac AUTO_REJECTED va chua co quyet dinh nguoi (EV-121, BR-E5). Cu nhat truoc.
+func (r *moderationRepository) ListPendingHuman(ctx context.Context) ([]*domain.ModerationReview, error) {
 	query := `
-		SELECT
-			id, event_id, ai_score, ai_verdict, ai_reasons,
-			human_id, human_verdict, human_note, created_at, decided_at
-		FROM moderation_reviews
-		WHERE ai_verdict = 'NEEDS_HUMAN' AND human_verdict IS NULL
+		SELECT id, event_id, ai_score, ai_verdict, ai_reasons,
+		       human_id, human_verdict, human_note, created_at, decided_at
+		FROM (
+			SELECT DISTINCT ON (event_id) *
+			FROM moderation_reviews
+			ORDER BY event_id, created_at DESC
+		) latest
+		WHERE ai_verdict IN ('NEEDS_HUMAN', 'AUTO_REJECTED') AND human_verdict IS NULL
 		ORDER BY created_at ASC
 	`
 

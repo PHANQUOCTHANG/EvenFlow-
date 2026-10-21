@@ -31,6 +31,7 @@ func NewRouter(h *EventHandler) http.Handler {
 	mux.Handle("POST /api/v1/events/{id}/approve", h.require(h.ApproveEvent, roleModerator))
 	mux.Handle("POST /api/v1/events/{id}/reject", h.require(h.RejectEvent, roleModerator))
 	mux.Handle("GET /api/v1/moderation/queue", h.require(h.GetModerationQueue, roleModerator))
+	mux.Handle("GET /api/v1/moderation/events/{id}", h.require(h.GetModerationDetail, roleModerator))
 
 	// Mo ban (SCHEDULED -> ON_SALE) la thao tac van hanh, khong phai cua organizer: chi Ops,
 	// cho toi khi co scheduler tu mo luc sale_start_at.

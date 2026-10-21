@@ -31,6 +31,12 @@ export const ORGANIZER_NAV: NavItem[] = [
   { href: "/organizer/events/new", label: "Tạo sự kiện", ready: true },
 ];
 
+/** Moderator (EV-121, handoff muc 4). `/moderator/appeals` can anti-bot (EV-177) nen chua co route. */
+export const MODERATOR_NAV: NavItem[] = [
+  { href: "/moderator/reviews", label: "Hàng đợi thẩm định", ready: true },
+  { href: "/moderator/appeals", label: "Khiếu nại anti-bot", ready: false },
+];
+
 /** `/ops/events` la route index DE XUAT, chua co trong handoff muc 4 — o do Ops chi co
  *  `/ops/events/[eventId]` (war room) va `/ops/ai`. Mot muc nav khong the tro vao route co
  *  tham so, nen can mot trang danh sach (EV-187: trang do da co, nen `ready: true`).
