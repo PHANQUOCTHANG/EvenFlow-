@@ -87,8 +87,11 @@ class ModerationConsumer:
         else:
             await self._send_verdict_callback(event_id, result)
 
+    def verdict_url(self, event_id: str) -> str:
+        return f"{self._api_base}/internal/v1/events/{event_id}/ai-verdict"
+
     async def _send_verdict_callback(self, event_id: str, result: ModerationResult) -> None:
-        url = f"{self._api_base}/internal/v1/events/{event_id}/ai-verdict"
+        url = self.verdict_url(event_id)
         payload = {
             "score": result.score,
             "verdict": result.verdict.value,

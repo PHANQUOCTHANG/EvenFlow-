@@ -7,6 +7,7 @@ te nhat co the. Tha khong khoi dong duoc con hon.
 from __future__ import annotations
 
 from pathlib import Path
+from urllib.parse import urlsplit
 
 from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -55,7 +56,18 @@ class Settings(BaseSettings):
     # Thoi gian cho handler dang chay xong khi tat; qua han thi huy, message quay lai hang.
     shutdown_grace_seconds: float = Field(default=20.0, gt=0)
 
+    # API cong khai cho SystemTools cua tro ly (waitingroom, ticketing, event): di qua gateway.
     internal_api_base: str = "http://gateway:8080"
+    # Callback ket qua kiem duyet PATCH /internal/v1/events/{id}/ai-verdict: goi thang event
+    # service. Gateway chan /internal/ (404) -> job vao DLQ, su kien ket PENDING_REVIEW.
+    event_api_base: str = "http://event:8084"
+
+    @model_validator(mode="after")
+    def _event_api_base_hop_le(self) -> Settings:
+        u = urlsplit(self.event_api_base)
+        if u.scheme not in ("http", "https") or not u.hostname:
+            raise ValueError(f"EVENT_API_BASE khong phai URL http(s): {self.event_api_base!r}")
+        return self
 
     @model_validator(mode="after")
     def _gemini_that_can_key(self) -> Settings:

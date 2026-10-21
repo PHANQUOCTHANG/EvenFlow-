@@ -61,6 +61,13 @@ def build_specs(s: Settings, *, chat: Handler, moderation: Handler) -> list[Pool
     ]
 
 
+def build_moderation_consumer(
+    s: Settings, gemini: GeminiClient, *, limiter: Any
+) -> moderation.ModerationConsumer:
+    # Callback noi bo -> thang event service (event_api_base), khong qua gateway.
+    return moderation.ModerationConsumer(gemini, s.event_api_base, limiter=limiter)
+
+
 @contextlib.asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     logx.configure()
@@ -93,7 +100,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             embed_model=settings.gemini_embed_model,
         )
         tools = SystemTools(settings.internal_api_base)
-        mod_consumer = moderation.ModerationConsumer(gemini, settings.internal_api_base, limiter=limiter)
+        mod_consumer = build_moderation_consumer(settings, gemini, limiter=limiter)
         stack.push_async_callback(mod_consumer.aclose)
         chat_consumer = chat.ChatConsumer(
             limiter=limiter,

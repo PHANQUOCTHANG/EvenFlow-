@@ -225,7 +225,10 @@ services:
       MODERATION_CONSUMERS: "5"
       ANOMALY_CONSUMERS: "1"
       REPORT_CONSUMERS: "1"
+      # API cong khai cho cong cu cua tro ly: qua gateway.
       INTERNAL_API_BASE: "http://gateway:8080"
+      # Callback ket qua kiem duyet (/internal/...): gateway chan /internal/ nen goi thang event.
+      EVENT_API_BASE: "http://event:8084"
     # RabbitMQ co the mo cong cham hon luc ai-worker khoi dong; tu thu lai thay vi chet han.
     restart: unless-stopped
     ports: ["8090:8090"]
