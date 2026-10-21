@@ -82,11 +82,14 @@ export default function LoginForm() {
   const { toast } = useToast();
 
   const [identifier, setIdentifier] = useState("");
-  // Sau dang ky (dang nhap tu dong that bai) trang nay duoc mo kem ?identifier=... de dien san (F-6).
+  // Sau dang ky (dang nhap tu dong that bai) dien san dinh danh tu sessionStorage (1 lan, F-6/G-7; khong dung URL).
   useEffect(() => {
     try {
-      const prefill = new URLSearchParams(window.location.search).get("identifier");
-      if (prefill) setIdentifier(prefill);
+      const prefill = sessionStorage.getItem("ef:signin:identifier");
+      if (prefill) {
+        sessionStorage.removeItem("ef:signin:identifier");
+        setIdentifier(prefill);
+      }
     } catch {
       /* bo qua */
     }

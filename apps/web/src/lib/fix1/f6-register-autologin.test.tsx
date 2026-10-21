@@ -1,4 +1,4 @@
-/** Regression F-6 (X-4): verify succeeded but auto-login failed -> not an "OTP invalid" error; route to sign-in with identifier. */
+/** Regression F-6 (X-4): verify succeeded but auto-login failed -> not an "OTP invalid" error; route to sign-in (identifier via sessionStorage, G-7). */
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -59,7 +59,8 @@ describe("F-6", () => {
     fireEvent.submit(document.querySelector("form") as HTMLFormElement);
     fireEvent.click(await screen.findByText("submit-otp"));
     const link = await waitFor(() => screen.getByRole("link", { name: /Đăng nhập/ }));
-    expect(link.getAttribute("href")).toBe("/auth/sign-in?identifier=a%40b.co");
+    // G-7: the identifier is NOT in the URL; it travels via a one-shot sessionStorage key.
+    expect(link.getAttribute("href")).toBe("/auth/sign-in");
     expect(screen.getByText(/tài khoản đã được tạo/i)).toBeInTheDocument();
     expect(document.body.getAttribute("data-otp-error")).toBeNull();
   });

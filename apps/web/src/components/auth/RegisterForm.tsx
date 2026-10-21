@@ -417,7 +417,15 @@ function TelegramOTPVerification({
            </div>
            
            <Link
-             href={currentIdentifier ? `/auth/sign-in?identifier=${encodeURIComponent(currentIdentifier)}` : "/auth/sign-in"}
+             href="/auth/sign-in"
+             onClick={() => {
+               // G-7: dinh danh KHONG di vao URL (lich su/log); chuyen qua sessionStorage, LoginForm doc 1 lan roi xoa.
+               try {
+                 if (currentIdentifier) sessionStorage.setItem("ef:signin:identifier", currentIdentifier);
+               } catch {
+                 /* bo qua */
+               }
+             }}
              className="w-full mt-2"
            >
              <Button className="h-[48px] w-full rounded-[12px] bg-indigo-600 hover:bg-indigo-700 text-white text-[15px] font-bold shadow-md shadow-indigo-600/20 hover:shadow-indigo-600/30 transition-all active:scale-[0.98]">
