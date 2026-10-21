@@ -207,8 +207,12 @@ expect 200 "lay ve"; QR="$(jget "d['tickets'][0]['qr_payload']")"
 ok "lay ve (idempotent, khong tao ve thu hai)"
 call POST "$GW/v1/tickets/verify" -H "$(auth "$OPS")" -H 'Content-Type: application/json' -d "{\"qr_payload\":\"$QR\"}"
 expect 200 "kiem ve hop le"; ok "QR hop le: $(jget "d['message']")"
-call POST "$GW/v1/tickets/verify" -H "$(auth "$OPS")" -H 'Content-Type: application/json' -d "{\"qr_payload\":\"${QR%?}x\"}"
-expect 400 "kiem ve gia"; ok "QR bi sua 1 ky tu bi tu choi (400 tampered-qr)"
+# QR = base64url(claims).base64url(chu ky). Sua ky tu DAU cua chu ky: no mang du 6 bit. Sua ky tu cuoi thi khong
+# chac: ky tu cuoi chi mang 4 bit chu ky + 2 bit dem, doi giua hai ky tu chi khac bit dem van giai ra cung chu ky.
+SIG="${QR##*.}"; FIRST=A; [[ "${SIG:0:1}" == A ]] && FIRST=B
+FAKE_QR="${QR%.*}.${FIRST}${SIG:1}"
+call POST "$GW/v1/tickets/verify" -H "$(auth "$OPS")" -H 'Content-Type: application/json' -d "{\"qr_payload\":\"$FAKE_QR\"}"
+expect 400 "kiem ve gia"; ok "QR bi sua 1 ky tu chu ky bi tu choi (400 tampered-qr)"
 call POST "$GW/v1/tickets/check-in" -H "$(auth "$T1")" -H 'Content-Type: application/json' -d "{\"qr_payload\":\"$QR\"}"
 expect 403 "khach tu check-in"; ok "khach khong tu check-in ve duoc (403): chi nhan vien van hanh"
 call POST "$GW/v1/tickets/check-in" -H "$(auth "$OPS")" -H 'Content-Type: application/json' -d "{\"qr_payload\":\"$QR\"}"
