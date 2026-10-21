@@ -102,6 +102,49 @@ describe("EventDetailPage (EVF-111, BR-A4, BR-Q1)", () => {
     expect(screen.getByText("Vé Tiêu Chuẩn (GA)")).toBeInTheDocument();
   });
 
+  it("gia hien thi theo price_cents cua hang ve (VND)", async () => {
+    render(await EventDetailPage({ params: Promise.resolve({ slug: SLUG }) }));
+    const row = document.querySelector('[data-tier-id="11111111-1111-4111-8111-111111111111"]') as HTMLElement;
+    expect(row.textContent).toMatch(/650\.000/);
+  });
+
+  it("ON_SALE: availability AVAILABLE -> 'Con ve' va co nut vao phong cho; co ghi chu chi mang tinh tham khao", async () => {
+    render(await EventDetailPage({ params: Promise.resolve({ slug: SLUG }) }));
+    expect(screen.getByText("Còn vé")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /vào phòng chờ|phòng chờ/i })).toBeEnabled();
+    expect(screen.getByTestId("availability-note")).toHaveTextContent(/mang tính tham khảo/);
+  });
+
+  it("availability that bai -> UNKNOWN trung tinh, KHONG hien 'Con ve'", async () => {
+    installFetch((c) =>
+      c.path.endsWith("/availability") ? problem(502, "/problems/upstream-unavailable") : json(wireEvent()),
+    );
+    render(await EventDetailPage({ params: Promise.resolve({ slug: SLUG }) }));
+    expect(screen.getByText("Chưa rõ tình trạng")).toBeInTheDocument();
+    expect(screen.queryByText("Còn vé")).not.toBeInTheDocument();
+    expect(screen.queryByText("Sắp hết vé")).not.toBeInTheDocument();
+  });
+
+  it("SOLD_OUT: badge het ve, nut vao phong cho bi vo hieu hoa, khong goi availability", async () => {
+    const { calls } = installFetch(() => json(wireEvent({ status: "SOLD_OUT" })));
+    render(await EventDetailPage({ params: Promise.resolve({ slug: SLUG }) }));
+    expect(screen.getAllByText("Hết vé").length).toBeGreaterThan(0);
+    const btns = screen.getAllByRole("button");
+    expect(btns).toHaveLength(1);
+    expect(btns[0]).toBeDisabled();
+    expect(calls.some((c) => c.path.endsWith("/availability"))).toBe(false);
+  });
+
+  it("SCHEDULED chua toi gio: dem nguoc + nut vo hieu hoa, tier UNKNOWN", async () => {
+    installFetch(() =>
+      json(wireEvent({ status: "SCHEDULED", sale_start_at: new Date(Date.now() + 86_400_000).toISOString() })),
+    );
+    render(await EventDetailPage({ params: Promise.resolve({ slug: SLUG }) }));
+    expect(screen.getByText("Chưa mở bán")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Chưa tới giờ mở bán/ })).toBeDisabled();
+    expect(screen.getByText("Chưa rõ tình trạng")).toBeInTheDocument();
+  });
+
   it("backend loi (503): hien trang loi co lien ket thu lai, khong nem va khong notFound()", async () => {
     installFetch(() => problem(503, "/problems/upstream-unavailable"));
     const jsx = await EventDetailPage({ params: Promise.resolve({ slug: SLUG }) });

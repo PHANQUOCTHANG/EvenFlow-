@@ -147,6 +147,12 @@ export default async function EventDetailPage({ params }: PageProps) {
       <section aria-labelledby={hasTiers ? TICKET_TIERS_HEADING_ID : undefined}>
         <TicketTierList tiers={event.tiers} headingId={TICKET_TIERS_HEADING_ID} />
       </section>
+      {hasTiers ? (
+        <p className="mt-md text-body-sm text-fg-muted" lang="vi" data-testid="availability-note">
+          Tình trạng vé chỉ mang tính tham khảo và có thể thay đổi; hạng vé &ldquo;Chưa rõ tình trạng&rdquo; đang
+          được cập nhật.
+        </p>
+      ) : null}
     </article>
   );
 }

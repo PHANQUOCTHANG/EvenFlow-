@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 
+import { Alert, Button } from "@/components/ui";
 import { EventListView } from "@/components/event/event-list-view";
 import { getAllPublicEvents } from "@/lib/event-service";
 import type { EventDetailSnapshot } from "@/lib/types/event";
@@ -12,6 +13,8 @@ export function EventsBrowserList() {
   const [state, setState] = useState<{ status: "loading" } | { status: "error" } | { status: "ok"; events: EventDetailSnapshot[] }>({
     status: "loading",
   });
+
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -25,7 +28,23 @@ export function EventsBrowserList() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [attempt]);
+
+  const retry = () => {
+    setState({ status: "loading" });
+    setAttempt((n) => n + 1);
+  };
+
+  if (state.status === "error") {
+    return (
+      <Alert variant="error" title="Không tải được danh sách sự kiện" lang="vi">
+        <p>Hệ thống đang bận hoặc mất kết nối.</p>
+        <Button variant="secondary" size="sm" onClick={retry} className="mt-sm">
+          Thử lại
+        </Button>
+      </Alert>
+    );
+  }
 
   if (state.status === "loading") {
     return (
@@ -34,5 +53,5 @@ export function EventsBrowserList() {
       </p>
     );
   }
-  return <EventListView events={state.status === "ok" ? state.events : []} error={state.status === "error"} />;
+  return <EventListView events={state.events} />;
 }

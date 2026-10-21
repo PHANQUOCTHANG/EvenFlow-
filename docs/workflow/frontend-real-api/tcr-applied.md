@@ -48,3 +48,10 @@ Nguon: `test-change-request.md`. Khong xoa, khong skip, khong lam yeu; chi doi a
 
 Test moi (WP2, khong thay test cu): `components/event/event-loader.test.tsx`, `components/checkout/{checkout-view.wp2,payment-page-client,result-page-client}.test.tsx`, `components/queue/waiting-room.wp2.test.tsx`.
 Khong can sua: `components/event/ticket-tier-list.test.tsx` (UNKNOWN da duoc WP1 xu ly), `components/queue/queue-position.test.tsx`, `hooks/use-queue-status.test.tsx`, `lib/queue-client.test.ts`.
+## WP3
+
+Khong co test bi loi/phai doi assertion. Chi them test moi (khong xoa/skip/lam yeu):
+- `components/event/events-browser-list.test.tsx` (moi): loading / empty / error + thu lai (AC-17).
+- `components/event/event-list-view.test.tsx` (moi): co du lieu, rong, loi (AC-17).
+- `app/(marketing)/events/[slug]/page.test.tsx`: them gia theo price_cents, availability AVAILABLE + ghi chu tham khao, availability loi -> UNKNOWN trung tinh, SOLD_OUT, SCHEDULED chua toi gio (AC-16).
+- `components/event/event-action-panel.test.tsx`: them `it.each` cac trang thai khong ban duoc khong co CTA vao phong cho.
