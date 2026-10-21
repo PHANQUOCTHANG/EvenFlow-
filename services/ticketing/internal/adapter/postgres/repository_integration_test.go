@@ -437,3 +437,29 @@ func TestGetSaleConfig(t *testing.T) {
 		t.Fatalf("expected ErrSoldOut for non-ON_SALE event, got %v", err)
 	}
 }
+
+// ListOrderHoldIDs tra id hold cua don (dung de don hold Redis sau khi phat ve); don khong ton tai
+// hoac id sai dinh dang thi rong, khong loi.
+func TestListOrderHoldIDs(t *testing.T) {
+	repo, pool := setupPostgresTest(t)
+	ctx := context.Background()
+	fix := seedTestEvent(t, pool, 320)
+
+	out, err := repo.PersistHold(ctx, port.PersistHoldParams{
+		EventID: fix.EventID, TicketTypeID: fix.TicketTypeID, IdentityID: fix.IdentityID,
+		HoldID: domain.NewID(), Bucket: 1, Quantity: 1, UnitCents: 1,
+		ExpiresAt: time.Now().Add(10 * time.Minute), MaxPerIdentity: 4,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	ids, err := repo.ListOrderHoldIDs(ctx, out.OrderID)
+	if err != nil || len(ids) != 1 || ids[0] != out.HoldID {
+		t.Fatalf("ListOrderHoldIDs = %v, %v; muon [%s]", ids, err, out.HoldID)
+	}
+	for _, bad := range []string{"khong-phai-uuid", "00000000-0000-4000-8000-000000000000"} {
+		if got, err := repo.ListOrderHoldIDs(ctx, bad); err != nil || len(got) != 0 {
+			t.Errorf("%q: %v, %v; muon rong", bad, got, err)
+		}
+	}
+}

@@ -162,7 +162,7 @@ func run(log *slog.Logger) error {
 		if err != nil {
 			return fmt.Errorf("khoi tao qr engine: %w", err)
 		}
-		handler := worker.NewOrderPaidHandler(app.NewIssueTicketsUseCase(repo, qrEngine, log), log)
+		handler := worker.NewOrderPaidHandler(app.NewIssueTicketsUseCase(repo, qrEngine, log).WithHoldCleanup(repo, gate), log)
 		runOrderPaid = func(ctx context.Context) error {
 			return mq.Consume(ctx, consumeCh, forwardPub, worker.OrderPaidConsumerConfig(), handler.Handle)
 		}

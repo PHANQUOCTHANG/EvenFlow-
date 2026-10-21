@@ -20,7 +20,9 @@ services:
     ports: ["5432:5432"]
     volumes: ["pgdata:/var/lib/postgresql/data"]
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U eventflow"]
+      # Phai kiem qua TCP (-h): luc khoi tao DB lan dau, entrypoint chay mot server tam chi nghe unix socket;
+      # pg_isready qua socket bao "healthy" ngay do, migrate/pgbouncer noi TCP thi "connection refused".
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U eventflow -d eventflow"]
       interval: 5s
       timeout: 3s
       retries: 10
@@ -249,7 +251,12 @@ services:
       args: {SERVICE: identity}
     environment:
       HTTP_ADDR: ":8083"
-      DATABASE_URL: "postgres://eventflow:eventflow@pgbouncer:5432/eventflow?sslmode=disable"
+      # NOI THANG Postgres, khong qua PgBouncer: service nay dung lib/pq, ma lib/pq chuan bi cau lenh nhieu
+      # vong (Parse/Describe roi Bind/Execute); PgBouncer che do transaction co the doi ket noi giua hai
+      # vong va tra "pq: unnamed prepared statement does not exist" (da lam mat ket qua kiem duyet AI).
+      # Dat binary_parameters=yes khong an toan vi cot jsonb cua outbox nhan []byte. Service nong
+      # (ticketing, payment) dung pgx nen van qua PgBouncer.
+      DATABASE_URL: "postgres://eventflow:eventflow@postgres:5432/eventflow?sslmode=disable"
       REDIS_ADDR: "redis:6379"
       JWT_SECRET: "${JWT_SECRET:-dev-jwt-secret-change-me-0123456789}"
       SMTP_HOST: "mailpit"
@@ -267,7 +274,12 @@ services:
       args: {SERVICE: event}
     environment:
       HTTP_ADDR: ":8084"
-      DATABASE_URL: "postgres://eventflow:eventflow@pgbouncer:5432/eventflow?sslmode=disable"
+      # NOI THANG Postgres, khong qua PgBouncer: service nay dung lib/pq, ma lib/pq chuan bi cau lenh nhieu
+      # vong (Parse/Describe roi Bind/Execute); PgBouncer che do transaction co the doi ket noi giua hai
+      # vong va tra "pq: unnamed prepared statement does not exist" (da lam mat ket qua kiem duyet AI).
+      # Dat binary_parameters=yes khong an toan vi cot jsonb cua outbox nhan []byte. Service nong
+      # (ticketing, payment) dung pgx nen van qua PgBouncer.
+      DATABASE_URL: "postgres://eventflow:eventflow@postgres:5432/eventflow?sslmode=disable"
       RABBITMQ_URL: "amqp://eventflow:eventflow@rabbitmq:5672/"
       # BR-E2 mac dinh 30 phut giua luc duyet va gio mo ban. Demo ha xuong 60 giay de organizer tao,
       # duyet va mo ban trong mot buoi trinh bay. Production KHONG dat bien nay.

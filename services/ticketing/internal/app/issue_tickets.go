@@ -18,6 +18,19 @@ type IssueTicketsUseCase struct {
 	signer port.QRSigner
 	log    *slog.Logger
 	clock  func() time.Time
+
+	holds    OrderHoldLister // tuy chon: cung voi gate de don hold Redis sau khi phat ve
+	holdGate HoldConsumer
+}
+
+// OrderHoldLister liet ke id hold (seat_holds) cua mot don.
+type OrderHoldLister interface {
+	ListOrderHoldIDs(ctx context.Context, orderID string) ([]string, error)
+}
+
+// HoldConsumer xoa hold khoi Redis KHONG tra kho (port.InventoryGate.Consume).
+type HoldConsumer interface {
+	Consume(ctx context.Context, eventID, holdID string) error
 }
 
 // NewIssueTicketsUseCase khoi tao use case phat hanh ve.
@@ -27,6 +40,33 @@ func NewIssueTicketsUseCase(repo port.TicketRepository, signer port.QRSigner, lo
 		signer: signer,
 		log:    log,
 		clock:  time.Now,
+	}
+}
+
+// WithHoldCleanup bat viec don hold Redis cua don sau khi phat ve. Thieu buoc nay hold da tra tien van
+// nam trong Redis toi khi het han (mac dinh 10 phut), nen: (1) tin hieu het ve (EV-146) tre ngan ay
+// lan sau ve cuoi cung vi no dem moi hold con song, ke ca hold da thanh toan; (2) so hold dang hoat
+// dong bi thoi phong.
+func (uc *IssueTicketsUseCase) WithHoldCleanup(holds OrderHoldLister, gate HoldConsumer) *IssueTicketsUseCase {
+	uc.holds, uc.holdGate = holds, gate
+	return uc
+}
+
+// consumeHolds xoa hold cua don khoi Redis. Chi ghi log khi loi: ve da phat va Postgres da danh dau
+// consumed, hold Redis con lai se tu het han; viec nay chay lai o moi lan goi issue-tickets/order.paid.
+func (uc *IssueTicketsUseCase) consumeHolds(ctx context.Context, orderID, eventID string) {
+	if uc.holds == nil || uc.holdGate == nil {
+		return
+	}
+	ids, err := uc.holds.ListOrderHoldIDs(ctx, orderID)
+	if err != nil {
+		uc.log.Warn("khong liet ke duoc hold de don Redis sau khi phat ve", "order_id", orderID, "err", err)
+		return
+	}
+	for _, id := range ids {
+		if err := uc.holdGate.Consume(ctx, eventID, redisHoldID(id)); err != nil {
+			uc.log.Warn("don hold Redis sau khi phat ve that bai", "order_id", orderID, "hold", id, "err", err)
+		}
 	}
 }
 
@@ -83,6 +123,7 @@ func (uc *IssueTicketsUseCase) Execute(ctx context.Context, in port.IssueTickets
 				})
 			}
 
+			uc.consumeHolds(ctx, in.OrderID, order.EventID)
 			uc.log.Info("don hang da phat hanh ve truoc do, tra ve danh sach ve idempotent (AC-3)",
 				"order_id", in.OrderID,
 				"ticket_count", len(resTickets),
@@ -206,6 +247,7 @@ func (uc *IssueTicketsUseCase) Execute(ctx context.Context, in port.IssueTickets
 		)
 	}
 
+	uc.consumeHolds(ctx, in.OrderID, order.EventID)
 	return port.IssueTicketsResult{
 		OrderID:       in.OrderID,
 		EventID:       order.EventID,

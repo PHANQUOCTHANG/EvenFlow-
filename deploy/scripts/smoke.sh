@@ -17,6 +17,10 @@ TICKETING="${TICKETING_URL:-http://localhost:8082}"
 # Phai nam trong ACTIVE_EVENT_IDS cua worker + controller (mac dinh co san).
 EVENT_ID="${SMOKE_EVENT_ID:-22222222-2222-4222-8222-222222222222}"
 BUYER="00000000-0000-4000-8000-000000000001"
+# Smoke goi THANG waitingroom/ticketing (khong qua gateway) nen tu dong vai gateway: gan cac header
+# danh tinh ma gateway lay tu JWT. Thieu X-Identity-Verified thi join bi 403 (BR-Q3, EV-111); queue token
+# gan voi thiet bi nen moi lan goi phai cung X-Device-Id (EV-137).
+IDHDR=(-H "X-Identity-Id: $BUYER" -H "X-Identity-Role: buyer" -H "X-Identity-Verified: true" -H "X-Device-Id: 00000000-0000-4000-8000-0000000000d1")
 QUOTA=100
 TTL=5
 
@@ -32,6 +36,14 @@ die()  {
 # json_field <ten> -- doc truong tu JSON gon (Go encoder khong chen khoang trang).
 json_field() {
   sed -n "s/.*\"$1\":\"\\{0,1\\}\\([^\",}]*\\)\"\\{0,1\\}.*/\\1/p" | head -n1
+}
+
+# jti_of <queue_token> -- jti nam trong payload base64url cua token (q1.<payload>.<chu ky>).
+# Token duoc ky lai moi lan join (EV-137) nen chuoi khac nhau; jti la dinh danh cho trong hang.
+jti_of() {
+  local p; p="$(printf '%s' "$1" | cut -d. -f2 | tr '_-' '/+')"
+  while (( ${#p} % 4 )); do p="${p}="; done
+  printf '%s' "$p" | base64 -d 2>/dev/null | json_field jti
 }
 
 # http <method> <url> [curl args...] -> in "body\nstatus"
@@ -84,7 +96,7 @@ ok "Postgres=$(pg_available)  Redis=$(redis_available)"
 
 step "3. Xep hang"
 resp="$(http POST "$WAITINGROOM/v1/events/$EVENT_ID/queue/join" \
-  -H 'Content-Type: application/json' -H "X-Identity-Id: $BUYER" -d '{"signals":{}}')"
+  -H 'Content-Type: application/json' "${IDHDR[@]}" -d '{"signals":{}}')"
 [[ "$(echo "$resp" | status_of)" == "200" ]] || die "join tra $(echo "$resp" | status_of): $(echo "$resp" | body_of)"
 TOKEN="$(echo "$resp" | body_of | json_field queue_token)"
 [[ -n "$TOKEN" ]] || die "join khong tra queue_token"
@@ -92,16 +104,18 @@ ok "join -> token ${TOKEN:0:8}...  state=$(echo "$resp" | body_of | json_field s
 
 # Goi lai phai ra dung token cu (BR-Q3)
 resp2="$(http POST "$WAITINGROOM/v1/events/$EVENT_ID/queue/join" \
-  -H 'Content-Type: application/json' -H "X-Identity-Id: $BUYER" -d '{}')"
-[[ "$(echo "$resp2" | body_of | json_field queue_token)" == "$TOKEN" ]] \
-  || die "join lan 2 phai tra lai dung token (BR-Q3)"
-ok "join lai -> cung token (BR-Q3)"
+  -H 'Content-Type: application/json' "${IDHDR[@]}" -d '{}')"
+TOKEN2="$(echo "$resp2" | body_of | json_field queue_token)"
+[[ -n "$(jti_of "$TOKEN")" && "$(jti_of "$TOKEN2")" == "$(jti_of "$TOKEN")" ]] \
+  || die "join lan 2 phai giu nguyen cho trong hang (cung jti, BR-Q3)"
+TOKEN="$TOKEN2"
+ok "join lai -> cung jti, giu cho trong hang (BR-Q3)"
 
 step "4. Chua duoc admit thi khong giu ghe duoc"
 code="$(curl -s -o /dev/null -m 10 -w '%{http_code}' -X POST \
   "$TICKETING/v1/events/$EVENT_ID/holds" \
   -H 'Content-Type: application/json' -H "Idempotency-Key: smoke-bogus-$$" \
-  -H "X-Identity-Id: $BUYER" -H 'X-Queue-Token: khong-ton-tai' \
+  "${IDHDR[@]}" -H 'X-Queue-Token: khong-ton-tai' \
   -d "{\"ticket_type_id\":\"$TT\",\"quantity\":1}")"
 [[ "$code" == "403" ]] || die "token gia phai bi 403, nhan $code"
 ok "token gia -> 403"
@@ -109,7 +123,7 @@ ok "token gia -> 403"
 step "5. Cho admit controller tha vao"
 admitted=0
 for _ in $(seq 1 40); do
-  st="$(http GET "$WAITINGROOM/v1/events/$EVENT_ID/queue/status" -H "X-Queue-Token: $TOKEN" | body_of | json_field state)"
+  st="$(http GET "$WAITINGROOM/v1/events/$EVENT_ID/queue/status" "${IDHDR[@]}" -H "X-Queue-Token: $TOKEN" | body_of | json_field state)"
   if [[ "$st" == "ADMITTED" ]]; then admitted=1; break; fi
   sleep 1
 done
@@ -120,12 +134,12 @@ step "6. Giu ghe"
 hold() { # <idempotency-key> <quantity>
   http POST "$TICKETING/v1/events/$EVENT_ID/holds" \
     -H 'Content-Type: application/json' -H "Idempotency-Key: $1" \
-    -H "X-Identity-Id: $BUYER" -H "X-Queue-Token: $TOKEN" \
+    "${IDHDR[@]}" -H "X-Queue-Token: $TOKEN" \
     -d "{\"ticket_type_id\":\"$TT\",\"quantity\":$2}"
 }
 
 code="$(curl -s -o /dev/null -m 10 -w '%{http_code}' -X POST "$TICKETING/v1/events/$EVENT_ID/holds" \
-  -H 'Content-Type: application/json' -H "X-Identity-Id: $BUYER" -H "X-Queue-Token: $TOKEN" \
+  -H 'Content-Type: application/json' "${IDHDR[@]}" -H "X-Queue-Token: $TOKEN" \
   -d "{\"ticket_type_id\":\"$TT\",\"quantity\":1}")"
 [[ "$code" == "400" ]] || die "thieu Idempotency-Key phai bi 400, nhan $code"
 ok "thieu Idempotency-Key -> 400 (BR-O5)"
