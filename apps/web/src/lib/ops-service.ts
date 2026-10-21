@@ -1,6 +1,6 @@
 /** Ops Service — war room cho Ops (EV-187, EVF-117).
  *
- * Hien chi la DU LIEU MAU tat dinh (isSample = true), cung mau voi lib/organizer-service.ts.
+ * Hien chi la DU LIEU MAU tat dinh (isSample = true), cung kieu du lieu mau voi doanh so organizer (xem getRealtimeSales).
  * Khi co Ops API that (admit controller, ticketing, ai-worker /admin/mode) chi can thay than
  * cua getOpsWarRoom / listOpsEvents; hop dong kieu giu nguyen.
  *
