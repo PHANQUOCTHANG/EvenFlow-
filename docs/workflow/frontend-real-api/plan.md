@@ -133,3 +133,7 @@ flag, (3) drop single-flight reuse, (4) skip clearSession on refresh failure, (5
 - m-R3-4: accepted as-is (error page for ≤ 60 s if the backend fails during regeneration).
 - m-R3-5: verification notes that `/events/[slug]` carries `s-maxage=10` because of the availability fetch; not a regression of AC-16.
 - m-R3-6: WP1 also replaces the `unauthorized` page test and `RoleGuard` tests if async `logout` breaks them (added to the TCR).
+
+## 9. Amendment after implementation
+
+- `qrcode@1.5.4` + `@types/qrcode@1.5.6` were added (exact versions) after the human chose "add qrcode" on 2026-10-21 to meet AC-15 (scannable QR). This supersedes "no new npm dependencies" for that package only.

@@ -1,0 +1,366 @@
+{
+  "review_commit": "bb05733",
+  "round": 1,
+  "counts": {
+    "blocker": 0,
+    "major": 11,
+    "minor": 27
+  },
+  "items": [
+    {
+      "id": "F-1",
+      "status": "to_fix",
+      "severity": "major",
+      "sources": [
+        "C-1",
+        "X-8"
+      ],
+      "title": "Confirmed: no UI path to raise a tier quota on an ON_SALE event (regression vs develop)",
+      "files": [
+        "apps/web/src/app/(organizer)/organizer/events/[eventId]/edit/edit-event-client.tsx"
+      ],
+      "fix": "Add a quota-only mode for ON_SALE (and SOLD_OUT if the backend allows it). Either render the wizard tier step with the event fields read-only, skip updateOrganizerEvent (PUT /events is not allowed on ON_SALE), and call only updateTierQuota; or add a small 'Tăng số lượng vé' form on review-status. Show the edit link for ON_SALE events, and update the it.each test so ON_SALE expects the quota-only form. | For ON_SALE (and other non-editable states that still allow tier ops) render a tiers-only mode: fields of step 1/3 read-only, PUT /events skipped, only addTier/updateTierQuota calls; keep the full block only for COMPLETED/CANCELLED."
+    },
+    {
+      "id": "F-2",
+      "status": "to_fix",
+      "severity": "major",
+      "sources": [
+        "C-2"
+      ],
+      "title": "After a partial create failure, clicking submit again creates a second draft event",
+      "files": [
+        "apps/web/src/app/(organizer)/organizer/events/new/page.tsx"
+      ],
+      "fix": "When the result has a draftHref (or failedStep), disable the submit buttons and leave only the 'Mở bản nháp' link, or redirect to the edit page automatically. Alternatively, keep the created event id in page state and resume (tiers/submit) against it instead of creating again."
+    },
+    {
+      "id": "F-3",
+      "status": "to_fix",
+      "severity": "major",
+      "sources": [
+        "C-3"
+      ],
+      "title": "Edit retry after a partial tier failure re-POSTs tiers that were already created",
+      "files": [
+        "apps/web/src/app/(organizer)/organizer/events/[eventId]/edit/edit-event-client.tsx"
+      ],
+      "fix": "After a partial failure, reload the event (call OrganizerEventView's load/setEvent with fresh data, or router.refresh plus a key change) and map created tiers back to their server ids. At minimum, record the tiers created in this session and skip them on retry. Point draftHref somewhere that forces a reload, or drop it on the edit page."
+    },
+    {
+      "id": "F-4",
+      "status": "to_fix",
+      "severity": "major",
+      "sources": [
+        "X-1",
+        "X-11",
+        "C-9"
+      ],
+      "title": "Proactive refresh with a skewed client clock: lastRefreshed guard only covers this tab's own token -> refresh ping-pong between tabs (one refresh per request) and one refresh per 30 s in a single tab, while every Bearer sent was still valid server-side",
+      "files": [
+        "apps/web/src/lib/api-client.ts"
+      ],
+      "fix": "Do not decide expiry from the client clock alone: estimate skew from the issued token (iat vs Date.now() at receipt, or a Date response header) and only refresh early when (exp - skew - now) <= 30 s; alternatively drop proactive refresh entirely and rely on the reactive 401 path, or make the guard token-independent (any refresh in the last N seconds seen via storage timestamp, e.g. persist `ef_refreshed_at` so all tabs share it). | Catch NETWORK_ERROR from the proactive refresh and fall through to sending the request with the current token (the reactive 401 path still covers true expiry). | Wrap the proactive refresh in try/catch. On a non-AUTH_REQUIRED error, continue with the current token and let the 401 token-expired path handle real expiry."
+    },
+    {
+      "id": "F-5",
+      "status": "to_fix",
+      "severity": "major",
+      "sources": [
+        "X-2",
+        "X-3"
+      ],
+      "title": "401 that is not refreshable (no session -> /problems/unauthorized; or retried request still /problems/token-expired) is mapped to UNKNOWN 'Lỗi hệ thống khi giữ vé (HTTP 401)' instead of AUTH_REQUIRED; same in payment-client (line 250: 'Lỗi thanh toán HTTP 401')",
+      "files": [
+        "apps/web/src/lib/hold-client.ts",
+        "apps/web/src/components/checkout/checkout-view.tsx"
+      ],
+      "fix": "In requestHold/cancelHold/initiatePayment/getOrderDetails/issueTickets map `response.status === 401 && !QUEUE_TOKEN_PROBLEMS.has(type)` to AUTH_REQUIRED (and 403 /problems/forbidden to a distinct code) so the UI shows the sign-in alert. | Add a fallback `<Alert variant=\"error\">{error.message}</Alert>` for any error type not handled explicitly (UNKNOWN/LIMIT_EXCEEDED/AMBIGUOUS message), and together with X-2 show the sign-in alert for 401."
+    },
+    {
+      "id": "F-6",
+      "status": "to_fix",
+      "severity": "major",
+      "sources": [
+        "X-4"
+      ],
+      "title": "register/verify 201 followed by a failed auto-login (e.g. 429 from the auth rate class after request-otp + verify + login from one IP, or 5xx) rejects with the LOGIN error; RegisterForm.handleVerifyOTP (line 367) rethrows it as 'OTP không hợp lệ' and stays on the OTP step although the account now exists -> re-submitting the OTP yields 409, user is stuck",
+      "files": [
+        "apps/web/src/lib/api/auth.ts"
+      ],
+      "fix": "Make verifyRegistrationOTP return `{registered:true, session:null, loginError}` (or throw an ApiError with code REGISTERED_LOGIN_FAILED) when verify succeeded but login failed; RegisterForm then shows SUCCESS with a 'Đăng nhập' link instead of an OTP error."
+    },
+    {
+      "id": "F-7",
+      "status": "to_fix",
+      "severity": "major",
+      "sources": [
+        "X-5",
+        "C-7"
+      ],
+      "title": "409 idempotency-in-progress (+ Retry-After: 1) is mapped to AMBIGUOUS with no retry, and the Idempotency-Key is regenerated on every requestHold call (line 116), so no retry (reload, second click after reset) is ever idempotent — spec §5 'idempotent retry after 409 in-flight (Retry-After)' is not implemented",
+      "files": [
+        "apps/web/src/lib/hold-client.ts",
+        "apps/web/src/lib/payment-client.ts"
+      ],
+      "fix": "Persist the key per (eventId, ticketTypeId, quantity) in sessionStorage (like issueKeyFor) and reuse it until a 2xx/4xx terminal answer; on 409 in-progress wait Retry-After (default 1 s, bounded attempts) and re-send the SAME key instead of surfacing AMBIGUOUS. | Read the problem type. For idempotency-in-progress, throw AMBIGUOUS, or wait Retry-After and retry once with the same key. Keep HOLD_EXPIRED for the other 409s."
+    },
+    {
+      "id": "F-8",
+      "status": "to_fix",
+      "severity": "major",
+      "sources": [
+        "X-6"
+      ],
+      "title": "Payment retry after a NETWORK_ERROR (request may have reached the server) sends POST /payments again with a NEW Idempotency-Key -> BR-O5 not honoured, two payment initiations possible for one order",
+      "files": [
+        "apps/web/src/hooks/use-payment-session.ts"
+      ],
+      "fix": "Generate the key once per (orderId, holdId) in the hook (useRef / sessionStorage `ef:pay:{orderId}`) and pass it to initiatePayment on every retry; rotate only after a definitive 4xx."
+    },
+    {
+      "id": "F-9",
+      "status": "to_fix",
+      "severity": "major",
+      "sources": [
+        "X-7"
+      ],
+      "title": "Edit mode: the slug input is enabled and pre-filled, but updateOrganizerEvent drops `slug` (PUT contract has no slug) and resolves without error -> silent field loss",
+      "files": [
+        "apps/web/src/components/organizer/event-wizard.tsx"
+      ],
+      "fix": "Disable the slug input when `isEditing` (read-only hint 'không thể đổi sau khi tạo'), or throw in updateOrganizerEvent when input.slug differs from existing.slug."
+    },
+    {
+      "id": "F-10",
+      "status": "to_fix",
+      "severity": "minor",
+      "sources": [
+        "C-4",
+        "X-17"
+      ],
+      "title": "Edit wizard offers 'Gửi kiểm duyệt' for SCHEDULED events, which always fails with 422",
+      "files": [
+        "apps/web/src/components/organizer/event-wizard.tsx"
+      ],
+      "fix": "Pass a canSubmit prop (canSubmitEvent(initialEvent.state)) to the wizard and hide or disable the submit-for-review button when it is false. | Hide/disable the submit button when `initialEvent && !canSubmitEvent(initialEvent.state)`."
+    },
+    {
+      "id": "F-11",
+      "status": "to_fix",
+      "severity": "minor",
+      "sources": [
+        "C-5",
+        "X-9"
+      ],
+      "title": "An expired session (refresh failed) during join or poll is shown as a network error, not 'sign in again'",
+      "files": [
+        "apps/web/src/components/queue/waiting-room.tsx"
+      ],
+      "fix": "In waiting-room, handle err instanceof ApiError && err.code === 'AUTH_REQUIRED' (show t('waiting.signInRequired') with a sign-in link). In use-queue-status, treat AUTH_REQUIRED as terminal (update error, transport idle). | In initQueueToken's catch, check `err instanceof ApiError && err.code === 'AUTH_REQUIRED'` and show the sign-in action (same as kind 'device'/'otp')."
+    },
+    {
+      "id": "F-12",
+      "status": "to_fix",
+      "severity": "minor",
+      "sources": [
+        "C-8"
+      ],
+      "title": "Logout while a refresh is in flight brings the session back",
+      "files": [
+        "apps/web/src/lib/api-client.ts"
+      ],
+      "fix": "Before setSession in doRefresh, re-read storage. If there is no session, or its refresh token is no longer cur.refreshToken, discard the result and throw AUTH_REQUIRED. Alternatively, keep a logout epoch counter and compare it."
+    },
+    {
+      "id": "F-13",
+      "status": "to_fix",
+      "severity": "minor",
+      "sources": [
+        "C-10",
+        "C-11",
+        "X-19"
+      ],
+      "title": "Issue-ticket idempotency key is kept after a 2xx with no QR tickets, so retries replay the same empty response",
+      "files": [
+        "apps/web/src/lib/payment-client.ts",
+        "apps/web/src/components/checkout/order-result-view.tsx",
+        "apps/web/src/hooks/use-order-status.ts"
+      ],
+      "fix": "Call forgetIssueKey(orderId) when the filtered list is empty, and also in useIssuedTickets.retry(). | Show 'đã sẵn sàng' only when issued.tickets.length > 0. Otherwise show 'Thanh toán thành công — đang phát hành vé'. | Stop retrying (set failed) when err.type is AUTH_REQUIRED or NOT_FOUND."
+    },
+    {
+      "id": "F-14",
+      "status": "to_fix",
+      "severity": "minor",
+      "sources": [
+        "X-10"
+      ],
+      "title": "Web Locks path has no timeout/ifAvailable/steal: if another tab holds 'ef-auth-refresh' and is suspended (bfcache/throttled), every authenticated apiFetch in this tab hangs forever",
+      "files": [
+        "apps/web/src/lib/api-client.ts"
+      ],
+      "fix": "Pass an AbortSignal with a timeout (e.g. 10 s) to locks.request and fall back to doRefresh without the lock when it aborts; or use `steal: true` after a timeout."
+    },
+    {
+      "id": "F-15",
+      "status": "to_fix",
+      "severity": "minor",
+      "sources": [
+        "X-12",
+        "X-13"
+      ],
+      "title": "Corrupted ef_user JSON makes getSession() null while ef_refresh is still a valid server-side token; logout() then skips POST /logout, so the refresh token is wiped locally but never revoked",
+      "files": [
+        "apps/web/src/lib/api/auth.ts",
+        "apps/web/src/lib/session.ts"
+      ],
+      "fix": "logout() should read ef_refresh directly from both storages (not via getSession) before clearing; or session.readFrom should keep returning the tokens with a placeholder user when only ef_user is corrupt. | Write the three keys first (try/catch), and only wipe the OTHER store / old values after a successful write; on failure restore the previous values."
+    },
+    {
+      "id": "F-16",
+      "status": "to_fix",
+      "severity": "minor",
+      "sources": [
+        "S-1"
+      ],
+      "title": "Google sign-in ignores the 'remember me' choice and always persists the session in localStorage",
+      "files": [
+        "apps/web/src/components/auth/LoginForm.tsx"
+      ],
+      "fix": "Pass { persist: remember ? 'local' : 'session' } to loginWithGoogle in LoginForm. RegisterForm has no checkbox, so pick one default on purpose and document it."
+    },
+    {
+      "id": "F-17",
+      "status": "to_fix",
+      "severity": "minor",
+      "sources": [
+        "S-3"
+      ],
+      "title": "Logout clears only the auth keys; per-user order, ticket and queue data stays in sessionStorage",
+      "files": [
+        "apps/web/src/lib/api/auth.ts"
+      ],
+      "fix": "Remove saveRecentOrder, or at least stop calling it from getOrderDetails, since nothing reads it. On logout, also clear the ef:queue:token:*, hold, evenflow_order_* and ef:issue:* sessionStorage keys, or call sessionStorage.clear() for the app's prefixes."
+    },
+    {
+      "id": "F-18",
+      "status": "to_fix",
+      "severity": "minor",
+      "sources": [
+        "S-7"
+      ],
+      "title": "Availability path interpolates eventId without encodeURIComponent",
+      "files": [
+        "apps/web/src/lib/event-service.ts"
+      ],
+      "fix": "Use encodeURIComponent(eventId) for consistency."
+    },
+    {
+      "id": "F-19",
+      "status": "to_fix",
+      "severity": "minor",
+      "sources": [
+        "X-16"
+      ],
+      "title": "Step-3 gate applies BR-E2 (sale start >= now+30 min) to EVERY path, so 'Lưu nháp' (and editing a DRAFT/SCHEDULED/REJECTED event whose sale start is <30 min away or in the past) can never reach step 4, while createOrganizerEvent only enforces BR-E2 when submitForReview",
+      "files": [
+        "apps/web/src/components/organizer/event-wizard.tsx"
+      ],
+      "fix": "Move the BR-E2 check from handleNext(step 3) into handleSubmit(submitForReview === true) only; show it as a warning on step 3."
+    },
+    {
+      "id": "F-20",
+      "status": "to_fix",
+      "severity": "minor",
+      "sources": [
+        "X-18"
+      ],
+      "title": "Suspicion: CheckoutPageClient renders CheckoutView without maxSelectablePerOrder, so the hard-coded default 4 is used although event.maxPerOrder is now mapped from the API (max_per_order); events with max_per_order < 4 get 422 quantity-not-allowed, > 4 cannot be selected",
+      "files": [
+        "apps/web/src/components/checkout/checkout-view.tsx"
+      ],
+      "fix": "Pass `maxSelectablePerOrder={event.maxPerOrder || 4}` from CheckoutPageClient."
+    },
+    {
+      "id": "D-C-6",
+      "status": "deferred",
+      "severity": "minor",
+      "sources": [
+        "C-6"
+      ],
+      "title": "cancelHold exists but nothing in the UI calls it",
+      "reason": "AC-11 only requires the client function; a cancel button is a UX follow-up"
+    },
+    {
+      "id": "D-S-2",
+      "status": "deferred",
+      "severity": "minor",
+      "sources": [
+        "S-2"
+      ],
+      "title": "XSS amplification: a long-lived refresh token is now kept in web storage (accepted risk, recorded here)",
+      "reason": "human accepted web storage for tokens"
+    },
+    {
+      "id": "D-S-4",
+      "status": "deferred",
+      "severity": "minor",
+      "sources": [
+        "S-4"
+      ],
+      "title": "Server-supplied redirect_url is assigned to window.location without a scheme/host check; the server echoes client return_url unvalidated",
+      "reason": "pre-existing; payment service return_url allow-list is a backend follow-up"
+    },
+    {
+      "id": "D-S-5",
+      "status": "deferred",
+      "severity": "minor",
+      "sources": [
+        "S-5"
+      ],
+      "title": "New unauthenticated bulk list exposes organizer_id plus tier quota/bucket_count for up to 100 events per call",
+      "reason": "same fields already public via GET /events/{id}"
+    },
+    {
+      "id": "D-S-6",
+      "status": "deferred",
+      "severity": "minor",
+      "sources": [
+        "S-6"
+      ],
+      "title": "Without Web Locks, concurrent refresh across tabs can reuse a rotated refresh token and trigger family revocation (forced logout)",
+      "reason": "browsers without Web Locks; no data leak; accepted"
+    },
+    {
+      "id": "D-S-8",
+      "status": "deferred",
+      "severity": "minor",
+      "sources": [
+        "S-8"
+      ],
+      "title": "Supply chain: qrcode@1.5.4 adds 26 transitive packages (yargs CLI tree, pngjs, dijkstrajs) with no new advisories",
+      "reason": "supply chain reviewed; no new audit findings"
+    },
+    {
+      "id": "D-X-14",
+      "status": "deferred",
+      "severity": "minor",
+      "sources": [
+        "X-14"
+      ],
+      "title": "readFrom only checks typeof role === 'string'; an unknown role (e.g. 'admin', or a tampered value) is returned as Role and reaches RoleGuard/useAuth",
+      "reason": "server enforces roles; client role only gates UX"
+    },
+    {
+      "id": "D-X-15",
+      "status": "deferred",
+      "severity": "minor",
+      "sources": [
+        "X-15"
+      ],
+      "title": "Google login: when /devices succeeds and /refresh fails on the NETWORK (response lost after the server rotated the pair) the client restores the original Google refresh token, which may already be revoked -> the next token-expired turns into a forced logout",
+      "reason": "rare network race after server rotation; leads to re-login, no leak"
+    }
+  ]
+}
