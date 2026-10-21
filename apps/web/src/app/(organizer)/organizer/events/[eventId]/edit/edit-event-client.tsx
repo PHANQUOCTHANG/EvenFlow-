@@ -73,7 +73,10 @@ function EditForm({
         const key = serverTier ? serverTier.id : tier.id;
         const old = existing.get(key) ?? serverTier;
         if (!old) {
-          created.current.set(tier.id, await addTier(eventId, tier));
+          const made = await addTier(eventId, tier);
+          // H-3: khoa theo ca id cuc bo lan id may chu (sau khi wizard doi id, hang ve khong bi POST lai).
+          created.current.set(tier.id, made);
+          created.current.set(made.id, made);
         } else if (old.quota !== tier.quota) {
           await updateTierQuota(eventId, key, tier.quota);
         }

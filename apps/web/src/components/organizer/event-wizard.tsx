@@ -99,7 +99,9 @@ export function EventWizard({
   // Chỉ DRAFT/REJECTED mới nộp duyệt được (khi tạo mới luôn được).
   const canSubmit = !initialEvent || canSubmitEvent(initialEvent.state);
   // Hạng vé đã tồn tại trên backend: chỉ được đổi quota (PUT .../tiers/{id} {new_quota}).
-  const existingTierIds = new Set((initialEvent?.tiers ?? []).map((t) => t.id));
+  // H-3: cong them hang ve da tao trong phien nay (id may chu) de khong phu thuoc viec tai lai thanh cong.
+  const [createdIds, setCreatedIds] = useState<ReadonlySet<string>>(() => new Set());
+  const existingTierIds = new Set([...(initialEvent?.tiers ?? []).map((t) => t.id), ...createdIds]);
 
   const [step, setStep] = useState<WizardStep>(1);
 
@@ -343,6 +345,7 @@ export function EventWizard({
     const created = result.createdTiers;
     if (!created || Object.keys(created).length === 0) return;
     setTiers((prev) => prev.map((t) => created[t.id] ?? t));
+    setCreatedIds((prev) => new Set([...prev, ...Object.values(created).map((t) => t.id)]));
   }
 
   if (quotaOnly && initialEvent) {
