@@ -95,9 +95,9 @@ test.describe("EV-198 luong mua ve (backend gia lap)", () => {
       for (const code of TICKET_CODES) {
         await expect(tickets.getByText(code, { exact: true }).first()).toBeVisible();
       }
-      // AC-15: QR den tu POST issue-tickets (payload ky that), hien thanh chu trong khung QR.
+      // AC-15: QR den tu POST issue-tickets (payload ky that), ve thanh SVG quet duoc.
       for (const code of TICKET_CODES) {
-        await expect(tickets.getByText(`QR-${code}`, { exact: true })).toBeVisible();
+        await expect(tickets.locator(`[data-qr-payload="QR-${code}"][data-qr-state="ready"] svg`)).toBeVisible();
       }
       expect(api.calls("POST", `/v1/orders/${ORDER_ID}/issue-tickets`).length).toBeGreaterThanOrEqual(1);
     });

@@ -93,3 +93,9 @@ Nguon: AC-28 (spec.md). Khong xoa, khong skip, khong lam yeu assertion cu; chi d
 | tests/e2e/specs/ops-war-room.spec.ts, smoke.spec.ts | khong doi | ops van dung SAMPLE_EVENTS (AC-19) |
 | tests/e2e/tsconfig.json | them `resolveJsonModule` | import `events.json` dung chung giua api-mock.ts va stub-api.mjs |
 | tests/e2e/playwright.config.ts | them `webServer` chay `fixtures/stub-api.mjs` (:8080, `reuseExistingServer: !CI`) | fetch phia server cua Next (SSR/ISR) khong di qua page.route |
+
+## Integrator (after merging wp/fe-qr)
+
+| File | Change | Why |
+|---|---|---|
+| tests/e2e/specs/buy-flow.spec.ts | `getByText("QR-<code>")` → `[data-qr-payload="QR-<code>"][data-qr-state="ready"] svg` visible | The result page now draws a scannable SVG QR from the payload (human-approved `qrcode` dependency) instead of printing the payload text; the new assertion is stronger (payload bound to the element AND an SVG rendered) |
