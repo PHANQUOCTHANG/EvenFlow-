@@ -78,4 +78,11 @@ describe("EventList — 9 trạng thái từ API (AC-20)", () => {
     expect(screen.getByText(/1 hạng vé \(Tổng 100 vé\)/)).toBeInTheDocument();
     expect(screen.getByText(/Giá từ/)).toBeInTheDocument();
   });
+
+  it("F-1: ON_SALE có link 'Tăng số lượng vé' tới trang sửa", () => {
+    render(<EventList events={[ev("ON_SALE", 3), ev("SOLD_OUT", 4)]} />);
+    const link = screen.getByRole("link", { name: /Tăng số lượng vé/ });
+    expect(link).toHaveAttribute("href", "/organizer/events/id-3/edit");
+    expect(screen.getAllByRole("link", { name: /Tăng số lượng vé/ })).toHaveLength(1);
+  });
 });

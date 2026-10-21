@@ -18,7 +18,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/cn";
 import { formatVnd } from "@/lib/format";
-import { canEditEvent, type EventLifecycleState, type OrganizerEvent } from "@/lib/organizer-service";
+import { canEditEvent, canOpenEventEditor, type EventLifecycleState, type OrganizerEvent } from "@/lib/organizer-service";
 
 export interface EventListProps {
   events: OrganizerEvent[];
@@ -225,10 +225,10 @@ export function EventList({ events, className }: EventListProps) {
                     </Button>
                   </Link>
 
-                  {canEditEvent(event.state) && (
+                  {canOpenEventEditor(event.state) && (
                     <Link href={`/organizer/events/${event.id}/edit`}>
                       <Button variant="tertiary" className="text-body-xs">
-                        ✏️ Chỉnh sửa
+                        {canEditEvent(event.state) ? "✏️ Chỉnh sửa" : "✏️ Tăng số lượng vé"}
                       </Button>
                     </Link>
                   )}

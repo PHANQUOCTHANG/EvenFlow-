@@ -288,6 +288,16 @@ export function canEditEvent(state: EventLifecycleState): boolean {
   return EDITABLE_STATES.includes(state);
 }
 
+/** ON_SALE: chi duoc TANG quota hang ve (PUT .../tiers/{id} {new_quota}); cac truong su kien chi doc. */
+export function canIncreaseTierQuota(state: EventLifecycleState): boolean {
+  return state === "ON_SALE";
+}
+
+/** Co loi vao trang sua (day du hoac chi tang quota). */
+export function canOpenEventEditor(state: EventLifecycleState): boolean {
+  return canEditEvent(state) || canIncreaseTierQuota(state);
+}
+
 export function canSubmitEvent(state: EventLifecycleState): boolean {
   return SUBMITTABLE_STATES.includes(state);
 }

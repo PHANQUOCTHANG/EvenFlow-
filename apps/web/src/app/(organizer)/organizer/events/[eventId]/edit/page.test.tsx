@@ -93,7 +93,7 @@ describe("EditEventPage route (/organizer/events/[eventId]/edit - AC-22)", () =>
     expect(await screen.findByText("Chỉnh sửa: Rock Fest")).toBeInTheDocument();
   });
 
-  it.each(["PENDING_REVIEW", "ON_SALE", "SOLD_OUT", "CLOSED", "COMPLETED", "CANCELLED"] as const)(
+  it.each(["PENDING_REVIEW", "SOLD_OUT", "CLOSED", "COMPLETED", "CANCELLED"] as const)(
     "trạng thái %s không được chỉnh sửa: không hiện form",
     async (state) => {
       mocks.getById.mockResolvedValue(event(state));
@@ -185,10 +185,63 @@ describe("EditEventPage route (/organizer/events/[eventId]/edit - AC-22)", () =>
 
     expect(await screen.findByText(/Đã lưu thông tin sự kiện nhưng bước tạo hạng vé thất bại/)).toBeInTheDocument();
     expect(screen.getByText(/Hạng vé "GA": quota không hợp lệ/)).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /Mở bản nháp/ })).toHaveAttribute(
-      "href",
-      `/organizer/events/${EVT}/edit`,
-    );
+    // F-3: liên kết tới chính trang này không tải lại gì -> thay bằng tải lại dữ liệu thật từ máy chủ.
+    expect(screen.queryByRole("link", { name: /Mở bản nháp/ })).not.toBeInTheDocument();
+    expect(mocks.getById.mock.calls.length).toBeGreaterThanOrEqual(3);
     expect(mocks.push).not.toHaveBeenCalled();
+  });
+
+  it("F-1: ON_SALE -> form tăng số lượng vé, chỉ gọi PUT tier quota (không PUT sự kiện, không POST hạng vé)", async () => {
+    mocks.getById.mockResolvedValue(event("ON_SALE"));
+    mocks.updateQuota.mockResolvedValue({});
+    await renderPage();
+    expect(await screen.findByText(/Tăng số lượng vé/)).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText(/Số lượng vé \(Quota\)/), { target: { value: "500" } });
+    fireEvent.click(screen.getByRole("button", { name: "Lưu số lượng vé" }));
+    await waitFor(() => expect(mocks.push).toHaveBeenCalledWith(`/organizer/events/${EVT}/review-status`));
+    expect(mocks.updateQuota).toHaveBeenCalledWith(EVT, "tier-a", 500);
+    expect(mocks.update).not.toHaveBeenCalled();
+    expect(mocks.addTier).not.toHaveBeenCalled();
+    expect(mocks.submit).not.toHaveBeenCalled();
+  });
+
+  it("F-1: ON_SALE giảm quota bị chặn phía client", async () => {
+    mocks.getById.mockResolvedValue(event("ON_SALE"));
+    await renderPage();
+    await screen.findByText(/Tăng số lượng vé/);
+    fireEvent.change(screen.getByLabelText(/Số lượng vé \(Quota\)/), { target: { value: "10" } });
+    fireEvent.click(screen.getByRole("button", { name: "Lưu số lượng vé" }));
+    expect(screen.getByText(/Tuyệt đối cấm giảm số lượng vé/)).toBeInTheDocument();
+    expect(mocks.updateQuota).not.toHaveBeenCalled();
+  });
+
+  it("F-3: thử lại sau khi lỗi một phần không POST lại hạng vé đã tạo", async () => {
+    const base = event();
+    mocks.getById.mockResolvedValue(base);
+    mocks.update.mockResolvedValue(base);
+    mocks.addTier
+      .mockResolvedValueOnce({ id: "srv-new-1", name: "Hạng vé #2", price: 200000, quota: 100 })
+      .mockRejectedValueOnce(new Error("hạng 3 lỗi"))
+      .mockResolvedValueOnce({ id: "srv-new-2", name: "Hạng vé #3", price: 200000, quota: 100 });
+    await renderPage();
+    await screen.findByText("Chỉnh sửa: Rock Fest");
+    next();
+    fireEvent.click(screen.getByRole("button", { name: "+ Thêm hạng vé" }));
+    fireEvent.click(screen.getByRole("button", { name: "+ Thêm hạng vé" }));
+    next();
+    next();
+    // Sau lần lưu đầu, máy chủ đã có hạng vé #2.
+    mocks.getById.mockResolvedValue({
+      ...base,
+      tiers: [...base.tiers, { id: "srv-new-1", name: "Hạng vé #2", price: 200000, quota: 100 }],
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Lưu nháp" }));
+    expect(await screen.findByText(/hạng 3 lỗi/)).toBeInTheDocument();
+    expect(mocks.addTier).toHaveBeenCalledTimes(2);
+
+    fireEvent.click(screen.getByRole("button", { name: "Lưu nháp" }));
+    await waitFor(() => expect(mocks.push).toHaveBeenCalled());
+    expect(mocks.addTier).toHaveBeenCalledTimes(3);
+    expect(mocks.addTier).toHaveBeenLastCalledWith(EVT, expect.objectContaining({ name: "Hạng vé #3" }));
   });
 });

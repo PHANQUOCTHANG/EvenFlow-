@@ -124,4 +124,12 @@ describe("ModerationStatusCard — nộp duyệt và huỷ (AC-23)", () => {
     rerender(<ModerationStatusCard event={ev("ON_SALE")} />);
     expect(screen.queryByRole("link", { name: /Chỉnh sửa thông tin/ })).not.toBeInTheDocument();
   });
+
+  it("F-1: ON_SALE có link 'Tăng số lượng vé'", () => {
+    render(<ModerationStatusCard event={ev("ON_SALE")} />);
+    expect(screen.getByRole("link", { name: /Tăng số lượng vé/ })).toHaveAttribute(
+      "href",
+      expect.stringMatching(/\/edit$/),
+    );
+  });
 });

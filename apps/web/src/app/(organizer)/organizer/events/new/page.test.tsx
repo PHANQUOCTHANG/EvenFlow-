@@ -124,4 +124,16 @@ describe("NewEventPage route (/organizer/events/new - AC-21)", () => {
     expect(await screen.findByText("không tạo được sự kiện")).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /Mở bản nháp/ })).not.toBeInTheDocument();
   });
+
+  it("F-2: sau lỗi một phần, không POST /events lần nữa (khoá nút lưu, giữ link bản nháp)", async () => {
+    createMock.mockResolvedValue({ event: draft(), failedStep: "tiers", error: "tên hạng vé bị trùng" });
+    render(<NewEventPage />);
+    fillAndReachReview();
+    fireEvent.click(screen.getByRole("button", { name: /Gửi kiểm duyệt/ }));
+    await screen.findByRole("link", { name: /Mở bản nháp/ });
+
+    fireEvent.click(screen.getByRole("button", { name: "Lưu nháp" }));
+    expect(createMock).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole("button", { name: "Lưu nháp" })).toBeDisabled();
+  });
 });

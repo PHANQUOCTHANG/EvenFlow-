@@ -99,3 +99,12 @@ Nguon: AC-28 (spec.md). Khong xoa, khong skip, khong lam yeu assertion cu; chi d
 | File | Change | Why |
 |---|---|---|
 | tests/e2e/specs/buy-flow.spec.ts | `getByText("QR-<code>")` → `[data-qr-payload="QR-<code>"][data-qr-state="ready"] svg` visible | The result page now draws a scannable SVG QR from the payload (human-approved `qrcode` dependency) instead of printing the payload text; the new assertion is stronger (payload bound to the element AND an SVG rendered) |
+
+## Fix round 1 (organizer: F-1, F-2, F-3, F-9, F-10, F-19)
+
+| File | Old -> new | Why |
+|---|---|---|
+| apps/web/src/app/(organizer)/organizer/events/[eventId]/edit/page.test.tsx | `it.each` of non-editable states: `ON_SALE` removed (now opens the quota-only form; new tests assert PUT tier quota only, decrease blocked) | F-1 / AC-22: ON_SALE tier quota increases must be reachable |
+| apps/web/src/app/(organizer)/organizer/events/[eventId]/edit/page.test.tsx | partial tier failure test: no longer asserts the "Mo ban nhap" link (`/edit` on the same page); asserts the event is reloaded instead | F-3: a link to the current route never reloaded; retry now diffs against freshly loaded server tiers |
+| apps/web/src/components/organizer/event-wizard.test.tsx | BR-E2 test: step 3 with <30 min shows the BR-E2 warning and still advances; "Gui kiem duyet" is blocked with BR-E2 | F-19: gate belongs to submit-for-review only (matches createOrganizerEvent) |
+| apps/web/src/components/organizer/event-wizard.test.tsx | ON_SALE decrease test goes through the quota-only form ("Luu so luong ve") instead of wizard step 2 | F-1: ON_SALE renders quota-only mode; BR-E3 message unchanged |

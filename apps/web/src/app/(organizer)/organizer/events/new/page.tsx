@@ -18,6 +18,8 @@ export default function NewEventPage() {
         error: result.error,
         failedStep: result.failedStep,
         draftHref: `/organizer/events/${result.event.id}/edit`,
+        // Bản nháp đã có: không POST /events lần nữa (AC-21).
+        blockResubmit: true,
       };
     }
     if (data.submitForReview) {
