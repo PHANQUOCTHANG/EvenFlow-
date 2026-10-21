@@ -1,7 +1,7 @@
 /** Wrapper fetch dung chung cho moi client goi qua gateway (AC-3, AC-4, AC-5).
  *
  * - URL = apiBase() + path. Co phien -> `Authorization: Bearer <access>`; khong co -> khong gui.
- * - Khong bao gio dung `credentials` va khong gui header X-Identity-* (gateway tu chen tu token).
+ * - Khong bao gio dung `credentials` va khong tu gui header danh tinh (gateway tu chen tu token).
  * - 401 `/problems/token-expired` -> refresh DUNG 1 lan (single-flight trong tab + Web Locks giua cac tab),
  *   roi retry request goc dung 1 lan. Refresh hong -> xoa phien, nem ApiError AUTH_REQUIRED.
  * - 401/403 cua queue token KHONG phai loi dang nhap -> khong refresh, tra nguyen Response.
