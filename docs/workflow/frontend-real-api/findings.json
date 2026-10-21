@@ -532,5 +532,69 @@
         "reason": "changing method after a lost response returns the existing payment; acceptable, backend is source of truth"
       }
     ]
+  },
+  "round4": {
+    "review_commit": "06fd7c4",
+    "blocker": 0,
+    "major": 0,
+    "items": [
+      {
+        "id": "D-R4-1",
+        "sources": [
+          "R4-1",
+          "W-3"
+        ],
+        "severity": "minor",
+        "status": "deferred",
+        "reason": "refresh POST without timeout is deliberate (aborting after server rotation causes family revocation); hung /refresh blocks that tab until closed"
+      },
+      {
+        "id": "D-R4-2",
+        "sources": [
+          "R4-2",
+          "W-2"
+        ],
+        "severity": "minor",
+        "status": "deferred",
+        "reason": "non-abort navigator.locks errors surface as raw DOMException; pre-existing; map to NETWORK_ERROR in follow-up"
+      },
+      {
+        "id": "D-R4-3",
+        "sources": [
+          "R4-3",
+          "W-1"
+        ],
+        "severity": "minor",
+        "status": "deferred",
+        "reason": "cross-tab user switch not reconciled for buy-flow keys; same-tab fixed"
+      },
+      {
+        "id": "D-R4-4",
+        "sources": [
+          "R4-4"
+        ],
+        "severity": "minor",
+        "status": "deferred",
+        "reason": "PRIORITY follow-up: re-read inside lock should compare user id; rare (account switch during lock wait)"
+      },
+      {
+        "id": "D-W-4",
+        "sources": [
+          "W-4"
+        ],
+        "severity": "minor",
+        "status": "deferred",
+        "reason": "lost addTier response leads to 422 duplicate name until reload"
+      },
+      {
+        "id": "D-W-5",
+        "sources": [
+          "W-5"
+        ],
+        "severity": "minor",
+        "status": "deferred",
+        "reason": "payment-client maps 403 forbidden to UNKNOWN; needs its own TCR"
+      }
+    ]
   }
 }
