@@ -1,14 +1,12 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { EventActionPanel } from "@/components/event/event-action-panel";
 import { LobbyNotice } from "@/components/event/lobby-notice";
 import { TICKET_TIERS_HEADING_ID, TicketTierList } from "@/components/event/ticket-tier-list";
-import { Badge, type BadgeVariant } from "@/components/ui";
-import {
-  getAllEventSlugs,
-  getEventBySlug,
-} from "@/lib/event-service";
+import { Alert, Badge, type BadgeVariant } from "@/components/ui";
+import { getEventBySlug } from "@/lib/event-service";
 import { toEpochMs } from "@/lib/server-time";
 
 export const revalidate = 60;
@@ -17,16 +15,20 @@ interface PageProps {
   params: Promise<{ slug: string }>;
 }
 
+/** Khong doc backend luc build: trang sinh theo yeu cau dau tien roi ISR (revalidate = 60). */
 export async function generateStaticParams() {
-  const slugs = await getAllEventSlugs();
-  return slugs.map((slug) => ({ slug }));
+  return [];
 }
+
+/** Ton kho chi mang tinh goi y: fetch availability bao lam moi 10s (trang van revalidate = 60). */
+const FETCH_OPTS = { revalidate: 10 } as const;
 
 export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const event = await getEventBySlug(slug);
+  // Backend loi: dung metadata chung, khong lam hong trang.
+  const event = await getEventBySlug(slug, FETCH_OPTS).catch(() => null);
 
   if (!event) {
     return {
@@ -64,7 +66,23 @@ function formatVenueTime(value: string): string {
 
 export default async function EventDetailPage({ params }: PageProps) {
   const { slug } = await params;
-  const event = await getEventBySlug(slug);
+  let event: Awaited<ReturnType<typeof getEventBySlug>>;
+  try {
+    event = await getEventBySlug(slug, FETCH_OPTS);
+  } catch {
+    // Mang / 5xx / timeout: hien trang loi co lien ket thu lai, khong nem ra ngoai render.
+    return (
+      <div className="py-xl" lang="vi">
+        <Alert variant="error" title="Không tải được sự kiện">
+          Hệ thống đang bận hoặc mất kết nối. Vui lòng{" "}
+          <Link href={`/events/${encodeURIComponent(slug)}`} className="underline">
+            thử lại
+          </Link>{" "}
+          sau ít phút.
+        </Alert>
+      </div>
+    );
+  }
 
   if (!event) {
     notFound();

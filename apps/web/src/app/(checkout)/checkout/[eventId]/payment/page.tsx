@@ -16,7 +16,8 @@ interface PageProps {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { eventId } = await params;
-  const event = await getEventById(eventId);
+  // Backend loi: dung tieu de chung (WP2 chuyen cac trang nay sang tra cuu phia client).
+  const event = await getEventById(eventId).catch(() => null);
 
   const title = event?.title ? `Thanh toán: ${event.title}` : "Thanh toán đơn hàng";
 
