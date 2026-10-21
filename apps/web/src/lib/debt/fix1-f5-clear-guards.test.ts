@@ -1,7 +1,7 @@
 /** F-5 (X-3): both clearSession guards (120 s abort, POST 401) also require the same user id. */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { installFetch, json, problem, resetEnv, setupEnv } from "@/test-utils/fetch-mock";
+import { installFetch, problem, resetEnv, setupEnv } from "@/test-utils/fetch-mock";
 
 import { fakeLocks, hangUntilAborted, installLocks, newTab, outcome, removeLocks, seedUser } from "./harness";
 

@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { installFetch, json, problem, resetEnv, setupEnv } from "@/test-utils/fetch-mock";
 
-import { fakeLocks, hangUntilAborted, installLocks, newTab, outcome, removeLocks, seedUser } from "./harness";
+import { fakeLocks, installLocks, newTab, outcome, removeLocks, seedUser } from "./harness";
 
 beforeEach(setupEnv);
 afterEach(() => {
