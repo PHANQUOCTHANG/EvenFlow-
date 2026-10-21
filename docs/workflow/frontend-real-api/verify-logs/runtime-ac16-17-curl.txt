@@ -1,0 +1,34 @@
+### GET /events (1st)
+HTTP/1.1 200 OK
+x-nextjs-cache: STALE
+x-nextjs-prerender: 1
+x-nextjs-prerender: 1
+x-nextjs-stale-time: 300
+Cache-Control: s-maxage=60, stale-while-revalidate=31535940
+### GET /events (2nd, after ISR revalidation trigger)
+HTTP/1.1 200 OK
+x-nextjs-cache: HIT
+x-nextjs-prerender: 1
+x-nextjs-stale-time: 300
+Cache-Control: s-maxage=60, stale-while-revalidate=31535940
+### GET /events/vietnam-tech-summit-2026
+HTTP/1.1 200 OK
+x-nextjs-cache: STALE
+x-nextjs-prerender: 1
+x-nextjs-stale-time: 300
+Cache-Control: s-maxage=10, stale-while-revalidate=31535990
+### GET /events/evenflow-grand-concert-2026
+HTTP/1.1 200 OK
+x-nextjs-cache: STALE
+x-nextjs-prerender: 1
+x-nextjs-stale-time: 300
+Cache-Control: s-maxage=10, stale-while-revalidate=31535990
+### GET /events/indie-acoustic-night-hanoi
+HTTP/1.1 200 OK
+x-nextjs-cache: STALE
+x-nextjs-prerender: 1
+x-nextjs-stale-time: 300
+Cache-Control: s-maxage=10, stale-while-revalidate=31535990
+### GET /events/khong-ton-tai-xyz
+HTTP/1.1 404 Not Found
+Cache-Control: s-maxage=10, stale-while-revalidate=31535990

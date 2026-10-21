@@ -1,0 +1,96 @@
+{
+  "review": {
+    "reviewer": "final incremental re-reviewer (v3 step 5, after fix round 3)",
+    "range": "67be2b8..06fd7c4 (excluding docs/workflow; gate script change in 06fd7c4 inspected separately)",
+    "tests_run": "vitest: fix3/h2-user-switch, fix2/g1-lock-refresh, fix1/f14-lock-timeout, hold-client.contract, checkout-view.fix3, organizer edit page.test -> 6 files, 59 tests passed",
+    "summary": "All 4 round-3 items fixed. No blocker or major. 4 new minor findings (2 of them pre-existing, carried over from earlier rounds)."
+  },
+  "verdicts": [
+    {
+      "id": "H-1",
+      "verdict": "fixed",
+      "evidence": "api-client.ts:100-198. The ef_refresh_inflight marker, MARKER_TTL, waitForRotation and the steal path are removed, so the raw refresh token is never copied out of ef_refresh and no code path can POST without holding the exclusive lock. The lock request passes { signal: ac.signal } (181). The deadline handler (171-176) sets abandoned=true before ac.abort(), and the callback checks abandoned first (182), so an abandoned request never POSTs even if the grant races the abort (single thread). Once the lock is granted the deadline is cleared (183-184) and the request's own POST runs to completion with no abort, so a rotated pair is never thrown away mid-flight. Inside the lock, doRefresh re-reads storage (109-117): a missing session gives AUTH_REQUIRED with no resurrection; a different refresh token reuses the new pair without a POST. refreshCore keeps the epoch and after-check (142-147).",
+      "tests": [
+        "g1-lock-refresh.test.ts H-1 Z-1 (40 s holder + waiter: one POST per token)",
+        "Z-1b (waiter gives up at 45 s: NETWORK_ERROR, no POST, session kept)",
+        "Z-2 (two waiters behind a stuck holder: 0 extra POSTs)",
+        "Z-3 (own 401 clears the session)",
+        "R3-1 it.each local/session (scans both storages during and after the POST: only ef_refresh holds the token, and no *refresh* key remains after clearSession)",
+        "G-1 rotated-while-waiting (no POST)",
+        "lock that never settles",
+        "f14-lock-timeout.test.ts (deadline: NETWORK_ERROR, 0 POSTs, session kept)"
+      ],
+      "notes": "Trade-off: the steal-based recovery is gone and the refresh POST has no timeout, so a hung POST blocks the holder tab with no limit and blocks other tabs' refresh in 45 s cycles. See R4-1."
+    },
+    {
+      "id": "H-2",
+      "verdict": "fixed",
+      "evidence": "session.ts:94-108. setSession calls reconcileBuyFlowOwner: prev = current session user id ?? sessionStorage ef:lastuid. A different id runs clearBuyFlowStorage(). ef:lastuid holds only a user id (no token), lives in sessionStorage (tab-scoped like the buy-flow keys), survives an involuntary expiry by design (G-4), and is removed on explicit logout (clearSession({buyFlow:true}) at 188-194, called from api/auth.ts:135). Refresh keeps the same user, so it does not clear. An empty id is ignored.",
+      "tests": [
+        "fix3/h2-user-switch.test.ts: different user after expiry -> cleared",
+        "same user after expiry -> kept",
+        "different user while still signed in -> cleared"
+      ],
+      "notes": "The item is about the same tab and that is fixed. Cross-tab user switch is not covered; see R4-3."
+    },
+    {
+      "id": "H-3",
+      "verdict": "fixed",
+      "evidence": "event-wizard.tsx:102-104 and 348: tier ids created on the server are kept in wizard state createdIds and merged into existingTierIds, so read-only no longer depends on a successful reload. edit-event-client.tsx:76-79 keys the created map by both the local id and the server id. On a retry the tier, now carrying the server id, resolves through created.current (72-74) and is not POSTed again; only the quota is compared.",
+      "tests": [
+        "edit/page.test.tsx 'H-3 (Z-5): reload fails twice after a partial failure -> created tier stays read-only and is not POSTed again' (addTier calls = [#2, #3, #3]; tier #2 input disabled; one delete button)"
+      ]
+    },
+    {
+      "id": "G-9",
+      "verdict": "fixed",
+      "evidence": "hold-client.ts:219-222: inside case 403, /problems/forbidden is checked BEFORE the generic NOT_ADMITTED throw. The queue-token 401/403 types are handled earlier, as before. FORBIDDEN is added to HoldClientErrorType (40), to the showGenericError exclusion list (checkout-view.tsx:135), and gets its own banner (166-170) with i18n vi/en checkout.forbidden. It does not count as isAdmittedError or isTokenInvalid, so there is no 'back to waiting room' and the queue token is not cleared. Contract test: the only change is line 83 [403,'/problems/forbidden','NOT_ADMITTED'] -> 'FORBIDDEN', matching test-change-request-fix2.md (approved) and spec AC-10 (amended). The full-gate.sh tamper exception (06fd7c4) accepts exactly that one +/- line pair and fails on anything else.",
+      "tests": [
+        "hold-client.contract.test.ts AC-10 table rows '403 /problems/forbidden -> FORBIDDEN' and '403 about:blank -> NOT_ADMITTED'",
+        "checkout-view.fix3.test.tsx (distinct message, no waiting-room text, token kept)"
+      ]
+    }
+  ],
+  "new_findings": [
+    {
+      "id": "R4-1",
+      "severity": "minor",
+      "file": "apps/web/src/lib/api-client.ts",
+      "line": 180,
+      "title": "Refresh POST has no timeout and the holder's callers have no limit on their wait: one hung /refresh blocks every authenticated request in that tab, and blocks cross-tab refresh, until the tab is closed",
+      "evidence": "Once the lock is granted, clearTimeout(deadlineTimer) (184) removes the only deadline. refreshCore's fetch (124) has no AbortSignal or timeout (intended by H-1). refreshAccessToken is single-flight (201-207), so every later 401 retry and every proactive refresh in that tab (apiFetch 240-243 awaits it) waits on the same promise forever. Other tabs queue on the held lock, get NETWORK_ERROR after 45 s, and repeat on each request. With the steal path removed there is no recovery until the holder tab closes or its fetch fails at the network-stack level (Chrome has no general response timeout).",
+      "repro": "Tab A: access token near expiry, and the identity service accepts the TCP connection for POST /api/v1/auth/refresh but never responds (overloaded upstream, captive proxy). Every apiFetch in tab A stays pending with no limit; tab B's requests fail with NETWORK_ERROR every 45 s.",
+      "fix": "Separate the caller's wait from the POST. Keep the POST and the lock running (no abort, inflight stays set until the POST settles, so there is never a second POST), but race each caller's await against a timer (for example 45 s) that rejects with NETWORK_ERROR without clearing the session. Add a test: holder POST never resolves -> the caller gets NETWORK_ERROR at the deadline, a second call in the same tab joins the same inflight (still 1 POST), and a late success still updates the session."
+    },
+    {
+      "id": "R4-2",
+      "severity": "minor",
+      "file": "apps/web/src/lib/api-client.ts",
+      "line": 187,
+      "title": "A non-AbortError rejection from navigator.locks.request escapes as a raw DOMException instead of an ApiError",
+      "evidence": "The .catch (187-190) maps only AbortError to NETWORK_ERROR and rethrows everything else. Per spec, locks.request rejects with SecurityError (opaque origin, sandboxed iframe without allow-same-origin) or InvalidStateError (document not fully active). apiFetch's reactive path (258) then throws a DOMException, but callers and the proactive branch (246) expect ApiError codes. A non-conforming implementation that throws synchronously also skips the try/finally, which leaves deadlineTimer armed (harmless). No POST happens on these paths. This behaviour already existed before round 3.",
+      "repro": "Load the app in <iframe sandbox='allow-scripts'> with an expired access token and call any authenticated apiFetch: it rejects with DOMException SecurityError, not ApiError.",
+      "fix": "In the catch, convert any non-ApiError to networkError(). Optionally treat a SecurityError the same as 'no navigator.locks' (in-tab single-flight), because no other tab can share that lock in that context anyway."
+    },
+    {
+      "id": "R4-3",
+      "severity": "minor",
+      "file": "apps/web/src/lib/session.ts",
+      "line": 99,
+      "title": "H-2 owner check prefers the shared session over this tab's ef:lastuid, so a user switch made in ANOTHER tab is never detected and this tab keeps the previous user's buy-flow keys",
+      "evidence": "prev = getSession()?.user.id ?? sessionStorage ef:lastuid. With persist=local, a sign-in as u-2 in tab B writes the shared localStorage. Tab A still holds u-1's ef:queue:token:*, evenflow_hold_*, evenflow_order_*, ef:pay:* in its own sessionStorage, and lastuid=u-1. On tab A's next setSession (a refresh in refreshCore:153 with cur.user = u-2), prev resolves to u-2 from localStorage, so nothing is cleared and lastuid is overwritten with u-2. Tab A then shows or reuses u-1's hold/order keys under u-2's bearer. The server rejects cross-identity use (queue-token mismatch, order ownership), so the impact is stale UI and confusing errors, plus a small privacy leak of u-1's order and hold ids to u-2 on a shared machine.",
+      "repro": "Tab A signed in as u-1 with an active hold. Tab B: log out, then log in as u-2 (remember me on). Back in tab A, the checkout page still finds evenflow_hold_<event> and ef:pay keys after any refresh.",
+      "fix": "Prefer the tab-local marker: prev = sessionStorage ef:lastuid ?? getSession()?.user.id. Also run the same reconciliation from the use-auth 'storage' listener (and on getSession when the stored user id differs from ef:lastuid), so tab A clears u-1's keys as soon as the shared session changes owner. Add a two-'tab' test: shared localStorage, separate sessionStorage."
+    },
+    {
+      "id": "R4-4",
+      "severity": "minor",
+      "file": "apps/web/src/lib/api-client.ts",
+      "line": 116,
+      "title": "The post-lock re-read accepts any newer pair without checking the user, so a request started by u-1 can be retried with u-2's bearer after a logout/login in another tab during the lock wait",
+      "evidence": "doRefresh returns cur.accessToken whenever cur.refreshToken !== usedRefresh (116), and refreshCore does the same at 147. A logout in another tab does not bump this tab's sessionEpoch, so the epoch guard does not apply. apiFetch (258-260) then retries the original request (for example POST /v1/holds with u-1's Idempotency-Key and queue token) with u-2's access token. Plain logout is handled correctly: no session gives AUTH_REQUIRED with no resurrection. Only logout followed by login as someone else inside the up-to-45 s wait is affected. The behaviour already existed before round 3; the new longer wait (45 s instead of 10 s) widens the window.",
+      "repro": "Tab A: a request gets 401 token-expired and waits behind tab C's lock. In tab B: log out, log in as u-2. Tab A gets the lock, sees refresh r-u2 != r1, and retries its u-1 request with acc-u2.",
+      "fix": "Capture the user id together with usedRefresh when the request is sent (sentUserId). In doRefresh/refreshCore, reuse cur.accessToken only if cur.user.id === sentUserId; otherwise throw AUTH_REQUIRED without clearing the new session."
+    }
+  ]
+}

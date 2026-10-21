@@ -125,6 +125,19 @@ describe("EventActionPanel (EVF-111, BR-Q5, BR-O2)", () => {
   });
 });
 
+describe("EventActionPanel — chi ON_SALE moi co nut vao phong cho (AC-16)", () => {
+  it.each(["DRAFT", "PENDING_REVIEW", "REJECTED", "COMPLETED", "CLOSED", "CANCELLED", "SOLD_OUT"] as const)(
+    "%s: khong co nut vao phong cho, chi nut vo hieu hoa",
+    (state) => {
+      render(<EventActionPanel eventId="evt-1" state={state} saleStartAt="2026-10-10T10:00:00+07:00" />);
+      const buttons = screen.getAllByRole("button");
+      expect(buttons).toHaveLength(1);
+      expect(buttons[0]).toBeDisabled();
+      expect(screen.queryByRole("button", { name: /phòng chờ/i })).not.toBeInTheDocument();
+    },
+  );
+});
+
 // ---------------------------------------------------------------------------
 // EV-188 (AC-8; plan §6 M2): EventActionPanel dich vi/en; phan tu goc co lang = locale
 // (nam trong <main lang="vi">).

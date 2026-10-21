@@ -1,0 +1,102 @@
+# AC -> tests. Ten test = "file::describe-block" (hoac "file::ten test") de gon; moi block gom nhieu it().
+# Duong dan web tinh tu apps/web/, Go tinh tu goc repo.
+AC-1:
+  - src/lib/api/auth.contract.test.ts::loginUser (AC-1)
+  - src/lib/session.contract.test.ts::session (AC-1, AC-7)
+  - src/real-api.contract.test.ts::mot bien moi truong NEXT_PUBLIC_API_BASE (khong 8083 / NEXT_PUBLIC_API_URL)
+AC-2:
+  - src/lib/api/auth.contract.test.ts::registration (AC-2)
+AC-3:
+  - src/lib/api-client.contract.test.ts::apiFetch co ban (AC-3)
+  - src/lib/hold-client.contract.test.ts::requestHold - request (AC-3, AC-10)
+  - src/lib/payment-client.contract.test.ts::initiatePayment - request / getOrderDetails / issueTickets (Bearer, khong credentials, khong X-Identity)
+  - src/lib/queue-client.contract.test.ts::joinQueue / fetchQueueStatus / connectSse
+  - src/lib/organizer-service.contract.test.ts::createOrganizerEvent / getOrganizerEvents (Bearer)
+  - src/real-api.contract.test.ts::khong credentials include, khong X-Identity-* (quet ma nguon)
+AC-4:
+  - src/lib/api-client.contract.test.ts::refresh don le (AC-4)
+  - src/lib/api-client.contract.test.ts::refresh dong thoi (AC-4, concurrent 401)
+  - src/lib/api-client.contract.test.ts::refresh that bai (AC-4)
+  - src/lib/api-client.contract.test.ts::refresh chu dong khi exp <= 30s (plan round 2)
+  - src/lib/api-client.contract.test.ts::hai tab - doc lai storage truoc khi refresh (incl. Web Locks)
+  - src/lib/api/auth.contract.test.ts::refreshSession
+  - src/lib/hold-client.contract.test.ts::requestHold + refresh (AC-4)
+  - src/lib/payment-client.contract.test.ts::getOrderDetails 401 token-expired -> refresh roi retry
+  - src/lib/session.contract.test.ts::persist local|session, clearSession
+AC-5:
+  - src/lib/api-client.contract.test.ts::401/403 cua queue token KHONG refresh (AC-5)
+  - src/lib/queue-client.contract.test.ts::fetchQueueStatus (401/403 queue-token-* khong refresh)
+  - src/lib/hold-client.contract.test.ts::requestHold + refresh (queue-token het han khong refresh)
+AC-6:
+  - src/lib/api/auth.contract.test.ts::logout (AC-6)
+AC-7:
+  - src/hooks/use-auth.contract.test.tsx::useAuth (AC-7)
+  - src/lib/session.contract.test.ts::session
+  - runtime: kiem tay UI tai /auth/sign-in -> dang nhap -> reload, van dang nhap
+AC-8:
+  - src/lib/api/auth.contract.test.ts::loginWithGoogle (AC-8)
+AC-9:
+  - src/lib/queue-client.contract.test.ts::joinQueue (Bearer, otp-required/device-required ma rieng)
+  - src/lib/queue-client.contract.test.ts::fetchQueueStatus
+  - src/lib/queue-client.contract.test.ts::connectSse
+  - runtime: thong bao hanh dong duoc tren man phong cho (OTP/dang nhap lai) -> component test thuoc WP2 (giao dien chua dong bang ten) + E2E
+AC-10:
+  - src/lib/hold-client.contract.test.ts::requestHold - thanh cong (AC-10)
+  - src/lib/hold-client.contract.test.ts::requestHold - anh xa loi (AC-10) (incl. MUTATION per-identity-limit vs quantity-not-allowed)
+AC-11:
+  - src/lib/hold-client.contract.test.ts::cancelHold (AC-11)
+AC-12:
+  - src/lib/payment-client.contract.test.ts::initiatePayment - request (AC-3, AC-12)
+  - src/lib/payment-client.contract.test.ts::initiatePayment - khong bao gio gia thanh cong (AC-12)
+  - src/real-api.contract.test.ts::payment-client khong con nhanh gia thanh cong
+AC-13:
+  - src/lib/payment-client.contract.test.ts::listPaymentMethods (AC-13)
+  - runtime: man thanh toan chi hien method enabled + loi/thu lai (component test WP2; E2E mock methods)
+AC-14:
+  - src/lib/payment-client.contract.test.ts::getOrderDetails (AC-14)
+AC-15:
+  - src/lib/payment-client.contract.test.ts::issueTickets (AC-15)
+  - runtime: trang ket qua polling + khong QR demo (component test WP2 + E2E buy flow)
+AC-16:
+  - src/lib/event-service.contract.test.ts::getEventBySlug (AC-16)
+  - runtime: ISR revalidate=60 + notFound() tren /events/[slug] (page test WP3)
+AC-17:
+  - src/lib/event-service.contract.test.ts::getAllPublicEvents (AC-17)
+  - runtime: empty state / error state tren /events (page test WP3)
+AC-18:
+  - src/lib/event-service.contract.test.ts::getEventById (AC-18)
+  - runtime: notFound() tren checkout/payment/result/waiting (page test WP2)
+AC-19:
+  - src/real-api.contract.test.ts::khong con mock trong ma san xuat (AC-19)
+  - src/lib/event-service.contract.test.ts (khong du lieu mau khi 404/5xx)
+  - src/lib/organizer-service.contract.test.ts (loi server khong tra du lieu mock)
+AC-20:
+  - src/lib/organizer-service.contract.test.ts::getOrganizerEvents / getOrganizerEventById (AC-20)
+AC-21:
+  - src/lib/organizer-service.contract.test.ts::createOrganizerEvent (AC-21)
+  - runtime: UI bao buoc loi + link ban nhap (component test event-wizard, WP4)
+AC-22:
+  - src/lib/organizer-service.contract.test.ts::updateOrganizerEvent (AC-22)
+  - src/lib/organizer-service.contract.test.ts::tiers (AC-22)
+  - src/lib/organizer-service.test.ts::validateTierQuotaUpdate (ton tai san, BR-E3)
+AC-23:
+  - src/lib/organizer-service.contract.test.ts::submit / cancel (AC-23)
+  - runtime: confirm huy + refresh view (component test WP4)
+AC-24:
+  - runtime: component test WP4 (moderation-status-card, sales-dashboard hien nhan isSample) -- ten component chua dong bang nen khong viet o buoc nay
+AC-25:
+  - services/gateway/internal/proxy/frontend_real_api_contract_test.go::TestGateway_CORS_PreflightChoPhepHeaderCuaPhongCho
+  - services/gateway/internal/proxy/frontend_real_api_contract_test.go::TestGateway_CORS_ExposeHeaders
+  - services/gateway/internal/proxy/frontend_real_api_contract_test.go::TestGateway_CORS_KhongCoAllowCredentials
+  - services/gateway/internal/proxy/frontend_real_api_contract_test.go::TestGateway_CORS_OriginLaKhongDoi
+AC-26:
+  - services/gateway/internal/proxy/frontend_real_api_contract_test.go::TestGateway_EventsPublic_* (3 test)
+  - services/event/internal/adapter/http/public_events_contract_test.go::TestPublicEvents_* (7 test)
+  - services/event/internal/adapter/postgres/list_public_integration_test.go::TestTichHop_ListPublic_* (build tag integration; can Docker)
+AC-27:
+  - src/real-api.contract.test.ts::mot bien moi truong NEXT_PUBLIC_API_BASE
+  - src/lib/api/auth.contract.test.ts::loginUser (AC-1) khong goi 8083
+AC-28:
+  - runtime: tests/e2e (Playwright) -- `npx playwright test` tai tests/e2e voi fixture api-mock.ts da cap nhat (CORS giong gateway, hold 200, mock auth/events/availability/methods/issue-tickets). Khong the unit test.
+AC-29:
+  - runtime: lint, typecheck, build, `npx vitest run` (>= 1946 + test moi, 0 bi xoa/skip), `go test ./...` gateway + event, `go vet -tags integration ./...` event. Bao cao o buoc verify.

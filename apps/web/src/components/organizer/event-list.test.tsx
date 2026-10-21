@@ -117,7 +117,11 @@ describe("EventList component (EV-186, EVF-116, Stitch 10.12)", () => {
     const reviewLinks = screen.getAllByRole("link", { name: /Kiểm duyệt/ });
     expect(reviewLinks[0]).toHaveAttribute("href", "/organizer/events/evt-1/review-status");
 
+    // Chỉ DRAFT/SCHEDULED/REJECTED mới được chỉnh sửa (AC-22): evt-1 là ON_SALE nên không có link.
     const editLinks = screen.getAllByRole("link", { name: /Chỉnh sửa/ });
-    expect(editLinks[0]).toHaveAttribute("href", "/organizer/events/evt-1/edit");
+    expect(editLinks.map((l) => l.getAttribute("href"))).toEqual([
+      "/organizer/events/evt-2/edit",
+      "/organizer/events/evt-3/edit",
+    ]);
   });
 });

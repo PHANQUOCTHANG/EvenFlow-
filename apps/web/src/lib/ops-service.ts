@@ -1,13 +1,14 @@
 /** Ops Service — war room cho Ops (EV-187, EVF-117).
  *
- * Hien chi la DU LIEU MAU tat dinh (isSample = true), cung mau voi lib/organizer-service.ts.
+ * Hien chi la DU LIEU MAU tat dinh (isSample = true), cung kieu du lieu mau voi doanh so organizer (xem getRealtimeSales).
  * Khi co Ops API that (admit controller, ticketing, ai-worker /admin/mode) chi can thay than
  * cua getOpsWarRoom / listOpsEvents; hop dong kieu giu nguyen.
  *
  * Handoff muc 10.18 cam "fabricated green health": snapshot mau luon gan isSample = true de UI
  * hien nhan "Du lieu mau". So lieu khong dung Math.random va khong suy trang thai tu Date.now. */
 
-import { getAllPublicEvents, type EventDetailSnapshot, type TierAvailability } from "./event-service";
+import { SAMPLE_EVENTS } from "./sample-data/events";
+import type { EventDetailSnapshot, TierAvailability } from "./types/event";
 
 export type DegradationMode = "NORMAL" | "SAVING" | "FAQ_ONLY" | "OFF";
 export type SourceHealth = "ok" | "stale" | "unavailable";
@@ -149,6 +150,7 @@ const TIER_SAMPLE: Record<TierAvailability, Omit<OpsTierInventory, "tierId" | "n
   AVAILABLE: { quota: 1000, held: 40, paid: 300, issued: 250, available: 410 },
   FEW_LEFT: { quota: 200, held: 20, paid: 90, issued: 80, available: 10 },
   SOLD_OUT: { quota: 500, held: 0, paid: 0, issued: 500, available: 0 },
+  UNKNOWN: { quota: 0, held: 0, paid: 0, issued: 0, available: 0 },
 };
 
 function buildSample(event: EventDetailSnapshot): OpsWarRoomSnapshot {
@@ -185,13 +187,18 @@ function buildSample(event: EventDetailSnapshot): OpsWarRoomSnapshot {
   };
 }
 
+/** Nguon su kien cua war room: du lieu MAU (chua co API ops, EVF-60), khong phai su kien that. */
+async function listSampleEvents(): Promise<EventDetailSnapshot[]> {
+  return [...SAMPLE_EVENTS];
+}
+
 export async function getOpsWarRoom(eventId: string): Promise<OpsWarRoomSnapshot> {
   const override = overrides.get(eventId);
   if (override && "error" in override) {
     throw new OpsServiceError(override.error);
   }
 
-  const events = await getAllPublicEvents();
+  const events = await listSampleEvents();
   const event = events.find((e) => e.id === eventId);
   if (!event) {
     throw new OpsServiceError(404);
@@ -201,7 +208,7 @@ export async function getOpsWarRoom(eventId: string): Promise<OpsWarRoomSnapshot
 }
 
 export async function listOpsEvents(): Promise<OpsEventListItem[]> {
-  const events = await getAllPublicEvents();
+  const events = await listSampleEvents();
   return events.map((e) => ({
     eventId: e.id,
     eventTitle: e.title,

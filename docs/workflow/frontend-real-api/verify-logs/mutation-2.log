@@ -1,0 +1,15 @@
+mutation 2 applied to api-client.ts
+diff --git a/apps/web/src/lib/api-client.ts b/apps/web/src/lib/api-client.ts
+index ae84cca..958bcd5 100644
+--- a/apps/web/src/lib/api-client.ts
++++ b/apps/web/src/lib/api-client.ts
+@@ -257,5 +257,7 @@ export async function apiFetch(path: string, init: ApiFetchInit = {}): Promise<R
+ 
+   const fresh = await refreshAccessToken(sentRefresh);
+   // Retry dung 1 lan; neu van 401 thi tra nguyen Response (khong refresh lan hai).
+-  return fetch(url, withBearer(base, fresh));
++  /* MUTANT 2: no single-retry guard (recurse) */
++  void fresh;
++  return apiFetch(path, init);
+ }
+### npx vitest run src/lib (testTimeout 15000)
