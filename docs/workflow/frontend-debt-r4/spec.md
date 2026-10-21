@@ -24,7 +24,7 @@ correct (single POST per refresh token, always inside the Web Lock, no steal).
     every OTHER caller waiting on it (later calls in the same tab joining the in-flight refresh, or other tabs waiting
     for the lock) rejects with `NETWORK_ERROR` after at most 45 s, the session
     is kept, and no second POST is sent while the first is in flight;
-  - the refresh POST itself is aborted after 120 s; that outcome is `AUTH_REQUIRED` and the session is cleared,
+  - the refresh POST itself is aborted after 120 s; that outcome is `AUTH_REQUIRED` and the session is cleared (only if it is still the same session and refresh token that was POSTed),
     because the server may already have rotated the token, which must never be POSTed again;
   - once the POST settles, the lock is released and a later request in any tab can refresh normally.
 - **AC-3 (R4-2 / W-2)** Given `navigator.locks.request` rejects or throws synchronously with any error that is not

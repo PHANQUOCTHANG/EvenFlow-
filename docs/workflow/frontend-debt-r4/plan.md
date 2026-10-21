@@ -56,3 +56,17 @@ NETWORK_ERROR without clearing. (4) Rethrow the raw locks error. (5) Compare aga
 | m-5 AC-5 trigger | Any 422 from `addTier` → reload + the M-4 lookup; no match → show the server detail |
 | m-6 mutations | Threshold becomes 8/8: the original 5 plus (6) clear `inflight` on caller timeout, (7) unguarded clear on abort, (8) name match without the referenced/price filter |
 | m-7 test files and rollback | Tests: `src/lib/debt/ac1-user-switch.test.ts`, `ac2-refresh-deadlines.test.ts`, `ac3-locks-errors.test.ts`, `ac4-cross-tab-owner.test.ts`, `ac6-payment-forbidden.test.ts`, organizer `edit/page.debt.test.tsx`, checkout `*.debt.test.tsx`. Rollback check adds `npx tsc --noEmit` and lint |
+
+## 7. Round 3 (plan-review.md round 2: FAIL, M2-1, M2-2 + m2-1..m2-7)
+
+| Finding | Resolution |
+|---|---|
+| M2-1 SecurityError path / when `inflight` clears | **One rule:** the shared in-flight promise settles (a) after the refresh POST and its body read settle, or (b) when the lock wait is abandoned before any POST can start. `inflight` is cleared exactly when that promise settles, never earlier. On SecurityError: set `granted = true`, clear the lock-wait deadline **before** falling back, and set a tab-wide `locksUnusable` flag so later calls skip `navigator.locks`. Test with a POST that never answers: calls at 0 s, 46 s and 100 s give exactly 1 POST; the owner gets AUTH_REQUIRED at 121 s; joiners get NETWORK_ERROR at their own 45 s. Run once with a SecurityError lock manager and once with no `navigator.locks` |
+| M2-2 AC-1 after the POST | **Every** place that returns an already-stored token (pre-POST re-read in `doRefresh`, post-POST read in `refreshCore` ~:147, proactive path) returns it only if `stored.user.id === sentUserId`. On a mismatch it throws `AUTH_REQUIRED` without clearing the other user's session, and `apiFetch` does not retry the original request. Test: user switch in another tab while A's POST is in flight → A's original request is not retried with B's token. Mutation (9): drop the post-POST user check. Threshold becomes 9/9 |
+| m2-1 second user in same tab behind a hung POST | Accepted risk, documented: the shared Web Lock serialises; that user gets NETWORK_ERROR at 45 s until the POST settles or is aborted at 120 s |
+| m2-2 AC-4 null lastuid | If `ef:lastuid` is absent, adopt the stored user id without clearing buy-flow keys |
+| m2-3 timer hygiene | After every outcome, `vi.getTimerCount()` returns to its starting value (45 s caller timer, lock-wait deadline, 120 s abort) |
+| m2-4 AC-5 wording | Compare the tier `price` field (the web model) and use the ids already tracked in the edit client (`created` map keys/values and the reloaded tier ids) as "already referenced" |
+| m2-5 AC-6 files | Add `hooks/use-payment-session.ts`: expose a `forbidden` flag for the payment view |
+| m2-6 spec wording | spec AC-2 notes the ownership guard on the abort clear (§6 M-2) |
+| m2-7 `refreshAccessToken()` in `lib/api/auth.ts:122` | Default user key = the stored session's user id at call time |

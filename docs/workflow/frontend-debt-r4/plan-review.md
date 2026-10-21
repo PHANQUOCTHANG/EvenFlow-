@@ -142,3 +142,124 @@ is updated (and the test-change request in B-1 is approved), a re-review should 
   clears and never writes.
 - Interaction with other tabs: they keep their own 45 s lock-wait deadline. The lock is released by about 120 s plus
   the body read, so other tabs recover after that.
+
+## Round 2
+
+Reviewer: clean-context plan reviewer. Inputs: `spec.md` (AC-2 clarified for B-1), `plan.md` @ 9fa3375 (§6), code at
+base 43375eb in the `EvenFlow-debt` worktree (`api-client.ts`, `session.ts`, `lib/api/auth.ts`, `hooks/use-auth.ts`,
+`hooks/use-order-status.ts`, `hooks/use-payment-session.ts`, `components/checkout/*`, organizer `edit-event-client.tsx`,
+`lib/fix2/g1-lock-refresh.test.ts`). The in-progress, untracked `src/lib/debt/*.test.ts` were read only to see how the
+plan is being interpreted. Read-only. Nothing was executed.
+
+### Verdict: **FAIL**
+
+There are 2 majors and no blocker. Both are fixes to the plan text, about one table row each, and need no spec redesign.
+The B-1 clarification is sound. Round-1 M-2, M-3 and M-4 are resolved.
+
+### Round-1 resolutions
+
+| Finding | Status | Note |
+|---|---|---|
+| B-1 | resolved | Spec AC-2 now limits the 45 s bound to non-owners. Z-1b (`g1-lock-refresh.test.ts:152-172`) stays valid as written: A, the owner, gets 200 at about 60 s, and B's own lock wait gets NETWORK_ERROR at 45 s. No TCR is needed. |
+| M-1 | **partially resolved** | See M2-1. The SecurityError fallback and the lifetime of `inflight` on the abandoned path are still not pinned down. |
+| M-2 | resolved | The guard matches `api-client.ts:136`. Note that `sessionEpoch` is module-local, so a cross-tab switch is caught only by the refresh-token comparison. That comparison is enough. |
+| M-3 | resolved | AbortController plus setTimeout, armed through `res.json()` and classified by `signal.aborted`. |
+| M-4 | resolved | See m2-4 for wording. |
+| m-1 | resolved for the join; the after-POST check is **not addressed** | See M2-2. |
+| m-2 | resolved | See m2-2 for the case where `ef:lastuid` is null. |
+| m-3, m-6, m-7 | resolved | |
+| m-4 | mostly resolved | See m2-5. `use-payment-session.ts` was dropped from the list. |
+| m-5 | resolved | |
+
+### Major
+
+#### M2-1. SecurityError fallback: the 45 s lock-wait deadline is still armed during the POST, and the plan's lifetime rule for `inflight` contradicts itself
+- Evidence: `api-client.ts:166-197`. The deadline fires whenever `granted` is false (`:172`), and `withRefreshLock`
+  returns `Promise.race([locked, deadline])`. If the fallback is written the obvious way (`locked.catch(SecurityError
+  => doRefresh())`), `granted` never becomes true. At 45 s the race then rejects with NETWORK_ERROR while the POST is
+  still in flight. Plan §6 M-1 says only that "the lock-wait deadline is disarmed once the lock is granted". Round 1
+  asked for two more things: disarm the deadline (or set `granted`) before falling back, and remember for the whole
+  tab that locks are unusable. Neither is in the plan.
+  - Plan §6 M-1 also says "`inflight` is cleared only in the POST's own finally". On the abandoned lock-wait path
+    there is no POST, so a literal implementation never clears `inflight`. Every later call in that tab would then
+    join a rejected promise until reload. The draft test `ac2-refresh-deadlines.test.ts:45` ("rejects at 45 s each
+    time") only catches this by accident.
+  - Depending on which reading the implementer picks, the SecurityError path does one of two things:
+    - The owner gets NETWORK_ERROR at 45 s, which violates the clarified AC-2.
+    - `inflight` clears at 45 s and the next call POSTs the same refresh token again. That is reuse, the token family
+      is revoked, and it is the round-1 bug.
+  - The plan's SecurityError test (§6 m-3) uses a POST that answers immediately, so neither failure is exercised.
+- Fix: in §6, M-1 row, replace the lifetime sentence with an invariant. The shared refresh promise settles in only two
+  cases:
+  - (a) after the POST and its body read have settled;
+  - (b) at lock-wait abandonment, and only when no POST can start afterwards. The `abandoned` check at `:182` already
+    guarantees that.
+
+  `inflight[user]` is cleared exactly when that shared promise settles, and never on a caller timeout.
+  - On SecurityError, set `granted = true` and clear the deadline timer before calling `doRefresh`. Set a
+    module-level `locksUnusable` flag so later calls skip `navigator.locks`.
+  - Add test: a SecurityError lock manager whose POST never answers. Calls at t = 0, 46 s and 100 s must produce
+    exactly 1 POST. The owner must still be pending at 119 s and get AUTH_REQUIRED at 121 s.
+  - Add the same test without `navigator.locks`.
+  - Mutation (6) must also be killed on the SecurityError path.
+
+#### M2-2. AC-1 is still violated after the POST: `refreshCore` returns another user's access token
+- Evidence: `api-client.ts:143-147`. While A's POST is in flight (now up to 120 s), another tab signs out A and signs
+  in B. Logout and login do not take the lock (`session.ts:107`, `:184`), and `sessionEpoch` is per module, so this
+  tab's epoch does not change. Then `after` is B's session, and `after.refreshToken !== cur.refreshToken` is true.
+  `:147` returns `after.accessToken`, and `apiFetch` (`:258-260`) retries A's original request with B's Bearer. That
+  request can be non-idempotent: `initiatePayment`, `addTier` and hold creation all go through `apiFetch`.
+  - The spec's AC-1 headline ("the original request is NOT retried with B's token") is then false for the POST
+    window.
+  - Round 1 m-1 asked the plan to say this. §1 AC-1 and §6 m-1 only cover the pre-POST read in `doRefresh`.
+  - The 120 s POST window this plan adds makes the race much easier to hit than the old sub-second one.
+  - The draft `ac1-user-switch.test.ts` only covers the lock wait.
+- Fix: in §1 AC-1, state that every return of an existing token checks `user.id === sentUserId`. That covers
+  `doRefresh`'s reuse at `:116` and `refreshCore`'s `:147`. On a mismatch, throw AUTH_REQUIRED without
+  `clearSession` and do not store the rotated pair.
+  - Add a test: the owner's POST is answered at 30 s, another tab switches A to B at 10 s. Expected: `A:AUTH_REQUIRED`,
+    no request carries `Bearer acc-u2`, and B's session is left as it was.
+  - Add mutation (9): drop the after-POST user check.
+
+### Minor
+
+- **m2-1 (keying vs the shared Web Lock)** The lock name is global (`LOCK_NAME`, `:101`). With `navigator.locks`
+  present, keying `inflight` by user only stops a cross-user *join*. A u-2 refresh in the same tab still queues behind
+  u-1's hung POST, which holds the lock for up to 120 s, so u-2 gets NETWORK_ERROR at 45 s. That is acceptable, but
+  write it in plan §3 Risks. The draft test at `ac2-refresh-deadlines.test.ts:269` correctly removes locks for the
+  "u-2 succeeds" case.
+
+  Optional improvement: when the epoch changes or the stored user is no longer `sentUserId`, the old user's POST may be
+  aborted early. Its result would be discarded anyway, so no reuse risk follows. This frees the lock sooner.
+- **m2-2 (AC-4 when `ef:lastuid` is null)** The plan says "stored user id ≠ `ef:lastuid` → clear". When `lastuid` is
+  null, that must mean adopt the stored id without clearing, as in the existing `prev && nextUid && prev !== nextUid`
+  at `session.ts:100`. Otherwise the first `getSession()` in a tab that has no `lastuid` yet wipes that tab's buy-flow
+  keys. State this in the plan, and add a GUARD test: buy-flow keys present, no `lastuid`, session for u-1 →
+  `getSession()` keeps the keys and sets `lastuid` to u-1.
+- **m2-3 (AC-2 timers)** Each joiner's 45 s timer must be cleared when the shared promise settles first. The 120 s
+  abort timer must be cleared in `finally`. Add `vi.getTimerCount()` returning to its baseline after a fast refresh to
+  the AC-2 tests, as is already planned for AC-3.
+- **m2-4 (AC-5 wording)** The client tier field is `price` (mapped from `price_cents` at `organizer-service.ts:311`).
+  "`existingTierIds`" does not exist in `edit-event-client.tsx`; say "ids in `data.tiers` and values of
+  `created.current`". After a match, record it in `created.current` (both ids) and continue the loop. Do not return
+  the error.
+- **m2-5 (AC-6 files)** `components/checkout/payment-handoff-view.tsx:126-140` can only tell `authRequired` apart.
+  `hooks/use-payment-session.ts:145-149` stores only `err.message`, so it must expose a `forbidden` flag, as it
+  already does for `authRequired`. Add it back to the file list. Also record in the plan that no contract test pins
+  payment 403 → UNKNOWN, so no TCR is needed (round-1 m-4).
+- **m2-6 (spec text)** AC-2's second bullet still says "the session is cleared" without the M-2 ownership guard. Add
+  "(only if the stored session still holds the POSTed refresh token; see AC-1)" so that spec and tests agree. The draft
+  test at `:184-217` already expects the guard.
+- **m2-7 (`refreshAccessToken` signature)** `lib/api/auth.ts:122` calls `refreshAccessToken()` with no arguments. The
+  new user key needs a default, `getSession()?.user.id`. With no session, the call must keep today's behaviour:
+  `doRefresh` clears the session and throws AUTH_REQUIRED. Say so in the plan.
+
+### Consistency check (round 2)
+
+- Owner limited to 120 s and joiners to 45 s: these fit together. The owner's worst case is a 45 s lock wait plus
+  120 s for the POST and body read. Other tabs never wait more than 45 s. The lock is free by about 120 s, and the
+  draft test at `:221-243` covers recovery.
+- Epoch plus token guard on abort: correct. It can only skip a clear, never write, so no session comes back after a
+  logout.
+- Reconciliation on the read path: there is no recursion if `readFrom` is used and nothing calls `notify()` or
+  `setSession`. A `storage` event during a refresh only touches buy-flow keys, so it does not disturb the refresh.
