@@ -72,3 +72,47 @@ describe("G-1 PAID + forbidden shows the message once", () => {
   });
 });
 
+describe("G-2 terminal poll errors on a PENDING order stop the silent spinner", () => {
+  it("NOT_FOUND: not-found message shown, no spinner, polling stopped", async () => {
+    let n = 0;
+    const { calls } = installFetch(() => {
+      n += 1;
+      return n === 1 ? json(wirePending) : problem(404, "/problems/not-found", "gone");
+    });
+    render(<OrderResultView eventId="e1" orderId="o1" />);
+    await step(120_000);
+    expect(orderGets(calls)).toBe(2);
+    expect(screen.queryByText("Không tìm thấy đơn hàng")).not.toBeNull();
+    expect(screen.queryByText(SPINNER_TITLE)).toBeNull();
+    expect(screen.queryByRole("button", { name: /Kiểm tra trạng thái ngay/ })).toBeNull();
+  });
+
+  it("AUTH_REQUIRED: sign-in prompt with link, no spinner, polling stopped", async () => {
+    let n = 0;
+    const { calls } = installFetch((c) => {
+      if (c.path === "/api/v1/auth/refresh") return problem(401, "/problems/invalid-token");
+      n += 1;
+      return n === 1 ? json(wirePending) : problem(401, "/problems/token-expired");
+    });
+    render(<OrderResultView eventId="e1" orderId="o1" />);
+    await step(120_000);
+    expect(orderGets(calls)).toBe(2);
+    expect(screen.queryByText("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.")).not.toBeNull();
+    expect(screen.getByRole("link", { name: "Đăng nhập" }).getAttribute("href")).toBe("/auth/sign-in");
+    expect(screen.queryByText(SPINNER_TITLE)).toBeNull();
+  });
+
+  it("guard: network error keeps polling with spinner and manual button", async () => {
+    let n = 0;
+    const { calls } = installFetch(() => {
+      n += 1;
+      return n === 1 ? json(wirePending) : Promise.reject(new TypeError("Failed to fetch"));
+    });
+    render(<OrderResultView eventId="e1" orderId="o1" />);
+    await step(30_000);
+    expect(orderGets(calls)).toBeGreaterThan(3);
+    expect(screen.queryByText(SPINNER_TITLE)).not.toBeNull();
+    expect(screen.queryByRole("button", { name: /Kiểm tra trạng thái ngay/ })).not.toBeNull();
+    expect(screen.queryByText(FORBIDDEN_TEXT)).toBeNull();
+  });
+});

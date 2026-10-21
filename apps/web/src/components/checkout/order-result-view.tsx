@@ -54,7 +54,10 @@ export function OrderResultView({
 
   // 403 forbidden: hien thong bao ke ca khi da co don PENDING tren man hinh (khong spinner, khong nut kiem tra, khong poll).
   const blocked = error?.type === "FORBIDDEN";
-  const showErrorCard = error !== null && (blocked || order === null) && (order === null || status === "PENDING");
+  // Loi cuoi cung (403/404/401) tren don PENDING: dung spinner im lang, bao ro ly do. Don da co ket qua thi giu muc cua trang thai do.
+  const terminalError = error !== null && (blocked || error.type === "NOT_FOUND" || error.type === "AUTH_REQUIRED");
+  const authExpired = error?.type === "AUTH_REQUIRED" && order !== null;
+  const showErrorCard = error !== null && (order === null || (status === "PENDING" && terminalError));
 
   const handlePrint = () => {
     if (typeof window !== "undefined") {
@@ -76,7 +79,13 @@ export function OrderResultView({
         <Card className="space-y-md p-xl text-center">
           <Alert
             variant="error"
-            title={error.type === "NOT_FOUND" ? t("result.notFoundTitle") : t("result.loadErrorTitle")}
+            title={
+              error.type === "NOT_FOUND"
+                ? t("result.notFoundTitle")
+                : authExpired
+                  ? t("checkout.authRequired")
+                  : t("result.loadErrorTitle")
+            }
             className="text-left"
           >
             <p className="text-body-sm">
@@ -84,10 +93,20 @@ export function OrderResultView({
                 ? t("result.notFoundBody")
                 : error.type === "FORBIDDEN"
                   ? t("checkout.forbidden")
-                  : t("result.loadErrorBody")}
+                  : authExpired
+                    ? null
+                    : t("result.loadErrorBody")}
             </p>
           </Alert>
-          {error.type !== "NOT_FOUND" && error.type !== "FORBIDDEN" ? (
+          {authExpired ? (
+            <Link
+              href="/auth/sign-in"
+              className="ef-focus-ring inline-flex items-center justify-center rounded-control border border-transparent bg-primary px-md py-sm text-label-md text-primary-fg hover:bg-primary-hover"
+            >
+              {t("checkout.signInAction")}
+            </Link>
+          ) : null}
+          {error.type !== "NOT_FOUND" && error.type !== "FORBIDDEN" && !authExpired ? (
             <Button variant="secondary" loading={loading} onClick={refresh}>
               {t("result.retry")}
             </Button>
