@@ -99,6 +99,8 @@ let lastProactive: { pair: string; at: number } | null = null;
 
 const HARD_DEADLINE_MS = 45_000;
 const LOCK_NAME = "ef-auth-refresh";
+/** SecurityError tu Web Locks: ca tab dung single-flight trong tab, khong thu lai navigator.locks. */
+let locksUnusable = false;
 
 function pairKey(s: { accessToken: string; refreshToken: string | null }): string {
   return JSON.stringify([s.accessToken, s.refreshToken ?? ""]);
@@ -161,7 +163,7 @@ async function refreshCore(cur: Session, refreshToken: string): Promise<string> 
  *  yeu cau da bo khong bao gio duoc cap khoa de POST. */
 async function withRefreshLock(usedRefresh: string | null): Promise<string> {
   const locks = typeof navigator !== "undefined" ? (navigator as Navigator & { locks?: LockManager }).locks : undefined;
-  if (!(locks && typeof locks.request === "function")) return doRefresh(usedRefresh);
+  if (locksUnusable || !(locks && typeof locks.request === "function")) return doRefresh(usedRefresh);
 
   let abandoned = false;
   let granted = false;
@@ -177,21 +179,37 @@ async function withRefreshLock(usedRefresh: string | null): Promise<string> {
   });
   deadline.catch(() => undefined);
 
-  const locked = Promise.resolve(
-    locks.request(LOCK_NAME, ac ? { signal: ac.signal } : {}, () => {
-      if (abandoned) throw networkError();
+  // Loi tu Web Locks (reject hoac nem dong bo): khong bao gio lo ra loi tho cho caller (AC-3).
+  const onLockError = async (err: unknown): Promise<string> => {
+    if (err instanceof ApiError) throw err;
+    const name = (err as { name?: string } | null)?.name;
+    if (name === "SecurityError" && !granted && !abandoned) {
+      // Khong tab nao khac co the chung khoa trong ngu canh nay: single-flight trong tab. Go han cho khoa truoc khi POST.
       granted = true;
       clearTimeout(deadlineTimer);
+      locksUnusable = true;
       return doRefresh(usedRefresh);
-    }),
-  ).catch((err: unknown) => {
-    if ((err as { name?: string } | null)?.name === "AbortError") throw networkError();
-    throw err;
-  });
+    }
+    throw networkError();
+  };
+
+  let locked: Promise<string>;
+  try {
+    locked = Promise.resolve(
+      locks.request(LOCK_NAME, ac ? { signal: ac.signal } : {}, () => {
+        if (abandoned) throw networkError();
+        granted = true;
+        clearTimeout(deadlineTimer);
+        return doRefresh(usedRefresh);
+      }),
+    ).catch(onLockError) as Promise<string>;
+  } catch (err) {
+    locked = onLockError(err);
+  }
   locked.catch(() => undefined);
 
   try {
-    return await Promise.race([locked as Promise<string>, deadline]);
+    return await Promise.race([locked, deadline]);
   } finally {
     clearTimeout(deadlineTimer);
   }
