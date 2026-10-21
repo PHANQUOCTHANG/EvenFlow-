@@ -1,0 +1,19 @@
+# AC -> tests (all red on 5dc4713 unless marked GUARD in baseline.json red_check)
+AC-1:
+  - apps/web/src/lib/debt/ac1-user-switch.test.ts   # user switch during lock wait, same-refresh-string, during POST in flight; guards: same-user rotation, signed out, A->B->A
+AC-2:
+  - apps/web/src/lib/debt/ac2-refresh-deadlines.test.ts   # joiner/other-tab 45 s, owner 120 s abort, abort guards (epoch / stored token), lock release, per-user key, M2-1 (no locks / SecurityError), timer hygiene
+  - apps/web/src/lib/fix2/g1-lock-refresh.test.ts          # existing Z-1b stays valid (owner gets 200 at 60 s)
+AC-3:
+  - apps/web/src/lib/debt/ac3-locks-errors.test.ts   # rejection + sync throw per error name, SecurityError single-flight, hold-client AMBIGUOUS, timer count
+AC-4:
+  - apps/web/src/lib/debt/ac4-cross-tab-owner.test.tsx   # getSession path, setSession path, storage event (via useAuth), absent lastuid, same-user guard
+AC-5:
+  - apps/web/src/app/(organizer)/organizer/events/[eventId]/edit/page.debt.test.tsx
+AC-6:
+  - apps/web/src/lib/debt/ac6-payment-forbidden.test.ts
+  - apps/web/src/hooks/use-payment-session.debt.test.tsx
+  - apps/web/src/components/checkout/payment-handoff-view.debt.test.tsx
+  - apps/web/src/components/checkout/order-result-view.debt.test.tsx
+AC-7:
+  runtime_evidence: full-gate.sh (lint, tsc, build with NEXT_PUBLIC_API_BASE unset, full vitest, Playwright, Go gateway/event); baseline 152 files / 2342 tests at 5dc4713
