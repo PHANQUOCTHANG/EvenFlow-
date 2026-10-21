@@ -55,17 +55,22 @@ export function useOrderStatus({
   const [error, setError] = useState<PaymentClientError | null>(null);
 
   const isPollingRef = useRef(false);
+  /** Loi cuoi cung doc dong bo: timer da hen co the chay truoc khi React ke kip huy no (render chua flush). */
+  const stopPollRef = useRef(false);
 
   const fetchStatus = useCallback(async () => {
     if (!orderId || !eventId) return;
 
     try {
       const details = await getOrderDetails(orderId, eventId);
+      stopPollRef.current = false;
       setOrder(details);
       setError(null);
     } catch (err) {
       // Giữ nguyên order hiện có (không đè lỗi làm mất thông tin), chỉ ghi nhận lỗi để UI báo + thử lại
-      setError(err instanceof PaymentClientError ? err : new PaymentClientError("Lỗi không xác định", "UNKNOWN"));
+      const e = err instanceof PaymentClientError ? err : new PaymentClientError("Lỗi không xác định", "UNKNOWN");
+      stopPollRef.current = e.type === "NOT_FOUND" || e.type === "AUTH_REQUIRED" || e.type === "FORBIDDEN";
+      setError(e);
     } finally {
       setLoading(false);
     }
@@ -99,7 +104,7 @@ export function useOrderStatus({
     }
 
     const timer = setTimeout(async () => {
-      if (isPollingRef.current) return;
+      if (isPollingRef.current || stopPollRef.current) return;
       isPollingRef.current = true;
       try {
         setPollAttempts((prev) => prev + 1);
