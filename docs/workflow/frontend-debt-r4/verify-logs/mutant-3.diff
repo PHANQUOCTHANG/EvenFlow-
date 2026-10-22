@@ -1,0 +1,13 @@
+diff --git a/apps/web/src/lib/api-client.ts b/apps/web/src/lib/api-client.ts
+index 17b6299..c2852ef 100644
+--- a/apps/web/src/lib/api-client.ts
++++ b/apps/web/src/lib/api-client.ts
+@@ -140,7 +140,7 @@ function isSamePostedSession(epoch: number, cur: Session): boolean {
+ async function refreshCore(cur: Session, refreshToken: string): Promise<string> {
+   const epoch = getSessionEpoch();
+   const controller = new AbortController();
+-  const abortTimer = setTimeout(() => controller.abort(), REFRESH_POST_TIMEOUT_MS);
++  const abortTimer: ReturnType<typeof setTimeout> | undefined = undefined;
+   try {
+     return await refreshPost(cur, refreshToken, epoch, controller);
+   } catch (err) {

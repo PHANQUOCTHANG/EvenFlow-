@@ -39,6 +39,8 @@ export interface UsePaymentSessionReturn {
   error: string | null;
   /** true khi phien dang nhap het han (F-5): UI hien loi moi dang nhap lai. */
   authRequired: boolean;
+  /** 403 /problems/forbidden: tai khoan khong du quyen mua ve (khong thu lai). */
+  forbidden: boolean;
   submitPayment: () => Promise<PaymentInitiationResult | null>;
 }
 
@@ -89,6 +91,7 @@ export function usePaymentSession({
   const [holdExpired, setHoldExpired] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [authRequired, setAuthRequired] = useState(false);
+  const [forbidden, setForbidden] = useState(false);
 
   const isSubmittingRef = useRef(false);
 
@@ -122,6 +125,7 @@ export function usePaymentSession({
     setSubmitting(true);
     setError(null);
     setAuthRequired(false);
+    setForbidden(false);
 
     try {
       const params: InitiatePaymentParams = {
@@ -146,6 +150,9 @@ export function usePaymentSession({
           setHoldExpired(true);
           clearActiveHold(eventId);
           setError("Phiên giữ vé đã hết hạn trong lúc thanh toán (BR-O2)");
+        } else if (err.type === "FORBIDDEN") {
+          setForbidden(true);
+          setError(err.message);
         } else if (err.type === "AUTH_REQUIRED") {
           setAuthRequired(true);
           setError(err.message);
@@ -181,6 +188,7 @@ export function usePaymentSession({
     remainingMs: countdown.remainingMs,
     error,
     authRequired,
+    forbidden,
     submitPayment,
   };
 }

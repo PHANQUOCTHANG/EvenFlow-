@@ -1,0 +1,25 @@
+diff --git a/apps/web/src/lib/api-client.ts b/apps/web/src/lib/api-client.ts
+index 17b6299..94a1c0a 100644
+--- a/apps/web/src/lib/api-client.ts
++++ b/apps/web/src/lib/api-client.ts
+@@ -255,9 +255,9 @@ async function withRefreshLock(usedRefresh: string | null, sentUserId: string |
+ 
+ /** Nguoi tham gia (khong so huu POST) cho refresh dang bay toi da HARD_DEADLINE_MS: het han -> NETWORK_ERROR, giu phien.
+  *  Promise dung chung khong bi anh huong (inflight chi xoa khi no tu settle), nen khong co POST thu hai. */
+-function joinInflight(p: Promise<string>): Promise<string> {
++function joinInflight(p: Promise<string>, onTimeout?: () => void): Promise<string> {
+   return new Promise<string>((resolve, reject) => {
+-    const timer = setTimeout(() => reject(networkError()), HARD_DEADLINE_MS);
++    const timer = setTimeout(() => { onTimeout?.(); reject(networkError()); }, HARD_DEADLINE_MS);
+     p.then(
+       (v) => {
+         clearTimeout(timer);
+@@ -279,7 +279,7 @@ export function refreshAccessToken(
+ ): Promise<string> {
+   const key = userId ?? "";
+   const existing = inflight.get(key);
+-  if (existing) return joinInflight(existing);
++  if (existing) return joinInflight(existing, () => { if (inflight.get(key) === existing) inflight.delete(key); });
+   const p: Promise<string> = withRefreshLock(usedRefresh, userId).finally(() => {
+     if (inflight.get(key) === p) inflight.delete(key);
+   });

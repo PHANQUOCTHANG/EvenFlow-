@@ -1,0 +1,49 @@
+{
+  "round": 2,
+  "reviewer": "incremental re-review (correctness/regression + security)",
+  "base": "99fe35e",
+  "head": "0f85023",
+  "verdicts": [
+    {
+      "id": "F-1",
+      "verdict": "fixed",
+      "evidence": "apps/web/src/components/checkout/order-result-view.tsx:56-57 blocked = error?.type === 'FORBIDDEN'; showErrorCard = error !== null && (blocked || order === null); error card at :75 now renders for FORBIDDEN even with an order on screen, PENDING card at :99 is suppressed by !showErrorCard (no spinner, no 'Kiem tra trang thai ngay'). Polling stop already existed in use-order-status.ts (stopPollRef + effect guard on FORBIDDEN).",
+      "test": "apps/web/src/components/checkout/order-result-view.fix1.test.tsx: initialOrder PENDING, every GET -> 403 /problems/forbidden, step(120_000) = 120 separate act(async () => advanceTimersByTimeAsync(1000)) so React commits between ticks. Asserts forbidden text present, spinner heading absent, manual-check button absent, exactly 1 GET /v1/orders/o1. The text/spinner/button assertions fail on 99fe35e (card gated on order === null), so the test asserts the reported failure. The 1-GET assertion is not vacuous (stepped act lets the poll effect re-arm; without the stop it would reach ~15 GETs), though it also held before the fix, since the stop already existed."
+    },
+    {
+      "id": "F-2",
+      "verdict": "fixed",
+      "evidence": "apps/web/src/lib/api-client.ts:123-128 the user-mismatch check (cur && sentUserId !== null && cur.user.id !== sentUserId -> userChanged, no clear, no POST) now runs before the '!cur || !cur.refreshToken -> clearSession' branch. Same user with a broken session (no refresh token) still passes the first check (ids equal) and reaches clearSession, so the reorder cannot skip clearing the same user's session. cur === null still clears as before.",
+      "test": "apps/web/src/lib/debt/fix1-f2-no-refresh-token.test.ts: u-1 request blocked on the lock, u-2 stored without refresh token, lock released -> A:AUTH_REQUIRED, 0 refresh POSTs, ef_token/ef_user still u-2. On 99fe35e the no-refresh branch ran first and wiped u-2, so the test asserts the reported failure."
+    },
+    {
+      "id": "F-3",
+      "verdict": "fixed",
+      "evidence": "apps/web/src/lib/api-client.ts:125 uses sentUserId !== null instead of truthiness. The other user comparisons in this path (refreshPost after.user.id !== cur.user.id, apiFetch proactive session.user.id !== startUserId, isSamePostedSession) are already strict equality.",
+      "test": "apps/web/src/lib/debt/fix1-f3-empty-user-id.test.ts: request sent by user id '', u-2 signs in with a different refresh token while the lock is held -> A:AUTH_REQUIRED and no request ever carries Bearer acc-u2. On 99fe35e the '' guard was skipped and the rotated-pair branch returned acc-u2 for the retry (the retry got 200), so the test fails before the fix."
+    },
+    {
+      "id": "F-4",
+      "verdict": "fixed",
+      "evidence": "apps/web/src/hooks/use-payment-session.ts:128 setForbidden(false) next to setError(null)/setAuthRequired(false) at submit start. Other flags: holdExpired is intentionally terminal (submit returns early while it is set, and the hold is cleared); fieldErrors are recomputed on every submit; submitting is reset in finally. No other stale flag.",
+      "test": "apps/web/src/hooks/use-payment-session.fix1.test.tsx: FORBIDDEN then AUTH_REQUIRED -> forbidden false, authRequired true. Fails on 99fe35e (forbidden stayed true)."
+    },
+    {
+      "id": "F-5",
+      "verdict": "fixed",
+      "evidence": "apps/web/src/lib/api-client.ts:134-138 isSamePostedSession(epoch, cur) = same epoch && stored.refreshToken === cur.refreshToken && stored.user.id === cur.user.id; used at both clear sites: abort branch :149 and POST 400/401/403 branch :175. It is used nowhere else. The other clearSession calls (doRefresh no-refresh branch, invalid refresh body after a same-user/same-epoch check) are unchanged. A legitimate clear is never blocked: the only added condition is user-id equality, which always holds for the session that was actually POSTed (stored null was already 'no clear' before).",
+      "test": "apps/web/src/lib/debt/fix1-f5-clear-guards.test.ts: (1) 120 s abort, (2) delayed POST 401 - in both, u-2 is stored with the SAME refresh string 'r1' through raw localStorage (seedUser does not bump the in-tab epoch), so the epoch and refresh-token conditions still match and only the new user-id condition prevents the wipe. Both fail on 99fe35e; not vacuous."
+    }
+  ],
+  "new_findings": [
+    {
+      "id": "N-1",
+      "severity": "minor",
+      "category": "regression/ui",
+      "file": "apps/web/src/components/checkout/order-result-view.tsx:56-57,75,132,189",
+      "title": "FORBIDDEN error card now also shows on top of non-PENDING order sections",
+      "detail": "showErrorCard ignores status, so a 403 from a later refresh while order.status is PAID/FAILED/EXPIRED/CANCELLED now shows the error card above that section. Before the fix it was hidden because order !== null. Reachable on PAID: useIssuedTickets onRetry -> refresh() -> GET 403. The PAID section can then show two forbidden messages (the card plus the issued-tickets alert at :189), and the PAID content stays visible under a 'cannot load' title (result.loadErrorTitle). This is not a security problem (no data is exposed that was not already on screen) and it is arguably acceptable. Optional fix: restrict to blocked && status === 'PENDING', or hide the order sections when blocked.",
+      "blocking": false
+    }
+  ]
+}

@@ -21,3 +21,7 @@ is green.
 
 Proposed change: insert `await vi.advanceTimersByTimeAsync(0);` before the `getTimerCount` assertion at line 78.
 Nothing else changes.
+
+## Approval
+
+TCR-1 APPROVED by the human (TranDinhVo) on 2026-10-21 in the Claude Code session. Applied exactly: one added line `await vi.advanceTimersByTimeAsync(0);` before the timer assertion of the SecurityError `it.each` (both reject and throw cases). No assertion removed or weakened.

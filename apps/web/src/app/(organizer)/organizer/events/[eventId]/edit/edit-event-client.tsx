@@ -5,6 +5,7 @@ import { useRef } from "react";
 
 import { EventWizard, type WizardSubmitResult } from "@/components/organizer/event-wizard";
 import { Card } from "@/components/ui/card";
+import { ApiError } from "@/lib/api-client";
 import {
   addTier,
   canEditEvent,
@@ -32,6 +33,8 @@ function EditForm({
   const router = useRouter();
   // Hạng vé tạo trong phiên này: id cục bộ của wizard -> hạng vé trên máy chủ (tránh POST lại khi thử lại).
   const created = useRef(new Map<string, TicketTierConfig>());
+  // Da co mot lan luu hang ve that bai: ban tai lai luc thu lai co the chua hang ve da tao nhung mat phan hoi.
+  const tierSaveFailed = useRef(false);
 
   if (!canOpenEventEditor(event.state)) {
     return (
@@ -67,20 +70,48 @@ function EditForm({
     // 2. Hạng vé: so với hạng vé HIỆN TẠI trên máy chủ. Hạng mới -> POST; hạng cũ -> chỉ đổi quota.
     const current = await reload();
     const existing = new Map(current.tiers.map((t) => [t.id, t]));
+    const normName = (n: string) => n.trim().toLowerCase();
+    /** Hang ve may chu da tao nhung phan hoi bi mat: chua duoc tham chieu (khong nam trong form, khong trong `created`),
+     *  cung gia, cung ten (trim + khong phan biet hoa thuong, nhu may chu). Chi nhan khi co dung 1 ung vien. */
+    const findLostTier = (tier: TicketTierConfig, serverTiers: TicketTierConfig[]): TicketTierConfig | null => {
+      const referenced = new Set<string>(data.tiers.map((t) => t.id));
+      for (const [k, v] of created.current) {
+        referenced.add(k);
+        referenced.add(v.id);
+      }
+      const hits = serverTiers.filter(
+        (s) => !referenced.has(s.id) && s.price === tier.price && normName(s.name) === normName(tier.name),
+      );
+      return hits.length === 1 ? hits[0] : null;
+    };
     for (const tier of data.tiers) {
       try {
         const serverTier = created.current.get(tier.id);
         const key = serverTier ? serverTier.id : tier.id;
         const old = existing.get(key) ?? serverTier;
         if (!old) {
-          const made = await addTier(eventId, tier);
+          let made: TicketTierConfig | null = tierSaveFailed.current ? findLostTier(tier, current.tiers) : null;
+          let adopted = made !== null;
+          if (!made) {
+            try {
+              made = await addTier(eventId, tier);
+            } catch (err) {
+              // 422 (vd. trung ten vi lan truoc da tao nhung mat phan hoi): tai lai va tim hang ve do.
+              if (!(err instanceof ApiError) || err.status !== 422) throw err;
+              made = findLostTier(tier, (await reload()).tiers);
+              if (!made) throw err;
+              adopted = true;
+            }
+          }
           // H-3: khoa theo ca id cuc bo lan id may chu (sau khi wizard doi id, hang ve khong bi POST lai).
           created.current.set(tier.id, made);
           created.current.set(made.id, made);
+          if (adopted && made.quota !== tier.quota) await updateTierQuota(eventId, made.id, tier.quota);
         } else if (old.quota !== tier.quota) {
           await updateTierQuota(eventId, key, tier.quota);
         }
       } catch (err) {
+        tierSaveFailed.current = true;
         setEvent(await reload());
         return {
           error: `Hạng vé "${tier.name}": ${err instanceof Error ? err.message : String(err)}`,

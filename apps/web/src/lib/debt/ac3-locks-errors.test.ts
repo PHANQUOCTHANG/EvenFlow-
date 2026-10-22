@@ -75,6 +75,7 @@ describe("AC-3 lock failures", () => {
     expect([a.status, b.status]).toEqual([200, 200]);
     expect(calls.filter(isRefresh)).toHaveLength(1);
     expect(tab.sess.getSession()?.refreshToken).toBe("r2");
+    await vi.advanceTimersByTimeAsync(0);
     expect(vi.getTimerCount()).toBeLessThanOrEqual(timersBefore);
   });
 

@@ -1,0 +1,90 @@
+[
+  {
+    "id": "X-1",
+    "severity": "major",
+    "ac": "AC-6",
+    "file": "apps/web/src/components/checkout/order-result-view.tsx",
+    "line": 71,
+    "title": "403 /problems/forbidden on the order poll is shown ONLY when no order was ever loaded; once a PENDING order is on screen the FORBIDDEN error is invisible: spinner 'Dang xac nhan thanh toan' + manual check button stay, polling stops silently, manual check also stays silent",
+    "evidence": "vitest (stepped act, 120 s): initialOrder PENDING + GET 403 forbidden -> {\"gets\":1,\"forbiddenShown\":false,\"spinnerTitle\":true,\"manualButton\":true}; click 'Kiem tra trang thai ngay' + 5 s -> {\"gets\":2,\"forbiddenShown\":false,\"spinnerTitle\":true}. Realistic variant (first GET 200 PENDING, 2nd poll 403 after a cross-tab user switch) -> {\"gets\":2,\"forbiddenShown\":false,\"spinner\":true}. The forbidden Alert at line 71-91 is gated on `order === null && error !== null`; the PENDING card (line 95) renders whenever an order object exists, ignoring error.type. Spec AC-6: 'the result page show[s] the existing checkout.forbidden message with no retry loop' - the message is missing in this state; the user is stuck on a spinner with no explanation.",
+    "repro": "render(<OrderResultView eventId=\"e1\" orderId=\"o1\" initialOrder={pendingOrder} />); installFetch(() => problem(403, \"/problems/forbidden\", \"not yours\")); for (t=0;t<120000;t+=1000) await act(async()=>{await vi.advanceTimersByTimeAsync(1000)}); expect(screen.queryByText(\"Tài khoản của bạn không có quyền mua vé cho sự kiện này.\")).not.toBeNull(); // FAILS (null). Variant: installFetch(() => ++n===1 ? json(wireOrder(\"PENDING\")) : problem(403,\"/problems/forbidden\")); render without initialOrder; same stepping; same assertion FAILS, gets === 2.",
+    "fix": "Render the checkout.forbidden Alert whenever `error?.type === \"FORBIDDEN\"` regardless of `order` (and likewise NOT_FOUND/AUTH_REQUIRED if desired), and do not render the PENDING card / manual check button in that state (e.g. `const blocked = error?.type === \"FORBIDDEN\"`; show the error Card when `blocked || (order === null && error !== null)`; gate the PENDING card on `!blocked`). Add a test with initialOrder PENDING + 403 forbidden and one with 200-then-403 using stepped act()."
+  },
+  {
+    "id": "X-2",
+    "severity": "minor",
+    "ac": "AC-6",
+    "file": "apps/web/src/hooks/use-payment-session.ts",
+    "line": 127,
+    "title": "`forbidden` is sticky: submitPayment resets authRequired/error at the start of every submit but never resets forbidden, so a later failure of another kind is rendered as checkout.forbidden",
+    "evidence": "renderHook(usePaymentSession): submit #1 rejects FORBIDDEN -> forbidden=true; submit #2 rejects AUTH_REQUIRED -> {\"forbidden\":true,\"authRequired\":true,\"error\":\"expired\"}. In payment-handoff-view.tsx:133 the body is `forbidden ? t(\"checkout.forbidden\") : authRequired ? <Link sign-in> : error`, so after an expired session the sign-in link is hidden and the stale forbidden text is shown under the authRequired title.",
+    "repro": "const spy = vi.spyOn(paymentClient, \"initiatePayment\"); spy.mockRejectedValueOnce(new PaymentClientError(\"x\",\"FORBIDDEN\",403)); const h = renderHook(() => usePaymentSession({eventId:\"e1\",orderId:\"o1\",holdId:\"h1\",amount:100})); act(()=>h.result.current.setFormData({buyerName:\"A\",buyerEmail:\"a@b.co\",buyerPhone:\"0901234567\",method:\"sandbox\"})); await act(async()=>{await h.result.current.submitPayment()}); spy.mockRejectedValueOnce(new PaymentClientError(\"expired\",\"AUTH_REQUIRED\",401)); await act(async()=>{await h.result.current.submitPayment()}); expect(h.result.current.forbidden).toBe(false); // FAILS (true)",
+    "fix": "Add `setForbidden(false);` next to `setAuthRequired(false);` at use-payment-session.ts:127. Guard test: FORBIDDEN then AUTH_REQUIRED -> forbidden false, authRequired true."
+  },
+  {
+    "id": "X-3",
+    "severity": "minor",
+    "ac": "AC-1/AC-2",
+    "file": "apps/web/src/lib/api-client.ts",
+    "line": 142,
+    "title": "The two clearSession guards (120 s abort at :142, 400/401/403 POST answer at :168) compare epoch + refresh-token string only, not the user id; a different user whose stored session carries the same refresh string is signed out, contradicting the identity rule the implementation asserts elsewhere (ac1-user-switch 'u-2 holds the SAME refresh string ... identity decides, not token')",
+    "evidence": "Hung POST of u-1/r1; at 60 s another tab stores u-2 with refresh \"r1\"; at 121 s owner -> AUTH_REQUIRED and localStorage = {\"token\":null,\"user\":null} (u-2 cleared). Same with the POST answering 401 after the switch: {\"token\":null,\"refresh\":null,\"user\":null}. Practically unreachable (server-issued refresh tokens are unique per session), hence minor; listed for consistency with the identity model.",
+    "repro": "seedUser(\"u-1\",\"old\",\"r1\"); const A = await newTab(); const a = outcome(\"A\", A.api.apiFetch(\"/v1/orders/a\")); await vi.advanceTimersByTimeAsync(60_000); seedUser(\"u-2\",\"acc-u2\",\"r1\"); await vi.advanceTimersByTimeAsync(61_000); expect(await a).toBe(\"A:AUTH_REQUIRED\"); expect(localStorage.getItem(\"ef_token\")).toBe(\"acc-u2\"); // FAILS (null)",
+    "fix": "Extend both guards with `&& peekSession()?.user.id === cur.user.id` (or compare the full pair + user id) so a session of another user is never cleared. Guard test: same refresh string, different user, POST 401 / 120 s abort -> other user's session intact."
+  },
+  {
+    "id": "X-4",
+    "severity": "minor",
+    "ac": "AC-2",
+    "file": "apps/web/src/lib/api-client.ts",
+    "line": 180,
+    "title": "Design note (plan m3-2): when the SAME user signs in again in another tab (new pair r9) while this tab's POST hangs, the owner and every joiner reject AUTH_REQUIRED at 120 s even though a valid session for that user is stored and (correctly) left intact; the UI will ask the user to sign in while they are signed in",
+    "evidence": "Hung POST r1; joiner at 99 s (old token -> 401 -> joins); other tab seeds u-1/acc-9/r9 at 100 s; at 121 s -> {\"a\":\"A:AUTH_REQUIRED\",\"j\":\"J:AUTH_REQUIRED\"}, getSession().refreshToken === \"r9\" (kept), 1 POST; a NEW call right after gets 200 with acc-9. So the failure is confined to the two in-flight callers, but AUTH_REQUIRED is semantically wrong for them (re-read at :180 already prefers a rotated pair in the success path, the abort path does not).",
+    "repro": "seedUser(\"u-1\",\"old\",\"r1\"); const A = await newTab(); const a = outcome(\"A\", A.api.apiFetch(\"/v1/orders/a\")); await vi.advanceTimersByTimeAsync(99_000); const j = outcome(\"J\", A.api.apiFetch(\"/v1/orders/j\")); await vi.advanceTimersByTimeAsync(1_000); seedUser(\"u-1\",\"acc-9\",\"r9\"); await vi.advanceTimersByTimeAsync(21_000); // await a === \"A:AUTH_REQUIRED\", await j === \"J:AUTH_REQUIRED\", refresh kept = r9",
+    "fix": "Optional: in refreshCore's abort branch, after the guard decides NOT to clear, if `peekSession()` is the same user with a different refresh token, return `stored.accessToken` (same reuse rule as :180) instead of throwing AUTH_REQUIRED; keep AUTH_REQUIRED when no session or another user. Otherwise document the accepted behaviour next to m3-2."
+  },
+  {
+    "id": "X-5",
+    "severity": "minor",
+    "ac": "AC-5",
+    "file": "apps/web/src/app/(organizer)/organizer/events/[eventId]/edit/edit-event-client.tsx",
+    "line": 93,
+    "title": "Design note: `tierSaveFailed` is set by ANY tier-step failure (here a quota PUT), after which a new form tier is matched to any unreferenced server tier with the same name+price - e.g. one created meanwhile by a colleague - and that tier's quota is overwritten with the form value (999 -> 100) without any POST or 422 ever happening",
+    "evidence": "Edit page: quota PUT for GA fails once (tierSaveFailed=true); colleague adds {name:\"Hạng vé #2\", price:200000, quota:999} server-side; organizer adds a new tier with the default name/price (quota 100) and saves -> addTier never called, updateTierQuota(EVT,\"srv-colleague\",100), navigation to review-status, no message. The 422 path would end in the same state (plan m-5), so this is the approved design's consequence, not a regression; recorded because the adoption cannot distinguish 'my lost response' from 'someone else's tier' and silently lowers another tier's quota.",
+    "repro": "realisticServer(base,false); mocks.updateQuota.mockRejectedValueOnce(new Error(\"mất mạng quota\")); render edit page; next(); change quota[0] to 150; next(); next(); save(); await findByText(/mất mạng quota/); srv.serverTiers.push({id:\"srv-colleague\",name:\"Hạng vé #2\",price:200000,quota:999}); back(); back(); addTierButton(); next(); next(); restore updateQuota; save(); await waitFor(()=>expect(mocks.push).toHaveBeenCalled()); // addTier calls: [] ; updateQuota calls include [EVT,\"srv-colleague\",100]",
+    "fix": "Optional hardening: only adopt a server tier that was ABSENT from the reload taken before the failed addTier attempt (snapshot `current.tiers` ids per tier before POST and match against tiers that appeared afterwards), or require an explicit organizer confirmation when adopting a tier whose quota differs. Otherwise document the accepted behaviour in the spec."
+  },
+  {
+    "id": "X-S1",
+    "severity": "suspicion",
+    "ac": "AC-1",
+    "file": "apps/web/src/lib/api-client.ts",
+    "line": 258,
+    "title": "Pre-existing (identical at 43375eb): proactive refresh swallowed as NETWORK_ERROR while another tab logged out -> the request is sent with NO Authorization header and the raw 401 Response is returned instead of an AUTH_REQUIRED error",
+    "evidence": "proactive path (exp in 10 s), lock never granted, localStorage.clear() at 2 s -> at 46 s outcome \"A:401\", bearers [null], 0 POST. Base commit has the same fall-through (`session = getSession()` then `sentAccess = session?.accessToken ?? null`). Out of scope for r4; noted only.",
+    "repro": "locks.request(\"ef-auth-refresh\", () => new Promise(() => {})); seedUser(\"u-1\", tokenExpIn(10), \"r1\"); const a = outcome(\"A\", A.api.apiFetch(\"/v1/orders/a\")); await vi.advanceTimersByTimeAsync(2_000); localStorage.clear(); await vi.advanceTimersByTimeAsync(44_000); // \"A:401\", Authorization header absent",
+    "fix": "None required for r4. If desired: after the proactive block, `if (!session && startUserId) throw new ApiError(\"AUTH_REQUIRED\", ...)`."
+  },
+  {
+    "id": "X-S2",
+    "severity": "suspicion",
+    "ac": "AC-3",
+    "file": "apps/web/src/lib/api-client.ts",
+    "line": 230,
+    "title": "Hypothetical lock manager whose request() resolves without ever running the callback: `fresh` is undefined and the retry is sent with no bearer (raw 401 returned)",
+    "evidence": "installLocks({request: () => Promise.resolve(undefined)}) -> outcome \"A:401\", bearers [\"Bearer old\", null], 0 POST, session kept. No real Web Locks implementation behaves this way; listed for completeness only.",
+    "repro": "installLocks({ request: () => Promise.resolve(undefined) }); seedUser(\"u-1\",\"old\",\"r1\"); const a = outcome(\"A\", A.api.apiFetch(\"/v1/orders/a\")); await vi.advanceTimersByTimeAsync(100); // \"A:401\"",
+    "fix": "Optional: in withRefreshLock, `if (typeof token !== \"string\") throw networkError()` after the race."
+  },
+  {
+    "id": "X-OK",
+    "severity": "info",
+    "ac": "AC-1..AC-6",
+    "file": "apps/web/src/__challenge__ (removed)",
+    "line": 0,
+    "title": "Attacks executed with no defect found",
+    "evidence": "3 tabs (A owner hung, B+C lock waiters, joiner in B at 40 s): B1/C1/BJ NETWORK_ERROR at 45 s (pending at 44.995 s), B2 at 91 s, owner AUTH_REQUIRED + session cleared at ~121 s, 1 POST, later call in C sent unauthenticated, vi.getTimerCount()===0. A->B->A (new tokens) cross-tab during A's POST: 200 with A's new stored token, r1b discarded, 1 POST. Storage event (user switch) mid-POST: buy-flow keys cleared, auth keys untouched, POST result not stored for B, no request with B's token. Proactive path: user switch during lock wait (grant and 45 s-swallow variants) and during the POST -> AUTH_REQUIRED, 0 requests with B's token, B intact. SecurityError sync throw: 1 POST, joiner NETWORK_ERROR at 91 s, owner AUTH_REQUIRED at 121 s, navigator.locks never retried (locksUnusable), later re-login refreshes normally, no timer leak; late SecurityError rejection (50 s) -> NETWORK_ERROR at 45 s, no POST, no leak. AC-4: two module instances both listening -> single idempotent clear; expired session then same-user re-login keeps keys; persist=session tab vs cross-tab local login follows the pre-existing local-first read (own sessionStorage still A, getSession() = B, keys cleared, lastuid B) - not a regression. AC-5: two new form tiers 'VIP' / 'vip ' with the first response lost -> one adoption, second POST 422 shown, server has exactly one VIP, no quota PUT; price edited before retry -> no adoption, POST 422 shown, no duplicate. AC-6: 503 then network error then 200 keeps polling (7 GETs / 30 s with stepped act); issue-tickets empty then 403 forbidden on PAID -> forbidden shown, 2 POSTs, no retry button; other 403s stay UNKNOWN.",
+    "repro": "see x1-refresh.test.ts / x2-session.test.ts / x3-organizer.test.tsx / x4-payment.test.tsx as pasted in the challenge report",
+    "fix": "n/a"
+  }
+]

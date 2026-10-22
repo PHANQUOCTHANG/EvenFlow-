@@ -52,6 +52,7 @@ export function PaymentHandoffView({
     holdExpired,
     error,
     authRequired,
+    forbidden,
     submitPayment,
   } = usePaymentSession({
     eventId,
@@ -129,7 +130,9 @@ export function PaymentHandoffView({
           title={authRequired ? t("checkout.authRequired") : "Không thể khởi tạo thanh toán"}
           className="mb-md"
         >
-          {authRequired ? (
+          {forbidden ? (
+            t("checkout.forbidden")
+          ) : authRequired ? (
             <Link
               href="/auth/sign-in"
               className="ef-focus-ring inline-flex items-center justify-center rounded-control border border-border-strong bg-surface px-md py-sm text-label-md text-fg hover:bg-surface-subtle"

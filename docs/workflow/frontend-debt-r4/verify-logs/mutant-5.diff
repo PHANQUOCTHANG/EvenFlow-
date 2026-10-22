@@ -1,0 +1,13 @@
+diff --git a/apps/web/src/lib/session.ts b/apps/web/src/lib/session.ts
+index 2db9c6e..5040e9b 100644
+--- a/apps/web/src/lib/session.ts
++++ b/apps/web/src/lib/session.ts
+@@ -120,7 +120,7 @@ function reconcileBuyFlowOwner(nextUid: string): void {
+   try {
+     if (typeof window === "undefined") return;
+     // Uu tien lastuid cua tab nay; chua co thi dung user dang luu (nguoi dung khac dang nhap tiep trong tab moi).
+-    const prev = window.sessionStorage.getItem(K_LAST_UID) ?? readFrom(store("local"))?.user.id ?? readFrom(store("session"))?.user.id;
++    const prev = readFrom(store("local"))?.user.id ?? readFrom(store("session"))?.user.id ?? window.sessionStorage.getItem(K_LAST_UID);
+     if (prev && nextUid && prev !== nextUid) clearBuyFlowStorage();
+     if (nextUid) window.sessionStorage.setItem(K_LAST_UID, nextUid);
+   } catch {

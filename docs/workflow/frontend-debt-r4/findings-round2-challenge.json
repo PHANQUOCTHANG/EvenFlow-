@@ -1,0 +1,117 @@
+{
+  "round": 2,
+  "role": "challenger",
+  "commit_reviewed": "0f85023",
+  "docs_commit": "d59c2a9",
+  "command": "cd apps/web && npx vitest run src/__challenge__  (3 files, 31 tests, all executed; files removed afterwards)",
+  "rerun": [
+    {
+      "id": "X-1",
+      "variant": "A: initialOrder PENDING + GET 403 /problems/forbidden, stepped act() over 120 s",
+      "still_reproduces": false,
+      "evidence": "{\"gets\":1,\"forbidden\":true,\"spinner\":false,\"manual\":false,\"retry\":false,\"notFound\":false,\"loadError\":true,\"paidBanner\":false} - checkout.forbidden text shown, PENDING card (spinner 'Dang xac nhan thanh toan' + 'Kiem tra trang thai ngay') gone, 1 GET over 120 s.",
+      "repro": "const { calls } = installFetch(() => problem(403, \"/problems/forbidden\", \"not yours\")); render(<OrderResultView eventId=\"e1\" orderId=\"o1\" initialOrder={pending} />); for (let t=0;t<120000;t+=1000) await act(async()=>{await vi.advanceTimersByTimeAsync(1000)}); expect(screen.queryByText(FORBIDDEN_TEXT)).not.toBeNull(); expect(screen.queryByText(\"Đang xác nhận thanh toán\")).toBeNull(); expect(screen.queryByRole(\"button\",{name:/Kiểm tra trạng thái ngay/})).toBeNull(); expect(gets(calls)).toBe(1);"
+    },
+    {
+      "id": "X-1",
+      "variant": "B: GET #1 200 PENDING, cross-tab user switch (localStorage u-2), GET #2 403 forbidden, stepped act()",
+      "still_reproduces": false,
+      "evidence": "after GET #1: {\"gets\":1,\"spinner\":true,\"forbidden\":false}; after switch + 120 s: {\"gets\":2,\"forbidden\":true,\"spinner\":false,\"manual\":false,\"retry\":false,\"loadError\":true} - polling stopped at 2 GETs, forbidden shown.",
+      "repro": "let n=0; const { calls } = installFetch(() => (++n===1 ? json(wire(\"PENDING\")) : problem(403,\"/problems/forbidden\",\"not yours\"))); render(<OrderResultView eventId=\"e1\" orderId=\"o1\" />); await step(1_000); localStorage.setItem(\"ef_token\",\"acc-u2\"); localStorage.setItem(\"ef_refresh\",\"r-u2\"); localStorage.setItem(\"ef_user\",JSON.stringify({id:\"u-2\",role:\"buyer\"})); await step(120_000); expect(snap(calls)).toMatchObject({gets:2,forbidden:true,spinner:false,manual:false,retry:false});"
+    },
+    {
+      "id": "X-2",
+      "variant": "submit #1 FORBIDDEN, submit #2 AUTH_REQUIRED",
+      "still_reproduces": false,
+      "evidence": "{\"forbidden\":false,\"authRequired\":true,\"holdExpired\":false,\"error\":\"expired\"}",
+      "repro": "spy.mockRejectedValueOnce(new PaymentClientError(\"x\",\"FORBIDDEN\",403)); await submit(); expect(flags().forbidden).toBe(true); spy.mockRejectedValueOnce(new PaymentClientError(\"expired\",\"AUTH_REQUIRED\",401)); await submit(); expect(flags()).toMatchObject({forbidden:false,authRequired:true,error:\"expired\"});"
+    },
+    {
+      "id": "X-3",
+      "variant": "A: hung POST of u-1/r1, u-2 stored with the SAME refresh string r1 at 60 s, abort at 120 s",
+      "still_reproduces": false,
+      "evidence": "{\"a\":\"A:AUTH_REQUIRED\",\"token\":\"acc-u2\",\"refresh\":\"r1\",\"user\":\"u-2\",\"posts\":[\"r1\"]} - u-2 left intact, 1 POST.",
+      "repro": "installLocks(fakeLocks()); installFetch(c => c.path===\"/api/v1/auth/refresh\" ? hangUntilAborted(c.init) : problem(401,\"/problems/token-expired\")); seedUser(\"u-1\",\"old\",\"r1\"); const A=await newTab(); const a=outcome(\"A\",A.api.apiFetch(\"/v1/orders/a\")); await vi.advanceTimersByTimeAsync(60_000); seedUser(\"u-2\",\"acc-u2\",\"r1\"); await vi.advanceTimersByTimeAsync(61_000); expect(await a).toBe(\"A:AUTH_REQUIRED\"); expect(localStorage.getItem(\"ef_token\")).toBe(\"acc-u2\");"
+    },
+    {
+      "id": "X-3",
+      "variant": "B: POST answers 401 after u-2 stored with the SAME refresh string r1",
+      "still_reproduces": false,
+      "evidence": "{\"a\":\"A:AUTH_REQUIRED\",\"token\":\"acc-u2\",\"refresh\":\"r1\",\"user\":\"u-2\",\"posts\":[\"r1\"]}",
+      "repro": "controlled refresh promise; seedUser(\"u-1\",\"old\",\"r1\"); a=outcome(A.api.apiFetch(\"/v1/orders/a\")); await advance(10_000); seedUser(\"u-2\",\"acc-u2\",\"r1\"); answer(problem(401,\"/problems/invalid-token\")); await advance(1_000); expect(stored()).toMatchObject({token:\"acc-u2\",refresh:\"r1\",user:\"u-2\"});"
+    }
+  ],
+  "new_findings": [
+    {
+      "id": "R2-1",
+      "severity": "minor",
+      "pre_existing": "yes - identical gating at 43375eb (view: `order === null && error !== null`; hook stopped polling on NOT_FOUND/AUTH_REQUIRED before r4)",
+      "ac": "outside AC-6 (spec names FORBIDDEN only); same shape as F-1/X-1 for the other two definitive errors",
+      "file": "apps/web/src/components/checkout/order-result-view.tsx",
+      "line": 56,
+      "title": "F-1 fixed FORBIDDEN only: NOT_FOUND or AUTH_REQUIRED on a poll AFTER a PENDING order is on screen still leaves a silent spinner + 'Kiem tra trang thai ngay' with polling stopped; manual check is silent too; for AUTH_REQUIRED the session has been cleared and no sign-in prompt is shown",
+      "evidence": "NOT_FOUND: {\"gets\":2,\"forbidden\":false,\"spinner\":true,\"manual\":true,\"retry\":false,\"notFound\":false,\"loadError\":false}; click manual + 5 s -> gets 3, same screen. AUTH_REQUIRED (401 token-expired, refresh 401): {\"gets\":2,\"spinner\":true,\"manual\":true,\"notFound\":false,\"loadError\":false,\"token\":null}; manual -> gets 3, same screen. Without an order on screen both still render their cards (NOT_FOUND card no retry; AUTH_REQUIRED -> loadError card + retry), so no regression; `blocked` is simply narrower than the hook's stop set (use-order-status.ts:72,97).",
+      "repro": "let n=0; const { calls } = installFetch(() => (++n===1 ? json(wire(\"PENDING\")) : problem(404,\"/problems/not-found\",\"gone\"))); render(<OrderResultView eventId=\"e1\" orderId=\"o1\" />); await step(120_000); expect(gets(calls)).toBe(2); expect(screen.queryByText(\"Không tìm thấy đơn hàng\")).toBeNull(); // passes: no message\nexpect(screen.queryByText(\"Đang xác nhận thanh toán\")).not.toBeNull(); fireEvent.click(screen.getByRole(\"button\",{name:/Kiểm tra trạng thái ngay/})); await step(5_000); // gets 3, still spinner\n// AUTH_REQUIRED variant: installFetch(c => c.path===\"/api/v1/auth/refresh\" ? problem(401,\"/problems/invalid-token\") : (++n===1 ? json(wire(\"PENDING\")) : problem(401,\"/problems/token-expired\")));",
+      "fix": "Optional follow-up (not required for AC-6): `const blocked = error?.type === \"FORBIDDEN\" || error?.type === \"NOT_FOUND\" || error?.type === \"AUTH_REQUIRED\"` so the error card replaces the PENDING card for every type the hook stops polling on; add a sign-in link for AUTH_REQUIRED like payment-handoff-view."
+    },
+    {
+      "id": "R2-2",
+      "severity": "minor",
+      "pre_existing": "no - introduced by the F-1 widening (`showErrorCard = error !== null && (blocked || order === null)`) at 0f85023",
+      "ac": "AC-6",
+      "file": "apps/web/src/components/checkout/order-result-view.tsx",
+      "line": 57,
+      "title": "PAID order on screen: issue-tickets fails non-definitively (503) -> onRetry refresh -> GET 403 forbidden -> the new forbidden card (titled 'Khong tai duoc don hang') renders ABOVE the 'Da thanh toan thanh cong' banner, and the issued.forbidden alert renders below it: two checkout.forbidden messages plus a contradictory 'paid / issuing tickets' banner on one page",
+      "evidence": "{\"forbiddenCount\":2,\"loadErrorTitle\":1,\"paidBanner\":true,\"issuingTitle\":true,\"issueN\":2}. At 99fe35e the top card was gated on order === null, so only the single issued.forbidden alert under the PAID banner appeared. `blocked` is evaluated regardless of `status`, but the PAID/FAILED/EXPIRED/CANCELLED branches are not gated on `!showErrorCard` (only PENDING is).",
+      "repro": "let issueN=0; installFetch(c => { if (c.path.endsWith(\"/issue-tickets\")) { issueN+=1; return issueN===1 ? problem(503,\"/problems/unavailable\") : problem(403,\"/problems/forbidden\",\"not yours\"); } return problem(403,\"/problems/forbidden\",\"not yours\"); }); render(<OrderResultView eventId=\"e1\" orderId=\"o1\" initialOrder={paid} />); await step(30_000); expect(screen.queryAllByText(FORBIDDEN_TEXT)).toHaveLength(2); expect(screen.queryByText(\"Đã thanh toán thành công\")).not.toBeNull();",
+      "fix": "Either gate `blocked` on `status === \"PENDING\"` (the only state that polls) or gate the PAID branch on `!showErrorCard` and drop the duplicate issued.forbidden alert when the order itself is forbidden. Add a test: PAID + issue 503 then GET 403 -> exactly one forbidden message."
+    },
+    {
+      "id": "R2-3",
+      "severity": "minor",
+      "pre_existing": "yes - same outcome at 99fe35e (guard compared peekSession()?.refreshToken, and peekSession() is local-first, so the tab-local sessionStorage copy was never compared); introduced with the 120 s abort in this r4 branch, not by fix round 1",
+      "ac": "AC-2 ('the server may already have rotated the token, which must never be POSTed again')",
+      "file": "apps/web/src/lib/api-client.ts",
+      "line": 135,
+      "title": "isSamePostedSession reads peekSession() (localStorage first). persist=session tab (u-1/r1 in sessionStorage) with a hung POST; another tab signs in u-2 with persist=local; abort at 120 s -> guard sees u-2 and does not clear, so the tab-local u-1/r1 copy survives; when u-2 later signs out (other tab), the next request in this tab POSTs r1 AGAIN (posts [\"r1\",\"r1\"])",
+      "evidence": "after abort: {\"a\":\"A:AUTH_REQUIRED\",\"token\":\"acc-u2\",\"refresh\":\"r-u2\",\"user\":\"u-2\",\"sToken\":\"old\",\"sRefresh\":\"r1\",\"posts\":[\"r1\"]}; after localStorage.clear() + new request + 121 s: {\"b\":\"B:AUTH_REQUIRED\",\"sToken\":null,\"sRefresh\":null,\"posts\":[\"r1\",\"r1\"]}. Needs mixed persist + 120 s hang + other-user logout, hence minor; consequence server-side is reuse detection revoking the family (self-healing) rather than a session leak.",
+      "repro": "installLocks(fakeLocks()); const { calls } = installFetch(c => c.path===\"/api/v1/auth/refresh\" ? hangUntilAborted(c.init) : problem(401,\"/problems/token-expired\")); seedUser(\"u-1\",\"old\",\"r1\",sessionStorage); const A=await newTab(); const a=outcome(\"A\",A.api.apiFetch(\"/v1/orders/a\")); await vi.advanceTimersByTimeAsync(60_000); seedUser(\"u-2\",\"acc-u2\",\"r-u2\",localStorage); await vi.advanceTimersByTimeAsync(61_000); await a; localStorage.clear(); const b=outcome(\"B\",A.api.apiFetch(\"/v1/orders/b\")); await vi.advanceTimersByTimeAsync(121_000); await b; expect(posts(calls)).toEqual([\"r1\"]); // FAILS: [\"r1\",\"r1\"]",
+      "fix": "Optional: in the abort/401 guards, wipe the specific store that still holds the POSTed pair (same user id + same refresh token in EITHER localStorage or sessionStorage) instead of asking peekSession() which store wins; or record the posted refresh token in a module-level 'burned' set so doRefresh never POSTs it again."
+    },
+    {
+      "id": "R2-4",
+      "severity": "minor",
+      "pre_existing": "yes - same as deferred D-X-4 (abort path); this is the POST-401 path of the same symptom",
+      "ac": "AC-2 / deferred D-X-4",
+      "file": "apps/web/src/lib/api-client.ts",
+      "line": 175,
+      "title": "Same user re-logs in with a new pair (r9) in another tab while this tab's POST of r1 is in flight; the POST answers 401 (r1 revoked by the logout) -> caller gets AUTH_REQUIRED although a valid session for the SAME user is stored and kept; the very next call succeeds with acc-9 and no POST",
+      "evidence": "{\"a\":\"A:AUTH_REQUIRED\",\"token\":\"acc-9\",\"refresh\":\"r9\",\"user\":\"u-1\",\"posts\":[\"r1\"]}; next call {\"b\":\"B:200\",\"posts\":[\"r1\"]}. Abort-path twin (S1) and logout-then-same-user-login (S3) behave identically. The success path (line 187) already reuses the rotated pair; the 401 and abort paths do not.",
+      "repro": "controlled refresh; seedUser(\"u-1\",\"old\",\"r1\"); const a=outcome(\"A\",A.api.apiFetch(\"/v1/orders/a\")); await advance(10_000); seedUser(\"u-1\",\"acc-9\",\"r9\"); answer(problem(401,\"/problems/invalid-token\")); await advance(1_000); expect(await a).toBe(\"A:200\"); // FAILS: A:AUTH_REQUIRED ; expect(await outcome(\"B\",A.api.apiFetch(\"/v1/orders/b\"))).toBe(\"B:200\"); // passes",
+      "fix": "Fold into D-X-4: after a guard decides not to clear, if peekSession() is the same user with a different refresh token, return stored.accessToken (same rule as line 187) for both the 401 and the abort branch."
+    },
+    {
+      "id": "R2-S1",
+      "severity": "suspicion",
+      "pre_existing": "yes (epoch guard unchanged since F-12)",
+      "ac": "AC-2",
+      "file": "apps/web/src/lib/api-client.ts",
+      "line": 137,
+      "title": "Same-tab clearSession() then setSession() writing back the IDENTICAL pair (old/r1) during the hung POST: epoch moved, so the abort guard keeps the session and r1 is POSTed again on the next call. Unreachable with server-issued tokens (a new login never returns the previous refresh string); listed because the epoch check is the only thing standing between the two POSTs",
+      "evidence": "after abort: {\"a\":\"A:AUTH_REQUIRED\",\"token\":\"old\",\"refresh\":\"r1\",\"user\":\"u-1\",\"posts\":[\"r1\"]}; next call: {\"b\":\"B:AUTH_REQUIRED\",\"posts\":[\"r1\",\"r1\"]}",
+      "repro": "hung refresh; seedUser(\"u-1\",\"old\",\"r1\"); const a=outcome(\"A\",A.api.apiFetch(\"/v1/orders/a\")); await advance(30_000); A.sess.clearSession(); A.sess.setSession({accessToken:\"old\",refreshToken:\"r1\",user:{id:\"u-1\",role:\"buyer\"}}); await advance(91_000); await a; const b=outcome(\"B\",A.api.apiFetch(\"/v1/orders/b\")); await advance(121_000); await b; // posts [\"r1\",\"r1\"]",
+      "fix": "None required; the 'burned refresh token' set from R2-3 would close this too."
+    },
+    {
+      "id": "R2-OK",
+      "severity": "info",
+      "ac": "F-1..F-5",
+      "file": "apps/web/src/__challenge__ (removed)",
+      "line": 0,
+      "title": "Attacks executed with no defect found",
+      "evidence": "F-4: FORBIDDEN->success->NETWORK_ERROR -> {forbidden:false,authRequired:false,error:\"mat mang\"}, onSuccess once; AUTH_REQUIRED->FORBIDDEN->UNKNOWN each shows only its own kind; FORBIDDEN->HOLD_EXPIRED -> forbidden false, holdExpired true; FORBIDDEN->validation early return keeps forbidden true with 1 network call (no new submit, acceptable); FORBIDDEN->countdown expiry early return keeps forbidden true but the view renders holdExpired first (`error && !holdExpired`). F-2: same user with refresh token removed (old or new access) -> AUTH_REQUIRED and the broken session IS cleared, 0 POST; other user without refresh token -> AUTH_REQUIRED, u-2 intact, 0 POST, both via lock wait and via the no-locks direct path; signed out while waiting -> AUTH_REQUIRED, 0 POST, epoch +1 (pre-existing, harmless). F-5/isSamePostedSession: other user WITHOUT refresh token during the POST (abort and 401) -> u-2 intact, 1 POST; same user with refresh token removed during the POST -> not cleared at abort, next call clears cleanly with no second POST of r1; same user/same pair untouched -> abort clears (AUTH_REQUIRED, storage empty); empty user id both sides -> cleared ('' === ''). F-1: network error with an order on screen keeps polling (7 GETs / 30 s) with spinner + manual button (designed); without an order NOT_FOUND / network / AUTH_REQUIRED keep their cards; forbidden card has no retry/manual button and the 'Tom tat thanh toan' summary (tier/total) still renders under it (harmless). Cosmetic note: the forbidden card's title is result.loadErrorTitle ('Khong tai duoc don hang'), as it already was for the no-order case.",
+      "repro": "see r2-x1-order-result.test.tsx / r2-x2-payment-session.test.tsx / r2-x3-refresh-guards.test.ts (pasted in the challenge report)",
+      "fix": "n/a"
+    }
+  ]
+}

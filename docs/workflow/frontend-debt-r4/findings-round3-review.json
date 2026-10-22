@@ -1,0 +1,104 @@
+{
+  "round": 3,
+  "role": "re-reviewer + challenger (different model than the implementer)",
+  "commit_reviewed": "e91dff0",
+  "diff": "git diff 52d0477 e91dff0 -- apps/web (order-result-view.tsx +27/-4, order-result-view.fix2.test.tsx +118)",
+  "command": "cd apps/web && npx vitest run src/__challenge__  (3 files, 37 tests: 34 passed, 3 failed = the intended vacuity failures against the pre-fix view; files removed afterwards). Also: npx vitest run src/components/checkout/order-result-view src/hooks -> 18 files / 170 tests passed.",
+  "verdicts": [
+    { "id": "G-1", "status": "fixed" },
+    { "id": "G-2", "status": "fixed" }
+  ],
+  "rerun": [
+    {
+      "id": "R2-1",
+      "variant": "NOT_FOUND: GET #1 200 PENDING, GET #2 404 /problems/not-found, stepped act() 120 s (+60 s more)",
+      "still_reproduces": false,
+      "evidence": "{\"gets\":2,\"alerts\":1,\"forbidden\":0,\"spinner\":false,\"manual\":false,\"retry\":false,\"notFound\":true,\"loadError\":false} ; after a further 60 s gets still 2 (no manual button exists, polling stopped).",
+      "repro": "let n=0; const { calls } = installFetch(() => (++n===1 ? json(wire(\"PENDING\")) : problem(404,\"/problems/not-found\",\"gone\"))); render(<OrderResultView eventId=\"e1\" orderId=\"o1\" />); await step(120_000); expect(snap(calls)).toMatchObject({gets:2,notFound:true,spinner:false,manual:false,retry:false,alerts:1}); await step(60_000); expect(gets(calls)).toBe(2);"
+    },
+    {
+      "id": "R2-1",
+      "variant": "AUTH_REQUIRED: GET #1 200 PENDING, GET #2 401 token-expired, POST refresh 401 invalid-token, stepped act() 120 s",
+      "still_reproduces": false,
+      "evidence": "{\"gets\":2,\"alerts\":1,\"authTitle\":true,\"signIn\":\"/auth/sign-in\",\"spinner\":false,\"manual\":false,\"retry\":false,\"loadError\":false,\"token\":null} - session cleared AND a sign-in prompt with link is shown; same href as checkout-view / payment-handoff-view / waiting-room.",
+      "repro": "let n=0; const { calls } = installFetch(c => c.path===\"/api/v1/auth/refresh\" ? problem(401,\"/problems/invalid-token\") : (++n===1 ? json(wire(\"PENDING\")) : problem(401,\"/problems/token-expired\"))); render(<OrderResultView eventId=\"e1\" orderId=\"o1\" />); await step(120_000); expect(snap(calls)).toMatchObject({gets:2,authTitle:true,signIn:\"/auth/sign-in\",spinner:false,manual:false,retry:false,alerts:1,token:null});"
+    },
+    {
+      "id": "R2-2",
+      "variant": "initialOrder PAID, issue-tickets #1 503 -> onRetry refresh -> GET 403 forbidden, issue-tickets #2 403, stepped act() 30 s",
+      "still_reproduces": false,
+      "evidence": "{\"gets\":1,\"alerts\":1,\"forbidden\":1,\"loadErrorTitles\":0,\"paidBanner\":true,\"spinner\":false,\"issueN\":2}; the single role=alert contains checkout.forbidden (the issued.forbidden alert); buttons on page: [\"In / Tải vé\"] only - no retry / manual check.",
+      "repro": "let issueN=0; const { calls } = installFetch(c => { if (c.path.endsWith(\"/issue-tickets\")) { issueN+=1; return issueN===1 ? problem(503,\"/problems/unavailable\") : problem(403,\"/problems/forbidden\",\"not yours\"); } return problem(403,\"/problems/forbidden\",\"not yours\"); }); render(<OrderResultView eventId=\"e1\" orderId=\"o1\" initialOrder={paid} />); await step(30_000); expect(screen.queryAllByText(FORBIDDEN_TEXT)).toHaveLength(1); expect(screen.queryAllByText(\"Không tải được đơn hàng\")).toHaveLength(0); expect(screen.queryAllByRole(\"alert\")).toHaveLength(1); expect(screen.queryByText(\"Đã thanh toán thành công\")).not.toBeNull();"
+    }
+  ],
+  "regression_test_vacuity_check": {
+    "file": "apps/web/src/components/checkout/order-result-view.fix2.test.tsx",
+    "method": "copied the pre-fix view (git show 52d0477:.../order-result-view.tsx -> __challenge__/old-view.tsx) and ran the identical fix2 test body against it (import path swapped only).",
+    "result": "3 of 4 tests FAIL on the pre-fix view, each on the exact reported symptom: G-1 'expected [...] to have a length of 1 but got 2' (two forbidden texts); G-2 NOT_FOUND 'expected null not to be null' on queryByText('Không tìm thấy đơn hàng'); G-2 AUTH_REQUIRED 'expected null not to be null' on queryByText(checkout.authRequired). The 4th test (network error keeps polling) passes on both views by design - it is a guard against over-fixing, not a regression test.",
+    "non_vacuous": true,
+    "notes": "Assertions use stepped act() per 1 s tick and count GETs on /v1/orders/o1 (toBe(2)) so the 'polling stopped' half is asserted, not just the message. G-1 additionally asserts the PAID banner survives. Minor gap: G-1 does not assert the absence of result.loadErrorTitle (the top card's title) - covered by my rerun, optional to add."
+  },
+  "attack_matrix": {
+    "columns": "error in {FORBIDDEN 403, NOT_FOUND 404, AUTH_REQUIRED 401+refresh 401, NETWORK (fetch reject), S503}",
+    "rows": {
+      "none (first GET fails)": "FORBIDDEN -> 1 alert (loadErrorTitle + checkout.forbidden), no retry, 1 GET. NOT_FOUND -> 1 alert notFound, no retry, 1 GET. AUTH_REQUIRED -> 1 alert loadErrorTitle + loadErrorBody + Retry button, NO sign-in link (see R3-1). NETWORK / S503 -> 1 alert loadError + Retry, and the hook keeps auto-polling behind the card (10 GETs / 60 s; status defaults to PENDING when order===null) - pre-existing, self-healing, harmless.",
+      "PENDING": "FORBIDDEN / NOT_FOUND / AUTH_REQUIRED -> exactly 1 role=alert, spinner gone, manual button gone, polling stopped at 2 GETs; AUTH_REQUIRED shows checkout.authRequired + link href=/auth/sign-in. Also via initialOrder PENDING (1 GET). NETWORK / S503 -> 0 alerts, spinner + 'Kiểm tra trạng thái ngay' stay, 7 GETs / 30 s (keeps polling). 401 with a successful refresh -> transparent retry, no card. Auto-poll exhausted at 15 attempts (16 GETs) keeps spinner+manual; manual click -> 404 -> notFound card replaces spinner (17 GETs).",
+      "PAID": "issue 503 -> onRetry GET x -> the order error is never rendered (no loadError/notFound/forbidden top card); exactly 1 alert in every column: FORBIDDEN -> issued.forbidden (1 checkout.forbidden); NOT_FOUND / AUTH_REQUIRED -> issued.failed 'Chưa lấy được vé điện tử' + 'Lấy vé lại' (F-13 design, see R3-3); NETWORK / S503 -> 6 issue attempts then issued.failed. GET 403 but issue #2 succeeds -> QR shown, 0 alerts.",
+      "FAILED / EXPIRED / CANCELLED": "initialOrder: 0 GET and 0 issue over 120 s, exactly the one status card, no error card. PENDING -> poll -> settled: polling stops at 2 GETs, one card, later 403 never fetched.",
+      "recovery": "PENDING -> network x3 -> PAID: error cleared (0 alerts), PAID banner, issue-tickets called once, QR rendered, polling stopped at 5 GETs. PENDING -> network -> PENDING -> 404: single notFound card at 4 GETs."
+    },
+    "duplicates": "In no cell did two role=alert elements render; the PENDING card and the error card are mutually exclusive via !showErrorCard; PAID/FAILED/EXPIRED/CANCELLED branches never co-render with the error card because showErrorCard requires status === 'PENDING' when order !== null."
+  },
+  "new_findings": [
+    {
+      "id": "R3-1",
+      "severity": "minor",
+      "pre_existing": "yes - identical at 43375eb (no-order AUTH_REQUIRED already rendered loadError + Retry); the G-2 fix makes it visibly inconsistent because the same error now gets a sign-in prompt when an order was on screen",
+      "ac": "outside AC-6 (spec names FORBIDDEN only)",
+      "file": "apps/web/src/components/checkout/order-result-view.tsx",
+      "line": 59,
+      "title": "authExpired is gated on `order !== null`: a 401 (refresh 401) on the FIRST GET shows the generic 'Không tải được đơn hàng' + 'Thử lại' with no sign-in link, although the session has just been cleared; each Retry re-hits the network with 401 (3 GETs after 2 clicks), same screen",
+      "evidence": "none x AUTH_REQUIRED: {\"gets\":1,\"alerts\":1,\"retry\":true,\"loadError\":true,\"authTitle\":false,\"signIn\":null,\"token\":null}; after 2 Retry clicks: {\"gets\":3,...same}. PENDING x AUTH_REQUIRED (same error, order on screen): {\"authTitle\":true,\"signIn\":\"/auth/sign-in\",\"retry\":false}.",
+      "repro": "installFetch(c => c.path===\"/api/v1/auth/refresh\" ? problem(401,\"/problems/invalid-token\") : problem(401,\"/problems/token-expired\")); render(<OrderResultView eventId=\"e1\" orderId=\"o1\" />); await step(5_000); expect(screen.queryByRole(\"link\",{name:\"Đăng nhập\"})).toBeNull(); // passes = no sign-in link\nexpect(screen.queryByRole(\"button\",{name:/^Thử lại$/})).not.toBeNull(); expect(localStorage.getItem(\"ef_token\")).toBeNull();",
+      "fix": "Optional follow-up: `const authExpired = error?.type === \"AUTH_REQUIRED\";` (drop `order !== null`) so both paths show checkout.authRequired + sign-in link and hide Retry; check whether an existing no-order test asserts the Retry button for 401 before changing."
+    },
+    {
+      "id": "R3-2",
+      "severity": "nit",
+      "pre_existing": "no - introduced by e91dff0",
+      "ac": "G-2",
+      "file": "apps/web/src/components/checkout/order-result-view.tsx",
+      "line": 91,
+      "title": "PENDING x AUTH_REQUIRED alert renders an empty `<p class=\"text-body-sm\"></p>` (body is null for authExpired but the <p> wrapper is unconditional)",
+      "evidence": "AUTH body p {\"exists\":true,\"text\":\"\"}",
+      "repro": "same setup as R2-1 AUTH_REQUIRED; const p = screen.getByRole(\"alert\").querySelector(\"p.text-body-sm\"); expect(p?.textContent).toBe(\"\");",
+      "fix": "Optional: wrap the <p> in `{!authExpired ? (<p ...>...</p>) : null}` or move the message into the body instead of the title."
+    },
+    {
+      "id": "R3-3",
+      "severity": "info",
+      "pre_existing": "yes - F-13 design at 43375eb",
+      "ac": "outside AC-6",
+      "file": "apps/web/src/hooks/use-order-status.ts",
+      "line": 181,
+      "title": "PAID + issue-tickets 503 -> refresh GET 401 (session dead) -> issue #2 401: user sees 'Chưa lấy được vé điện tử' + 'Lấy vé lại' (which will 401 again) and no sign-in prompt; the hidden order error is AUTH_REQUIRED",
+      "evidence": "PAID x AUTH_REQUIRED: {\"gets\":1,\"issues\":2,\"alerts\":1,\"paid\":true,\"loadError\":false,\"authTitle\":false,\"signIn\":null}",
+      "repro": "let issueN=0; installFetch(c => { if (c.path===\"/api/v1/auth/refresh\") return problem(401,\"/problems/invalid-token\"); if (c.path.endsWith(\"/issue-tickets\")) { issueN+=1; return issueN===1 ? problem(503,\"/problems/unavailable\") : problem(401,\"/problems/token-expired\"); } return problem(401,\"/problems/token-expired\"); }); render(<OrderResultView eventId=\"e1\" orderId=\"o1\" initialOrder={paid} />); await step(120_000); expect(screen.queryByRole(\"link\",{name:\"Đăng nhập\"})).toBeNull();",
+      "fix": "None required for r4; if R3-1 is taken, consider surfacing an AUTH_REQUIRED sign-in prompt in the PAID section too (issued hook would need to expose authRequired like it exposes forbidden)."
+    },
+    {
+      "id": "R3-OK",
+      "severity": "info",
+      "ac": "AC-6 / G-1 / G-2",
+      "file": "apps/web/src/__challenge__ (removed)",
+      "line": 0,
+      "title": "Attacks executed with no defect found: full error x status matrix (see attack_matrix), recovery after later success, sign-in link target, duplicate-alert count, settled statuses never poll, poll-exhausted + manual check, 401 with successful refresh",
+      "evidence": "29/29 matrix tests passed; 4/4 rerun tests passed; existing suites src/components/checkout/order-result-view* + src/hooks: 170/170 passed at e91dff0.",
+      "repro": "r3-rerun.test.tsx / r3-matrix.test.tsx / r3-vacuity-oldview.test.tsx (pasted above and in the round-3 report)",
+      "fix": "n/a"
+    }
+  ],
+  "blocker": 0,
+  "major": 0,
+  "cleanup": "apps/web/src/__challenge__ removed; no tracked files modified by this review (git status shows only docs/workflow/frontend-debt-r4/gate/web-npm-ci.log, which the parallel gate script was already rewriting before this review started, plus this new untracked findings file)."
+}

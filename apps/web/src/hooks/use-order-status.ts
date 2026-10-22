@@ -55,17 +55,22 @@ export function useOrderStatus({
   const [error, setError] = useState<PaymentClientError | null>(null);
 
   const isPollingRef = useRef(false);
+  /** Loi cuoi cung doc dong bo: timer da hen co the chay truoc khi React ke kip huy no (render chua flush). */
+  const stopPollRef = useRef(false);
 
   const fetchStatus = useCallback(async () => {
     if (!orderId || !eventId) return;
 
     try {
       const details = await getOrderDetails(orderId, eventId);
+      stopPollRef.current = false;
       setOrder(details);
       setError(null);
     } catch (err) {
       // Giữ nguyên order hiện có (không đè lỗi làm mất thông tin), chỉ ghi nhận lỗi để UI báo + thử lại
-      setError(err instanceof PaymentClientError ? err : new PaymentClientError("Lỗi không xác định", "UNKNOWN"));
+      const e = err instanceof PaymentClientError ? err : new PaymentClientError("Lỗi không xác định", "UNKNOWN");
+      stopPollRef.current = e.type === "NOT_FOUND" || e.type === "AUTH_REQUIRED" || e.type === "FORBIDDEN";
+      setError(e);
     } finally {
       setLoading(false);
     }
@@ -89,7 +94,7 @@ export function useOrderStatus({
     }
 
     // 404 / het phien: poll tiep khong giup gi.
-    if (error?.type === "NOT_FOUND" || error?.type === "AUTH_REQUIRED") {
+    if (error?.type === "NOT_FOUND" || error?.type === "AUTH_REQUIRED" || error?.type === "FORBIDDEN") {
       return;
     }
 
@@ -99,7 +104,7 @@ export function useOrderStatus({
     }
 
     const timer = setTimeout(async () => {
-      if (isPollingRef.current) return;
+      if (isPollingRef.current || stopPollRef.current) return;
       isPollingRef.current = true;
       try {
         setPollAttempts((prev) => prev + 1);
@@ -132,6 +137,8 @@ export interface UseIssuedTicketsReturn {
   tickets: IssuedTicketQR[];
   /** true khi chua co ve nao (dang lay hoac cho phat hanh) va con luot thu lai. */
   pending: boolean;
+  /** true khi server tu choi (403 forbidden): khong thu lai. */
+  forbidden: boolean;
   /** true khi da het luot thu lai ma van chua co ve: UI cho nguoi dung bam thu lai. */
   failed: boolean;
   retry: () => void;
@@ -148,6 +155,7 @@ export function useIssuedTickets(
   const { baseDelayMs = 2000, maxAttempts = 6, onRetry } = opts;
   const [tickets, setTickets] = useState<IssuedTicketQR[]>([]);
   const [attempts, setAttempts] = useState(0);
+  const [forbidden, setForbidden] = useState(false);
   const [run, setRun] = useState(0);
   const attemptsRef = useRef(0);
   const onRetryRef = useRef(onRetry);
@@ -170,7 +178,8 @@ export function useIssuedTickets(
       .catch((err: unknown) => {
         if (cancelled) return;
         // Het phien / khong thay don: thu lai khong the thanh cong -> dung han, de UI hien nut thu lai thu cong (F-13).
-        if (err instanceof PaymentClientError && (err.type === "AUTH_REQUIRED" || err.type === "NOT_FOUND")) {
+        if (err instanceof PaymentClientError && (err.type === "AUTH_REQUIRED" || err.type === "NOT_FOUND" || err.type === "FORBIDDEN")) {
+          if (err.type === "FORBIDDEN") setForbidden(true);
           attemptsRef.current = maxAttempts;
           setAttempts(maxAttempts);
           return;
@@ -198,10 +207,17 @@ export function useIssuedTickets(
     forgetIssueKey(orderId);
     attemptsRef.current = 0;
     setAttempts(0);
+    setForbidden(false);
     setRun((r) => r + 1);
   }, [orderId]);
 
   const hasTickets = tickets.length > 0;
   const exhausted = attempts >= maxAttempts;
-  return { tickets, pending: paid && !hasTickets && !exhausted, failed: paid && !hasTickets && exhausted, retry };
+  return {
+    tickets,
+    pending: paid && !hasTickets && !exhausted,
+    forbidden: paid && !hasTickets && forbidden,
+    failed: paid && !hasTickets && exhausted && !forbidden,
+    retry,
+  };
 }

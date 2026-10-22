@@ -1,0 +1,195 @@
+[33mThe CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.[39m
+
+[1m[7m[36m RUN [39m[27m[22m [36mv2.1.8 [39m[90mD:/Documents/Nam4-1/Project1/EvenFlow-debt-verify/apps/web[39m
+
+ [32m✓[39m src/lib/debt/fix1-f3-empty-user-id.test.ts[2m > [22mF-3 empty user id[2m > [22mrequest sent by user id ""; another tab signs in u-2: AUTH_REQUIRED, never retried with u-2's token
+ [32m✓[39m src/lib/debt/ac1-user-switch.test.ts[2m > [22mAC-1 session ownership during the lock wait[2m > [22manother tab signs out u-1 and signs in u-2: AUTH_REQUIRED, u-2 session untouched, 0 POST, no retry with u-2 token
+ [32m✓[39m src/lib/debt/ac1-user-switch.test.ts[2m > [22mAC-1 session ownership during the lock wait[2m > [22mu-2 holds the SAME refresh string but a different user id: still AUTH_REQUIRED (identity decides, not token)
+ [32m✓[39m src/lib/fix2/g1-lock-refresh.test.ts[2m > [22mH-1[2m > [22mZ-1: holder POST takes 40 s + a waiting tab: exactly one POST per token, nobody logged out
+ [32m✓[39m src/lib/debt/ac1-user-switch.test.ts[2m > [22mAC-1 session ownership during the lock wait[2m > [22mGUARD: the other tab rotated the pair for the SAME user: reused, request succeeds, no POST
+ [32m✓[39m src/lib/debt/fix1-f2-no-refresh-token.test.ts[2m > [22mF-2 doRefresh with another user's session lacking a refresh token[2m > [22mu-1 request waits for the lock; another tab stores u-2 WITHOUT refresh token: AUTH_REQUIRED, u-2 intact, 0 POST
+ [32m✓[39m src/lib/debt/ac1-user-switch.test.ts[2m > [22mAC-1 session ownership during the lock wait[2m > [22mGUARD: the other tab signed out and nobody signed in: AUTH_REQUIRED, 0 POST
+ [32m✓[39m src/lib/fix2/g1-lock-refresh.test.ts[2m > [22mH-1[2m > [22mZ-1b: holder POST takes 60 s: the waiter gives up at 45 s with NETWORK_ERROR (no POST, session kept); the holder finishes
+ [32m✓[39m src/lib/debt/ac1-user-switch.test.ts[2m > [22mAC-1 session ownership during the lock wait[2m > [22mu-1 -> u-2 -> u-1 within one wait: same user id again, so reuse is allowed (no POST)
+ [32m✓[39m src/lib/debt/ac1-user-switch.test.ts[2m > [22mAC-1 user switch WHILE the refresh POST is in flight (plan M2-2)[2m > [22mother tab signs in u-2 during u-1's POST, POST then succeeds: request NOT retried with u-2 token, AUTH_REQUIRED, u-2 session intact
+ [32m✓[39m src/lib/fix2/g1-lock-refresh.test.ts[2m > [22mH-1[2m > [22mZ-2: two waiters time out together behind a stuck holder: 0 extra POSTs, session kept
+ [32m✓[39m src/lib/fix2/g1-lock-refresh.test.ts[2m > [22mH-1[2m > [22mZ-3: own POST answered 401 -> AUTH_REQUIRED and the session is cleared
+ [32m✓[39m src/lib/debt/ac4-cross-tab-owner.test.tsx[2m > [22mAC-4 user switch made in another tab[2m > [22mgetSession(): stored user id differs from this tab's ef:lastuid -> buy-flow keys cleared, lastuid updated
+ [32m✓[39m src/lib/debt/ac4-cross-tab-owner.test.tsx[2m > [22mAC-4 user switch made in another tab[2m > [22mW-1 setSession(): this tab then signs in as u-B (shared storage already holds u-B) -> keys of u-A are cleared
+ [32m✓[39m src/lib/debt/fix1-f5-clear-guards.test.ts[2m > [22mF-5 clearSession guards compare the user id[2m > [22m120 s abort: u-2 stored with the SAME refresh string "r1" is not cleared
+ [32m✓[39m src/lib/debt/fix1-f5-clear-guards.test.ts[2m > [22mF-5 clearSession guards compare the user id[2m > [22mPOST answers 401 after the switch: u-2 with the SAME refresh string "r1" is not cleared
+ [32m✓[39m src/lib/fix2/g1-lock-refresh.test.ts[2m > [22mH-1[2m > [22mR3-1: the refresh token lives only under ef_refresh (persist=local), during the POST and after clearSession
+ [32m✓[39m src/lib/debt/ac3-locks-errors.test.ts[2m > [22mAC-3 lock failures[2m > [22mreject InvalidStateError -> ApiError NETWORK_ERROR, 0 POST, session kept, no pending timer
+ [32m✓[39m src/lib/debt/ac3-locks-errors.test.ts[2m > [22mAC-3 lock failures[2m > [22mreject NotSupportedError -> ApiError NETWORK_ERROR, 0 POST, session kept, no pending timer
+ [32m✓[39m src/lib/fix2/g1-lock-refresh.test.ts[2m > [22mH-1[2m > [22mR3-1: the refresh token lives only under ef_refresh (persist=session), during the POST and after clearSession
+ [32m✓[39m src/lib/fix2/g1-lock-refresh.test.ts[2m > [22mH-1[2m > [22mno navigator.locks: in-tab single-flight, one POST for concurrent requests
+ [32m✓[39m src/lib/debt/ac2-refresh-deadlines.test.ts[2m > [22mAC-2 non-owner callers are bounded at 45 s[2m > [22mW-3: other tab waiting on the lock rejects NETWORK_ERROR at 45 s each time; 1 POST total; owner still waiting; session kept
+ [32m✓[39m src/lib/debt/ac3-locks-errors.test.ts[2m > [22mAC-3 lock failures[2m > [22mreject AbortError -> ApiError NETWORK_ERROR, 0 POST, session kept, no pending timer
+ [32m✓[39m src/lib/debt/ac6-payment-forbidden.test.ts[2m > [22mAC-6 403 /problems/forbidden[2m > [22minitiatePayment -> FORBIDDEN (type + code + status 403), one call only
+ [32m✓[39m src/lib/debt/ac6-payment-forbidden.test.ts[2m > [22mAC-6 403 /problems/forbidden[2m > [22mgetOrderDetails -> FORBIDDEN (type + code + status 403), one call only
+ [32m✓[39m src/lib/debt/ac6-payment-forbidden.test.ts[2m > [22mAC-6 403 /problems/forbidden[2m > [22missueTickets -> FORBIDDEN (type + code + status 403), one call only
+ [32m✓[39m src/lib/debt/ac6-payment-forbidden.test.ts[2m > [22mAC-6 403 /problems/forbidden[2m > [22mGUARD: initiatePayment with 403 about:blank keeps the generic mapping (UNKNOWN)
+ [32m✓[39m src/lib/debt/ac6-payment-forbidden.test.ts[2m > [22mAC-6 403 /problems/forbidden[2m > [22mGUARD: getOrderDetails with 403 about:blank keeps the generic mapping (UNKNOWN)
+ [32m✓[39m src/lib/debt/ac6-payment-forbidden.test.ts[2m > [22mAC-6 403 /problems/forbidden[2m > [22mGUARD: issueTickets with 403 about:blank keeps the generic mapping (UNKNOWN)
+ [32m✓[39m src/lib/debt/ac6-payment-forbidden.test.ts[2m > [22mAC-6 403 /problems/forbidden[2m > [22mGUARD: initiatePayment with 403 and an empty body keeps the generic mapping (UNKNOWN)
+ [32m✓[39m src/lib/debt/ac6-payment-forbidden.test.ts[2m > [22mAC-6 403 /problems/forbidden[2m > [22mGUARD: getOrderDetails with 403 and an empty body keeps the generic mapping (UNKNOWN)
+ [32m✓[39m src/lib/debt/ac6-payment-forbidden.test.ts[2m > [22mAC-6 403 /problems/forbidden[2m > [22mGUARD: issueTickets with 403 and an empty body keeps the generic mapping (UNKNOWN)
+ [32m✓[39m src/lib/debt/ac6-payment-forbidden.test.ts[2m > [22mAC-6 403 /problems/forbidden[2m > [22mGUARD: getOrderDetails 404 is still NOT_FOUND and initiatePayment 422 still INVALID_INPUT
+ [32m✓[39m src/lib/fix2/g1-lock-refresh.test.ts[2m > [22mG-1[2m > [22manother tab rotated the pair while we waited: use it, no POST at all
+ [32m✓[39m src/lib/debt/ac3-locks-errors.test.ts[2m > [22mAC-3 lock failures[2m > [22mreject TypeError -> ApiError NETWORK_ERROR, 0 POST, session kept, no pending timer
+ [32m✓[39m src/lib/fix2/g1-lock-refresh.test.ts[2m > [22mG-1[2m > [22mlock manager that never settles: NETWORK_ERROR at the deadline, session and buy-flow keys kept, no POST
+ [32m✓[39m src/lib/debt/ac2-refresh-deadlines.test.ts[2m > [22mAC-2 non-owner callers are bounded at 45 s[2m > [22ma later same-tab caller joins the in-flight refresh and rejects NETWORK_ERROR at 45 s; a call at 50 s joins too (still 1 POST)
+ [32m✓[39m src/lib/debt/ac3-locks-errors.test.ts[2m > [22mAC-3 lock failures[2m > [22mthrow InvalidStateError -> ApiError NETWORK_ERROR, 0 POST, session kept, no pending timer
+ [32m✓[39m src/lib/debt/ac4-cross-tab-owner.test.tsx[2m > [22mAC-4 user switch made in another tab[2m > [22mstorage event for ef_user (no getSession call by the test) -> keys cleared once the tab observes it
+ [32m✓[39m src/lib/debt/ac3-locks-errors.test.ts[2m > [22mAC-3 lock failures[2m > [22mthrow NotSupportedError -> ApiError NETWORK_ERROR, 0 POST, session kept, no pending timer
+ [32m✓[39m src/lib/debt/ac2-refresh-deadlines.test.ts[2m > [22mAC-2 non-owner callers are bounded at 45 s[2m > [22mGUARD (Z-1b): the owner whose POST answers at 60 s gets 200; the abandoned waiter never POSTs afterwards
+ [32m✓[39m src/lib/debt/ac4-cross-tab-owner.test.tsx[2m > [22mAC-4 user switch made in another tab[2m > [22mGUARD: same user signed in by the other tab (token rotation) keeps the keys on getSession and on a storage event
+ [32m✓[39m src/lib/debt/ac4-cross-tab-owner.test.tsx[2m > [22mAC-4 user switch made in another tab[2m > [22mGUARD (G-4): other tab signs out (no new user): getSession() is null and the keys / lastuid are kept
+ [32m✓[39m src/lib/debt/ac4-cross-tab-owner.test.tsx[2m > [22mAC-4 user switch made in another tab[2m > [22mA -> B -> A in the other tab before this tab observes anything: same uid as lastuid, keys are kept
+ [32m✓[39m src/lib/debt/ac3-locks-errors.test.ts[2m > [22mAC-3 lock failures[2m > [22mthrow TypeError -> ApiError NETWORK_ERROR, 0 POST, session kept, no pending timer
+ [32m✓[39m src/lib/debt/ac4-cross-tab-owner.test.tsx[2m > [22mAC-4 user switch made in another tab[2m > [22ma storage event for an unrelated key does not touch buy-flow keys
+ [32m✓[39m src/lib/debt/ac2-refresh-deadlines.test.ts[2m > [22mAC-2 non-owner callers are bounded at 45 s[2m > [22mafter a joiner gave up, the POST that finally answers (60 s) still stores the pair and frees the lock for another tab (no 2nd POST)
+ [32m✓[39m src/lib/debt/ac2-refresh-deadlines.test.ts[2m > [22mAC-2 the POST is aborted at 120 s[2m > [22mexports REFRESH_POST_TIMEOUT_MS = 120_000
+ [32m✓[39m src/lib/debt/ac3-locks-errors.test.ts[2m > [22mAC-3 lock failures[2m > [22mSecurityError (reject) -> in-tab single-flight: exactly 1 POST, request succeeds
+ [32m✓[39m src/hooks/use-payment-session.fix1.test.tsx[2m > [22musePaymentSession forbidden reset (F-4)[2m > [22mFORBIDDEN then AUTH_REQUIRED: forbidden false, authRequired true
+ [32m✓[39m src/hooks/use-payment-session.debt.test.tsx[2m > [22musePaymentSession forbidden (AC-6)[2m > [22mFORBIDDEN error -> forbidden flag true, not authRequired, not holdExpired
+ [32m✓[39m src/hooks/use-payment-session.debt.test.tsx[2m > [22musePaymentSession forbidden (AC-6)[2m > [22mGUARD: UNKNOWN 403 leaves forbidden false
+ [32m✓[39m src/lib/debt/ac2-refresh-deadlines.test.ts[2m > [22mAC-2 the POST is aborted at 120 s[2m > [22mowner pending at 119 s, signal aborted and AUTH_REQUIRED at 121 s, session cleared, r1 POSTed once
+ [32m✓[39m src/lib/debt/ac3-locks-errors.test.ts[2m > [22mAC-3 lock failures[2m > [22mSecurityError (throw) -> in-tab single-flight: exactly 1 POST, request succeeds
+ [32m✓[39m src/lib/debt/ac4-cross-tab-owner.test.tsx[2m > [22mAC-4 user switch made in another tab[2m > [22mreconciliation never touches the auth keys in localStorage (safe while a refresh is in flight)
+ [32m✓[39m src/lib/debt/ac4-cross-tab-owner.test.tsx[2m > [22mAC-4 user switch made in another tab[2m > [22man explicit logout (buyFlow:true) still clears keys and lastuid (unchanged behaviour)
+ [32m✓[39m src/lib/debt/ac4-cross-tab-owner.test.tsx[2m > [22mAC-4 user switch made in another tab[2m > [22mef:lastuid absent (fresh tab, session already stored): getSession adopts the stored user id and KEEPS the keys
+ [32m✓[39m src/lib/debt/ac2-refresh-deadlines.test.ts[2m > [22mAC-2 the POST is aborted at 120 s[2m > [22mabort guard (other tab): another tab signed in as u-2 during the POST -> AUTH_REQUIRED but u-2's session is left intact
+ [32m✓[39m src/lib/debt/ac3-locks-errors.test.ts[2m > [22mAC-3 lock failures[2m > [22mW-2: the lock error also reaches hold-client as a classified (AMBIGUOUS) error, not a raw DOMException
+ [32m✓[39m src/lib/debt/ac3-locks-errors.test.ts[2m > [22mAC-3 lock failures[2m > [22mGUARD: a lock error does not clear buy-flow keys or the session
+ [32m✓[39m src/lib/debt/ac2-refresh-deadlines.test.ts[2m > [22mAC-2 the POST is aborted at 120 s[2m > [22mabort guard (same tab): sign-out and new sign-in in this tab during the POST (epoch changed) -> the new session is left intact
+ [32m✓[39m src/lib/debt/ac2-refresh-deadlines.test.ts[2m > [22mAC-2 the POST is aborted at 120 s[2m > [22mafter the abort the lock is released: user signs in again (r9); a request in another tab refreshes normally; r1 never POSTed twice
+ [32m✓[39m src/lib/debt/ac2-refresh-deadlines.test.ts[2m > [22mAC-2 the POST is aborted at 120 s[2m > [22mGUARD: a plain network failure of the POST (not an abort) keeps the session -> NETWORK_ERROR
+ [32m✓[39m src/lib/debt/ac2-refresh-deadlines.test.ts[2m > [22mAC-2 the POST is aborted at 120 s[2m > [22mGUARD (Z-3): POST answered 401 within the window -> AUTH_REQUIRED, session cleared
+ [32m✓[39m src/lib/debt/ac2-refresh-deadlines.test.ts[2m > [22mAC-2 / plan m-1: the in-flight refresh is keyed by user[2m > [22ma u-2 caller in the same tab does not join u-1's hung refresh; it POSTs with its own token and succeeds
+ [32m✓[39m src/lib/debt/ac2-refresh-deadlines.test.ts[2m > [22mAC-2 never-answering POST, no navigator.locks[2m > [22mcalls at 0 s, 46 s and 100 s -> exactly 1 POST; joiner at 46 s NETWORK_ERROR at 91 s; owner AUTH_REQUIRED at 121 s; session cleared
+ [32m✓[39m src/lib/debt/ac2-refresh-deadlines.test.ts[2m > [22mAC-2 never-answering POST, locks.request rejects SecurityError[2m > [22mcalls at 0 s, 46 s and 100 s -> exactly 1 POST; joiner at 46 s NETWORK_ERROR at 91 s; owner AUTH_REQUIRED at 121 s; session cleared
+ [32m✓[39m src/lib/debt/ac2-refresh-deadlines.test.ts[2m > [22mAC-2 timer hygiene: vi.getTimerCount() returns to its starting value after every outcome[2m > [22msuccess
+ [32m✓[39m src/lib/debt/ac2-refresh-deadlines.test.ts[2m > [22mAC-2 timer hygiene: vi.getTimerCount() returns to its starting value after every outcome[2m > [22m401 on the POST
+ [32m✓[39m src/lib/debt/ac2-refresh-deadlines.test.ts[2m > [22mAC-2 timer hygiene: vi.getTimerCount() returns to its starting value after every outcome[2m > [22mnetwork error on the POST
+ [32m✓[39m src/lib/debt/ac2-refresh-deadlines.test.ts[2m > [22mAC-2 timer hygiene: vi.getTimerCount() returns to its starting value after every outcome[2m > [22m120 s abort
+ [32m✓[39m src/components/checkout/order-result-view.fix1.test.tsx[2m > [22mOrderResultView forbidden with a PENDING order on screen (F-1)[2m > [22minitialOrder PENDING + GET 403: forbidden alert shown, no spinner, no manual check, polling stops
+ [32m✓[39m src/components/checkout/order-result-view.debt.test.tsx[2m > [22mOrderResultView 403 forbidden (AC-6)[2m > [22morder poll 403: shows checkout.forbidden, no retry button, and does not poll again (1 GET over 120 s)
+[90mstderr[2m | src/app/(organizer)/organizer/events/[eventId]/edit/page.debt.test.tsx[2m > [22m[2mAC-5 lost addTier response[2m > [22m[2mW-4: retry matches the reloaded server tier: addTier called once in total, no quota PUT, navigates to review-status
+[22m[39mWarning: An update to OrganizerEventView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrganizerEventView (D:\Documents\Nam4-1\Project1\EvenFlow-debt-verify\apps\web\src\app\(organizer)\organizer\_lib\organizer-event-view.tsx:18:31)
+    at EditEventClient (D:\Documents\Nam4-1\Project1\EvenFlow-debt-verify\apps\web\src\app\(organizer)\organizer\events\[eventId]\edit\edit-event-client.tsx:131:28)
+
+ [32m✓[39m src/components/checkout/order-result-view.debt.test.tsx[2m > [22mOrderResultView 403 forbidden (AC-6)[2m > [22missue-tickets 403 on a PAID order: shows checkout.forbidden and stops after 1 POST (no 6-attempt retry loop)
+ [32m✓[39m src/components/checkout/order-result-view.fix2.test.tsx[2m > [22mG-1 PAID + forbidden shows the message once[2m > [22missue-tickets 503 -> retry refresh -> GET 403: forbidden text appears exactly once and PAID section stays
+ [32m✓[39m src/components/checkout/order-result-view.fix2.test.tsx[2m > [22mG-2 terminal poll errors on a PENDING order stop the silent spinner[2m > [22mNOT_FOUND: not-found message shown, no spinner, polling stopped
+ [32m✓[39m src/components/checkout/payment-handoff-view.debt.test.tsx[2m > [22mPaymentHandoffView 403 forbidden (AC-6)[2m > [22mshows checkout.forbidden (not the generic HTTP 403 text) and sends exactly one payment POST[33m 338[2mms[22m[39m
+ [32m✓[39m src/components/checkout/order-result-view.fix2.test.tsx[2m > [22mG-2 terminal poll errors on a PENDING order stop the silent spinner[2m > [22mAUTH_REQUIRED: sign-in prompt with link, no spinner, polling stopped
+ [32m✓[39m src/components/checkout/order-result-view.fix2.test.tsx[2m > [22mG-2 terminal poll errors on a PENDING order stop the silent spinner[2m > [22mguard: network error keeps polling with spinner and manual button
+[90mstderr[2m | src/app/(organizer)/organizer/events/[eventId]/edit/page.debt.test.tsx[2m > [22m[2mAC-5 lost addTier response[2m > [22m[2mmatched tier with a different quota: only the quota is sent, to the server id; still one addTier
+[22m[39mWarning: An update to OrganizerEventView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrganizerEventView (D:\Documents\Nam4-1\Project1\EvenFlow-debt-verify\apps\web\src\app\(organizer)\organizer\_lib\organizer-event-view.tsx:18:31)
+    at EditEventClient (D:\Documents\Nam4-1\Project1\EvenFlow-debt-verify\apps\web\src\app\(organizer)\organizer\events\[eventId]\edit\edit-event-client.tsx:131:28)
+
+ [32m✓[39m src/app/(organizer)/organizer/events/[eventId]/edit/page.debt.test.tsx[2m > [22mAC-5 lost addTier response[2m > [22mW-4: retry matches the reloaded server tier: addTier called once in total, no quota PUT, navigates to review-status[33m 484[2mms[22m[39m
+[90mstderr[2m | src/app/(organizer)/organizer/events/[eventId]/edit/page.debt.test.tsx[2m > [22m[2mAC-5 lost addTier response[2m > [22m[2mtrim + case-insensitive: server stored the name as ' HẠNG VÉ #2 ' -> still matched, no second POST
+[22m[39mWarning: An update to OrganizerEventView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrganizerEventView (D:\Documents\Nam4-1\Project1\EvenFlow-debt-verify\apps\web\src\app\(organizer)\organizer\_lib\organizer-event-view.tsx:18:31)
+    at EditEventClient (D:\Documents\Nam4-1\Project1\EvenFlow-debt-verify\apps\web\src\app\(organizer)\organizer\events\[eventId]\edit\edit-event-client.tsx:131:28)
+
+ [32m✓[39m src/app/(organizer)/organizer/events/[eventId]/edit/page.debt.test.tsx[2m > [22mAC-5 lost addTier response[2m > [22mmatched tier with a different quota: only the quota is sent, to the server id; still one addTier
+[90mstderr[2m | src/app/(organizer)/organizer/events/[eventId]/edit/page.debt.test.tsx[2m > [22m[2mAC-5 lost addTier response[2m > [22m[2many 422 from addTier triggers the same lookup: server tier visible only after the failure -> matched, no error shown
+[22m[39mWarning: An update to OrganizerEventView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrganizerEventView (D:\Documents\Nam4-1\Project1\EvenFlow-debt-verify\apps\web\src\app\(organizer)\organizer\_lib\organizer-event-view.tsx:18:31)
+    at EditEventClient (D:\Documents\Nam4-1\Project1\EvenFlow-debt-verify\apps\web\src\app\(organizer)\organizer\events\[eventId]\edit\edit-event-client.tsx:131:28)
+
+ [32m✓[39m src/app/(organizer)/organizer/events/[eventId]/edit/page.debt.test.tsx[2m > [22mAC-5 lost addTier response[2m > [22mtrim + case-insensitive: server stored the name as ' HẠNG VÉ #2 ' -> still matched, no second POST
+[90mstderr[2m | src/app/(organizer)/organizer/events/[eventId]/edit/page.debt.test.tsx[2m > [22m[2mAC-5 lost addTier response[2m > [22m[2man UNRELATED existing tier with the same name but a different price is NOT matched: POST as new, show the server 422 detail
+[22m[39mWarning: An update to OrganizerEventView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrganizerEventView (D:\Documents\Nam4-1\Project1\EvenFlow-debt-verify\apps\web\src\app\(organizer)\organizer\_lib\organizer-event-view.tsx:18:31)
+    at EditEventClient (D:\Documents\Nam4-1\Project1\EvenFlow-debt-verify\apps\web\src\app\(organizer)\organizer\events\[eventId]\edit\edit-event-client.tsx:131:28)
+
+ [32m✓[39m src/app/(organizer)/organizer/events/[eventId]/edit/page.debt.test.tsx[2m > [22mAC-5 lost addTier response[2m > [22many 422 from addTier triggers the same lookup: server tier visible only after the failure -> matched, no error shown
+[90mstderr[2m | src/app/(organizer)/organizer/events/[eventId]/edit/page.debt.test.tsx[2m > [22m[2mAC-5 lost addTier response[2m > [22m[2mGUARD: the organizer renamed the lost tier before retrying: no match, POSTed under the new name, 422 detail shown
+[22m[39mWarning: An update to OrganizerEventView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrganizerEventView (D:\Documents\Nam4-1\Project1\EvenFlow-debt-verify\apps\web\src\app\(organizer)\organizer\_lib\organizer-event-view.tsx:18:31)
+    at EditEventClient (D:\Documents\Nam4-1\Project1\EvenFlow-debt-verify\apps\web\src\app\(organizer)\organizer\events\[eventId]\edit\edit-event-client.tsx:131:28)
+
+ [32m✓[39m src/app/(organizer)/organizer/events/[eventId]/edit/page.debt.test.tsx[2m > [22mAC-5 lost addTier response[2m > [22man UNRELATED existing tier with the same name but a different price is NOT matched: POST as new, show the server 422 detail
+[90mstderr[2m | src/app/(organizer)/organizer/events/[eventId]/edit/page.debt.test.tsx[2m > [22m[2mAC-5 lost addTier response[2m > [22m[2mGUARD (F-3): without any lost response a normal save POSTs the new tier exactly once
+[22m[39mWarning: An update to OrganizerEventView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrganizerEventView (D:\Documents\Nam4-1\Project1\EvenFlow-debt-verify\apps\web\src\app\(organizer)\organizer\_lib\organizer-event-view.tsx:18:31)
+    at EditEventClient (D:\Documents\Nam4-1\Project1\EvenFlow-debt-verify\apps\web\src\app\(organizer)\organizer\events\[eventId]\edit\edit-event-client.tsx:131:28)
+
+ [32m✓[39m src/app/(organizer)/organizer/events/[eventId]/edit/page.debt.test.tsx[2m > [22mAC-5 lost addTier response[2m > [22mGUARD: the organizer renamed the lost tier before retrying: no match, POSTed under the new name, 422 detail shown
+ [32m✓[39m src/app/(organizer)/organizer/events/[eventId]/edit/page.debt.test.tsx[2m > [22mAC-5 lost addTier response[2m > [22mGUARD (F-3): without any lost response a normal save POSTs the new tier exactly once
+
+[2m Test Files [22m [1m[32m16 passed[39m[22m[90m (16)[39m
+[2m      Tests [22m [1m[32m86 passed[39m[22m[90m (86)[39m
+[2m   Start at [22m 00:55:05
+[2m   Duration [22m 6.90s[2m (transform 1.90s, setup 13.69s, collect 5.87s, tests 4.64s, environment 49.76s, prepare 3.87s)[22m
+
+exit=0
