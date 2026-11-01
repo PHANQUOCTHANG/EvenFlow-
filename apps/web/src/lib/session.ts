@@ -40,24 +40,45 @@ function store(kind: SessionPersist): Storage | null {
   }
 }
 
-function readFrom(s: Storage | null): Session | null {
-  if (!s) return null;
+/** AC-6 (X-14): chi 4 role backend biet; role khac (gia mao/"admin") -> phien khong hop le. */
+const ROLES: ReadonlySet<string> = new Set<Role>(["buyer", "organizer", "moderator", "ops"]);
+export function isRole(v: unknown): v is Role {
+  return typeof v === "string" && ROLES.has(v);
+}
+
+type StoreRead = { kind: "absent" } | { kind: "invalid" } | { kind: "ok"; session: Session };
+
+/** "Co mat" = co ca ef_token va ef_user. Co mat nhung hong (JSON loi, role la) -> invalid (khong roi xuong kho kia). */
+function readStore(s: Storage | null): StoreRead {
+  if (!s) return { kind: "absent" };
   try {
     const accessToken = s.getItem(K_ACCESS);
     const rawUser = s.getItem(K_USER);
-    if (!accessToken || !rawUser) return null;
+    if (!accessToken || !rawUser) return { kind: "absent" };
     const user = JSON.parse(rawUser) as SessionUser | null;
-    if (!user || typeof user !== "object" || typeof user.id !== "string" || typeof user.role !== "string") return null;
+    if (!user || typeof user !== "object" || typeof user.id !== "string" || !isRole(user.role)) return { kind: "invalid" };
     const rawExp = Number(s.getItem(K_EXPIRES));
     return {
-      accessToken,
-      refreshToken: s.getItem(K_REFRESH) || null,
-      user,
-      ...(Number.isFinite(rawExp) && rawExp > 0 ? { expiresAt: rawExp } : {}),
+      kind: "ok",
+      session: {
+        accessToken,
+        refreshToken: s.getItem(K_REFRESH) || null,
+        user,
+        ...(Number.isFinite(rawExp) && rawExp > 0 ? { expiresAt: rawExp } : {}),
+      },
     };
   } catch {
-    return null;
+    return { kind: "invalid" };
   }
+}
+
+/** Kho dau tien "co mat" (local truoc, roi session) quyet dinh phien; null khi khong kho nao co mat. */
+function activeStore(): { kind: SessionPersist; read: StoreRead } | null {
+  for (const kind of ["local", "session"] as const) {
+    const read = readStore(store(kind));
+    if (read.kind !== "absent") return { kind, read };
+  }
+  return null;
 }
 
 function wipe(s: Storage | null) {
@@ -86,14 +107,14 @@ export function getSession(): Session | null {
 
 /** Nhu getSession nhung KHONG doi chieu `ef:lastuid` (khong ghi gi ca): dung cho lop mang (api-client). */
 export function peekSession(): Session | null {
-  return readFrom(store("local")) ?? readFrom(store("session"));
+  const a = activeStore();
+  return a?.read.kind === "ok" ? a.read.session : null;
 }
 
 /** Phien dang nam o kho nao (de refresh giu nguyen che do "ghi nho"). */
 export function getSessionPersist(): SessionPersist | null {
-  if (readFrom(store("local"))) return "local";
-  if (readFrom(store("session"))) return "session";
-  return null;
+  const a = activeStore();
+  return a?.read.kind === "ok" ? a.kind : null;
 }
 
 /** User id cua phien gan nhat TRONG TAB NAY (sessionStorage, cung pham vi voi khoa luong mua ve). Con lai sau khi phien
@@ -120,7 +141,7 @@ function reconcileBuyFlowOwner(nextUid: string): void {
   try {
     if (typeof window === "undefined") return;
     // Uu tien lastuid cua tab nay; chua co thi dung user dang luu (nguoi dung khac dang nhap tiep trong tab moi).
-    const prev = window.sessionStorage.getItem(K_LAST_UID) ?? readFrom(store("local"))?.user.id ?? readFrom(store("session"))?.user.id;
+    const prev = window.sessionStorage.getItem(K_LAST_UID) ?? peekSession()?.user.id;
     if (prev && nextUid && prev !== nextUid) clearBuyFlowStorage();
     if (nextUid) window.sessionStorage.setItem(K_LAST_UID, nextUid);
   } catch {
@@ -135,7 +156,7 @@ function observeStorageEvents(): void {
   storageObserved = true;
   window.addEventListener("storage", (e: StorageEvent) => {
     if (e.key !== null && e.key !== K_USER && e.key !== K_ACCESS) return;
-    const s = readFrom(store("local")) ?? readFrom(store("session"));
+    const s = peekSession();
     if (s) observeUser(s.user.id);
   });
 }
@@ -249,6 +270,9 @@ export function sessionFromIdentity(res: IdentityTokens, prev?: SessionUser | nu
   const accessToken = res.access_token ?? res.token;
   if (!accessToken) return null;
   const email = res.email ?? prev?.email;
+  const id = res.id ?? prev?.id ?? "";
+  // AC-6: role la/thieu -> role cu (hop le, CUNG user id), neu khong thi buyer (it quyen nhat; server van kiem role).
+  const role: Role = isRole(res.role) ? res.role : prev && isRole(prev.role) && prev.id === id ? prev.role : "buyer";
   const expiresAt =
     typeof res.expires_in === "number" && res.expires_in > 0 ? Date.now() + res.expires_in * 1000 : undefined;
   return {
@@ -256,8 +280,8 @@ export function sessionFromIdentity(res: IdentityTokens, prev?: SessionUser | nu
     ...(expiresAt ? { expiresAt } : {}),
     refreshToken: res.refresh_token ?? null,
     user: {
-      id: res.id ?? prev?.id ?? "",
-      role: (res.role as Role) ?? prev?.role ?? "buyer",
+      id,
+      role,
       ...(email ? { email } : {}),
     },
   };
