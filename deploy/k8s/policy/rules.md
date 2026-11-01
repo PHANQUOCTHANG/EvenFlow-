@@ -65,3 +65,14 @@ Each rule was disabled one at a time (function body replaced by `return`; AC-13 
 self-test cases of sections B/C re-evaluated with the `test_policy.sh` criteria: all 24 rule mutants fail the
 self-test. Extra mutants (per AC-12 sub-check, sub-check exemption widened to the whole rule, AC-9 exemption
 accepted) are listed with their results in the WP5 report.
+
+### Accepted limitations of the self-test
+
+- **Invalid exemption taking effect is not observable.** Every `EXEMPT--*` fixture adds an invalid exemption key
+  to a workload whose target rule already passes, so the self-test cannot see whether the checker wrongly lets an
+  invalid key suppress the rule. A fixture where it would matter (e.g. gateway with `readOnlyRootFilesystem: false`
+  plus `policy-exempt.AC-12.readOnlyRootFilesystem`) must fail with both `AC-12` and `EXEMPT`, which contract §7
+  (one rule id per bad fixture) does not allow. Accepted at WP6 integration (test-change-request-wp5.md, second row);
+  `Ctx._load_exemptions` adds a pair to `Workload.exempt` only when it is an allowed pair with a non-empty reason, and code review covers it. Closing the gap needs a
+  contract §7 amendment for multi-id cases.
+- The `rootUid` sub-check gap from the same request is closed by `bad/AC-12--dev-infra-run-as-uid-0.yaml`.
