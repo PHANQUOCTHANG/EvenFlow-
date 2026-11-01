@@ -5,3 +5,7 @@
 # Manifest k8s va compose cung nen giu LF cho nhat quan khi apply tu may Windows.
 *.yaml text eol=lf
 *.yml  text eol=lf
+
+# Kustomize generator sources (secrets.dev.env, app-config.env, endpoints.env): a CRLF checkout
+# would put a carriage return into every generated Secret/ConfigMap value.
+*.env text eol=lf
