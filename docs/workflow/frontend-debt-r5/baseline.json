@@ -1,0 +1,636 @@
+{
+ "commit": "5273691 (develop c5fb598 + docs)",
+ "vitest": {
+  "files": 167,
+  "passed": 2419,
+  "failed": 0,
+  "command": "cd apps/web && npx vitest run (before the new tests)"
+ },
+ "new_tests": {
+  "total": 136,
+  "red": 76,
+  "green_guard": 60
+ },
+ "red_check": [
+  {
+   "test": "src/hooks/use-order-status.debt5.test.tsx > useIssuedTickets authRequired 401 -> authRequired true, pending false, forbidden false; failed keeps today's value (true: attempts exhausted)",
+   "status": "red",
+   "reason": "AssertionError: expected undefined to be true // Object.is equality"
+  },
+  {
+   "test": "src/hooks/use-order-status.debt5.test.tsx > useIssuedTickets authRequired retry() resets authRequired and issues again; success clears it",
+   "status": "red",
+   "reason": "AssertionError: expected undefined to be true // Object.is equality"
+  },
+  {
+   "test": "src/hooks/use-order-status.debt5.test.tsx > useIssuedTickets authRequired GUARD: 403 -> forbidden true, authRequired false",
+   "status": "red",
+   "reason": "AssertionError: expected undefined to be false // Object.is equality"
+  },
+  {
+   "test": "src/hooks/use-order-status.debt5.test.tsx > useIssuedTickets authRequired GUARD: not paid -> authRequired false and no request",
+   "status": "red",
+   "reason": "AssertionError: expected undefined to be false // Object.is equality"
+  },
+  {
+   "test": "src/components/checkout/checkout-view.debt5.test.tsx > AC-11 button visibility active hold: secondary 'Huỷ giữ vé' button is shown, i18n key exists in vi and en",
+   "status": "red",
+   "reason": "AssertionError: expected null not to be null"
+  },
+  {
+   "test": "src/components/checkout/checkout-view.debt5.test.tsx > AC-11 confirmation dialog clicking 'Huỷ giữ vé' opens an accessible dialog and sends NO request yet",
+   "status": "red",
+   "reason": "TestingLibraryElementError: Unable to find an accessible element with the role \"button\" and name `/^Huỷ giữ vé$/`"
+  },
+  {
+   "test": "src/components/checkout/checkout-view.debt5.test.tsx > AC-11 confirmation dialog dismiss button closes it: 0 DELETE, hold and countdown stay",
+   "status": "red",
+   "reason": "TestingLibraryElementError: Unable to find an accessible element with the role \"button\" and name `/^Huỷ giữ vé$/`"
+  },
+  {
+   "test": "src/components/checkout/checkout-view.debt5.test.tsx > AC-11 confirmation dialog Escape closes it: 0 DELETE, hold stays",
+   "status": "red",
+   "reason": "TestingLibraryElementError: Unable to find an accessible element with the role \"button\" and name `/^Huỷ giữ vé$/`"
+  },
+  {
+   "test": "src/components/checkout/checkout-view.debt5.test.tsx > AC-11 confirmation dialog confirm -> exactly 1 DELETE /v1/holds/h1 with an Idempotency-Key and the bearer; hold removed; back to idle; dialog closed",
+   "status": "red",
+   "reason": "TestingLibraryElementError: Unable to find an accessible element with the role \"button\" and name `/^Huỷ giữ vé$/`"
+  },
+  {
+   "test": "src/components/checkout/checkout-view.debt5.test.tsx > AC-11 confirmation dialog double click on confirm while the DELETE is pending -> still 1 DELETE; primary button disabled while cancelling",
+   "status": "red",
+   "reason": "TestingLibraryElementError: Unable to find an accessible element with the role \"button\" and name `/^Huỷ giữ vé$/`"
+  },
+  {
+   "test": "src/components/checkout/checkout-view.debt5.test.tsx > AC-11 outcomes DELETE 404 is treated as released",
+   "status": "red",
+   "reason": "TestingLibraryElementError: Unable to find an accessible element with the role \"button\" and name `/^Huỷ giữ vé$/`"
+  },
+  {
+   "test": "src/components/checkout/checkout-view.debt5.test.tsx > AC-11 outcomes DELETE 200 is treated as released",
+   "status": "red",
+   "reason": "TestingLibraryElementError: Unable to find an accessible element with the role \"button\" and name `/^Huỷ giữ vé$/`"
+  },
+  {
+   "test": "src/components/checkout/checkout-view.debt5.test.tsx > AC-11 outcomes AUTH_REQUIRED (401): existing sign-in alert, hold stays, no 'could not confirm' alert",
+   "status": "red",
+   "reason": "TestingLibraryElementError: Unable to find an accessible element with the role \"button\" and name `/^Huỷ giữ vé$/`"
+  },
+  {
+   "test": "src/components/checkout/checkout-view.debt5.test.tsx > AC-11 outcomes HTTP 500: hold stays, error alert says release could not be confirmed, no sign-in prompt",
+   "status": "red",
+   "reason": "TestingLibraryElementError: Unable to find an accessible element with the role \"button\" and name `/^Huỷ giữ vé$/`"
+  },
+  {
+   "test": "src/components/checkout/checkout-view.debt5.test.tsx > AC-11 outcomes HTTP 403: hold stays, error alert says release could not be confirmed, no sign-in prompt",
+   "status": "red",
+   "reason": "TestingLibraryElementError: Unable to find an accessible element with the role \"button\" and name `/^Huỷ giữ vé$/`"
+  },
+  {
+   "test": "src/components/checkout/checkout-view.debt5.test.tsx > AC-11 outcomes network: hold stays, error alert says release could not be confirmed, no sign-in prompt",
+   "status": "red",
+   "reason": "TestingLibraryElementError: Unable to find an accessible element with the role \"button\" and name `/^Huỷ giữ vé$/`"
+  },
+  {
+   "test": "src/components/checkout/checkout-view.debt5.test.tsx > AC-11 outcomes failure then a second attempt: user can confirm again (a new DELETE) and succeed",
+   "status": "red",
+   "reason": "TestingLibraryElementError: Unable to find an accessible element with the role \"button\" and name `/^Huỷ giữ vé$/`"
+  },
+  {
+   "test": "src/components/checkout/checkout-view.debt5.test.tsx > AC-11 expiry hold expires while the dialog is open -> dialog closes, state expired, 0 DELETE (stepped per second)",
+   "status": "red",
+   "reason": "TestingLibraryElementError: Unable to find an accessible element with the role \"button\" and name `/^Huỷ giữ vé$/`"
+  },
+  {
+   "test": "src/components/checkout/checkout-view.debt5.test.tsx > AC-11 expiry hold expires while the DELETE is in flight -> ends expired, not idle",
+   "status": "red",
+   "reason": "TestingLibraryElementError: Unable to find an accessible element with the role \"button\" and name `/^Huỷ giữ vé$/`"
+  },
+  {
+   "test": "src/components/checkout/order-result-view.debt5.test.tsx > AC-7 401 on the first order GET (no order on screen) R3-1: shows the auth title and one sign-in link, no 'Thử lại', no generic load error; 1 GET over 120 s",
+   "status": "red",
+   "reason": "AssertionError: expected null not to be null"
+  },
+  {
+   "test": "src/components/checkout/order-result-view.debt5.test.tsx > AC-8 no empty paragraph in the auth prompt no order: the alert has no empty <p>",
+   "status": "red",
+   "reason": "AssertionError: expected null not to be null"
+  },
+  {
+   "test": "src/components/checkout/order-result-view.debt5.test.tsx > AC-8 no empty paragraph in the auth prompt PENDING order then 401: the alert has no empty <p>",
+   "status": "red",
+   "reason": "AssertionError: expected [ <p class=\"text-body-sm\"></p> ] to have a length of +0 but got 1"
+  },
+  {
+   "test": "src/components/checkout/order-result-view.debt5.test.tsx > AC-9 ticket issuing stops on an expired session R3-3: PAID + issue-tickets 401 -> one prompt with sign-in link, no 'Lấy vé lại', no failed alert, 1 POST over 120 s",
+   "status": "red",
+   "reason": "AssertionError: expected null not to be null"
+  },
+  {
+   "test": "src/components/checkout/order-result-view.debt5.test.tsx > AC-9 ticket issuing stops on an expired session the auth prompt appears exactly once (no duplicate text)",
+   "status": "red",
+   "reason": "AssertionError: expected [] to have a length of 1 but got +0"
+  },
+  {
+   "test": "src/lib/debt5/ac1-refresh-body.test.ts > AC-1 unusable refresh body 200 + not JSON -> AUTH_REQUIRED, session cleared, 1 POST",
+   "status": "red",
+   "reason": "AssertionError: expected 'A:NETWORK_ERROR' to be 'A:AUTH_REQUIRED' // Object.is equality"
+  },
+  {
+   "test": "src/lib/debt5/ac1-refresh-body.test.ts > AC-1 unusable refresh body 200 + body stream errors -> AUTH_REQUIRED, session cleared, 1 POST",
+   "status": "red",
+   "reason": "AssertionError: expected 'A:NETWORK_ERROR' to be 'A:AUTH_REQUIRED' // Object.is equality"
+  },
+  {
+   "test": "src/lib/debt5/ac1-refresh-body.test.ts > AC-1 unusable refresh body 200 + JSON null -> AUTH_REQUIRED, session cleared, 1 POST",
+   "status": "red",
+   "reason": "AssertionError: expected 'A:NETWORK_ERROR' to be 'A:AUTH_REQUIRED' // Object.is equality"
+  },
+  {
+   "test": "src/lib/debt5/ac1-refresh-body.test.ts > AC-1 unusable refresh body GUARD: sign-out in this tab (epoch changed) then another user signs in; bad body -> AUTH_REQUIRED, other session untouched",
+   "status": "red",
+   "reason": "AssertionError: expected 'A:NETWORK_ERROR' to be 'A:AUTH_REQUIRED' // Object.is equality"
+  },
+  {
+   "test": "src/lib/debt5/ac10-safe-redirect.test.ts > AC-10 redirect_url scheme check rejected \"javascript:alert(document.domain)\" -> default result URL",
+   "status": "red",
+   "reason": "AssertionError: expected 'javascript:alert(document.domain)' to be '/checkout/evt-1/result?orderId=ord%201' // Object.is equality"
+  },
+  {
+   "test": "src/lib/debt5/ac10-safe-redirect.test.ts > AC-10 redirect_url scheme check rejected \"JaVaScRiPt:alert(1)\" -> default result URL",
+   "status": "red",
+   "reason": "AssertionError: expected 'JaVaScRiPt:alert(1)' to be '/checkout/evt-1/result?orderId=ord%201' // Object.is equality"
+  },
+  {
+   "test": "src/lib/debt5/ac10-safe-redirect.test.ts > AC-10 redirect_url scheme check rejected \" javascript:alert(1)\" -> default result URL",
+   "status": "red",
+   "reason": "AssertionError: expected ' javascript:alert(1)' to be '/checkout/evt-1/result?orderId=ord%201' // Object.is equality"
+  },
+  {
+   "test": "src/lib/debt5/ac10-safe-redirect.test.ts > AC-10 redirect_url scheme check rejected \"\\tjava\\nscript:alert(1)\" -> default result URL",
+   "status": "red",
+   "reason": "AssertionError: expected '\\tjava\\nscript:alert(1)' to be '/checkout/evt-1/result?orderId=ord%201' // Object.is equality"
+  },
+  {
+   "test": "src/lib/debt5/ac10-safe-redirect.test.ts > AC-10 redirect_url scheme check rejected \"data:text/html,<script>alert(1)</script>\" -> default result URL",
+   "status": "red",
+   "reason": "AssertionError: expected 'data:text/html,<script>alert(1)</scri…' to be '/checkout/evt-1/result?orderId=ord%201' // Object.is equality"
+  },
+  {
+   "test": "src/lib/debt5/ac10-safe-redirect.test.ts > AC-10 redirect_url scheme check rejected \"vbscript:msgbox(1)\" -> default result URL",
+   "status": "red",
+   "reason": "AssertionError: expected 'vbscript:msgbox(1)' to be '/checkout/evt-1/result?orderId=ord%201' // Object.is equality"
+  },
+  {
+   "test": "src/lib/debt5/ac10-safe-redirect.test.ts > AC-10 redirect_url scheme check rejected \"file:///etc/passwd\" -> default result URL",
+   "status": "red",
+   "reason": "AssertionError: expected 'file:///etc/passwd' to be '/checkout/evt-1/result?orderId=ord%201' // Object.is equality"
+  },
+  {
+   "test": "src/lib/debt5/ac10-safe-redirect.test.ts > AC-10 redirect_url scheme check rejected \"blob:https://evil.example/abc\" -> default result URL",
+   "status": "red",
+   "reason": "AssertionError: expected 'blob:https://evil.example/abc' to be '/checkout/evt-1/result?orderId=ord%201' // Object.is equality"
+  },
+  {
+   "test": "src/lib/debt5/ac10-safe-redirect.test.ts > AC-10 redirect_url scheme check rejected \"http://[::1\" -> default result URL",
+   "status": "red",
+   "reason": "AssertionError: expected 'http://[::1' to be '/checkout/evt-1/result?orderId=ord%201' // Object.is equality"
+  },
+  {
+   "test": "src/lib/debt5/ac10-safe-redirect.test.ts > AC-10 redirect_url scheme check rejected \"https://\" -> default result URL",
+   "status": "red",
+   "reason": "AssertionError: expected 'https://' to be '/checkout/evt-1/result?orderId=ord%201' // Object.is equality"
+  },
+  {
+   "test": "src/lib/debt5/ac10-safe-redirect.test.ts > AC-10 redirect_url scheme check rejected value -> caller's returnUrl when one was given",
+   "status": "red",
+   "reason": "AssertionError: expected 'javascript:alert(1)' to be 'https://web.test/checkout/evt-1/resul…' // Object.is equality"
+  },
+  {
+   "test": "src/lib/debt5/ac2-used-refresh.test.ts > AC-2 repros R2-3: mixed persist, abort at 120 s, other user signs out -> r1 POSTed once; tab-local copy wiped; buy-flow kept; other store untouched",
+   "status": "red",
+   "reason": "AssertionError: expected [ 'r1', 'r1' ] to deeply equal [ 'r1' ]"
+  },
+  {
+   "test": "src/lib/debt5/ac2-used-refresh.test.ts > AC-2 repros R2-S1: same-tab clearSession + setSession of the identical pair during the hung POST -> posts [r1]",
+   "status": "red",
+   "reason": "AssertionError: expected [ 'r1', 'r1' ] to deeply equal [ 'r1' ]"
+  },
+  {
+   "test": "src/lib/debt5/ac2-used-refresh.test.ts > AC-2 marking 2xx rotation r1->r2, then a same-tab setSession writes r1 back -> next 401 sends no POST, AUTH_REQUIRED",
+   "status": "red",
+   "reason": "AssertionError: expected 'b:200' to be 'b:AUTH_REQUIRED' // Object.is equality"
+  },
+  {
+   "test": "src/lib/debt5/ac2-used-refresh.test.ts > AC-2 marking 400 answer then the same pair is stored again -> no second POST",
+   "status": "red",
+   "reason": "AssertionError: expected [ 'r1', 'r1' ] to deeply equal [ 'r1' ]"
+  },
+  {
+   "test": "src/lib/debt5/ac2-used-refresh.test.ts > AC-2 marking 401 answer then the same pair is stored again -> no second POST",
+   "status": "red",
+   "reason": "AssertionError: expected [ 'r1', 'r1' ] to deeply equal [ 'r1' ]"
+  },
+  {
+   "test": "src/lib/debt5/ac2-used-refresh.test.ts > AC-2 marking 403 answer then the same pair is stored again -> no second POST",
+   "status": "red",
+   "reason": "AssertionError: expected [ 'r1', 'r1' ] to deeply equal [ 'r1' ]"
+  },
+  {
+   "test": "src/lib/debt5/ac2-used-refresh.test.ts > AC-2 marking 2xx with unusable body marks the token used (Google X-15): restored pair gets no second POST",
+   "status": "red",
+   "reason": "AssertionError: expected 'a:NETWORK_ERROR' to be 'a:AUTH_REQUIRED' // Object.is equality"
+  },
+  {
+   "test": "src/lib/debt5/ac2-used-refresh.test.ts > AC-2 marking survives a reload of the tab (new module graph, same sessionStorage)",
+   "status": "red",
+   "reason": "AssertionError: expected [ 'r1', 'r1' ] to deeply equal [ 'r1' ]"
+  },
+  {
+   "test": "src/lib/debt5/ac2-used-refresh.test.ts > AC-2 marking stale used copy on the PROACTIVE path -> AUTH_REQUIRED, no request sent at all",
+   "status": "red",
+   "reason": "AssertionError: expected 3 to be 2 // Object.is equality"
+  },
+  {
+   "test": "src/lib/debt5/ac2-used-refresh.test.ts > AC-2 marking only the store holding the used token is wiped; the other store (another token) survives; no POST",
+   "status": "red",
+   "reason": "AssertionError: expected [ 'r1', 'r1' ] to deeply equal [ 'r1' ]"
+  },
+  {
+   "test": "src/lib/debt5/ac2-used-refresh.test.ts > AC-2 record format record is a JSON array of at most 16 entries and never contains a raw token",
+   "status": "red",
+   "reason": "AssertionError: expected null not to be null"
+  },
+  {
+   "test": "src/lib/debt5/ac3-same-user-reuse.test.ts > AC-3 abort path (X-4) owner and joiner both get acc-9 written by another tab at 100 s; 1 POST; original retried once with acc-9",
+   "status": "red",
+   "reason": "AssertionError: expected 'A:AUTH_REQUIRED' to be 'A:200' // Object.is equality"
+  },
+  {
+   "test": "src/lib/debt5/ac3-same-user-reuse.test.ts > AC-3 answered path (R2-4) 401 while same user signed in again (r9) -> A:200 with acc-9, then B:200, 1 POST",
+   "status": "red",
+   "reason": "AssertionError: expected 'A:AUTH_REQUIRED' to be 'A:200' // Object.is equality"
+  },
+  {
+   "test": "src/lib/debt5/ac3-same-user-reuse.test.ts > AC-3 answered path (R2-4) 400 while same user signed in again (r9) -> A:200 with acc-9, then B:200, 1 POST",
+   "status": "red",
+   "reason": "AssertionError: expected 'A:AUTH_REQUIRED' to be 'A:200' // Object.is equality"
+  },
+  {
+   "test": "src/lib/debt5/ac3-same-user-reuse.test.ts > AC-3 answered path (R2-4) 403 while same user signed in again (r9) -> A:200 with acc-9, then B:200, 1 POST",
+   "status": "red",
+   "reason": "AssertionError: expected 'A:AUTH_REQUIRED' to be 'A:200' // Object.is equality"
+  },
+  {
+   "test": "src/lib/debt5/ac3-same-user-reuse.test.ts > AC-3 answered path (R2-4) 200 with bad body (AC-1) while same user signed in again (r9) -> A:200 with acc-9, then B:200, 1 POST",
+   "status": "red",
+   "reason": "AssertionError: expected 'A:NETWORK_ERROR' to be 'A:200' // Object.is equality"
+  },
+  {
+   "test": "src/lib/debt5/ac4-ac5-no-bearerless-send.test.ts > AC-4 no unauthenticated send after a swallowed proactive refresh X-S1: lock never granted, another tab signs out at 2 s -> AUTH_REQUIRED at 45 s, no request at all, no POST",
+   "status": "red",
+   "reason": "AssertionError: expected 'A:401' to be 'A:AUTH_REQUIRED' // Object.is equality"
+  },
+  {
+   "test": "src/lib/debt5/ac4-ac5-no-bearerless-send.test.ts > AC-5 lock result that is not a token X-S2: request() resolves undefined -> NETWORK_ERROR, session kept, 0 POST, only the original bearer ever sent, timers cleaned",
+   "status": "red",
+   "reason": "AssertionError: expected 'A:401' to be 'A:NETWORK_ERROR' // Object.is equality"
+  },
+  {
+   "test": "src/lib/debt5/ac4-ac5-no-bearerless-send.test.ts > AC-5 lock result that is not a token refreshAccessToken() itself rejects NETWORK_ERROR (not resolves undefined)",
+   "status": "red",
+   "reason": "AssertionError: expected 'resolved:undefined' to be 'rejected:NETWORK_ERROR' // Object.is equality"
+  },
+  {
+   "test": "src/lib/debt5/ac6-role-validation.test.ts > AC-6 stored role validation role \"admin\" in localStorage -> null for getSession and peekSession",
+   "status": "red",
+   "reason": "AssertionError: expected { accessToken: 'acc', …(2) } to be null"
+  },
+  {
+   "test": "src/lib/debt5/ac6-role-validation.test.ts > AC-6 stored role validation role \"Buyer\" in localStorage -> null for getSession and peekSession",
+   "status": "red",
+   "reason": "AssertionError: expected { accessToken: 'acc', …(2) } to be null"
+  },
+  {
+   "test": "src/lib/debt5/ac6-role-validation.test.ts > AC-6 stored role validation role \"BUYER\" in localStorage -> null for getSession and peekSession",
+   "status": "red",
+   "reason": "AssertionError: expected { accessToken: 'acc', …(2) } to be null"
+  },
+  {
+   "test": "src/lib/debt5/ac6-role-validation.test.ts > AC-6 stored role validation role \"\" in localStorage -> null for getSession and peekSession",
+   "status": "red",
+   "reason": "AssertionError: expected { accessToken: 'acc', …(2) } to be null"
+  },
+  {
+   "test": "src/lib/debt5/ac6-role-validation.test.ts > AC-6 stored role validation role \"superuser\" in localStorage -> null for getSession and peekSession",
+   "status": "red",
+   "reason": "AssertionError: expected { accessToken: 'acc', …(2) } to be null"
+  },
+  {
+   "test": "src/lib/debt5/ac6-role-validation.test.ts > AC-6 stored role validation role admin in sessionStorage -> null too",
+   "status": "red",
+   "reason": "AssertionError: expected { accessToken: 'acc', …(2) } to be null"
+  },
+  {
+   "test": "src/lib/debt5/ac6-role-validation.test.ts > AC-6 stored role validation X-14 repro: ef_user {id:'u', role:'admin'} is no longer returned",
+   "status": "red",
+   "reason": "AssertionError: expected 'admin' to be undefined"
+  },
+  {
+   "test": "src/lib/debt5/ac6-role-validation.test.ts > AC-6 stored role validation invalid role in localStorage does NOT fall through to a valid sessionStorage session",
+   "status": "red",
+   "reason": "AssertionError: expected { accessToken: 'acc-evil', …(2) } to be null"
+  },
+  {
+   "test": "src/lib/debt5/ac6-role-validation.test.ts > AC-6 stored role validation no Authorization header is sent for a tampered role",
+   "status": "red",
+   "reason": "AssertionError: expected [ 'Bearer acc-tamper' ] to deeply equal [ null ]"
+  },
+  {
+   "test": "src/lib/debt5/ac6-role-validation.test.ts > AC-6 sessionFromIdentity unknown role \"admin\" + valid prev -> prev role",
+   "status": "red",
+   "reason": "AssertionError: expected 'admin' to be 'organizer' // Object.is equality"
+  },
+  {
+   "test": "src/lib/debt5/ac6-role-validation.test.ts > AC-6 sessionFromIdentity unknown role \"root\" + valid prev -> prev role",
+   "status": "red",
+   "reason": "AssertionError: expected 'root' to be 'organizer' // Object.is equality"
+  },
+  {
+   "test": "src/lib/debt5/ac6-role-validation.test.ts > AC-6 sessionFromIdentity unknown role \"\" + valid prev -> prev role",
+   "status": "red",
+   "reason": "AssertionError: expected '' to be 'organizer' // Object.is equality"
+  },
+  {
+   "test": "src/lib/debt5/ac6-role-validation.test.ts > AC-6 sessionFromIdentity unknown role \"BUYER\" + valid prev -> prev role",
+   "status": "red",
+   "reason": "AssertionError: expected 'BUYER' to be 'organizer' // Object.is equality"
+  },
+  {
+   "test": "src/lib/debt5/ac6-role-validation.test.ts > AC-6 sessionFromIdentity unknown role \"admin\", no prev -> buyer",
+   "status": "red",
+   "reason": "AssertionError: expected 'admin' to be 'buyer' // Object.is equality"
+  },
+  {
+   "test": "src/lib/debt5/ac6-role-validation.test.ts > AC-6 sessionFromIdentity unknown role \"\", no prev -> buyer",
+   "status": "red",
+   "reason": "AssertionError: expected '' to be 'buyer' // Object.is equality"
+  },
+  {
+   "test": "src/lib/debt5/ac6-role-validation.test.ts > AC-6 sessionFromIdentity unknown role \"BUYER\", no prev -> buyer",
+   "status": "red",
+   "reason": "AssertionError: expected 'BUYER' to be 'buyer' // Object.is equality"
+  },
+  {
+   "test": "src/lib/debt5/ac6-role-validation.test.ts > AC-6 sessionFromIdentity unknown role, prev role itself invalid -> buyer",
+   "status": "red",
+   "reason": "AssertionError: expected 'admin' to be 'buyer' // Object.is equality"
+  },
+  {
+   "test": "src/lib/debt5/ac6-role-validation.test.ts > AC-6 sessionFromIdentity refresh response with role admin keeps the session's previous role",
+   "status": "red",
+   "reason": "AssertionError: expected 'admin' to be 'organizer' // Object.is equality"
+  },
+  {
+   "test": "src/components/checkout/checkout-view.debt5.test.tsx > AC-11 button visibility idle: no button",
+   "status": "green_guard"
+  },
+  {
+   "test": "src/components/checkout/checkout-view.debt5.test.tsx > AC-11 button visibility creating: no button",
+   "status": "green_guard"
+  },
+  {
+   "test": "src/components/checkout/checkout-view.debt5.test.tsx > AC-11 button visibility sold_out: no button",
+   "status": "green_guard"
+  },
+  {
+   "test": "src/components/checkout/checkout-view.debt5.test.tsx > AC-11 button visibility ambiguous: no button",
+   "status": "green_guard"
+  },
+  {
+   "test": "src/components/checkout/checkout-view.debt5.test.tsx > AC-11 button visibility expired: no button",
+   "status": "green_guard"
+  },
+  {
+   "test": "src/components/checkout/checkout-view.debt5.test.tsx > AC-11 confirmation dialog GUARD: without any cancel the primary button stays enabled",
+   "status": "green_guard"
+  },
+  {
+   "test": "src/components/checkout/order-result-view.debt5.test.tsx > AC-7 401 on the first order GET (no order on screen) GUARD: network error on the first GET keeps the generic load error and 'Thử lại'; clicking retries",
+   "status": "green_guard"
+  },
+  {
+   "test": "src/components/checkout/order-result-view.debt5.test.tsx > AC-7 401 on the first order GET (no order on screen) GUARD: 500 on the first GET keeps 'Thử lại' and the generic error",
+   "status": "green_guard"
+  },
+  {
+   "test": "src/components/checkout/order-result-view.debt5.test.tsx > AC-7 401 on the first order GET (no order on screen) GUARD: PENDING order on screen then 401 still shows the prompt with one link",
+   "status": "green_guard"
+  },
+  {
+   "test": "src/components/checkout/order-result-view.debt5.test.tsx > AC-8 no empty paragraph in the auth prompt GUARD: other error kinds keep their body text",
+   "status": "green_guard"
+  },
+  {
+   "test": "src/components/checkout/order-result-view.debt5.test.tsx > AC-9 ticket issuing stops on an expired session GUARD (F-13): issue-tickets 404 still shows 'Lấy vé lại' (failed stays true) and no sign-in prompt",
+   "status": "green_guard"
+  },
+  {
+   "test": "src/components/checkout/order-result-view.debt5.test.tsx > AC-9 ticket issuing stops on an expired session GUARD: issue-tickets 503 keeps retrying with backoff (more than one POST) and no sign-in prompt",
+   "status": "green_guard"
+  },
+  {
+   "test": "src/lib/debt5/ac1-refresh-body.test.ts > AC-1 unusable refresh body 200 + JSON string -> AUTH_REQUIRED, session cleared, 1 POST",
+   "status": "green_guard"
+  },
+  {
+   "test": "src/lib/debt5/ac1-refresh-body.test.ts > AC-1 unusable refresh body 200 + JSON number -> AUTH_REQUIRED, session cleared, 1 POST",
+   "status": "green_guard"
+  },
+  {
+   "test": "src/lib/debt5/ac1-refresh-body.test.ts > AC-1 unusable refresh body GUARD: JSON array body already ended in AUTH_REQUIRED (stays so)",
+   "status": "green_guard"
+  },
+  {
+   "test": "src/lib/debt5/ac1-refresh-body.test.ts > AC-1 unusable refresh body GUARD: abort at 120 s while the body is being read keeps the abort outcome (AUTH_REQUIRED, cleared, 1 POST)",
+   "status": "green_guard"
+  },
+  {
+   "test": "src/lib/debt5/ac10-safe-redirect.test.ts > AC-10 redirect_url scheme check GUARD: https://pay.test/redirect kept unchanged",
+   "status": "green_guard"
+  },
+  {
+   "test": "src/lib/debt5/ac10-safe-redirect.test.ts > AC-10 redirect_url scheme check GUARD: http://pay.test/redirect?a=1&b=2 kept unchanged",
+   "status": "green_guard"
+  },
+  {
+   "test": "src/lib/debt5/ac10-safe-redirect.test.ts > AC-10 redirect_url scheme check GUARD: HTTPS://PAY.TEST/x kept unchanged",
+   "status": "green_guard"
+  },
+  {
+   "test": "src/lib/debt5/ac10-safe-redirect.test.ts > AC-10 redirect_url scheme check GUARD: /checkout/evt-1/result?orderId=ord-1 kept unchanged",
+   "status": "green_guard"
+  },
+  {
+   "test": "src/lib/debt5/ac10-safe-redirect.test.ts > AC-10 redirect_url scheme check GUARD: result?orderId=1 kept unchanged",
+   "status": "green_guard"
+  },
+  {
+   "test": "src/lib/debt5/ac10-safe-redirect.test.ts > AC-10 redirect_url scheme check GUARD: missing/non-string redirect_url undefined -> default",
+   "status": "green_guard"
+  },
+  {
+   "test": "src/lib/debt5/ac10-safe-redirect.test.ts > AC-10 redirect_url scheme check GUARD: missing/non-string redirect_url null -> default",
+   "status": "green_guard"
+  },
+  {
+   "test": "src/lib/debt5/ac10-safe-redirect.test.ts > AC-10 redirect_url scheme check GUARD: missing/non-string redirect_url \"\" -> default",
+   "status": "green_guard"
+  },
+  {
+   "test": "src/lib/debt5/ac10-safe-redirect.test.ts > AC-10 redirect_url scheme check GUARD: missing/non-string redirect_url 5 -> default",
+   "status": "green_guard"
+  },
+  {
+   "test": "src/lib/debt5/ac10-safe-redirect.test.ts > AC-10 redirect_url scheme check GUARD: missing/non-string redirect_url {} -> default",
+   "status": "green_guard"
+  },
+  {
+   "test": "src/lib/debt5/ac2-used-refresh.test.ts > AC-2 GUARDS: not marked without a response fetch rejection (offline) then retry -> 2 POSTs of r1, second succeeds",
+   "status": "green_guard"
+  },
+  {
+   "test": "src/lib/debt5/ac2-used-refresh.test.ts > AC-2 GUARDS: not marked without a response 429 then retry -> 2 POSTs of r1",
+   "status": "green_guard"
+  },
+  {
+   "test": "src/lib/debt5/ac2-used-refresh.test.ts > AC-2 GUARDS: not marked without a response 500 then retry -> 2 POSTs of r1",
+   "status": "green_guard"
+  },
+  {
+   "test": "src/lib/debt5/ac2-used-refresh.test.ts > AC-2 GUARDS: not marked without a response 503 then retry -> 2 POSTs of r1",
+   "status": "green_guard"
+  },
+  {
+   "test": "src/lib/debt5/ac2-used-refresh.test.ts > AC-2 GUARDS: not marked without a response corrupt record {not json counts as empty (refresh works, 1 POST)",
+   "status": "green_guard"
+  },
+  {
+   "test": "src/lib/debt5/ac2-used-refresh.test.ts > AC-2 GUARDS: not marked without a response corrupt record \"str\" counts as empty (refresh works, 1 POST)",
+   "status": "green_guard"
+  },
+  {
+   "test": "src/lib/debt5/ac2-used-refresh.test.ts > AC-2 GUARDS: not marked without a response corrupt record {\"a\":1} counts as empty (refresh works, 1 POST)",
+   "status": "green_guard"
+  },
+  {
+   "test": "src/lib/debt5/ac2-used-refresh.test.ts > AC-2 GUARDS: not marked without a response corrupt record 123 counts as empty (refresh works, 1 POST)",
+   "status": "green_guard"
+  },
+  {
+   "test": "src/lib/debt5/ac2-used-refresh.test.ts > AC-2 GUARDS: not marked without a response corrupt record null counts as empty (refresh works, 1 POST)",
+   "status": "green_guard"
+  },
+  {
+   "test": "src/lib/debt5/ac2-used-refresh.test.ts > AC-2 GUARDS: not marked without a response storage errors on the record key never throw (refresh works)",
+   "status": "green_guard"
+  },
+  {
+   "test": "src/lib/debt5/ac3-same-user-reuse.test.ts > AC-3 abort path (X-4) GUARD: another user stored at abort -> AUTH_REQUIRED, stored session untouched, original not retried with its token",
+   "status": "green_guard"
+  },
+  {
+   "test": "src/lib/debt5/ac3-same-user-reuse.test.ts > AC-3 abort path (X-4) GUARD: session removed at abort -> AUTH_REQUIRED",
+   "status": "green_guard"
+  },
+  {
+   "test": "src/lib/debt5/ac3-same-user-reuse.test.ts > AC-3 abort path (X-4) GUARD: same-tab sign-out + same-user login (epoch changed) at abort -> AUTH_REQUIRED, new session kept",
+   "status": "green_guard"
+  },
+  {
+   "test": "src/lib/debt5/ac3-same-user-reuse.test.ts > AC-3 answered path (R2-4) GUARD: 401 while ANOTHER user is stored -> AUTH_REQUIRED, stored session untouched, no retry",
+   "status": "green_guard"
+  },
+  {
+   "test": "src/lib/debt5/ac3-same-user-reuse.test.ts > AC-3 answered path (R2-4) GUARD: 401 after same-tab sign-out + same-user login (epoch changed) -> AUTH_REQUIRED, new session kept",
+   "status": "green_guard"
+  },
+  {
+   "test": "src/lib/debt5/ac3-same-user-reuse.test.ts > AC-3 answered path (R2-4) GUARD: 401 and the stored session is still the posted one -> cleared, AUTH_REQUIRED",
+   "status": "green_guard"
+  },
+  {
+   "test": "src/lib/debt5/ac4-ac5-no-bearerless-send.test.ts > AC-4 no unauthenticated send after a swallowed proactive refresh GUARD: transient proactive failure but the session is still there -> request sent WITH the current bearer",
+   "status": "green_guard"
+  },
+  {
+   "test": "src/lib/debt5/ac4-ac5-no-bearerless-send.test.ts > AC-4 no unauthenticated send after a swallowed proactive refresh GUARD: a call that starts without any session is still sent without a bearer (public behaviour)",
+   "status": "green_guard"
+  },
+  {
+   "test": "src/lib/debt5/ac4-ac5-no-bearerless-send.test.ts > AC-5 lock result that is not a token GUARD: a real lock that runs the callback still refreshes once",
+   "status": "green_guard"
+  },
+  {
+   "test": "src/lib/debt5/ac6-role-validation.test.ts > AC-6 stored role validation role 5 in localStorage -> null for getSession and peekSession",
+   "status": "green_guard"
+  },
+  {
+   "test": "src/lib/debt5/ac6-role-validation.test.ts > AC-6 stored role validation role null in localStorage -> null for getSession and peekSession",
+   "status": "green_guard"
+  },
+  {
+   "test": "src/lib/debt5/ac6-role-validation.test.ts > AC-6 stored role validation role \"buyer\" in localStorage -> null for getSession and peekSession",
+   "status": "green_guard"
+  },
+  {
+   "test": "src/lib/debt5/ac6-role-validation.test.ts > AC-6 stored role validation GUARD: valid role in localStorage still wins over sessionStorage",
+   "status": "green_guard"
+  },
+  {
+   "test": "src/lib/debt5/ac6-role-validation.test.ts > AC-6 stored role validation ef_refresh stays readable and logout() POSTs it for revocation, then clears",
+   "status": "green_guard"
+  },
+  {
+   "test": "src/lib/debt5/ac6-role-validation.test.ts > AC-6 stored role validation GUARD: known role buyer accepted unchanged",
+   "status": "green_guard"
+  },
+  {
+   "test": "src/lib/debt5/ac6-role-validation.test.ts > AC-6 stored role validation GUARD: known role organizer accepted unchanged",
+   "status": "green_guard"
+  },
+  {
+   "test": "src/lib/debt5/ac6-role-validation.test.ts > AC-6 stored role validation GUARD: known role moderator accepted unchanged",
+   "status": "green_guard"
+  },
+  {
+   "test": "src/lib/debt5/ac6-role-validation.test.ts > AC-6 stored role validation GUARD: known role ops accepted unchanged",
+   "status": "green_guard"
+  },
+  {
+   "test": "src/lib/debt5/ac6-role-validation.test.ts > AC-6 stored role validation GUARD: valid role plus an unknown extra field is accepted",
+   "status": "green_guard"
+  },
+  {
+   "test": "src/lib/debt5/ac6-role-validation.test.ts > AC-6 sessionFromIdentity missing role + valid prev -> prev role; missing role, no prev -> buyer",
+   "status": "green_guard"
+  },
+  {
+   "test": "src/lib/debt5/ac6-role-validation.test.ts > AC-6 sessionFromIdentity GUARD: known role buyer stored unchanged (even with a different prev)",
+   "status": "green_guard"
+  },
+  {
+   "test": "src/lib/debt5/ac6-role-validation.test.ts > AC-6 sessionFromIdentity GUARD: known role organizer stored unchanged (even with a different prev)",
+   "status": "green_guard"
+  },
+  {
+   "test": "src/lib/debt5/ac6-role-validation.test.ts > AC-6 sessionFromIdentity GUARD: known role moderator stored unchanged (even with a different prev)",
+   "status": "green_guard"
+  },
+  {
+   "test": "src/lib/debt5/ac6-role-validation.test.ts > AC-6 sessionFromIdentity GUARD: known role ops stored unchanged (even with a different prev)",
+   "status": "green_guard"
+  }
+ ]
+}

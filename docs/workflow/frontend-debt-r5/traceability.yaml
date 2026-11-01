@@ -1,0 +1,26 @@
+# AC -> tests (red on c5fb598 unless marked GUARD in baseline.json red_check; 136 new tests: 76 red, 60 green guards)
+AC-1:
+  - apps/web/src/lib/debt5/ac1-refresh-body.test.ts   # 200 + non-JSON / stream error / null / string / number; guards: array body, epoch changed (red today: NETWORK_ERROR), abort while reading body
+AC-2:
+  - apps/web/src/lib/debt5/ac2-used-refresh.test.ts   # R2-3 and R2-S1 repros, 400/401/403/2xx marking, bad body, reload, proactive path, per-store wipe, record format (<=16, hashed); guards: fetch reject, 429/500/503, corrupt record, storage errors
+AC-3:
+  - apps/web/src/lib/debt5/ac3-same-user-reuse.test.ts   # X-4 (abort, owner+joiner), R2-4 (401/400/403/bad body); guards: other user, absent session, epoch changed, still-posted session cleared
+AC-4:
+  - apps/web/src/lib/debt5/ac4-ac5-no-bearerless-send.test.ts   # X-S1 repro; guards: session kept -> bearer sent, no session -> public send
+AC-5:
+  - apps/web/src/lib/debt5/ac4-ac5-no-bearerless-send.test.ts   # X-S2 repro, refreshAccessToken rejects, timer count; guard: normal lock
+AC-6:
+  - apps/web/src/lib/debt5/ac6-role-validation.test.ts   # X-14, no fall-through local->session, getStoredRefreshToken + logout, no bearer, sessionFromIdentity fallbacks, refresh keeps prev role; guards: 4 known roles, extra field
+AC-7:
+  - apps/web/src/components/checkout/order-result-view.debt5.test.tsx   # R3-1 repro; guards: network, 500, PENDING+401
+AC-8:
+  - apps/web/src/components/checkout/order-result-view.debt5.test.tsx   # no empty <p>; guard: 404 body kept
+AC-9:
+  - apps/web/src/components/checkout/order-result-view.debt5.test.tsx   # R3-3 repro, one prompt only; guards: 404 keeps retry, 503 backs off
+  - apps/web/src/hooks/use-order-status.debt5.test.tsx                   # authRequired flag, reset by retry()
+AC-10:
+  - apps/web/src/lib/debt5/ac10-safe-redirect.test.ts   # javascript:/data:/vbscript:/file:/blob:/unparsable -> default or returnUrl; guards: https, http, relative kept
+AC-11:
+  - apps/web/src/components/checkout/checkout-view.debt5.test.tsx   # visibility per state, alertdialog open/dismiss/Escape, confirm -> 1 DELETE w/ Idempotency-Key, double click, primary disabled, 404/200/401/5xx/network, expiry during dialog and during DELETE
+AC-12:
+  runtime_evidence: full-gate.sh (lint, tsc, build with NEXT_PUBLIC_API_BASE unset, full vitest, Playwright, Go gateway/event); baseline 167 files / 2419 tests at c5fb598
