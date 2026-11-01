@@ -1,5 +1,7 @@
 # Runbook — deploy `apps/web` lên Kubernetes của Docker Desktop
 
+> **Superseded for applying (k8s-all):** web now lives in `deploy/k8s/base/web/`; apply only an overlay, e.g. `kubectl apply -k deploy/k8s/overlays/local` with the tag set per `docs/workflow/k8s-all/runbook.md` (sections 2-3).
+
 Đóng **AC-6**. Phạm vi: cluster **Docker Desktop local**. Apply lên bất kỳ cluster nào khác là
 điểm cần người duyệt (spec §6.2).
 
