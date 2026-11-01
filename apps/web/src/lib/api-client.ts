@@ -370,6 +370,8 @@ export async function apiFetch(path: string, init: ApiFetchInit = {}): Promise<R
       if (err instanceof ApiError && err.code === "AUTH_REQUIRED") throw err;
     }
     session = peekSession();
+    // AC-4: request bat dau co phien, phien mat trong luc refresh (tab khac dang xuat) -> khong gui khong kem bearer.
+    if (!session && startUserId !== null) throw new ApiError("AUTH_REQUIRED", 401, {}, "Phien dang nhap da ket thuc");
     // Doi user trong luc refresh (ke ca khi loi tam thoi bi nuot): khong gui request cua A bang token cua B.
     if (session && session.user.id !== startUserId) throw userChanged();
   }
