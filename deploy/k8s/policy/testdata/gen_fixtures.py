@@ -692,7 +692,7 @@ def main():
         bad = 0
         for k, v in files.items():
             p = os.path.join(HERE, k)
-            if not os.path.exists(p) or open(p, newline="").read() != v:
+            if not os.path.exists(p) or open(p, newline="").read().replace(chr(13) + chr(10), chr(10)) != v:
                 print("OUT-OF-SYNC", k)
                 bad += 1
         bd = os.path.join(HERE, "bad")
