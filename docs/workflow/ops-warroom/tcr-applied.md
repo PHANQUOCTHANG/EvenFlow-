@@ -20,7 +20,15 @@ added. Counts are `it(` / `it.each(` declarations before (HEAD f5c6d44) → afte
 | `tests/e2e/specs/i18n.spec.ts` | `/ops/events` case: ops session seeded (`seedRoleSession`) and the `api` fixture requested, because the list now loads in the browser from `GET /api/v1/events/public` (without the fixture the request reaches the CORS-less stub). Assertions unchanged | unchanged |
 | NEW `tests/e2e/specs/organizer-sales.spec.ts` | not a TCR item (plan WP4): real figures, no sample label, peak TPS "Chưa có dữ liệu", provider list | +1 |
 
-## Requests NOT applied (pending, see `test-change-request.md` "New request 1..3")
+## New requests 1-3 — APPROVED by the human 2026-11-01, applied
+
+| File | Change |
+|---|---|
+| `services/ai-worker/tests/test_ops_api.py:28` | lint-only (FURB162): `datetime.fromisoformat(body["generated_at"])`, no assertion change |
+| `services/waitingroom/internal/adapter/http/ops_handler_test.go` | `TestOpsPut_AC6_BoundariesAccepted`: `0.5` removed from accepted list; `"fraction": {"rate_per_sec":0.5,...}` added to `TestOpsWrite_AC9_InvalidInputIs400AndNothingApplied` (expects 400) |
+| `services/ticketing/internal/adapter/postgres/ops_repository_integration_test.go` | unused `postgresadapter` import line deleted, nothing else |
+
+## Previously pending (now approved, see above)
 
 1. `services/ai-worker/tests/test_ops_api.py:28` — ruff FURB162 (lint only).
 2. `services/waitingroom/internal/adapter/http/ops_handler_test.go` `TestOpsPut_AC6_BoundariesAccepted` expects `0.5` accepted; contradicts approved CR-1 item 5. Fails one subtest.

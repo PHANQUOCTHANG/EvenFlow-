@@ -25,7 +25,7 @@ def test_ops_gets_mode_with_contract_shape() -> None:
     assert set(body) == {"mode", "manual_override", "signals", "generated_at"}
     assert set(body["signals"]) == {"chat_queue_lag_seconds", "budget_used_ratio", "gemini_circuit_open"}
     assert "policy" not in body
-    datetime.fromisoformat(body["generated_at"].replace("Z", "+00:00"))
+    datetime.fromisoformat(body["generated_at"])
 
 
 def test_same_values_as_admin_mode() -> None:

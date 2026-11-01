@@ -382,7 +382,7 @@ func TestOpsPut_AC10_ZeroIsPausedAction(t *testing.T) {
 }
 
 func TestOpsPut_AC6_BoundariesAccepted(t *testing.T) {
-	for _, rate := range []string{"0", "10000", "0.5", "1e2"} {
+	for _, rate := range []string{"0", "10000", "1e2"} {
 		r := newOpsRig(true)
 		if rec := put(r, `{"rate_per_sec":`+rate+`,"reason":"abc"}`); rec.Code != 200 {
 			t.Errorf("rate %s: %d", rate, rec.Code)
@@ -401,6 +401,7 @@ func TestOpsWrite_AC9_InvalidInputIs400AndNothingApplied(t *testing.T) {
 		"negative":          `{"rate_per_sec":-1,"reason":"abc"}`,
 		"too big":           `{"rate_per_sec":10001,"reason":"abc"}`,
 		"huge":              `{"rate_per_sec":1e308,"reason":"abc"}`,
+		"fraction":          `{"rate_per_sec":0.5,"reason":"abc"}`,
 		"missing reason":    `{"rate_per_sec":5}`,
 		"short reason":      `{"rate_per_sec":5,"reason":"ab"}`,
 		"blank reason":      `{"rate_per_sec":5,"reason":"     "}`,
