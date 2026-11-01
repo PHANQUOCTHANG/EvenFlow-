@@ -203,3 +203,7 @@ sale (inventory/sales 503 or slow → ticketing unavailable; pause still works �
 - D1–D4 answered by the human; spec approved.
 - Test designer writes failing tests per AC (red check) before implementation; test change request lists every existing
   test that asserted sample behaviour (plan §7).
+
+## Human approval
+
+Approved by TranDinhVo on 2026-11-01 in the Claude Code session, with all recommended decisions.
