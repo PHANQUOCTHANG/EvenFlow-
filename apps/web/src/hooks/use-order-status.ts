@@ -141,6 +141,8 @@ export interface UseIssuedTicketsReturn {
   forbidden: boolean;
   /** true khi da het luot thu lai ma van chua co ve: UI cho nguoi dung bam thu lai. */
   failed: boolean;
+  /** true khi phat hanh ve dung vi het phien (AUTH_REQUIRED): UI moi dang nhap lai thay vi "Lay ve lai" (AC-9). */
+  authRequired: boolean;
   retry: () => void;
 }
 
@@ -156,6 +158,7 @@ export function useIssuedTickets(
   const [tickets, setTickets] = useState<IssuedTicketQR[]>([]);
   const [attempts, setAttempts] = useState(0);
   const [forbidden, setForbidden] = useState(false);
+  const [authRequired, setAuthRequired] = useState(false);
   const [run, setRun] = useState(0);
   const attemptsRef = useRef(0);
   const onRetryRef = useRef(onRetry);
@@ -180,6 +183,7 @@ export function useIssuedTickets(
         // Het phien / khong thay don: thu lai khong the thanh cong -> dung han, de UI hien nut thu lai thu cong (F-13).
         if (err instanceof PaymentClientError && (err.type === "AUTH_REQUIRED" || err.type === "NOT_FOUND" || err.type === "FORBIDDEN")) {
           if (err.type === "FORBIDDEN") setForbidden(true);
+          if (err.type === "AUTH_REQUIRED") setAuthRequired(true);
           attemptsRef.current = maxAttempts;
           setAttempts(maxAttempts);
           return;
@@ -208,6 +212,7 @@ export function useIssuedTickets(
     attemptsRef.current = 0;
     setAttempts(0);
     setForbidden(false);
+    setAuthRequired(false);
     setRun((r) => r + 1);
   }, [orderId]);
 
@@ -218,6 +223,7 @@ export function useIssuedTickets(
     pending: paid && !hasTickets && !exhausted,
     forbidden: paid && !hasTickets && forbidden,
     failed: paid && !hasTickets && exhausted && !forbidden,
+    authRequired: paid && !hasTickets && authRequired,
     retry,
   };
 }

@@ -68,6 +68,8 @@ export function OrderResultView({
         : error.type === "FORBIDDEN"
           ? t("checkout.forbidden")
           : t("result.loadErrorBody");
+  // AC-9: phat hanh ve dung vi het phien -> moi dang nhap (mot loi moi duy nhat tren trang).
+  const ticketsAuthRequired = issued.authRequired && !(showErrorCard && authExpired);
 
   const handlePrint = () => {
     if (typeof window !== "undefined") {
@@ -210,7 +212,19 @@ export function OrderResultView({
               <Alert variant="error" title={t("checkout.forbidden")} />
             ) : null}
 
-            {issued.failed ? (
+            {ticketsAuthRequired ? (
+              <Card className="space-y-md p-lg text-center">
+                <Alert variant="error" title={t("checkout.authRequired")} className="text-left" />
+                <Link
+                  href="/auth/sign-in"
+                  className="ef-focus-ring inline-flex items-center justify-center rounded-control border border-transparent bg-primary px-md py-sm text-label-md text-primary-fg hover:bg-primary-hover"
+                >
+                  {t("checkout.signInAction")}
+                </Link>
+              </Card>
+            ) : null}
+
+            {issued.failed && !issued.authRequired ? (
               <Alert variant="warning" title={t("result.ticketsFailedTitle")}>
                 <p className="mb-sm text-body-sm">{t("result.ticketsFailedBody")}</p>
                 <Button variant="secondary" onClick={issued.retry}>
