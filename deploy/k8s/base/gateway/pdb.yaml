@@ -1,0 +1,15 @@
+# PDB for gateway (AC-10): maxUnavailable 1, selector = pod labels exactly.
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: eventflow-gateway
+  namespace: eventflow
+  labels:
+    app.kubernetes.io/name: eventflow-gateway
+    app.kubernetes.io/part-of: eventflow
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: eventflow-gateway
+      app.kubernetes.io/part-of: eventflow

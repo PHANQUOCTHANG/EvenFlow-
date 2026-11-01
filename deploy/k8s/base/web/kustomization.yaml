@@ -1,0 +1,10 @@
+# Web resources. Names, selector and strategy are unchanged from the web slice
+# (k8s-all AC-3): the selector is immutable on a live cluster.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - deployment.yaml
+  - service.yaml
+  - ingress.yaml
+  - hpa.yaml
+  - pdb.yaml

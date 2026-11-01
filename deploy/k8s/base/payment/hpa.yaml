@@ -1,0 +1,28 @@
+# HPA for payment (AC-9): CPU only (custom metrics stay in EV-191, spec D3).
+# Utilization is relative to `resources.requests.cpu` of the Deployment.
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: eventflow-payment
+  namespace: eventflow
+  labels:
+    app.kubernetes.io/name: eventflow-payment
+    app.kubernetes.io/part-of: eventflow
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: eventflow-payment
+  minReplicas: 2
+  maxReplicas: 6
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+  behavior:
+    scaleDown:
+      # No flapping between sale waves: hold for 5 minutes before removing pods.
+      stabilizationWindowSeconds: 300

@@ -1,0 +1,20 @@
+# Service for notification: health/metrics only: notification is a consumer, nobody calls it (spec 4).
+# Selector = the Deployment pod labels exactly; targetPort by container port name (AC-22).
+apiVersion: v1
+kind: Service
+metadata:
+  name: eventflow-notification
+  namespace: eventflow
+  labels:
+    app.kubernetes.io/name: eventflow-notification
+    app.kubernetes.io/part-of: eventflow
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: eventflow-notification
+    app.kubernetes.io/part-of: eventflow
+  ports:
+    - name: http
+      port: 8087
+      targetPort: http
+      protocol: TCP

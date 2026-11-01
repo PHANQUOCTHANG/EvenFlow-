@@ -1,0 +1,24 @@
+# Service for gateway: API on http; metrics on its own port 9094 (spec F6).
+# Selector = the Deployment pod labels exactly; targetPort by container port name (AC-22).
+apiVersion: v1
+kind: Service
+metadata:
+  name: eventflow-gateway
+  namespace: eventflow
+  labels:
+    app.kubernetes.io/name: eventflow-gateway
+    app.kubernetes.io/part-of: eventflow
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: eventflow-gateway
+    app.kubernetes.io/part-of: eventflow
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+      protocol: TCP
+    - name: metrics
+      port: 9094
+      targetPort: metrics
+      protocol: TCP

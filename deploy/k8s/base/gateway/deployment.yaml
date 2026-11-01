@@ -1,0 +1,153 @@
+# Deployment for gateway (k8s-all spec 4.1): public API entry point; the only backend exposed by Ingress.
+#
+# Values come from spec 4.1 and policy-contract.md; env = the compose block with hostnames
+# replaced by Service names or by keys of `eventflow-endpoints` / `eventflow-app-config` (per overlay),
+# and every secret from `secretKeyRef` per policy-contract.md section 8 (never optional,
+# never `envFrom`). Overlay-only secret keys are added by the overlay, not here.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: eventflow-gateway
+  namespace: eventflow
+  labels:
+    app.kubernetes.io/name: eventflow-gateway
+    app.kubernetes.io/part-of: eventflow
+spec:
+  # No `replicas`: the HPA owns the count (AC-7); `kubectl apply` must not reset it.
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      # AC-6: never drop below the current Ready count during a rollout.
+      maxUnavailable: 0
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: eventflow-gateway
+      app.kubernetes.io/part-of: eventflow
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: eventflow-gateway
+        app.kubernetes.io/part-of: eventflow
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9094"
+        prometheus.io/path: /metrics
+    spec:
+      # AC-6: >= 5 s preStop + 20 s (httpx.Run) app grace + 5 s margin.
+      terminationGracePeriodSeconds: 35
+      # AC-12: no process calls the Kubernetes API.
+      automountServiceAccountToken: false
+      # AC-11: soft rules only, so a one-node local cluster still schedules every replica.
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                topologyKey: kubernetes.io/hostname
+                labelSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: eventflow-gateway
+                    app.kubernetes.io/part-of: eventflow
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/name: eventflow-gateway
+              app.kubernetes.io/part-of: eventflow
+      securityContext:
+        # AC-12: the image sets a numeric USER (AC-13); no runAsUser here on purpose, so a
+        # Dockerfile regression fails loudly (CreateContainerConfigError) instead of being masked.
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: gateway
+          # AC-20: no tag in base; the overlay `images:` list sets sha-<short>.
+          image: ghcr.io/phanquocthang/eventflow-gateway
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+            - name: metrics
+              containerPort: 9094
+              protocol: TCP
+          env:
+            - name: APP_ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: eventflow-app-config
+                  key: APP_ENV
+            - name: HTTP_ADDR
+              value: ":8080"
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              valueFrom:
+                configMapKeyRef:
+                  name: eventflow-endpoints
+                  key: OTEL_EXPORTER_OTLP_ENDPOINT
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: eventflow-auth
+                  key: JWT_SECRET
+            - name: CORS_ALLOWED_ORIGINS
+              valueFrom:
+                configMapKeyRef:
+                  name: eventflow-app-config
+                  key: CORS_ALLOWED_ORIGINS
+            - name: IDENTITY_URL
+              value: "http://eventflow-identity:8083"
+            - name: EVENT_URL
+              value: "http://eventflow-event:8084"
+            - name: WAITINGROOM_URL
+              value: "http://eventflow-waitingroom:8081"
+            - name: TICKETING_URL
+              value: "http://eventflow-ticketing:8082"
+            - name: PAYMENT_URL
+              value: "http://eventflow-payment:8085"
+            - name: ASSISTANT_URL
+              value: "http://eventflow-ai-worker:8090"
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          resources:
+            requests:
+              cpu: 200m
+              memory: 128Mi
+            limits:
+              cpu: 1000m
+              memory: 256Mi
+          # AC-5: liveness never touches dependencies; readiness may (503 on failure).
+          startupProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 2
+            timeoutSeconds: 2
+            failureThreshold: 30
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 3
+          lifecycle:
+            preStop:
+              # Core `sleep` handler (k8s >= 1.30, spec E5): distroless/python images have no
+              # sleep binary. Gives endpoints time to drop the pod before SIGTERM.
+              sleep:
+                seconds: 5
