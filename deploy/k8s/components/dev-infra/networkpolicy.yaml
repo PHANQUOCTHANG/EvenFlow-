@@ -5,6 +5,8 @@ kind: NetworkPolicy
 metadata:
   name: allow-dev-infra
   namespace: eventflow
+  labels:
+    app.kubernetes.io/part-of: eventflow
 spec:
   podSelector:
     matchLabels:
