@@ -1,0 +1,22 @@
+{
+  "commit_sha": "43eba3f4539b43d89bd2d2951ff9f56441e72cd0",
+  "base": "c5fb598",
+  "generated_at": "2026-11-01T14:50:52Z",
+  "results": {
+    "web-npm-ci": {"exit": 0, "log": "gate/web-npm-ci.log"},
+    "web-lint": {"exit": 0, "log": "gate/web-lint.log"},
+    "web-typecheck": {"exit": 0, "log": "gate/web-typecheck.log"},
+    "web-build": {"exit": 0, "log": "gate/web-build.log"},
+    "web-test-coverage": {"exit": 0, "log": "gate/web-test-coverage.log"},
+    "web-audit": {"exit": 0, "log": "gate/web-audit.log"},
+    "go-gateway": {"exit": 0, "log": "gate/go-gateway.log"},
+    "go-waitingroom": {"exit": 0, "log": "gate/go-waitingroom.log"},
+    "go-ticketing": {"exit": 0, "log": "gate/go-ticketing.log"},
+    "py-ai-worker": {"exit": 0, "log": "gate/py-ai-worker.log"},
+    "go-event": {"exit": 0, "log": "gate/go-event.log"},
+    "tamper": {"exit": 0, "log": "gate/tamper.log"},
+    "secrets": {"exit": 0, "log": "gate/secrets.log"},
+    "sast": {"exit": 0, "log": "gate/sast.log"},
+    "e2e": {"exit": 0, "log": "gate/e2e.log"}
+  }
+}

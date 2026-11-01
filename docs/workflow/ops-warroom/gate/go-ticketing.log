@@ -1,0 +1,11 @@
+ok  	github.com/eventflow/eventflow/services/ticketing/cmd/server	0.305s
+?   	github.com/eventflow/eventflow/services/ticketing/cmd/worker	[no test files]
+ok  	github.com/eventflow/eventflow/services/ticketing/internal/adapter/http	3.593s
+ok  	github.com/eventflow/eventflow/services/ticketing/internal/adapter/metrics	1.931s
+?   	github.com/eventflow/eventflow/services/ticketing/internal/adapter/mq	[no test files]
+ok  	github.com/eventflow/eventflow/services/ticketing/internal/adapter/postgres	0.210s
+ok  	github.com/eventflow/eventflow/services/ticketing/internal/adapter/redis	0.208s
+ok  	github.com/eventflow/eventflow/services/ticketing/internal/app	0.779s
+ok  	github.com/eventflow/eventflow/services/ticketing/internal/domain	0.339s
+?   	github.com/eventflow/eventflow/services/ticketing/internal/port	[no test files]
+ok  	github.com/eventflow/eventflow/services/ticketing/internal/worker	0.571s
