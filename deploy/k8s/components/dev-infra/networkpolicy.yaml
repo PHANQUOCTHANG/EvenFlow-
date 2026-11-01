@@ -1,0 +1,17 @@
+# Dev-infra chi nhan ket noi tu pod trong namespace eventflow (spec 6.2, AC-15).
+# Default-deny ingress cua namespace nam o base/networkpolicy.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dev-infra
+  namespace: eventflow
+spec:
+  podSelector:
+    matchLabels:
+      eventflow.io/tier: dev-infra
+  policyTypes: ["Ingress"]
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: eventflow
