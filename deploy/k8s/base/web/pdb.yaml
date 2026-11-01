@@ -1,0 +1,19 @@
+# PodDisruptionBudget for web (k8s-all AC-10).
+#
+# `maxUnavailable: 1`, never `minAvailable`: with HPA min 2 a node drain may take one
+# pod at a time and still keeps one Ready. The selector must equal the pod labels of
+# deployment.yaml exactly, or the budget protects nothing (YAML stays valid).
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: eventflow-web
+  namespace: eventflow
+  labels:
+    app.kubernetes.io/name: eventflow-web
+    app.kubernetes.io/part-of: eventflow
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: eventflow-web
+      app.kubernetes.io/part-of: eventflow

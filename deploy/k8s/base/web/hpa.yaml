@@ -20,7 +20,7 @@ metadata:
     app.kubernetes.io/part-of: eventflow
 spec:
   scaleTargetRef:
-    # Ba truong nay phai tro dung Deployment cua 10-deployment.yaml. Sai `name` thi
+    # Ba truong nay phai tro dung Deployment cua deployment.yaml. Sai `name` thi
     # HPA bao `failed to get scale` va khong scale gi — YAML van hop le.
     apiVersion: apps/v1
     kind: Deployment
@@ -36,3 +36,8 @@ spec:
           type: Utilization
           # 60% CUA `resources.requests.cpu` trong Deployment (= 60m tren moi pod).
           averageUtilization: 60
+  # k8s-all AC-9: hold the replica count for 5 minutes before scaling down, so a
+  # short dip between two sale waves does not remove pods that are needed again.
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300

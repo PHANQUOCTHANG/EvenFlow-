@@ -11,9 +11,14 @@ metadata:
   labels:
     app.kubernetes.io/name: eventflow-web
     app.kubernetes.io/part-of: eventflow
+  annotations:
+    # k8s-all spec 7 / policy-contract 3: the only exemption web may carry. Next ISR
+    # writes .next/cache, so the root filesystem stays writable; every other AC-12
+    # sub-check still applies to web.
+    eventflow.io/policy-exempt.AC-12.readOnlyRootFilesystem: "Next ISR writes .next/cache"
 spec:
   # KHONG co `replicas` o day — co y, khong phai thieu sot (C2.3 / AC-4c).
-  # HPA (40-hpa.yaml) lam chu so pod. Khai bao ca hai thi moi lan `kubectl apply`
+  # HPA (hpa.yaml) lam chu so pod. Khai bao ca hai thi moi lan `kubectl apply`
   # se giat so pod ve gia tri tinh sau khi HPA da scale.
   #
   # Luu y van hanh: lan apply dau tien Deployment tao 1 pod (mac dinh cua k8s khi
@@ -30,7 +35,7 @@ spec:
       maxSurge: 1
   selector:
     # Bo nhan nay phai TRUNG KHOP tuyet doi voi `template.metadata.labels` ben duoi
-    # va voi `spec.selector` cua 20-service.yaml. Lech mot ky tu thi Deployment
+    # va voi `spec.selector` cua service.yaml. Lech mot ky tu thi Deployment
     # khong nhan pod cua chinh no / Service khong co endpoint nao.
     matchLabels:
       app.kubernetes.io/name: eventflow-web
@@ -54,6 +59,28 @@ spec:
       # 30s grace phai lon hon tong do: dat 10s thi SIGKILL roi dung luc exit(0)
       # va ExitCode se la 137 chu khong 0 -- AC-2b hong vi mot con so o day.
       terminationGracePeriodSeconds: 30
+      # k8s-all AC-12: web never calls the Kubernetes API, so no token is mounted.
+      automountServiceAccountToken: false
+      # k8s-all AC-11: soft rules only, so a one-node Docker Desktop still schedules
+      # both replicas. Both select exactly the pod labels above.
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                topologyKey: kubernetes.io/hostname
+                labelSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: eventflow-web
+                    app.kubernetes.io/part-of: eventflow
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/name: eventflow-web
+              app.kubernetes.io/part-of: eventflow
       securityContext:
         # 3.5 / AC-4: image da co `USER 1000`, nhung manifest khang dinh lai de mot
         # lan sua Dockerfile khong am tham lam mat tinh chat nay.
@@ -98,7 +125,10 @@ spec:
           # Image nay CHUA ton tai tren GHCR (cd-web.yml chi build tu `main`). Tren
           # cluster local thi `IfNotPresent` dung image build tay voi dung tag nay.
           # Doi tag: kubectl -n eventflow set image deployment/eventflow-web web=<image>
-          image: ghcr.io/phanquocthang/eventflow-web:sha-c848afa
+          #
+          # k8s-all AC-20: base carries no tag; each overlay sets `sha-<short>` in
+          # its `images:` list (last base tag was sha-c848afa).
+          image: ghcr.io/phanquocthang/eventflow-web
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
