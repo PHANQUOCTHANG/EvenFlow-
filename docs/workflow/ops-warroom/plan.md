@@ -1,8 +1,8 @@
 # Plan: ops-warroom (round 2, addresses plan-review.md round 1)
 
 Inputs: `spec.md` (AC-1..AC-32, approved 2026-11-01 with D1-A, D2 apply-then-audit, D3 owner only, D4 reason required;
-round-2 amendments marked inline), `contracts.md` (frozen; amended by `contracts-change-request-1.md`, pending human
-approval). Base develop @ c5fb598. §8 (D1-B) is kept only for reference; the human chose D1-A.
+round-2 amendments marked inline), `contracts.md` (frozen; amended by `contracts-change-request-1.md`, approved by the
+human on 2026-11-01). Base develop @ c5fb598. §8 (D1-B) is kept only for reference; the human chose D1-A.
 
 No migrations. Dependencies: only `github.com/jackc/pgx/v5 v5.9.2` added to `services/waitingroom/go.mod`.
 
@@ -107,7 +107,7 @@ Per module, the same way CI does it (`ci.yml:94-128,189-190`, `integration.yml:3
 ```
 gofmt -l services/waitingroom services/ticketing services/gateway   # empty
 for m in waitingroom ticketing gateway; do (cd services/$m && go vet ./... && go test -race ./... && golangci-lint run ./...); done
-(cd services/waitingroom && go vet -tags=integration ./... && go test -v -tags=integration ./test/... -count=1 | grep -c -- '--- PASS: TestTichHop_')
+(cd services/waitingroom && go vet -tags=integration ./... && REQUIRE_PASS=1 bash ../../.github/scripts/run-and-report-tests.sh TestTichHop go test -v -tags=integration ./test/... -count=1)   # R2-m5: exit code of the run, not of grep
 (cd services/ticketing && go test -tags=integration ./... -count=1)
 cd services/ai-worker && uv run ruff check . && uv run pytest -q
 cd apps/web && npm run lint && npm run typecheck && npm test && npm run build
@@ -166,7 +166,8 @@ Each mutation must make at least one frozen test fail:
 6. Redis ops state: `ZCOUNT admitted (now +inf` replaced by `ZCARD admitted` (expired members counted).
 7. Ticketing sales: ownership check removed (other organizer gets 200).
 8. Ticketing sales: `REFUNDED`/`REFUNDING` orders counted as sold.
-9. Ticketing inventory: `consumed_at IS NULL` dropped from `held`.
+9. Ticketing inventory: `released_at IS NULL` dropped from `held` (R2-m1: the `consumed_at` variant is equivalent under
+   the CR-1 order-status filter; this one is killed by the released-hold fixture).
 10. Gateway: `Roles: []string{"ops"}` removed from `GET /v1/ops/events/{eventID}/queue`.
 11. Web `ops-service`: a 403 from one source mapped to `unavailable` instead of `OpsServiceError(403)`.
 12. Web `ops-service`: `isSample` left `true` on the real path (sample label shown over real data).
@@ -203,7 +204,7 @@ do **not** take the Idempotency middleware (idempotent by method; recorded as an
 
 | Finding | Resolution |
 |---|---|
-| MAJOR-1 `held` and `paid` double counting | `contracts-change-request-1.md` (pending human approval) amends contracts §4.1/§4.2: `held`/`active_holds` = open holds whose order is `HELD`/`PAYMENT_PENDING`. Inventory is one SQL statement (CTEs); sales is one `REPEATABLE READ READ ONLY` tx. Spec AC-14/AC-15 amended; fixture "PAID-not-issued order with open hold" required; mutation 13 added; risk row added; WP2 rows rewritten |
+| MAJOR-1 `held` and `paid` double counting | `contracts-change-request-1.md` (approved 2026-11-01) amends contracts §4.1/§4.2: `held`/`active_holds` = open holds whose order is `HELD`/`PAYMENT_PENDING`. Inventory is one SQL statement (CTEs); sales is one `REPEATABLE READ READ ONLY` tx. Spec AC-14/AC-15 amended; fixture "PAID-not-issued order with open hold" required; mutation 13 added; risk row added; WP2 rows rewritten |
 | MAJOR-2 startup DB blip disables pause | WP1 `main.go` row: auditor nil only when `DATABASE_URL` is unset or unparsable; `pgxpool.NewWithConfig` connects lazily; a startup ping failure is WARN and keeps the auditor; runtime failures → apply + `audit:"failed"`. Spec AC-12 and contracts §3.2 amended. Integration test with `127.0.0.1:1` (unreachable) → 200 `audit:"failed"`, Redis applied; mutations 14/15 |
 | MAJOR-3 integration tests not run by CI | Binding location rule in WP1: `services/waitingroom/test/<pkg>/`, `//go:build integration`, `TestTichHop_` prefix, `testx.Redis`/`testx.Postgres`. `integration.yml` not touched. Ticketing integration tests stay under `internal/` (CI runs `./...`) |
 | m1 AC-7 wording vs controller | AC-7 amended: pause asserted after in-flight tick + 1; resume within `DecreaseCooldown + 2` ticks with rate > 0 (first healthy tick = StepUp). Edge-case line fixed; UI note after resume (WP4) |
@@ -218,3 +219,17 @@ do **not** take the Idempotency middleware (idempotent by method; recorded as an
 | m10 mutation gaps | Added mutations 13–17 (held filter, nil-auditor order, audit failure → 5xx, organizer role on sales route, client validation bypass); threshold 17/17 |
 | m11 route order wording | WP3 row: comment states ServeMux picks by specificity; placement irrelevant |
 | m12 client 404 | War room 404 uses existing `OpsNotFoundView` in `LiveWarRoom`; no client `notFound()`; `not-found.test.tsx` unchanged |
+
+## Implementer notes — plan-review round 2 minors
+
+| Minor | Where it landed |
+|---|---|
+| R2-m1 mutation 9 | §6 item 9 now drops `released_at IS NULL` (fixture: released hold of a HELD order, `ops_repository_integration_test.go`) |
+| R2-m2 inventory statement | `ops_repository.go` `TierInventory`: `FROM events e LEFT JOIN tt`, figure CTEs `GROUP BY ticket_type_id` before the join; event without tiers → 1 row with NULL tier → `[]`; no row → `ErrEventNotFound` |
+| R2-m3 breakdown amount / tie-break | `EventSales`: amount = per-order `SUM(quantity*unit_cents)`; `DISTINCT ON (order_id) … ORDER BY order_id, created_at DESC, id DESC`. Orders without a SUCCEEDED payment are not returned by the repo (the frozen repo test expects 2 rows); `app.GetOrganizerSales` adds the `"unknown"` remainder so totals reconcile (contracts §4.2) |
+| R2-m4 typed nil / empty URL | `postgresadapter.NewAuditorFromEnv` returns a plain `nil` interface; `DATABASE_URL` empty or blank = unset. Unit test `internal/adapter/postgres/audit_test.go` (no Docker) + integration `test/opsaudit` |
+| R2-m5 gate pipe | §3 waitingroom integration line uses `REQUIRE_PASS=1 .github/scripts/run-and-report-tests.sh` |
+| R2-m6 TestMain | `test/opsapi/main_test.go`, `test/opsaudit/main_test.go` call `testx.Shutdown()` |
+| R2-m7 not-found caching | ticketing `ttlCache` caches `ErrEventNotFound` for the same 2 s TTL; other errors are not cached (`TestOpsCache_AC17_ErrorsAreNotCached`) |
+| R2-m8 stale status text | plan.md header, Round 2 table and CR-1 status line now say approved |
+

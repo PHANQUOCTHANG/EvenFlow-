@@ -1,6 +1,6 @@
 # Contracts change request 1 (ops-warroom, from plan review round 1)
 
-Status: **pending human approval**. Amends `contracts.md` (already edited, marked "amended CR-1") and spec AC-6,
+Status: **approved** by the human on 2026-11-01 (see "Approval" below). Amends `contracts.md` (already edited, marked "amended CR-1") and spec AC-6,
 AC-7, AC-9, AC-12, AC-14, AC-15, AC-17 (marked "amended round 2").
 
 | # | Change | Reason |
