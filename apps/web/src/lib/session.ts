@@ -208,6 +208,76 @@ export function getSessionEpoch(): number {
   return sessionEpoch;
 }
 
+/** AC-2: refresh token da POST va co cau tra loi (2xx/400/401/403, body hong) hoac bi huy 120 s thi KHONG bao gio POST lai
+ *  tu tab nay. Ghi o sessionStorage (pham vi tab, con sau reload), chi luu bam FNV-1a 32 bit (khong luu token), toi da 16
+ *  muc moi nhat. Doc/ghi loi hoac du lieu hong -> coi nhu rong (giu hanh vi cu), khong bao gio nem.
+ *  Va cham bam (~16/2^32 moi lan refresh) chi gay AUTH_REQUIRED (dang nhap lai), khong gay POST hay lo token. */
+const K_REFRESH_USED = "ef:refresh:used";
+const REFRESH_USED_MAX = 16;
+
+function refreshHash(token: string): string {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < token.length; i++) {
+    h ^= token.charCodeAt(i);
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
+  return h.toString(16);
+}
+
+function readRefreshUsed(): string[] {
+  try {
+    const raw = store("session")?.getItem(K_REFRESH_USED);
+    if (!raw) return [];
+    const arr: unknown = JSON.parse(raw);
+    return Array.isArray(arr) ? arr.filter((x): x is string => typeof x === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
+/** Danh dau refresh token da dung (moi nhat o cuoi; danh dau lai -> chuyen len moi nhat; vuot 16 -> bo cu nhat). */
+export function markRefreshUsed(token: string): void {
+  if (!token) return;
+  const h = refreshHash(token);
+  const list = readRefreshUsed().filter((x) => x !== h);
+  list.push(h);
+  while (list.length > REFRESH_USED_MAX) list.shift();
+  try {
+    store("session")?.setItem(K_REFRESH_USED, JSON.stringify(list));
+  } catch {
+    /* bo qua */
+  }
+}
+
+export function isRefreshUsed(token: string | null | undefined): boolean {
+  if (!token) return false;
+  return readRefreshUsed().includes(refreshHash(token));
+}
+
+/** Xoa khoa dang nhap CHI o kho dang giu dung refresh token `token` (khong cham buy-flow, ef:lastuid, kho giu token khac).
+ *  Chi tang epoch khi kho dang quyet dinh phien (kho dau tien co mat) bi xoa; co xoa gi thi notify. */
+export function clearSessionHoldingRefresh(token: string): void {
+  if (!token) return;
+  const active = activeStore()?.kind ?? null;
+  let wiped = false;
+  let activeWiped = false;
+  for (const kind of ["local", "session"] as const) {
+    const s = store(kind);
+    let held = false;
+    try {
+      held = s?.getItem(K_REFRESH) === token;
+    } catch {
+      held = false;
+    }
+    if (!held) continue;
+    wipe(s);
+    wiped = true;
+    if (kind === active) activeWiped = true;
+  }
+  if (activeWiped) sessionEpoch += 1;
+  if (wiped) notify();
+}
+
 /** Refresh token tho tu ca hai kho (khong phu thuoc ef_user con nguyen ven) - de logout van thu hoi duoc (F-15). */
 export function getStoredRefreshToken(): string | null {
   for (const kind of ["local", "session"] as const) {

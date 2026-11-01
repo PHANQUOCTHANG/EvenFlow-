@@ -11,7 +11,10 @@ import { apiBase } from "@/lib/api-base";
 import { getDeviceFingerprint } from "@/lib/device";
 import {
   clearSession,
+  clearSessionHoldingRefresh,
   getSession,
+  isRefreshUsed,
+  markRefreshUsed,
   peekSession,
   getSessionEpoch,
   getSessionPersist,
@@ -127,6 +130,12 @@ async function doRefresh(usedRefresh: string | null, sentUserId: string | null):
     clearSession();
     throw new ApiError("AUTH_REQUIRED", 401, {}, "Phien dang nhap da het han");
   }
+  // AC-2: token nay da POST tu tab nay va co cau tra loi -> khong POST lai; xoa kho con giu no (chi kho do).
+  // Dat TRUOC nhanh "cap khac -> dung luon" de ban sao cu tu sessionStorage khong duoc tra ve nhu token song.
+  if (isRefreshUsed(cur.refreshToken)) {
+    clearSessionHoldingRefresh(cur.refreshToken);
+    throw new ApiError("AUTH_REQUIRED", 401, {}, "Phien dang nhap da het han");
+  }
   if (usedRefresh && cur.refreshToken !== usedRefresh) return cur.accessToken;
   return refreshCore(cur, cur.refreshToken);
 }
@@ -146,6 +155,7 @@ async function refreshCore(cur: Session, refreshToken: string): Promise<string> 
   } catch (err) {
     if (controller.signal.aborted) {
       // Server co the da xoay token roi: khong bao gio POST lai. Chi xoa neu phien van la phien da POST.
+      markRefreshUsed(refreshToken);
       if (isSamePostedSession(epoch, cur)) clearSession();
       throw new ApiError("AUTH_REQUIRED", 401, {}, "Phien dang nhap da het han");
     }
@@ -169,6 +179,8 @@ async function refreshPost(cur: Session, refreshToken: string, epoch: number, co
     // Mat mang: giu phien, de lan sau thu lai.
     throw networkError();
   }
+  // AC-2: co cau tra loi chot (2xx/400/401/403) -> danh dau NGAY (dong bo, truoc moi await doc body). 5xx/429/4xx khac thi khong.
+  if (res.ok || res.status === 400 || res.status === 401 || res.status === 403) markRefreshUsed(refreshToken);
   if (!res.ok) {
     if (res.status === 400 || res.status === 401 || res.status === 403) {
       // Dang xuat/xoay trong luc cho: khong xoa phien cua nguoi khac.
