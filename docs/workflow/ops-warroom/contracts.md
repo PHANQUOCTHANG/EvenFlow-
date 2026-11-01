@@ -83,7 +83,9 @@ when `wr:{ev}:meta` has no `sale_start_ms` (room never configured); 503 Redis er
 ### 3.2 `PUT /v1/ops/events/{eventID}/admit-override`
 
 Request `{ "rate_per_sec": 120, "reason": "checkout p99 cao, giam tai" }`
-- `rate_per_sec`: JSON number, finite, `0 ≤ rate ≤ 10000`; stored as `int64(rate*1000)`. `0` = emergency pause.
+- `rate_per_sec`: JSON **integer**, `0 ≤ rate ≤ 10000` (amended CR-1: a fractional value such as `0.3` is rejected with
+  400, because rates below 0.5 give a batch of 0 and would stop admission while `paused=false`). Stored as `rate*1000`.
+  `0` = emergency pause.
   Values above the controller's `ADMIT_MAX_RATE` are accepted and clamped by the controller (existing behaviour).
 - `reason`: string, trimmed length 3..200.
 - Unknown fields rejected (400). Body ≤ 4 KiB.
@@ -93,11 +95,14 @@ Request `{ "rate_per_sec": 120, "reason": "checkout p99 cao, giam tai" }`
 { "event_id": "…", "override": { "active": true, "rate_per_sec": 120.0 }, "paused": false,
   "applied_at": "2026-11-01T10:00:01Z", "audit": "recorded" }
 ```
-`audit` is `"recorded"` or `"failed"` (see 3.4).
+`audit` is `"recorded"` or `"failed"` (see 3.4). The `override` in the response is read back from the stored integer
+(`override_rate/1000`), not echoed from the request.
 
 Errors: 400 `/problems/invalid-override` (bad JSON, rate out of range/non-finite, reason length); 401; 403; 404 (as 3.1);
-503 Redis error (nothing applied, nothing audited as applied); 503 `/problems/audit-unavailable` when the service has no
-audit store configured (fail-closed misconfiguration, nothing applied).
+503 Redis error (nothing applied, nothing audited as applied); 503 `/problems/audit-unavailable` only when
+`DATABASE_URL` is unset or cannot be parsed (fail-closed misconfiguration, nothing applied). An unreachable database is
+**not** this case: the pool connects lazily, and connect or insert failures at request time follow 3.4
+(`audit:"failed"`, change applied) (amended CR-1).
 
 ### 3.3 `DELETE /v1/ops/events/{eventID}/admit-override`
 
@@ -110,7 +115,9 @@ Errors: as 3.2.
 
 ### 3.4 Audit record (both writes)
 
-Order: validate → apply in Redis → insert audit (2 s timeout). One row per successful apply:
+Order: validate → apply in Redis → insert audit. Both the Redis apply and the insert run on
+`context.WithoutCancel(r.Context())` with their own timeouts (Redis 1 s, insert 2 s), so a client disconnect after the
+apply cannot cancel the audit. One row per successful apply:
 
 | column | value |
 |---|---|
@@ -144,13 +151,19 @@ produces a second identical audit row, which is acceptable.
 }
 ```
 - `available` = `SUM(ticket_inventory.available)` for the tier (Postgres, source of truth).
-- `held` = `SUM(seat_holds.quantity)` with `released_at IS NULL AND consumed_at IS NULL` (expired-but-unswept holds count:
-  they still occupy stock).
+- `held` = `SUM(seat_holds.quantity)` with `released_at IS NULL AND consumed_at IS NULL` **and the hold's order in
+  `('HELD','PAYMENT_PENDING')`** (amended CR-1). Holds are consumed only at ticket issuance
+  (`ticket_repository.go:152-158`), not when the order becomes PAID, so without the order-status filter a
+  PAID-not-issued order would be counted in both `held` and `paid`. Expired-but-unswept holds of HELD orders still count.
 - `paid` = `SUM(order_items.quantity)` of orders with `status = 'PAID'` (paid, tickets not issued yet).
 - `issued` = `COUNT(tickets)` with `status IN ('ISSUED','CHECKED_IN')`.
+- Each seat is therefore counted in at most one of `held`, `paid`, `issued`.
+- **Single snapshot** (amended CR-1): all per-tier figures come from **one SQL statement** (CTEs per figure, joined on
+  `ticket_type_id`), so an order moving HELD→PAID or PAID→ISSUED between reads cannot be counted twice.
 - Tiers ordered by `price_cents, name`; empty array when the event has no tiers.
-- Served from a per-event cache with TTL 2 s and single-flight (at most one DB round per event per 2 s); queries run
-  with a 2 s statement timeout.
+- Served from a per-event cache with TTL 2 s and single-flight. The loader runs on a detached context with a 2 s
+  timeout, so one caller's cancel cannot fail the waiters. `generated_at` = the time the cache entry was filled, not the
+  response time, so the age shown in the UI is honest.
 
 Errors: 401; 403 role ≠ `ops`; 400 non-UUID; 404 event row does not exist; 503 DB error/timeout.
 
@@ -173,11 +186,18 @@ Errors: 401; 403 role ≠ `ops`; 400 non-UUID; 404 event row does not exist; 503
 ```
 - Sold orders = `orders.status IN ('PAID','ISSUED')` (REFUNDING/REFUNDED/CANCELLED/EXPIRED/HELD/PAYMENT_PENDING excluded).
 - `sold` / `tickets_sold` = `SUM(order_items.quantity)` of sold orders; `revenue_cents` = `SUM(quantity*unit_cents)` of sold orders.
-- `active_holds` = open hold quantity as in 4.1 `held`.
+- `active_holds` = open hold quantity exactly as in 4.1 `held` (HELD/PAYMENT_PENDING orders only, amended CR-1).
 - `paid_orders` = count of sold orders.
-- `payment_breakdown` = sold orders grouped by the provider of their `SUCCEEDED` payment, sorted by `amount_cents` desc;
-  provider is free text (`vnpay`, `momo`, `sandbox`, …).
-- Same 2 s cache / timeout as 4.1, keyed by event (the ownership check is done before the cache).
+- `payment_breakdown` = sold orders grouped by the provider of **one** payment per order: the latest `SUCCEEDED`
+  payment (`DISTINCT ON (order_id) … ORDER BY order_id, created_at DESC`), so an order with two SUCCEEDED rows is not
+  counted twice. Sold orders without any SUCCEEDED payment are grouped under provider `"unknown"`. Then
+  `SUM(orders)` = `paid_orders` and `SUM(amount_cents)` = `gross_revenue_cents` (amount is the order revenue, not the
+  payment amount). Sorted by `amount_cents` desc; provider is free text (`vnpay`, `momo`, `sandbox`, …).
+- Per-tier figures, totals and the breakdown come from one snapshot: a single statement, or a
+  `BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY` transaction around the two statements (tiers, breakdown).
+- Same 2 s cache / timeout / detached loader / `generated_at` rule as 4.1. The cache entry also stores the event's
+  `organizer_id`, and the ownership check runs on every request **before** a cached value is served (on a miss, the
+  owner is read in the same snapshot). AC-17 counts these snapshot queries: at most one per event per 2 s.
 
 Errors: 401; 403 role ≠ `organizer`; 400 non-UUID; **404 when the event does not exist or `events.organizer_id` ≠ caller**
 (same "hide existence" rule as `requireOwner`, `order_handler.go:62-83`); 503.

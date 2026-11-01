@@ -64,36 +64,51 @@ peak TPS, ops event list including CLOSED/COMPLETED events, `orders(event_id)` i
 
 ### B. Waitingroom write (EVF-60)
 
-- **AC-6** Given an `ops` caller, When `PUT …/admit-override {rate_per_sec, reason}` with `0 ≤ rate ≤ 10000` and reason
-  3..200 chars (trimmed), Then Redis `meta.override="1"`, `meta.override_rate=int(rate*1000)` and 200 per contracts §3.2.
+- **AC-6** Given an `ops` caller, When `PUT …/admit-override {rate_per_sec, reason}` with an integer `0 ≤ rate ≤ 10000`
+  and reason 3..200 chars (trimmed), Then Redis `meta.override="1"`, `meta.override_rate=rate*1000` and 200 per
+  contracts §3.2, with the response built from the stored value. *(amended round 2: integer only)*
 - **AC-7** Given an active override, When the controller ticks, Then the admitted batch follows the override within
-  ≤ 2 s (EVF-60 AC-1). Verified by an integration test with the real controller + Redis: after PUT rate 0, no new
-  member enters `admitted` after the next tick; after DELETE, admission resumes from `MinRate`.
+  ≤ 2 s (EVF-60 AC-1). Verified by an integration test with the real controller + Redis. After PUT rate 0, `admitted`
+  does not grow after the tick already in flight plus one more tick. After DELETE, admission resumes (rate > 0 and
+  `admitted` grows) within `DecreaseCooldown + 2` ticks. A leftover cooldown can keep the rate at 0 for up to
+  `DecreaseCooldown` (5) ticks, and the first healthy tick gives `0 + StepUp`, not `MinRate`. The UI tells Ops that AUTO
+  can show 0/s for a few seconds after resuming. *(amended round 2, plan-review m1)*
 - **AC-8** Given `DELETE …/admit-override {reason}`, Then both meta fields are removed and 200; repeating it returns 200.
-- **AC-9** Given invalid input (missing/non-number/negative/>10000/NaN-like rate, reason missing/too short/too long,
+- **AC-9** Given invalid input (missing/non-number/non-integer/negative/>10000 rate, reason missing/too short/too long,
   unknown field, body > 4 KiB), Then 400 `/problems/invalid-override` and Redis is unchanged.
 - **AC-10** Given a successful apply, Then exactly one `audit_logs` row is written with `actor_type=human`,
   `actor_id=<caller id>`, `action ∈ {ADMIT_OVERRIDE_SET, ADMIT_PAUSED, ADMIT_OVERRIDE_CLEARED}`, `subject=event:{id}`,
   `reason`, metadata `{rate_per_sec, previous, request_id}` (EVF-60 AC-2). Response `audit:"recorded"`.
 - **AC-11** Given the audit insert fails or times out (2 s) after the Redis apply, Then the override stays applied,
   the response is 200 with `audit:"failed"`, and one ERROR log line carries actor, action, subject, reason, metadata (D2).
-- **AC-12** Given the service started without an audit store (`DATABASE_URL` unset), Then both write endpoints return
-  503 `/problems/audit-unavailable` and Redis is unchanged; the read endpoint and the buyer endpoints keep working;
-  readiness does not depend on Postgres.
+- **AC-12** Given `DATABASE_URL` unset or unparsable, Then both write endpoints return 503
+  `/problems/audit-unavailable` and Redis is unchanged. Given `DATABASE_URL` set but the database unreachable (at
+  startup or later), Then the service starts, writes are applied and return 200 with `audit:"failed"` (AC-11). In all
+  cases the read endpoint and the buyer endpoints keep working, and readiness does not depend on Postgres.
+  *(amended round 2, plan-review MAJOR-2)*
 - **AC-13** Given a non-`ops` caller (gateway 403, service 403 as AC-5), Then nothing is applied or audited
   (EVF-60 AC-3).
 
 ### C. Ticketing
 
 - **AC-14** Given an `ops` caller, When `GET /v1/ops/events/{id}/inventory`, Then 200 per contracts §4.1 with per-tier
-  `quota, available, held, paid, issued` computed exactly as defined there (consumed or released holds not in `held`,
-  `VOID/REFUNDED` tickets not in `issued`, only `PAID` orders in `paid`).
+  `quota, available, held, paid, issued` computed exactly as defined there, all read in one snapshot:
+  - consumed or released holds are not in `held`;
+  - holds of orders that are not HELD/PAYMENT_PENDING are not in `held`, so a PAID-not-issued order with an open hold
+    counts only in `paid`;
+  - `VOID/REFUNDED` tickets are not in `issued`;
+  - only `PAID` orders are in `paid`.
+  *(amended round 2, CR-1)*
 - **AC-15** Given an `organizer` caller who owns the event, When `GET /v1/organizer/events/{id}/sales`, Then 200 per
-  contracts §4.2; refunded/cancelled/expired/pending orders contribute nothing to sold, revenue or paid_orders.
+  contracts §4.2. Refunded/cancelled/expired/pending orders contribute nothing to sold, revenue or paid_orders.
+  `active_holds` excludes holds of PAID orders. An order with two SUCCEEDED payments counts once in the breakdown, and
+  the breakdown totals equal `paid_orders` / `gross_revenue_cents`. *(amended round 2, CR-1)*
 - **AC-16** Given an organizer who does not own the event, or an unknown event, Then 404 (indistinguishable); role ≠
   `organizer` at the service → 403; ops endpoint with role ≠ `ops` → 403; non-UUID → 400; DB error → 503.
-- **AC-17** Given N concurrent requests for the same event within 2 s, Then at most one set of DB queries runs
-  (per-event TTL cache + single-flight); queries are bounded by a 2 s timeout.
+- **AC-17** Given N concurrent requests for the same event within 2 s, Then at most one figure-snapshot query runs
+  (per-event TTL cache + single-flight; the sales ownership check uses the cached `organizer_id`). Queries are bounded
+  by a 2 s timeout, one caller cancelling does not fail the others, and `generated_at` is the fill time.
+  *(amended round 2, m3)*
 
 ### D. ai-worker
 
@@ -166,7 +181,7 @@ peak TPS, ops event list including CLOSED/COMPLETED events, `orders(event_id)` i
 
 Override set while no leader is running (applies when a leader appears — shown as MANUAL + no leader); override rate
 above `ADMIT_MAX_RATE` (controller clamps; UI shows the effective `admit_rate_per_sec` on the next poll); two Ops
-writing at once (last write wins, both audited); clearing after pause (controller resumes from MinRate, not 0); sold-out
+writing at once (last write wins, both audited); clearing after pause (AUTO may stay at 0/s for up to `DecreaseCooldown` ticks, then grows by `StepUp`); sold-out
 while paused (both flags shown); event in public list but room not yet configured (queue 404 → waitingroom unavailable);
 organizer event in DRAFT (sales all zero, 200); ai-worker down (AI unavailable, rest live); Postgres overloaded during a
 sale (inventory/sales 503 or slow → ticketing unavailable; pause still works — D2); clock skew between services
