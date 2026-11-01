@@ -1,0 +1,24 @@
+{
+  "task": "frontend-debt-r5",
+  "branch": "feature/frontend-debt-r5",
+  "base_commit": "c5fb598",
+  "tier": "high-risk",
+  "rule_hits": [
+    "auth: refresh failure handling, burned refresh tokens, stored-session reuse, role validation (apps/web/src/lib/api-client.ts, lib/session.ts)",
+    "payments: payment redirect URL validation (apps/web/src/lib/payment-client.ts)",
+    "inventory: buyer-initiated hold release (apps/web/src/hooks/use-hold-timer.ts, components/checkout/checkout-view.tsx)"
+  ],
+  "llm_assessment": "high-risk (agrees with rules; cannot lower)",
+  "user_override": null,
+  "source": "deferred minor findings of frontend-real-api (docs/workflow/frontend-real-api/findings.json: C-6, S-2, S-4, S-5, S-6, S-8, X-14, X-15, F-16 gap, F-17 gap, R3-5) and frontend-debt-r4 (docs/workflow/frontend-debt-r4/findings.json: R-3, X-4, X-5, X-S1, X-S2, R2-3, R2-4, R2-S1, R3-1, R3-2, R3-3)",
+  "consequences": [
+    "human approves spec.md before implementation",
+    "plan review mandatory",
+    "correctness + security review and a challenge on a different model",
+    "mutation test on changed refresh/session logic + rollback check",
+    "human sign-off before merge to develop"
+  ],
+  "no_migrations": true,
+  "no_new_dependencies": true,
+  "no_backend_changes": true
+}
