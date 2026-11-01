@@ -156,3 +156,9 @@ Approved by TranDinhVo on 2026-11-01 in the Claude Code session, with all recomm
 ## Human decision after review (2026-11-01)
 
 TranDinhVo ACCEPTED the lazy-wipe deviation from plan P-4 (findings R-1 / X-1): a consumed refresh token copy in the other store is wiped when next encountered (doRefresh), not eagerly at mark time. Residual: the stale, already-consumed copy may linger in sessionStorage until the next API call; it is never re-POSTed (the 17-mark exploit did not reproduce) and never leaks. §5 eager-wipe text is superseded by this note.
+
+## Deferred after review round 2 (minor)
+
+- N2-1 whitespace-only lock result; N2-3 lock result with newline -> raw TypeError (both need a non-conforming LockManager).
+- N2-2 pre-existing: sessionStorage.setItem throwing for ef:rt:used leaves the record empty (identical at 351bf74).
+- R-3/X-3: any http(s) redirect host allowed until the payment-service allow-list exists (by design).

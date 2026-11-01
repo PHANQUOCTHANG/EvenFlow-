@@ -19,7 +19,7 @@
 \\?\D:\Documents\Nam4-1\Project1\EvenFlow-frontend-debt-r5\apps\web\node_modules\@next\swc-win32-x64-msvc\next-swc.win32-x64-msvc.node
  ⚠ Attempted to load @next/swc-win32-x64-msvc, but an error occurred: A dynamic link library (DLL) initialization routine failed.
 \\?\D:\Documents\Nam4-1\Project1\EvenFlow-frontend-debt-r5\apps\web\node_modules\@next\swc-win32-x64-msvc\next-swc.win32-x64-msvc.node
- ✓ Compiled successfully in 14.9s
+ ✓ Compiled successfully in 12.0s
    Linting and checking validity of types ...
 
 ./src/components/auth/ForgotPasswordForm.tsx
@@ -71,7 +71,7 @@ Route (app)                                       Size  First Load JS  Revalidat
 ├ ○ /auth/forgot-password                       6.4 kB         162 kB
 ├ ○ /auth/sign-in                                 3 kB         126 kB
 ├ ○ /auth/sign-up                              6.57 kB         165 kB
-├ ƒ /checkout/[eventId]                        8.11 kB         129 kB
+├ ƒ /checkout/[eventId]                        8.29 kB         129 kB
 ├ ƒ /checkout/[eventId]/payment                7.37 kB         128 kB
 ├ ƒ /checkout/[eventId]/result                 16.2 kB         137 kB
 ├ ○ /events                                    3.73 kB         118 kB          1m      1y

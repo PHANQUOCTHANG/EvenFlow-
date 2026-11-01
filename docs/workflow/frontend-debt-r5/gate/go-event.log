@@ -1,7 +1,7 @@
 ?   	github.com/eventflow/eventflow/services/event/cmd/server	[no test files]
-ok  	github.com/eventflow/eventflow/services/event/internal/adapter/http	0.333s
+ok  	github.com/eventflow/eventflow/services/event/internal/adapter/http	0.298s
 ?   	github.com/eventflow/eventflow/services/event/internal/adapter/postgres	[no test files]
-ok  	github.com/eventflow/eventflow/services/event/internal/app	0.443s
-ok  	github.com/eventflow/eventflow/services/event/internal/domain	0.443s
+ok  	github.com/eventflow/eventflow/services/event/internal/app	0.379s
+ok  	github.com/eventflow/eventflow/services/event/internal/domain	0.409s
 ?   	github.com/eventflow/eventflow/services/event/internal/port	[no test files]
-ok  	github.com/eventflow/eventflow/services/event/internal/worker	0.317s
+ok  	github.com/eventflow/eventflow/services/event/internal/worker	0.292s
