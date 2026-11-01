@@ -137,3 +137,68 @@ needs a contracts change request) before implementation starts.
 3. Location rule (or `integration.yml` ownership) for waitingroom integration tests per MAJOR-3.
 
 Minor items can be folded into the same revision or recorded as accepted.
+
+## Round 2
+
+Reviewer: plan reviewer, clean context. Inputs: `spec.md` (round-2 amendments), `contracts.md` (amended CR-1),
+`contracts-change-request-1.md` (APPROVED by the human 2026-11-01), `plan.md` ("Round 2" table). Read-only checks
+against the worktree at 39edb38.
+
+### Verdict: **PASS** (0 blocker, 0 major, 8 minor)
+
+All three round-1 majors are resolved in the plan and the frozen contracts. The round-1 minors are resolved or
+accepted with a reason. The new items below are minor: fold them into the test-designer brief / WP rows or record
+them as accepted. None blocks implementation.
+
+### Round-1 resolutions checked against the code
+
+| Finding | Status | Evidence |
+|---|---|---|
+| MAJOR-1 held/paid double count | Resolved. CR-1 approved; contracts §4.1/§4.2 filter `held`/`active_holds` on order `HELD`/`PAYMENT_PENDING`. Holds are consumed only at issuance, together with `ISSUED` in the same tx (ticket_repository.go:152-171). Payment moves the order to PAID without touching holds (payment repository.go:294-297). The hold sweeper sets `released_at` and `EXPIRED` in one tx, but only for `HELD` orders (ticketing repository.go:276-311), so `PAYMENT_PENDING` + released hold is a real state and is excluded by `released_at IS NULL`. With the filter, each seat lands in at most one of held/paid/issued. Holds of EXPIRED/CANCELLED orders that are still open make the figures *under*-count only, and `tierInventoryViolation` flags only `held+paid+issued > quota` (ops-service.ts:109), so no false alert | contracts.md:154-162, 189; plan.md:52 |
+| MAJOR-1 single snapshot | Resolved. Inventory: one statement (one snapshot even in READ COMMITTED). Sales: `REPEATABLE READ READ ONLY` tx. Through PgBouncer `POOL_MODE: transaction` (docker-compose.yml:39) an explicit transaction stays on one server connection until COMMIT, so RR works. A read-only RR tx cannot hit serialization failures. pgx cached statements already work through this PgBouncer for ticketing/payment (same DSN, docker-compose.yml:186,208), so the new queries add no new protocol risk | plan.md:52 |
+| MAJOR-2 startup DB blip | Resolved. `pgxpool.NewWithConfig` does not dial when `MinConns` is 0 (plan sets only MaxConns 2), so an unreachable host does not fail construction. `pgxpool.ParseConfig("::not a url")` fails ("invalid keyword/value", pgconn/config.go:636-639), so the planned unparsable test case is real. Ping failure keeps the auditor; runtime failures go to `audit:"failed"` | plan.md:23, 39-41; contracts.md:101-105; spec AC-12 |
+| MAJOR-3 CI coverage | Resolved. Location rule `services/waitingroom/test/<pkg>/` + `//go:build integration` + `TestTichHop_` matches CI (integration.yml:85-91). `test/...` may import `services/waitingroom/internal/...` (same module root, Go internal rule). `testx.Postgres(t)` defaults to `<repo>/migrations` (libs/go/testx/postgres.go:38-43), which creates `audit_logs` (0001_core.sql:198). Ticketing integration under `internal/` runs via `./...` (integration.yml:35-37). pgx v5.9.2 is the version already used by libs/go, ticketing and payment, so `go.work` adds no version skew | plan.md:31-45 |
+| m1..m12 | Resolved or accepted (m6 recorded as security debt). Checked: AC-7 wording vs `syncOverride` (admit_controller.go:225-246); `rate*1000` storage is exact for integers (queue.go:186-189); `getAllPublicEvents`/`apiFetch` exist (event-service.ts:138, api-client.ts:314); `OpsNotFoundView` path (ops-war-room.tsx:104); all `__setOpsSampleOverride` importers are in the §7 TCR list; `go.work` exists, so root-level `go test ./services/...` in §5 works | plan.md:205-220 |
+
+### New findings (round 2)
+
+- **R2-m1 Mutation 9 becomes an equivalent mutant (risk to the 17/17 threshold).** With the CR-1 order-status filter,
+  dropping `consumed_at IS NULL` from `held` changes nothing for any reachable state: a hold is consumed only in the
+  issuance tx that also sets the order to `ISSUED` (ticket_repository.go:152-171), and that order is already
+  filtered out. Only a synthetic fixture (consumed hold under a `HELD`/`PAYMENT_PENDING` order) kills it. Evidence:
+  plan.md:169. Fix: replace mutation 9 with "`released_at IS NULL` dropped from `held`", which a real fixture kills
+  (a `PAYMENT_PENDING` order whose hold the sweeper released; ticketing repository.go:305-307 expires only `HELD`).
+  Or keep mutation 9 and require the synthetic fixture explicitly in the test-designer brief.
+- **R2-m2 Inventory "one statement" must still return the event when it has no tiers.** If the statement is driven
+  from `ticket_types` with an `owner` CTE, an event without tiers returns zero rows, which looks the same as "event
+  does not exist". The handler would then return 404 instead of 200 with `tiers: []` (contracts.md:163, 168). Evidence:
+  plan.md:52. Fix: drive the statement from `events e LEFT JOIN ticket_types t ON t.event_id = e.id` (or return the
+  owner row separately within the statement). Add a test: existing event, no tiers → 200, `tiers: []`. Also state
+  that each figure CTE is `GROUP BY ticket_type_id` **before** the join, so a fan-out mutation is caught by a fixture
+  with ≥ 2 holds and ≥ 2 items on one tier.
+- **R2-m3 `payment_breakdown` amount and tie-break.** contracts.md:191-195 says the amount is the order revenue, so that
+  `SUM(amount_cents) = gross_revenue_cents`. Spell out in the WP2 row that the amount is
+  `SUM(order_items.quantity*unit_cents)` per order, not `orders.total_cents` and not `payments.amount_cents`. Add
+  `id` as a deterministic tie-break after `created_at DESC` in the `DISTINCT ON` order. Evidence: plan.md:52.
+- **R2-m4 Typed-nil auditor.** `NewAuditorFromEnv(...) (app.Auditor, func())` must return an untyped `nil` when the
+  auditor is off. Returning a nil `*Auditor` inside the interface makes `auditor == nil` false, which skips the AC-12
+  fail-closed check and panics on `Record`. The planned `::not a url` integration test catches it; note it in the WP1
+  row. Treat `DATABASE_URL=""` the same as unset, because `ParseConfig("")` succeeds with libpq defaults. Evidence: plan.md:23.
+- **R2-m5 Gate pipe hides failures.** `go test … | grep -c -- '--- PASS: TestTichHop_'` (plan.md:110) exits with
+  grep's status, so a failing integration run still "passes" the gate if at least one test passed. Fix: use the CI
+  wrapper (`REQUIRE_PASS=1 bash .github/scripts/run-and-report-tests.sh TestTichHop go test -v -tags=integration ./test/... -count=1`)
+  or `set -o pipefail` plus a check of the exit code.
+- **R2-m6 New integration packages need `TestMain` with `testx.Shutdown()`.** This follows `test/leader/main_test.go`,
+  so the Redis/Postgres containers are not leaked between packages on the CI runner. Add it to the location rule (plan.md:31-37).
+- **R2-m7 Not-found results are not cached.** The TTL cache stores only successful snapshots. A caller with a valid
+  `organizer`/`ops` token who loops over random UUIDs runs one existence query per request. The gateway RateDefault
+  bounds this. Either cache negative results for the same 2 s, or record it as accepted. Evidence: plan.md:54.
+- **R2-m8 Stale status text.** plan.md:3 and contracts-change-request-1.md:3 still say CR-1 is "pending human
+  approval". The approval is recorded at line 21. Update the wording so a later reviewer does not stop on it.
+
+### Rollback (§5) check
+
+Step 0 is now inspect → on-call decision → clear one event → record. The commands match compose: the service names
+`redis` and `postgres`, user/db `eventflow`, no Redis auth (docker-compose.yml:50-58). The meta key format
+`wr:{<id>}:meta` matches queue.go:45, and braces are literal in a Redis glob. The `case "$v" in 1*)` filter matches
+only `override="1"`. The revert commands work from the repo root because `go.work` exists. No finding.
