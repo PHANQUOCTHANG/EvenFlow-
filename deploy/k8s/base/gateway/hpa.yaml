@@ -1,0 +1,28 @@
+# HPA for gateway (AC-9): CPU only (custom metrics stay in EV-191, spec D3).
+# Utilization is relative to `resources.requests.cpu` of the Deployment.
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: eventflow-gateway
+  namespace: eventflow
+  labels:
+    app.kubernetes.io/name: eventflow-gateway
+    app.kubernetes.io/part-of: eventflow
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: eventflow-gateway
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+  behavior:
+    scaleDown:
+      # No flapping between sale waves: hold for 5 minutes before removing pods.
+      stabilizationWindowSeconds: 300

@@ -14,3 +14,4 @@ resources:
   # --- WP3 (security + config) adds here: namespace.yaml, networkpolicy ---
   # --- app workloads (WP2), one directory per process ---
   - web
+  - gateway
