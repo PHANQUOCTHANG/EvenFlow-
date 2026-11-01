@@ -1,0 +1,23 @@
+# Spec k8s-all 6.2 / AC-15. Ingress only; egress is not restricted in this task.
+# web: only the ingress controller namespace, on the http port.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-web
+  labels:
+    app.kubernetes.io/part-of: eventflow
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: eventflow-web
+      app.kubernetes.io/part-of: eventflow
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 3000
