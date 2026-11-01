@@ -231,46 +231,54 @@ log "check C4.4: validate manifest trong ${K8S_DIR}/"
 # kubectl" (B1). Da kiem tren may that: --dry-run=client KHONG phai che do
 # offline, no tai openapi tu API server va fail khi chua co cluster.
 if kubectl cluster-info >/dev/null 2>&1; then
-  if [ ! -d "$K8S_DIR" ]; then
-    log "  ${K8S_DIR}/ chua ton tai (WP-B tao) -- khong co gi de validate."
-  else
-    # Duyet theo glob, khong gia dinh ten file, de WP-B tu do dat ten.
-    shopt -s nullglob globstar
-    manifests=( "$K8S_DIR"/**/*.yaml "$K8S_DIR"/**/*.yml )
-    shopt -u nullglob globstar
-
-    if [ "${#manifests[@]}" -eq 0 ]; then
-      log "  khong co file .yaml/.yml nao trong ${K8S_DIR}/ -- khong co gi de validate."
-    else
-      files_args=()
-      for manifest_file in "${manifests[@]}"; do
-        files_args+=( -f "$manifest_file" )
-      done
-      # --dry-run=server KHONG persist object, nen Namespace trong chinh lan
-      # dry-run nay chua ton tai that. Admission plugin NamespaceLifecycle se tu
-      # choi moi resource namespaced bang `namespaces "eventflow" not found`,
-      # lam gate do trong khi manifest hoan toan dung -- va nguoi doc log rat de
-      # ket luan sai la manifest hong. Nen apply THAT Namespace truoc (idempotent)
-      # roi moi dry-run phan con lai.
-      ns_file="$K8S_DIR/00-namespace.yaml"
-      if [ -f "$ns_file" ]; then
-        log "  tao truoc namespace (that, idempotent) de --dry-run=server khong bi NamespaceLifecycle tu choi"
-        if ! kubectl apply -f "$ns_file" >/dev/null; then
-          fail "khong tao duoc namespace tu $ns_file"
-          exit 1
-        fi
-      fi
-
-      log "  co cluster -> kubectl apply --dry-run=server tren ${#manifests[@]} file"
-      rc=0
-      kubectl apply --dry-run=server "${files_args[@]}" || rc=$?
-      if [ "$rc" -ne 0 ]; then
-        fail "kubectl apply --dry-run=server that bai (exit ${rc})."
-        exit "$rc"
-      fi
-      log "  OK: ${#manifests[@]} file qua duoc --dry-run=server"
+  # k8s-all (plan Round 3 m8 + r2-m6): the manifests are a kustomize tree now; the overlay that
+  # carries everything a local cluster needs is overlays/local (apps + dev-infra component).
+  K8S_OVERLAY="$K8S_DIR/overlays/local"
+  if [ ! -f "$K8S_OVERLAY/kustomization.yaml" ]; then
+    fail "${K8S_OVERLAY}/kustomization.yaml khong ton tai -- khong validate duoc."
+    exit 1
+  fi
+  # --dry-run=server KHONG persist object, nen Namespace trong chinh lan dry-run nay chua
+  # ton tai that. Admission plugin NamespaceLifecycle se tu choi moi resource namespaced
+  # bang `namespaces "eventflow" not found`. Nen tao THAT namespace truoc (idempotent);
+  # PSA labels cua no do lan apply that theo runbook dat, dry-run duoi day van kiem chung.
+  if ! kubectl get namespace eventflow >/dev/null 2>&1; then
+    log "  tao truoc namespace eventflow (that) de --dry-run=server khong bi NamespaceLifecycle tu choi"
+    if ! kubectl create namespace eventflow >/dev/null; then
+      fail "khong tao duoc namespace eventflow"
+      exit 1
     fi
   fi
+
+  # Job eventflow-migrate la immutable: dry-run apply len mot Job da ton tai (spec khac) se
+  # fail du manifest dung. Chi XOA Job khi (1) context la cluster local (docker-desktop /
+  # kind-*) VA (2) Job da chay xong (status.succeeded >= 1). Moi truong hop khac: KHONG xoa,
+  # bo Job ra khoi dry-run va noi ro dieu do.
+  dry_args=( -k "$K8S_OVERLAY" )
+  if kubectl -n eventflow get job eventflow-migrate >/dev/null 2>&1; then
+    ctx="$(kubectl config current-context 2>/dev/null || true)"
+    succeeded="$(kubectl -n eventflow get job eventflow-migrate -o jsonpath='{.status.succeeded}' 2>/dev/null || true)"
+    if [[ "$ctx" =~ ^(docker-desktop|kind-.+)$ ]] && [[ "${succeeded:-0}" =~ ^[0-9]+$ ]] && [ "${succeeded:-0}" -ge 1 ]; then
+      log "  context ${ctx}: xoa job/eventflow-migrate da xong (Job immutable) truoc khi dry-run"
+      if ! kubectl -n eventflow delete job eventflow-migrate --ignore-not-found >/dev/null; then
+        fail "khong xoa duoc job/eventflow-migrate"
+        exit 1
+      fi
+    else
+      log "  BO QUA job/eventflow-migrate trong dry-run: Job immutable, va context '${ctx}' khong phai"
+      log "  docker-desktop/kind-* hoac Job chua xong (succeeded='${succeeded}') nen KHONG xoa."
+      dry_args+=( -l 'app.kubernetes.io/name!=eventflow-migrate' )
+    fi
+  fi
+
+  log "  co cluster -> kubectl apply --dry-run=server ${dry_args[*]}"
+  rc=0
+  kubectl apply --dry-run=server "${dry_args[@]}" || rc=$?
+  if [ "$rc" -ne 0 ]; then
+    fail "kubectl apply --dry-run=server that bai (exit ${rc})."
+    exit "$rc"
+  fi
+  log "  OK: ${K8S_OVERLAY} qua duoc --dry-run=server"
 else
   # Ba dong duoi day la nguyen van C4.4. KHONG thay bang parse YAML hay bat ky
   # check mot phan nao: parse chi bat loi cu phap, con loi that (sai apiVersion,
