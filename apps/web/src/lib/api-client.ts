@@ -140,9 +140,26 @@ async function doRefresh(usedRefresh: string | null, sentUserId: string | null):
   return refreshCore(cur, cur.refreshToken);
 }
 
-/** Refresh da co cau tra loi chot nhung khong dung duoc: chi xoa khi van la phien da POST, roi AUTH_REQUIRED. */
-function failedRefresh(epoch: number, cur: Session, problem: Partial<Problem> = {}): never {
-  if (isSamePostedSession(epoch, cur)) clearSession();
+/** POST refresh ket thuc that bai chot (400/401/403, huy 120 s, body hong - AC-1):
+ *  (1) van la phien da POST -> xoa, AUTH_REQUIRED;
+ *  (2) AC-3: CUNG user, cung epoch, da co refresh token KHAC chua dung (dang nhap lai o tab khac) -> tra access token do
+ *      (cung quy tac voi nhanh thanh cong); (3) con lai -> AUTH_REQUIRED, khong cham phien dang luu. */
+function failedRefresh(epoch: number, cur: Session, problem: Partial<Problem> = {}): string {
+  if (isSamePostedSession(epoch, cur)) {
+    clearSession();
+    throw new ApiError("AUTH_REQUIRED", 401, problem, "Phien dang nhap da het han");
+  }
+  const stored = peekSession();
+  if (
+    stored &&
+    epoch === getSessionEpoch() &&
+    stored.user.id === cur.user.id &&
+    stored.refreshToken &&
+    stored.refreshToken !== cur.refreshToken &&
+    !isRefreshUsed(stored.refreshToken)
+  ) {
+    return stored.accessToken;
+  }
   throw new ApiError("AUTH_REQUIRED", 401, problem, "Phien dang nhap da het han");
 }
 
@@ -162,8 +179,7 @@ async function refreshCore(cur: Session, refreshToken: string): Promise<string> 
     if (controller.signal.aborted) {
       // Server co the da xoay token roi: khong bao gio POST lai. Chi xoa neu phien van la phien da POST.
       markRefreshUsed(refreshToken);
-      if (isSamePostedSession(epoch, cur)) clearSession();
-      throw new ApiError("AUTH_REQUIRED", 401, {}, "Phien dang nhap da het han");
+      return failedRefresh(epoch, cur);
     }
     if (err instanceof ApiError) throw err;
     throw networkError();
@@ -189,9 +205,8 @@ async function refreshPost(cur: Session, refreshToken: string, epoch: number, co
   if (res.ok || res.status === 400 || res.status === 401 || res.status === 403) markRefreshUsed(refreshToken);
   if (!res.ok) {
     if (res.status === 400 || res.status === 401 || res.status === 403) {
-      // Dang xuat/xoay trong luc cho: khong xoa phien cua nguoi khac.
-      if (isSamePostedSession(epoch, cur)) clearSession();
-      throw new ApiError("AUTH_REQUIRED", 401, await readProblem(res), "Phien dang nhap da het han");
+      // Dang xuat/xoay trong luc cho: khong xoa phien cua nguoi khac; cung user dang nhap lai -> dung cap moi (AC-3).
+      return failedRefresh(epoch, cur, await readProblem(res));
     }
     throw await toApiError(res);
   }
