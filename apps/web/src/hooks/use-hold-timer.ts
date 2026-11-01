@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useServerCountdown } from "@/hooks/use-server-countdown";
 import {
+  cancelHold,
   clearActiveHold,
   getActiveHold,
   HoldClientError,
@@ -30,7 +31,18 @@ export interface UseHoldTimerReturn {
   error: HoldClientError | null;
   createHold: (ticketTypeId: string, quantity: number) => Promise<boolean>;
   resetHold: () => void;
+  /** AC-11: huy hold dang active (DELETE /v1/holds/{id}). Chi goi sau khi nguoi mua xac nhan. */
+  cancelActiveHold: () => Promise<CancelHoldOutcome>;
+  /** true trong luc DELETE dang chay. */
+  cancelling: boolean;
 }
+
+/** released: da tra ve (204/404/2xx); ignored: khong co hold active hoac dang huy (double click) hoac da unmount;
+ *  failed: hold van giu (AUTH_REQUIRED / AMBIGUOUS / HTTP khac). */
+export type CancelHoldOutcome =
+  | { status: "released" }
+  | { status: "ignored" }
+  | { status: "failed"; error: HoldClientError };
 
 /** Hook quản lý vòng đời giữ vé và đồng hồ 10:00 theo expires_at của server (EVF-113, BR-O2, BR-O5).
  *
@@ -47,6 +59,20 @@ export function useHoldTimer({
   const [holdState, setHoldState] = useState<HoldState>("idle");
   const [error, setError] = useState<HoldClientError | null>(null);
   const isCreatingRef = useRef(false);
+  const [cancelling, setCancelling] = useState(false);
+  const cancellingRef = useRef(false);
+  // Doc hold/trang thai qua ref (khong dung closure cu) khi DELETE tra ve.
+  const holdRef = useRef(hold);
+  const holdStateRef = useRef(holdState);
+  holdRef.current = hold;
+  holdStateRef.current = holdState;
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   // Khoi phuc hold tu sessionStorage khi mount
   useEffect(() => {
@@ -141,6 +167,35 @@ export function useHoldTimer({
     setError(null);
   }, [eventId]);
 
+  const cancelActiveHold = useCallback(async (): Promise<CancelHoldOutcome> => {
+    const current = holdRef.current;
+    if (cancellingRef.current || !current || holdStateRef.current !== "active") return { status: "ignored" };
+    cancellingRef.current = true;
+    setCancelling(true);
+    try {
+      await cancelHold(current.holdId);
+      if (!mountedRef.current) return { status: "ignored" };
+      // Het han trong luc DELETE dang bay: giu trang thai expired (khong ve idle).
+      // Doc lai qua ref sau await (TS van thu hep kieu tu lan kiem tra truoc await).
+      const stateNow = holdStateRef.current as HoldState;
+      if (stateNow !== "expired") {
+        clearActiveHold(eventId);
+        setHold(null);
+      }
+      setHoldState((s) => (s === "expired" ? s : "idle"));
+      setError(null);
+      return { status: "released" };
+    } catch (err) {
+      if (!mountedRef.current) return { status: "ignored" };
+      const clientErr =
+        err instanceof HoldClientError ? err : new HoldClientError("Không thể huỷ giữ vé", "UNKNOWN");
+      return { status: "failed", error: clientErr };
+    } finally {
+      cancellingRef.current = false;
+      if (mountedRef.current) setCancelling(false);
+    }
+  }, [eventId]);
+
   return {
     hold,
     holdState,
@@ -150,5 +205,7 @@ export function useHoldTimer({
     error,
     createHold,
     resetHold,
+    cancelActiveHold,
+    cancelling,
   };
 }

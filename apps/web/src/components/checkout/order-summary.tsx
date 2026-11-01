@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useId, useState, type Ref } from "react";
 
 import { Alert, Button, ServerExpiryCountdown } from "@/components/ui";
 import { cn } from "@/lib/cn";
@@ -31,6 +31,10 @@ export interface OrderSummaryProps {
   fees?: number;
   primaryActionLabel?: string;
   onPrimaryAction?: () => void;
+  /** Khoa nut chinh tam thoi (vd. dang huy giu ve - AC-11). */
+  primaryDisabled?: boolean;
+  /** Ref toi nut chinh (de tra focus khi hop thoai dong ma nut kich hoat da bi go). */
+  primaryRef?: Ref<HTMLButtonElement>;
   className?: string;
 }
 
@@ -82,6 +86,8 @@ export function OrderSummary({
   fees,
   primaryActionLabel,
   onPrimaryAction,
+  primaryDisabled = false,
+  primaryRef,
   className,
 }: OrderSummaryProps) {
   const detailsId = useId();
@@ -215,8 +221,9 @@ export function OrderSummary({
 
       {showPrimary ? (
         <Button
+          ref={primaryRef}
           loading={holdState === "creating"}
-          disabled={items.length === 0 || mixedCurrency}
+          disabled={items.length === 0 || mixedCurrency || primaryDisabled}
           onClick={onPrimaryAction}
         >
           {label}
