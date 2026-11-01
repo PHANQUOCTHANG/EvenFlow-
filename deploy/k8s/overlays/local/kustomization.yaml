@@ -1,0 +1,221 @@
+# Overlay local: Docker Desktop Kubernetes / kind (spec k8s-all section 3).
+# base (apps, namespace, NetworkPolicies) + dev-infra component (Postgres, PgBouncer, Redis,
+# RabbitMQ, Mailpit, migrate Job) + dev config and dev Secrets.
+#   kustomize build deploy/k8s/overlays/local     (pinned version: deploy/k8s/tools.env)
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: eventflow
+
+resources:
+  - ../../base
+
+components:
+  - ../../components/dev-infra
+
+# PLACEHOLDER: no image is built from this commit; runbook sets the real tag via a temp overlay.
+images:
+  - name: ghcr.io/phanquocthang/eventflow-web
+    newTag: sha-c5fb598
+  - name: ghcr.io/phanquocthang/eventflow-gateway
+    newTag: sha-c5fb598
+  - name: ghcr.io/phanquocthang/eventflow-identity
+    newTag: sha-c5fb598
+  - name: ghcr.io/phanquocthang/eventflow-event
+    newTag: sha-c5fb598
+  - name: ghcr.io/phanquocthang/eventflow-waitingroom
+    newTag: sha-c5fb598
+  - name: ghcr.io/phanquocthang/eventflow-ticketing
+    newTag: sha-c5fb598
+  - name: ghcr.io/phanquocthang/eventflow-payment
+    newTag: sha-c5fb598
+  - name: ghcr.io/phanquocthang/eventflow-notification
+    newTag: sha-c5fb598
+  - name: ghcr.io/phanquocthang/eventflow-ai-worker
+    newTag: sha-c5fb598
+  - name: ghcr.io/phanquocthang/eventflow-migrate
+    newTag: sha-c5fb598
+
+patches:
+  # Pod Security Admission (AC-14): dev-infra may need baseline; warn/audit show restricted gaps.
+  - target:
+      version: v1
+      kind: Namespace
+      name: eventflow
+    patch: |-
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: eventflow
+        labels:
+          pod-security.kubernetes.io/enforce: baseline
+          pod-security.kubernetes.io/warn: restricted
+          pod-security.kubernetes.io/audit: restricted
+  # Stripe keys exist only in local (contract section 8; Stripe is disabled in staging).
+  - target:
+      group: apps
+      version: v1
+      kind: Deployment
+      name: eventflow-payment
+    patch: |-
+      - op: add
+        path: /spec/template/spec/containers/0/env/-
+        value:
+          name: STRIPE_PUBLISHABLE_KEY
+          valueFrom:
+            secretKeyRef:
+              name: eventflow-payment
+              key: STRIPE_PUBLISHABLE_KEY
+      - op: add
+        path: /spec/template/spec/containers/0/env/-
+        value:
+          name: STRIPE_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: eventflow-payment
+              key: STRIPE_SECRET_KEY
+      - op: add
+        path: /spec/template/spec/containers/0/env/-
+        value:
+          name: STRIPE_WEBHOOK_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: eventflow-payment
+              key: STRIPE_WEBHOOK_SECRET
+
+generatorOptions:
+  labels:
+    app.kubernetes.io/part-of: eventflow
+
+configMapGenerator:
+  - name: eventflow-endpoints
+    envs:
+      - endpoints.env
+  - name: eventflow-app-config
+    envs:
+      - app-config.env
+
+# Local Secrets (AC-16). All values live in ONE file, secrets.dev.env. Kustomize cannot split an
+# env file, so: (1) generate a temporary Secret with every key from it, (2) generate the contract
+# Secrets empty, (3) copy each key into its Secret with `replacements`, (4) drop the temporary
+# Secret with the transformer in drop-secret-source.yaml (runs after replacements). The hash suffix
+# is computed after step 3, so a changed value still rolls the pods that reference it.
+secretGenerator:
+  - name: eventflow-dev-secrets-source
+    envs:
+      - secrets.dev.env
+  - name: eventflow-db
+    type: Opaque
+  - name: eventflow-mq
+    type: Opaque
+  - name: eventflow-auth
+    type: Opaque
+  - name: eventflow-qr
+    type: Opaque
+  - name: eventflow-identity
+    type: Opaque
+  - name: eventflow-payment
+    type: Opaque
+  - name: eventflow-ai
+    type: Opaque
+  - name: eventflow-dev-infra
+    type: Opaque
+
+replacements:
+  - source: {kind: Secret, name: eventflow-dev-secrets-source, fieldPath: data.DATABASE_URL_DIRECT}
+    targets:
+      - select: {kind: Secret, name: eventflow-db}
+        fieldPaths: [data.DATABASE_URL_DIRECT]
+        options: {create: true}
+  - source: {kind: Secret, name: eventflow-dev-secrets-source, fieldPath: data.DATABASE_URL_POOLED}
+    targets:
+      - select: {kind: Secret, name: eventflow-db}
+        fieldPaths: [data.DATABASE_URL_POOLED]
+        options: {create: true}
+  - source: {kind: Secret, name: eventflow-dev-secrets-source, fieldPath: data.AMQP_URL}
+    targets:
+      - select: {kind: Secret, name: eventflow-mq}
+        fieldPaths: [data.AMQP_URL]
+        options: {create: true}
+  - source: {kind: Secret, name: eventflow-dev-secrets-source, fieldPath: data.JWT_SECRET}
+    targets:
+      - select: {kind: Secret, name: eventflow-auth}
+        fieldPaths: [data.JWT_SECRET]
+        options: {create: true}
+  - source: {kind: Secret, name: eventflow-dev-secrets-source, fieldPath: data.QUEUE_TOKEN_SECRET}
+    targets:
+      - select: {kind: Secret, name: eventflow-auth}
+        fieldPaths: [data.QUEUE_TOKEN_SECRET]
+        options: {create: true}
+  - source: {kind: Secret, name: eventflow-dev-secrets-source, fieldPath: data.HMAC_QR_SECRET}
+    targets:
+      - select: {kind: Secret, name: eventflow-qr}
+        fieldPaths: [data.HMAC_QR_SECRET]
+        options: {create: true}
+  - source: {kind: Secret, name: eventflow-dev-secrets-source, fieldPath: data.PII_ENC_KEY}
+    targets:
+      - select: {kind: Secret, name: eventflow-identity}
+        fieldPaths: [data.PII_ENC_KEY]
+        options: {create: true}
+  - source: {kind: Secret, name: eventflow-dev-secrets-source, fieldPath: data.PII_HASH_KEY}
+    targets:
+      - select: {kind: Secret, name: eventflow-identity}
+        fieldPaths: [data.PII_HASH_KEY]
+        options: {create: true}
+  - source: {kind: Secret, name: eventflow-dev-secrets-source, fieldPath: data.VNPAY_TMN_CODE}
+    targets:
+      - select: {kind: Secret, name: eventflow-payment}
+        fieldPaths: [data.VNPAY_TMN_CODE]
+        options: {create: true}
+  - source: {kind: Secret, name: eventflow-dev-secrets-source, fieldPath: data.VNPAY_HASH_SECRET}
+    targets:
+      - select: {kind: Secret, name: eventflow-payment}
+        fieldPaths: [data.VNPAY_HASH_SECRET]
+        options: {create: true}
+  - source: {kind: Secret, name: eventflow-dev-secrets-source, fieldPath: data.MOMO_PARTNER_CODE}
+    targets:
+      - select: {kind: Secret, name: eventflow-payment}
+        fieldPaths: [data.MOMO_PARTNER_CODE]
+        options: {create: true}
+  - source: {kind: Secret, name: eventflow-dev-secrets-source, fieldPath: data.MOMO_ACCESS_KEY}
+    targets:
+      - select: {kind: Secret, name: eventflow-payment}
+        fieldPaths: [data.MOMO_ACCESS_KEY]
+        options: {create: true}
+  - source: {kind: Secret, name: eventflow-dev-secrets-source, fieldPath: data.MOMO_SECRET_KEY}
+    targets:
+      - select: {kind: Secret, name: eventflow-payment}
+        fieldPaths: [data.MOMO_SECRET_KEY]
+        options: {create: true}
+  - source: {kind: Secret, name: eventflow-dev-secrets-source, fieldPath: data.STRIPE_PUBLISHABLE_KEY}
+    targets:
+      - select: {kind: Secret, name: eventflow-payment}
+        fieldPaths: [data.STRIPE_PUBLISHABLE_KEY]
+        options: {create: true}
+  - source: {kind: Secret, name: eventflow-dev-secrets-source, fieldPath: data.STRIPE_SECRET_KEY}
+    targets:
+      - select: {kind: Secret, name: eventflow-payment}
+        fieldPaths: [data.STRIPE_SECRET_KEY]
+        options: {create: true}
+  - source: {kind: Secret, name: eventflow-dev-secrets-source, fieldPath: data.STRIPE_WEBHOOK_SECRET}
+    targets:
+      - select: {kind: Secret, name: eventflow-payment}
+        fieldPaths: [data.STRIPE_WEBHOOK_SECRET]
+        options: {create: true}
+  - source: {kind: Secret, name: eventflow-dev-secrets-source, fieldPath: data.GEMINI_API_KEY}
+    targets:
+      - select: {kind: Secret, name: eventflow-ai}
+        fieldPaths: [data.GEMINI_API_KEY]
+        options: {create: true}
+  - source: {kind: Secret, name: eventflow-dev-secrets-source, fieldPath: data.POSTGRES_PASSWORD}
+    targets:
+      - select: {kind: Secret, name: eventflow-dev-infra}
+        fieldPaths: [data.POSTGRES_PASSWORD]
+        options: {create: true}
+  - source: {kind: Secret, name: eventflow-dev-secrets-source, fieldPath: data.RABBITMQ_DEFAULT_PASS}
+    targets:
+      - select: {kind: Secret, name: eventflow-dev-infra}
+        fieldPaths: [data.RABBITMQ_DEFAULT_PASS]
+        options: {create: true}
+
+transformers:
+  - drop-secret-source.yaml

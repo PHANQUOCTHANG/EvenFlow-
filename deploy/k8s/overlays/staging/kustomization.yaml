@@ -1,0 +1,110 @@
+# Overlay staging: prod-like, all infra external (spec D6), APP_ENV=production.
+# Contains NO Secret objects (AC-16, D4). Create these before applying (contract section 8):
+#   eventflow-db       DATABASE_URL_DIRECT, DATABASE_URL_POOLED
+#   eventflow-mq       AMQP_URL
+#   eventflow-auth     JWT_SECRET, QUEUE_TOKEN_SECRET
+#   eventflow-qr       HMAC_QR_SECRET
+#   eventflow-identity PII_ENC_KEY, PII_HASH_KEY, SMTP_USER, SMTP_PASS
+#   eventflow-payment  VNPAY_TMN_CODE, VNPAY_HASH_SECRET, MOMO_PARTNER_CODE, MOMO_ACCESS_KEY, MOMO_SECRET_KEY
+#   eventflow-ai       GEMINI_API_KEY
+#   eventflow-notification SMTP_USER, SMTP_PASSWORD
+# No secretKeyRef is optional: a missing Secret/key fails the pod (CreateContainerConfigError)
+# instead of falling back to public code defaults.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: eventflow
+
+resources:
+  - ../../base
+
+# PLACEHOLDER: no image is built from this commit; runbook sets the real tag via a temp overlay.
+images:
+  - name: ghcr.io/phanquocthang/eventflow-web
+    newTag: sha-c5fb598
+  - name: ghcr.io/phanquocthang/eventflow-gateway
+    newTag: sha-c5fb598
+  - name: ghcr.io/phanquocthang/eventflow-identity
+    newTag: sha-c5fb598
+  - name: ghcr.io/phanquocthang/eventflow-event
+    newTag: sha-c5fb598
+  - name: ghcr.io/phanquocthang/eventflow-waitingroom
+    newTag: sha-c5fb598
+  - name: ghcr.io/phanquocthang/eventflow-ticketing
+    newTag: sha-c5fb598
+  - name: ghcr.io/phanquocthang/eventflow-payment
+    newTag: sha-c5fb598
+  - name: ghcr.io/phanquocthang/eventflow-notification
+    newTag: sha-c5fb598
+  - name: ghcr.io/phanquocthang/eventflow-ai-worker
+    newTag: sha-c5fb598
+
+patches:
+  # Pod Security Admission (AC-14): no dev-infra here, so restricted is enforced.
+  - target:
+      version: v1
+      kind: Namespace
+      name: eventflow
+    patch: |-
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: eventflow
+        labels:
+          pod-security.kubernetes.io/enforce: restricted
+  # SMTP credentials exist only in staging (contract section 8; local uses Mailpit).
+  - target:
+      group: apps
+      version: v1
+      kind: Deployment
+      name: eventflow-identity
+    patch: |-
+      - op: add
+        path: /spec/template/spec/containers/0/env/-
+        value:
+          name: SMTP_USER
+          valueFrom:
+            secretKeyRef:
+              name: eventflow-identity
+              key: SMTP_USER
+      - op: add
+        path: /spec/template/spec/containers/0/env/-
+        value:
+          name: SMTP_PASS
+          valueFrom:
+            secretKeyRef:
+              name: eventflow-identity
+              key: SMTP_PASS
+  - target:
+      group: apps
+      version: v1
+      kind: Deployment
+      name: eventflow-notification
+    patch: |-
+      - op: add
+        path: /spec/template/spec/containers/0/env/-
+        value:
+          name: SMTP_USER
+          valueFrom:
+            secretKeyRef:
+              name: eventflow-notification
+              key: SMTP_USER
+      - op: add
+        path: /spec/template/spec/containers/0/env/-
+        value:
+          name: SMTP_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: eventflow-notification
+              key: SMTP_PASSWORD
+
+generatorOptions:
+  labels:
+    app.kubernetes.io/part-of: eventflow
+
+configMapGenerator:
+  - name: eventflow-endpoints
+    envs:
+      - endpoints.env
+  - name: eventflow-app-config
+    envs:
+      - app-config.env
