@@ -56,8 +56,18 @@ export function OrderResultView({
   const blocked = error?.type === "FORBIDDEN";
   // Loi cuoi cung (403/404/401) tren don PENDING: dung spinner im lang, bao ro ly do. Don da co ket qua thi giu muc cua trang thai do.
   const terminalError = error !== null && (blocked || error.type === "NOT_FOUND" || error.type === "AUTH_REQUIRED");
-  const authExpired = error?.type === "AUTH_REQUIRED" && order !== null;
+  // AC-7: het phien ca khi chua co don (GET dau tien 401) -> moi dang nhap, khong "Thu lai".
+  const authExpired = error?.type === "AUTH_REQUIRED";
   const showErrorCard = error !== null && (order === null || (status === "PENDING" && terminalError));
+  // AC-8: chi render doan than khi co noi dung (loi het phien chi co tieu de).
+  const errorBody =
+    error === null || authExpired
+      ? null
+      : error.type === "NOT_FOUND"
+        ? t("result.notFoundBody")
+        : error.type === "FORBIDDEN"
+          ? t("checkout.forbidden")
+          : t("result.loadErrorBody");
 
   const handlePrint = () => {
     if (typeof window !== "undefined") {
@@ -88,15 +98,7 @@ export function OrderResultView({
             }
             className="text-left"
           >
-            <p className="text-body-sm">
-              {error.type === "NOT_FOUND"
-                ? t("result.notFoundBody")
-                : error.type === "FORBIDDEN"
-                  ? t("checkout.forbidden")
-                  : authExpired
-                    ? null
-                    : t("result.loadErrorBody")}
-            </p>
+            {errorBody !== null ? <p className="text-body-sm">{errorBody}</p> : null}
           </Alert>
           {authExpired ? (
             <Link
