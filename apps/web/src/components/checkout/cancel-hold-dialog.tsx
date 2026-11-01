@@ -15,7 +15,8 @@ export interface CancelHoldDialogProps {
 /** Hop thoai xac nhan "Huy giu ve" (AC-11). Chi mount khi dang mo; dong = parent unmount.
  *
  * - Nhanh that: `<dialog>.showModal()` (top layer, Esc -> su kien `cancel`).
- * - Trinh duyet/jsdom khong co `showModal`: dat thuoc tinh `open` va tu bat phim Escape (R2-2).
+ * - Trinh duyet/jsdom khong co `showModal`: dat thuoc tinh `open`, bat Escape o muc document (ca khi focus nam ngoai
+ *   hop thoai - X-5; van bi chan khi dang huy) va bay focus Tab trong cac nut cua hop thoai (R2-2, X-5).
  * - Focus ban dau vao "Giu lai" (lua chon an toan). Tra focus do parent lo (trigger co the da bi go - R2-3). */
 export function CancelHoldDialog({ busy, onConfirm, onDismiss }: CancelHoldDialogProps) {
   const t = useT();
@@ -44,22 +45,49 @@ export function CancelHoldDialog({ busy, onConfirm, onDismiss }: CancelHoldDialo
       e.preventDefault();
       dismiss();
     };
+    // Nhanh du phong: Escape + bay focus Tab o muc document (focus co the da roi ra ngoai hop thoai).
+    const onDocKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onKeyDown(e);
+        return;
+      }
+      if (e.key !== "Tab") return;
+      const items = Array.from(el.querySelectorAll<HTMLButtonElement>("button")).filter((b) => !b.disabled);
+      if (items.length === 0) {
+        e.preventDefault();
+        return;
+      }
+      const first = items[0];
+      const last = items[items.length - 1];
+      const active = document.activeElement;
+      const inside = active instanceof Node && el.contains(active);
+      if (e.shiftKey && (!inside || active === first)) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && (!inside || active === last)) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
     // Dong boi trinh duyet (khong qua React) -> dong bo trang thai.
     const onClose = () => dismiss();
 
-    if (typeof el.showModal === "function") {
+    const native = typeof el.showModal === "function";
+    if (native) {
       if (!el.open) el.showModal();
+      el.addEventListener("keydown", onKeyDown);
     } else {
       el.setAttribute("open", "");
+      document.addEventListener("keydown", onDocKeyDown);
     }
     el.addEventListener("cancel", onCancel);
-    el.addEventListener("keydown", onKeyDown);
     el.addEventListener("close", onClose);
     keepRef.current?.focus();
 
     return () => {
       el.removeEventListener("cancel", onCancel);
       el.removeEventListener("keydown", onKeyDown);
+      document.removeEventListener("keydown", onDocKeyDown);
       el.removeEventListener("close", onClose);
       if (typeof el.close === "function") {
         if (el.open) el.close();
