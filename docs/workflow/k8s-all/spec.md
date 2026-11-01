@@ -294,3 +294,7 @@ Kubelet probes are not affected by NetworkPolicy on mainstream CNIs; stated as a
 ## 11. Definition of Ready
 
 Spec approved with D1-D6 answered; 4.1, 6.1, 6.2, 7 frozen as contracts; test designer has this spec only.
+
+## Human approval
+
+Approved by TranDinhVo on 2026-11-01 in the Claude Code session, with all recommended decisions.
