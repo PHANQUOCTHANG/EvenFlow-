@@ -106,7 +106,9 @@ type LoadSignalCheckout struct {
 	r *loadsignal.Reader
 }
 
-func NewLoadSignalCheckout(r *loadsignal.Reader) *LoadSignalCheckout { return &LoadSignalCheckout{r: r} }
+func NewLoadSignalCheckout(r *loadsignal.Reader) *LoadSignalCheckout {
+	return &LoadSignalCheckout{r: r}
+}
 
 func (c *LoadSignalCheckout) Checkout(ctx context.Context) app.CheckoutState {
 	agg, err := c.r.Read(ctx)
