@@ -1,0 +1,29 @@
+# k8s-all base: every app workload, shared by overlays/local and overlays/staging.
+#
+# Rules for this file (k8s-all AC-3, plan section 1):
+# - resources only. NO `commonLabels`, no `labels` with `includeSelectors`, no other
+#   transformer that touches selectors: Deployment selectors are immutable on a
+#   live cluster, and every object already carries its labels explicitly.
+# - Images carry no tag here; each overlay sets the tag in its `images:` list (AC-20).
+# - ConfigMaps `eventflow-app-config` / `eventflow-endpoints` and all Secrets are
+#   referenced by base name; the overlays generate them (kustomize rewrites the
+#   refs to the hash-suffixed names) or, in staging, expect them to exist.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  # --- WP3 (security + config) adds here: namespace.yaml, networkpolicy ---
+  - namespace
+  - networkpolicy
+  # --- app workloads (WP2), one directory per process ---
+  - web
+  - gateway
+  - identity
+  - event
+  - waitingroom
+  - ticketing
+  - payment
+  - ai-worker
+  # background processes
+  - notification
+  - waitingroom-controller
+  - ticketing-worker
