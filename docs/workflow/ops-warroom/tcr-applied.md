@@ -16,8 +16,9 @@ added. Counts are `it(` / `it.each(` declarations before (HEAD f5c6d44) → afte
 | `apps/web/src/components/organizer/sales-dashboard.test.tsx` | Sample label case → "no sample label/alert"; TPS → "Chưa có dữ liệu"; provider cards → list from data (vnpay/momo/card); toggle starts ON. `getRealtimeSales` mocked to a pending promise so the test does no network call | 5 → 5 |
 | `apps/web/src/app/(organizer)/organizer/events/[eventId]/sales/page.test.tsx` | **Note:** the TCR row says "metadata text only", but the file has no metadata assertion; it asserts the dashboard sample labels (lines 81-82). Those two assertions became "no `Dữ liệu mẫu`" + "badge `Realtime (≤ 5s)`", and the fixture got `isSample: false` + `postSaleReport` (type). Flagged for reviewer confirmation | 2 → 2 |
 | `apps/web/src/real-api.contract.test.ts` | "sample-data/events.ts exists and only ops-service imports it" → "file deleted and no production module imports sample-data" | 9 → 9 |
-| `tests/e2e/specs/ops-war-room.spec.ts` | Rewritten per AC-31 (see WP4 Playwright commit) | see commit |
-| `tests/e2e/specs/i18n.spec.ts` | Ops login mock added for `/ops/events` (see WP4 Playwright commit) | see commit |
+| `tests/e2e/specs/ops-war-room.spec.ts` | Rewritten per AC-31: ops session, list → war room on mocked real API (no sample label, funnel 4.210, inventory table, checkout p99), then override 120 → emergency pause (confirm, rate 0, "ĐANG TẠM DỪNG") → resume (DELETE, banner gone, AUTO); request bodies and Bearer asserted | 1 → 1 |
+| `tests/e2e/specs/i18n.spec.ts` | `/ops/events` case: ops session seeded (`seedRoleSession`) and the `api` fixture requested, because the list now loads in the browser from `GET /api/v1/events/public` (without the fixture the request reaches the CORS-less stub). Assertions unchanged | unchanged |
+| NEW `tests/e2e/specs/organizer-sales.spec.ts` | not a TCR item (plan WP4): real figures, no sample label, peak TPS "Chưa có dữ liệu", provider list | +1 |
 
 ## Requests NOT applied (pending, see `test-change-request.md` "New request 1..3")
 

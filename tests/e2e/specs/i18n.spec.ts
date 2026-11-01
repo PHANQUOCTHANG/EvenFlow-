@@ -1,6 +1,6 @@
 import type { Page } from "@playwright/test";
 
-import { expect, test } from "../fixtures/api-mock";
+import { E2E_OPS_USER, expect, seedRoleSession, test } from "../fixtures/api-mock";
 import { EVENT_SLUG, installDeterministicJitter, waitForHydration } from "../fixtures/buy-flow-helpers";
 
 /**
@@ -260,7 +260,11 @@ test.describe("M1 vung chua dich nam trong [lang=vi] khi da chon en", () => {
     expect(await ownLang(page.locator('button[type="submit"]'))).toBe("vi");
   });
 
-  test("/ops/events: tieu de workspace, nav va noi dung co lang hieu luc vi", async ({ page }) => {
+  test("/ops/events: tieu de workspace, nav va noi dung co lang hieu luc vi", async ({ page, api }) => {
+    // ops-warroom AC-27 (test change request): /ops/* nam sau RoleGuard ["ops"], can phien ops; danh sach su kien
+    // gio tai o trinh duyet (GET /api/v1/events/public) nen can API gia lap (fixture `api` khoi tao route).
+    expect(api).toBeTruthy();
+    await seedRoleSession(page, E2E_OPS_USER);
     await page.goto("/ops/events");
     const eventLink = page.getByRole("link", { name: /Vietnam Tech Summit 2026/ });
     await expect(eventLink).toBeVisible();

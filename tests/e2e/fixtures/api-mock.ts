@@ -309,8 +309,150 @@ export function e2eQrPayload(ticketId: string): string {
 }
 
 export function e2eAccessToken(): string {
+  return e2eAccessTokenFor(E2E_USER);
+}
+
+/** Token khong ky cho mot user bat ky (exp xa => web khong tu refresh). */
+export function e2eAccessTokenFor(user: { id: string; role: string }): string {
   const b64 = (o: unknown) => Buffer.from(JSON.stringify(o)).toString("base64url");
-  return `${b64({ alg: "none", typ: "JWT" })}.${b64({ sub: E2E_USER.id, role: E2E_USER.role, ver: true, exp: 4_102_444_800 })}.e2e`;
+  return `${b64({ alg: "none", typ: "JWT" })}.${b64({ sub: user.id, role: user.role, ver: true, exp: 4_102_444_800 })}.e2e`;
+}
+
+/* ---------------- ops-warroom: phien ops / organizer + Ops API + doanh so (contracts ops-warroom §2-§5) ---------------- */
+
+export const E2E_OPS_USER = { id: "99999999-9999-4999-8999-999999999999", role: "ops", email: "ops@example.com" };
+/** Organizer so huu cac su kien trong events.json (organizer_id). */
+export const E2E_ORGANIZER_USER = {
+  id: "0b1c2d3e-4f50-4a61-8b72-93a4b5c6d7e8",
+  role: "organizer",
+  email: "organizer@example.com",
+};
+
+/** Ghi phien dang nhap cua `user` vao localStorage TRUOC khi trang tai (nhu seedLoggedInSession cua luong mua ve). */
+export async function seedRoleSession(
+  page: import("@playwright/test").Page,
+  user: { id: string; role: string; email: string },
+): Promise<void> {
+  await page.addInitScript(
+    ({ token, refresh, u }) => {
+      try {
+        window.localStorage.setItem("ef_token", token);
+        window.localStorage.setItem("ef_refresh", refresh);
+        window.localStorage.setItem("ef_user", JSON.stringify(u));
+      } catch {
+        /* storage bi chan: bo qua */
+      }
+    },
+    { token: e2eAccessTokenFor(user), refresh: E2E_REFRESH_TOKEN, u: user },
+  );
+}
+
+/** Trang thai phong cho gia lap cua war room; PUT/DELETE admit-override thay doi no nhu waitingroom that. */
+export interface OpsMockState {
+  override: { active: boolean; ratePerSec: number | null };
+}
+
+/** Dang ky Ops API cho mot su kien: queue (waitingroom), inventory (ticketing), ai mode (ai-worker),
+ *  PUT/DELETE admit-override (tra ve gia tri da luu, audit "recorded"). */
+export function registerOpsApi(api: ApiMock, eventId: string): OpsMockState {
+  const state: OpsMockState = { override: { active: false, ratePerSec: null } };
+  const now = () => new Date().toISOString();
+
+  api.on("GET", `/v1/ops/events/${eventId}/queue`, () => {
+    const paused = state.override.active && state.override.ratePerSec === 0;
+    return {
+      status: 200,
+      headers: { "Cache-Control": "no-store" },
+      json: {
+        event_id: eventId,
+        generated_at: now(),
+        lobby: 0,
+        queued: 4210,
+        admitted_active: 350,
+        admit_rate_per_sec: state.override.active ? (state.override.ratePerSec ?? 0) : 50,
+        override: { active: state.override.active, rate_per_sec: state.override.active ? state.override.ratePerSec : null },
+        paused,
+        sold_out: false,
+        stock_zero: false,
+        controller: { leader_present: true, epoch: 7 },
+        checkout: { signal: "ok", pods: 3, p99_ms: 420, error_rate: 0.004, db_pool_usage: 0.61 },
+      },
+    };
+  });
+
+  api.on("GET", `/v1/ops/events/${eventId}/inventory`, () => ({
+    status: 200,
+    headers: { "Cache-Control": "no-store" },
+    json: {
+      event_id: eventId,
+      generated_at: now(),
+      tiers: [
+        { ticket_type_id: "c1d2e3f4-a5b6-4c7d-8e9f-0a1b2c3d4e5f", name: "Standard Pass", quota: 500, available: 210, held: 40, paid: 150, issued: 100 },
+        { ticket_type_id: E2E_TIER_ID, name: "All-Access Executive Pass", quota: 100, available: 20, held: 5, paid: 35, issued: 40 },
+      ],
+    },
+  }));
+
+  api.on("GET", "/v1/ops/ai/mode", () => ({
+    status: 200,
+    headers: { "Cache-Control": "no-store" },
+    json: {
+      mode: "NORMAL",
+      manual_override: null,
+      signals: { chat_queue_lag_seconds: 2, budget_used_ratio: 0.35, gemini_circuit_open: false },
+      generated_at: now(),
+    },
+  }));
+
+  const result = () => ({
+    status: 200,
+    json: {
+      event_id: eventId,
+      override: { active: state.override.active, rate_per_sec: state.override.active ? state.override.ratePerSec : null },
+      paused: state.override.active && state.override.ratePerSec === 0,
+      applied_at: now(),
+      audit: "recorded",
+    },
+  });
+
+  api.on("PUT", `/v1/ops/events/${eventId}/admit-override`, (req) => {
+    const body = req.body as { rate_per_sec?: unknown; reason?: unknown } | null;
+    const rate = body?.rate_per_sec;
+    if (typeof rate !== "number" || !Number.isInteger(rate) || rate < 0 || rate > 10000 || typeof body?.reason !== "string") {
+      return { status: 400, contentType: "application/problem+json", json: { type: "/problems/invalid-override", title: "Bad Request", status: 400, detail: "invalid" } };
+    }
+    state.override = { active: true, ratePerSec: rate };
+    return result();
+  });
+
+  api.on("DELETE", `/v1/ops/events/${eventId}/admit-override`, () => {
+    state.override = { active: false, ratePerSec: null };
+    return result();
+  });
+
+  return state;
+}
+
+/** GET /v1/organizer/events/{id}/sales (contracts ops-warroom §4.2) cho organizer so huu su kien. */
+export function registerOrganizerSalesApi(api: ApiMock, eventId: string): void {
+  api.on("GET", `/v1/organizer/events/${eventId}/sales`, () => ({
+    status: 200,
+    headers: { "Cache-Control": "no-store" },
+    json: {
+      event_id: eventId,
+      generated_at: new Date().toISOString(),
+      currency: "VND",
+      totals: { gross_revenue_cents: 222500000, tickets_sold: 185, quota: 600, paid_orders: 120, active_holds: 12 },
+      tiers: [
+        { ticket_type_id: "c1d2e3f4-a5b6-4c7d-8e9f-0a1b2c3d4e5f", name: "Standard Pass", price_cents: 900000, quota: 500, sold: 150, active_holds: 10, revenue_cents: 135000000 },
+        { ticket_type_id: E2E_TIER_ID, name: "All-Access Executive Pass", price_cents: 2500000, quota: 100, sold: 35, active_holds: 2, revenue_cents: 87500000 },
+      ],
+      payment_breakdown: [
+        { provider: "vnpay", orders: 80, amount_cents: 150000000 },
+        { provider: "sandbox", orders: 40, amount_cents: 72500000 },
+      ],
+    },
+  }));
 }
 
 /** Cac moi goi tu trinh duyet cua web that (frontend-real-api): su kien theo id, availability,
