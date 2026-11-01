@@ -51,10 +51,17 @@ type StoreRead = { kind: "absent" } | { kind: "invalid" } | { kind: "ok"; sessio
 /** "Co mat" = co ca ef_token va ef_user. Co mat nhung hong (JSON loi, role la) -> invalid (khong roi xuong kho kia). */
 function readStore(s: Storage | null): StoreRead {
   if (!s) return { kind: "absent" };
+  let accessToken: string | null;
+  let rawUser: string | null;
   try {
-    const accessToken = s.getItem(K_ACCESS);
-    const rawUser = s.getItem(K_USER);
-    if (!accessToken || !rawUser) return { kind: "absent" };
+    accessToken = s.getItem(K_ACCESS);
+    rawUser = s.getItem(K_USER);
+  } catch {
+    // X-4: doc kho bi chan (extension/quota) -> coi nhu khong co mat, roi xuong kho kia.
+    return { kind: "absent" };
+  }
+  if (!accessToken || !rawUser) return { kind: "absent" };
+  try {
     const user = JSON.parse(rawUser) as SessionUser | null;
     if (!user || typeof user !== "object" || typeof user.id !== "string" || !isRole(user.role)) return { kind: "invalid" };
     const rawExp = Number(s.getItem(K_EXPIRES));
