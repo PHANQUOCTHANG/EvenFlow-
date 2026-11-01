@@ -9,20 +9,20 @@ AC-5:  [bad/AC-5--dev-infra-liveness-on-readyz]   # spec 4.1 processes cannot is
 AC-6:  [bad/AC-6--*]
 AC-7:  [bad/AC-7--*]
 AC-8:  [bad/AC-8--*]
-AC-9:  [bad/AC-9--*]
+AC-9:  [bad/AC-9--* incl. hpa-on-controller, hpa-on-ticketing-worker (AC-9 is not exemptable: EXEMPT--worker-ac9)]
 AC-10: [bad/AC-10--*]
 AC-11: [bad/AC-11--*]
-AC-12: [bad/AC-12--*]
-AC-13: [test_policy.sh D-USER-* (grep of 4 Dockerfiles)]
+AC-12: [bad/AC-12--* incl. sub-check exemption cases (web, dev-infra)]
+AC-13: [test_policy.sh D-USER-* (grep of the 4 Dockerfiles), testdata/dockerfiles/good + bad/AC-13--* via --dockerfiles (C-DOCKERFILES-*)]
 AC-14: [bad/AC-14--*]
 AC-15: [bad/AC-15--*]
 AC-16: [bad/AC-16--*, test_policy.sh E-AC16-*]
 AC-17: [bad/AC-17--*]
-AC-18: [bad/AC-18--*]   # spec Erratum E3 table
+AC-18: [bad/AC-18--* (contract section 8 per-overlay table, no optional secretKeyRef)]
 AC-19: [bad/AC-19--*]
 AC-20: [bad/AC-20--*]
 AC-21: [bad/AC-21--*]
-AC-22: [bad/AC-22--*]
+AC-22: [bad/AC-22--* incl. ref-uses-base-name-local (hash-suffix rule)]
 AC-23: [bad/AC-23--*]
 AC-24: [test_policy.sh E-AC24-POLICY (real render), whole-script exit code, exit-2 cases C-EXIT2-*]
 AC-25: [good-local/good-staging accepted (B-GOOD), every bad rejected with its id only (C-*), EXEMPT--*; mutation check = later step: disable each rule in check_policy.py, expect test_policy.sh to fail]
@@ -32,5 +32,5 @@ AC-28: {runtime_evidence: "existing suites unchanged: .github/scripts/tests/test
 AC-29: {runtime_evidence: "review of docs/workflow/k8s-all/runbook.md"}
 AC-30: {runtime_evidence: "overlays/local applied on Docker Desktop/kind; NOT VERIFIED offline"}
 AC-31: {runtime_evidence: "kubectl apply --dry-run=server -k overlays/staging on a cluster"}
-AC-32: [bad/AC-32--* (env literal, ConfigMap key, sandbox providers; staging only)]
-EXEMPT: [bad/EXEMPT--* (unknown pair, empty reason)]
+AC-32: [bad/AC-32--* (forbidden keys, required-present keys, optional refs, stripe, providers; staging only)]
+EXEMPT: [bad/EXEMPT--* (whole-rule AC-12, unknown sub-check, AC-9, unknown pairs, empty reason)]

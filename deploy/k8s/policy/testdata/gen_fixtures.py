@@ -59,7 +59,7 @@ def APPCFG(k, opt=False):
     return {"configMapKeyRef": ref}
 
 
-def env_for(p):
+def env_for(p, overlay="local"):
     e = []
 
     def v(n, val):
@@ -74,6 +74,7 @@ def env_for(p):
         v("NEXT_PUBLIC_API_BASE", "http://api.eventflow.localtest.me")
     if p == "gateway":
         f("JWT_SECRET", SECRET("eventflow-auth", "JWT_SECRET"))
+        f("CORS_ALLOWED_ORIGINS", APPCFG("CORS_ALLOWED_ORIGINS"))
         v("IDENTITY_URL", "http://eventflow-identity:8083")
     if p == "identity":
         f("DATABASE_URL", SECRET("eventflow-db", "DATABASE_URL_DIRECT"))
@@ -81,6 +82,10 @@ def env_for(p):
         f("PII_ENC_KEY", SECRET("eventflow-identity", "PII_ENC_KEY"))
         f("PII_HASH_KEY", SECRET("eventflow-identity", "PII_HASH_KEY"))
         f("SMTP_HOST", CMAP("SMTP_HOST"))
+        f("GOOGLE_CLIENT_ID", APPCFG("GOOGLE_CLIENT_ID"))
+        if overlay == "staging":
+            f("SMTP_USER", SECRET("eventflow-identity", "SMTP_USER"))
+            f("SMTP_PASS", SECRET("eventflow-identity", "SMTP_PASS"))
     if p == "event":
         f("DATABASE_URL", SECRET("eventflow-db", "DATABASE_URL_DIRECT"))
         f("RABBITMQ_URL", SECRET("eventflow-mq", "AMQP_URL"))
@@ -104,17 +109,30 @@ def env_for(p):
     if p == "payment":
         f("DATABASE_URL", SECRET("eventflow-db", "DATABASE_URL_POOLED"))
         f("RABBITMQ_URL", SECRET("eventflow-mq", "AMQP_URL"))
-        f("STRIPE_WEBHOOK_SECRET", SECRET("eventflow-payment", "STRIPE_WEBHOOK_SECRET", True))
+        pkeys = ["VNPAY_TMN_CODE", "VNPAY_HASH_SECRET", "MOMO_PARTNER_CODE", "MOMO_ACCESS_KEY", "MOMO_SECRET_KEY"]
+        if overlay == "local":
+            pkeys += ["STRIPE_PUBLISHABLE_KEY", "STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET"]
+        for k in pkeys:
+            f(k, SECRET("eventflow-payment", k))
+        for k in ("VNPAY_RETURN_URL", "MOMO_RETURN_URL", "MOMO_NOTIFY_URL"):
+            f(k, APPCFG(k))
+        for k in ("STRIPE_SUCCESS_URL", "STRIPE_CANCEL_URL"):
+            f(k, APPCFG(k, True))
         f("PAYMENT_DEFAULT_PROVIDER", APPCFG("PAYMENT_DEFAULT_PROVIDER"))
         f("PAYMENT_ENABLED_PROVIDERS", APPCFG("PAYMENT_ENABLED_PROVIDERS"))
         f("PAYMENT_SANDBOX_MODE", APPCFG("PAYMENT_SANDBOX_MODE", True))
     if p == "notification":
         f("DATABASE_URL", SECRET("eventflow-db", "DATABASE_URL_POOLED"))
         f("AMQP_URL", SECRET("eventflow-mq", "AMQP_URL"))
+        f("EMAIL_PROVIDER", APPCFG("EMAIL_PROVIDER"))
+        f("SMTP_FROM", APPCFG("SMTP_FROM"))
+        if overlay == "staging":
+            f("SMTP_USER", SECRET("eventflow-notification", "SMTP_USER"))
+            f("SMTP_PASSWORD", SECRET("eventflow-notification", "SMTP_PASSWORD"))
     if p == "ai-worker":
         f("AMQP_URL", SECRET("eventflow-mq", "AMQP_URL"))
         f("REDIS_URL", CMAP("REDIS_URL"))
-        f("GEMINI_API_KEY", SECRET("eventflow-ai", "GEMINI_API_KEY", True))
+        f("GEMINI_API_KEY", SECRET("eventflow-ai", "GEMINI_API_KEY"))
         f("GEMINI_MOCK", APPCFG("GEMINI_MOCK"))
         v("INTERNAL_API_BASE", "http://eventflow-gateway:8080")
         v("MODERATION_API_BASE", "http://eventflow-event:8084")
@@ -129,7 +147,7 @@ def sel(p):
     return {"matchLabels": labels(p)}
 
 
-def deployment(row):
+def deployment(row, overlay="local"):
     p, img, cmd, ports, live, ready, start, grace, hpa_, repl, req, lim = row
     pn = "http" if any(n == "http" for n, _ in ports) else "metrics"
     L = labels(p)
@@ -143,7 +161,7 @@ def deployment(row):
         "name": p,
         "image": "%s%s:%s" % (REG, img, TAG), "imagePullPolicy": "IfNotPresent",
         "ports": [{"name": n, "containerPort": num} for n, num in ports],
-        "env": env_for(p),
+        "env": env_for(p, overlay),
         "resources": {"requests": {"cpu": req[0], "memory": req[1]}, "limits": {"cpu": lim[0], "memory": lim[1]}},
         "startupProbe": pr(start, {"periodSeconds": 2, "failureThreshold": 30}),
         "livenessProbe": pr(live, {"periodSeconds": 10, "failureThreshold": 3}),
@@ -185,12 +203,9 @@ def deployment(row):
         d["spec"]["replicas"] = repl
     ex = {}
     if p == "web":
-        ex["AC-12"] = "Next ISR writes .next/cache (readOnlyRootFilesystem)"
+        ex["AC-12.readOnlyRootFilesystem"] = "Next ISR writes .next/cache"
     if p == "ticketing-worker":
-        ex["AC-9"] = "singleton: reconciler not proven safe with 2 replicas (spec D5)"
         ex["AC-11"] = "singleton: no spread for 1 replica (spec D5)"
-    if p == "waitingroom-controller":
-        ex["AC-9"] = "fixed 2 replicas, lease-based"
     if ex:
         d["metadata"]["annotations"] = {EXEMPT + k: v for k, v in ex.items()}
     return d
@@ -276,7 +291,9 @@ SECRETS = {
     "eventflow-auth": {"JWT_SECRET": "dev-jwt-secret-change-me-0123456789", "QUEUE_TOKEN_SECRET": "dev-queue-token-secret-0123456789"},
     "eventflow-qr": {"HMAC_QR_SECRET": "dev-hmac-qr-secret-0123456789"},
     "eventflow-identity": {"PII_ENC_KEY": "dev-pii-enc-key-0123456789", "PII_HASH_KEY": "dev-pii-hash-key-0123456789"},
-    "eventflow-payment": {"STRIPE_WEBHOOK_SECRET": "dev-stripe-whsec"},
+    "eventflow-payment": {"VNPAY_TMN_CODE": "dev-vnpay-tmn", "VNPAY_HASH_SECRET": "dev-vnpay-hash", "MOMO_PARTNER_CODE": "dev-momo-partner",
+                          "MOMO_ACCESS_KEY": "dev-momo-access", "MOMO_SECRET_KEY": "dev-momo-secret", "STRIPE_PUBLISHABLE_KEY": "dev-stripe-pub",
+                          "STRIPE_SECRET_KEY": "dev-stripe-sk", "STRIPE_WEBHOOK_SECRET": "dev-stripe-whsec"},
     "eventflow-ai": {"GEMINI_API_KEY": "dev-gemini-key"},
     "eventflow-dev-infra": {"POSTGRES_PASSWORD": "dev-pw", "RABBITMQ_DEFAULT_PASS": "dev-pw"},
 }
@@ -288,8 +305,8 @@ def secret_obj(name, data):
 
 
 PG_LABELS = {"app.kubernetes.io/name": "eventflow-postgres", "app.kubernetes.io/part-of": "eventflow", "eventflow.io/tier": "dev-infra"}
-PG_EXEMPT = {"AC-6": "statefulset, single replica dev db", "AC-9": "single replica", "AC-10": "single replica dev db",
-             "AC-11": "single replica", "AC-12": "upstream entrypoint needs root init", "AC-20": "upstream image, version pinned (AC-21)"}
+PG_EXEMPT = {"AC-6": "statefulset, single replica dev db", "AC-10": "single replica dev db",
+             "AC-11": "single replica", "AC-20": "upstream image, version pinned (AC-21)"}
 
 
 def devinfra_pg():
@@ -301,11 +318,32 @@ def devinfra_pg():
             "spec": {"serviceName": "eventflow-postgres", "replicas": 1, "selector": {"matchLabels": dict(PG_LABELS)},
                      "template": {"metadata": {"labels": dict(PG_LABELS)}, "spec": {
                          "automountServiceAccountToken": False,
-                         "containers": [{"name": "postgres", "image": "postgres:16-alpine",
+                         "securityContext": {"runAsNonRoot": True, "runAsUser": 70, "runAsGroup": 70, "fsGroup": 70,
+                                             "seccompProfile": {"type": "RuntimeDefault"}},
+                         "containers": [{"name": "postgres", "securityContext": {"allowPrivilegeEscalation": False, "capabilities": {"drop": ["ALL"]}}, "image": "postgres:16-alpine",
                                          "ports": [{"name": "pg", "containerPort": 5432}],
                                          "env": [{"name": "POSTGRES_PASSWORD", "valueFrom": SECRET("eventflow-dev-infra", "POSTGRES_PASSWORD")}],
                                          "resources": {"requests": {"cpu": "100m", "memory": "256Mi"}, "limits": {"cpu": "500m", "memory": "512Mi"}},
                                          "startupProbe": pr(), "livenessProbe": pr(), "readinessProbe": pr()}]}}}}
+
+
+def devinfra_mailpit():
+    L = {"app.kubernetes.io/name": "eventflow-mailpit", "app.kubernetes.io/part-of": "eventflow", "eventflow.io/tier": "dev-infra"}
+    pr = {"tcpSocket": {"port": "smtp"}, "periodSeconds": 10}
+    ex = {"AC-6": "dev mail catcher, single replica", "AC-10": "single replica dev tool",
+          "AC-11": "single replica", "AC-20": "upstream image, version pinned (AC-21)"}
+    return {"apiVersion": "apps/v1", "kind": "Deployment",
+            "metadata": {"name": "eventflow-mailpit", "namespace": NS, "labels": dict(L),
+                         "annotations": {EXEMPT + k: v for k, v in ex.items()}},
+            "spec": {"replicas": 1, "selector": {"matchLabels": dict(L)},
+                     "template": {"metadata": {"labels": dict(L)}, "spec": {
+                         "automountServiceAccountToken": False,
+                         "securityContext": {"runAsNonRoot": True, "runAsUser": 1000, "runAsGroup": 1000, "seccompProfile": {"type": "RuntimeDefault"}},
+                         "containers": [{"name": "mailpit", "image": "axllent/mailpit:v1.21",
+                                         "ports": [{"name": "smtp", "containerPort": 1025}, {"name": "ui", "containerPort": 8025}],
+                                         "securityContext": {"allowPrivilegeEscalation": False, "capabilities": {"drop": ["ALL"]}},
+                                         "resources": {"requests": {"cpu": "20m", "memory": "32Mi"}, "limits": {"cpu": "200m", "memory": "128Mi"}},
+                                         "startupProbe": dict(pr), "livenessProbe": dict(pr), "readinessProbe": dict(pr)}]}}}}
 
 
 def devinfra_np():
@@ -321,6 +359,33 @@ def devinfra_svc():
                      "ports": [{"name": "pg", "port": 5432, "targetPort": "pg"}]}}
 
 
+SUF = "5g8h2k9m4t"
+
+
+def add_hash_suffixes(objs, overlay):
+    """kustomize generator names: local Secrets and ConfigMaps, staging ConfigMaps get a hash suffix; refs follow."""
+    renamed = {"ConfigMap": {"eventflow-endpoints", "eventflow-app-config"}}
+    if overlay == "local":
+        renamed["Secret"] = {x["metadata"]["name"] for x in objs if x["kind"] == "Secret"}
+    for x in objs:
+        if x["metadata"]["name"] in renamed.get(x["kind"], ()):
+            x["metadata"]["name"] += "-" + SUF
+
+    def walk(v):
+        if isinstance(v, dict):
+            for rk, kind in (("secretKeyRef", "Secret"), ("configMapKeyRef", "ConfigMap"), ("secretRef", "Secret")):
+                r = v.get(rk)
+                if isinstance(r, dict) and r.get("name") in renamed.get(kind, ()):
+                    r["name"] += "-" + SUF
+            for c in v.values():
+                walk(c)
+        elif isinstance(v, list):
+            for c in v:
+                walk(c)
+    walk(objs)
+    return objs
+
+
 def good(overlay):
     objs = []
     psa = ({"pod-security.kubernetes.io/enforce": "restricted"} if overlay == "staging" else
@@ -331,18 +396,24 @@ def good(overlay):
                  "data": {"REDIS_ADDR": "eventflow-redis:6379" if overlay == "local" else "redis.example.internal:6379",
                           "REDIS_URL": "redis://eventflow-redis:6379/0" if overlay == "local" else "redis://redis.example.internal:6379/0",
                           "SMTP_HOST": "eventflow-mailpit", "SMTP_PORT": "1025", "OTEL_EXPORTER_OTLP_ENDPOINT": ""}})
+    common = {"EMAIL_PROVIDER": "smtp", "SMTP_FROM": "noreply@eventflow.example.com", "GOOGLE_CLIENT_ID": "dev-google-client-id.apps.example.com"}
     if overlay == "local":
-        cfg = {"APP_ENV": "development", "MIN_SALE_LEAD_SECONDS": "60",
-               "ACTIVE_EVENT_IDS": "00000000-0000-0000-0000-000000000001,00000000-0000-0000-0000-000000000002",
-               "ADMIT_MIN_RATE": "5", "GEMINI_MOCK": "1", "PAYMENT_DEFAULT_PROVIDER": "sandbox",
-               "PAYMENT_ENABLED_PROVIDERS": "sandbox,vnpay,momo,stripe", "PAYMENT_SANDBOX_MODE": "success",
-               "CORS_ALLOWED_ORIGINS": "http://eventflow.localtest.me"}
+        cfg = dict(common, APP_ENV="development", MIN_SALE_LEAD_SECONDS="60",
+                   ACTIVE_EVENT_IDS="00000000-0000-0000-0000-000000000001,00000000-0000-0000-0000-000000000002",
+                   ADMIT_MIN_RATE="5", GEMINI_MOCK="1", PAYMENT_DEFAULT_PROVIDER="sandbox",
+                   PAYMENT_ENABLED_PROVIDERS="sandbox,vnpay,momo,stripe", PAYMENT_SANDBOX_MODE="success",
+                   CORS_ALLOWED_ORIGINS="http://eventflow.localtest.me",
+                   VNPAY_RETURN_URL="http://eventflow.localtest.me/pay/vnpay", MOMO_RETURN_URL="http://eventflow.localtest.me/pay/momo",
+                   MOMO_NOTIFY_URL="http://api.eventflow.localtest.me/payments/momo/ipn",
+                   STRIPE_SUCCESS_URL="http://eventflow.localtest.me/pay/ok", STRIPE_CANCEL_URL="http://eventflow.localtest.me/pay/cancel")
     else:
-        cfg = {"APP_ENV": "production", "GEMINI_MOCK": "0", "PAYMENT_DEFAULT_PROVIDER": "vnpay",
-               "PAYMENT_ENABLED_PROVIDERS": "vnpay,momo,stripe", "CORS_ALLOWED_ORIGINS": "https://staging.example.com"}
+        cfg = dict(common, APP_ENV="production", GEMINI_MOCK="0", PAYMENT_DEFAULT_PROVIDER="vnpay",
+                   PAYMENT_ENABLED_PROVIDERS="vnpay,momo", CORS_ALLOWED_ORIGINS="https://staging.example.com",
+                   VNPAY_RETURN_URL="https://staging.example.com/pay/vnpay", MOMO_RETURN_URL="https://staging.example.com/pay/momo",
+                   MOMO_NOTIFY_URL="https://staging.example.com/payments/momo/ipn")
     objs.append({"apiVersion": "v1", "kind": "ConfigMap", "metadata": {"name": "eventflow-app-config", "namespace": NS}, "data": cfg})
     for row in M:
-        objs.append(deployment(row))
+        objs.append(deployment(row, overlay))
         if row[0] in SERVICES:
             objs.append(service(row))
         if row[8]:
@@ -356,8 +427,8 @@ def good(overlay):
     if overlay == "local":
         for n, d in SECRETS.items():
             objs.append(secret_obj(n, d))
-        objs += [devinfra_pg(), devinfra_svc(), devinfra_np()]
-    return objs
+        objs += [devinfra_pg(), devinfra_mailpit(), devinfra_svc(), devinfra_np()]
+    return add_hash_suffixes(objs, overlay)
 
 
 
@@ -365,7 +436,7 @@ def good(overlay):
 # ---- helpers for mutations ---------------------------------------------------
 def find(objs, kind, name):
     for o in objs:
-        if o["kind"] == kind and o["metadata"]["name"] == name:
+        if o["kind"] == kind and o["metadata"]["name"] in (name, name + "-" + SUF):
             return o
     raise KeyError((kind, name))
 
@@ -383,7 +454,7 @@ def pod(o, p):
 
 
 def drop(objs, kind, name):
-    objs[:] = [x for x in objs if not (x["kind"] == kind and x["metadata"]["name"] == name)]
+    objs[:] = [x for x in objs if not (x["kind"] == kind and x["metadata"]["name"] in (name, name + "-" + SUF))]
 
 
 def envitem(o, p, name):
@@ -398,6 +469,24 @@ def setenv(o, p, name, **new):
     e.clear()
     e["name"] = name
     e.update(new)
+
+
+def rname(o, kind, base):
+    for x in o:
+        if x["kind"] == kind and x["metadata"]["name"] in (base, base + "-" + SUF):
+            return x["metadata"]["name"]
+    return base
+
+
+def SX(o, s_, k):
+    return SECRET(rname(o, "Secret", s_), k)
+
+
+def CX(o, n, k, opt=False):
+    ref = {"name": rname(o, "ConfigMap", n), "key": k}
+    if opt:
+        ref["optional"] = True
+    return {"configMapKeyRef": ref}
 
 
 def pgctr(o):
@@ -436,11 +525,13 @@ def mut(rule, slug, fn, overlay="local", extra=()):
     MUT.append((rule, slug, overlay, fn, tuple(extra)))
 
 
-def hpa_on_fixed(o):
-    h = copy.deepcopy(find(o, "HorizontalPodAutoscaler", "eventflow-gateway"))
-    h["metadata"]["name"] = "eventflow-ticketing-worker"
-    h["spec"]["scaleTargetRef"]["name"] = "eventflow-ticketing-worker"
-    o.append(h)
+def hpa_on(p):
+    def fn(o):
+        h = copy.deepcopy(find(o, "HorizontalPodAutoscaler", "eventflow-gateway"))
+        h["metadata"]["name"] = "eventflow-" + p
+        h["spec"]["scaleTargetRef"]["name"] = "eventflow-" + p
+        o.append(h)
+    return fn
 
 
 def pdb_min_available(o):
@@ -537,7 +628,8 @@ mut("AC-9", "event-max-20", lambda o: find(o, "HorizontalPodAutoscaler", "eventf
 mut("AC-9", "payment-cpu-90", lambda o: find(o, "HorizontalPodAutoscaler", "eventflow-payment")["spec"]["metrics"][0]["resource"]["target"].update({"averageUtilization": 90}))
 mut("AC-9", "web-stabilization-60", lambda o: find(o, "HorizontalPodAutoscaler", "eventflow-web")["spec"]["behavior"]["scaleDown"].update({"stabilizationWindowSeconds": 60}))
 mut("AC-9", "ticketing-no-behavior", lambda o: find(o, "HorizontalPodAutoscaler", "eventflow-ticketing")["spec"].pop("behavior"))
-mut("AC-9", "hpa-on-ticketing-worker", hpa_on_fixed)
+mut("AC-9", "hpa-on-ticketing-worker", hpa_on("ticketing-worker"))
+mut("AC-9", "hpa-on-controller", hpa_on("waitingroom-controller"))
 # AC-10
 mut("AC-10", "gateway-pdb-missing", lambda o: drop(o, "PodDisruptionBudget", "eventflow-gateway"))
 mut("AC-10", "dev-infra-exemption-removed", pg_no_pdb_exempt)
@@ -590,13 +682,12 @@ mut("AC-17", "web-url-with-credentials", lambda o: ctr(o, "web")["env"].append({
 mut("AC-17", "configmap-url-with-credentials", lambda o: cfg(o, "eventflow-endpoints").update({"REDIS_URL": "redis://default:hunter2@host:6379/0"}))
 mut("AC-17", "configmap-password-key", lambda o: cfg(o, "eventflow-endpoints").update({"REDIS_PASSWORD": "dev-pw"}))
 # AC-18
-mut("AC-18", "notification-gets-jwt", lambda o: ctr(o, "notification")["env"].append({"name": "JWT_SECRET", "valueFrom": SECRET("eventflow-auth", "JWT_SECRET")}))
-mut("AC-18", "web-envfrom-secret", lambda o: ctr(o, "web").update({"envFrom": [{"secretRef": {"name": "eventflow-auth"}}]}))
-mut("AC-18", "ticketing-gets-amqp", lambda o: ctr(o, "ticketing")["env"].append({"name": "AMQP_URL", "valueFrom": SECRET("eventflow-mq", "AMQP_URL")}))
-mut("AC-18", "identity-gets-queue-token", lambda o: ctr(o, "identity")["env"].append({"name": "QUEUE_TOKEN_SECRET", "valueFrom": SECRET("eventflow-auth", "QUEUE_TOKEN_SECRET")}))
-mut("AC-18", "identity-uses-pooled-db", lambda o: setenv(o, "identity", "DATABASE_URL", valueFrom=SECRET("eventflow-db", "DATABASE_URL_POOLED")))
-mut("AC-18", "ticketing-uses-direct-db", lambda o: setenv(o, "ticketing", "DATABASE_URL", valueFrom=SECRET("eventflow-db", "DATABASE_URL_DIRECT")))
-mut("AC-18", "stripe-key-not-optional", lambda o: envitem(o, "payment", "STRIPE_WEBHOOK_SECRET")["valueFrom"]["secretKeyRef"].pop("optional"))
+mut("AC-18", "notification-gets-jwt", lambda o: ctr(o, "notification")["env"].append({"name": "JWT_SECRET", "valueFrom": SX(o, "eventflow-auth", "JWT_SECRET")}))
+mut("AC-18", "web-envfrom-secret", lambda o: ctr(o, "web").update({"envFrom": [{"secretRef": {"name": rname(o, "Secret", "eventflow-auth")}}]}))
+mut("AC-18", "ticketing-gets-amqp", lambda o: ctr(o, "ticketing")["env"].append({"name": "AMQP_URL", "valueFrom": SX(o, "eventflow-mq", "AMQP_URL")}))
+mut("AC-18", "identity-gets-queue-token", lambda o: ctr(o, "identity")["env"].append({"name": "QUEUE_TOKEN_SECRET", "valueFrom": SX(o, "eventflow-auth", "QUEUE_TOKEN_SECRET")}))
+mut("AC-18", "identity-uses-pooled-db", lambda o: setenv(o, "identity", "DATABASE_URL", valueFrom=SX(o, "eventflow-db", "DATABASE_URL_POOLED")))
+mut("AC-18", "ticketing-uses-direct-db", lambda o: setenv(o, "ticketing", "DATABASE_URL", valueFrom=SX(o, "eventflow-db", "DATABASE_URL_DIRECT")))
 # AC-19
 mut("AC-19", "staging-app-env-development", lambda o: cfg(o).update({"APP_ENV": "development"}), overlay="staging")
 mut("AC-19", "local-app-env-production", lambda o: cfg(o).update({"APP_ENV": "production"}))
@@ -623,8 +714,8 @@ mut("AC-22", "hpa-target-missing", ghost_hpa)
 mut("AC-22", "pdb-selects-nothing", ghost_pdb)
 mut("AC-22", "secret-unknown-local", lambda o: setenv(o, "event", "RABBITMQ_URL", valueFrom=SECRET("eventflow-rabbit", "AMQP_URL")))
 mut("AC-22", "secret-unknown-staging", lambda o: setenv(o, "event", "RABBITMQ_URL", valueFrom=SECRET("eventflow-rabbit", "AMQP_URL")), overlay="staging")
-mut("AC-22", "secret-key-missing-local", lambda o: setenv(o, "ticketing", "HMAC_QR_SECRET", valueFrom=SECRET("eventflow-qr", "HMAC_SECRET")))
-mut("AC-22", "configmap-key-missing", lambda o: setenv(o, "waitingroom", "REDIS_ADDR", valueFrom=CMAP("REDIS_ADDRESS")))
+mut("AC-22", "secret-key-missing-local", lambda o: setenv(o, "ticketing", "HMAC_QR_SECRET", valueFrom=SX(o, "eventflow-qr", "HMAC_SECRET")))
+mut("AC-22", "configmap-key-missing", lambda o: setenv(o, "waitingroom", "REDIS_ADDR", valueFrom=CX(o, "eventflow-endpoints", "REDIS_ADDRESS")))
 mut("AC-22", "configmap-missing", lambda o: setenv(o, "identity", "SMTP_HOST", valueFrom={"configMapKeyRef": {"name": "eventflow-config", "key": "SMTP_HOST"}}))
 # AC-23
 mut("AC-23", "web-host-changed", lambda o: find(o, "Ingress", "eventflow-web")["spec"]["rules"][0].update({"host": "web.example.com"}))
@@ -637,35 +728,127 @@ mut("AC-23", "ticketing-loadbalancer", lambda o: find(o, "Service", "eventflow-t
 mut("AC-23", "identity-ingress", lambda o: o.append(ingress("eventflow-identity", "id.eventflow.localtest.me", "eventflow-identity")))
 # AC-32 (staging only)
 mut("AC-32", "min-sale-lead-seconds-env", lambda o: setenv(o, "event", "MIN_SALE_LEAD_SECONDS", value="0"), overlay="staging")
-mut("AC-32", "min-sale-lead-seconds-configmap", lambda o: cfg(o).update({"MIN_SALE_LEAD_SECONDS": "0"}), overlay="staging")
-mut("AC-32", "gemini-mock-1-configmap", lambda o: cfg(o).update({"GEMINI_MOCK": "1"}), overlay="staging")
+mut("AC-32", "min-sale-lead-seconds-configmap", lambda o: cfg(o).update({"MIN_SALE_LEAD_SECONDS": "0"}), overlay="staging", extra=("event",))
+mut("AC-32", "gemini-mock-1-configmap", lambda o: cfg(o).update({"GEMINI_MOCK": "1"}), overlay="staging", extra=("ai-worker",))
 mut("AC-32", "payment-sandbox-mode-env", lambda o: setenv(o, "payment", "PAYMENT_SANDBOX_MODE", value="true"), overlay="staging")
-mut("AC-32", "payment-sandbox-mode-configmap", lambda o: cfg(o).update({"PAYMENT_SANDBOX_MODE": "success"}), overlay="staging")
-mut("AC-32", "active-event-ids-configmap", lambda o: cfg(o).update({"ACTIVE_EVENT_IDS": "demo-event-1"}), overlay="staging")
-mut("AC-32", "admit-min-rate-configmap", lambda o: cfg(o).update({"ADMIT_MIN_RATE": "5"}), overlay="staging")
-mut("AC-32", "default-provider-sandbox", lambda o: cfg(o).update({"PAYMENT_DEFAULT_PROVIDER": "sandbox"}), overlay="staging")
-mut("AC-32", "enabled-providers-include-sandbox", lambda o: cfg(o).update({"PAYMENT_ENABLED_PROVIDERS": "sandbox,vnpay"}), overlay="staging")
+mut("AC-32", "payment-sandbox-mode-configmap", lambda o: cfg(o).update({"PAYMENT_SANDBOX_MODE": "success"}), overlay="staging", extra=("payment",))
+mut("AC-32", "active-event-ids-configmap", lambda o: cfg(o).update({"ACTIVE_EVENT_IDS": "demo-event-1"}), overlay="staging", extra=("waitingroom-controller",))
+mut("AC-32", "admit-min-rate-configmap", lambda o: cfg(o).update({"ADMIT_MIN_RATE": "5"}), overlay="staging", extra=("waitingroom-controller",))
+mut("AC-32", "default-provider-sandbox", lambda o: cfg(o).update({"PAYMENT_DEFAULT_PROVIDER": "sandbox"}), overlay="staging", extra=("payment",))
+mut("AC-32", "enabled-providers-include-sandbox", lambda o: cfg(o).update({"PAYMENT_ENABLED_PROVIDERS": "sandbox,vnpay"}), overlay="staging", extra=("payment",))
 # EXEMPT
 mut("EXEMPT", "unknown-pair-gateway-ac12", lambda o: exempt(o, "gateway", "AC-12", "lazy"))
 mut("EXEMPT", "empty-reason-gateway-ac11", lambda o: exempt(o, "gateway", "AC-11", "   "))
 mut("EXEMPT", "unknown-pair-worker-ac4", lambda o: exempt(o, "ticketing-worker", "AC-4", "no probes please"))
 
 
+# ---- contract revision 2 additions (TCR-E8) ---------------------------------
+def opt_ref(o, p, name):
+    e = envitem(o, p, name)
+    e["valueFrom"]["configMapKeyRef"]["optional"] = True
+
+
+def optional_secret(o, p, name):
+    envitem(o, p, name)["valueFrom"]["secretKeyRef"]["optional"] = True
+
+
+def rm_env(o, p, name):
+    c = ctr(o, p)
+    c["env"] = [e for e in c["env"] if e["name"] != name]
+
+
+def gemini_absent(o):
+    opt_ref(o, "ai-worker", "GEMINI_MOCK")
+    cfg(o).pop("GEMINI_MOCK")
+
+
+def enabled_absent(o):
+    opt_ref(o, "payment", "PAYMENT_ENABLED_PROVIDERS")
+    cfg(o).pop("PAYMENT_ENABLED_PROVIDERS")
+
+
+def momo_notify_absent(o):
+    opt_ref(o, "payment", "MOMO_NOTIFY_URL")
+    cfg(o).pop("MOMO_NOTIFY_URL")
+
+
+def worker_ac9(o):
+    exempt(o, "ticketing-worker", "AC-9", "x")
+
+
+def web_whole_rule(o):
+    exempt(o, "web", "AC-12", "whole rule is not allowed")
+
+
+def web_unknown_sub(o):
+    exempt(o, "web", "AC-12.runAsNonRoot", "runAsNonRoot stays true")
+
+
+def web_exemption_missing(o):
+    dep(o, "web")["metadata"].pop("annotations")
+
+
+mut("AC-12", "web-exempt-runasnonroot-missing", lambda o: pod(o, "web")["securityContext"].pop("runAsNonRoot"))
+mut("AC-12", "web-exemption-missing", web_exemption_missing)
+mut("AC-12", "dev-infra-drop-all-missing", lambda o: pgctr(o)["securityContext"].pop("capabilities"))
+mut("AC-12", "dev-infra-runasnonroot-false", lambda o: find(o, "StatefulSet", "eventflow-postgres")["spec"]["template"]["spec"]["securityContext"].update({"runAsNonRoot": False}))
+mut("AC-18", "local-provider-key-optional", lambda o: optional_secret(o, "payment", "VNPAY_HASH_SECRET"))
+mut("AC-18", "staging-optional-secret-ref", lambda o: optional_secret(o, "ai-worker", "GEMINI_API_KEY"), overlay="staging")
+mut("AC-18", "staging-stripe-key-extra", lambda o: ctr(o, "payment")["env"].append({"name": "STRIPE_SECRET_KEY", "valueFrom": SECRET("eventflow-payment", "STRIPE_SECRET_KEY")}), overlay="staging")
+mut("AC-18", "staging-identity-smtp-missing", lambda o: rm_env(o, "identity", "SMTP_PASS"), overlay="staging")
+mut("AC-22", "ref-uses-base-name-local", lambda o: setenv(o, "event", "RABBITMQ_URL", valueFrom=SECRET("eventflow-mq", "AMQP_URL")))
+mut("AC-32", "gemini-mock-absent", gemini_absent, overlay="staging", extra=("ai-worker",))
+mut("AC-32", "gemini-mock-optional-ref", lambda o: opt_ref(o, "ai-worker", "GEMINI_MOCK"), overlay="staging")
+mut("AC-32", "enabled-providers-absent", enabled_absent, overlay="staging")
+mut("AC-32", "stripe-enabled", lambda o: cfg(o).update({"PAYMENT_ENABLED_PROVIDERS": "vnpay,momo,stripe"}), overlay="staging", extra=("payment",))
+mut("AC-32", "default-provider-not-enabled", lambda o: cfg(o).update({"PAYMENT_DEFAULT_PROVIDER": "stripe"}), overlay="staging", extra=("payment",))
+mut("AC-32", "momo-secret-missing", lambda o: rm_env(o, "payment", "MOMO_SECRET_KEY"), overlay="staging")
+mut("AC-32", "momo-notify-url-absent", momo_notify_absent, overlay="staging")
+mut("AC-32", "email-provider-mock", lambda o: cfg(o).update({"EMAIL_PROVIDER": "mock"}), overlay="staging", extra=("notification",))
+mut("AC-32", "stripe-url-in-configmap", lambda o: cfg(o).update({"STRIPE_SUCCESS_URL": "https://staging.example.com/pay/ok"}), overlay="staging", extra=("payment",))
+mut("EXEMPT", "worker-ac9", worker_ac9)
+mut("EXEMPT", "web-ac12-whole-rule", web_whole_rule)
+mut("EXEMPT", "web-unknown-subcheck", web_unknown_sub)
+
+
+# ---- Dockerfile fixtures (AC-13, --dockerfiles mode) -------------------------
+DF_GOOD = {
+    "go-service.Dockerfile": "FROM golang:1.23 AS build\nRUN go build -o /out/server ./cmd/server\n\nFROM gcr.io/distroless/static-debian12\nCOPY --from=build /out/server /server\nUSER 65532:65532\nENTRYPOINT [\"/server\"]\n",
+    "ticketing.Dockerfile": "FROM golang:1.23 AS build\nRUN go build -o /out/server ./cmd/server\n\nFROM gcr.io/distroless/static-debian12\nCOPY --from=build /out/server /server\nCOPY --from=build /out/worker /worker\nUSER 65532:65532\nENTRYPOINT [\"/server\"]\n",
+    "waitingroom.Dockerfile": "FROM golang:1.23 AS build\nRUN go build -o /out/server ./cmd/server\n\nFROM gcr.io/distroless/static-debian12\nCOPY --from=build /out/server /server\nCOPY --from=build /out/controller /controller\nUSER 65532:65532\nENTRYPOINT [\"/server\"]\n",
+    "ai-worker.Dockerfile": "FROM python:3.12-slim\nRUN useradd --uid 10001 worker\nCOPY app /app\nUSER 10001\nCMD [\"uvicorn\", \"app.main:app\"]\n",
+    "web.Dockerfile": "FROM node:22-alpine AS build\nRUN npm run build\n\nFROM node:22-alpine\nCOPY --from=build /app /app\nUSER 1000\nCMD [\"node\", \"server.js\"]\n",
+    "migrate.Dockerfile": "FROM ghcr.io/kukymbr/goose-docker:3.22.0\nCOPY migrations /migrations\nUSER 65532:65532\n",
+}
+DF_BAD = {
+    "named-user": {"go-service.Dockerfile": "FROM golang:1.23 AS build\nRUN go build -o /out/server ./cmd/server\n\nFROM gcr.io/distroless/static-debian12\nCOPY --from=build /out/server /server\nUSER nonroot:nonroot\nENTRYPOINT [\"/server\"]\n"},
+    "no-user": {"go-service.Dockerfile": "FROM golang:1.23 AS build\nRUN go build -o /out/server ./cmd/server\n\nFROM gcr.io/distroless/static-debian12\nCOPY --from=build /out/server /server\nENTRYPOINT [\"/server\"]\n"},
+    "user-only-in-build-stage": {"go-service.Dockerfile": "FROM golang:1.23 AS build\nUSER 65532:65532\nRUN go build -o /out/server ./cmd/server\n\nFROM gcr.io/distroless/static-debian12\nCOPY --from=build /out/server /server\nENTRYPOINT [\"/server\"]\n"},
+}
+
+
+
 def prune(objs, keep):
     return [x for x in objs if proc_of(x) is None or proc_of(x) in keep]
 
 
-def dump(objs, overlay, procs):
+def dump(objs, overlay, procs, trailing_null=False):
     head = "# policy-args: --overlay %s%s\n" % (overlay, " --processes " + ",".join(procs) if procs else "")
-    return head + "".join("---\n" + json.dumps(x, separators=(",", ":"), sort_keys=True) + "\n" for x in objs)
+    body = "".join("---\n" + json.dumps(x, separators=(",", ":"), sort_keys=True) + "\n" for x in objs)
+    return head + body + ("---\n" if trailing_null else "")
 
 
 def build():
     out = {}
     base = {"local": good("local"), "staging": good("staging")}
-    out["good-local.yaml"] = dump(base["local"], "local", None)
+    out["good-local.yaml"] = dump(base["local"], "local", None, trailing_null=True)
     out["good-staging.yaml"] = dump(base["staging"], "staging", None)
     allp = [r[0] for r in M]
+    for n, t in DF_GOOD.items():
+        out["dockerfiles/good/" + n] = t
+    for slug, files in DF_BAD.items():
+        for n, t in files.items():
+            out["dockerfiles/bad/AC-13--%s/%s" % (slug, n)] = t
     for rule, slug, overlay, fn, extra in MUT:
         b = copy.deepcopy(base[overlay])
         o = copy.deepcopy(b)
@@ -695,16 +878,19 @@ def main():
             if not os.path.exists(p) or open(p, newline="").read().replace(chr(13) + chr(10), chr(10)) != v:
                 print("OUT-OF-SYNC", k)
                 bad += 1
-        bd = os.path.join(HERE, "bad")
-        for f in (os.listdir(bd) if os.path.isdir(bd) else []):
-            if "bad/" + f not in files:
-                print("STRAY bad/" + f)
-                bad += 1
+        for d in ("bad", "dockerfiles"):
+            for dp, _, fns in os.walk(os.path.join(HERE, d)):
+                for f in fns:
+                    rel = os.path.relpath(os.path.join(dp, f), HERE).replace(os.sep, "/")
+                    if rel not in files:
+                        print("STRAY", rel)
+                        bad += 1
         sys.exit(1 if bad else 0)
-    os.makedirs(os.path.join(HERE, "bad"), exist_ok=True)
-    for f in os.listdir(os.path.join(HERE, "bad")):
-        os.remove(os.path.join(HERE, "bad", f))
+    import shutil
+    for d in ("bad", "dockerfiles"):
+        shutil.rmtree(os.path.join(HERE, d), ignore_errors=True)
     for k, v in files.items():
+        os.makedirs(os.path.dirname(os.path.join(HERE, k)), exist_ok=True)
         with open(os.path.join(HERE, k), "w", newline="\n") as fh:
             fh.write(v)
     print("wrote %d fixtures (%d bad)" % (len(files), len(MUT)))

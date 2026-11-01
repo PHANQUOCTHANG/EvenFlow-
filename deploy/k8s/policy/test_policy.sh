@@ -8,7 +8,7 @@
 #
 # A  fixtures are in sync with testdata/gen_fixtures.py; every rule id has a bad fixture
 # B  check_policy.py exists; good-local.yaml / good-staging.yaml -> exit 0 and "policy: OK" last line
-# C  every bad/<RULE-ID>--<slug>.yaml -> exit 1, a FAIL line for <RULE-ID>, no FAIL line for any other id,
+# C  AC-13 dockerfile fixtures via --dockerfiles; every bad/<RULE-ID>--<slug>.yaml -> exit 1, a FAIL line for <RULE-ID>, no FAIL line for any other id,
 #    FAIL lines match the contract regex, "policy: <k> violation(s)" last line; plus exit-2 usage errors
 # D  AC-13: numeric USER in the four non-web Dockerfiles
 # E  (not with --fixtures-only) the real tree: layout, render of both overlays with pinned kustomize,
@@ -78,6 +78,7 @@ nbad="$(ls "$TD"/bad/*.yaml 2>/dev/null | wc -l)"
 for id in AC-1 AC-3 AC-4 AC-5 AC-6 AC-7 AC-8 AC-9 AC-10 AC-11 AC-12 AC-14 AC-15 AC-16 AC-17 AC-18 AC-19 AC-20 AC-21 AC-22 AC-23 AC-32 EXEMPT; do
   if ls "$TD"/bad/"$id"--*.yaml >/dev/null 2>&1; then pass "A-COVER-$id" "has bad fixture(s)"; else fail "A-COVER-$id" "no bad fixture"; fi
 done
+if ls -d "$TD"/dockerfiles/bad/AC-13--*/ >/dev/null 2>&1; then pass A-COVER-AC-13 "has bad dockerfile fixture(s)"; else fail A-COVER-AC-13 "no bad dockerfile fixture"; fi
 
 # ---------------------------------------------------------------- B/C fixtures through the checker
 if [ -f "$CHECK" ]; then pass B-CHECKER-EXISTS "check_policy.py exists"
@@ -131,6 +132,28 @@ for f in "$TD"/bad/*.yaml; do
   fi
 done
 
+# AC-13 through the checker's --dockerfiles mode (contract sections 4 and 7)
+if [ ! -f "$CHECK" ]; then
+  st_fail C-DOCKERFILES-good "cannot run: check_policy.py missing"
+elif "$PY" -I "$(winpath "$CHECK")" --dockerfiles "$(winpath "$TD/dockerfiles/good")" >"$TMP/out.txt" 2>"$TMP/err.txt" \
+     && ! grep -q '^FAIL ' "$TMP/out.txt" && tail -n 1 "$TMP/out.txt" | grep -qE '^policy: OK \([0-9]+ objects, overlay=dockerfiles\)$'; then
+  st_pass C-DOCKERFILES-good "dockerfiles/good accepted"
+else
+  st_fail C-DOCKERFILES-good "dockerfiles/good rejected: $(head -c 300 "$TMP/out.txt" | tr '\n' '|') $(head -c 200 "$TMP/err.txt" | tr '\n' '|')"
+fi
+for d in "$TD"/dockerfiles/bad/AC-13--*/; do
+  b="$(basename "$d")"; id="C-DOCKERFILES-$b"
+  if [ ! -f "$CHECK" ]; then st_fail "$id" "cannot run: check_policy.py missing"; continue; fi
+  "$PY" -I "$(winpath "$CHECK")" --dockerfiles "$(winpath "$d")" >"$TMP/out.txt" 2>"$TMP/err.txt"; rc=$?
+  got="$(grep -E '^FAIL ' "$TMP/out.txt" | awk '{print $2}' | sort -u | tr '\n' ' ')"
+  malformed="$(grep -E '^FAIL ' "$TMP/out.txt" | grep -vE "$FAIL_RE" | head -n 1)"
+  if [ "$rc" -ne 1 ]; then st_fail "$id" "expected exit 1, got $rc: $(head -c 200 "$TMP/out.txt" | tr '\n' '|')"
+  elif [ "$got" != "AC-13 " ]; then st_fail "$id" "must trip only AC-13, got: ${got:-none}"
+  elif [ -n "$malformed" ]; then st_fail "$id" "FAIL line does not match the contract regex: $malformed"
+  elif ! tail -n 1 "$TMP/out.txt" | grep -qE '^policy: [0-9]+ violation\(s\) \(overlay=dockerfiles\)$'; then st_fail "$id" "bad summary line: $(tail -n 1 "$TMP/out.txt")"
+  else st_pass "$id" "rejected with AC-13 only"; fi
+done
+
 # exit code 2: usage / input errors (contract section 4)
 usage_case() { # id description args...
   local id="$1" d="$2" rc; shift 2
@@ -147,6 +170,7 @@ usage_case C-EXIT2-NO-OVERLAY "missing --overlay" --input "$EMPTY"
 usage_case C-EXIT2-BAD-OVERLAY "unknown overlay" --overlay prod --input "$EMPTY"
 usage_case C-EXIT2-UNREADABLE "unreadable file" --overlay local --input "$(winpath "$TMP/does-not-exist.json")"
 usage_case C-EXIT2-NOT-ARRAY "JSON object instead of array" --overlay local --input "$(winpath "$TMP/obj.json")"
+usage_case C-EXIT2-DOCKERFILES-DIR "missing Dockerfile dir" --dockerfiles "$(winpath "$TMP/no-such-dir")"
 usage_case C-EXIT2-BAD-PROCESS "unknown process name" --overlay local --input "$EMPTY" --processes web,nosuch
 
 # ---------------------------------------------------------------- D Dockerfile USER (AC-13)

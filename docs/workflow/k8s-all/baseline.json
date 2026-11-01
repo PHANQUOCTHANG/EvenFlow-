@@ -1,16 +1,17 @@
 {
- "commit": "f72bad8",
+ "commit": "505de06",
+ "contract_revision": 2,
  "command": "bash deploy/k8s/policy/test_policy.sh",
  "existing_tests_touched": 0,
- "result_before_checker": {"pass": 26, "fail": 151, "skip": 0, "selftest": "0/138"},
- "fixtures": {"good": 2, "bad": 130, "exit2_cases": 6},
+ "result_before_checker": {"pass": 27, "fail": 177, "skip": 0, "selftest": "0/164"},
+ "fixtures": {"good": 2, "bad": 151, "dockerfiles_good": 6, "dockerfiles_bad": 3, "exit2_cases": 7},
  "red_reasons": [
-  "B-CHECKER-EXISTS, B-GOOD-*, C-* (136 cases): deploy/k8s/policy/check_policy.py does not exist",
+  "B-CHECKER-EXISTS, B-GOOD-*, C-* (160 cases incl. dockerfile and exit-2 cases): deploy/k8s/policy/check_policy.py does not exist",
   "D-USER-*: Dockerfiles end with nonroot:nonroot / worker, expected 65532:65532 / 10001",
   "E-AC3-FLAT: deploy/k8s/*.yaml still present",
   "E-AC1-RENDER-*, E-AC16-DEVENV, E-AC2-*, E-AC24-*: overlays/local, overlays/staging, secrets.dev.env do not exist"
  ],
- "green_guards": ["A-GEN-SYNC", "A-COUNT", "A-COVER-* (23 ids)", "E-AC27-COMPOSE"],
- "tools": "yq v4.44.3 / kustomize v5.7.1 / kubeconform v0.8.0 via go install (GOTOOLCHAIN=local); good fixtures validated with kubeconform -strict -kubernetes-version 1.32.0 (68 and 57 resources valid)",
- "sanity": "accept-everything stub checker: good pass, all 130 bad + 6 exit-2 cases fail"
+ "green_guards": ["A-GEN-SYNC", "A-COUNT", "A-COVER-* (24 ids incl. AC-13)", "E-AC27-COMPOSE"],
+ "tools": "yq v4.44.3 / kustomize v5.7.1 / kubeconform v0.8.0 via go install (GOTOOLCHAIN=local); good-local (69 resources) and good-staging (57) pass kubeconform -strict -kubernetes-version 1.32.0",
+ "sanity": "accept-everything stub checker: good pass, all bad + exit-2 cases fail"
 }
