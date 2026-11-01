@@ -1,0 +1,28 @@
+# Spec k8s-all 6.2 / AC-15. Ingress only; egress is not restricted in this task.
+# ai-worker: gateway pods (ASSISTANT_URL) and monitoring on 8090.
+# Monitoring = namespaces labelled eventflow.io/monitoring="true" (none exists yet).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ai-worker
+  labels:
+    app.kubernetes.io/part-of: eventflow
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: eventflow-ai-worker
+      app.kubernetes.io/part-of: eventflow
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: eventflow-gateway
+              app.kubernetes.io/part-of: eventflow
+        - namespaceSelector:
+            matchLabels:
+              eventflow.io/monitoring: "true"
+      ports:
+        - protocol: TCP
+          port: 8090

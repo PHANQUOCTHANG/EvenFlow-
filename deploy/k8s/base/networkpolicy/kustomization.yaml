@@ -1,0 +1,16 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: eventflow
+resources:
+  - allow-ai-worker.yaml
+  - allow-event.yaml
+  - allow-gateway.yaml
+  - allow-identity.yaml
+  - allow-notification.yaml
+  - allow-payment.yaml
+  - allow-ticketing-worker.yaml
+  - allow-ticketing.yaml
+  - allow-waitingroom-controller.yaml
+  - allow-waitingroom.yaml
+  - allow-web.yaml
+  - default-deny-ingress.yaml
