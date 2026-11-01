@@ -290,7 +290,10 @@ async function withRefreshLock(usedRefresh: string | null, sentUserId: string | 
   locked.catch(() => undefined);
 
   try {
-    return await Promise.race([locked, deadline]);
+    const token: unknown = await Promise.race([locked, deadline]);
+    // AC-5: LockManager tra ve ma khong chay callback (khong co token) -> loi tam thoi, giu phien, khong retry khong bearer.
+    if (typeof token !== "string") throw networkError();
+    return token;
   } finally {
     clearTimeout(deadlineTimer);
   }
