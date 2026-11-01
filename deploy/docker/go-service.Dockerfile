@@ -25,5 +25,7 @@ RUN --mount=type=cache,target=/go/pkg/mod \
 
 FROM gcr.io/distroless/static-debian12:nonroot
 COPY --from=build /out/server /server
-USER nonroot:nonroot
+# Dang so (65532 = nonroot cua distroless, cung uid): runAsNonRoot cua kubelet chi doc
+# Config.User, gap ten user se tu choi pod (CreateContainerConfigError). AC-13.
+USER 65532:65532
 ENTRYPOINT ["/server"]
