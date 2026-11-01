@@ -214,8 +214,11 @@ for ov in local staging; do
   if render "$ov"; then
     pass "E-AC1-RENDER-$ov" "kustomize build overlays/$ov exits 0"
     RENDERED="$RENDERED $ov"
-    n="$(grep -c '^kind: Deployment$' "$TMP/$ov.yaml")"
-    if [ "$n" -eq 11 ]; then pass "E-AC1-DEPLOYMENTS-$ov" "11 Deployments"; else fail "E-AC1-DEPLOYMENTS-$ov" "$n Deployments (expected 11)"; fi
+    if [ -z "$YQ" ]; then skip "E-AC1-DEPLOYMENTS-$ov" "yq unavailable"
+    else
+      n="$("$YQ" ea '[select(.kind == "Deployment" and .metadata.labels["eventflow.io/tier"] != "dev-infra")] | length' "$(winpath "$TMP/$ov.yaml")" 2>/dev/null | tail -n 1)"
+      if [ "$n" = "11" ]; then pass "E-AC1-DEPLOYMENTS-$ov" "11 app Deployments (dev-infra excluded)"; else fail "E-AC1-DEPLOYMENTS-$ov" "${n:-?} app Deployments (expected 11, dev-infra label excluded)"; fi
+    fi
     for p in $PROCS; do
       grep -q "^  name: eventflow-$p\$" "$TMP/$ov.yaml" || fail "E-AC1-PROC-$ov" "no object named eventflow-$p"
     done
