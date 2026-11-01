@@ -50,3 +50,7 @@ any session is still sent without a bearer" requires. Only the lazy wipe in `doR
 branch; wipe only the store holding the used token) satisfies both, so that is what is implemented. Residual: a stale copy
 can outlive its record entry only if 16 further refresh tokens get marked in the same tab before the copy is read again.
 Step 4 reviewers should confirm this trade-off.
+
+## TCR-1 decision
+
+APPROVED by the human (TranDinhVo) on 2026-11-01: option 1, rename the sessionStorage key to `ef:rt:used`. Applied: one constant in `apps/web/src/lib/debt5/ac2-used-refresh.test.ts` (USED) and `K_REFRESH_USED` in `lib/session.ts`, plus spec/plan/traceability wording. Existing test R3-1 unchanged.

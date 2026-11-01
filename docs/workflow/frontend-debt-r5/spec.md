@@ -31,7 +31,7 @@ abort for the POST owner. The changes below only add guards around that design.
   and `ef:lastuid` are kept, as G-4 requires), a store holding another token is left alone, and the caller gets
   `AUTH_REQUIRED`. A POST that failed before any response (fetch rejected, `NETWORK_ERROR`) or answered 5xx/429
   does **not** mark the token as used: retry after going offline or after a server error works as today.
-  - The record of used tokens is tab-scoped: sessionStorage key `ef:refresh:used`, holding a short hash (not the
+  - The record of used tokens is tab-scoped: sessionStorage key `ef:rt:used`, holding a short hash (not the
     token) of at most the 16 most recent used tokens. It survives a reload of the tab, is not a buy-flow key, and
     an unreadable or corrupt value counts as empty (fail open to today's behaviour, never throws).
   - Repro to turn green: R2-3 in `frontend-debt-r4/findings-round2-challenge.json` ends with posts `["r1"]`, not

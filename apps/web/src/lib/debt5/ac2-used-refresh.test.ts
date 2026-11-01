@@ -1,6 +1,6 @@
 /** AC-2 (R2-3, R2-S1): a refresh token that got a response (2xx, 400/401/403, bad body) or was aborted is never POSTed
- *  again from this tab. Record = sessionStorage `ef:refresh:used` (JSON array of short hashes, max 16, never the token).
- *  Assumed interface: `ef:refresh:used` holds a JSON array of strings. */
+ *  again from this tab. Record = sessionStorage `ef:rt:used` (JSON array of short hashes, max 16, never the token).
+ *  Assumed interface: `ef:rt:used` holds a JSON array of strings. */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { json, problem, resetEnv, setupEnv } from "@/test-utils/fetch-mock";
@@ -8,7 +8,7 @@ import { json, problem, resetEnv, setupEnv } from "@/test-utils/fetch-mock";
 import { BUY_FLOW_KEYS, fakeLocks, installLocks, newTab, outcome, removeLocks, seedBuyFlow, seedUser } from "../debt/harness";
 import { apiServer, IDENT, jwtExpIn, posts } from "./harness5";
 
-const USED = "ef:refresh:used";
+const USED = "ef:rt:used";
 beforeEach(() => {
   setupEnv();
   vi.useFakeTimers();

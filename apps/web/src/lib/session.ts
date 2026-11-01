@@ -212,7 +212,7 @@ export function getSessionEpoch(): number {
  *  tu tab nay. Ghi o sessionStorage (pham vi tab, con sau reload), chi luu bam FNV-1a 32 bit (khong luu token), toi da 16
  *  muc moi nhat. Doc/ghi loi hoac du lieu hong -> coi nhu rong (giu hanh vi cu), khong bao gio nem.
  *  Va cham bam (~16/2^32 moi lan refresh) chi gay AUTH_REQUIRED (dang nhap lai), khong gay POST hay lo token. */
-const K_REFRESH_USED = "ef:refresh:used";
+const K_REFRESH_USED = "ef:rt:used";
 const REFRESH_USED_MAX = 16;
 
 function refreshHash(token: string): string {

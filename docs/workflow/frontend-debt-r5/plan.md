@@ -10,7 +10,7 @@ and goes first so review can start early). No parallel split: the test harness a
 
 | AC | File(s) | Change |
 |---|---|---|
-| AC-2 | `lib/session.ts` | New exports: `markRefreshUsed(token)`, `isRefreshUsed(token)` over sessionStorage `ef:refresh:used` (JSON array of FNV-1a hashes, newest last, capped at 16; parse errors and storage errors -> treated as empty, never throw). New `clearSessionHoldingRefresh(token)`: for each of local/session store, `wipe()` only if that store's `ef_refresh === token`; if anything was wiped, `sessionEpoch += 1` and `notify()`. It never touches buy-flow keys or `ef:lastuid`. |
+| AC-2 | `lib/session.ts` | New exports: `markRefreshUsed(token)`, `isRefreshUsed(token)` over sessionStorage `ef:rt:used` (JSON array of FNV-1a hashes, newest last, capped at 16; parse errors and storage errors -> treated as empty, never throw). New `clearSessionHoldingRefresh(token)`: for each of local/session store, `wipe()` only if that store's `ef_refresh === token`; if anything was wiped, `sessionEpoch += 1` and `notify()`. It never touches buy-flow keys or `ef:lastuid`. |
 | AC-2 | `lib/api-client.ts` | `refreshCore`: call `markRefreshUsed(refreshToken)` as soon as a `Response` exists with status 2xx/400/401/403, and on the abort path. Not on fetch rejection, 5xx, 429. `doRefresh`: after the user check, the no-token branch and the "different token -> reuse" branch, and before `refreshCore`: if `isRefreshUsed(cur.refreshToken)` -> `clearSessionHoldingRefresh(cur.refreshToken)` and throw `AUTH_REQUIRED` (no POST). |
 | AC-1 | `lib/api-client.ts` | In `refreshPost`, wrap `res.json()` and the object check (`body !== null && typeof body === "object" && !Array.isArray(body)`) in try/catch. If the abort signal fired, rethrow so `refreshCore` keeps the abort outcome. Otherwise go to the shared failure resolver (below). |
 | AC-3 | `lib/api-client.ts` | One helper `resolveFailedRefresh(epoch, cur, problem?)` used by the 400/401/403 branch, the abort branch and the AC-1 branch: (1) `isSamePostedSession` -> `clearSession()` and throw `AUTH_REQUIRED`; (2) else re-read `peekSession()`: if `epoch === getSessionEpoch()`, `stored.user.id === cur.user.id`, `stored.refreshToken` is non-null and differs from `cur.refreshToken` -> return `stored.accessToken`; (3) else throw `AUTH_REQUIRED` without clearing. `refreshCore`'s abort branch returns the helper's value instead of always throwing. |
@@ -31,7 +31,7 @@ and goes first so review can start early). No parallel split: the test harness a
 ## 2. Tests (written first, red on c5fb598 unless marked GUARD)
 
 - `src/lib/debt5/ac1-refresh-body.test.ts`: 200 + non-JSON body; 200 + stream error; 200 + `null` body -> `AUTH_REQUIRED`, session cleared, next 401 sends no POST; GUARD: body read fails after a sign-out (epoch changed) -> nothing cleared.
-- `src/lib/debt5/ac2-used-refresh.test.ts`: R2-3 repro (mixed persist) -> posts `["r1"]`, sessionStorage auth keys gone, localStorage untouched; R2-S1 repro; GUARD: fetch rejection then retry -> 2 POSTs of `r1`; GUARD: 503 then retry -> 2 POSTs; corrupt `ef:refresh:used` -> behaves as today; record never contains the raw token.
+- `src/lib/debt5/ac2-used-refresh.test.ts`: R2-3 repro (mixed persist) -> posts `["r1"]`, sessionStorage auth keys gone, localStorage untouched; R2-S1 repro; GUARD: fetch rejection then retry -> 2 POSTs of `r1`; GUARD: 503 then retry -> 2 POSTs; corrupt `ef:rt:used` -> behaves as today; record never contains the raw token.
 - `src/lib/debt5/ac3-same-user-reuse.test.ts`: X-4 repro (abort, owner + joiner get `acc-9`, 1 POST); R2-4 repro (401 -> `A:200`); AC-1 variant; GUARDS: other user stored -> `AUTH_REQUIRED`, stored session untouched, original request not retried; same-tab sign-out + same-user login (epoch changed) -> `AUTH_REQUIRED`.
 - `src/lib/debt5/ac4-ac5-no-bearerless-send.test.ts`: X-S1 repro -> `AUTH_REQUIRED`, no request without `Authorization`; X-S2 repro -> `NETWORK_ERROR`, bearers `["Bearer old"]` only, timer count back to start.
 - `src/lib/debt5/ac6-role-validation.test.ts`: X-14 repro (`admin` -> `null`), tampered role, `getStoredRefreshToken()` still returns the token, `logout()` POSTs it; `sessionFromIdentity` unknown role with/without valid prev; GUARD: all four known roles accepted.
@@ -63,7 +63,7 @@ marks the token) -> AC-4 -> AC-5. WP-B: AC-10 -> AC-7/AC-8 -> AC-9 -> AC-11. Com
 ## 5. Rollback
 
 One PR with a merge commit; `git revert -m 1 <merge>`. No data, no backend, no migration. The only new
-persisted state is sessionStorage `ef:refresh:used`, which older code ignores. Check after the revert: `npm test`,
+persisted state is sessionStorage `ef:rt:used`, which older code ignores. Check after the revert: `npm test`,
 `npx tsc --noEmit`, lint and `npm run build` pass.
 
 ## 6. Mutation test (threshold 10/10; extended in §7 P-8)
