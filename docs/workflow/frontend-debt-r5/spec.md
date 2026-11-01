@@ -54,8 +54,10 @@ abort for the POST owner. The changes below only add guards around that design.
   `ops` (for example `"admin"` or a tampered value), Then `getSession()` and `peekSession()` return `null` (signed
   out for the UI, no `Authorization` header), and `ef_refresh` stays readable by `getStoredRefreshToken()` so
   `logout()` can still revoke it (F-15). Given an identity response (login, refresh, Google) with an unknown or
-  missing role, Then `sessionFromIdentity` uses the previous session's role when it is valid, otherwise `buyer`
-  (least privilege; the server enforces roles). A known role is stored unchanged.
+  missing role, Then `sessionFromIdentity` uses the previous session's role when it is valid and belongs to the
+  same user id, otherwise `buyer` (least privilege; the server enforces roles). A known role is stored unchanged.
+  (Clarified after plan review P-6: the store that holds `ef_token` + `ef_user` decides; an invalid session in
+  localStorage does not fall through to a session in sessionStorage.)
 
 ### B. Checkout and payment
 
@@ -74,14 +76,21 @@ abort for the POST owner. The changes below only add guards around that design.
   not parse), Then `redirectUrl` is the default result URL (`/checkout/{eventId}/result?orderId={orderId}`, or the
   caller's `returnUrl`) and the browser never navigates to the rejected value. `https://...` provider URLs and
   relative URLs are kept unchanged, so `payment-client.contract.test.ts` passes untouched.
-- **AC-11 (C-6) Release held tickets.** Given the checkout page shows an active hold, Then a secondary button
+- **AC-11 (C-6) Release held tickets, after confirmation.** (Clarified 2026-11-01 to match the human approval:
+  a confirmation dialog is required.) Given the checkout page shows an active hold, Then a secondary button
   "Huỷ giữ vé" (i18n key `checkout.cancelHold`, English "Release tickets") is shown. When the buyer clicks it, Then
-  `DELETE /v1/holds/{holdId}` is sent exactly once (button disabled with a spinner while it runs, double clicks
-  ignored). On success (204/404/2xx) the stored hold is removed, the countdown disappears and the page returns to
-  the idle "Giữ vé và thanh toán" state. On `AUTH_REQUIRED` the existing sign-in alert is shown and the hold stays
-  on screen. On any other failure (network `AMBIGUOUS`, other HTTP status) the hold stays on screen and an error
-  alert says the release could not be confirmed (key `checkout.cancelHoldFailed`). The button is not shown in the
-  idle, creating, expired, sold-out or ambiguous states.
+  no request is sent; an accessible confirmation dialog opens (`role="alertdialog"`, `aria-modal="true"`,
+  labelled by its title and described by its body, focus moves into the dialog and returns to the trigger when it
+  closes; keys `checkout.cancelHoldConfirmTitle`, `checkout.cancelHoldConfirmBody`, `checkout.cancelHoldConfirm`,
+  `checkout.cancelHoldKeep`, vi and en). "Giữ lại" (keep) or Esc closes it and sends nothing. When the buyer
+  confirms, Then `DELETE /v1/holds/{holdId}` is sent exactly once (confirm disabled with a spinner while it runs,
+  double clicks ignored; the primary action and tier selection are disabled meanwhile). If the hold leaves the
+  active state while the dialog is open (expiry), the dialog closes and nothing is sent. On success (204/404/2xx)
+  the stored hold is removed, the countdown disappears and the page returns to the idle "Giữ vé và thanh toán"
+  state. On `AUTH_REQUIRED` the existing sign-in alert is shown (one prompt) and the hold stays on screen. On any
+  other failure (network `AMBIGUOUS`, other HTTP status) the hold stays on screen and an error alert says the
+  release could not be confirmed (key `checkout.cancelHoldFailed`). The button is not shown in the idle, creating,
+  expired, sold-out or ambiguous states.
 
 ### C. Cross-cutting
 
@@ -109,7 +118,7 @@ Already closed by frontend-debt-r4 (listed so nothing is lost): R4-1/W-3, R4-2/W
 ## 4. Out of scope
 
 Backend changes; HttpOnly cookies; refresh design changes (lock, deadlines, single POST); sample-data screens;
-a confirmation dialog for "Huỷ giữ vé"; a release button on the payment page.
+a release button on the payment page; a shared dialog component for other pages (the AC-11 dialog stays local).
 
 ## 5. Edge cases
 
@@ -123,6 +132,9 @@ a confirmation dialog for "Huỷ giữ vé"; a release button on the payment pag
   a call that starts after the abort is not affected.
 - AC-6: a stored session with a valid role but an unknown extra field is still accepted.
 - AC-7/AC-9: `AUTH_REQUIRED` on the order GET and on issue-tickets at the same time -> one prompt only.
+- AC-2 (plan review P-4): when the token is marked used and the guard did not clear, any other store still
+  holding that token is wiped at once, so no stale copy outlives the 16-entry record.
+- AC-11: the hold expires while the confirmation dialog is open -> dialog closes, nothing sent.
 - AC-11: the hold expires while the DELETE is in flight -> the page ends in the expired state, not idle; the
   DELETE answers 404 -> treated as released.
 
