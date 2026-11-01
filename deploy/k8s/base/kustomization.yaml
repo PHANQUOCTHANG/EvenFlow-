@@ -21,3 +21,7 @@ resources:
   - ticketing
   - payment
   - ai-worker
+  # background processes
+  - notification
+  - waitingroom-controller
+  - ticketing-worker

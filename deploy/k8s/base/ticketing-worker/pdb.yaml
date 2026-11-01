@@ -1,0 +1,17 @@
+# PDB for ticketing-worker (AC-10): maxUnavailable 1, selector = pod labels exactly.
+# With 1 replica, `maxUnavailable: 1` still lets a node drain evict the pod
+# (`minAvailable` would block the drain forever).
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: eventflow-ticketing-worker
+  namespace: eventflow
+  labels:
+    app.kubernetes.io/name: eventflow-ticketing-worker
+    app.kubernetes.io/part-of: eventflow
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: eventflow-ticketing-worker
+      app.kubernetes.io/part-of: eventflow

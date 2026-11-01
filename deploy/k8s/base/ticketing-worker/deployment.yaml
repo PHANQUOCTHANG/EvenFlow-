@@ -1,0 +1,129 @@
+# Deployment for ticketing-worker (k8s-all spec 4.1): sweeper, seeder, outbox relay, ticket issuer; singleton (spec F8, D5).
+#
+# Values come from spec 4.1 and policy-contract.md; env = the compose block with hostnames
+# replaced by Service names or by keys of `eventflow-endpoints` / `eventflow-app-config` (per overlay),
+# and every secret from `secretKeyRef` per policy-contract.md section 8 (never optional,
+# never `envFrom`). Overlay-only secret keys are added by the overlay, not here.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: eventflow-ticketing-worker
+  namespace: eventflow
+  labels:
+    app.kubernetes.io/name: eventflow-ticketing-worker
+    app.kubernetes.io/part-of: eventflow
+  annotations:
+    eventflow.io/policy-exempt.AC-11: "singleton: no spread for 1 replica (spec D5)"
+spec:
+  # Singleton (AC-7, spec D5): the inventory reconciler is not proven safe with two
+  # instances, so Recreate (never two pods at once) and no HPA (AC-9).
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: eventflow-ticketing-worker
+      app.kubernetes.io/part-of: eventflow
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: eventflow-ticketing-worker
+        app.kubernetes.io/part-of: eventflow
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9092"
+        prometheus.io/path: /metrics
+    spec:
+      # App grace: ctx cancel; 30 s is ample.
+      terminationGracePeriodSeconds: 30
+      # AC-12: no process calls the Kubernetes API.
+      automountServiceAccountToken: false
+      securityContext:
+        # AC-12: the image sets a numeric USER (AC-13); no runAsUser here on purpose, so a
+        # Dockerfile regression fails loudly (CreateContainerConfigError) instead of being masked.
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: ticketing-worker
+          # AC-20: no tag in base; the overlay `images:` list sets sha-<short>.
+          image: ghcr.io/phanquocthang/eventflow-ticketing
+          imagePullPolicy: IfNotPresent
+          command: ["/worker"]
+          ports:
+            - name: metrics
+              containerPort: 9092
+              protocol: TCP
+          env:
+            - name: APP_ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: eventflow-app-config
+                  key: APP_ENV
+            - name: REDIS_ADDR
+              valueFrom:
+                configMapKeyRef:
+                  name: eventflow-endpoints
+                  key: REDIS_ADDR
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              valueFrom:
+                configMapKeyRef:
+                  name: eventflow-endpoints
+                  key: OTEL_EXPORTER_OTLP_ENDPOINT
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: eventflow-db
+                  key: DATABASE_URL_POOLED
+            - name: RABBITMQ_URL
+              valueFrom:
+                secretKeyRef:
+                  name: eventflow-mq
+                  key: AMQP_URL
+            - name: HMAC_QR_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: eventflow-qr
+                  key: HMAC_QR_SECRET
+            - name: ACTIVE_EVENT_IDS
+              valueFrom:
+                configMapKeyRef:
+                  name: eventflow-app-config
+                  key: ACTIVE_EVENT_IDS
+                  optional: true
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          # Spec F5/9: no health endpoint, only /metrics. The probes prove the process
+          # serves HTTP, not that the work loop is alive (known limit).
+          startupProbe:
+            httpGet:
+              path: /metrics
+              port: metrics
+            periodSeconds: 2
+            timeoutSeconds: 2
+            failureThreshold: 30
+          livenessProbe:
+            httpGet:
+              path: /metrics
+              port: metrics
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /metrics
+              port: metrics
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 3
