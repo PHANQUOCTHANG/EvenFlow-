@@ -365,3 +365,7 @@ disagree, this section wins.
 - **E7 (M2)** AC-24 tooling: validation needs **no cluster and no Docker**; it renders with pinned kustomize
   (not kubectl) and runs kubeconform/yq at pinned versions via `go run` (`policy-contract.md` §6). It needs network
   on first run (Go modules, kubeconform schemas) and caches both. Docker images are an optional mode.
+
+## Human approval of round-2 errata
+
+Errata E1, E2, E4, E5, E6, E7 and decision D7 APPROVED by TranDinhVo on 2026-11-01 in the Claude Code session (E3 approved earlier).
