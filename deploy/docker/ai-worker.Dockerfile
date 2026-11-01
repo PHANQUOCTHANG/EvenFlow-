@@ -9,7 +9,8 @@ COPY services/ai-worker/app ./app
 COPY deploy/rabbitmq/definitions.json ./topology/definitions.json
 ENV AI_TOPOLOGY_FILE=/app/topology/definitions.json
 RUN useradd -m -u 10001 worker
-USER worker
+# Dang so (cung uid 10001 o tren): runAsNonRoot cua kubelet chi doc Config.User. AC-13.
+USER 10001
 EXPOSE 8090
 # --log-config: log JSON tu dong dau tien (truoc lifespan), khong chi tu luc app khoi dong.
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8090", "--log-config", "app/logging.json"]
