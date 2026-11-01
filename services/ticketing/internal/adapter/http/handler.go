@@ -33,6 +33,7 @@ type Handler struct {
 	ticketChecker  TicketChecker
 	ticketReader   TicketReader
 	orderAPI       // API don hang (EV-NEW-2), xem order_handler.go
+	opsAPI         // war room Ops + doanh so organizer, xem ops_handler.go
 	log            *slog.Logger
 
 	queueSecret []byte // xac minh queue token (EV-137); rong -> tu choi tao hold (fail-closed)
@@ -85,9 +86,16 @@ const (
 
 // Routes dang ky route. idempotency BAT BUOC: BR-O5 yeu cau moi API ghi co Idempotency-Key, nen
 // khong cho phep dang ky route ghi ma khong truyen middleware nay (truyen idem.Middleware(...)).
-func (h *Handler) Routes(mux *http.ServeMux, idempotency httpx.Middleware) {
+// Routes dang ky moi route da cau hinh. idempotency (BR-O5) boc cac route ghi; thieu no thi cac route do
+// tu choi moi request (fail-closed) thay vi chay khong co Idempotency-Key. Route chi doc khong can no.
+func (h *Handler) Routes(mux *http.ServeMux, idempotencyMW ...httpx.Middleware) {
+	idempotency := idempotencyUnavailable
+	if len(idempotencyMW) > 0 && idempotencyMW[0] != nil {
+		idempotency = idempotencyMW[0]
+	}
 	mux.Handle("POST /v1/events/{eventID}/holds", idempotency(http.HandlerFunc(h.createHold)))
 	h.registerOrderRoutes(mux, idempotency)
+	h.registerOpsRoutes(mux) // chi doc: khong can Idempotency-Key
 	if h.limits != nil {
 		// Doc, khong ghi: khong can Idempotency-Key.
 		mux.HandleFunc("GET /v1/events/{eventID}/purchase-limit", h.purchaseLimit)
@@ -203,4 +211,11 @@ func (h *Handler) createHold(w http.ResponseWriter, r *http.Request) {
 		h.log.Error("tao hold that bai", "err", err)
 		httpx.WriteProblem(w, http.StatusServiceUnavailable, "he thong dang ban, vui long thu lai")
 	}
+}
+
+// idempotencyUnavailable thay the middleware Idempotency-Key khi Routes duoc goi ma khong co no.
+func idempotencyUnavailable(http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		httpx.WriteProblem(w, http.StatusServiceUnavailable, "chua cau hinh Idempotency-Key")
+	})
 }
