@@ -21,3 +21,7 @@ Scope: `deploy/k8s/policy/test_policy.sh` and `deploy/k8s/policy/testdata/**` on
 
 - good-staging already carries a non-empty GOOGLE_CLIENT_ID (verified).
 - Added bad/AC-32--google-client-id-empty.yaml (staging, --processes web,gateway,identity, empty string in eventflow-app-config). Now 152 bad fixtures, selftest total 165.
+
+## TCR-E8c: AC-1 count excludes dev-infra Deployments (covered by E8 / contract rev 2 section 2)
+
+- test_policy.sh E-AC1-DEPLOYMENTS now counts rendered Deployments without label eventflow.io/tier=dev-infra via the pinned yq and still expects 11 (SKIP when yq is unavailable).
