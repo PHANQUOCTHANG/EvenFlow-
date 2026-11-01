@@ -16,3 +16,8 @@ Scope: `deploy/k8s/policy/test_policy.sh` and `deploy/k8s/policy/testdata/**` on
 - `test_policy.sh`: `--dockerfiles` runs (good dir once, each bad dir expects exit 1 with only `FAIL AC-13`), exit-2 case for a
   missing Dockerfile dir, AC-13 coverage check.
 - All other bad fixtures keep their rule id and intent; their bytes changed because they derive from the good fixtures.
+
+## TCR-E8b: AC-32 requires non-empty GOOGLE_CLIENT_ID in staging (human-confirmed 2026-11-01, spec.md aec252a)
+
+- good-staging already carries a non-empty GOOGLE_CLIENT_ID (verified).
+- Added bad/AC-32--google-client-id-empty.yaml (staging, --processes web,gateway,identity, empty string in eventflow-app-config). Now 152 bad fixtures, selftest total 165.

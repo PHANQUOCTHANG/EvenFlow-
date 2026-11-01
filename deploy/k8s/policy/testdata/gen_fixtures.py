@@ -806,6 +806,7 @@ mut("AC-32", "momo-secret-missing", lambda o: rm_env(o, "payment", "MOMO_SECRET_
 mut("AC-32", "momo-notify-url-absent", momo_notify_absent, overlay="staging")
 mut("AC-32", "email-provider-mock", lambda o: cfg(o).update({"EMAIL_PROVIDER": "mock"}), overlay="staging", extra=("notification",))
 mut("AC-32", "stripe-url-in-configmap", lambda o: cfg(o).update({"STRIPE_SUCCESS_URL": "https://staging.example.com/pay/ok"}), overlay="staging", extra=("payment",))
+mut("AC-32", "google-client-id-empty", lambda o: cfg(o).update({"GOOGLE_CLIENT_ID": ""}), overlay="staging", extra=("identity",))
 mut("EXEMPT", "worker-ac9", worker_ac9)
 mut("EXEMPT", "web-ac12-whole-rule", web_whole_rule)
 mut("EXEMPT", "web-unknown-subcheck", web_unknown_sub)
