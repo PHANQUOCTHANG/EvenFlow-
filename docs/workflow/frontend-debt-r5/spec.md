@@ -136,3 +136,7 @@ feature). Questions for the human:
 2. AC-6: unknown role in storage -> treated as signed out; unknown role in an identity response -> previous role or
    `buyer`. Confirm, or prefer failing the login instead.
 3. AC-11: add the "Huỷ giữ vé" button without a confirmation dialog (as proposed), or require one.
+
+## Human approval
+
+Approved by TranDinhVo on 2026-11-01 in the Claude Code session, with all recommended decisions. AC-11: the "Huỷ giữ vé" button REQUIRES a confirmation dialog before sending DELETE.
