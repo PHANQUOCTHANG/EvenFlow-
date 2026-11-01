@@ -140,6 +140,12 @@ async function doRefresh(usedRefresh: string | null, sentUserId: string | null):
   return refreshCore(cur, cur.refreshToken);
 }
 
+/** Refresh da co cau tra loi chot nhung khong dung duoc: chi xoa khi van la phien da POST, roi AUTH_REQUIRED. */
+function failedRefresh(epoch: number, cur: Session, problem: Partial<Problem> = {}): never {
+  if (isSamePostedSession(epoch, cur)) clearSession();
+  throw new ApiError("AUTH_REQUIRED", 401, problem, "Phien dang nhap da het han");
+}
+
 /** Chi xoa phien khi no van la phien da POST: cung epoch, cung refresh token VA cung user id. */
 function isSamePostedSession(epoch: number, cur: Session): boolean {
   const stored = peekSession();
@@ -189,7 +195,17 @@ async function refreshPost(cur: Session, refreshToken: string, epoch: number, co
     }
     throw await toApiError(res);
   }
-  const body = (await res.json()) as IdentityTokens;
+  // AC-1: 2xx nhung body khong doc duoc / khong phai object -> AUTH_REQUIRED (khong phai NETWORK_ERROR). Huy 120 s trong luc
+  // doc body -> nem lai de refreshCore giu ket qua huy.
+  let raw: unknown;
+  try {
+    raw = await res.json();
+  } catch (err) {
+    if (controller.signal.aborted) throw err;
+    return failedRefresh(epoch, cur);
+  }
+  if (raw === null || typeof raw !== "object" || Array.isArray(raw)) return failedRefresh(epoch, cur);
+  const body = raw as IdentityTokens;
   // F-12: dang xuat (cung tab hoac tab khac) trong luc refresh dang bay -> bo ket qua, khong hoi sinh phien.
   const after = peekSession();
   if (epoch !== getSessionEpoch() || !after) {
