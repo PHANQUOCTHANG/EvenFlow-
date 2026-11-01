@@ -31,7 +31,7 @@ run web-test-coverage bash -c "cd apps/web && npx vitest run --coverage"
 run web-audit         bash -c "cd apps/web && npm audit --omit=dev --json > ../../$OUT/audit-head.json; git show $BASE:apps/web/package-lock.json > /tmp/base-lock.json; node -e '
 const h=require(\"../../$OUT/audit-head.json\").vulnerabilities||{};
 const bad=Object.entries(h).filter(([,v])=>[\"high\",\"critical\"].includes(v.severity)).map(([k])=>k);
-const known=[\"next\",\"postcss\",\"source-map-js\"]; // co san tren develop $BASE (npm audit cung ket qua)
+const known=[\"next\",\"postcss\",\"source-map-js\",\"zod\"]; // co san tren develop $BASE (kiem lai 2026-11-01: zod GHSA-mrhx-c7xc-m3w5 moi cong bo, develop cung bi)
 const fresh=bad.filter(k=>!known.includes(k));
 console.log(\"high/critical:\",bad.join(\",\")||\"none\",\"| new vs develop:\",fresh.join(\",\")||\"none\");
 process.exit(fresh.length?1:0);'"
