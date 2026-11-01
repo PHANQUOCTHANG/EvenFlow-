@@ -15,3 +15,9 @@ resources:
   # --- app workloads (WP2), one directory per process ---
   - web
   - gateway
+  - identity
+  - event
+  - waitingroom
+  - ticketing
+  - payment
+  - ai-worker
