@@ -298,3 +298,70 @@ Spec approved with D1-D6 answered; 4.1, 6.1, 6.2, 7 frozen as contracts; test de
 ## Human approval
 
 Approved by TranDinhVo on 2026-11-01 in the Claude Code session, with all recommended decisions.
+
+## Erratum (round 2, after plan-review.md round 1)
+
+Status: E3 recorded as implicitly approved by the human (least privilege, relayed by the coordinator 2026-11-01);
+E1, E2, E4-E7 need the human's sign-off **before WP0 freezes fixtures**. Where this section and the text above
+disagree, this section wins.
+
+- **E1 (M1) — exemption format and rule ids.** Section 4 "Exemption" is replaced by `policy-contract.md` §3: one
+  annotation per rule, `eventflow.io/policy-exempt.AC-<n>: "<reason>"` (ticketing-worker needs AC-9 and AC-11).
+  Rule ids = AC numbers, listed in `policy-contract.md` §2. AC-25 reads "reject with the rule id defined in
+  `policy-contract.md`".
+- **E2 (M3) — per-overlay app settings; new AC-32.** Spec 4.1 "env = compose block" applies only to values that are
+  the same in every environment. Environment-dependent app settings live in a per-overlay ConfigMap
+  `eventflow-app-config` (configMapGenerator from `overlays/<o>/app-config.env`) read with `configMapKeyRef`
+  (`optional: true` where staging omits the key). Values:
+
+  | Key | local | staging |
+  |---|---|---|
+  | `APP_ENV` | development | production |
+  | `MIN_SALE_LEAD_SECONDS` (event) | 60 | **absent** (BR-E2 default 30 min) |
+  | `ACTIVE_EVENT_IDS` (controller, worker) | the two demo UUIDs | **absent** (discovery from Postgres, EV-118) |
+  | `ADMIT_MIN_RATE/MAX_RATE/STEP_UP/BACKOFF/TTL_SECONDS` | 5 / 50 / 10 / 0.7 / 900 | **absent** (`app.DefaultAdmitConfig`) |
+  | `GEMINI_MOCK` | 1 | 0 (`GEMINI_API_KEY` then **required** in `eventflow-ai`, ai-worker refuses to start otherwise) |
+  | `PAYMENT_SANDBOX_MODE` | success | **absent** |
+  | `PAYMENT_DEFAULT_PROVIDER` | sandbox | vnpay |
+  | `PAYMENT_ENABLED_PROVIDERS` | sandbox,vnpay,momo,stripe | vnpay,momo,stripe |
+  | `CORS_ALLOWED_ORIGINS` | http://eventflow.localtest.me | https://<staging web host> placeholder |
+
+  Note: compose sets `PAYMENT_SANDBOX_MODE: "true"`, which is not a valid mode (`success|fail|delay`,
+  `services/payment/internal/adapter/gateway/sandbox.go:16-18`); local uses `success`. Compose is not changed.
+  **AC-32 (new)** Given the staging render, Then no container env and no ConfigMap carries `MIN_SALE_LEAD_SECONDS`,
+  `ACTIVE_EVENT_IDS`, any `ADMIT_*`, `PAYMENT_SANDBOX_MODE`, `GEMINI_MOCK` ≠ `"0"`, `PAYMENT_DEFAULT_PROVIDER=sandbox`
+  or `sandbox` in `PAYMENT_ENABLED_PROVIDERS`. Checked by the policy (rule AC-32, fixtures per `policy-contract.md` §7).
+  **D7 (new, recommended):** staging payment uses the providers' own test endpoints (code defaults for
+  `VNPAY_BASE_URL`, `MOMO_ENDPOINT`) with credentials from `eventflow-payment`, not the in-process sandbox; a load test
+  that must not call providers adds its own patch outside this task.
+- **E3 (m1) — least-privilege secret mapping; replaces the "Used by" column of 6.1 and corrects F10.** Gateway in
+  production requires only `JWT_SECRET` (`services/gateway/internal/config/config.go:66-79`); only waitingroom and
+  ticketing read `QUEUE_TOKEN_SECRET`; the ticketing **server** reads no AMQP URL (compose's `AMQP_URL` there is dead
+  config). Payment also reads provider secrets via `getEnvOrDefault` (`services/payment/internal/config/config.go:82-96`).
+  AC-18 checks exactly this table:
+
+  | Process | Secret keys (env name ← `secret/key`) |
+  |---|---|
+  | gateway | `JWT_SECRET ← eventflow-auth/JWT_SECRET` |
+  | identity | `DATABASE_URL ← eventflow-db/DATABASE_URL_DIRECT`, `JWT_SECRET ← eventflow-auth/JWT_SECRET`, `PII_ENC_KEY`, `PII_HASH_KEY` ← `eventflow-identity`; optional `SMTP_USER`, `SMTP_PASS`, `TELEGRAM_BOT_TOKEN`, `REDIS_PASSWORD` ← `eventflow-identity` |
+  | event | `DATABASE_URL ← eventflow-db/DATABASE_URL_DIRECT`, `RABBITMQ_URL ← eventflow-mq/AMQP_URL` |
+  | waitingroom | `QUEUE_TOKEN_SECRET ← eventflow-auth/QUEUE_TOKEN_SECRET` |
+  | waitingroom-controller | none |
+  | ticketing | `DATABASE_URL ← eventflow-db/DATABASE_URL_POOLED`, `QUEUE_TOKEN_SECRET ← eventflow-auth/QUEUE_TOKEN_SECRET`, `HMAC_QR_SECRET ← eventflow-qr/HMAC_QR_SECRET` |
+  | ticketing-worker | `DATABASE_URL ← eventflow-db/DATABASE_URL_POOLED`, `RABBITMQ_URL ← eventflow-mq/AMQP_URL`, `HMAC_QR_SECRET ← eventflow-qr/HMAC_QR_SECRET` |
+  | payment | `DATABASE_URL ← eventflow-db/DATABASE_URL_POOLED`, `RABBITMQ_URL ← eventflow-mq/AMQP_URL`; optional `VNPAY_TMN_CODE`, `VNPAY_HASH_SECRET`, `MOMO_PARTNER_CODE`, `MOMO_ACCESS_KEY`, `MOMO_SECRET_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` ← `eventflow-payment` (required in staging by D7) |
+  | notification | `DATABASE_URL ← eventflow-db/DATABASE_URL_POOLED`, `AMQP_URL ← eventflow-mq/AMQP_URL` |
+  | ai-worker | `AMQP_URL ← eventflow-mq/AMQP_URL`; `GEMINI_API_KEY ← eventflow-ai` (optional local, required staging) |
+  | web | none |
+  | migrate Job (local) | `GOOSE_DBSTRING ← eventflow-db/DATABASE_URL_DIRECT`, `GOOSE_DRIVER=postgres` literal |
+
+  Secret objects only by key reference (`secretKeyRef`), never `envFrom: secretRef`, so a pod sees only its keys.
+  Dev PII keys in `secrets.dev.env`: 44-char base64 strings that contain `dev` and decode to exactly 32 bytes.
+- **E4 (m6)** ai-worker app grace = 20 s (`shutdown_grace_seconds`, `services/ai-worker/app/config.py:56`);
+  `terminationGracePeriodSeconds` 35 like the other 20-s services.
+- **E5 (m7)** Minimum cluster version 1.30 (`preStop.sleep` beta on by default; GA 1.34). Stated in runbook.
+- **E6 (m4)** `ci.yml` paths filter `deploy` gains `'deploy/docker/**'` so AC-13 runs when a Dockerfile changes.
+  This replaces "paths filter unchanged" in D1; still inside the approved validate-deploy scope.
+- **E7 (M2)** AC-24 tooling: validation needs **no cluster and no Docker**; it renders with pinned kustomize
+  (not kubectl) and runs kubeconform/yq at pinned versions via `go run` (`policy-contract.md` §6). It needs network
+  on first run (Go modules, kubeconform schemas) and caches both. Docker images are an optional mode.

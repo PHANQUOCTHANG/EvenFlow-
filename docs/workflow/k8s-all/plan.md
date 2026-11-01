@@ -1,9 +1,10 @@
-# Plan: k8s-all (round 1, before plan review)
+# Plan: k8s-all (round 2, addresses plan-review.md round 1)
 
-Inputs: `spec.md` (AC-1..AC-31, decisions D1-D6 pending human approval), base develop @ c5fb598.
-No migrations, no service code changes, no new runtime dependencies. New CI tool images only (D1).
-Plan review is mandatory (High-risk); this plan assumes D1-D6 are approved as recommended — section 8 says what
-changes if they are not.
+Inputs: `spec.md` (AC-1..AC-31 + Erratum E1-E7 and AC-32; D1-D6 approved by the human 2026-11-01, D7 and errata
+E1/E2/E4-E7 pending sign-off), `policy-contract.md` (frozen), base develop @ c5fb598.
+No migrations, no service code changes, no new runtime dependencies. New CI tools are pinned Go modules (D1, E7).
+**Section "Round 2" at the end supersedes sections 1-9 wherever they disagree** (tool choice, ConfigMaps, secrets,
+CI step text).
 
 ## 1. Target layout
 
@@ -170,3 +171,82 @@ gateway.
 
 None expected: no existing test changes. If the CI edit forces an edit to `.github/scripts/tests/test-workflows.sh`
 (e.g. the AC-5 check must point to an overlay path), it goes through a test change request for human approval.
+
+## Round 2 (plan-review.md round 1: FAIL, 3 major + 13 minor)
+
+### Finding → resolution
+
+| Finding | Resolution |
+|---|---|
+| **M1** checker interface not frozen | New frozen `policy-contract.md`: rule id = AC number (table §2, incl. new AC-32 and `EXEMPT`), CLI `check_policy.py --overlay {local,staging} --input <json or -> [--processes <csv>]`, input = JSON array produced only by pinned yq, output regex `^FAIL (AC-[0-9]+ or EXEMPT) Kind/name: reason$` (exact regex in contract §5) + fixed last line, exit codes 0/1/2, fixture overlay selection via first line `# policy-args: …`, one-fixture-one-rule acceptance, multi-rule exemption `eventflow.io/policy-exempt.AC-<n>: "<reason>"` (ticketing-worker carries AC-9 and AC-11). Spec erratum E1. WP0 gets spec + erratum + contract; WP0 has already started in this worktree (`deploy/k8s/policy/`, `traceability.yaml`, `baseline.json` are untracked here), so it re-aligns its fixtures to the contract before the freeze |
+| **M2** offline validation needs Docker | All tools pinned in `deploy/k8s/tools.env` and run with `go run` by default (`TOOLS=go`): kustomize `sigs.k8s.io/kustomize/kustomize/v5@v5.7.1` (renders; kubectl is no longer used for rendering anywhere), kubeconform `github.com/yannh/kubeconform/cmd/kubeconform@v0.8.0` (same version as today's CI image), yq `github.com/mikefarah/yq/v4@v4.44.3`. Verified on this Windows machine 2026-11-01 with Go 1.27 and the Docker daemon down: all three ran with `go run` (kustomize printed `v5.7.1`, yq `v4.44.3`, kubeconform ran). `validate.sh` finds `go` on PATH or at `/c/Program Files/Go/bin/go`, uses `python3` or `python`, and runs kubeconform with `-cache "$TMP/kubeconform-cache"`. Optional `TOOLS=docker` sets `MSYS_NO_PATHCONV=1` for every `docker -v` and mounts `$(pwd -W 2>/dev/null || pwd)`. Corrected claim (spec E7): "no cluster and no Docker; network only on first run for Go modules and JSON schemas". The fast gate, RED check, mutation test and full gate all run locally this way |
+| **M3** demo settings leak into staging | Per-overlay ConfigMap `eventflow-app-config` (configMapGenerator from `overlays/<o>/app-config.env`), referenced with `configMapKeyRef` (`optional: true` for keys staging omits). Staging values are listed explicitly in spec E2: no `MIN_SALE_LEAD_SECONDS`, `ACTIVE_EVENT_IDS`, `ADMIT_*` or `PAYMENT_SANDBOX_MODE`; `GEMINI_MOCK=0` with a required key; providers vnpay/momo/stripe (decision D7). New AC-32 + policy rule + ≥ 3 fixtures (`policy-contract.md` §7). `eventflow-endpoints` stays for infra hosts only |
+| m1 secrets least privilege | Spec erratum E3: per-process key table. Gateway gets only `JWT_SECRET`; identity gets no `QUEUE_TOKEN_SECRET`; the ticketing server gets no MQ URL; payment provider secrets are added; `secretKeyRef` only, never `envFrom.secretRef`. AC-18 checks that table |
+| m2 inconsistent pinning | CI renders once with the pinned kustomize into `$RUNNER_TEMP/k8s-render/{local,staging}.yaml`; kubeconform and the policy both read those files (`validate.sh --render-dir`). `validate.sh` prints the kustomize, kubeconform and yq versions at the top of its log |
+| m3 migrate Job immutable | `ttlSecondsAfterFinished: 600`; the runbook and `gates.sh` C4.4 run `kubectl -n eventflow delete job eventflow-migrate --ignore-not-found` before apply/dry-run; env `GOOSE_DRIVER=postgres`, `GOOSE_DBSTRING ← eventflow-db/DATABASE_URL_DIRECT` |
+| m4 Dockerfile changes skip validate-deploy | Add `'deploy/docker/**'` to the `deploy` paths filter (spec E6). A small change inside the approved validate-deploy scope, recorded |
+| m5 dev PII keys | `secrets.dev.env` gets two 44-char base64 values that contain `dev` and decode to 32 bytes. WP3 proves this with `python3 -c "import base64,sys; assert len(base64.b64decode(sys.argv[1]))==32" <v>`; identity startup proves it at runtime (AC-30) |
+| m6 ai-worker grace | App grace 20 s (E4) → `terminationGracePeriodSeconds: 35`; the policy gets a numeric value |
+| m7 preStop.sleep version | Minimum Kubernetes 1.30 (E5) in the runbook and the staging assumptions. The "core since 1.29" text in §4 is wrong (alpha there, feature gate off) |
+| m8 gates C4.4 namespace | `kubectl get ns eventflow >/dev/null 2>&1 || kubectl create namespace eventflow`, delete the migrate Job, then `kubectl apply --dry-run=server -k deploy/k8s/overlays/local`. The no-cluster branch is kept verbatim. No yq in gates |
+| m9 dev-infra sizing | Values fixed for WP4. Postgres: StatefulSet, PVC 1Gi, `shared_buffers=128MB`, `max_connections=200`, limits 1 CPU/768Mi. Redis: `--maxmemory 256mb`, limit 512Mi. RabbitMQ: **StatefulSet** (stable hostname), PVC 1Gi, probe `rabbitmq-diagnostics -q check_port_connectivity` with `timeoutSeconds: 15`, startup 5 s × 36, limit 1Gi. PgBouncer: pinned tag (verified against the registry at WP4), `AUTH_TYPE=scram-sha-256`. Mailpit v1.21 |
+| m10 secret-scan exclusion | Run the full-gate scan first. Only if it hits, exclude exactly `:(exclude)deploy/k8s/overlays/local/secrets.dev.env` (never `*.env`); the AC-16 "contains dev" check is the compensating control |
+| m11 delete -k removes namespace | Runbook rollback states: "`kubectl delete -k overlays/local` deletes Namespace `eventflow`, together with web and the dev PVC data". To keep the namespace: `kubectl -n eventflow delete deploy,sts,job,svc,ingress,hpa,pdb,networkpolicy,cm,secret -l app.kubernetes.io/part-of=eventflow` (every object carries that label) |
+| m12 placeholder tag | Overlays carry `newTag: sha-c5fb598` with the comment `# PLACEHOLDER: no image is built from this commit; runbook sets the real tag via a temp overlay` |
+| m13 header | Updated (top of file) |
+| (new in round 2) CRLF in `.env` | `.gitattributes` gains `*.env text eol=lf`. With `core.autocrlf=true`, a CRLF `secrets.dev.env` / `app-config.env` would put `\r` into every Secret/ConfigMap value |
+
+### Changed pieces of the plan
+
+**Layout additions:** `deploy/k8s/tools.env`; `overlays/{local,staging}/app-config.env`; one line in `.gitattributes`.
+
+**validate.sh:**
+
+```
+validate.sh [--render-dir DIR] [--skip-render] [--skip-kubeconform] [--skip-policy]
+  1. source tools.env; print versions
+  2. render: kustomize build overlays/<o> > DIR/<o>.yaml       (o in: local staging)
+  3. kubeconform -strict -summary -kubernetes-version $K8S_SCHEMA_VERSION -cache ... DIR/<o>.yaml
+  4. yq ea -o=json '[.]' DIR/<o>.yaml > DIR/<o>.json ; check_policy.py --overlay <o> --input DIR/<o>.json
+  5. AC-13 grep of numeric USER (prints FAIL AC-13 Dockerfile/<name>: ...)
+  6. bash policy/test_policy.sh
+```
+
+**CI `validate-deploy` (the whole change, D1 + E6):** add `actions/setup-go@v5` (`go-version: ${{ env.GO_VERSION }}`,
+module cache on) and replace the raw-directory step with:
+
+```yaml
+- name: render overlays (pinned kustomize)
+  run: bash deploy/k8s/validate.sh --render-dir "$RUNNER_TEMP/k8s-render" --skip-kubeconform --skip-policy
+- name: kubeconform -strict (rendered overlays)
+  run: |
+    set -euo pipefail
+    . deploy/k8s/tools.env
+    for o in local staging; do
+      go run "github.com/yannh/kubeconform/cmd/kubeconform@${KUBECONFORM_VERSION}" -strict -summary \
+        -kubernetes-version "$K8S_SCHEMA_VERSION" "$RUNNER_TEMP/k8s-render/$o.yaml"
+    done
+- name: k8s policy + self-test
+  run: bash deploy/k8s/validate.sh --render-dir "$RUNNER_TEMP/k8s-render" --skip-render --skip-kubeconform
+```
+
+The `deploy` filter also gains `'deploy/docker/**'`. The run text of the kubeconform step still contains
+`kubeconform` and `-strict`, so test-workflows.sh AC-5 keeps matching. The compose and promtool steps are unchanged.
+Before pushing, run the `lint-ci` script tests locally with `bash .github/scripts/tests/test-workflows.sh`.
+
+**WP table changes:**
+- WP0 inputs are spec + erratum + `policy-contract.md`.
+- WP3 also owns the `app-config.env` files, the `.gitattributes` line and the PII key check.
+- WP5 owns `tools.env`.
+- WP6 owns the CI filter line.
+- Fast gate per WP:
+  - `bash deploy/k8s/validate.sh` (TOOLS=go)
+  - `docker compose config -q` **only if Docker is up**; otherwise it is recorded as not run and CI runs it
+  - `bash .github/scripts/tests/test-workflows.sh`
+
+**Mutation test:** unchanged, plus a fourth manifest mutant. Adding `MIN_SALE_LEAD_SECONDS` to the staging
+`app-config.env` must make `validate.sh` fail with AC-32.
+
+**Risks added:**
+- The first `go run` needs network; modules are cached afterwards, and CI uses the setup-go cache.
+- The kubeconform schema download from GitHub can be rate-limited. Use the `-cache` dir; a failed download is a hard error, never a skip.
