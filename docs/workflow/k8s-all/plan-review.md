@@ -115,3 +115,121 @@ overlay, referenced with `configMapKeyRef`/`envFrom` from base), or use overlay 
 
 M1, M2 and M3 fixed in plan.md. If spec text changes (M1 exemption format, M3 4.1 env split, m1 secret contract),
 record it as a spec erratum signed by the human before WP0 freezes fixtures.
+
+## Round 2
+
+Reviewer: new clean-context plan reviewer. Inputs: `spec.md` (errata E1-E7 and D7 human-approved), `plan.md`
+("Round 2" section), `policy-contract.md` (frozen), round 1 above. Read-only checks against the worktree @ f72bad8.
+The untracked WP0 files under `deploy/k8s/policy/` were not reviewed.
+
+## Verdict (round 2): **FAIL** (2 major, 0 blocker)
+
+M1, M2 and M3 from round 1 are addressed in substance, and 12 of the 13 minors are resolved (m13 only partly). Two new
+major problems sit in the round-2 contract and need fixing before WP0 freezes fixtures:
+- R2-M1: the staging "prod-like" guarantee still fails open whenever a key is **absent**, because the service code
+  falls back to demo or insecure defaults.
+- R2-M2: exemptions apply to a whole rule. That switches off checks the spec meant to keep: the singleton no-HPA
+  guard for ticketing-worker, and the whole web security context.
+
+Both fixes are small changes to the contract text plus a few fixtures.
+
+## Round-1 resolutions verified
+
+| Finding | Status | Evidence (checked now) |
+|---|---|---|
+| M1 interface frozen | **Resolved**, with the gaps listed in R2-M2, r2-m1, r2-m3 and r2-m10 | `policy-contract.md` §2-§7: rule ids, CLI, exit codes, output regex, `# policy-args:` line, one-fixture-one-rule, per-rule annotation. The annotation key `eventflow.io/policy-exempt.AC-9` is a valid qualified name (uppercase is allowed in the name part) |
+| M2 offline without Docker | **Resolved** | Ran on this machine (Go 1.27, Git Bash, Docker down), from the repo root where `GOWORK` is set: `go run sigs.k8s.io/kustomize/kustomize/v5@v5.7.1 version` → `v5.7.1`; yq `v4.44.3`; `go run …/kubeconform@v0.8.0 -strict -summary -kubernetes-version 1.32.0 -cache <dir> deploy/k8s/*.yaml` → `Valid: 5, Invalid: 0, Errors: 0, Skipped: 0`. The `@version` form ignores `go.work`. Module `go` directives: kustomize 1.22.7, yq 1.21, **kubeconform v0.8.0 = 1.26**. CI `GO_VERSION` is "1.26" (`ci.yml:28`), so that is OK, but it is the floor. `python3` is available (msys 3.12) |
+| M3 demo settings | **Partly resolved.** Present values are now overlay-specific. Absent values still leak, see R2-M1 | spec E2; compose `docker-compose.yml:165-172,214,292-294,309-310,228-229` all covered by the E2 table |
+| m1 least privilege | **Resolved.** The E3 table matches the code | env reads: gateway only `JWT_SECRET` (`gateway/internal/config/config.go:72-79`); `QueueTokenSecretFromEnv` only in `ticketing/cmd/server/main.go:123` and `waitingroom/cmd/server/main.go:74`; `RABBITMQ_URL` only in event, payment and ticketing-worker; `AMQP_URL` only in notification and ai-worker; the ticketing server reads no MQ URL; the controller reads only Redis (active set via `libs/go/activeevents`, `controller/main.go:20,66`) |
+| m2 single render | Resolved | plan Round 2 CI: one render to `$RUNNER_TEMP/k8s-render`, shared by kubeconform and policy |
+| m3 migrate Job | Resolved | `GOOSE_DRIVER`/`GOOSE_DBSTRING` is the same mechanism compose uses (`docker-compose.yml:131-136`). goose with pgx accepts the `postgres://…?sslmode=disable` URL form of `DATABASE_URL_DIRECT` |
+| m4 Dockerfile filter | Resolved | adds `'deploy/docker/**'` to the `deploy` filter (`ci.yml:76-79`); the AC-13 grep runs in the third CI step (`--skip-render --skip-kubeconform`) |
+| m5 PII keys | Resolved | a 44-char base64 value decodes to 32 bytes only if its last data char is one of `AEIMQUYcgkosw048` before the `=`; the planned python assert catches any mistake |
+| m6, m7, m10, m11, m12 | Resolved | — |
+| m8 gates namespace | Resolved, but deleting the Job is new, see r2-m6 | `gates.sh:225-270` |
+| m9 sizing | Resolved for sizing. The security-context question is open, see r2-m2 | — |
+| m13 header | **Not fully.** `plan.md:3-4` still says "D7 and errata E1/E2/E4-E7 pending sign-off", but spec.md:369-371 records approval | — |
+| CRLF `.env` | Resolved | `core.autocrlf=true` here. Tracked env files are only `.env.example` files, which `*.env` does not match, so nothing is renormalised. The rule also covers `tools.env`, which bash sources (a CRLF there would put `\r` into the `@version`) |
+| test-workflows AC-5 | Still passes | `ac5_k8s` greps the `run` text of any step in a `deploy`-gated job for `kubeconform` and `-strict` (`test-workflows.sh:606-619`). The new step has both. `ac11_no_deploy` only scans for `kubectl apply/create…` without `--dry-run`, and CI has no kubectl. `ac1_no_latest` is not triggered |
+
+## Findings (round 2)
+
+### R2-M1 (major): staging fails open when a key is absent (demo defaults, known secrets)
+
+AC-32 only forbids **values** that are present. E3 marks the payment provider secrets `optional`. The code turns
+every absent key into the demo or insecure behaviour:
+- **Payment.** `PAYMENT_DEFAULT_PROVIDER` absent → `"sandbox"`. `PAYMENT_ENABLED_PROVIDERS` absent → `sandbox,vnpay,momo,stripe`
+  (`services/payment/internal/config/config.go:52-70`). A staging app-config that omits these keys, or reads them
+  through `configMapKeyRef optional: true` (E2 allows `optional: true` "where staging omits the key"), passes AC-32
+  and re-enables the in-process sandbox, which pays any order with mode `success`.
+- **Gemini.** `GEMINI_MOCK` absent → `gemini_mock: bool = True` (`services/ai-worker/app/config.py:35`). Absent passes
+  AC-32 ("no `GEMINI_MOCK` other than `"0"`"), so staging silently mocks.
+- **Provider secrets.** E3 lists `VNPAY_HASH_SECRET`, `MOMO_SECRET_KEY`, `STRIPE_*` as `optional` "(required in
+  staging by D7)". But AC-18 is marked "Overlay-specific: no" in `policy-contract.md` §2, and the plan has no
+  staging patch, so "required in staging" cannot be encoded or checked. With `optional: true` and the key missing,
+  payment starts with the **public code defaults** (`config.go:82-93`, e.g. `VNPAY_HASH_SECRET` =
+  `EVENTFLOW_VNPAY_SECRET_KEY_123456`). The VNPay callback check uses that secret (`vnpay.go:121`), and
+  `/v1/payments/webhook/` is a Public gateway route (`gateway/internal/proxy/routes.go:65`). So anyone can forge a
+  "paid" callback. A non-optional `secretKeyRef` would instead fail loudly with `CreateContainerConfigError`.
+- Related existing debt that D7 now exposes: the Stripe callback accepts a request with **no** signature, and the
+  literal `v1=valid_sig` (`stripe.go:122-148`). Enabling `stripe` in staging makes that reachable.
+
+**Fix (contract change request + spec erratum, before WP0 freezes):**
+1. AC-32 (staging) also requires these keys to be **present**: `GEMINI_MOCK="0"`, `PAYMENT_DEFAULT_PROVIDER`,
+   `PAYMENT_ENABLED_PROVIDERS`. Each must come from an env literal or a non-optional `configMapKeyRef` to an existing key.
+   Add a fixture for "key absent in staging".
+2. Make AC-18 overlay-specific: in staging, the `secretKeyRef`s for `GEMINI_API_KEY` and for the provider keys of
+   every enabled provider are **not** `optional`. Simplest: non-optional in both overlays, with dev values in
+   `secrets.dev.env`. Add a fixture.
+3. Record the Stripe webhook verification as debt in the runbook (spec §9). Ask the human whether `stripe` stays in
+   staging `PAYMENT_ENABLED_PROVIDERS` until it is fixed.
+
+### R2-M2 (major): exemptions at rule level switch off checks the spec keeps
+
+`policy-contract.md` §3 says: "the checker skips that rule for that workload only (and for its HPA/PDB …)". The
+rule is the whole AC. This causes two problems:
+- **ticketing-worker AC-9.** E1 and contract §3 say the worker "needs" `policy-exempt.AC-9`. But AC-9 itself
+  demands "no HPA targets the fixed-replica workloads". That is the only guard against an HPA scaling the singleton
+  to 2, the D5 double-reconciler risk. If the exemption is present, the checker must skip AC-9 for the worker, so a
+  bad fixture "HPA targeting ticketing-worker" (which carries the annotation the contract says it needs) cannot fail
+  with AC-9. The contract contradicts itself, and the D5 guard is lost. The same applies to the waitingroom-controller
+  AC-9 entry in spec §7.
+- **web AC-12.** Spec §7 exempts web from `readOnlyRootFilesystem` only. A whole-rule AC-12 skip also drops
+  `runAsNonRoot`, `capabilities.drop`, `allowPrivilegeEscalation`, seccomp and automount for the public web pod. The
+  contract narrows the exemption to a sub-check ("runAsNonRoot only") for dev-infra, but not for web. So WP0 and WP5
+  can read it differently, which is the M1 failure mode again.
+
+**Fix (contract change request):**
+- Define the scope of each exemption at sub-check level:
+  - web `AC-12` → `readOnlyRootFilesystem` only;
+  - dev-infra `AC-12` → `runAsNonRoot` only;
+  - ticketing-worker `AC-11` → whole rule.
+- Remove AC-9 from the exemption pairs for both fixed-replica workloads. AC-9 already defines them as "must have no
+  HPA", so nothing needs exempting. A worker or controller carrying `policy-exempt.AC-9` → `FAIL EXEMPT`.
+- Say whether section-7 exceptions are realised **only** through annotations (that is, a web pod without the
+  annotation fails AC-12), or are hard-coded.
+- Add fixtures: "HPA targets ticketing-worker" → AC-9; "web with exemption but `runAsNonRoot` missing" → AC-12.
+
+### Minor (round 2)
+
+| # | Finding | Evidence | Fix |
+|---|---|---|---|
+| r2-m1 | AC-1 is ambiguous with dev-infra. The contract example counts all Deployments (`10 Deployments, want 11`), but the local render also has Deployments for PgBouncer and Mailpit | contract §5; plan layout `components/dev-infra` | Count only app Deployments (no `eventflow.io/tier: dev-infra` label), and say so in contract §2 |
+| r2-m2 | It is not stated which AC-12 checks apply to dev-infra. Official postgres, redis and rabbitmq entrypoints start as root and `gosu`/`chown`, which needs CHOWN/SETUID/SETGID. With `drop: [ALL]` (and only `runAsNonRoot` exemptable) they crash at AC-30 time | spec AC-12 "app pod" vs "No pod uses …"; contract §3 | Contract: list the dev-infra AC-12 sub-checks (host*, hostPath, privileged, `runAsUser: 0`, caps). WP4: run the stores as their image uid (999 postgres/redis/rabbitmq, 70 pgbouncer) with `fsGroup`, plus `emptyDir` for `/var/run/postgresql`, `/tmp` and `/etc/pgbouncer`. Then no root exemption is needed |
+| r2-m3 | Generator hash suffixes. In local, `secretGenerator`/`configMapGenerator` rename `eventflow-db` → `eventflow-db-<hash>` (and `eventflow-app-config-<hash>` in both overlays). AC-16 "allowed names", AC-18 `secret/key` and AC-22 compare names, and fixtures will probably use plain names | kustomize default | Contract: names match `^<name>(-[a-z0-9]{10})?$`, or overlays set `disableNameSuffixHash` (but then pods do not roll when a Secret changes). Pick one |
+| r2-m4 | kubeconform `-cache` fails if the directory does not exist. Verified: `failed opening cache folder …: The system cannot find the file specified`, exit 1 | run above | `mkdir -p` the cache dir in `validate.sh` |
+| r2-m5 | `actions/setup-go@v5` "module cache on": the repo has no root `go.sum` (only `go.work`, `go.work.sum`), and the tool modules are not in any `go.sum`. The cache either warns or misses | `ls go.*`; `ci.yml:90-93` | `cache-dependency-path: deploy/k8s/tools.env` |
+| r2-m6 | gates C4.4 now **deletes** `job/eventflow-migrate` on whatever kube-context is current, which could be a shared cluster, mid-migration | plan Round 2 m3/m8 | Delete only when the context is `docker-desktop` or `kind-*`, or only a Job with `status.succeeded`. Otherwise print that the immutable-Job error is expected |
+| r2-m7 | `validate.sh` flags do not cover steps 5-6 (AC-13 grep, self-test), so the CI "render" step (`--skip-kubeconform --skip-policy`) also runs the self-test | plan Round 2 `validate.sh` block | `--skip-policy` skips 4-6, or add `--render-only` |
+| r2-m8 | Per-environment keys and secrets the code reads are in neither E2 nor E3: notification `SMTP_USER`/`SMTP_PASSWORD`/`SMS_API_KEY` (`notification/internal/config/config.go:31-36`, note `SMTP_PASSWORD` vs identity `SMTP_PASS`); payment `VNPAY_RETURN_URL`, `MOMO_RETURN_URL`/`MOMO_NOTIFY_URL` (an empty IPN URL means MoMo can never complete in staging), `STRIPE_SUCCESS/CANCEL_URL`, `STRIPE_PUBLISHABLE_KEY` (matches the AC-17 `_KEY$` name pattern, so it can only come from a Secret); identity `GOOGLE_CLIENT_ID`; notification `SMTP_FROM` `.local` | env grep over services | Add them to E2/E3 (staging placeholders), or list them as known limits in the runbook |
+| r2-m9 | AC-13 negative path is untested: the contract excludes AC-13 from fixtures, so the mutation "disable the AC-13 grep" survives | contract §7, spec AC-25 | Give the AC-13 function a directory argument and add one bad Dockerfile fixture to the self-test |
+| r2-m10 | Where `APP_ENV`/`CORS_ALLOWED_ORIGINS` live: spec 4.1 says `eventflow-endpoints`, E2 says `eventflow-app-config`, plan Round 2 says endpoints is "infra hosts only". AC-19/AC-22 fixtures need one answer | spec 4.1, E2 | State in the contract: `eventflow-app-config` only |
+| r2-m11 | A staging Redis with a password cannot be wired: only identity reads `REDIS_PASSWORD`, and a `redis://:pw@` URL in a ConfigMap breaks AC-17 | env grep; spec AC-17 | Runbook known limit: staging Redis must be private and passwordless (or TLS/ACL later) |
+| r2-m12 | yq turns an empty YAML document (trailing `---`) into `null` in the array. The contract does not say whether that is input error (exit 2) or ignored | contract §4 | Checker ignores `null` entries; state it |
+| r2-m13 | `POSTGRES_PASSWORD` (`eventflow-dev-infra`) must equal the password inside the `eventflow-db` URLs. That is two copies in one file, and nothing checks them | plan §4, E3 | One comment in `secrets.dev.env`. AC-30 proves it at runtime |
+
+## Required for round 3
+
+Fix R2-M1 and R2-M2 as a `policy-contract.md` change request plus a short spec erratum (E8). Both need human
+approval **before WP0 freezes fixtures**, so tell the WP0 agent now. Minors can be fixed during implementation;
+r2-m1, r2-m3 and r2-m10 change fixture expectations, so put them into the same contract change.

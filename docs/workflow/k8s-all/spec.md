@@ -369,3 +369,7 @@ disagree, this section wins.
 ## Human approval of round-2 errata
 
 Errata E1, E2, E4, E5, E6, E7 and decision D7 APPROVED by TranDinhVo on 2026-11-01 in the Claude Code session (E3 approved earlier).
+
+## Human approval of erratum E8 (2026-11-01)
+
+APPROVED by TranDinhVo: (1) staging fails closed: GEMINI_MOCK="0" and all payment provider secrets for enabled providers are REQUIRED (no optional refs in staging; AC-18 becomes overlay-specific, AC-32 also requires presence); (2) exemptions are scoped to a named sub-check (web AC-12: readOnlyRootFilesystem only; dev-infra AC-12: runAsNonRoot only); AC-9 is NOT exemptable for fixed-replica workloads. Decision: Stripe is DISABLED in staging (enabled providers = vnpay, momo) until the payment Stripe webhook signature check is fixed (recorded as security debt).
