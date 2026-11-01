@@ -146,10 +146,14 @@ services:
       REDIS_ADDR: "redis:6379"
       OTEL_EXPORTER_OTLP_ENDPOINT: "http://jaeger:4318"
       QUEUE_TOKEN_SECRET: "${QUEUE_TOKEN_SECRET:-dev-queue-token-secret-change-me}"
+      # Chi de ghi audit_logs cho lenh ghi de admit rate cua Ops (EVF-60). Pool ket noi luoi: Postgres
+      # cham / chet khong chan khoi dong, readiness hay duong mua ve.
+      DATABASE_URL: "postgres://eventflow:eventflow@pgbouncer:5432/eventflow?sslmode=disable"
     # Chi loopback: ai goi thang service se gia danh duoc X-Identity-Id. Cong ra ngoai la gateway:8080.
     ports: ["127.0.0.1:8081:8081"]
     depends_on:
       redis: {condition: service_healthy}
+      pgbouncer: {condition: service_started}
 
   waitingroom-controller:
     build:

@@ -30,3 +30,9 @@ those tests.
 | Existing test file | Why it must change | Proposed change |
 |---|---|---|
 | `services/ai-worker/tests/test_ops_api.py` (frozen, line 28) | `uv run ruff check .` (ruff 0.16.10, the version pinned in `pyproject.toml` and used by CI `ci.yml:170`) fails with `FURB162 Unnecessary timezone replacement with zero offset` on `datetime.fromisoformat(body["generated_at"].replace("Z", "+00:00"))`. The test itself passes; only the lint gate fails | lint-only: `datetime.fromisoformat(body["generated_at"])` (Python 3.12 parses a trailing `Z`; the endpoint returns `+00:00` anyway). Assertion strength unchanged. Not applied by the implementer: needs approval |
+
+## New request 2 (implementer, 2026-11-01) — pending
+
+| Existing test file | Why it must change | Proposed change |
+|---|---|---|
+| `services/waitingroom/internal/adapter/http/ops_handler_test.go` (frozen), `TestOpsPut_AC6_BoundariesAccepted` | the test expects `rate_per_sec: 0.5` to be accepted (200). Contracts §3.2 as amended by the **approved** CR-1 (item 5), spec AC-6/AC-9 ("integer only", "non-integer → 400") and the frozen web tests (`ops-service.contract.test.ts:309` rejects `1.5`; `ops-war-room.real.test.tsx:145`) all require a fractional rate to be rejected with 400. The implementation follows the approved contract, so this one subtest (`rate 0.5: 400`) fails. `1e2` (= 100, integral) is accepted | move `"0.5"` out of the accepted list (keep `"0"`, `"10000"`, `"1e2"`) and add `"fraction": {"rate_per_sec":0.5,...}` to `TestOpsWrite_AC9_InvalidInputIs400AndNothingApplied`. Strengthens the test; needs approval. Alternative if the human prefers fractions: a new contracts change request reverting CR-1 item 5 (then web tests change too) |
