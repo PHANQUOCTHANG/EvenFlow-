@@ -24,3 +24,9 @@ Go / Python: no existing test is expected to change. The existing tests in
 `services/waitingroom/internal/adapter/http` and `services/ticketing/internal/adapter/http` do not compile until the new
 symbols exist (the new `*_test.go` files in those directories reference them). That is the red state, not a change to
 those tests.
+
+## New request 1 (implementer, 2026-11-01) — pending
+
+| Existing test file | Why it must change | Proposed change |
+|---|---|---|
+| `services/ai-worker/tests/test_ops_api.py` (frozen, line 28) | `uv run ruff check .` (ruff 0.16.10, the version pinned in `pyproject.toml` and used by CI `ci.yml:170`) fails with `FURB162 Unnecessary timezone replacement with zero offset` on `datetime.fromisoformat(body["generated_at"].replace("Z", "+00:00"))`. The test itself passes; only the lint gate fails | lint-only: `datetime.fromisoformat(body["generated_at"])` (Python 3.12 parses a trailing `Z`; the endpoint returns `+00:00` anyway). Assertion strength unchanged. Not applied by the implementer: needs approval |

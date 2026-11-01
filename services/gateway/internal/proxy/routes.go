@@ -72,6 +72,15 @@ func Routes() []Route {
 		{Pattern: "/v1/events/{eventID}/assistant/", Upstream: config.Assistant, Access: Public, Rate: config.RateDefault},
 		{Pattern: "/v1/assistant/", Upstream: config.Assistant, Access: Public, Rate: config.RateDefault},
 
+		// Ops war room (EVF-117, EVF-60) va doanh so organizer (EVF-116). ServeMux chon pattern cu the nhat,
+		// nen vi tri trong bang khong quan trong. Method khac tren cac path nay khong duoc chuyen tiep.
+		{Pattern: "GET /v1/ops/events/{eventID}/queue", Upstream: config.Waitingroom, Access: Authenticated, Roles: []string{"ops"}, Rate: config.RateDefault},
+		{Pattern: "PUT /v1/ops/events/{eventID}/admit-override", Upstream: config.Waitingroom, Access: Authenticated, Roles: []string{"ops"}, Rate: config.RateDefault},
+		{Pattern: "DELETE /v1/ops/events/{eventID}/admit-override", Upstream: config.Waitingroom, Access: Authenticated, Roles: []string{"ops"}, Rate: config.RateDefault},
+		{Pattern: "GET /v1/ops/events/{eventID}/inventory", Upstream: config.Ticketing, Access: Authenticated, Roles: []string{"ops"}, Rate: config.RateDefault},
+		{Pattern: "GET /v1/ops/ai/mode", Upstream: config.Assistant, Access: Authenticated, Roles: []string{"ops"}, Rate: config.RateDefault},
+		{Pattern: "GET /v1/organizer/events/{eventID}/sales", Upstream: config.Ticketing, Access: Authenticated, Roles: []string{"organizer"}, Rate: config.RateDefault},
+
 		// Khong bao gio ra ngoai: callback noi bo (vd PATCH /internal/v1/events/{id}/ai-verdict),
 		// metric, cong admin cua ai-worker.
 		{Pattern: "/internal/", Access: Blocked},
