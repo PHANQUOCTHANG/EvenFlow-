@@ -1,0 +1,29 @@
+{
+  "task": "k8s-all",
+  "jira": ["EV-190 (EVF-120)", "EV-191 (EVF-121) partial: CPU HPA only"],
+  "owner": "TranDinhVo",
+  "branch": "feature/k8s-all",
+  "base_commit": "c5fb598",
+  "tier": "high-risk",
+  "rule_hits": [
+    "secrets: new Secret contract, secretKeyRef wiring for DB/MQ credentials, JWT/queue-token/QR/PII keys; dev Secret values generated from a committed dev-only env file",
+    "permissions: pod/container securityContext, Pod Security Admission namespace labels, automountServiceAccountToken, NetworkPolicy (default-deny + allow matrix) that decides which pod may call which service",
+    "protected paths: .github/workflows/ci.yml (validate-deploy step) and .github/scripts/gates.sh (C4.4) must change, otherwise the kustomize layout breaks the existing kubeconform step",
+    "runtime identity change in images: deploy/docker/*.Dockerfile USER nonroot:nonroot / USER worker -> numeric uid (affects compose and every image)",
+    "new CI tool images (registry.k8s.io/kubectl, mikefarah/yq) = dependency change"
+  ],
+  "llm_assessment": "high-risk (agrees with rules; config/infra alone would be standard, but secrets + permissions + protected CI paths raise it; cannot lower)",
+  "user_override": null,
+  "consequences": [
+    "human approves spec.md (incl. decisions D1-D6 in spec section 8) before implementation",
+    "plan review mandatory (clean context, spec + plan only, max 3 rounds)",
+    "test design by a separate agent with RED check: policy fixtures and validate tests exist and fail before deploy/k8s/policy/check_policy.py exists",
+    "correctness + security review and a challenge on a different model; every finding needs a repro command",
+    "mutation test on the policy script (each rule disabled in turn must make the self-test fail) + rollback check",
+    "human sign-off before merge to develop"
+  ],
+  "no_migrations": true,
+  "no_new_runtime_dependencies": true,
+  "no_service_code_changes": true,
+  "touches_protected_paths": [".github/workflows/ci.yml", ".github/scripts/gates.sh"]
+}
