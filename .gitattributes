@@ -9,3 +9,5 @@
 # Kustomize generator sources (secrets.dev.env, app-config.env, endpoints.env): a CRLF checkout
 # would put a carriage return into every generated Secret/ConfigMap value.
 *.env text eol=lf
+# deploy/k8s/tools.env is sourced by bash in validate.sh / CI: a CR would end up inside every version string.
+deploy/k8s/tools.env text eol=lf
