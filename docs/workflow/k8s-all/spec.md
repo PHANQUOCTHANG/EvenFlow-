@@ -433,3 +433,7 @@ The precise checker semantics are in `policy-contract.md` (round-3 revision). Th
 ## Human approval of erratum E8 (2026-11-01)
 
 APPROVED by TranDinhVo: (1) staging fails closed: GEMINI_MOCK="0" and all payment provider secrets for enabled providers are REQUIRED (no optional refs in staging; AC-18 becomes overlay-specific, AC-32 also requires presence); (2) exemptions are scoped to a named sub-check (web AC-12: readOnlyRootFilesystem only; dev-infra AC-12: runAsNonRoot only); AC-9 is NOT exemptable for fixed-replica workloads. Decision: Stripe is DISABLED in staging (enabled providers = vnpay, momo) until the payment Stripe webhook signature check is fixed (recorded as security debt).
+
+## Human confirmation after plan review round 3 (2026-11-01)
+
+TranDinhVo confirmed: (1) GOOGLE_CLIENT_ID must be present and non-empty in staging (added to the AC-32 required list; one bad fixture); (2) no optional secretKeyRef in BOTH overlays (local and staging), as E8.2 text says.

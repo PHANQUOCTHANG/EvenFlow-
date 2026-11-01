@@ -233,3 +233,71 @@ rule is the whole AC. This causes two problems:
 Fix R2-M1 and R2-M2 as a `policy-contract.md` change request plus a short spec erratum (E8). Both need human
 approval **before WP0 freezes fixtures**, so tell the WP0 agent now. Minors can be fixed during implementation;
 r2-m1, r2-m3 and r2-m10 change fixture expectations, so put them into the same contract change.
+
+## Round 3
+
+Reviewer: new clean-context plan reviewer (last allowed round). Inputs: `spec.md` (E1-E8, D7 and the
+Stripe-disabled decision, all human-approved), `policy-contract.md` revision 2, `plan.md` "Round 3", rounds 1-2
+above. Read-only checks against the worktree @ 505de06. The WP0 working-tree changes under `deploy/k8s/policy/`
+(uncommitted) were looked at only to confirm fixture names. They were not reviewed. Docker is still down, so image
+uids are checked against the plan's "read the uid from the image" rule, not by running the images.
+
+## Verdict (round 3): **PASS** (0 blocker, 0 major, 6 minor)
+
+R2-M1 and R2-M2 are resolved in the contract and checked against the code. The round-2 minors are resolved. The
+contract is precise enough that each C3 fixture trips exactly one rule; I traced every one of them below. The
+author's extra choices ("no optional secret refs in local either", `EMAIL_PROVIDER=smtp`, required callback URLs in
+staging) are in the approved E8 text and match its fail-closed intent, so they are not scope creep. The minors below
+can be fixed during implementation. r3-m1 is the only one worth folding into the contract before WP0 freezes.
+
+## Major resolutions verified against the code
+
+| Finding | Status | Evidence (checked now) |
+|---|---|---|
+| R2-M1 payment | **Resolved** | `PAYMENT_DEFAULT_PROVIDER` absent → `sandbox`; `PAYMENT_ENABLED_PROVIDERS` absent/empty → all four (`services/payment/internal/config/config.go:52-70`). `NewRegistry` turns an invalid default into `sandbox` and always enables the default (`internal/adapter/gateway/factory.go:20-38`). Contract §2.2 requires both keys **present**, the list = {vnpay,momo}, and the default in that list, so all three fallbacks are closed. Webhooks resolve through `registry.Get`, which rejects disabled providers (`internal/app/process_webhook.go:67`, `factory.go:58-60`). So with Stripe disabled, the unsigned / `v1=valid_sig` Stripe callback (`stripe.go:122-148`) is unreachable in staging. The debt is in E8.3 and plan §D |
+| R2-M1 provider secrets | **Resolved** | `getEnvOrDefault` falls back to public defaults on absent **or empty** (`config.go:82-99`). Contract §8 + AC-18 forbid `optional` on every `secretKeyRef`, and AC-32 requires the vnpay/momo keys present in staging. So a missing key fails as `CreateContainerConfigError`. An empty value inside the external Secret is not checkable offline (see r3-m5) |
+| R2-M1 Gemini | **Resolved** | `gemini_mock: bool = True` (`services/ai-worker/app/config.py:35`). AC-32 requires `GEMINI_MOCK="0"` present. The validator (`config.py:69-73`) then refuses to start without `GEMINI_API_KEY`, and that ref is non-optional |
+| R2-M1 notification | **Resolved** | `EMAIL_PROVIDER` default `mock` (`services/notification/internal/config/config.go:28`), and only the exact string `smtp` selects SMTP (`cmd/server/main.go:66`). AC-32 requires `"smtp"` exactly. The SMTP sender authenticates only when user and password are both non-empty (`adapter/sender/smtp.go:43-45`), so local (no creds, Mailpit) still works |
+| R2-M1 identity SMTP | Consistent | identity uses SMTP whenever `SMTP_HOST` is set, with user/pass if given (`services/identity/cmd/server/main.go:96-102`; `SMTP_PASS`, not `SMTP_PASSWORD`, `config.go:78-79`). Contract §8 uses the right names per service |
+| R2-M2 | **Resolved** | §2.1 splits AC-12 into 12 named sub-checks. §3 has a closed allow table, AC-9 is not exemptable, an invalid exemption has no effect, and nothing is hard-coded. `HPA-managed` is a static list (spec §4, line 66), so "HPA on controller/worker" cannot also trip AC-7 |
+
+## Round-2 minors verified
+
+| # | Status | Notes |
+|---|---|---|
+| r2-m1 | Resolved | AC-1 counts app Deployments only. `good-local` pins it with Mailpit |
+| r2-m2 | Resolved, see r3-m4 | Run as the image uid, `dropAll` kept, no cap exemption. Official entrypoints skip `chown`/`su-exec` when not uid 0 (postgres, redis, rabbitmq), so drop ALL is fine. postgres:16-**alpine** = 70:70 is correct (the debian variant is 999). The plan's table is only a hint, but two values differ from the images: redis:7-alpine = uid 999 / **gid 1000**, and rabbitmq:3.13-*-alpine = **100:101**. The rule "WP4 reads uid and gid from the image" covers both |
+| r2-m3 | Resolved | Kustomize's suffix is 10 chars from a subset of `[0-9a-z]` (hex with 0/1/3/a/e remapped), so `-[a-z0-9]{10}` matches. No real base name ends in a 10-char segment, so stripping cannot misfire. Kustomize rewrites `secretKeyRef`/`configMapKeyRef` names only for objects generated in the same render. That matches §9 exactly: suffixed names in local, plain external names in staging |
+| r2-m4, r2-m5, r2-m7, r2-m9, r2-m10, r2-m11, r2-m12, r2-m13, r1-m13 | Resolved | — |
+| r2-m6 | Resolved | The guard deletes only on `docker-desktop`/`kind-*` **and** only a Job with `succeeded ≥ 1`. Otherwise it dry-runs with `-l 'app.kubernetes.io/name!=eventflow-migrate'`; objects without the label (Namespace etc.) still match `!=`. `kubectl apply -k … -l` filters the rendered objects. Note: the `-l` branch alone would always be enough, so the delete is optional; it is harmless as guarded |
+| r2-m8 | Resolved, see r3-m1 | — |
+
+## One fixture → one rule (C3 traced)
+
+Every C3 fixture trips only its named rule under the contract text:
+- `AC-32--momo-secret-missing` is not AC-18, because of the staging presence exception.
+- `AC-18--staging-stripe-key-extra` is not AC-22 (the key resolves via "any column"), and not AC-32 (only ConfigMap or literal `STRIPE_*` counts).
+- `AC-22--ref-uses-base-name-local` is not AC-18, because AC-18 compares base names.
+- `*-absent` fixtures are not AC-22, because an optional ref to a missing key is allowed.
+- `EXEMPT--web-ac12-whole-rule`: the valid sub-check key keeps AC-12 green.
+- `EXEMPT--worker-ac9` has no HPA.
+- `AC-12--dev-infra-*` trip one sub-check each.
+
+Latent overlap, which no fixture uses: in staging, an `optional: true` provider `secretKeyRef` trips both AC-18
+(no optional) and AC-32 (not present). Do not add such a fixture, or name it under both ids.
+
+## Findings (round 3), all minor
+
+| # | Finding | Evidence | Fix |
+|---|---|---|---|
+| r3-m1 | **`GOOGLE_CLIENT_ID` fails open and nothing guards it.** `idtoken.Validate` skips the audience check when the audience is empty. Absent or empty `GOOGLE_CLIENT_ID` in staging therefore makes identity accept a Google ID token minted for **any** OAuth client (token-confusion login as the token's verified email). The planned staging value is non-empty, so the planned config fails closed (`good-staging.yaml` line 7). But AC-32 does not require the key, so a later edit that drops it passes the policy. Same class as R2-M1, though not in E8's list | `services/identity/internal/app/google_login.go:48`; `google.golang.org/api/idtoken/validate.go:109,160` ("If audience is not empty the audience claim … is validated") | Preferred: add identity `GOOGLE_CLIENT_ID` (present, non-empty) to contract §2.2, plus fixture `AC-32--google-client-id-absent`, in the same change request before WP0 freezes. It needs a one-line human OK. Otherwise: runbook known limit + a code ticket (identity must refuse an empty client id when `APP_ENV=production`) |
+| r3-m2 | Approval wording differs. The human's approval line says "no optional refs **in staging**". E8.2 (labelled as the approved text) says both overlays, and plan Round 3 §A calls the plan "stricter than E8's 'staging'", which misquotes E8.2. The substance is consistent and fail-closed: local just needs dev values for all 8 payment keys, and nothing in the repo depends on the public default secrets (grep finds them only in `config.go`) | spec.md:393-394 vs :435; plan.md Round 3 §A | Coordinator: confirm with the human in one line that "both overlays" is intended, and fix the §A sentence |
+| r3-m3 | AC-32 does not say how values are compared. The code lowercases and trims each provider (`domain/payment.go:19-21`). The contract only says "order-insensitive". `"vnpay, momo"` or `"VNPay"` would work at runtime but could fail a strict checker | contract §2.2 | State: split on `,`, trim, lowercase, then the set must equal {vnpay,momo}; normalise the default the same way. `GEMINI_MOCK`/`EMAIL_PROVIDER` stay exact-match (stricter than the code, which is fine) |
+| r3-m4 | Dev-infra PVC permissions with no root allowed. (a) Docker Desktop's `hostpath` StorageClass backs PVs with hostPath, where kubelet does **not** apply `fsGroup`. The data dir is then writable only if the provisioner creates it world-writable. (b) Where `fsGroup` is applied (kind local-path), the default `fsGroupChangePolicy: Always` adds group rw on each mount. That makes RabbitMQ's `.erlang.cookie` group-readable, and RabbitMQ refuses to start on the second boot. The contract forbids the usual fix (a root `chown` init container: `rootUid`, `dropAll`). The plan's fallback ("swap image") does not help here | kubelet volume ownership behaviour; contract §2.1 dev-infra column | WP4: set `fsGroupChangePolicy: OnRootMismatch`. Prove AC-30 with a pod **restart**, not only the first start. Record the fallback now: if the hostpath dir is not writable, use `emptyDir` for local data (dev data loss accepted) rather than a new exemption |
+| r3-m5 | Present ≠ non-empty for Secret values. Payment's `getEnvOrDefault` and notification's `getEnv` treat an **empty** value as absent, so an empty key in the external staging Secret still falls back to public defaults. This cannot be checked offline | `payment/internal/config/config.go:95-99` | Runbook: staging Secret values must be non-empty; list the keys whose emptiness falls back to public defaults (VNPay/MoMo, `EMAIL_PROVIDER`) |
+| r3-m6 | Staging requires SMTP credentials for both identity and notification. An internal relay without auth still needs dummy values, and then both clients try `AUTH`, which such a relay may reject | `identity/cmd/server/main.go:96-99`, `notification/.../smtp.go:43-45` | Runbook: staging needs an authenticating SMTP provider, and the same credentials go into two Secrets |
+
+## Outcome
+
+PASS. The plan may proceed to WP0 freeze and implementation. Recommended before the freeze: r3-m1 (one contract line
+plus one fixture, human OK) and the r3-m2 confirmation. All other minors go into WP4 and the runbook.
