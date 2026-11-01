@@ -1,0 +1,38 @@
+[
+  {
+    "id": "R-1",
+    "reviewer": "correctness",
+    "severity": "minor",
+    "ac": "AC-2 (spec §5 edge 'AC-2 (plan review P-4)'; plan §7 P-4)",
+    "file": "apps/web/src/lib/api-client.ts",
+    "line": 181,
+    "title": "Eager wipe from approved spec §5 / plan P-4 not implemented (lazy wipe only); trade-off acceptable but undocumented in the approved spec and not signed off",
+    "evidence": "On the abort (api-client.ts:181-182), 400/401/403 (:205-209) and AC-1 (:220,:222) paths the code only calls markRefreshUsed() then failedRefresh(); no clearSessionHoldingRefresh(postedToken) when the guard did not clear. The only wipe is lazy, in doRefresh (:135-137). spec.md:135 still says 'any other store still holding that token is wiped at once'. The implementer's reason holds: the frozen test ac2-used-refresh.test.ts:45 asserts 'B:AUTH_REQUIRED' after localStorage.clear(); with an eager wipe B starts with no session and the AC-4 guard ('a call that starts without any session is still sent without a bearer') makes it return raw 401, so both cannot pass. test-change-request.md records the deviation as a 'Note', but the human decision covers TCR-1 only. Residuals of lazy-only: (a) each marked token (every successful refresh, ~1 per 15 min with AccessTokenTTL=15m, libs/go/authx/access.go:16) pushes the stale copy's hash toward eviction; after 16 marks (~4 h of activity) the R2-3 stale sessionStorage copy can be POSTed again (posts [r1, r1]), server reuse detection revokes that family; (b) between another tab's logout and the next API call this tab's UI shows the stale u-1 copy as signed in (getSession returns it); its access token is already expired (the refresh was triggered by 401 token-expired or the 30 s skew), so no request succeeds as u-1 and the first call ends AUTH_REQUIRED with no POST. Neither residual is a token leak, a hand-out to another user, or a regression vs c5fb598 (both existed before as R2-3).",
+    "repro": "R2-3 setup (seedUser u-1/old/r1 in sessionStorage, hung refresh, u-2 seeded in localStorage at 60 s, abort at 121 s), then 16 successful u-2 refreshes in the same tab (each marks r-u2-n), then localStorage.clear() and a request -> doRefresh finds r1 not in the record -> POST r1 again.",
+    "fix": "Pick one and record it: (1) keep lazy-only, have the human accept the residual and amend spec §5 + plan §7 P-4 row to say 'lazy wipe only (frozen R2-3/R2-S1 require it); residual: copy can outlive a 16-entry record'; or (2) TCR: relax R2-3/R2-S1's B expectation to accept 'B:401' (the load-bearing assertion is posts == [r1]) and implement the eager wipe as planned. Option (1) is the smaller change and is acceptable on risk."
+  },
+  {
+    "id": "R-2",
+    "reviewer": "correctness",
+    "severity": "minor",
+    "ac": "AC-2 (record rules, plan §7 P-4)",
+    "file": "apps/web/src/lib/debt5/ac2-used-refresh.test.ts",
+    "line": 149,
+    "title": "Eviction order and move-to-newest are untested (planned P-4 tests '17 marks -> first evicted' and 're-mark moves to newest' are missing)",
+    "evidence": "The only cap test (ac2-used-refresh.test.ts:149-164) checks length 16 after 20 marks and that no raw token appears. Implementation session.ts:239-246 (filter duplicate, push, shift oldest) is correct, but mutations 'list.pop() instead of shift()' (evict newest: the just-used token is immediately forgotten, AC-2 broken) or 'no filter' (duplicates crowd out older entries) keep length 16 and pass every test.",
+    "repro": "In session.ts:243 replace `list.shift()` with `list.pop()`; run `npx vitest run src/lib/debt5` -> all green although the 17th used token is not recorded.",
+    "fix": "Add (new test, no frozen file touched or via TCR): mark t0..t16, expect isRefreshUsed(t0)=false and isRefreshUsed(t16)=true; mark t1 again then t17, expect t1 still used and t2 evicted."
+  },
+  {
+    "id": "R-3",
+    "reviewer": "security",
+    "severity": "minor",
+    "ac": "AC-10 (S-4 client part)",
+    "file": "apps/web/src/lib/payment-client.ts",
+    "line": 156,
+    "title": "safeRedirect blocks script/data schemes correctly but still allows any http(s) host, protocol-relative '//host' and plaintext http: (by design; server allow-list deferred)",
+    "evidence": "new URL(raw, origin) uses the same WHATWG parser as location.href, so leading whitespace, embedded tab/newline and case tricks on 'javascript:' are all normalised and rejected; unparsable values fall back. Kept as-is: 'https://attacker.example/x', '//attacker.example' (resolves to https:), 'http://provider/x'. The raw string (not the normalised URL) is returned, which is safe because the browser re-parses it identically. Spec §3 defers the provider-host allow-list (S-4 server part), so this is the agreed residual, not a defect of this PR. The only sink is payment-handoff-view.tsx:68.",
+    "repro": "initiatePayment with a mocked 201 { payment_id: 'p', redirect_url: '//attacker.example/phish' } -> redirectUrl === '//attacker.example/phish' and payment-handoff-view navigates there.",
+    "fix": "No change in this PR. Keep S-4 (server part) open; when it lands, optionally also reject 'http:' when window.location.protocol is 'https:'."
+  }
+]
