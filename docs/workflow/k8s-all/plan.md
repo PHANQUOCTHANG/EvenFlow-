@@ -1,10 +1,10 @@
-# Plan: k8s-all (round 2, addresses plan-review.md round 1)
+# Plan: k8s-all (round 3, addresses plan-review.md rounds 1 and 2)
 
-Inputs: `spec.md` (AC-1..AC-31 + Erratum E1-E7 and AC-32; D1-D6 approved by the human 2026-11-01, D7 and errata
-E1/E2/E4-E7 pending sign-off), `policy-contract.md` (frozen), base develop @ c5fb598.
+Inputs: `spec.md` (AC-1..AC-32, errata E1-E8, decisions D1-D7, **all approved** by the human on 2026-11-01, plus the
+Stripe-disabled-in-staging decision), `policy-contract.md` revision 2 (frozen), base develop @ c5fb598.
 No migrations, no service code changes, no new runtime dependencies. New CI tools are pinned Go modules (D1, E7).
-**Section "Round 2" at the end supersedes sections 1-9 wherever they disagree** (tool choice, ConfigMaps, secrets,
-CI step text).
+**Section "Round 3" at the end overrides sections 1-9 and "Round 2" wherever they disagree; "Round 2" overrides
+sections 1-9.**
 
 ## 1. Target layout
 
@@ -250,3 +250,133 @@ Before pushing, run the `lint-ci` script tests locally with `bash .github/script
 **Risks added:**
 - The first `go run` needs network; modules are cached afterwards, and CI uses the setup-go cache.
 - The kubeconform schema download from GitHub can be rate-limited. Use the `-cache` dir; a failed download is a hard error, never a skip.
+
+## Round 3 (plan-review.md round 2: FAIL, 2 major + 13 minor; last allowed round)
+
+### A. Majors
+
+| Finding | Resolution |
+|---|---|
+| **R2-M1** staging fails open when a key is absent | Erratum E8.1-E8.3 (approved) and contract r2 §2.2/§8. AC-32 now requires keys to be **present**, not just "not demo": `GEMINI_MOCK="0"`, `PAYMENT_ENABLED_PROVIDERS=vnpay,momo`, a default provider from that list, `EMAIL_PROVIDER=smtp`, and for each enabled provider its callback URLs and secret keys. "Present" = env literal or a **non-optional** ref to an existing key. An optional ref whose key exists counts as set but **not present**. An optional ref to a missing key counts as absent; that is allowed only for forbidden keys. AC-18 forbids `optional: true` on every `secretKeyRef` in both overlays (stricter than E8's "staging", same intent: a missing Secret fails with `CreateContainerConfigError` instead of using public code defaults). Local gets dev values for every referenced key. Stripe is disabled in staging (human decision); the unsigned / `v1=valid_sig` Stripe webhook is recorded as security debt in spec §9 and the runbook |
+| **R2-M2** whole-rule exemptions disable kept checks | Contract r2 §2.1/§3: AC-12 is split into 12 named sub-checks. Exemption keys are `eventflow.io/policy-exempt.AC-<n>[.<subcheck>]`. Allowed pairs: web `AC-12.readOnlyRootFilesystem`; ticketing-worker `AC-11`; dev-infra `AC-6`, `AC-10`, `AC-11`, `AC-20`, `AC-12.runAsNonRoot`. AC-9 is never exemptable: any `policy-exempt.AC-9*` gives `FAIL EXEMPT`, and an HPA on a fixed-replica workload fails AC-9. An invalid exemption has no effect (the rule is still checked). Section-7 exceptions exist only through annotations, nothing is hard-coded |
+
+### B. Minors
+
+| Finding | Resolution |
+|---|---|
+| r2-m1 AC-1 vs dev-infra | AC-1 counts only Deployments without the dev-infra label (contract §2). `good-local` gains a dev-infra Deployment (`eventflow-mailpit`) to pin this |
+| r2-m2 dev-infra under drop ALL | Dev-infra runs as the image's own non-root uid, so `dropAll` holds and no root exemption is needed. AC-12 sub-checks for dev-infra are in contract §2.1; it may set `runAsUser`, and readOnlyRootFilesystem is not required. Planned uids: postgres:16-alpine 70, edoburu/pgbouncer 70, redis:7-alpine 999, mailpit 1000 (no root need, ports > 1024), rabbitmq:3.13-management-alpine = the image's `rabbitmq` uid. WP4 reads every uid from the image itself (`docker run --rm --entrypoint id <image> <user>`, or the image config) and records it in the component. All of them use `fsGroup` = that gid. Postgres: `PGDATA=/var/lib/postgresql/data/pgdata` on the PVC, plus `emptyDir` for `/var/run/postgresql` and `/tmp`. PgBouncer: `emptyDir` `/etc/pgbouncer`. If an image cannot start without root caps, WP4 swaps to an image that can and records it; adding a cap exemption is **not** allowed |
+| r2-m3 hash suffixes | Contract §9: rules compare base names (rendered name minus a `-[a-z0-9]{10}` suffix). AC-22 requires refs to name the rendered object exactly. Good fixtures use suffixed names |
+| r2-m4 kubeconform -cache dir | `validate.sh` runs `mkdir -p "$CACHE"` before kubeconform. CI uses `$RUNNER_TEMP/kubeconform-cache` |
+| r2-m5 setup-go cache | `actions/setup-go@v5` with `cache-dependency-path: deploy/k8s/tools.env` |
+| r2-m6 gates deletes Jobs on any context | C4.4 deletes `job/eventflow-migrate` only if `kubectl config current-context` matches `^(docker-desktop\|kind-.+)$` **and** the Job has `status.succeeded ≥ 1`. Otherwise it runs `kubectl apply --dry-run=server -k deploy/k8s/overlays/local -l 'app.kubernetes.io/name!=eventflow-migrate'` and prints that the migrate Job was skipped because Jobs are immutable. It never deletes on other contexts |
+| r2-m7 validate.sh flags | `--render-only` = steps 1-2. `--skip-policy` skips steps 4-6 (policy, AC-13, self-test). CI step 1 uses `--render-only` |
+| r2-m8 missing per-env settings | E8.6: `eventflow-app-config` adds `EMAIL_PROVIDER`, `SMTP_FROM`, `GOOGLE_CLIENT_ID`, `VNPAY_RETURN_URL`, `MOMO_RETURN_URL`, `MOMO_NOTIFY_URL` (staging: placeholder `https://staging.example.com/...` values the runbook says to replace), and in local only `STRIPE_SUCCESS_URL`, `STRIPE_CANCEL_URL`. `STRIPE_PUBLISHABLE_KEY` moves to a Secret. New Secret `eventflow-notification` (`SMTP_USER`, `SMTP_PASSWORD`, staging only); identity `SMTP_USER`/`SMTP_PASS` in staging only. `SMS_PROVIDER` stays `mock` (known limit). MoMo IPN reachability needs a public `MOMO_NOTIFY_URL`, so the runbook says staging needs a public host for it |
+| r2-m9 AC-13 untested | Checker `--dockerfiles <dir>` mode (contract §4) plus fixtures `testdata/dockerfiles/{good,bad/AC-13--*}`. Mutation test: disabling AC-13 must fail the self-test. `migrate.Dockerfile` also ends with `USER 65532:65532` |
+| r2-m10 APP_ENV/CORS location | Contract §9: `eventflow-app-config` only. `eventflow-endpoints` = infra hosts only |
+| r2-m11 staging Redis password | Runbook known limit: staging Redis must be private and passwordless (no TLS/ACL in this task) |
+| r2-m12 yq `null` entries | Contract §4: ignored. `good-local` ends with an empty document to pin it |
+| r2-m13 duplicated dev DB password | `secrets.dev.env` comment: "`POSTGRES_PASSWORD` must equal the password inside both `eventflow-db` URLs". AC-30 proves it at runtime |
+| r1-m13 header | Fixed: the header now states that everything is approved |
+
+### C. WP0 fixture changes required by the approved contract change (TCR, approved via E8)
+
+All files are generated by `deploy/k8s/policy/testdata/gen_fixtures.py` (committed e408ea3/03d1ff5). Change the
+generator, then regenerate. `gen_fixtures.py --check` must be clean afterwards. Every `bad/*.yaml` changes bytes
+because it is derived from the good fixtures. Only the expectations listed below change; all other bad fixtures
+keep their rule id and intent.
+
+**C1. Generator / good fixtures (`good-local.yaml`, `good-staging.yaml`)**
+
+1. web annotation `policy-exempt.AC-12` → `policy-exempt.AC-12.readOnlyRootFilesystem`.
+2. ticketing-worker: remove `policy-exempt.AC-9` (keep `AC-11`). waitingroom-controller: remove `policy-exempt.AC-9`.
+3. Postgres (`PG_EXEMPT`): remove the `AC-9` and `AC-12` entries.
+   - Add pod `securityContext {runAsNonRoot: true, runAsUser: 70, runAsGroup: 70, fsGroup: 70, seccompProfile: RuntimeDefault}`.
+   - Add container `securityContext {allowPrivilegeEscalation: false, capabilities: {drop: [ALL]}}`.
+4. No `optional` on any `secretKeyRef` (`SECRET(..., opt)`): payment `STRIPE_WEBHOOK_SECRET`, ai-worker `GEMINI_API_KEY`.
+5. `env_for(p, overlay)`: per-overlay secret sets per contract §8.
+   - Local payment gets all 8 provider keys, and `SECRETS["eventflow-payment"]` gets `dev` values for them.
+   - Staging payment gets only the 5 vnpay/momo keys.
+   - Staging identity gets `SMTP_USER`/`SMTP_PASS` from `eventflow-identity`.
+   - Staging notification gets `SMTP_USER`/`SMTP_PASSWORD` from `eventflow-notification`.
+6. `eventflow-app-config`, staging:
+   - `PAYMENT_ENABLED_PROVIDERS` → `vnpay,momo`;
+   - add `EMAIL_PROVIDER=smtp`, `SMTP_FROM`, `GOOGLE_CLIENT_ID`, `VNPAY_RETURN_URL`, `MOMO_RETURN_URL`, `MOMO_NOTIFY_URL`.
+7. `eventflow-app-config`, local: add the same keys plus `STRIPE_SUCCESS_URL`, `STRIPE_CANCEL_URL`.
+8. New env refs:
+   - non-optional: payment `VNPAY_RETURN_URL`, `MOMO_RETURN_URL`, `MOMO_NOTIFY_URL`; notification `EMAIL_PROVIDER`,
+     `SMTP_FROM`; identity `GOOGLE_CLIENT_ID`; gateway `CORS_ALLOWED_ORIGINS`;
+   - optional: payment `STRIPE_SUCCESS_URL`, `STRIPE_CANCEL_URL`.
+9. Hash-suffixed names (any fixed 10-char `[a-z0-9]` suffix):
+   - local: all Secrets and both ConfigMaps;
+   - staging: both ConfigMaps.
+
+   Every ref follows the rename. Helpers `find(o, "Secret", …)`, `cfg()` and `CMAP`/`APPCFG` must resolve the suffixed
+   names, so mutations such as `AC-16--local-value-without-dev`, `AC-22--configmap-key-missing` and
+   `AC-17--configmap-*` still hit the intended object.
+10. `good-local` adds a dev-infra Deployment `eventflow-mailpit`:
+    - image `axllent/mailpit:v1.21`, `runAsUser: 1000`;
+    - probes and resources;
+    - exemptions `AC-6`, `AC-10`, `AC-11`, `AC-20`.
+11. `good-local` ends with an empty document (`---` then nothing).
+
+**C2. Bad fixtures whose expectation changes**
+
+- Delete `bad/AC-18--stripe-key-not-optional.yaml`. Under the new contract a non-optional Stripe key in local is
+  correct, so the mutation would be a no-op.
+- `bad/AC-9--hpa-on-ticketing-worker.yaml`: unchanged expectation (AC-9). It is now consistent, because the worker no
+  longer carries an AC-9 exemption.
+- `bad/EXEMPT--unknown-pair-gateway-ac12.yaml`, `bad/EXEMPT--empty-reason-gateway-ac11.yaml`,
+  `bad/EXEMPT--unknown-pair-worker-ac4.yaml`: unchanged expectation (whole-rule `AC-12` is now invalid everywhere,
+  which still gives EXEMPT).
+
+**C3. New bad fixtures (minimum set)**
+
+| File | Overlay | Mutation | Expect |
+|---|---|---|---|
+| `AC-9--hpa-on-controller` | local | HPA targeting waitingroom-controller | AC-9 |
+| `EXEMPT--worker-ac9` | local | worker gets `policy-exempt.AC-9: "x"` (no HPA) | EXEMPT |
+| `EXEMPT--web-ac12-whole-rule` | local | web gets `policy-exempt.AC-12` **in addition to** the sub-check key | EXEMPT |
+| `EXEMPT--web-unknown-subcheck` | local | web gets `policy-exempt.AC-12.runAsNonRoot` (runAsNonRoot stays true) | EXEMPT |
+| `AC-12--web-exempt-runasnonroot-missing` | local | web pod `runAsNonRoot` removed, exemption kept | AC-12 |
+| `AC-12--web-exemption-missing` | local | web sub-check annotation removed | AC-12 |
+| `AC-12--dev-infra-drop-all-missing` | local | postgres container `capabilities` removed | AC-12 |
+| `AC-12--dev-infra-runasnonroot-false` | local | postgres pod `runAsNonRoot: false` (no exemption) | AC-12 |
+| `AC-18--local-provider-key-optional` | local | payment `VNPAY_HASH_SECRET` ref `optional: true` | AC-18 |
+| `AC-18--staging-optional-secret-ref` | staging | ai-worker `GEMINI_API_KEY` ref `optional: true` | AC-18 |
+| `AC-18--staging-stripe-key-extra` | staging | payment gets `STRIPE_SECRET_KEY ← eventflow-payment/STRIPE_SECRET_KEY` | AC-18 |
+| `AC-18--staging-identity-smtp-missing` | staging | identity `SMTP_PASS` ref removed | AC-18 |
+| `AC-22--ref-uses-base-name-local` | local | event `RABBITMQ_URL` ref names `eventflow-mq` instead of the suffixed name | AC-22 |
+| `AC-32--gemini-mock-absent` | staging | ai-worker `GEMINI_MOCK` ref made optional and the key removed from app-config | AC-32 |
+| `AC-32--gemini-mock-optional-ref` | staging | ai-worker `GEMINI_MOCK` ref made optional, key `"0"` kept | AC-32 |
+| `AC-32--enabled-providers-absent` | staging | payment `PAYMENT_ENABLED_PROVIDERS` ref optional and key removed | AC-32 |
+| `AC-32--stripe-enabled` | staging | `PAYMENT_ENABLED_PROVIDERS=vnpay,momo,stripe` | AC-32 |
+| `AC-32--default-provider-not-enabled` | staging | `PAYMENT_DEFAULT_PROVIDER=stripe` | AC-32 |
+| `AC-32--momo-secret-missing` | staging | payment `MOMO_SECRET_KEY` env removed | AC-32 |
+| `AC-32--momo-notify-url-absent` | staging | payment `MOMO_NOTIFY_URL` ref optional and key removed | AC-32 |
+| `AC-32--email-provider-mock` | staging | `EMAIL_PROVIDER=mock` | AC-32 |
+| `AC-32--stripe-url-in-configmap` | staging | `STRIPE_SUCCESS_URL` added to staging app-config (payment holds an optional ref to it) | AC-32 |
+| `dockerfiles/bad/AC-13--named-user/` | — | final stage `USER nonroot:nonroot` | AC-13 |
+| `dockerfiles/bad/AC-13--no-user/` | — | final stage without `USER` | AC-13 |
+| `dockerfiles/good/` | — | tails of the 6 real Dockerfiles (numeric USER) | pass |
+
+**C4. `test_policy.sh`**: add the `--dockerfiles` runs. Run the good dir once; run each `bad/AC-13--*` dir and
+expect exit 1 plus only `FAIL AC-13` lines.
+
+### D. Other plan updates
+
+- Mutation test:
+  - Add per-sub-check mutants for AC-12 (disable `readOnlyRootFilesystem` scoping, so web is fully exempt → must fail
+    `AC-12--web-exempt-runasnonroot-missing`).
+  - Add an AC-9 exemptability mutant (accept `policy-exempt.AC-9` → must fail `EXEMPT--worker-ac9`).
+  - Add AC-13.
+- Fast gate unchanged.
+- WP4 also owns the uid table (r2-m2).
+- WP6 owns the gates context guard (r2-m6) and the setup-go cache path (r2-m5).
+- Runbook additions:
+  - the Stripe debt;
+  - Redis passwordless (r2-m11);
+  - SMS mock;
+  - the MoMo public notify URL;
+  - minimum Kubernetes 1.30;
+  - the `delete -k` warning.

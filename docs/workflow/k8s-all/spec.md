@@ -370,6 +370,66 @@ disagree, this section wins.
 
 Errata E1, E2, E4, E5, E6, E7 and decision D7 APPROVED by TranDinhVo on 2026-11-01 in the Claude Code session (E3 approved earlier).
 
+## Erratum E8 (round 3, after plan-review.md round 2) — text of the approved change
+
+Approved by the human on 2026-11-01 (see the approval section below). Where E8 disagrees with E1-E7 or the body, E8 wins.
+The precise checker semantics are in `policy-contract.md` (round-3 revision). This section states the intent.
+
+1. **Staging fails closed (R2-M1).**
+   - AC-32 requires these to be **present** in staging, not only "not demo":
+     - `GEMINI_MOCK="0"`.
+     - `PAYMENT_DEFAULT_PROVIDER` ∈ enabled providers, and `PAYMENT_ENABLED_PROVIDERS` = `vnpay,momo`.
+     - `EMAIL_PROVIDER=smtp` (notification code default is `mock`).
+     - For each enabled provider, its callback URLs (`VNPAY_RETURN_URL`; `MOMO_RETURN_URL`, `MOMO_NOTIFY_URL`) and its
+       secret keys (`VNPAY_TMN_CODE`, `VNPAY_HASH_SECRET`; `MOMO_PARTNER_CODE`, `MOMO_ACCESS_KEY`, `MOMO_SECRET_KEY`).
+   - "Present" means one of:
+     - an env literal;
+     - a **non-optional** `configMapKeyRef` to a key that exists in the rendered ConfigMap;
+     - for the secret keys, a **non-optional** `secretKeyRef`.
+   - A demo/forbidden key counts as set when it is an env literal, or when any ref (optional or not) points to a key
+     that exists in the rendered ConfigMap. An optional ref to a key that does not exist counts as absent, which is
+     allowed for forbidden keys.
+2. **No optional secret refs, overlay-specific key sets (R2-M1).**
+   - AC-18 forbids `optional: true` on every `secretKeyRef`, in both overlays. A missing Secret must fail loudly
+     (`CreateContainerConfigError`) instead of falling back to public code defaults. Local therefore gets dev values
+     for every referenced key.
+   - The per-process key sets differ per overlay. The table in `policy-contract.md` §8 replaces the E3 table:
+     - identity and notification get SMTP credentials in staging only;
+     - payment gets vnpay+momo+stripe keys in local and vnpay+momo in staging;
+     - the optional identity keys (`TELEGRAM_BOT_TOKEN`, `REDIS_PASSWORD`) are dropped from both overlays.
+3. **Stripe disabled in staging.** Staging `PAYMENT_ENABLED_PROVIDERS=vnpay,momo`; no Stripe key or URL is rendered in
+   staging. Security debt (runbook + spec §9): the Stripe webhook accepts unsigned requests and the literal `v1=valid_sig`
+   (`services/payment/internal/adapter/gateway/stripe.go:122-148`). Re-enable Stripe in staging only after that is fixed.
+4. **Exemptions scoped to a sub-check (R2-M2).**
+   - Exemption annotations name a rule and, where the rule has sub-checks, the sub-check:
+     `eventflow.io/policy-exempt.AC-12.readOnlyRootFilesystem`.
+   - Allowed pairs:
+     - web: `AC-12.readOnlyRootFilesystem` only;
+     - dev-infra: `AC-12.runAsNonRoot` only (expected unused, since dev-infra runs as the image uid), plus the
+       whole-rule `AC-6`, `AC-10`, `AC-11`, `AC-20`;
+     - ticketing-worker: whole-rule `AC-11`.
+   - **AC-9 is never exemptable.** The fixed-replica workloads are defined by AC-9 as "must have no HPA", so an HPA
+     targeting them fails AC-9, and any `policy-exempt.AC-9*` annotation fails `EXEMPT`.
+   - The spec §7 exceptions exist **only** through annotations. Nothing is hard-coded, so a web Deployment without
+     the annotation fails AC-12.
+5. **Clarifications (r2-m1, r2-m3, r2-m10).**
+   - AC-1 counts only Deployments without label `eventflow.io/tier: dev-infra`.
+   - Generated Secret/ConfigMap names may carry the kustomize hash suffix. Rules compare the base name. References
+     must name the rendered object exactly.
+   - `APP_ENV` and `CORS_ALLOWED_ORIGINS` live in `eventflow-app-config` only. `eventflow-endpoints` holds only infra
+     hosts and ports: `REDIS_ADDR`, `REDIS_URL`, `SMTP_HOST`, `SMTP_PORT`, `OTEL_EXPORTER_OTLP_ENDPOINT`.
+6. **Per-environment settings added (r2-m8).** `eventflow-app-config` also carries:
+   - `EMAIL_PROVIDER`;
+   - `SMTP_FROM`;
+   - `GOOGLE_CLIENT_ID`;
+   - `VNPAY_RETURN_URL`, `MOMO_RETURN_URL`, `MOMO_NOTIFY_URL`;
+   - local only: `STRIPE_SUCCESS_URL`, `STRIPE_CANCEL_URL`.
+
+   `STRIPE_PUBLISHABLE_KEY` comes from a Secret, because its name matches the AC-17 pattern. New Secret
+   `eventflow-notification` (`SMTP_USER`, `SMTP_PASSWORD`; staging only). Known limits that go into the runbook:
+   - `SMS_PROVIDER` stays `mock` (no SMS provider in scope);
+   - staging Redis must be private and passwordless (r2-m11).
+
 ## Human approval of erratum E8 (2026-11-01)
 
 APPROVED by TranDinhVo: (1) staging fails closed: GEMINI_MOCK="0" and all payment provider secrets for enabled providers are REQUIRED (no optional refs in staging; AC-18 becomes overlay-specific, AC-32 also requires presence); (2) exemptions are scoped to a named sub-check (web AC-12: readOnlyRootFilesystem only; dev-infra AC-12: runAsNonRoot only); AC-9 is NOT exemptable for fixed-replica workloads. Decision: Stripe is DISABLED in staging (enabled providers = vnpay, momo) until the payment Stripe webhook signature check is fixed (recorded as security debt).
