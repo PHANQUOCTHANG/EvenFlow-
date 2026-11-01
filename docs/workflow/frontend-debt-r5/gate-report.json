@@ -1,0 +1,19 @@
+{
+  "commit_sha": "ddf7ee3924544ade622359a758a48a809323c6de",
+  "base": "c5fb598",
+  "generated_at": "2026-11-01T14:18:06Z",
+  "results": {
+    "web-npm-ci": {"exit": 0, "log": "gate/web-npm-ci.log"},
+    "web-lint": {"exit": 0, "log": "gate/web-lint.log"},
+    "web-typecheck": {"exit": 0, "log": "gate/web-typecheck.log"},
+    "web-build": {"exit": 0, "log": "gate/web-build.log"},
+    "web-test-coverage": {"exit": 0, "log": "gate/web-test-coverage.log"},
+    "web-audit": {"exit": 0, "log": "gate/web-audit.log"},
+    "go-gateway": {"exit": 0, "log": "gate/go-gateway.log"},
+    "go-event": {"exit": 0, "log": "gate/go-event.log"},
+    "tamper": {"exit": 0, "log": "gate/tamper.log"},
+    "secrets": {"exit": 0, "log": "gate/secrets.log"},
+    "sast": {"exit": 0, "log": "gate/sast.log"},
+    "e2e": {"exit": 0, "log": "gate/e2e.log"}
+  }
+}
