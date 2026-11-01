@@ -25,3 +25,13 @@ Scope: `deploy/k8s/policy/test_policy.sh` and `deploy/k8s/policy/testdata/**` on
 ## TCR-E8c: AC-1 count excludes dev-infra Deployments (covered by E8 / contract rev 2 section 2)
 
 - test_policy.sh E-AC1-DEPLOYMENTS now counts rendered Deployments without label eventflow.io/tier=dev-infra via the pinned yq and still expects 11 (SKIP when yq is unavailable).
+
+## TCR-WP5: optional fixture for the AC-12 rootUid sub-check (test-change-request-wp5.md, applied by WP6 on 2026-11-01)
+
+- Added test, no existing assertion changed. `gen_fixtures.py` gains one mutant; regenerating changed no other file and
+  `gen_fixtures.py --check` is clean.
+- New `bad/AC-12--dev-infra-run-as-uid-0.yaml` (local, `--processes web,gateway`): postgres pod
+  `securityContext.runAsUser: 0`. Dev-infra may set `runAsUser`, so only `rootUid` catches it; the checker prints exactly
+  `FAIL AC-12 StatefulSet/eventflow-postgres: rootUid: pod runAsUser 0`. Now 153 bad fixtures, selftest total 166.
+- Second row of the request (invalid exemption taking effect) is not applied: it needs two ids in one fixture, which
+  contract §7 forbids. Recorded as an accepted limitation in `deploy/k8s/policy/rules.md`.

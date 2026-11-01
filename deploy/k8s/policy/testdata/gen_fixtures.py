@@ -792,6 +792,8 @@ mut("AC-12", "web-exempt-runasnonroot-missing", lambda o: pod(o, "web")["securit
 mut("AC-12", "web-exemption-missing", web_exemption_missing)
 mut("AC-12", "dev-infra-drop-all-missing", lambda o: pgctr(o)["securityContext"].pop("capabilities"))
 mut("AC-12", "dev-infra-runasnonroot-false", lambda o: find(o, "StatefulSet", "eventflow-postgres")["spec"]["template"]["spec"]["securityContext"].update({"runAsNonRoot": False}))
+# WP5 TCR (optional, added by WP6): dev-infra may set runAsUser, so only the rootUid sub-check can catch uid 0.
+mut("AC-12", "dev-infra-run-as-uid-0", lambda o: find(o, "StatefulSet", "eventflow-postgres")["spec"]["template"]["spec"]["securityContext"].update({"runAsUser": 0}))
 mut("AC-18", "local-provider-key-optional", lambda o: optional_secret(o, "payment", "VNPAY_HASH_SECRET"))
 mut("AC-18", "staging-optional-secret-ref", lambda o: optional_secret(o, "ai-worker", "GEMINI_API_KEY"), overlay="staging")
 mut("AC-18", "staging-stripe-key-extra", lambda o: ctr(o, "payment")["env"].append({"name": "STRIPE_SECRET_KEY", "valueFrom": SECRET("eventflow-payment", "STRIPE_SECRET_KEY")}), overlay="staging")
