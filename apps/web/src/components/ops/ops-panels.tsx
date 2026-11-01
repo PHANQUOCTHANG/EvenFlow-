@@ -6,7 +6,6 @@
 import type { ReactNode } from "react";
 
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { formatCount, formatDecimal } from "@/lib/format";
 import {
@@ -16,8 +15,6 @@ import {
   type OpsWarRoomSnapshot,
   type SourceHealth,
 } from "@/lib/ops-service";
-
-const CONTROLS_NOTE_ID = "ops-controls-note";
 
 /** Dong phu moi khoi: so lieu tuc thoi, khong phai lich su. */
 const LIVE_NOTE = `Số liệu tức thời · làm mới mỗi ${OPS_POLL_INTERVAL_MS / 1000} giây`;
@@ -115,10 +112,16 @@ export function OpsAdmissionPanel({ snapshot }: { snapshot: OpsWarRoomSnapshot }
   // Nhan "(cũ)" da nam o tieu de khoi; o con chi can biet co du lieu hay khong.
   const metricHealth = health === "stale" ? "ok" : health;
   const { admission } = snapshot;
+  const available = health !== "unavailable";
 
   return (
     <Card className="space-y-md">
       <PanelHeading title="Tuyển sinh hàng chờ" health={health} />
+      {available && admission.paused ? (
+        <p className="rounded-control border-2 border-danger px-md py-sm text-headline-sm font-bold text-danger">
+          ĐANG TẠM DỪNG — Ops đã đặt admit rate 0, không khách nào được vào thêm
+        </p>
+      ) : null}
       <div className="grid grid-cols-1 gap-md sm:grid-cols-3">
         <Metric
           label="Admit rate"
@@ -128,12 +131,19 @@ export function OpsAdmissionPanel({ snapshot }: { snapshot: OpsWarRoomSnapshot }
         />
         <div className="space-y-xs">
           <p className="text-body-md text-fg-muted">Chế độ</p>
-          {health === "unavailable" ? (
-            <NoData />
+          {available ? (
+            <div className="space-y-xs">
+              <Badge variant={admission.mode === "MANUAL" ? "pending" : "neutral"}>
+                {admission.mode}
+              </Badge>
+              {admission.mode === "MANUAL" && admission.overrideRatePerSec !== null ? (
+                <p className="text-body-md text-fg">
+                  Ops ghi đè: {formatDecimal(admission.overrideRatePerSec, 0)} khách/giây
+                </p>
+              ) : null}
+            </div>
           ) : (
-            <Badge variant={admission.mode === "MANUAL" ? "pending" : "neutral"}>
-              {admission.mode}
-            </Badge>
+            <NoData />
           )}
         </div>
         <Metric
@@ -143,7 +153,57 @@ export function OpsAdmissionPanel({ snapshot }: { snapshot: OpsWarRoomSnapshot }
           unit="khách"
         />
       </div>
+      {available ? (
+        <ul className="space-y-xs text-body-md">
+          {admission.soldOut ? (
+            <li className="font-semibold text-danger">Hết vé — phòng chờ ngừng nhận và ngừng cho vào</li>
+          ) : admission.stockZero ? (
+            <li className="font-semibold text-warning-fg">Kho tạm hết, còn vé đang giữ — tạm ngừng cho vào</li>
+          ) : null}
+          {!admission.leaderPresent ? (
+            <li className="font-semibold text-warning-fg">
+              Không có leader điều phối — nhịp admit không được cập nhật
+            </li>
+          ) : null}
+        </ul>
+      ) : null}
+      <CheckoutHealth snapshot={snapshot} />
     </Card>
+  );
+}
+
+/** Suc khoe checkout (loadsignal cua ticketing, di kem nguon waitingroom). Khong co tin hieu thi noi ro. */
+function CheckoutHealth({ snapshot }: { snapshot: OpsWarRoomSnapshot }) {
+  const health = snapshot.sources.waitingroom;
+  const { checkout } = snapshot;
+  return (
+    <div className="space-y-xs border-t border-border pt-md">
+      <h4 className="text-body-md font-semibold text-fg">Sức khỏe checkout</h4>
+      {health === "unavailable" ? (
+        <NoData />
+      ) : checkout === null ? (
+        <p className="text-body-md text-fg-muted">Không có tín hiệu từ checkout</p>
+      ) : (
+        <dl className="grid grid-cols-2 gap-sm text-body-md sm:grid-cols-4">
+          <div>
+            <dt className="text-fg-muted">p99</dt>
+            <dd className="font-semibold text-fg">{formatCount(Math.round(checkout.p99Ms))} ms</dd>
+          </div>
+          <div>
+            <dt className="text-fg-muted">Tỷ lệ lỗi</dt>
+            <dd className="font-semibold text-fg">{formatDecimal(checkout.errorRate * 100)} %</dd>
+          </div>
+          <div>
+            <dt className="text-fg-muted">DB pool</dt>
+            <dd className="font-semibold text-fg">{Math.round(checkout.dbPoolUsage * 100)} %</dd>
+          </div>
+          <div>
+            <dt className="text-fg-muted">Pod</dt>
+            <dd className="font-semibold text-fg">{formatCount(checkout.pods)}</dd>
+          </div>
+        </dl>
+      )}
+    </div>
   );
 }
 
@@ -257,26 +317,6 @@ export function OpsAiPanel({ snapshot }: { snapshot: OpsWarRoomSnapshot }) {
           </div>
         </>
       )}
-    </Card>
-  );
-}
-
-/** Khu "Điều khiển" tach rieng khoi giam sat. Chua co Ops API ghi de (EVF-60) nen moi nut
- *  bi vo hieu va khong gui request nao (AC-6). */
-export function OpsControlsPanel() {
-  return (
-    <Card className="space-y-md">
-      <div className="flex flex-wrap gap-sm">
-        <Button variant="secondary" disabled aria-describedby={CONTROLS_NOTE_ID}>
-          Ghi đè admit rate
-        </Button>
-        <Button variant="secondary" disabled aria-describedby={CONTROLS_NOTE_ID}>
-          Tạm dừng hàng chờ
-        </Button>
-      </div>
-      <p id={CONTROLS_NOTE_ID} className="text-body-md text-fg-muted">
-        Chưa có API ghi đè (EVF-60)
-      </p>
     </Card>
   );
 }

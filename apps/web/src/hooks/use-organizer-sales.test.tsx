@@ -7,9 +7,11 @@ import { useOrganizerSales } from "./use-organizer-sales";
 
 describe("useOrganizerSales — Hook doanh số realtime (AC-4)", () => {
   const mockSnapshot: organizerService.RealtimeSalesSnapshot = {
-    isSample: true,
+    // ops-warroom (test change request): fixture theo kieu snapshot that (isSample false, timestamp ISO,
+    // postSaleReport voi danh sach thanh toan); hanh vi polling 4 s khong doi.
+    isSample: false,
     eventId: "evt-tech-summit-2026",
-    timestamp: "12:00:00",
+    timestamp: "2026-11-01T05:00:00Z",
     grossRevenue: 150000000,
     totalTicketsSold: 250,
     totalQuota: 500,
@@ -28,6 +30,11 @@ describe("useOrganizerSales — Hook doanh số realtime (AC-4)", () => {
         fillRatePercentage: 50,
       },
     ],
+    postSaleReport: {
+      averageOrderValue: 1071429,
+      peakSalesVelocityTps: null,
+      paymentBreakdown: [{ provider: "vnpay", orders: 140, amount: 150000000 }],
+    },
   };
 
   beforeEach(() => {

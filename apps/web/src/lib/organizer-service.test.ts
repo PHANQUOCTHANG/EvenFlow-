@@ -256,16 +256,31 @@ describe("organizer-service — Business Rules & Validation", () => {
       expect(submitted.state).toBe("PENDING_REVIEW");
     });
 
-    it("getRealtimeSales là dữ liệu mẫu (isSample) suy từ quota thật, vẫn tính đúng doanh số", async () => {
-      installFetch(() => json(wire()));
+    // ops-warroom TCR: getRealtimeSales doc so lieu that (GET /v1/organizer/events/{id}/sales); chi tiet anh xa o
+    // organizer-service.sales.contract.test.ts. O day giu kiem tra "tinh dung doanh so" tren du lieu that.
+    it("getRealtimeSales đọc doanh số thật (isSample = false) và tính đúng doanh số", async () => {
+      const { calls } = installFetch(() =>
+        json({
+          event_id: EVT,
+          generated_at: "2026-11-01T10:00:00Z",
+          currency: "VND",
+          totals: { gross_revenue_cents: 900000, tickets_sold: 3, quota: 150, paid_orders: 2, active_holds: 1 },
+          tiers: [
+            { ticket_type_id: "t1", name: "A", price_cents: 300000, quota: 100, sold: 3, active_holds: 1, revenue_cents: 900000 },
+            { ticket_type_id: "t2", name: "B", price_cents: 500000, quota: 50, sold: 0, active_holds: 0, revenue_cents: 0 },
+          ],
+          payment_breakdown: [{ provider: "vnpay", orders: 2, amount_cents: 900000 }],
+        }),
+      );
       const sales = await getRealtimeSales(EVT);
-      expect(sales.isSample).toBe(true);
+      expect(calls[0].path).toBe(`/v1/organizer/events/${EVT}/sales`);
+      expect(sales.isSample).toBe(false);
       expect(sales.eventId).toBe(EVT);
-      expect(sales.grossRevenue).toBeGreaterThan(0);
-      expect(sales.totalTicketsSold).toBeGreaterThan(0);
+      expect(sales.grossRevenue).toBe(900000);
+      expect(sales.totalTicketsSold).toBe(3);
       expect(sales.tierSales.length).toBe(2);
-      expect(sales.postSaleReport?.averageOrderValue).toBeGreaterThan(0);
-      expect(sales.postSaleReport?.paymentBreakdown.vnpay).toBeGreaterThan(0);
+      expect(sales.postSaleReport.averageOrderValue).toBe(450000);
+      expect(sales.postSaleReport.paymentBreakdown).toEqual([{ provider: "vnpay", orders: 2, amount: 900000 }]);
     });
   });
 });

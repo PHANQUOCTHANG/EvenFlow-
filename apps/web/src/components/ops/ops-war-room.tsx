@@ -4,7 +4,8 @@
  *
  * - Dữ liệu làm mới mỗi 2s qua useOpsWarRoom; quá 5s hoặc lần làm mới lỗi thì hiện cảnh báo
  *   nhưng KHÔNG xoá số liệu cuối (AC-2).
- * - Dữ liệu mẫu phải gắn nhãn rõ (AC-3). Khu "Điều khiển" tách khỏi "Giám sát" (AC-6).
+ * - Nhãn "Dữ liệu mẫu" chỉ hiện khi snapshot.isSample (đường thật luôn false). Khu "Điều khiển" tách khỏi
+ *   "Giám sát" và gửi lệnh ghi đè thật (EVF-60).
  * - Không dùng Date/locale trong lần render đầu: ageMs là null cho tới khi mount (tránh hydration). */
 
 import Link from "next/link";
@@ -24,13 +25,8 @@ import {
   type OpsWarRoomSnapshot,
 } from "@/lib/ops-service";
 
-import {
-  OpsAdmissionPanel,
-  OpsAiPanel,
-  OpsControlsPanel,
-  OpsFunnelPanel,
-  OpsInventoryPanel,
-} from "./ops-panels";
+import { OpsControlsPanel } from "./ops-controls";
+import { OpsAdmissionPanel, OpsAiPanel, OpsFunnelPanel, OpsInventoryPanel } from "./ops-panels";
 
 export interface OpsWarRoomProps {
   eventId: string;
@@ -208,7 +204,7 @@ function LiveWarRoom({
         <h2 id="ops-controls-heading" className="text-headline-md font-bold text-fg">
           Điều khiển
         </h2>
-        <OpsControlsPanel />
+        <OpsControlsPanel eventId={eventId} snapshot={snapshot} onApplied={refresh} />
       </section>
     </div>
   );

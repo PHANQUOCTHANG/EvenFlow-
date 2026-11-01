@@ -1,9 +1,20 @@
+/**
+ * ops-warroom (test change request): dashboard chạy trên số liệu thật (isSample = false), không còn nhãn / alert mẫu,
+ * peak TPS hiện "Chưa có dữ liệu", cơ cấu thanh toán là danh sách theo nhà cung cấp, tự làm mới bật mặc định.
+ * Hành vi polling / lỗi / rỗng chi tiết nằm ở sales-dashboard.real.test.tsx. getRealtimeSales được giữ treo để
+ * test không gọi mạng.
+ */
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import type { OrganizerEvent, RealtimeSalesSnapshot } from "@/lib/organizer-service";
 
 import { SalesDashboard } from "./sales-dashboard";
+
+vi.mock("@/lib/organizer-service", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/organizer-service")>();
+  return { ...actual, getRealtimeSales: vi.fn(() => new Promise(() => {})) };
+});
 
 describe("SalesDashboard component (EV-186, EVF-116, AC-4, AC-5, Stitch 10.14)", () => {
   const mockEvent: OrganizerEvent = {
@@ -25,9 +36,9 @@ describe("SalesDashboard component (EV-186, EVF-116, AC-4, AC-5, Stitch 10.14)",
   };
 
   const mockSnapshot: RealtimeSalesSnapshot = {
-    isSample: true,
+    isSample: false,
     eventId: "evt-tech-summit",
-    timestamp: "12:30:00",
+    timestamp: "2026-11-01T05:30:00Z",
     grossRevenue: 950000000,
     totalTicketsSold: 750,
     totalQuota: 1200,
@@ -58,24 +69,21 @@ describe("SalesDashboard component (EV-186, EVF-116, AC-4, AC-5, Stitch 10.14)",
     ],
     postSaleReport: {
       averageOrderValue: 2261904,
-      peakSalesVelocityTps: 78.4,
-      paymentBreakdown: {
-        vnpay: 522500000,
-        momo: 285000000,
-        card: 142500000,
-      },
+      peakSalesVelocityTps: null,
+      paymentBreakdown: [
+        { provider: "vnpay", orders: 231, amount: 522500000 },
+        { provider: "momo", orders: 126, amount: 285000000 },
+        { provider: "card", orders: 63, amount: 142500000 },
+      ],
     },
   };
 
-  it("gắn nhãn Dữ liệu mẫu rõ ràng trước các khối số liệu (AC-24)", () => {
+  it("số liệu thật: không có nhãn / alert 'Dữ liệu mẫu' trước các khối số liệu (ops-warroom AC-30)", () => {
     render(<SalesDashboard event={mockEvent} initialSalesData={mockSnapshot} />);
 
-    const label = screen.getByText("Dữ liệu mẫu — chưa khả dụng từ hệ thống");
-    expect(label).toBeInTheDocument();
-    expect(
-      label.compareDocumentPosition(screen.getByText("Tổng doanh thu")) &
-        Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
+    expect(screen.queryByText(/Dữ liệu mẫu/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Mẫu — chưa phải doanh thu thật/)).not.toBeInTheDocument();
+    expect(screen.getByText("Tổng doanh thu")).toBeInTheDocument();
     expect(screen.queryByText("98.6%")).not.toBeInTheDocument();
   });
 
@@ -114,20 +122,23 @@ describe("SalesDashboard component (EV-186, EVF-116, AC-4, AC-5, Stitch 10.14)",
     fireEvent.click(reportTab);
 
     expect(screen.getByText("Giá trị trung bình mỗi đơn (AOV)")).toBeInTheDocument();
-    expect(screen.getByText(/78.4 TPS/)).toBeInTheDocument();
+    const tps = screen.getByText("Tốc độ giao dịch cao điểm").parentElement as HTMLElement;
+    expect(tps).toHaveTextContent("Chưa có dữ liệu");
+    expect(tps).not.toHaveTextContent(/TPS/);
     expect(screen.getByText("Cơ cấu doanh thu theo phương thức thanh toán")).toBeInTheDocument();
-    expect(screen.getByText("Cổng thanh toán VNPay")).toBeInTheDocument();
-    expect(screen.getByText("Ví điện tử MoMo")).toBeInTheDocument();
-    expect(screen.getByText("Thẻ Quốc Tế (Visa/Master)")).toBeInTheDocument();
+    expect(screen.getByText("vnpay")).toBeInTheDocument();
+    expect(screen.getByText("momo")).toBeInTheDocument();
+    expect(screen.getByText("card")).toBeInTheDocument();
   });
 
-  it("cho phép bật/tắt tự động cập nhật", () => {
+  it("cho phép bật/tắt tự động cập nhật (mặc định bật, EVF-116 AC-2)", () => {
     render(<SalesDashboard event={mockEvent} initialSalesData={mockSnapshot} />);
 
-    // Dữ liệu mẫu: mặc định không tự động gọi API, người dùng có thể bật.
-    const toggleBtn = screen.getByRole("button", { name: /Bật tự động/ });
+    const toggleBtn = screen.getByRole("button", { name: /Tắt tự động cập nhật/ });
     fireEvent.click(toggleBtn);
+    expect(screen.getByRole("button", { name: /Bật tự động/ })).toBeInTheDocument();
 
+    fireEvent.click(screen.getByRole("button", { name: /Bật tự động/ }));
     expect(screen.getByRole("button", { name: /Tắt tự động cập nhật/ })).toBeInTheDocument();
   });
 });

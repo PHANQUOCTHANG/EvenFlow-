@@ -80,10 +80,18 @@ export interface TierSalesDetail {
   fillRatePercentage: number;
 }
 
+/** Mot dong co cau thanh toan: nha cung cap la chuoi tu do (vnpay, momo, sandbox, unknown, ...). */
+export interface PaymentBreakdownItem {
+  provider: string;
+  orders: number;
+  amount: number;
+}
+
 export interface RealtimeSalesSnapshot {
-  /** Luôn true: chưa có API doanh số thật. UI phải gắn nhãn "Dữ liệu mẫu". */
-  isSample: true;
+  /** Luon false: so lieu that tu GET /v1/organizer/events/{id}/sales (contracts 4.2). */
+  isSample: false;
   eventId: string;
+  /** ISO generated_at cua server (thoi diem nap cache, khong phai luc tra loi). */
   timestamp: string;
   grossRevenue: number;
   totalTicketsSold: number;
@@ -92,14 +100,12 @@ export interface RealtimeSalesSnapshot {
   paidOrdersCount: number;
   activeHoldsCount: number;
   tierSales: TierSalesDetail[];
-  postSaleReport?: {
+  postSaleReport: {
+    /** gross / paidOrders, 0 khi chua co don. */
     averageOrderValue: number;
-    peakSalesVelocityTps: number;
-    paymentBreakdown: {
-      vnpay: number;
-      momo: number;
-      card: number;
-    };
+    /** Khong co nguon so lieu: UI hien "Chưa có dữ liệu". */
+    peakSalesVelocityTps: null;
+    paymentBreakdown: PaymentBreakdownItem[];
   };
 }
 
@@ -516,79 +522,82 @@ export async function cancelOrganizerEvent(id: string): Promise<OrganizerEvent> 
   return mapEvent((await res.json()) as WireEvent);
 }
 
-/** DU LIEU MAU: chua co endpoint doanh so cho organizer (contracts muc 7). Luon gan isSample = true.
- *
- * So lieu duoc suy tat dinh tu trang thai va quota that cua su kien; khong phai doanh so that. */
+interface WireSales {
+  event_id: string;
+  generated_at: string;
+  totals: {
+    gross_revenue_cents: number;
+    tickets_sold: number;
+    quota: number;
+    paid_orders: number;
+    active_holds: number;
+  };
+  tiers: {
+    ticket_type_id: string;
+    name: string;
+    price_cents: number;
+    quota: number;
+    sold: number;
+    active_holds: number;
+    revenue_cents: number;
+  }[] | null;
+  payment_breakdown: { provider: string; orders: number; amount_cents: number }[] | null;
+}
+
+const SALES_NOT_FOUND = "Không tìm thấy sự kiện hoặc bạn không sở hữu sự kiện này";
+
+const percent = (part: number, whole: number) => (whole > 0 ? Math.round((part / whole) * 100) : 0);
+
+/** Doanh so realtime cua su kien organizer so huu (EVF-116, contracts 4.2).
+ *  404 (khong ton tai hoac khong so huu, server khong phan biet) -> thong diep co dinh; 401/403/5xx -> ApiError
+ *  voi thong diep phia client (khong bao gio dung `detail` cua server). */
 export async function getRealtimeSales(eventId: string): Promise<RealtimeSalesSnapshot> {
-  const event = await getOrganizerEventById(eventId);
-  if (!event) {
-    throw new Error(`Sự kiện ${eventId} không tồn tại.`);
+  let res: Response;
+  try {
+    res = await call(`/v1/organizer/events/${encodeURIComponent(eventId)}/sales`, { method: "GET" });
+  } catch (e) {
+    if (e instanceof ApiError) {
+      if (e.status === 404) throw new Error(SALES_NOT_FOUND);
+      if (e.code === "AUTH_REQUIRED" || e.code === "NETWORK_ERROR") throw e;
+      if (e.status === 403) {
+        throw new ApiError(e.code, 403, {}, "Bạn không có quyền xem doanh số sự kiện này.");
+      }
+      throw new ApiError(e.code, e.status, {}, "Không tải được doanh số, vui lòng thử lại.");
+    }
+    throw e;
   }
-
-  const now = new Date();
-  const timestamp = now.toLocaleTimeString("vi-VN", {
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-  });
-
-  let soldRatio = 0;
-  let activeHolds = 0;
-  if (event.state === "ON_SALE") {
-    soldRatio = 0.72;
-    activeHolds = 48;
-  } else if (
-    event.state === "SOLD_OUT" ||
-    event.state === "CLOSED" ||
-    event.state === "COMPLETED"
-  ) {
-    soldRatio = 1.0;
-  }
-
-  const tierSales: TierSalesDetail[] = event.tiers.map((t) => {
-    const sold = Math.floor(t.quota * soldRatio);
-    const holds = Math.min(activeHolds, Math.floor(t.quota * 0.05));
-    const revenue = sold * t.price;
-    const fillRatePercentage = t.quota > 0 ? Math.round((sold / t.quota) * 100) : 0;
-
-    return {
-      tierId: t.id,
-      name: t.name,
-      price: t.price,
-      quota: t.quota,
-      sold,
-      activeHolds: holds,
-      revenue,
-      fillRatePercentage,
-    };
-  });
-
-  const totalTicketsSold = tierSales.reduce((acc, curr) => acc + curr.sold, 0);
-  const totalQuota = tierSales.reduce((acc, curr) => acc + curr.quota, 0);
-  const grossRevenue = tierSales.reduce((acc, curr) => acc + curr.revenue, 0);
-  const overallFillRatePercentage =
-    totalQuota > 0 ? Math.round((totalTicketsSold / totalQuota) * 100) : 0;
-  const paidOrdersCount = Math.floor(totalTicketsSold / 1.8);
-
+  const w = (await res.json()) as WireSales;
+  const tierSales: TierSalesDetail[] = (w.tiers ?? []).map((t) => ({
+    tierId: t.ticket_type_id,
+    name: t.name,
+    price: t.price_cents,
+    quota: t.quota,
+    sold: t.sold,
+    activeHolds: t.active_holds,
+    revenue: t.revenue_cents,
+    fillRatePercentage: percent(t.sold, t.quota),
+  }));
+  const { totals } = w;
   return {
-    isSample: true,
-    eventId: event.id,
-    timestamp,
-    grossRevenue,
-    totalTicketsSold,
-    totalQuota,
-    overallFillRatePercentage,
-    paidOrdersCount,
-    activeHoldsCount: activeHolds,
+    isSample: false,
+    eventId: w.event_id,
+    timestamp: w.generated_at,
+    grossRevenue: totals.gross_revenue_cents,
+    totalTicketsSold: totals.tickets_sold,
+    totalQuota: totals.quota,
+    overallFillRatePercentage: percent(totals.tickets_sold, totals.quota),
+    paidOrdersCount: totals.paid_orders,
+    activeHoldsCount: totals.active_holds,
     tierSales,
     postSaleReport: {
-      averageOrderValue: paidOrdersCount > 0 ? Math.round(grossRevenue / paidOrdersCount) : 0,
-      peakSalesVelocityTps: 84.5,
-      paymentBreakdown: {
-        vnpay: Math.round(grossRevenue * 0.55),
-        momo: Math.round(grossRevenue * 0.3),
-        card: Math.round(grossRevenue * 0.15),
-      },
+      averageOrderValue:
+        totals.paid_orders > 0 ? Math.round(totals.gross_revenue_cents / totals.paid_orders) : 0,
+      peakSalesVelocityTps: null,
+      paymentBreakdown: (w.payment_breakdown ?? []).map((p) => ({
+        provider: p.provider,
+        orders: p.orders,
+        amount: p.amount_cents,
+      })),
     },
   };
 }

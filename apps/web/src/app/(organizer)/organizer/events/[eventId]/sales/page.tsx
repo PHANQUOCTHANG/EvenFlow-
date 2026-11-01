@@ -2,7 +2,7 @@ import { SalesClient } from "./sales-client";
 
 export const metadata = {
   title: "Doanh số — Ban tổ chức EvenFlow",
-  description: "Doanh số mẫu của sự kiện (chưa có API doanh số thật)",
+  description: "Doanh số thời gian thực của sự kiện (cập nhật mỗi 4 giây)",
 };
 
 export default async function OrganizerSalesPage({

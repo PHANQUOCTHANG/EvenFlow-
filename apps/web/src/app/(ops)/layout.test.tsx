@@ -6,6 +6,10 @@
  * deu hien" + "khong hien label rieng cua ORGANIZER_NAV" bat duoc viec do.
  *
  * Luu y (spec §2.2): OPS_NAV la cau hinh hien thi, KHONG phai ma tran quyen.
+ *
+ * ops-warroom AC-27 (test change request): layout boc children trong RoleGuard ["ops"], nen o day dang nhap
+ * gia lap la ops (useAuth mock) va next/navigation co them useRouter cho RoleGuard. Cac truong hop role khac /
+ * an danh / dang tai phien nam o app/(ops)/ops-pages.real.test.tsx.
  */
 import { render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -18,6 +22,16 @@ const { pathnameMock } = vi.hoisted(() => ({ pathnameMock: vi.fn(() => "/ops") }
 
 vi.mock("next/navigation", () => ({
   usePathname: () => pathnameMock(),
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
+}));
+
+vi.mock("@/hooks/use-auth", () => ({
+  useAuth: () => ({
+    user: { id: "ops-1", role: "ops" },
+    loading: false,
+    isAuthenticated: true,
+    hasRole: (roles: string[]) => roles.includes("ops"),
+  }),
 }));
 
 const NAV_LABEL = "Điều hướng workspace";

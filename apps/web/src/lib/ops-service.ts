@@ -1,14 +1,15 @@
-/** Ops Service — war room cho Ops (EV-187, EVF-117).
+/** Ops Service — war room cho Ops (EV-187, EVF-117) va lenh ghi de admit rate (EV-147, EVF-60).
  *
- * Hien chi la DU LIEU MAU tat dinh (isSample = true), cung kieu du lieu mau voi doanh so organizer (xem getRealtimeSales).
- * Khi co Ops API that (admit controller, ticketing, ai-worker /admin/mode) chi can thay than
- * cua getOpsWarRoom / listOpsEvents; hop dong kieu giu nguyen.
- *
- * Handoff muc 10.18 cam "fabricated green health": snapshot mau luon gan isSample = true de UI
- * hien nhan "Du lieu mau". So lieu khong dung Math.random va khong suy trang thai tu Date.now. */
+ * getOpsWarRoom ghep MOT snapshot o client tu 4 nguon goi song song qua apiFetch (contracts ops-warroom §3-§6):
+ *   GET /api/v1/events/{id}            (cong khai: tieu de, trang thai, quyet dinh 404)
+ *   GET /v1/ops/events/{id}/queue      (waitingroom)
+ *   GET /v1/ops/events/{id}/inventory  (ticketing)
+ *   GET /v1/ops/ai/mode                (ai-worker)
+ * Mot nguon hong -> nguon do `unavailable`, cac so con lai van song. Snapshot luon isSample = false: khong con du
+ * lieu mau nao trong module nay (AC-28). Token nam o trinh duyet, nen chi goi tu client. */
 
-import { SAMPLE_EVENTS } from "./sample-data/events";
-import type { EventDetailSnapshot, TierAvailability } from "./types/event";
+import { ApiError, apiFetch } from "@/lib/api-client";
+import { getAllPublicEvents } from "@/lib/event-service";
 
 export type DegradationMode = "NORMAL" | "SAVING" | "FAQ_ONLY" | "OFF";
 export type SourceHealth = "ok" | "stale" | "unavailable";
@@ -24,11 +25,18 @@ export interface OpsTierInventory {
   available: number;
 }
 
+export interface OpsCheckoutHealth {
+  p99Ms: number;
+  errorRate: number;
+  dbPoolUsage: number;
+  pods: number;
+}
+
 export interface OpsWarRoomSnapshot {
   eventId: string;
   eventTitle: string;
   saleState: OpsSaleState;
-  /** ISO, gio server luc chup so lieu. */
+  /** ISO, gio server cua nguon CU NHAT trong cac nguon tra loi duoc. */
   generatedAt: string;
   funnel: {
     lobby: number;
@@ -38,7 +46,20 @@ export interface OpsWarRoomSnapshot {
     paid: number;
     issued: number;
   };
-  admission: { ratePerSec: number; mode: "AUTO" | "MANUAL"; queueDepth: number };
+  admission: {
+    ratePerSec: number;
+    mode: "AUTO" | "MANUAL";
+    queueDepth: number;
+    /** Nhip Ops dat tay; null khi AUTO. */
+    overrideRatePerSec: number | null;
+    /** Ghi de voi nhip 0 = tam dung khan cap. */
+    paused: boolean;
+    soldOut: boolean;
+    stockZero: boolean;
+    leaderPresent: boolean;
+  };
+  /** Suc khoe checkout (loadsignal); null khi khong co tin hieu. */
+  checkout: OpsCheckoutHealth | null;
   inventory: OpsTierInventory[];
   ai: {
     mode: DegradationMode;
@@ -47,7 +68,7 @@ export interface OpsWarRoomSnapshot {
     budgetUsedRatio: number;
   };
   sources: { waitingroom: SourceHealth; ticketing: SourceHealth; ai: SourceHealth };
-  /** true = du lieu mau, UI phai gan nhan. */
+  /** true = du lieu mau, UI phai gan nhan. Duong that luon false. */
   isSample: boolean;
 }
 
@@ -76,7 +97,7 @@ export interface OpsEventListItem {
   saleState: OpsSaleState;
 }
 
-/** 403 = khong co quyen, 404 = khong co su kien. */
+/** 401 = can dang nhap lai, 403 = khong co quyen, 404 = khong co su kien, 503 = khong tai duoc. */
 export class OpsServiceError extends Error {
   status: number;
 
@@ -88,6 +109,7 @@ export class OpsServiceError extends Error {
 }
 
 function defaultMessage(status: number): string {
+  if (status === 401) return "Phiên đăng nhập đã hết, vui lòng đăng nhập lại.";
   if (status === 403) return "Bạn không có quyền xem war room.";
   if (status === 404) return "Không tìm thấy sự kiện.";
   return "Không tải được số liệu war room.";
@@ -117,23 +139,8 @@ export function snapshotAgeMs(snapshot: Pick<OpsWarRoomSnapshot, "generatedAt">,
   return Number.isNaN(at) ? Infinity : nowMs - at;
 }
 
-type SampleOverride = Partial<OpsWarRoomSnapshot> | { error: number };
-
-const overrides = new Map<string, SampleOverride>();
-
-/** Chi dung trong test: ghi de / ep loi du lieu mau cua mot su kien; null = dat lai.
- *  No-op khi production. */
-export function __setOpsSampleOverride(eventId: string, patch: SampleOverride | null): void {
-  if (process.env.NODE_ENV === "production") return;
-  if (patch === null) {
-    overrides.delete(eventId);
-    return;
-  }
-  overrides.set(eventId, patch);
-}
-
-function toSaleState(state: EventDetailSnapshot["state"]): OpsSaleState {
-  switch (state) {
+function toSaleState(status: string): OpsSaleState {
+  switch (status) {
     case "ON_SALE":
       return "ON_SALE";
     case "SOLD_OUT":
@@ -145,73 +152,283 @@ function toSaleState(state: EventDetailSnapshot["state"]): OpsSaleState {
   }
 }
 
-/** Bang so lieu mau theo availability cong khai (plan §6 M-4). */
-const TIER_SAMPLE: Record<TierAvailability, Omit<OpsTierInventory, "tierId" | "name">> = {
-  AVAILABLE: { quota: 1000, held: 40, paid: 300, issued: 250, available: 410 },
-  FEW_LEFT: { quota: 200, held: 20, paid: 90, issued: 80, available: 10 },
-  SOLD_OUT: { quota: 500, held: 0, paid: 0, issued: 500, available: 0 },
-  UNKNOWN: { quota: 0, held: 0, paid: 0, issued: 0, available: 0 },
-};
+/* ------------------------------ wire (contracts §3.1, §4.1, §5.1) ------------------------------ */
 
-function buildSample(event: EventDetailSnapshot): OpsWarRoomSnapshot {
-  const saleState = toSaleState(event.state);
-  const live = saleState === "ON_SALE";
+interface WireEventDetail {
+  id: string;
+  title: string;
+  status: string;
+}
 
-  const inventory: OpsTierInventory[] = event.tiers.map((tier) => ({
-    tierId: tier.id,
-    name: tier.name,
-    ...TIER_SAMPLE[tier.availability],
+interface WireQueue {
+  generated_at: string;
+  lobby: number;
+  queued: number;
+  admitted_active: number;
+  admit_rate_per_sec: number;
+  override: { active: boolean; rate_per_sec: number | null };
+  paused: boolean;
+  sold_out: boolean;
+  stock_zero: boolean;
+  controller: { leader_present: boolean; epoch: number };
+  checkout: {
+    signal: string;
+    pods: number;
+    p99_ms: number | null;
+    error_rate: number | null;
+    db_pool_usage: number | null;
+  };
+}
+
+interface WireInventoryTier {
+  ticket_type_id: string;
+  name: string;
+  quota: number;
+  available: number;
+  held: number;
+  paid: number;
+  issued: number;
+}
+
+interface WireInventory {
+  generated_at: string;
+  tiers: WireInventoryTier[] | null;
+}
+
+interface WireAiMode {
+  mode: DegradationMode;
+  manual_override: string | null;
+  signals: { chat_queue_lag_seconds: number; budget_used_ratio: number; gemini_circuit_open: boolean };
+  generated_at: string;
+}
+
+/** Loi cua mot nguon: status HTTP (0 = mang / body hong), auth = phien da mat. */
+class SourceError extends Error {
+  readonly status: number;
+  readonly auth: boolean;
+
+  constructor(status: number, auth = false) {
+    super(`source ${status}`);
+    this.status = status;
+    this.auth = auth;
+  }
+}
+
+async function getJson<T>(path: string, auth: boolean): Promise<T> {
+  let res: Response;
+  try {
+    res = await apiFetch(path, { method: "GET", auth, cache: "no-store" });
+  } catch (e) {
+    if (e instanceof ApiError && e.code === "AUTH_REQUIRED") throw new SourceError(401, true);
+    throw new SourceError(0);
+  }
+  if (!res.ok) throw new SourceError(res.status);
+  try {
+    return (await res.json()) as T;
+  } catch {
+    throw new SourceError(0);
+  }
+}
+
+function failure(r: PromiseSettledResult<unknown>): SourceError | null {
+  if (r.status === "fulfilled") return null;
+  return r.reason instanceof SourceError ? r.reason : new SourceError(0);
+}
+
+const sum = (tiers: OpsTierInventory[], key: "held" | "paid" | "issued") =>
+  tiers.reduce((acc, t) => acc + t[key], 0);
+
+export async function getOpsWarRoom(eventId: string): Promise<OpsWarRoomSnapshot> {
+  const id = encodeURIComponent(eventId);
+  const [eventR, queueR, invR, aiR] = await Promise.allSettled([
+    getJson<WireEventDetail>(`/api/v1/events/${id}`, false),
+    getJson<WireQueue>(`/v1/ops/events/${id}/queue`, true),
+    getJson<WireInventory>(`/v1/ops/events/${id}/inventory`, true),
+    getJson<WireAiMode>("/v1/ops/ai/mode", true),
+  ]);
+  const failures = [eventR, queueR, invR, aiR].map(failure);
+  const [eventErr, queueErr, invErr, aiErr] = failures;
+
+  // Thu tu quyet dinh (AC-22): phien mat -> 401; su kien khong ton tai -> 404; mot nguon tu choi quyen -> 403
+  // (khong coi la "unavailable"); su kien loi khac hoac ca ba nguon hong -> 503.
+  if (failures.some((f) => f?.auth)) throw new OpsServiceError(401);
+  if (eventErr?.status === 404 || eventErr?.status === 400) throw new OpsServiceError(404);
+  if (failures.some((f) => f?.status === 403)) throw new OpsServiceError(403);
+  if (eventR.status !== "fulfilled") throw new OpsServiceError(503);
+  if (queueErr && invErr && aiErr) throw new OpsServiceError(503);
+
+  const event = eventR.value;
+  const saleState = toSaleState(event.status);
+  const queue = queueR.status === "fulfilled" ? queueR.value : null;
+  const inv = invR.status === "fulfilled" ? invR.value : null;
+  const ai = aiR.status === "fulfilled" ? aiR.value : null;
+
+  const inventory: OpsTierInventory[] = (inv?.tiers ?? []).map((t) => ({
+    tierId: t.ticket_type_id,
+    name: t.name,
+    quota: t.quota,
+    held: t.held,
+    paid: t.paid,
+    issued: t.issued,
+    available: t.available,
   }));
-  const sum = (key: "held" | "paid" | "issued") => inventory.reduce((acc, t) => acc + t[key], 0);
 
-  const queued = live ? 4210 : 0;
+  const overrideActive = queue?.override.active === true;
+  const leaderPresent = queue?.controller.leader_present === true;
+  const co = queue?.checkout;
+  const checkout: OpsCheckoutHealth | null =
+    co && co.signal === "ok" && co.p99_ms !== null && co.error_rate !== null && co.db_pool_usage !== null
+      ? { p99Ms: co.p99_ms, errorRate: co.error_rate, dbPoolUsage: co.db_pool_usage, pods: co.pods }
+      : null;
+
+  let waitingroom: SourceHealth = queue ? "ok" : "unavailable";
+  if (queue && !leaderPresent && saleState === "ON_SALE") waitingroom = "stale";
+
+  const times = [queue?.generated_at, inv?.generated_at, ai?.generated_at]
+    .map((t) => (t ? Date.parse(t) : Number.NaN))
+    .filter((t) => !Number.isNaN(t));
+  const generatedAt = new Date(times.length > 0 ? Math.min(...times) : Date.now()).toISOString();
 
   return {
     eventId: event.id,
     eventTitle: event.title,
     saleState,
-    generatedAt: new Date().toISOString(),
+    generatedAt,
     funnel: {
-      lobby: 0,
-      queued,
-      admitted: live ? 350 : 0,
-      holding: sum("held"),
-      paid: sum("paid"),
-      issued: sum("issued"),
+      lobby: queue?.lobby ?? 0,
+      queued: queue?.queued ?? 0,
+      admitted: queue?.admitted_active ?? 0,
+      holding: sum(inventory, "held"),
+      paid: sum(inventory, "paid"),
+      issued: sum(inventory, "issued"),
     },
-    admission: { ratePerSec: live ? 50 : 0, mode: "AUTO", queueDepth: queued },
+    admission: {
+      ratePerSec: queue?.admit_rate_per_sec ?? 0,
+      mode: overrideActive ? "MANUAL" : "AUTO",
+      queueDepth: queue?.queued ?? 0,
+      overrideRatePerSec: overrideActive ? (queue?.override.rate_per_sec ?? null) : null,
+      paused: queue?.paused === true,
+      soldOut: queue?.sold_out === true,
+      stockZero: queue?.stock_zero === true,
+      leaderPresent,
+    },
+    checkout,
     inventory,
-    ai: { mode: "NORMAL", manualOverride: false, chatQueueLagSeconds: 2, budgetUsedRatio: 0.35 },
-    sources: { waitingroom: "ok", ticketing: "ok", ai: "ok" },
-    isSample: true,
+    ai: {
+      mode: ai?.mode ?? "NORMAL",
+      manualOverride: ai ? ai.manual_override != null : false,
+      chatQueueLagSeconds: ai?.signals.chat_queue_lag_seconds ?? 0,
+      budgetUsedRatio: ai?.signals.budget_used_ratio ?? 0,
+    },
+    sources: {
+      waitingroom,
+      ticketing: inv ? "ok" : "unavailable",
+      ai: ai ? "ok" : "unavailable",
+    },
+    isSample: false,
   };
 }
 
-/** Nguon su kien cua war room: du lieu MAU (chua co API ops, EVF-60), khong phai su kien that. */
-async function listSampleEvents(): Promise<EventDetailSnapshot[]> {
-  return [...SAMPLE_EVENTS];
-}
-
-export async function getOpsWarRoom(eventId: string): Promise<OpsWarRoomSnapshot> {
-  const override = overrides.get(eventId);
-  if (override && "error" in override) {
-    throw new OpsServiceError(override.error);
-  }
-
-  const events = await listSampleEvents();
-  const event = events.find((e) => e.id === eventId);
-  if (!event) {
-    throw new OpsServiceError(404);
-  }
-
-  return { ...buildSample(event), ...(override ?? {}) };
-}
-
+/** Danh sach su kien cho war room: danh sach cong khai (SCHEDULED / ON_SALE / SOLD_OUT, contracts §6). */
 export async function listOpsEvents(): Promise<OpsEventListItem[]> {
-  const events = await listSampleEvents();
-  return events.map((e) => ({
-    eventId: e.id,
-    eventTitle: e.title,
-    saleState: toSaleState(e.state),
-  }));
+  const events = await getAllPublicEvents();
+  return events.map((e) => ({ eventId: e.id, eventTitle: e.title, saleState: toSaleState(e.state) }));
+}
+
+/* ------------------------------ ghi de admit rate (contracts §3.2, §3.3) ------------------------------ */
+
+export const MAX_OVERRIDE_RATE = 10_000;
+export const MIN_REASON_LENGTH = 3;
+export const MAX_REASON_LENGTH = 200;
+
+/** Nhip ghi de hop le: so nguyen 0..10000 (CR-1: so le bi tu choi). */
+export function isValidOverrideRate(rate: number): boolean {
+  return Number.isInteger(rate) && rate >= 0 && rate <= MAX_OVERRIDE_RATE;
+}
+
+/** Ly do da cat khoang trang neu dai 3..200 ky tu, nguoc lai null. */
+export function normalizeOverrideReason(reason: string): string | null {
+  const r = (reason ?? "").trim();
+  const n = Array.from(r).length;
+  return n >= MIN_REASON_LENGTH && n <= MAX_REASON_LENGTH ? r : null;
+}
+
+export type OpsWriteErrorCode = "INVALID" | "FORBIDDEN" | "NOT_FOUND" | "UNAVAILABLE";
+
+const WRITE_MESSAGE: Record<OpsWriteErrorCode, string> = {
+  INVALID: "Tốc độ phải là số nguyên 0–10000 và lý do dài 3–200 ký tự.",
+  FORBIDDEN: "Không có quyền thực hiện thao tác này.",
+  NOT_FOUND: "Sự kiện chưa có phòng chờ.",
+  UNAVAILABLE: "Không gửi được lệnh, vui lòng thử lại.",
+};
+
+/** Loi lenh ghi. Thong diep luon la cau co dinh phia client, khong bao gio la `detail` cua server. */
+export class OpsWriteError extends Error {
+  readonly code: OpsWriteErrorCode;
+
+  constructor(code: OpsWriteErrorCode) {
+    super(WRITE_MESSAGE[code]);
+    this.name = "OpsWriteError";
+    this.code = code;
+  }
+}
+
+export interface AdmitOverrideResult {
+  active: boolean;
+  ratePerSec: number | null;
+  paused: boolean;
+  audit: "recorded" | "failed";
+}
+
+interface WireOverrideResult {
+  override: { active: boolean; rate_per_sec: number | null };
+  paused: boolean;
+  audit: "recorded" | "failed";
+}
+
+async function sendOverride(eventId: string, method: "PUT" | "DELETE", body: unknown): Promise<AdmitOverrideResult> {
+  let res: Response;
+  try {
+    res = await apiFetch(`/v1/ops/events/${encodeURIComponent(eventId)}/admit-override`, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+  } catch (e) {
+    // Phien mat: de nguyen ApiError(AUTH_REQUIRED) cho tang tren dua nguoi dung ve dang nhap.
+    if (e instanceof ApiError && e.code === "AUTH_REQUIRED") throw e;
+    throw new OpsWriteError("UNAVAILABLE");
+  }
+  if (!res.ok) {
+    if (res.status === 400) throw new OpsWriteError("INVALID");
+    if (res.status === 401 || res.status === 403) throw new OpsWriteError("FORBIDDEN");
+    if (res.status === 404) throw new OpsWriteError("NOT_FOUND");
+    throw new OpsWriteError("UNAVAILABLE");
+  }
+  let w: WireOverrideResult;
+  try {
+    w = (await res.json()) as WireOverrideResult;
+  } catch {
+    throw new OpsWriteError("UNAVAILABLE");
+  }
+  return {
+    active: w.override.active,
+    ratePerSec: w.override.rate_per_sec,
+    paused: w.paused,
+    audit: w.audit === "failed" ? "failed" : "recorded",
+  };
+}
+
+/** Dat ghi de nhip admit (rate 0 = tam dung khan cap). Kiem tra o client truoc moi request (AC-24). */
+export async function setAdmitOverride(eventId: string, ratePerSec: number, reason: string): Promise<AdmitOverrideResult> {
+  const r = normalizeOverrideReason(reason);
+  if (!isValidOverrideRate(ratePerSec) || r === null) throw new OpsWriteError("INVALID");
+  return sendOverride(eventId, "PUT", { rate_per_sec: ratePerSec, reason: r });
+}
+
+/** Bo ghi de, tra quyen cho bo tu dieu chinh. */
+export async function clearAdmitOverride(eventId: string, reason: string): Promise<AdmitOverrideResult> {
+  const r = normalizeOverrideReason(reason);
+  if (r === null) throw new OpsWriteError("INVALID");
+  return sendOverride(eventId, "DELETE", { reason: r });
 }

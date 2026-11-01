@@ -42,10 +42,11 @@ describe("khong con mock trong ma san xuat (AC-19)", () => {
     }
   });
 
-  it("lib/sample-data/events.ts ton tai va chi duoc import boi ops-service", () => {
-    expect(files.some((f) => f.file === "lib/sample-data/events.ts")).toBe(true);
-    const importers = offenders(/sample-data\/events/).filter((f) => f !== "lib/sample-data/events.ts");
-    expect(importers.sort()).toEqual(["lib/ops-service.ts"]);
+  // ops-warroom AC-28 (test change request): war room da chay tren du lieu that, file mau bi xoa; chi tiet o
+  // ops-warroom.no-sample.contract.test.ts.
+  it("lib/sample-data/events.ts da bi xoa va khong module san xuat nao import sample-data", () => {
+    expect(files.some((f) => f.file === "lib/sample-data/events.ts")).toBe(false);
+    expect(offenders(/sample-data/)).toEqual([]);
   });
 
   it("organizer-service khong con kho mock (INITIAL_ORGANIZER_EVENTS / resetOrganizerEventsStore)", () => {

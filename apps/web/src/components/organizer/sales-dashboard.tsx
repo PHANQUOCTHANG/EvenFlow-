@@ -7,6 +7,8 @@
  * - Chỉ số trực quan: Doanh thu, Vé đã bán, Đơn hàng thành công, Vé đang giữ 10:00.
  * - Chi tiết từng hạng vé với thanh tiến độ lấp đầy (Fill rate %).
  * - AC-5: Báo cáo tổng kết sau bán (Post-sale report: AOV, Peak TPS, Cơ cấu thanh toán).
+ * - ops-warroom AC-30: số liệu thật từ GET /v1/organizer/events/{id}/sales, tự làm mới mỗi 4s mặc định.
+ *   Peak TPS chưa có nguồn nên hiện "Chưa có dữ liệu", không bịa số.
  */
 
 import Link from "next/link";
@@ -45,8 +47,8 @@ export function SalesDashboard({
   } = useOrganizerSales({
     eventId: event.id,
     initialData: initialSalesData,
-    // Dữ liệu mẫu: không cần gọi API liên tục.
-    initialAutoRefresh: false,
+    // EVF-116 AC-2: cập nhật trong <= 5s, mặc định bật tự làm mới (4s).
+    initialAutoRefresh: true,
   });
 
   const [activeTab, setActiveTab] = useState<"realtime" | "report">("realtime");
@@ -72,8 +74,8 @@ export function SalesDashboard({
 
         {/* Realtime control toolbar */}
         <div className="flex flex-wrap items-center gap-sm">
-          <Badge variant="pending" className="flex items-center gap-xs text-label-sm">
-            Dữ liệu mẫu · mô phỏng Realtime (≤ 5s)
+          <Badge variant="neutral" className="flex items-center gap-xs text-label-sm">
+            Realtime (≤ 5s)
           </Badge>
 
           <Button
@@ -96,12 +98,6 @@ export function SalesDashboard({
           </Button>
         </div>
       </div>
-
-      {/* Backend chưa có API doanh số cho organizer (contracts mục 7): luôn gắn nhãn mẫu */}
-      <Alert variant="info" title="Dữ liệu mẫu — chưa khả dụng từ hệ thống">
-        Doanh số, vé đang giữ và báo cáo bên dưới là số liệu minh hoạ suy từ hạn mức vé, chưa nối với
-        nguồn thật. Không dùng để đối soát doanh thu.
-      </Alert>
 
       {/* Freshness banner & errors */}
       {error && (
@@ -167,7 +163,7 @@ export function SalesDashboard({
                 <p className="text-heading-lg font-bold text-primary">
                   {formatVnd(data.grossRevenue)}
                 </p>
-                <span className="text-label-sm text-fg-muted">Mẫu — chưa phải doanh thu thật</span>
+                <span className="text-label-sm text-fg-muted">Đơn đã thanh toán / đã phát hành vé</span>
               </Card>
 
               <Card className="p-md space-y-xs">
@@ -213,6 +209,9 @@ export function SalesDashboard({
                 </span>
               </div>
 
+              {data.tierSales.length === 0 || data.totalTicketsSold === 0 ? (
+                <p className="text-body-md text-fg-muted">Chưa bán được vé nào cho sự kiện này.</p>
+              ) : null}
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-body-sm border-collapse">
                   <thead>
@@ -283,7 +282,7 @@ export function SalesDashboard({
                   Giá trị trung bình mỗi đơn (AOV)
                 </span>
                 <p className="text-heading-lg font-bold text-fg">
-                  {formatVnd(data.postSaleReport?.averageOrderValue ?? 0)}
+                  {formatVnd(data.postSaleReport.averageOrderValue)}
                 </p>
                 <span className="text-label-sm text-fg-muted">Doanh thu / Số đơn</span>
               </Card>
@@ -292,10 +291,8 @@ export function SalesDashboard({
                 <span className="text-body-xs text-fg-muted font-medium">
                   Tốc độ giao dịch cao điểm
                 </span>
-                <p className="text-heading-lg font-bold text-fg">
-                  {data.postSaleReport?.peakSalesVelocityTps ?? 0} TPS
-                </p>
-                <span className="text-label-sm text-fg-muted">Số liệu mẫu</span>
+                <p className="text-heading-lg font-bold text-fg-muted">—</p>
+                <span className="text-label-sm text-fg-muted">Chưa có dữ liệu</span>
               </Card>
 
               <Card className="p-md space-y-xs">
@@ -313,31 +310,25 @@ export function SalesDashboard({
                 Cơ cấu doanh thu theo phương thức thanh toán
               </h3>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-md">
-                <div className="p-md rounded-control bg-surface-elevated border border-border space-y-xs">
-                  <span className="font-semibold text-body-sm text-fg">Cổng thanh toán VNPay</span>
-                  <p className="text-heading-sm font-bold text-primary">
-                    {formatVnd(data.postSaleReport?.paymentBreakdown.vnpay ?? 0)}
-                  </p>
-                  <span className="text-body-xs text-fg-muted">Chiếm ~55% tổng doanh số</span>
-                </div>
-
-                <div className="p-md rounded-control bg-surface-elevated border border-border space-y-xs">
-                  <span className="font-semibold text-body-sm text-fg">Ví điện tử MoMo</span>
-                  <p className="text-heading-sm font-bold text-primary">
-                    {formatVnd(data.postSaleReport?.paymentBreakdown.momo ?? 0)}
-                  </p>
-                  <span className="text-body-xs text-fg-muted">Chiếm ~30% tổng doanh số</span>
-                </div>
-
-                <div className="p-md rounded-control bg-surface-elevated border border-border space-y-xs">
-                  <span className="font-semibold text-body-sm text-fg">Thẻ Quốc Tế (Visa/Master)</span>
-                  <p className="text-heading-sm font-bold text-primary">
-                    {formatVnd(data.postSaleReport?.paymentBreakdown.card ?? 0)}
-                  </p>
-                  <span className="text-body-xs text-fg-muted">Chiếm ~15% tổng doanh số</span>
-                </div>
-              </div>
+              {data.postSaleReport.paymentBreakdown.length === 0 ? (
+                <p className="text-body-md text-fg-muted">Chưa có đơn thanh toán thành công.</p>
+              ) : (
+                <ul className="grid grid-cols-1 md:grid-cols-3 gap-md">
+                  {data.postSaleReport.paymentBreakdown.map((p) => (
+                    <li
+                      key={p.provider}
+                      className="p-md rounded-control bg-surface-elevated border border-border space-y-xs"
+                    >
+                      <span className="font-semibold text-body-sm text-fg">{p.provider}</span>
+                      <p className="text-heading-sm font-bold text-primary">{formatVnd(p.amount)}</p>
+                      <span className="text-body-xs text-fg-muted">
+                        {p.orders.toLocaleString("vi-VN")} đơn ·{" "}
+                        {data.grossRevenue > 0 ? Math.round((p.amount / data.grossRevenue) * 100) : 0}% doanh thu
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </Card>
           </div>
         )
