@@ -1,0 +1,16 @@
+{
+ "commit": "f72bad8",
+ "command": "bash deploy/k8s/policy/test_policy.sh",
+ "existing_tests_touched": 0,
+ "result_before_checker": {"pass": 26, "fail": 151, "skip": 0, "selftest": "0/138"},
+ "fixtures": {"good": 2, "bad": 130, "exit2_cases": 6},
+ "red_reasons": [
+  "B-CHECKER-EXISTS, B-GOOD-*, C-* (136 cases): deploy/k8s/policy/check_policy.py does not exist",
+  "D-USER-*: Dockerfiles end with nonroot:nonroot / worker, expected 65532:65532 / 10001",
+  "E-AC3-FLAT: deploy/k8s/*.yaml still present",
+  "E-AC1-RENDER-*, E-AC16-DEVENV, E-AC2-*, E-AC24-*: overlays/local, overlays/staging, secrets.dev.env do not exist"
+ ],
+ "green_guards": ["A-GEN-SYNC", "A-COUNT", "A-COVER-* (23 ids)", "E-AC27-COMPOSE"],
+ "tools": "yq v4.44.3 / kustomize v5.7.1 / kubeconform v0.8.0 via go install (GOTOOLCHAIN=local); good fixtures validated with kubeconform -strict -kubernetes-version 1.32.0 (68 and 57 resources valid)",
+ "sanity": "accept-everything stub checker: good pass, all 130 bad + 6 exit-2 cases fail"
+}
