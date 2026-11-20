@@ -115,7 +115,7 @@ func (h *Handler) opsInventory(w http.ResponseWriter, r *http.Request) {
 	}
 	httpx.WriteJSON(w, http.StatusOK, map[string]any{
 		"event_id":     eventID,
-		"generated_at": filledAt.UTC().Format(time.RFC3339),
+		"generated_at": filledAt.UTC().Format(time.RFC3339Nano),
 		"tiers":        tiers,
 	})
 }
@@ -172,7 +172,7 @@ func (h *Handler) organizerSales(w http.ResponseWriter, r *http.Request) {
 	}
 	httpx.WriteJSON(w, http.StatusOK, map[string]any{
 		"event_id":          eventID,
-		"generated_at":      filledAt.UTC().Format(time.RFC3339),
+		"generated_at":      filledAt.UTC().Format(time.RFC3339Nano),
 		"currency":          "VND",
 		"totals":            salesTotalsJSON(s.Totals),
 		"tiers":             tiers,
