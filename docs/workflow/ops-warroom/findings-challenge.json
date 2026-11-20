@@ -1,0 +1,123 @@
+[
+  {
+    "id": "X-1",
+    "severity": "minor",
+    "ac": "AC-6, AC-9",
+    "file": "services/waitingroom/internal/adapter/http/ops_handler.go",
+    "line": 191,
+    "title": "rate_per_sec accepts non-integer JSON literals (1e2, 100.0, 1.0e1, -0); -0 is echoed back as -0",
+    "evidence": "PUT {\"rate_per_sec\":1e2,\"reason\":\"abc\"} -> 200, sets=[100]. Same for 100.0, 1E2, 10000.00. -0 -> 200 with override.rate_per_sec:-0, paused:true. Contract 3.2 says JSON integer. 0.3, 10001, -1, 1e400, 99999999999999999999, strings, null, bool, unknown field, trailing data, 4 KiB body are all correctly 400 with no write.",
+    "repro": "// package httpadapter_test (reuses newOpsRig/opsCall/ovPath from ops_handler_test.go)\nfunc TestChallenge_RateLiteralForms(t *testing.T) {\n\tfor _, c := range []string{`1e2`, `100.0`, `1E2`, `-0`, `0.0`, `1.0e1`, `10000.00`} {\n\t\trig := newOpsRig(true)\n\t\trec := opsCall(rig.mux, http.MethodPut, ovPath(opsEvent), \"ops\", `{\"rate_per_sec\":`+c+`,\"reason\":\"abc\"}`)\n\t\tt.Logf(\"rate=%s -> %d %s sets=%v\", c, rec.Code, rec.Body.String(), rig.store.sets)\n\t}\n}",
+    "fix": "In parseRate accept only ^(0|[1-9][0-9]*)$ and use ParseInt, or state in the contract that integral-valued numbers are accepted; normalise -0 to 0."
+  },
+  {
+    "id": "X-2",
+    "severity": "minor",
+    "ac": "AC-11",
+    "file": "services/waitingroom/internal/app/ops_override.go",
+    "line": 238,
+    "title": "Auditor panic after the Redis apply: override stays applied, but no ERROR line with actor/action/subject/reason and no audit:\"failed\" response",
+    "evidence": "panicAuditor -> panic leaves OpsOverride.Set; store sets=[0] (pause applied); log has no level=ERROR line. In production httpx.Recover turns it into a 500, so the UI says 'not sent, retry' while the pause is live and unaudited.",
+    "repro": "type panicAuditor struct{}\nfunc (panicAuditor) Record(context.Context, app.AuditEntry) error { panic(\"pg driver panic\") }\nfunc TestChallenge_AuditorPanic(t *testing.T) {\n\tst := &fakeOverrideStore{configured: true}\n\tlogs := &strings.Builder{}\n\tlog := slog.New(slog.NewTextHandler(logs, nil))\n\tmux := http.NewServeMux()\n\thttpadapter.NewOpsHandler(&fakeState{}, app.NewOpsOverride(st, panicAuditor{}, log), log).Routes(mux)\n\tdefer func() { r := recover(); t.Logf(\"panic=%v sets=%v errorLog=%v\", r != nil, st.sets, strings.Contains(logs.String(), \"level=ERROR\")) }()\n\topsCall(mux, http.MethodPut, ovPath(opsEvent), \"ops\", `{\"rate_per_sec\":0,\"reason\":\"abc\"}`)\n}\n// output: panic=true sets=[0] errorLog=false",
+    "fix": "recover() inside OpsOverride.audit and treat a panic as AuditFailed with the same ERROR log line."
+  },
+  {
+    "id": "X-3",
+    "severity": "minor",
+    "ac": "AC-6",
+    "file": "services/waitingroom/internal/app/ops_override.go",
+    "line": 145,
+    "title": "Response is not built from the stored value when the read-back says the override is gone (concurrent DELETE) or fails: it returns active:true with the request value",
+    "evidence": "Store that is cleared right after the HSET: response {override:{active:true,rate_per_sec:120},audit:recorded} while store.active=false; audit row ADMIT_OVERRIDE_SET with rate 120. 20 concurrent PUTs otherwise behave: 20 sets, 20 audit rows, last write wins.",
+    "repro": "type raceStore struct{ fakeOverrideStore }\nfunc (r *raceStore) SetRateOverride(ctx context.Context, ev string, rate float64) error {\n\t_ = r.fakeOverrideStore.SetRateOverride(ctx, ev, rate)\n\treturn r.fakeOverrideStore.ClearRateOverride(ctx, ev) // the other Ops' DELETE lands here\n}\n// st := &raceStore{fakeOverrideStore{configured: true}}; PUT rate 120 -> 200 active:true rate 120; st.active == false",
+    "fix": "When the read-back is inactive, answer with what was read (active:false, rate null); or do set + read in one Lua script / MULTI."
+  },
+  {
+    "id": "X-4",
+    "severity": "minor",
+    "ac": "AC-9 (D4)",
+    "file": "services/waitingroom/internal/app/ops_override.go",
+    "line": 116,
+    "title": "Mandatory reason can be visually empty: three zero-width spaces pass the 3..200 check on server and client",
+    "evidence": "Server: reason \"\\u200b\\u200b\\u200b\" -> 200, audit reason stored as three ZWSP. Client: clearAdmitOverride(EV, \"\\u200b\\u200b\\u200b\") sends the request. Control characters inside the reason are accepted too. Length rules are otherwise right: 200 runes ok, 201 -> 400, \"  ab  \" -> 400.",
+    "repro": "opsCall(rig.mux, http.MethodPut, ovPath(opsEvent), \"ops\", `{\"rate_per_sec\":5,\"reason\":\"\\u200b\\u200b\\u200b\"}`) // 200, rig.aud.entries[0].Reason == \"\\u200b\\u200b\\u200b\"\n// web (vitest): await clearAdmitOverride(EV, \"\\u200b\\u200b\\u200b\") resolves",
+    "fix": "Strip format/control runes (Cf, Cc) before counting, in NormalizeReason and normalizeOverrideReason."
+  },
+  {
+    "id": "X-5",
+    "severity": "minor",
+    "ac": "AC-19",
+    "file": "services/gateway/internal/proxy/gateway.go",
+    "line": 113,
+    "title": "Encoded dot-segments are not normalised: a buyer's GET /v1/assistant/%2e%2e/ops/ai/mode matches the Public /v1/assistant/ route and is forwarded (pre-existing; no bypass today)",
+    "evidence": "Gateway fixture, buyer token: 200, upstream 'assistant' was reached with X-Identity-Role=buyer. Not exploitable now: ai-worker returns 404 for the encoded form, a Go ServeMux upstream keeps %2e%2e as a literal segment, and all three services re-check the role. Plain '..' and '//' are redirected and end in 403. Everything else in the role matrix held: buyer/organizer/moderator 403 without reaching upstream, ops 403 on sales, other methods 404, spoofed X-Identity-Role ignored, /admin/mode 404.",
+    "repro": "// package proxy_test\nf := newFixture(t)\nbefore := f.up.count()\nresp := f.do(t, http.MethodGet, \"/v1/assistant/%2e%2e/ops/ai/mode\", token(t, opsID, \"buyer\", f.now), nil, \"\")\n// resp.StatusCode == 200, f.up.count() == before+1, f.up.last(t).Header.Get(\"X-Identity-Role\") == \"buyer\"\n# ai-worker: client.get('/v1/assistant/%2e%2e/ops/ai/mode', headers=buyer).status_code == 404",
+    "fix": "Reject at the gateway any request whose EscapedPath contains %2e or %2f (case-insensitive) before routing."
+  },
+  {
+    "id": "X-6",
+    "severity": "minor",
+    "ac": "AC-25, AC-22, AC-29",
+    "file": "apps/web/src/lib/ops-service.ts",
+    "line": 414,
+    "title": "Web trusts 200 bodies: missing `audit` is shown as recorded; malformed bodies throw a raw TypeError instead of OpsWriteError / a degraded source / ApiError",
+    "evidence": "PUT 200 {override:{active:true,rate_per_sec:0},paused:true} -> audit:'recorded'. PUT 200 {} -> TypeError (no code, UI shows generic retry although the command was applied). Queue 200 without `override` -> getOpsWarRoom rejects with TypeError, so the whole snapshot is lost instead of waitingroom being 'unavailable'. Sales 200 without `totals` -> TypeError.",
+    "repro": "installFetch((c) => (c.path === P_OVR ? json({ override: { active: true, rate_per_sec: 0 }, paused: true }) : problem(404, '/x')));\n(await setAdmitOverride(EV, 0, 'abc')).audit; // 'recorded'\ninstallFetch((c) => (c.path === P_OVR ? json({}) : problem(404, '/x')));\nawait rejection(setAdmitOverride(EV, 0, 'abc')); // TypeError: Cannot read properties of undefined (reading 'active')\ninstallFetch(wire({ queue: () => json({ ...QUEUE, override: undefined }) }));\nawait rejection(getOpsWarRoom(EV)); // TypeError, status undefined",
+    "fix": "Validate wire shapes: audit !== 'recorded' -> 'failed'; shape errors -> OpsWriteError('UNAVAILABLE') / SourceError(0) / ApiError."
+  },
+  {
+    "id": "X-7",
+    "severity": "minor",
+    "ac": "AC-22, AC-25",
+    "file": "apps/web/src/lib/ops-service.ts",
+    "line": 404,
+    "title": "A plain 401 on a write is reported as 'Không có quyền'; a plain 401 on a read source is only 'unavailable'; neither sends the user to login",
+    "evidence": "PUT -> 401 /problems/unauthorized: OpsWriteError code FORBIDDEN. Queue -> 401 /problems/unauthorized: sources.waitingroom='unavailable', no OpsServiceError(401). Sales 401 -> generic 'Không tải được doanh số'. Only the token-expired/refresh path yields AUTH_REQUIRED.",
+    "repro": "installFetch((c) => (c.path === P_OVR ? problem(401, '/problems/unauthorized') : problem(404, '/x')));\n(await rejection(setAdmitOverride(EV, 0, 'abc'))).code; // 'FORBIDDEN'\ninstallFetch(wire({ queue: () => problem(401, '/problems/unauthorized') }));\n(await getOpsWarRoom(EV)).sources.waitingroom; // 'unavailable'",
+    "fix": "Map HTTP 401 to the auth-required path in getJson, sendOverride and getRealtimeSales."
+  },
+  {
+    "id": "X-8",
+    "severity": "minor",
+    "ac": "AC-15, AC-16",
+    "file": "services/ticketing/internal/adapter/http/ops_handler.go",
+    "line": 155,
+    "title": "Ownership check is a case-sensitive string compare of organizer_id::text with X-Identity-Id",
+    "evidence": "Owner presenting the same UUID in upper case -> 404. Only bites if a token ever carries a non-lowercase sub. The attacks that matter held: other organizer reading through a cache warmed by the owner -> 404 with 1 query; ops role on sales -> 403; 10 concurrent inventory calls -> 1 query; role is checked before the UUID.",
+    "repro": "r := baseReader(); r.sales.OrganizerID = organizerA; mux := newOpsMux(r)\nopsGet(mux, salesPath(opsEv), strings.ToUpper(organizerA), \"organizer\").Code // 404",
+    "fix": "strings.EqualFold, or lowercase the principal id before comparing."
+  },
+  {
+    "id": "X-9",
+    "severity": "minor",
+    "ac": "AC-18",
+    "file": "services/ai-worker/app/main.py",
+    "line": 208,
+    "title": "ai-worker role check trims whitespace and accepts any non-empty identity id (the Go services reject both)",
+    "evidence": "X-Identity-Role ' ops ' -> 200; X-Identity-Id 'anything-not-uuid' -> 200. Go authx answers 401 to 'ops ' and to a non-UUID id. Correct otherwise: OPS/buyer/missing role -> 403, missing or blank id -> 401, problem+json with no-store, other methods 405, values equal /admin/mode.",
+    "repro": "client.get('/v1/ops/ai/mode', headers={'X-Identity-Id': ID, 'X-Identity-Role': ' ops '}).status_code  # 200\nclient.get('/v1/ops/ai/mode', headers={'X-Identity-Id': 'anything-not-uuid', 'X-Identity-Role': 'ops'}).status_code  # 200",
+    "fix": "Compare the role without strip() and require a UUID-shaped id, mirroring authx.PrincipalFromHeaders."
+  },
+  {
+    "id": "X-10",
+    "severity": "minor",
+    "ac": "AC-12",
+    "file": "services/waitingroom/internal/app/ops_override.go",
+    "line": 106,
+    "title": "suspicion: a typed-nil Auditor defeats the `auditor == nil` fail-closed check (not reachable from main.go today)",
+    "evidence": "NewOpsOverride(store, (*fakeAuditor)(nil), log): PUT applies the override (sets=[0]) and then panics with a nil pointer dereference. NewAuditorFromEnv returns an untyped nil, so production is safe; the guard relies on every future caller doing the same.",
+    "repro": "var typed *fakeAuditor\nhttpadapter.NewOpsHandler(&fakeState{}, app.NewOpsOverride(st, typed, log), log).Routes(mux)\nopsCall(mux, http.MethodPut, ovPath(opsEvent), \"ops\", `{\"rate_per_sec\":0,\"reason\":\"abc\"}`) // sets=[0], then panic",
+    "fix": "Covered by the recover proposed in X-2."
+  },
+  {
+    "id": "X-11",
+    "severity": "minor",
+    "ac": "AC-14, AC-15, AC-7",
+    "file": "services/ticketing/internal/adapter/postgres/ops_repository.go",
+    "line": 55,
+    "title": "suspicion (not executed, Docker off): inventory/sales SQL and the controller-follows-override timing were reviewed by reading only",
+    "evidence": "Reading found no defect: held filtered to HELD/PAYMENT_PENDING orders, paid = PAID only, issued = ISSUED/CHECKED_IN tickets, one statement for inventory, REPEATABLE READ READ ONLY for sales, DISTINCT ON latest SUCCEEDED payment, 'unknown' reconciliation, event without tiers -> [] not 404. None of it was run against Postgres/Redis here, so PAID-not-issued, multi-payment, refund and AC-7 timing rest on the implementer's integration runs.",
+    "repro": "none (needs Postgres/Redis): go test -tags integration ./internal/adapter/postgres -run Ops ; go test -tags integration ./test/opsapi ./test/opsaudit",
+    "fix": "Confirm the gate report shows these integration suites ran green."
+  }
+]
