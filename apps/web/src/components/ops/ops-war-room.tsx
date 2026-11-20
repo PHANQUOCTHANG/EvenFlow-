@@ -11,6 +11,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import { SignInRequired } from "@/components/auth/SignInRequired";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -73,6 +74,7 @@ export function OpsNotFoundView() {
 
 export function OpsWarRoom({ eventId, initialSnapshot = null, initialError }: OpsWarRoomProps) {
   // 403/404 ở lần tải đầu: màn tĩnh, không polling (hook không được mount).
+  if (!initialSnapshot && initialError?.status === 401) return <SignInRequired className="my-lg" />;
   if (!initialSnapshot && initialError?.status === 403) return <NoPermission />;
   if (!initialSnapshot && initialError?.status === 404) return <OpsNotFoundView />;
 
@@ -97,6 +99,8 @@ function LiveWarRoom({
 
   const errorStatus = error ? opsErrorStatus(error) : snapshot ? undefined : initialError?.status;
 
+  // Phien het (401) khi dang polling: moi dang nhap lai, khong bao "Không có quyền" (R-5, X-7).
+  if (errorStatus === 401) return <SignInRequired className="my-lg" />;
   if (errorStatus === 403) return <NoPermission />;
   if (!snapshot && errorStatus === 404) return <OpsNotFoundView />;
 

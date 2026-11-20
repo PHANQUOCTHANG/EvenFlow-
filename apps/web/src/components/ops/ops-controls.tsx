@@ -9,6 +9,7 @@
 
 import { useId, useState } from "react";
 
+import { SignInRequired } from "@/components/auth/SignInRequired";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -58,6 +59,8 @@ function successText(command: Command, result: AdmitOverrideResult): string {
 }
 
 function ErrorOutcome({ code, onRetry, busy }: { code: string; onRetry: () => void; busy: boolean }) {
+  // Phien het khi gui lenh: moi dang nhap lai thay vi "Thử lại" (R-5).
+  if (code === "AUTH_REQUIRED") return <SignInRequired />;
   if (code === "FORBIDDEN") {
     return (
       <Alert variant="error" title="Không có quyền">

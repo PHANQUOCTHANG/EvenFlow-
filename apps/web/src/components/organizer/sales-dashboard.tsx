@@ -14,6 +14,7 @@
 import Link from "next/link";
 import { useState } from "react";
 
+import { SignInRequired } from "@/components/auth/SignInRequired";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,6 +29,11 @@ export interface SalesDashboardProps {
   event: OrganizerEvent;
   initialSalesData?: RealtimeSalesSnapshot | null;
   className?: string;
+}
+
+/** Phien het (401 / AUTH_REQUIRED): hien loi moi dang nhap, khong phai loi tai chung (R-5, X-7). */
+function isAuthRequired(err: Error): boolean {
+  return (err as { code?: unknown }).code === "AUTH_REQUIRED";
 }
 
 export function SalesDashboard({
@@ -100,7 +106,8 @@ export function SalesDashboard({
       </div>
 
       {/* Freshness banner & errors */}
-      {error && (
+      {error && isAuthRequired(error) && <SignInRequired />}
+      {error && !isAuthRequired(error) && (
         <Alert variant="error" title="Lỗi cập nhật doanh số">
           {error.message}
         </Alert>
