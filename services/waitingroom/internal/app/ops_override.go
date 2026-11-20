@@ -270,7 +270,16 @@ func (o *OpsOverride) audit(ctx context.Context, cmd OverrideCommand, action str
 		Reason:    cmd.Reason,
 		Metadata:  meta,
 	}
-	err := o.withTimeout(ctx, auditTimeout, func(c context.Context) error { return o.auditor.Record(c, entry) })
+	err := o.withTimeout(ctx, auditTimeout, func(c context.Context) (err error) {
+		// Panic trong auditor (driver, typed-nil) sau khi lenh da ap dung: coi la audit hong, khong de no
+		// thanh 500 trong khi ghi de dang song (X-2).
+		defer func() {
+			if p := recover(); p != nil {
+				err = fmt.Errorf("auditor panic: %v", p)
+			}
+		}()
+		return o.auditor.Record(c, entry)
+	})
 	if err == nil {
 		return AuditRecorded
 	}
