@@ -159,15 +159,18 @@ func (o *OpsOverride) Set(ctx context.Context, cmd OverrideCommand, rate float64
 	}
 	appliedAt := o.now().UTC()
 
-	// Phan hoi dung gia tri da luu (override_rate/1000), khong lap lai request.
-	stored := rate
+	// Phan hoi dung trang thai da luu doc lai (override_rate/1000), khong lap lai request. Neu mot lenh bo ghi de
+	// khac chen vao ngay sau HSET thi bao dung trang thai do (active:false), X-3.
+	stored, storedActive := rate, true
 	var readErr error
 	_ = o.withTimeout(detached, overrideApplyTimeout, func(c context.Context) error {
 		r, active, err := o.store.RateOverride(c, cmd.EventID)
-		switch {
-		case err != nil:
+		if err != nil {
 			readErr = err
-		case active:
+			return nil
+		}
+		storedActive = active
+		if active {
 			stored = r
 		}
 		return nil
@@ -176,13 +179,18 @@ func (o *OpsOverride) Set(ctx context.Context, cmd OverrideCommand, rate float64
 		o.log.Warn("doc lai ghi de sau khi ap dung that bai, dung gia tri da gui", "event", cmd.EventID, "err", readErr)
 	}
 
+	res := OverrideResult{Active: false, AppliedAt: appliedAt}
+	auditRate := rate // lenh da ap dung; bi bo ngay sau thi audit van ghi nhip da dat
+	if storedActive {
+		res = OverrideResult{Active: true, RatePerSec: &stored, Paused: stored == 0, AppliedAt: appliedAt}
+		auditRate = stored
+	}
 	action := ActionOverrideSet
-	if stored == 0 {
+	if auditRate == 0 {
 		action = ActionPaused
 	}
-	res := OverrideResult{Active: true, RatePerSec: &stored, Paused: stored == 0, AppliedAt: appliedAt}
 	res.Audit = o.audit(detached, cmd, action, map[string]any{
-		"rate_per_sec": stored,
+		"rate_per_sec": auditRate,
 		"previous":     prev,
 		"request_id":   cmd.RequestID,
 	})
