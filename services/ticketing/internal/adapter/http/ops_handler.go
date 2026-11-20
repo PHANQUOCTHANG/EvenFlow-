@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"regexp"
+	"strings"
 	"sync"
 	"time"
 
@@ -151,8 +152,8 @@ func (h *Handler) organizerSales(w http.ResponseWriter, r *http.Request) {
 	}
 	s, filledAt, err := h.salesCache.get(r.Context(), eventID, h.opsSales.Execute)
 	// Khong ton tai va khong so huu cho CUNG mot phan hoi: khong lo su kien co ton tai (nhu requireOwner).
-	// Quyen so huu duoc kiem tren MOI request, ke ca khi ban ghi lay tu cache.
-	if errors.Is(err, domain.ErrEventNotFound) || (err == nil && s.OrganizerID != p.ID) {
+	// Quyen so huu duoc kiem tren MOI request, ke ca khi ban ghi lay tu cache. UUID so khong phan biet hoa/thuong (X-8).
+	if errors.Is(err, domain.ErrEventNotFound) || (err == nil && !strings.EqualFold(s.OrganizerID, p.ID)) {
 		httpx.WriteProblemType(w, http.StatusNotFound, problemNotFound, "khong tim thay su kien")
 		return
 	}
