@@ -559,6 +559,8 @@ export async function getRealtimeSales(eventId: string): Promise<RealtimeSalesSn
     if (e instanceof ApiError) {
       if (e.status === 404) throw new Error(SALES_NOT_FOUND);
       if (e.code === "AUTH_REQUIRED" || e.code === "NETWORK_ERROR") throw e;
+      // 401 thuong (khong qua duong refresh) cung la phien da mat: moi dang nhap lai (R-5, X-7).
+      if (e.status === 401) throw new ApiError("AUTH_REQUIRED", 401, {}, "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
       if (e.status === 403) {
         throw new ApiError(e.code, 403, {}, "Bạn không có quyền xem doanh số sự kiện này.");
       }
@@ -566,8 +568,18 @@ export async function getRealtimeSales(eventId: string): Promise<RealtimeSalesSn
     }
     throw e;
   }
-  const w = (await res.json()) as WireSales;
-  const tierSales: TierSalesDetail[] = (w.tiers ?? []).map((t) => ({
+  // Body 200 hong (khong phai JSON, thieu totals) -> ApiError co thong diep co dinh, khong de TypeError lot ra (X-6).
+  const salesUnavailable = () => new ApiError("INVALID_RESPONSE", res.status, {}, "Không tải được doanh số, vui lòng thử lại.");
+  let w: WireSales;
+  try {
+    w = (await res.json()) as WireSales;
+  } catch {
+    throw salesUnavailable();
+  }
+  if (typeof w !== "object" || w === null || typeof w.totals !== "object" || w.totals === null) {
+    throw salesUnavailable();
+  }
+  const tierSales: TierSalesDetail[] = (Array.isArray(w.tiers) ? w.tiers : []).map((t) => ({
     tierId: t.ticket_type_id,
     name: t.name,
     price: t.price_cents,
@@ -593,7 +605,7 @@ export async function getRealtimeSales(eventId: string): Promise<RealtimeSalesSn
       averageOrderValue:
         totals.paid_orders > 0 ? Math.round(totals.gross_revenue_cents / totals.paid_orders) : 0,
       peakSalesVelocityTps: null,
-      paymentBreakdown: (w.payment_breakdown ?? []).map((p) => ({
+      paymentBreakdown: (Array.isArray(w.payment_breakdown) ? w.payment_breakdown : []).map((p) => ({
         provider: p.provider,
         orders: p.orders,
         amount: p.amount_cents,

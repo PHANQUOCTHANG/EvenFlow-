@@ -222,12 +222,22 @@ async function getJson<T>(path: string, auth: boolean): Promise<T> {
     if (e instanceof ApiError && e.code === "AUTH_REQUIRED") throw new SourceError(401, true);
     throw new SourceError(0);
   }
+  // 401 thuong (khong qua duong refresh) cung la phien da mat: dua ve dang nhap (X-7).
+  if (res.status === 401) throw new SourceError(401, true);
   if (!res.ok) throw new SourceError(res.status);
+  let body: unknown;
   try {
-    return (await res.json()) as T;
+    body = await res.json();
   } catch {
     throw new SourceError(0);
   }
+  // Body khong phai object (null, mang, so) = nguon hong, khong duoc lam vo ca snapshot (X-6).
+  if (!isObject(body)) throw new SourceError(0);
+  return body as T;
+}
+
+function isObject(v: unknown): v is Record<string, unknown> {
+  return typeof v === "object" && v !== null && !Array.isArray(v);
 }
 
 function failure(r: PromiseSettledResult<unknown>): SourceError | null {
@@ -263,7 +273,9 @@ export async function getOpsWarRoom(eventId: string): Promise<OpsWarRoomSnapshot
   const inv = invR.status === "fulfilled" ? invR.value : null;
   const ai = aiR.status === "fulfilled" ? aiR.value : null;
 
-  const inventory: OpsTierInventory[] = (inv?.tiers ?? []).map((t) => ({
+  // Cac truong long nhau co the thieu trong body 200 hong: doc bang ?. de giu phan con lai cua snapshot (X-6).
+  const tiers = Array.isArray(inv?.tiers) ? inv.tiers.filter(isObject) : [];
+  const inventory: OpsTierInventory[] = tiers.map((t) => ({
     tierId: t.ticket_type_id,
     name: t.name,
     quota: t.quota,
@@ -273,11 +285,11 @@ export async function getOpsWarRoom(eventId: string): Promise<OpsWarRoomSnapshot
     available: t.available,
   }));
 
-  const overrideActive = queue?.override.active === true;
-  const leaderPresent = queue?.controller.leader_present === true;
+  const overrideActive = queue?.override?.active === true;
+  const leaderPresent = queue?.controller?.leader_present === true;
   const co = queue?.checkout;
   const checkout: OpsCheckoutHealth | null =
-    co && co.signal === "ok" && co.p99_ms !== null && co.error_rate !== null && co.db_pool_usage !== null
+    isObject(co) && co.signal === "ok" && co.p99_ms != null && co.error_rate != null && co.db_pool_usage != null
       ? { p99Ms: co.p99_ms, errorRate: co.error_rate, dbPoolUsage: co.db_pool_usage, pods: co.pods }
       : null;
 
@@ -306,7 +318,7 @@ export async function getOpsWarRoom(eventId: string): Promise<OpsWarRoomSnapshot
       ratePerSec: queue?.admit_rate_per_sec ?? 0,
       mode: overrideActive ? "MANUAL" : "AUTO",
       queueDepth: queue?.queued ?? 0,
-      overrideRatePerSec: overrideActive ? (queue?.override.rate_per_sec ?? null) : null,
+      overrideRatePerSec: overrideActive ? (queue?.override?.rate_per_sec ?? null) : null,
       paused: queue?.paused === true,
       soldOut: queue?.sold_out === true,
       stockZero: queue?.stock_zero === true,
@@ -317,8 +329,8 @@ export async function getOpsWarRoom(eventId: string): Promise<OpsWarRoomSnapshot
     ai: {
       mode: ai?.mode ?? "NORMAL",
       manualOverride: ai ? ai.manual_override != null : false,
-      chatQueueLagSeconds: ai?.signals.chat_queue_lag_seconds ?? 0,
-      budgetUsedRatio: ai?.signals.budget_used_ratio ?? 0,
+      chatQueueLagSeconds: ai?.signals?.chat_queue_lag_seconds ?? 0,
+      budgetUsedRatio: ai?.signals?.budget_used_ratio ?? 0,
     },
     sources: {
       waitingroom,
@@ -393,7 +405,13 @@ export interface AdmitOverrideResult {
 interface WireOverrideResult {
   override: { active: boolean; rate_per_sec: number | null };
   paused: boolean;
-  audit: "recorded" | "failed";
+  audit?: unknown;
+}
+
+function isWireOverrideResult(w: unknown): w is WireOverrideResult {
+  if (!isObject(w) || !isObject(w.override) || typeof w.paused !== "boolean") return false;
+  const { active, rate_per_sec: rate } = w.override;
+  return typeof active === "boolean" && (rate === null || (typeof rate === "number" && Number.isFinite(rate)));
 }
 
 async function sendOverride(eventId: string, method: "PUT" | "DELETE", body: unknown): Promise<AdmitOverrideResult> {
@@ -409,23 +427,27 @@ async function sendOverride(eventId: string, method: "PUT" | "DELETE", body: unk
     if (e instanceof ApiError && e.code === "AUTH_REQUIRED") throw e;
     throw new OpsWriteError("UNAVAILABLE");
   }
+  // 401 thuong cung la phien da mat, khong phai "khong co quyen" (R-5, X-7).
+  if (res.status === 401) throw new ApiError("AUTH_REQUIRED", 401, {}, defaultMessage(401));
   if (!res.ok) {
     if (res.status === 400) throw new OpsWriteError("INVALID");
-    if (res.status === 401 || res.status === 403) throw new OpsWriteError("FORBIDDEN");
+    if (res.status === 403) throw new OpsWriteError("FORBIDDEN");
     if (res.status === 404) throw new OpsWriteError("NOT_FOUND");
     throw new OpsWriteError("UNAVAILABLE");
   }
-  let w: WireOverrideResult;
+  let w: unknown;
   try {
-    w = (await res.json()) as WireOverrideResult;
+    w = await res.json();
   } catch {
     throw new OpsWriteError("UNAVAILABLE");
   }
+  if (!isWireOverrideResult(w)) throw new OpsWriteError("UNAVAILABLE");
   return {
     active: w.override.active,
     ratePerSec: w.override.rate_per_sec,
     paused: w.paused,
-    audit: w.audit === "failed" ? "failed" : "recorded",
+    // Fail closed: chi dung gia tri "recorded" moi la da ghi nhat ky; thieu / la -> canh bao (R-4).
+    audit: w.audit === "recorded" ? "recorded" : "failed",
   };
 }
 
