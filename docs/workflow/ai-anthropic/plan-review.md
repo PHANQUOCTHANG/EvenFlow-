@@ -166,3 +166,87 @@ propagate. Do not add a broad `except APIConnectionError` above the timeout clau
 
 ## Required for round 2
 Plan edits for P-1..P-4. Minors may be addressed in the same edit or recorded as accepted.
+
+## Round 2
+
+Reviewer: plan reviewer (clean context). Inputs: `spec.md` (approved), `plan.md` round 2 (section 6), code at
+c5fb598, and the untracked test-designer files in `services/ai-worker/tests/llm/` (`conftest.py`,
+`test_client_anthropic.py`, `test_client_mock.py`, `test_consumers_anthropic.py`, `test_embeddings.py`,
+`test_moderation_json.py`).
+
+### Verdict: **FAIL (round 2)**: 1 blocker, 2 majors, 2 minors
+
+The round-1 edits are real, not just mentioned: `sent_max_tokens` is the single headroom source in rows 4 and 7
+and in the tests, `wiring.py` is a pure and testable split, the compose nested default is valid Compose v2
+syntax, and the rollback one-liner runs on c5fb598 (`GeminiClient()` reads `GEMINI_MOCK` with default `"1"`,
+and `Settings` has `extra="ignore"`). The P-4 fix, however, goes against the approved spec and the tests that
+are already written. The plan and the tests also disagree on the constructor and on the file inventory, and
+this must be settled before the freeze.
+
+### Round-1 findings
+
+| Finding | Status | Note |
+|---|---|---|
+| P-1 | resolved | `build_llm`/`log_startup` are pure. The 100x `SemanticCache(redis, None)` case is planned. |
+| P-2 | resolved in plan | (a)/(b)/(c) are specified. No `test_llm_sdk_contract.py` exists yet (see Q-3). |
+| P-3 | resolved | One `sent_max_tokens`, used by `generate`, `guarded_generate` and the tests. The designer tests use `>=`, and the plan's exact-equality test is stricter (keep it). |
+| P-4 | **reopened as Q-1** | "No `embed()`" contradicts spec AC-1/AC-12 and the designer tests. |
+| P-5 | resolved | `os.environ` + `dotenv_values`, case-insensitive, `validate_by_name`. Precedence is documented. |
+| P-6 | resolved | `${AI_MOCK:-${GEMINI_MOCK:-1}}` is valid. `:-` treats an empty `AI_MOCK=` as unset, which is intended. |
+| P-7 | resolved | |
+| P-8 | partial (Q-3) | The fixture exists only in `tests/llm/conftest.py`, not `tests/conftest.py`. |
+| P-9, P-10, P-11, P-12, P-13 | resolved | |
+| P-14 | resolved | See Q-5 (minor wording). |
+| P-15 | resolved | |
+
+### New findings
+
+**Q-1 (blocker): the P-4 design breaks the approved spec.** AC-1 says "`embed()` returns `mock_embedding`".
+AC-12 says "`embed()` calls `google.genai` `embed_content` with the same timeout". Spec section 5 says the fakes
+are injected via `sdk=` / `embed_sdk=`. The designer tests call `LlmClient(...).embed()` with `gemini_api_key=`,
+`embed_model=` and `embed_sdk=` (`test_embeddings.py` AC-12, `test_client_mock.py::test_AC1_MockEmbed_*`).
+Plan row 4 says "No `embed()` method", and the test table asserts "`LlmClient` has no `embed` attribute".
+**Fix:** keep `LlmClient.embed()`, delegating to an internal `Embedder | None` built in `__init__` from
+`gemini_api_key`, `embed_model` and `embed_sdk` (through `make_embedder`). Build `GeminiEmbedder` lazily, so no
+`genai.Client` is constructed when the key is empty. Expose `llm.embedder`. `build_llm` returns
+`(llm, llm.embedder)`, and main wires `SemanticCache(redis, llm.embedder)`, so the cache never receives `llm`
+and the P-4 log-spam risk stays closed. If `embed()` is called with no embedder, it raises `RuntimeError`; it is
+never wired that way. Drop the "no `embed` attribute" test. Integration tests may keep `SemanticCache(redis, llm)`
+in mock mode, or use `MockEmbedder()`; pick one and state it.
+
+**Q-2 (major): the constructor contract differs from the tests.** The tests (`conftest.make_client`,
+`test_AC2_TaoAsyncAnthropicLuoi_*`) use `thinking_headroom_tokens=`, while the plan uses `thinking_headroom`. The
+tests also pass `gemini_api_key=`, `embed_model=` and `embed_sdk=`, which are not in row 4.
+`test_AC1_AI_MOCK0_ThieuKey_TuChoi` expects `LlmClient()` with `AI_MOCK=0` and no key to raise **at
+construction**, with "ANTHROPIC_API_KEY" in the message. Row 4 only raises lazily in `_sdk()`.
+**Fix:** write the row 4 signature exactly as the tests use it:
+`LlmClient(api_key, *, mock, chat_model, moderation_model, timeout_seconds, thinking_headroom_tokens, gemini_api_key, embed_model, sdk=None, embed_sdk=None)`.
+Raise `RuntimeError("... ANTHROPIC_API_KEY ...")` in `__init__` when real mode has an empty key (as the
+c5fb598 code does), and keep SDK construction lazy. State that `scan_moderation(job, *, generate=None)` takes
+the bound guarded function by keyword (the tests use `generate=functools.partial(guarded_generate, lim, c)`).
+
+**Q-3 (major): the test inventory in plan section 2 does not match the files that exist.** The plan names
+`tests/test_llm_client.py`, `test_llm_sdk_contract.py`, `test_llm_prompt.py`, `test_moderation_parse.py`,
+`test_embedder.py` and `test_wiring.py`, plus updates to `test_config.py`, `test_guarded.py`,
+`test_classify_real_errors.py`, `test_semantic_cache.py` and `test_chat_handler.py`, and an autouse fixture in
+`tests/conftest.py`. The test designer wrote `tests/llm/*` instead. No contract (P-2a/b), wiring, config/alias
+(AC-14/15), classify (AC-9) or root-conftest tests exist yet. The renamed `tests/test_llm_client.py` (from
+`test_gemini_client.py`) would hold genai `generate_content` tests that are now obsolete, next to
+`tests/llm/test_client_anthropic.py`. The freeze locks only files that exist at the freeze commit, so any AC test
+added after it is unlocked.
+**Fix:** rewrite the section 2 table against the real paths, mapping each AC to a `tests/llm/*` file or a named
+file still to be written. Before the freeze, require the designer to add the missing files: SDK contract,
+wiring, config/aliases, classify, cache 100x, and exact guarded equality. Move the env-clearing autouse fixture
+to `tests/conftest.py` so `test_config.py` and the others are covered. In `test-change-request.md`, state which
+obsolete cases in `test_gemini_client.py`/`test_llm_client.py` are deleted or replaced.
+
+**Q-4 (minor):** `tests/llm/conftest.py` clears an explicit list of variables, not every `AI_*` / `GEMINI_*` /
+`ANTHROPIC_*` variable as the plan says. **Fix:** match by prefix in the root fixture.
+
+**Q-5 (minor):** in the section 5 rollback, "with the new `.env.example` values exported" needs a command.
+**Fix:** `set -a; . <worktree>/.env.example; set +a` (bash) before the `uv run` line, and run `uv sync --locked`
+in the worktree first.
+
+### Required for round 3
+Plan edits for Q-1..Q-3 (rows 4, 5, 10 and the section 2 table). The test designer must align or add the test
+files before the freeze. Q-4 and Q-5 can go in the same edit.
