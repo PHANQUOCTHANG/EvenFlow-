@@ -187,10 +187,12 @@ func decodeStrict(w http.ResponseWriter, r *http.Request, dst any) bool {
 	return true
 }
 
-// parseRate chi nhan so JSON (khong phai chuoi/null). Pham vi va tinh nguyen do app.ValidRate quyet.
+// parseRate chi nhan literal so JSON khong dau, khong dau thap phan (X-1: tu choi 100.0, 1.0e1, -0).
+// Dang mu khong dau cham (1e2) van duoc nhan vi test AC-6 da dong bang yeu cau no; muon cam can mot TCR.
+// Pham vi va tinh nguyen do app.ValidRate quyet.
 func parseRate(raw json.RawMessage) (float64, bool) {
 	raw = bytes.TrimSpace(raw)
-	if len(raw) == 0 || !(raw[0] == '-' || (raw[0] >= '0' && raw[0] <= '9')) {
+	if len(raw) == 0 || raw[0] < '0' || raw[0] > '9' || bytes.ContainsAny(raw, ".-") {
 		return 0, false
 	}
 	v, err := strconv.ParseFloat(string(raw), 64)
