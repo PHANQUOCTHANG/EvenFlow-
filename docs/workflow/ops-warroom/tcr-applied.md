@@ -33,3 +33,7 @@ added. Counts are `it(` / `it.each(` declarations before (HEAD f5c6d44) → afte
 1. `services/ai-worker/tests/test_ops_api.py:28` — ruff FURB162 (lint only).
 2. `services/waitingroom/internal/adapter/http/ops_handler_test.go` `TestOpsPut_AC6_BoundariesAccepted` expects `0.5` accepted; contradicts approved CR-1 item 5. Fails one subtest.
 3. `services/ticketing/internal/adapter/postgres/ops_repository_integration_test.go:24` — unused import, breaks compilation of the ticketing Postgres integration test package.
+
+## TCR-4 (approved)
+
+APPROVED by the human (TranDinhVo) on 2026-11-20 in the Claude Code session, asked directly by the coordinator. Change: `TestOpsPut_AC6_BoundariesAccepted` no longer accepts `1e2`; `TestOpsWrite_AC9_InvalidInputIs400AndNothingApplied` gains `1e2` and `1E2` as invalid (400). Edit applied by the coordinator. Reason: contract says rate_per_sec is a JSON integer; exponent forms are not integers.

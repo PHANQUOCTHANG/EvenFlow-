@@ -42,3 +42,7 @@ those tests.
 | Existing test file | Why it must change | Proposed change |
 |---|---|---|
 | `services/ticketing/internal/adapter/postgres/ops_repository_integration_test.go` (frozen, line 24) | `go vet -tags integration ./...` (and therefore CI `go test -tags=integration ./...`, `integration.yml:35-37`) fails to compile the whole `postgresadapter_test` package: `"…/internal/adapter/postgres" imported as postgresadapter and not used` (the file uses `setupPostgresTest` from `repository_integration_test.go` and never names the package). Every existing ticketing Postgres integration test in that package is blocked with it. Verified with a `go vet -overlay` copy that drops only that import line: no other error (`OVERLAY_VET_OK`) | delete the unused import line `postgresadapter "github.com/eventflow/eventflow/services/ticketing/internal/adapter/postgres"`. No assertion changes. Not applied by the implementer: needs approval |
+
+## TCR-4 (approved)
+
+APPROVED by the human (TranDinhVo) on 2026-11-20 in the Claude Code session, asked directly by the coordinator. Change: `TestOpsPut_AC6_BoundariesAccepted` no longer accepts `1e2`; `TestOpsWrite_AC9_InvalidInputIs400AndNothingApplied` gains `1e2` and `1E2` as invalid (400). Edit applied by the coordinator. Reason: contract says rate_per_sec is a JSON integer; exponent forms are not integers.

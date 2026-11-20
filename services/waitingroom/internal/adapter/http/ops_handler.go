@@ -187,19 +187,24 @@ func decodeStrict(w http.ResponseWriter, r *http.Request, dst any) bool {
 	return true
 }
 
-// parseRate chi nhan literal so JSON khong dau, khong dau thap phan (X-1: tu choi 100.0, 1.0e1, -0).
-// Dang mu khong dau cham (1e2) van duoc nhan vi test AC-6 da dong bang yeu cau no; muon cam can mot TCR.
-// Pham vi va tinh nguyen do app.ValidRate quyet.
+// parseRate chi nhan literal so nguyen JSON dang thuan: chi chu so, khong dau, khong dau thap phan, khong mu
+// (X-1, TCR-4: tu choi 1e2, 100.0, -0). JSON khong cho so 0 dau nen "01" da bi decoder chan.
+// Pham vi do app.ValidRate quyet.
 func parseRate(raw json.RawMessage) (float64, bool) {
 	raw = bytes.TrimSpace(raw)
-	if len(raw) == 0 || raw[0] < '0' || raw[0] > '9' || bytes.ContainsAny(raw, ".-") {
+	if len(raw) == 0 || len(raw) > 6 {
 		return 0, false
 	}
-	v, err := strconv.ParseFloat(string(raw), 64)
+	for _, c := range raw {
+		if c < '0' || c > '9' {
+			return 0, false
+		}
+	}
+	v, err := strconv.ParseInt(string(raw), 10, 64)
 	if err != nil {
 		return 0, false
 	}
-	return v, app.ValidRate(v)
+	return float64(v), app.ValidRate(float64(v))
 }
 
 func (h *OpsHandler) setOverride(w http.ResponseWriter, r *http.Request) {

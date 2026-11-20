@@ -6,10 +6,9 @@ import (
 	"testing"
 )
 
-// X-1: rate_per_sec must be an integer literal: no decimal point, no sign. Exponent forms without a point (1e2)
-// stay accepted because the frozen TestOpsPut_AC6_BoundariesAccepted requires 1e2 -> 200.
+// X-1 / TCR-4: rate_per_sec must be a plain integer literal: digits only, no sign, decimal point or exponent.
 func TestOpsPutFix_X1_RateMustBeIntegerLiteral(t *testing.T) {
-	for _, lit := range []string{`100.0`, `-0`, `0.0`, `1.0e1`, `10000.00`, `-0.0`, `01`, `1e-0`, `1E+2.0`} {
+	for _, lit := range []string{`1e2`, `1E2`, `1e0`, `100.0`, `-0`, `0.0`, `1.0e1`, `10000.00`, `-0.0`, `01`, `1e-0`, `1E+2.0`} {
 		r := newOpsRig(true)
 		rec := put(r, `{"rate_per_sec":`+lit+`,"reason":"abc"}`)
 		if rec.Code != 400 || r.store.writes() != 0 {
