@@ -346,11 +346,21 @@ export function isValidOverrideRate(rate: number): boolean {
   return Number.isInteger(rate) && rate >= 0 && rate <= MAX_OVERRIDE_RATE;
 }
 
-/** Ly do da cat khoang trang neu dai 3..200 ky tu, nguoc lai null. */
+const isZeroWidth = (c: string) => /^[\u200B-\u200D\uFEFF]$/.test(c);
+const isEdgeBlank = (c: string) => /^\s$/u.test(c) || isZeroWidth(c);
+
+/** Ly do da cat khoang trang Unicode va ky tu zero-width hai dau. null khi co ky tu dieu khien (R-1), it hon 3 ky tu
+ * hien thi (X-4) hoac dai qua 200 ky tu. Cung luat voi waitingroom (app.NormalizeReason). */
 export function normalizeOverrideReason(reason: string): string | null {
-  const r = (reason ?? "").trim();
-  const n = Array.from(r).length;
-  return n >= MIN_REASON_LENGTH && n <= MAX_REASON_LENGTH ? r : null;
+  const chars = Array.from(reason ?? "");
+  let start = 0;
+  let end = chars.length;
+  while (start < end && isEdgeBlank(chars[start])) start++;
+  while (end > start && isEdgeBlank(chars[end - 1])) end--;
+  const kept = chars.slice(start, end);
+  if (kept.some((c) => /^\p{Cc}$/u.test(c))) return null;
+  const visible = kept.filter((c) => !isZeroWidth(c)).length;
+  return visible >= MIN_REASON_LENGTH && kept.length <= MAX_REASON_LENGTH ? kept.join("") : null;
 }
 
 export type OpsWriteErrorCode = "INVALID" | "FORBIDDEN" | "NOT_FOUND" | "UNAVAILABLE";

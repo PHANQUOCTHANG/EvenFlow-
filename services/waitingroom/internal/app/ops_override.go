@@ -9,6 +9,7 @@ import (
 	"math"
 	"strings"
 	"time"
+	"unicode"
 	"unicode/utf8"
 )
 
@@ -112,11 +113,28 @@ func ValidRate(rate float64) bool {
 	return !math.IsNaN(rate) && !math.IsInf(rate, 0) && rate >= 0 && rate <= MaxOverrideRate && rate == math.Trunc(rate)
 }
 
-// NormalizeReason cat khoang trang hai dau va kiem do dai 3..200 ky tu.
+// zeroWidth: ky tu khong hien thi (U+200B..U+200D, U+FEFF) khong duoc tinh vao do dai toi thieu.
+func zeroWidth(r rune) bool {
+	return (r >= 0x200B && r <= 0x200D) || r == 0xFEFF
+}
+
+// NormalizeReason cat khoang trang Unicode va ky tu zero-width hai dau, tu choi ky tu dieu khien
+// (vd NUL lam INSERT audit hong, R-1) va kiem do dai: it nhat 3 ky tu hien thi, toi da 200 ky tu (X-4).
 func NormalizeReason(reason string) (string, bool) {
-	r := strings.TrimSpace(reason)
-	n := utf8.RuneCountInString(r)
-	return r, n >= minReasonLen && n <= maxReasonLen
+	r := strings.TrimFunc(reason, func(c rune) bool { return unicode.IsSpace(c) || zeroWidth(c) })
+	if !utf8.ValidString(r) {
+		return r, false
+	}
+	visible := 0
+	for _, c := range r {
+		if unicode.IsControl(c) {
+			return r, false
+		}
+		if !zeroWidth(c) {
+			visible++
+		}
+	}
+	return r, visible >= minReasonLen && utf8.RuneCountInString(r) <= maxReasonLen
 }
 
 // Set dat ghi de nhip admit = rate (nguoi/giay). rate 0 = tam dung khan cap.
