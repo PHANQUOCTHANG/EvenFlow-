@@ -189,3 +189,10 @@ No migration. No change to queues, topology, limiter Lua logic, degradation mode
 - **Q-1** Anthropic org rate-limit tier for the demo key: keep `AI_RPM=55`, `AI_TPM=900000`, or set from tier?
 - **Q-2** Confirm C1-C6 (especially: aliases kept one release; module rename to `app/llm`; metric rename).
 - **Q-3** `AI_THINKING_HEADROOM_TOKENS` default 1024 acceptable (cost ~ +$0.0005 worst case per call at $0.50/1M out)?
+
+## Human approval
+
+- Approver: TranDinhVo, in the Claude Code session on 2026-11-20.
+- Spec approved as written, including choices C1–C6 (AI_MOCK with deprecated GEMINI_* aliases for one release, `app/gemini` → `app/llm`, metric/alert rename, json.loads moderation path, `max_retries=0`).
+- Q-1: keep AI_RPM=55 / AI_TPM=900000 as defaults; operators tune them to the Anthropic Console limits.
+- Q-3: AI_THINKING_HEADROOM_TOKENS default 1024 accepted.
