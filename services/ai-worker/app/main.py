@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import contextlib
 import logging
+import re
 from collections.abc import AsyncIterator
 from datetime import UTC, datetime
 from typing import Any
@@ -198,15 +199,20 @@ def _problem(status: int, type_: str, title: str, detail: str) -> JSONResponse:
     )
 
 
+_UUID_RE = re.compile(r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}")
+
+
 @app.get("/v1/ops/ai/mode")
 async def get_ops_mode(request: Request) -> Response:
     """Ban doc cho war room Ops (contracts 5.1): giong /admin/mode, bo `policy`, kiem tra role.
 
     Gateway da chan role khac `ops`; kiem lai o day (phong thu hai lop) vi header do gateway tiem vao.
     """
-    if not request.headers.get("x-identity-id", "").strip():
+    # Giong authx.PrincipalFromHeaders cua cac service Go (X-9): id phai la UUID, role so khop chinh xac
+    # (khong strip).
+    if not _UUID_RE.fullmatch(request.headers.get("x-identity-id", "")):
         return _problem(401, "/problems/unauthorized", "Unauthorized", "thieu danh tinh nguoi goi")
-    if request.headers.get("x-identity-role", "").strip() != "ops":
+    if request.headers.get("x-identity-role", "") != "ops":
         return _problem(403, "/problems/forbidden", "Forbidden", "chi role ops duoc xem che do AI")
     _, view = _mode_view()
     view["generated_at"] = datetime.now(UTC).isoformat()
