@@ -26,7 +26,7 @@ run web-npm-ci        bash -c "cd apps/web && npm ci --no-audit --no-fund"
 run web-lint          bash -c "cd apps/web && npm run lint"
 run web-typecheck     bash -c "cd apps/web && npm run typecheck"
 run web-build         bash -c "cd apps/web && env -u NEXT_PUBLIC_API_BASE npm run build"
-run web-test-coverage bash -c "cd apps/web && npx vitest run --coverage"
+run web-test-coverage bash -c "cd apps/web && env -u VITEST_MAX_THREADS -u VITEST_MAX_FORKS npx vitest run --coverage"
 # audit: so voi develop (BASE). Gate fail neu co lo hong high/critical MOI.
 run web-audit         bash -c "cd apps/web && npm audit --omit=dev --json > ../../$OUT/audit-head.json; git show $BASE:apps/web/package-lock.json > /tmp/base-lock.json; node -e '
 const h=require(\"../../$OUT/audit-head.json\").vulnerabilities||{};
