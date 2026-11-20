@@ -84,8 +84,6 @@ const (
 	ProblemPerIdentityLimit   = "/problems/per-identity-limit"
 )
 
-// Routes dang ky route. idempotency BAT BUOC: BR-O5 yeu cau moi API ghi co Idempotency-Key, nen
-// khong cho phep dang ky route ghi ma khong truyen middleware nay (truyen idem.Middleware(...)).
 // Routes dang ky moi route da cau hinh. idempotency (BR-O5) boc cac route ghi; thieu no thi cac route do
 // tu choi moi request (fail-closed) thay vi chay khong co Idempotency-Key. Route chi doc khong can no.
 func (h *Handler) Routes(mux *http.ServeMux, idempotencyMW ...httpx.Middleware) {
