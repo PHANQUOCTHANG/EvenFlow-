@@ -47,7 +47,9 @@ lower-case, compressed). Zones, empty strings, `unknown`, `_obfuscated` and anyt
 ### 3.3 Resolution algorithm `clientIP(r)`
 
 1. Compute `peerKey` (3.2). If the trusted set is empty, return `peerKey`; XFF is ignored.
-2. Normalise the peer with netip. If that fails, or the peer is not in the trusted set: return `peerKey`.
+2. Normalise the peer: `netip.ParseAddr(peerKey)`, reject a zone, then `Unmap()`. If that fails, or the peer is not
+   in the trusted set: return `peerKey`. (A port-less `RemoteAddr` such as `10.1.2.3` parses, so it can be trusted;
+   its fallback key is `10.1.2.3`.)
 3. Otherwise build the hop list from **all** `X-Forwarded-For` header lines in received order, each split on `,`
    (= one list, as RFC 7230 allows). Elements are trimmed of spaces/tabs; empty elements are skipped.
 4. Walk the list **right to left**. For each element: malformed → return `peerKey` (stop); not trusted → return it
@@ -69,7 +71,7 @@ skipped, not counted, so `MaxHeaderBytes` is the bound), no allocation per eleme
 - Upstream: `newReverseProxy` keeps `Rewrite` (which drops inbound `Forwarded`/`X-Forwarded-*`) and
   `SetXForwarded()`; when the resolved client came from XFF (step 4/5 of 3.3), it then **sets `X-Forwarded-For` to
   exactly that IP** (one element). Otherwise `SetXForwarded`'s value (the peer host = `peerKey`) is kept,
-  byte-identical to today. Identity (`deviceFrom`) and payment (`vnp_IpAddr`) read the first XFF
+  byte-identical to today. Identity (`newDevice`) and payment (`vnp_IpAddr`) read the first XFF
   element, so they get the real client behind the ingress with no change on their side. Untrusted/forged entries
   never reach upstreams. `X-Forwarded-Host`/`-Proto` unchanged.
 
@@ -109,7 +111,7 @@ when logged in; `id:<sub>` otherwise; `|<eventID>` suffix for queue-poll. No per
   `0.0.0.0/0`, `::/0`, `10.0.0.0/33`, `abc`, `fe80::1%eth0`, `::ffff:10.0.0.0/104`, `::ffff:10.0.0.1` makes `config.Load` fail with the
   element in the message, and `proxy.New` is never reached.
 - **AC-9 (upstream and identity)** For AC-2..AC-7 inputs, the upstream receives exactly one XFF element equal to the
-  resolved IP; no client-sent `X-Identity-*` reaches upstream (existing AC-1 test of gateway-auth-routing stays green
+  resolved IP (except an unparsable `RemoteAddr`: `SetXForwarded` drops XFF, so upstream gets none, as develop); no client-sent `X-Identity-*` reaches upstream (existing AC-1 test of gateway-auth-routing stays green
   unmodified); `RemoteAddr` seen by handlers is unchanged.
 - **AC-10 (key classes)** A logged-in user on an `auth` route is still keyed by resolved IP; on a default route by
   `id:`; queue-poll keeps the `|<eventID>` suffix.
