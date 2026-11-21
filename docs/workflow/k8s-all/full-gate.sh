@@ -45,6 +45,8 @@ else
   notrun ci-test-workflows ".github/scripts/tests/test-workflows.sh khong ton tai"
 fi
 run gates-syntax bash -c "bash -n .github/scripts/gates.sh && echo 'bash -n gates.sh ok'"
+# TCR-3: behaviour test of the C4.4 context guard (stub kubectl); CI runs it in lint-ci (.github/scripts/tests/*.sh)
+run gates-context-guard bash .github/scripts/tests/test-gates-context-guard.sh
 run actionlint bash -c "
 out=\$(go run github.com/rhysd/actionlint/cmd/actionlint@v1.7.7 .github/workflows/*.yml 2>&1); rc=\$?
 echo \"\$out\"
