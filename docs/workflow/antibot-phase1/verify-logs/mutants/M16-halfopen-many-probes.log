@@ -1,0 +1,3 @@
+ok  	github.com/eventflow/eventflow/libs/go/antibot	8.845s
+?   	github.com/eventflow/eventflow/libs/go/antibot/corpus	[no test files]
+ok  	github.com/eventflow/eventflow/libs/go/antibot/redisstate	1.919s

@@ -1,0 +1,14 @@
+--- FAIL: TestScore_AC8_DefaultOutcomesTable (0.00s)
+    --- FAIL: TestScore_AC8_DefaultOutcomesTable/missing_payload,_identity_holds_a_slot (0.00s)
+        score_test.go:92: action/applied = SLOW_LANE/SLOW_LANE, want SLOW_LANE/PASS
+        score_test.go:96: tags [CAPPED] lack REJOIN
+--- FAIL: TestScore_AC11_RejoinKeepsSlotUnlessBlock (0.00s)
+    score_test.go:220: pass with slot: applied PASS tags [], want PASS REJOIN
+    score_test.go:220: challenge with slot: applied SLOW_LANE tags [], want PASS REJOIN
+    score_test.go:220: slow lane with slot: applied SLOW_LANE tags [], want PASS REJOIN
+    score_test.go:220: capped with slot: applied SLOW_LANE tags [CAPPED], want PASS REJOIN
+FAIL
+FAIL	github.com/eventflow/eventflow/libs/go/antibot	9.123s
+?   	github.com/eventflow/eventflow/libs/go/antibot/corpus	[no test files]
+ok  	github.com/eventflow/eventflow/libs/go/antibot/redisstate	1.866s
+FAIL

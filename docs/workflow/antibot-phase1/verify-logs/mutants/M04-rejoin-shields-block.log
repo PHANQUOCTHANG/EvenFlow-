@@ -1,0 +1,7 @@
+--- FAIL: TestScore_AC11_RejoinKeepsSlotUnlessBlock (0.00s)
+    score_test.go:225: eligible BLOCK with slot: BLOCK/PASS, want BLOCK/BLOCK
+FAIL
+FAIL	github.com/eventflow/eventflow/libs/go/antibot	9.081s
+?   	github.com/eventflow/eventflow/libs/go/antibot/corpus	[no test files]
+ok  	github.com/eventflow/eventflow/libs/go/antibot/redisstate	1.844s
+FAIL

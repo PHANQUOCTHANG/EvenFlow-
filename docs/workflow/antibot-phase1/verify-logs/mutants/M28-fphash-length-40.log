@@ -1,0 +1,10 @@
+--- FAIL: TestFPHash_AC15_IsTruncatedHMAC (0.00s)
+    privacy_test.go:26: FPHash = "6be96bfc92bf67f1afd377073cfb1d8dc639ea13", want "6be96bfc92bf67f1afd377073cfb1d8d"
+--- FAIL: FuzzEvaluate (0.00s)
+    --- FAIL: FuzzEvaluate/seed#0 (0.00s)
+        score_test.go:347: FPHash "6be96bfc92bf67f1afd377073cfb1d8dc639ea13"
+FAIL
+FAIL	github.com/eventflow/eventflow/libs/go/antibot	8.697s
+?   	github.com/eventflow/eventflow/libs/go/antibot/corpus	[no test files]
+ok  	github.com/eventflow/eventflow/libs/go/antibot/redisstate	1.770s
+FAIL

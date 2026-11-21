@@ -1,0 +1,8 @@
+--- FAIL: TestRule_AC4_R1Client (0.00s)
+    --- FAIL: TestRule_AC4_R1Client/8_intervals_CV_exactly_0.10 (0.00s)
+        rules_test.go:43: R1 fired=true, want false (fired R1)
+FAIL
+FAIL	github.com/eventflow/eventflow/libs/go/antibot	8.890s
+?   	github.com/eventflow/eventflow/libs/go/antibot/corpus	[no test files]
+ok  	github.com/eventflow/eventflow/libs/go/antibot/redisstate	1.956s
+FAIL

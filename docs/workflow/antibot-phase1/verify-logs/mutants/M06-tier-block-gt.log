@@ -1,0 +1,13 @@
+--- FAIL: TestFix1_Amendment2_WorkedExamples (0.00s)
+    --- FAIL: TestFix1_Amendment2_WorkedExamples/X-4_python-requests_+_forged_pe:1 (0.00s)
+        fixround1_test.go:307: fired R5 score 0.85 action SLOW_LANE tags [], want R5 0.85 BLOCK capped=false
+    --- FAIL: TestFix1_Amendment2_WorkedExamples/X-4_wd_true_alone (0.00s)
+        fixround1_test.go:307: fired R5 score 0.85 action SLOW_LANE tags [], want R5 0.85 BLOCK capped=false
+--- FAIL: TestScore_AC8_TierBoundariesLowerInclusive (0.00s)
+    score_test.go:149: R2=0.8496: score 0.85 tier SLOW_LANE, want BLOCK
+    score_test.go:149: R2=0.85: score 0.85 tier SLOW_LANE, want BLOCK
+FAIL
+FAIL	github.com/eventflow/eventflow/libs/go/antibot	9.068s
+?   	github.com/eventflow/eventflow/libs/go/antibot/corpus	[no test files]
+ok  	github.com/eventflow/eventflow/libs/go/antibot/redisstate	1.892s
+FAIL

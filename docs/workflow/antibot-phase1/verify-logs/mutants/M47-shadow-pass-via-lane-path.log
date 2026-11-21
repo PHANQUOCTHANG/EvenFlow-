@@ -1,0 +1,3 @@
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/http	3.854s
+ok  	github.com/eventflow/eventflow/services/waitingroom/cmd/server	0.242s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/postgres	0.185s

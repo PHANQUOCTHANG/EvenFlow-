@@ -1,0 +1,7 @@
+--- FAIL: TestFix1_R2_StickyDoesNotRevokeAgain (0.00s)
+    antibot_fixround1_test.go:22: sticky called Revoke 1 times, want 0
+FAIL
+FAIL	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/http	3.871s
+ok  	github.com/eventflow/eventflow/services/waitingroom/cmd/server	0.231s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/postgres	0.200s
+FAIL

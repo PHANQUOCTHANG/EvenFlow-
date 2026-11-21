@@ -1,0 +1,7 @@
+--- FAIL: TestLoadConfig_AC16_OffSkipsValidation (0.00s)
+    config_test.go:122: off mode failed on unused settings: ANTIBOT_HASH_KEY: required when APP_ENV=production and ANTIBOT_MODE is not off
+FAIL
+FAIL	github.com/eventflow/eventflow/libs/go/antibot	8.880s
+?   	github.com/eventflow/eventflow/libs/go/antibot/corpus	[no test files]
+ok  	github.com/eventflow/eventflow/libs/go/antibot/redisstate	1.864s
+FAIL

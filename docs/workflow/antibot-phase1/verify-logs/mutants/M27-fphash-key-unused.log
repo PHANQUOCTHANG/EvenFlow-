@@ -1,0 +1,7 @@
+--- FAIL: TestFPHash_AC15_IsTruncatedHMAC (0.00s)
+    privacy_test.go:26: FPHash = "bfd8a0e04280e9bd16694a6185c27497", want "6be96bfc92bf67f1afd377073cfb1d8d"
+FAIL
+FAIL	github.com/eventflow/eventflow/libs/go/antibot	8.704s
+?   	github.com/eventflow/eventflow/libs/go/antibot/corpus	[no test files]
+ok  	github.com/eventflow/eventflow/libs/go/antibot/redisstate	1.835s
+FAIL

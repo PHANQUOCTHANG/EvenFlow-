@@ -1,0 +1,8 @@
+--- FAIL: TestScore_AC8_TierBoundariesLowerInclusive (0.00s)
+    score_test.go:149: R2=0.2996: score 0.3 tier PASS, want CHALLENGE
+    score_test.go:149: R2=0.30: score 0.3 tier PASS, want CHALLENGE
+FAIL
+FAIL	github.com/eventflow/eventflow/libs/go/antibot	9.049s
+?   	github.com/eventflow/eventflow/libs/go/antibot/corpus	[no test files]
+ok  	github.com/eventflow/eventflow/libs/go/antibot/redisstate	1.995s
+FAIL
