@@ -1,0 +1,7 @@
+G0|control (unmutated)|PROBE PASS
+G1|context guard accepts any context|KILLED|P1 FAIL non-local ctx touched cluster: --context prod-cluster get namespace eventflow
+G2|context guard regex unanchored at end|KILLED|P5 FAIL ctx docker-desktop-prod touched cluster
+G3|kubectl calls not pinned to approved context|KILLED|P3 FAIL finished Job not deleted with --context
+G4|migrate Job deleted even when not finished|KILLED|P2 FAIL unfinished migrate Job deleted
+G5|unfinished Job not excluded from dry-run|KILLED|P2 FAIL unfinished Job not excluded
+G6|guard skipped: non-local branch removed|KILLED|P1 FAIL non-local ctx touched cluster: --context prod-cluster get namespace eventflow
