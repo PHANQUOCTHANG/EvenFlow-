@@ -814,6 +814,104 @@ mut("EXEMPT", "web-ac12-whole-rule", web_whole_rule)
 mut("EXEMPT", "web-unknown-subcheck", web_unknown_sub)
 
 
+# ---- contract revision 3 additions (TCR-2, fix round 1 after review) ---------
+def addenv(p, name, value):
+    return lambda o: ctr(o, p)["env"].append({"name": name, "value": value})
+
+
+def gw_template(o):
+    return copy.deepcopy(dep(o, "gateway")["spec"]["template"])
+
+
+def extra_workload(kind, name, edit=None):
+    """A non-Deployment pod-bearing object whose pod spec is a copy of the (compliant) gateway pod, plus one edit."""
+    def fn(o):
+        t = gw_template(o)
+        if edit:
+            edit(t["spec"])
+        md = {"name": name, "namespace": NS}
+        if kind == "Pod":
+            obj = {"apiVersion": "v1", "kind": "Pod", "metadata": dict(md, labels={"app.kubernetes.io/name": name}),
+                   "spec": t["spec"]}
+        elif kind == "CronJob":
+            t["spec"]["restartPolicy"] = "Never"
+            obj = {"apiVersion": "batch/v1", "kind": "CronJob", "metadata": md,
+                   "spec": {"schedule": "0 3 * * *", "jobTemplate": {"spec": {"template": t}}}}
+        else:
+            t["metadata"]["labels"] = {"app.kubernetes.io/name": name}
+            obj = {"apiVersion": "apps/v1", "kind": kind, "metadata": md,
+                   "spec": {"selector": {"matchLabels": {"app.kubernetes.io/name": name}}, "template": t}}
+        o.append(obj)
+    return fn
+
+
+def first_ctr(ps):
+    return ps["containers"][0]
+
+
+def set_env_literal(ps, name, value):
+    first_ctr(ps)["env"] = [e for e in first_ctr(ps)["env"] if e["name"] != name] + [{"name": name, "value": value}]
+
+
+def ephemeral_privileged(ps):
+    c = copy.deepcopy(first_ctr(ps))
+    for k in ("livenessProbe", "readinessProbe", "startupProbe", "ports", "lifecycle"):
+        c.pop(k, None)
+    c["name"] = "debug"
+    c["securityContext"]["privileged"] = True
+    ps["ephemeralContainers"] = [c]
+
+
+def envfrom_prefix(o):
+    o.append({"apiVersion": "v1", "kind": "ConfigMap", "metadata": {"name": "tuning", "namespace": NS},
+              "data": {"HEALTH_MODE": "static"}})
+    ctr(o, "waitingroom-controller")["envFrom"] = [{"prefix": "ADMIT_", "configMapRef": {"name": "tuning"}}]
+
+
+def endport(o):
+    for r in find(o, "NetworkPolicy", "allow-identity")["spec"]["ingress"]:
+        for p in r["ports"]:
+            p["endPort"] = 65535
+
+
+# X-1 / R-2: duplicate env name (kubelet keeps the last one)
+mut("AC-22", "staging-duplicate-env-gemini-mock", addenv("ai-worker", "GEMINI_MOCK", "1"), overlay="staging")
+mut("AC-22", "staging-duplicate-env-providers", addenv("payment", "PAYMENT_ENABLED_PROVIDERS", "sandbox"), overlay="staging")
+# X-2: envFrom.configMapRef with a prefix injects ADMIT_*
+mut("AC-32", "envfrom-configmap-prefix", envfrom_prefix, overlay="staging")
+# X-3: pod-bearing kinds other than Deployment/StatefulSet/Job, ephemeral containers
+mut("AC-20", "cronjob-foreign-image", extra_workload("CronJob", "evil-cron",
+    lambda ps: first_ctr(ps).update({"image": "docker.io/evil/root:1.0"})))
+mut("AC-17", "pod-secret-literal", extra_workload("Pod", "evil-pod",
+    lambda ps: set_env_literal(ps, "JWT_SECRET", "prod-real-secret")), overlay="staging")
+mut("AC-12", "daemonset-hostpath", extra_workload("DaemonSet", "evil-ds",
+    lambda ps: ps.update({"volumes": [{"name": "host", "hostPath": {"path": "/"}}]})))
+mut("AC-12", "replicaset-privileged", extra_workload("ReplicaSet", "evil-rs",
+    lambda ps: first_ctr(ps)["securityContext"].update({"privileged": True})))
+mut("AC-12", "pod-ephemeral-privileged", extra_workload("Pod", "evil-debug", ephemeral_privileged))
+# X-4 / R-6: dev-infra only in local
+mut("AC-21", "staging-dev-infra-mailpit", lambda o: o.append(devinfra_mailpit()), overlay="staging")
+mut("AC-21", "staging-dev-infra-netpol", lambda o: o.append(devinfra_np()), overlay="staging")
+# X-5 / R-7: AC-17 gaps
+mut("AC-17", "empty-user-redis-url", lambda o: cfg(o, "eventflow-endpoints").update({"REDIS_URL": "redis://:Sup3rS3cretPw@redis.example.internal:6379/0"}), overlay="staging")
+mut("AC-17", "gateway-args-secret", lambda o: ctr(o, "gateway").update({"args": ["--jwt-secret=prod-real-secret"]}), overlay="staging")
+mut("AC-17", "gateway-args-dsn-password", lambda o: ctr(o, "gateway").update({"args": ["-db", "host=db user=app password=prod-pw"]}), overlay="staging")
+mut("AC-17", "configmap-binarydata-secret", lambda o: find(o, "ConfigMap", "eventflow-endpoints").update({"binaryData": {"JWT_SECRET": b64("prod")}}), overlay="staging")
+mut("AC-17", "literal-passphrase-name", addenv("gateway", "SIGNING_PASSPHRASE", "hunter2"), overlay="staging")
+mut("AC-17", "literal-db-pass-name", addenv("gateway", "DB_PASS", "hunter2"), overlay="staging")
+mut("AC-17", "literal-keys-name", addenv("gateway", "PII_ENC_KEYS", "hunter2"), overlay="staging")
+mut("AC-17", "literal-dsn-password", addenv("gateway", "PG_DSN", "host=db user=app password=prod-pw"), overlay="staging")
+# X-7: container-level overrides and restricted-profile fields
+mut("AC-12", "container-runasnonroot-false", lambda o: ctr(o, "gateway")["securityContext"].update({"runAsNonRoot": False}))
+mut("AC-12", "container-seccomp-unconfined", lambda o: ctr(o, "gateway")["securityContext"].update({"seccompProfile": {"type": "Unconfined"}}), overlay="staging")
+mut("AC-12", "gateway-hostport", lambda o: ctr(o, "gateway")["ports"][0].update({"hostPort": 80}), overlay="staging")
+mut("AC-12", "container-procmount-unmasked", lambda o: ctr(o, "gateway")["securityContext"].update({"procMount": "Unmasked"}))
+mut("AC-12", "share-process-namespace", lambda o: pod(o, "gateway").update({"shareProcessNamespace": True}))
+mut("AC-12", "pod-fsgroup-0", lambda o: pod(o, "gateway")["securityContext"].update({"fsGroup": 0}), overlay="staging")
+# X-8: NetworkPolicy endPort
+mut("AC-15", "identity-endport", endport, overlay="staging")
+
+
 # ---- Dockerfile fixtures (AC-13, --dockerfiles mode) -------------------------
 DF_GOOD = {
     "go-service.Dockerfile": "FROM golang:1.23 AS build\nRUN go build -o /out/server ./cmd/server\n\nFROM gcr.io/distroless/static-debian12\nCOPY --from=build /out/server /server\nUSER 65532:65532\nENTRYPOINT [\"/server\"]\n",
@@ -827,6 +925,10 @@ DF_BAD = {
     "named-user": {"go-service.Dockerfile": "FROM golang:1.23 AS build\nRUN go build -o /out/server ./cmd/server\n\nFROM gcr.io/distroless/static-debian12\nCOPY --from=build /out/server /server\nUSER nonroot:nonroot\nENTRYPOINT [\"/server\"]\n"},
     "no-user": {"go-service.Dockerfile": "FROM golang:1.23 AS build\nRUN go build -o /out/server ./cmd/server\n\nFROM gcr.io/distroless/static-debian12\nCOPY --from=build /out/server /server\nENTRYPOINT [\"/server\"]\n"},
     "user-only-in-build-stage": {"go-service.Dockerfile": "FROM golang:1.23 AS build\nUSER 65532:65532\nRUN go build -o /out/server ./cmd/server\n\nFROM gcr.io/distroless/static-debian12\nCOPY --from=build /out/server /server\nENTRYPOINT [\"/server\"]\n"},
+    # rev 3 (TCR-2, X-10)
+    "user-uid-0": {"go-service.Dockerfile": "FROM gcr.io/distroless/static-debian12\nCOPY server /server\nUSER 0:0\nENTRYPOINT [\"/server\"]\n"},
+    "lowercase-suffix": {"named.dockerfile": "FROM alpine:3.20\nUSER root\n"},
+    "plain-dockerfile-name": {"Dockerfile": "FROM alpine:3.20\nCMD [\"sh\"]\n"},
 }
 
 
