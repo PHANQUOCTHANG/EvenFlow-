@@ -112,13 +112,16 @@ add=\$(git diff $BASE HEAD -- services apps tests .github/scripts | grep -E '^\\
 exit \$fail"
 
 # --- secret scan (regex tren diff; chi secrets.dev.env DEV ONLY duoc phep) ---
+# Only this branch's own changes: diff from the merge-base with origin/develop, so code that develop already
+# merged (e.g. tests/e2e fixtures of PR #99) is not attributed to k8s-all. Falls back to BASE without the ref.
+SCAN_BASE=$(git merge-base HEAD origin/develop 2>/dev/null || echo $BASE)
 run secrets bash -c "
 set -o pipefail
 echo '--- secrets.dev.env: moi gia tri phai chua \"dev\" (DEV ONLY, spec AC-16)'
 bad=\$(grep -vE '^\\s*(#|\$)' deploy/k8s/overlays/local/secrets.dev.env | grep -viE '=.*dev' || true)
 [ -z \"\$bad\" ] && echo 'secrets.dev.env ok' || { echo \"non-dev value: \$bad\"; exit 1; }
-echo '--- diff $BASE..HEAD (tru secrets.dev.env, lockfiles)'
-git diff $BASE HEAD -- . ':(exclude)*.lock' ':(exclude)*package-lock.json' ':(exclude)deploy/k8s/overlays/local/secrets.dev.env' \
+echo '--- diff $SCAN_BASE..HEAD (tru secrets.dev.env, lockfiles)'
+git diff $SCAN_BASE HEAD -- . ':(exclude)*.lock' ':(exclude)*package-lock.json' ':(exclude)deploy/k8s/overlays/local/secrets.dev.env' \
   | python $DIR/gate_secret_scan.py"
 
 # --- can cluster: khong chay duoc o day ---
