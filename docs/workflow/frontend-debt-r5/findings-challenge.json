@@ -1,0 +1,79 @@
+[
+  {
+    "id": "X-1",
+    "severity": "minor",
+    "ac": "AC-2 (spec section 5 'AC-2 (plan review P-4)', plan section 7 P-4 option a)",
+    "file": "apps/web/src/lib/api-client.ts",
+    "line": 147,
+    "title": "P-4 eager wipe is not implemented: a used refresh token stays in the shadowed store after the abort / 401 path when the guard did not clear",
+    "evidence": "spec.md section 5 records: 'when the token is marked used and the guard did not clear, any other store still holding that token is wiped at once, so no stale copy outlives the 16-entry record'. plan-review.md P-4 is marked 'Resolved (option a)' and plan.md P-4 promises a test 'in the R2-3 repro the sessionStorage copy is gone right after the 120 s abort'. `failedRefresh` (api-client.ts:147-164) only calls `clearSession()` when `isSamePostedSession` is true; otherwise it re-reads and throws or returns without calling `clearSessionHoldingRefresh`. Executed: R2-3 shape (u-1/r1 in sessionStorage, u-2 written to localStorage at 60 s, abort at 121 s) -> `sessionStorage.ef_refresh === 'r1'` right after `A:AUTH_REQUIRED`; same on the 401 path (`controlled()` + answer 401 while u-2 stored) -> 'r1' still present; same on the AC-3 reuse path (u-1/r9 in local, abort) -> session copy 'r1' still present. The existing ac2 test only checks the copy after the NEXT request (lazy wipe in doRefresh), not 'right after the abort'. The exploit from P-4 (17 marks evict r1, then re-POST) did NOT reproduce: after 16 successful u-2 rotations `setSession` wiped the other store at the first rotation and `posts` still contained r1 once; a same-posted failure calls `clearSession()` which wipes both stores. So the stale copy can only outlive 16 marks if all 16 are non-clearing race outcomes (other tab rotated / other user stored during this tab's POST). Impact today: a consumed refresh token lingers in sessionStorage until the next refresh attempt; UX for R2-S1 shows a signed-in user whose refresh is dead until the next 401.",
+    "repro": "// src/__challenge__/c1-eviction.test.ts (harness: lib/debt/harness + lib/debt5/harness5, fakeLocks, fake timers)\nconst s = apiServer(() => valid);\nseedUser('u-1', 'old', 'r1', sessionStorage);\nconst A = await newTab();\nconst a = outcome('A', A.api.apiFetch('/v1/orders/a'));\nawait vi.advanceTimersByTimeAsync(60_000);\nseedUser('u-2', 'acc-u2-0', 'r-u2-0', localStorage);\nawait vi.advanceTimersByTimeAsync(61_000);\nexpect(await a).toBe('A:AUTH_REQUIRED');\nconst copyAfterAbort = sessionStorage.getItem('ef_refresh');\n// ... 16 rotations of u-2 (each 2xx), localStorage.clear(), request B, 121 s ...\nexpect({ copyAfterAbort, r1Posts }).toEqual({ copyAfterAbort: null, r1Posts: 1 });\n// => AssertionError: expected { copyAfterAbort: 'r1', r1Posts: 1 } to deeply equal { copyAfterAbort: null, r1Posts: 1 }\n\n// 401 path: s.controlled(); seedUser('u-1','old','r1',sessionStorage); A.api.apiFetch(...); seedUser('u-2','acc-u2','r-u2',localStorage); s.answer(401 problem)\nexpect(sessionStorage.getItem('ef_refresh')).toBeNull(); // => expected 'r1' to be null",
+    "fix": "Either implement option (a): in `failedRefresh`, when `isSamePostedSession` is false, call `clearSessionHoldingRefresh(cur.refreshToken)` before the step-2 re-read (the helper already applies the P-3 'bump only if active store' rule and never touches a store holding another token), and add the planned assertion to the R2-3 / X-4 tests; or pick option (b) explicitly: delete the section-5 line and record the eviction residual, and change plan-review P-4 from 'Resolved (option a)' to (b)."
+  },
+  {
+    "id": "X-2",
+    "severity": "minor",
+    "ac": "AC-5",
+    "file": "apps/web/src/lib/api-client.ts",
+    "line": 295,
+    "title": "A lock result of '' (empty string) passes the AC-5 check and apiFetch retries the original request WITHOUT a bearer, returning a raw 401",
+    "evidence": "`withRefreshLock` guards with `typeof token !== 'string'`; an empty string is a string, so '' is returned as the access token. `withBearer(base, '')` (api-client.ts:353-358) treats a falsy token as 'no bearer' and deletes `Authorization`, so the retry at line 392 is sent unauthenticated and the raw 401 `Response` is returned to the caller. Executed with `installLocks({ request: () => Promise.resolve('') })`: outcome `A:401`, bearers `[\"Bearer old\", null]`. Spec AC-5 wording ('no string token') is satisfied literally, but its goal ('does not retry the original request without a bearer') is not. Same premise as X-S2 (a LockManager that resolves without running the callback); `doRefresh` itself can never return '' because `readStore` requires a truthy access token, so this needs a non-conforming lock manager.",
+    "repro": "// src/__challenge__/c2-wpa-edges.test.ts\ninstallLocks({ request: () => Promise.resolve('') });\nconst s = apiServer();\nseedUser('u-1', 'old', 'r1');\nconst A = await newTab();\nconst a = outcome('A', A.api.apiFetch('/v1/orders/a'));\nawait vi.advanceTimersByTimeAsync(100);\nexpect(JSON.stringify({ outcome: await a, bearers: bearers(s.calls) }))\n  .toBe(JSON.stringify({ outcome: 'A:NETWORK_ERROR', bearers: ['Bearer old'] }));\n// => Received: {\"outcome\":\"A:401\",\"bearers\":[\"Bearer old\",null]}",
+    "fix": "api-client.ts:295: `if (typeof token !== 'string' || !token) throw networkError();` and add '' to the AC-5 it.each in ac4-ac5-no-bearerless-send.test.ts."
+  },
+  {
+    "id": "X-3",
+    "severity": "minor",
+    "ac": "AC-10",
+    "file": "apps/web/src/lib/payment-client.ts",
+    "line": 150,
+    "title": "Values that look relative but are cross-origin pass safeRedirect: '//evil.example/x', '\\\\evil.example/x', '/\\evil.example/x', 'https:evil.example', 'https://evil.example\\@pay.test'",
+    "evidence": "`safeRedirect` keeps `raw` whenever `new URL(raw, origin).protocol` is http(s). WHATWG parsing turns scheme-relative and backslash-relative inputs into `http(s)://evil.example/...`. Executed: all five values are returned unchanged and `new URL(redirectUrl, origin).host === 'evil.example'`; `payment-handoff-view.tsx:68` then assigns `window.location.href`. The spec only requires rejecting non-http(s) schemes and defers the host allow-list to the server (S-4 server part), so this is a documented residual rather than a spec breach; recorded because the spec text 'relative URL ... kept unchanged' reads as same-origin while these are not. Control-character and whitespace scheme tricks (\\u0000javascript:, 'javascript\\t:', JAVASCRIPT://%0a, ws:, ftp:, mailto:, about:blank, 'javascript:') are all rejected correctly.",
+    "repro": "// src/__challenge__/c3-redirect.test.ts\ninstallFetch(() => json({ payment_id: 'pay-1', order_id: 'ord-1', redirect_url: '//evil.example/x', status: 'PENDING' }));\nconst r = await initiatePayment(PAY);\nconst parsed = new URL(r.redirectUrl, 'http://localhost');\nexpect({ kept: r.redirectUrl === '//evil.example/x', host: parsed.host }).toEqual({ kept: false, host: 'localhost' });\n// => Received { kept: true, host: 'evil.example' }  (same for '\\\\\\\\evil.example/x', '/\\\\evil.example/x', 'https:evil.example', 'https://evil.example\\\\@pay.test')",
+    "fix": "Cheap client-side tightening without a host list: treat as relative only when `raw.startsWith('/') && !/^[\\/\\\\]{2}/.test(raw)`; treat as absolute only when `/^https?:\\/\\//i.test(raw)` and the parsed `href` round-trips (`new URL(raw).href` starts with the same scheme+host without backslashes); otherwise fallback. Or keep as is and add these shapes to the S-4 server-part deferral note so the backend allow-list owner knows the client passes them through."
+  },
+  {
+    "id": "X-4",
+    "severity": "minor",
+    "ac": "AC-6 (plan P-6 'present' definition)",
+    "file": "apps/web/src/lib/session.ts",
+    "line": 70,
+    "title": "A throwing Storage.getItem on localStorage now hides a valid sessionStorage session (regression vs c5fb598)",
+    "evidence": "`readStore` returns `{ kind: 'invalid' }` from its catch block, and `activeStore` stops at the first non-absent store. Before this change `readFrom` returned null on a throw and `peekSession` fell through to sessionStorage. P-6 defines 'present' as both `ef_token` and `ef_user` existing; a storage read that throws is not 'present'. Executed: valid u-1 session in sessionStorage, `Storage.prototype.getItem` throws only for `localStorage.getItem('ef_token')` -> `peekSession()` is null (expected 'u-1'). Rare path (per-key storage exceptions from privacy extensions / quota probes), `store()` already handles the accessor-level throw.",
+    "repro": "// src/__challenge__/c2-wpa-edges.test.ts\nseedUser('u-1', 'acc-s', 'r-s', sessionStorage);\nconst g = Storage.prototype.getItem;\nvi.spyOn(Storage.prototype, 'getItem').mockImplementation(function (this: Storage, k: string) {\n  if (this === localStorage && k === 'ef_token') throw new Error('blocked');\n  return g.call(this, k);\n});\nconst A = await newTab();\nexpect(A.sess.peekSession()?.user.id ?? null).toBe('u-1'); // => expected null to be 'u-1'",
+    "fix": "In `readStore`, wrap only the two `getItem` reads in a try/catch that returns `{ kind: 'absent' }`, and keep `{ kind: 'invalid' }` for JSON/shape/role failures of a store that is present."
+  },
+  {
+    "id": "X-5",
+    "severity": "minor",
+    "ac": "AC-11",
+    "file": "apps/web/src/components/checkout/cancel-hold-dialog.tsx",
+    "line": 52,
+    "title": "Fallback path (no showModal): Escape only works while focus is inside the dialog; no focus trap or inert background",
+    "evidence": "In the `else` branch the component sets the `open` attribute and listens for `keydown` on the dialog element itself, so a keydown whose target is outside the dialog (focus on body after a click on the backdrop/elsewhere) never reaches the handler. Executed in jsdom (which has no showModal): open the dialog, blur the focused button so `document.activeElement === document.body`, `fireEvent.keyDown(document.body, { key: 'Escape' })` -> dialog still open (0 DELETE, so no safety issue). The native path (`showModal`, used by every current browser) gets Esc through the `cancel` event regardless of focus, so this affects only the fallback. The fallback also does not trap Tab or mark the page `inert`, so keyboard users in that branch can reach the page behind the modal while `aria-modal='true'` claims otherwise.",
+    "repro": "// src/__challenge__/c4-dialog.test.tsx\nawait renderActive(); await openDialog();\n(document.activeElement as HTMLElement | null)?.blur();\nexpect(document.activeElement).toBe(document.body);\nawait act(async () => { fireEvent.keyDown(document.body, { key: 'Escape', code: 'Escape' }); });\nawait tick(10);\nexpect({ closed: dialog() === null, deletes: deletes(s.calls).length }).toEqual({ closed: true, deletes: 0 });\n// => Received { closed: false, deletes: 0 }",
+    "fix": "In the fallback branch attach the Escape `keydown` listener to `document` (remove it in the cleanup) and, optionally, a minimal Tab-wrap between the two buttons; or document that the fallback is a test-only path."
+  },
+  {
+    "id": "X-6",
+    "severity": "suspicion",
+    "ac": "AC-12 / plan section 6 and P-8",
+    "file": "docs/workflow/frontend-debt-r5/gate-report.json",
+    "line": 1,
+    "title": "No mutation-test record (M-1..M-18, W-1, W-2) and the planned Google X-15 test is missing",
+    "evidence": "plan.md section 6 sets a threshold of 18/18 (WP-A) and 5/5 (WP-B) mutations that must each fail at least one new test. gate-report.json and docs/workflow/frontend-debt-r5/gate/ contain lint/typecheck/build/test/e2e/go/audit/sast/secrets/tamper logs only; no mutation ids appear anywhere in the folder except plan.md / plan-review.md. Plan P-8 also promised a test for the Google edge (google 200, devices 200, refresh 200 bad body -> restored session works until a 401, then AUTH_REQUIRED with 1 POST); ac2-used-refresh.test.ts only has a seeded-session variant. I executed the Google scenario myself (c5-google.test.ts: loginWithGoogle with refresh 200 'junk' and with 401; devices 503 variant) and it behaves as specified (posts ['rG'], session and ef_refresh cleared at the end), so this is a records/test gap, not a defect. Not a code finding, hence 'suspicion'.",
+    "repro": "grep -rl -i mutation docs/workflow/frontend-debt-r5/  # only plan.md, plan-review.md, tier.json, findings-review.json\nnode -e \"const g=require('./docs/workflow/frontend-debt-r5/gate-report.json'); console.log(JSON.stringify(g).match(/\\\\b(M-1[0-8]|M-[1-9]|W-[12])\\\\b/g))\"  # null",
+    "fix": "Run the plan section 6 mutation set (or a documented subset) and record the per-mutation failing test in gate-report.json or a mutation.md; add the P-8 Google test (my c5 repro can be reused as is)."
+  },
+  {
+    "id": "X-7",
+    "severity": "suspicion",
+    "ac": "AC-11",
+    "file": "apps/web/src/components/checkout/cancel-hold-dialog.tsx",
+    "line": 48,
+    "title": "Chrome close-watcher can force-close the native dialog while the DELETE is in flight; React keeps it 'open' until the DELETE settles",
+    "evidence": "Chromium's close-watcher anti-abuse rule lets `cancel.preventDefault()` block Esc only once per user activation; a second Esc skips `cancel` and fires `close` directly. `onClose` -> `dismiss()` -> ignored while busy, so the native element closes (hidden, focus returns to the page) while `confirmOpen` stays true and the trigger/primary/tier controls remain disabled until the DELETE settles, after which `setConfirmOpen(false)` unmounts it. No second DELETE is possible (confirm is disabled and `cancellingRef` guards). Not executable in jsdom; the unit test 'a close the browser does on its own syncs state through onDismiss' covers the non-busy case only.",
+    "repro": "Not executed (requires a real Chromium close-watcher). Manual: open the dialog, click 'Huỷ giữ vé' with a slow DELETE (throttle), press Esc twice quickly without clicking; observe the dialog vanish while the spinner state persists in React until the response.",
+    "fix": "In `onClose`, when busy, re-open with `showModal()` on the next frame (if the element is still connected), or accept and document that the dialog may be hidden while the request completes."
+  }
+]

@@ -1,0 +1,86 @@
+{
+  "round": 2,
+  "role": "re-reviewer + challenger (v3 step 5 round 2, High-risk, different model from the implementer)",
+  "commit": "c6dcff1",
+  "fix_diff": "git diff 351bf74 c6dcff1 -- apps/web",
+  "method": "Repro tests only under apps/web/src/__challenge__/ (removed afterwards; code pasted below). Pre-fix copies of session.ts / api-client.ts / cancel-hold-dialog.tsx were extracted with `git show 351bf74:...` into __challenge__/old and wired in with vi.mock so the non-vacuity of every new test could be shown without touching tracked files. R-2 mutants (shift->pop, no duplicate filter) were produced the same way with sed on a copy. No tracked file was modified; node_modules/.next untouched.",
+  "commands": [
+    "cd apps/web && npx vitest run src/__challenge__  -> 8 files, 48 tests passed",
+    "cd apps/web && npx vitest run src/lib/debt5-fix src/lib/debt5 src/lib/debt src/components/checkout -> 36 files, 396 tests passed"
+  ],
+  "rerun": [
+    {
+      "id": "X-2",
+      "result": "no_longer_reproduces",
+      "evidence": "installLocks({ request: () => Promise.resolve('') }) + seeded u-1/old/r1 -> outcome A:NETWORK_ERROR, bearers ['Bearer old'], posts [], session kept (refreshToken 'r1'). Same for undefined/null/0/false/{}/[]. A joiner on an in-flight refresh whose lock resolves '' also gets NETWORK_ERROR (no '' handed out). Invariant check with the FIFO fake lock: two concurrent 401s -> posts ['r1'] once, bearers ['Bearer old','Bearer old','Bearer new','Bearer new'].",
+      "non_vacuity": "Same scenario against the 351bf74 copy of api-client (vi.mock('@/lib/api-client', () => import('./old/api-client-old'))) -> { outcome: 'A:401', bearers: ['Bearer old', null] }: the committed x2-empty-lock-token.test.ts fails on the old code and passes on the new.",
+      "repro": "// __challenge__/c1-x2-rerun.test.ts\ninstallLocks({ request: () => Promise.resolve(\"\") });\nconst s = apiServer();\nseedUser(\"u-1\", \"old\", \"r1\");\nconst A = await newTab();\nconst a = outcome(\"A\", A.api.apiFetch(\"/v1/orders/a\"));\nawait vi.advanceTimersByTimeAsync(100);\nexpect(JSON.stringify({ outcome: await a, bearers: bearers(s.calls), posts: posts(s.calls) }))\n  .toBe(JSON.stringify({ outcome: \"A:NETWORK_ERROR\", bearers: [\"Bearer old\"], posts: [] })); // passes\n\n// __challenge__/c1b-x2-vacuity.test.ts (old code)\nvi.mock(\"@/lib/api-client\", () => import(\"./old/api-client-old\"));\n...\nexpect({ outcome: await a, bearers: bearers(s.calls) }).toEqual({ outcome: \"A:401\", bearers: [\"Bearer old\", null] }); // passes => old behaviour confirmed"
+    },
+    {
+      "id": "X-4",
+      "result": "no_longer_reproduces",
+      "evidence": "Valid u-1 session in sessionStorage; Storage.prototype.getItem throws only for localStorage 'ef_token' -> peekSession().user.id === 'u-1', getSessionPersist() === 'session'. Same for 'ef_user' (committed it.each). Both stores throwing on ef_token -> peekSession null, no exception, getStoredRefreshToken still works. sessionStorage throwing with a valid local session -> local used. Present-but-corrupt local store (ef_user 'null', role 'admin', id not a string) stays invalid (null, no fall-through); token-only / user-only / empty-string token are 'absent' and fall through to sessionStorage, exactly the P-6 definition. setItem throwing on ef_user during setSession keeps the old session and does not wipe the other store.",
+      "non_vacuity": "Against the 351bf74 copy of session.ts (vi.mock('@/lib/session', () => import('./old/session-old'))) both it.each cases give peekSession() === null: the committed x4-throwing-getitem.test.ts fails on the old code. The GUARD case (present but corrupt) passes on both, as intended (it guards the fix from over-reaching).",
+      "note": "Sub-key edge (not a finding): a local store that is PRESENT (ef_token + ef_user readable) but whose getItem('ef_refresh') or getItem('ef_expires_at') throws is 'invalid' -> peekSession null, persist null; the sessionStorage copy is NOT used. That is the safe choice (a present store decides; never fall through to another store's tokens) and is the same at 351bf74; only c5fb598 fell through. Not a regression of this fix.",
+      "repro": "// __challenge__/c2-x4-rerun.test.ts\nseedUser(\"u-1\", \"acc-s\", \"r-s\", sessionStorage);\nconst g = Storage.prototype.getItem;\nvi.spyOn(Storage.prototype, \"getItem\").mockImplementation(function (this: Storage, k: string) {\n  if (this === localStorage && k === \"ef_token\") throw new Error(\"blocked\");\n  return g.call(this, k);\n});\nconst A = await newTab();\nexpect(A.sess.peekSession()?.user.id ?? null).toBe(\"u-1\"); // passes\nexpect(A.sess.getSessionPersist()).toBe(\"session\"); // passes"
+    },
+    {
+      "id": "X-5",
+      "result": "no_longer_reproduces",
+      "evidence": "Via CheckoutView (jsdom, no showModal => fallback branch): open the dialog, blur to body, keyDown Escape on body -> { closed: true, deletes: 0 }. After 'Giữ lại' closes the dialog, Escape/Tab on body are inert and focus is not stolen (document listener removed). With a DELETE in flight (controlled fetch): Escape on body and on the active element are ignored, the dialog stays until the DELETE settles, exactly 1 DELETE. Direct render: busy->not busy->Escape dismisses once (busyRef); onDismiss prop swap honoured (ref); close via parent state removes listeners; while busy both buttons are disabled -> Tab and Shift+Tab prevented (focus cannot leave to the page), also when focus is still on the now-disabled inner button; focus on an outside button + Tab -> 'Giữ lại', Shift+Tab -> 'Huỷ giữ vé'; Escape with focus on an outside button dismisses once with default prevented; Enter/Space/letters on body are not prevented; two mount/unmount cycles leave no leaked listener. Simulated native branch (showModal/close defined on the prototype): showModal called once, Escape on body does NOT dismiss and Tab at document is untouched (no document listener installed), `cancel` -> preventDefault + dismiss, Escape keydown inside the element -> dismiss, busy blocks both, unmount calls close() once with the close/keydown listeners already removed (onDismiss not called).",
+      "non_vacuity": "Against the 351bf74 copy of the component: Escape on body does not call onDismiss; Tab on the last button is not wrapped and Tab from body is not pulled inside. So the committed cancel-hold-dialog-fallback.test.tsx 'Escape on body', 'Tab wraps' and 'Tab from outside' tests fail on the old component. The 'after unmount' and 'inner Tab not prevented' tests pass on both (they guard the new listener; acceptable).",
+      "note": "Synthetic shape only (not reachable through props, so not a finding): with 'Giữ lại' disabled while 'Huỷ giữ vé' is still enabled, Shift+Tab from the disabled 'Giữ lại' is not prevented (a real browser would move focus to the page). Button sets disabled on both buttons whenever busy, so this combination cannot occur.",
+      "repro": "// __challenge__/c4-x5-rerun.test.tsx (CheckoutView harness from checkout-view.cancel-focus.test.tsx)\nawait openDialog();\n(document.activeElement as HTMLElement | null)?.blur();\nexpect(document.activeElement).toBe(document.body);\nawait act(async () => { fireEvent.keyDown(document.body, { key: \"Escape\", code: \"Escape\" }); });\nawait tick(10);\nexpect({ closed: dialog() === null, deletes: deletes(calls).length }).toEqual({ closed: true, deletes: 0 }); // passes\n\n// native simulation\nObject.defineProperty(HTMLDialogElement.prototype, \"showModal\", { value: vi.fn(function () { this.setAttribute(\"open\", \"\"); }), configurable: true, writable: true });\nrender(<div><button data-testid=\"o\">o</button><CancelHoldDialog busy={false} onConfirm={() => {}} onDismiss={onDismiss} /></div>);\nblurToBody(); fireEvent.keyDown(document.body, { key: \"Escape\" });\nexpect(onDismiss).not.toHaveBeenCalled(); // passes: no document listener in the native branch\nconst o = screen.getByTestId(\"o\"); o.focus();\nexpect(fireEvent.keyDown(o, { key: \"Tab\" })).toBe(true); expect(document.activeElement).toBe(o); // passes"
+    },
+    {
+      "id": "R-2",
+      "result": "resolved",
+      "evidence": "Mutant 'list.shift() -> list.pop()' (copy of session.ts with sed, wired via vi.mock): after marking t0..t16, isRefreshUsed(t0) === true and isRefreshUsed(t16) === false, so the committed r2 test 1 assertion `isRefreshUsed(t0) === false` throws and test 2's `t17 used` fails -> mutant killed. Mutant 'no duplicate filter': marking t0,t1,t0 gives a record of length 3 -> committed test 3 (`toHaveLength(2)`) kills it. (Test 2 alone does not kill the no-filter mutant: with no filter, the duplicate t1 still ends newest and t2 is still evicted; recorded for completeness, no action needed because test 3 covers it.)",
+      "repro": "// __challenge__/c3-r2-pop-mutant.test.ts\nvi.mock(\"@/lib/session\", () => import(\"./old/session-pop\")); // session.ts with `while (list.length > REFRESH_USED_MAX) list.pop();`\nconst { sess } = await newTab();\nfor (let i = 0; i <= 16; i++) sess.markRefreshUsed(\"tok-\" + i);\nexpect({ t0: sess.isRefreshUsed(\"tok-0\"), t16: sess.isRefreshUsed(\"tok-16\") }).toEqual({ t0: true, t16: false }); // passes => r2 test 1 would fail\n\n// __challenge__/c3b-r2-nofilter-mutant.test.ts\nvi.mock(\"@/lib/session\", () => import(\"./old/session-nofilter\")); // `const list = readRefreshUsed();`\nsess.markRefreshUsed(\"tok-0\"); sess.markRefreshUsed(\"tok-1\"); sess.markRefreshUsed(\"tok-0\");\nexpect(JSON.parse(sessionStorage.getItem(\"ef:rt:used\")!).length).not.toBe(2); // passes (3) => r2 test 3 would fail"
+    }
+  ],
+  "verdicts": [
+    { "id": "X-2", "status": "fixed" },
+    { "id": "X-4", "status": "fixed" },
+    { "id": "X-5", "status": "fixed" },
+    { "id": "R-2", "status": "fixed" }
+  ],
+  "new_findings": [
+    {
+      "id": "N2-1",
+      "severity": "minor",
+      "ac": "AC-5",
+      "file": "apps/web/src/lib/api-client.ts",
+      "line": 295,
+      "title": "Whitespace-only lock result ('   ', '\\t') still passes the AC-5 guard; the retry goes out as `Authorization: Bearer` (header value trimmed by Headers) and the caller gets a raw 401",
+      "evidence": "`typeof token !== 'string' || !token` rejects '' but '   ' is truthy. withBearer sets `Bearer    `, Headers normalises trailing whitespace, so the retry is sent with `Authorization: Bearer` (no credential) and apiFetch returns the raw 401 Response instead of NETWORK_ERROR. Executed for '   ', '\\t', ' \\t ': outcome A:401, bearers ['Bearer old', 'Bearer']. Same premise as X-2 (a LockManager that resolves without running the callback; doRefresh itself can only return a truthy stored access token, which could itself be whitespace only if storage was tampered with). No token leak, session kept, 0 POST.",
+      "repro": "// __challenge__/c1-x2-rerun.test.ts\ninstallLocks({ request: () => Promise.resolve(\"   \") });\nconst s = apiServer();\nseedUser(\"u-1\", \"old\", \"r1\");\nconst A = await newTab();\nconst a = outcome(\"A\", A.api.apiFetch(\"/v1/orders/a\"));\nawait vi.advanceTimersByTimeAsync(100);\nconsole.log(JSON.stringify({ outcome: await a, bearers: bearers(s.calls) }));\n// => {\"outcome\":\"A:401\",\"bearers\":[\"Bearer old\",\"Bearer\"]}",
+      "fix": "api-client.ts:295: `if (typeof token !== \"string\" || !token.trim()) throw networkError();` and add '   ' to the X-2 it.each."
+    },
+    {
+      "id": "N2-2",
+      "severity": "minor",
+      "ac": "AC-2 (invariant: one POST per refresh token per tab)",
+      "file": "apps/web/src/lib/session.ts",
+      "line": 252,
+      "title": "Pre-existing, outside this diff: when sessionStorage.setItem throws for 'ef:rt:used', the used-token record is silently empty and the R2-3 stale copy is POSTed a second time (posts ['r1','r1'])",
+      "evidence": "markRefreshUsed swallows the write error ('coi nhu rong, giu hanh vi cu', session.ts:220) and keeps no in-memory mirror. In the R2-3 shape (u-1/old/r1 in sessionStorage, hung refresh, u-2 written to localStorage at 60 s, abort at 121 s, localStorage.clear(), request B) with Storage.prototype.setItem throwing only for sessionStorage 'ef:rt:used': A:AUTH_REQUIRED, then B POSTs r1 again -> posts ['r1','r1']. Requires a storage write failure (quota / blocked key) plus the cross-tab race; the server's reuse detection then revokes the family (AUTH_REQUIRED), so impact is re-login, not a leak. Behaviour identical at 351bf74 and c6dcff1: not introduced by the fix under review, recorded because the brief asks to keep the one-POST invariant.",
+      "repro": "// __challenge__/c2-x4-rerun.test.ts\nvi.useFakeTimers();\nconst s = apiServer(() => \"acc-u2-0\");\nconst orig = Storage.prototype.setItem;\nvi.spyOn(Storage.prototype, \"setItem\").mockImplementation(function (this: Storage, k: string, v: string) {\n  if (this === sessionStorage && k === \"ef:rt:used\") throw new Error(\"blocked\");\n  return orig.call(this, k, v);\n});\nseedUser(\"u-1\", \"old\", \"r1\", sessionStorage);\nconst A = await newTab();\nconst a = outcome(\"A\", A.api.apiFetch(\"/v1/orders/a\"));\nawait vi.advanceTimersByTimeAsync(60_000);\nseedUser(\"u-2\", \"acc-u2-0\", \"r-u2-0\", localStorage);\nawait vi.advanceTimersByTimeAsync(61_000);\nexpect(await a).toBe(\"A:AUTH_REQUIRED\");\nlocalStorage.clear();\ns.setRefresh(() => json(IDENT({ access_token: \"n\", refresh_token: \"r9\" })));\nconst b = outcome(\"B\", A.api.apiFetch(\"/v1/orders/b\"));\nawait vi.advanceTimersByTimeAsync(1_000);\nconsole.log(JSON.stringify({ b: await b, posts: posts(s.calls) }));\n// => {\"b\":\"B:401\",\"posts\":[\"r1\",\"r1\"]}",
+      "fix": "Keep a module-level in-memory mirror (e.g. `const usedInTab = new Set<string>()` of hashes) that markRefreshUsed always updates and isRefreshUsed consults in addition to the storage record; the storage copy remains the reload-surviving one. Small, no new dependency; can be deferred to the next debt round with a note in spec §3."
+    },
+    {
+      "id": "N2-3",
+      "severity": "suspicion",
+      "ac": "AC-3 / AC-5 (no raw errors from the refresh path)",
+      "file": "apps/web/src/lib/api-client.ts",
+      "line": 354,
+      "title": "A lock result containing a CR/LF ('a\\nb') makes Headers.set throw inside withBearer, so apiFetch rejects with a raw TypeError (no `code`) instead of an ApiError",
+      "evidence": "Executed with installLocks({ request: () => Promise.resolve('a\\nb') }): apiFetch rejects with TypeError, code undefined. Callers switch on `err.code`, so this surfaces as an unknown error rather than NETWORK_ERROR. Same non-conforming LockManager premise as X-2 / N2-1; a stored access token with a newline (storage tampering) would hit the same line on the FIRST request, which is pre-existing. Not a security issue (nothing is sent).",
+      "repro": "// __challenge__/c1-x2-rerun.test.ts\ninstallLocks({ request: () => Promise.resolve(\"a\\nb\") });\napiServer(); seedUser(\"u-1\", \"old\", \"r1\");\nconst A = await newTab();\nconst a = A.api.apiFetch(\"/v1/orders/a\").then(r => \"A:\" + r.status, (e) => \"A:\" + e.constructor.name + \":\" + (e.code ?? \"-\"));\nawait vi.advanceTimersByTimeAsync(100);\nconsole.log(await a); // => A:TypeError:-",
+      "fix": "Optional: in withRefreshLock reject tokens that fail a header-value check (`/[\\r\\n]/.test(token)`) with networkError(), or wrap withBearer's Headers.set in try/catch -> networkError(). Low value; can stay deferred."
+    }
+  ],
+  "blockers": [],
+  "majors": [],
+  "cleanup": "apps/web/src/__challenge__/ removed; `git status --short` clean except docs/workflow/frontend-debt-r5/findings-round2.json (this file)."
+}

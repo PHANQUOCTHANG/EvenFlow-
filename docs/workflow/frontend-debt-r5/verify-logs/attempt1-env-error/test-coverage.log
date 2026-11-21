@@ -1,0 +1,247 @@
+[33mThe CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.[39m
+
+[1m[7m[36m RUN [39m[27m[22m [36mv2.1.8 [39m[90mD:/Documents/Nam4-1/Project1/EvenFlow-r5-verify/apps/web[39m
+      [2mCoverage enabled with [22m[33mv8[39m
+
+
+[31m⎯⎯⎯⎯⎯⎯[1m[7m Unhandled Errors [27m[22m⎯⎯⎯⎯⎯⎯[39m
+[31m[1m
+Vitest caught 1 unhandled error during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯[1m[7m Unhandled Error [27m[22m⎯⎯⎯⎯⎯⎯⎯[39m
+[31m[1mRangeError[22m: options.minThreads and options.maxThreads must not conflict[39m
+[90m [2m❯[22m new Tinypool node_modules/tinypool/dist/index.js:[2m745:120[22m[39m
+[90m [2m❯[22m createForksPool node_modules/vitest/dist/chunks/resolveConfig.RxKrDli4.js:[2m6755:16[22m[39m
+[90m [2m❯[22m forks node_modules/vitest/dist/chunks/resolveConfig.RxKrDli4.js:[2m7663:20[22m[39m
+[90m [2m❯[22m node_modules/vitest/dist/chunks/resolveConfig.RxKrDli4.js:[2m7689:27[22m[39m
+[90m [2m❯[22m executeTests node_modules/vitest/dist/chunks/resolveConfig.RxKrDli4.js:[2m7680:5[22m[39m
+[90m [2m❯[22m node_modules/vitest/dist/chunks/cli-api.C2yC_ESk.js:[2m10798:9[22m[39m
+[90m [2m❯[22m Vitest.runFiles node_modules/vitest/dist/chunks/cli-api.C2yC_ESk.js:[2m10820:12[22m[39m
+[90m [2m❯[22m Vitest.start node_modules/vitest/dist/chunks/cli-api.C2yC_ESk.js:[2m10662:7[22m[39m
+[90m [2m❯[22m startVitest node_modules/vitest/dist/chunks/cli-api.C2yC_ESk.js:[2m11828:7[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[39m
+
+[2m Test Files [22m [2mno tests[22m
+[2m      Tests [22m [2mno tests[22m
+[2m     Errors [22m [1m[31m1 error[39m[22m
+[2m   Start at [22m 10:26:40
+[2m   Duration [22m 2.58s[2m (transform 0ms, setup 0ms, collect 0ms, tests 0ms, environment 0ms, prepare 0ms)[22m
+
+[34m % [39m[2mCoverage report from [22m[33mv8[39m
+-------------------|---------|----------|---------|---------|-------------------
+File               | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+-------------------|---------|----------|---------|---------|-------------------
+All files          |       0 |    12.25 |   12.25 |       0 |                   
+ src               |       0 |        0 |       0 |       0 |                   
+  ...umentation.ts |       0 |        0 |       0 |       0 | 1-78              
+ ...app/(checkout) |       0 |        0 |       0 |       0 |                   
+  layout.tsx       |       0 |        0 |       0 |       0 | 1-9               
+ ...kout/[eventId] |       0 |        0 |       0 |       0 |                   
+  page.tsx         |       0 |        0 |       0 |       0 | 1-23              
+ ...entId]/payment |       0 |        0 |       0 |       0 |                   
+  page.tsx         |       0 |        0 |       0 |       0 | 1-38              
+ ...ventId]/result |       0 |        0 |       0 |       0 |                   
+  page.tsx         |       0 |        0 |       0 |       0 | 1-27              
+ ...pp/(marketing) |       0 |        0 |       0 |       0 |                   
+  layout.tsx       |       0 |        0 |       0 |       0 | 1-8               
+  page.tsx         |       0 |        0 |       0 |       0 | 1-48              
+ ...keting)/events |       0 |        0 |       0 |       0 |                   
+  page.tsx         |       0 |        0 |       0 |       0 | 1-44              
+ .../events/[slug] |       0 |        0 |       0 |       0 |                   
+  page.tsx         |       0 |        0 |       0 |       0 | 1-158             
+ ...ting)/showcase |       0 |        0 |       0 |       0 |                   
+  page.tsx         |       0 |        0 |       0 |       0 | 1-43              
+ src/app/(ops)     |       0 |        0 |       0 |       0 |                   
+  layout.tsx       |       0 |        0 |       0 |       0 | 1-11              
+ ...ps)/ops/events |       0 |        0 |       0 |       0 |                   
+  page.tsx         |       0 |        0 |       0 |       0 | 1-44              
+ ...ents/[eventId] |       0 |        0 |       0 |       0 |                   
+  not-found.tsx    |       0 |        0 |       0 |       0 | 1-5               
+  page.tsx         |       0 |        0 |       0 |       0 | 1-58              
+ ...pp/(organizer) |       0 |        0 |       0 |       0 |                   
+  layout.tsx       |       0 |        0 |       0 |       0 | 1-11              
+ ...zer)/organizer |       0 |        0 |       0 |       0 |                   
+  page.tsx         |       0 |        0 |       0 |       0 | 1-5               
+ ...organizer/_lib |       0 |        0 |       0 |       0 |                   
+  ...vent-view.tsx |       0 |        0 |       0 |       0 | 1-77              
+  ...izer-only.tsx |       0 |        0 |       0 |       0 | 1-10              
+ ...ganizer/events |       0 |        0 |       0 |       0 |                   
+  ...ts-client.tsx |       0 |        0 |       0 |       0 | 1-62              
+  page.tsx         |       0 |        0 |       0 |       0 | 1-10              
+ ...[eventId]/edit |       0 |        0 |       0 |       0 |                   
+  ...nt-client.tsx |       0 |        0 |       0 |       0 | 1-153             
+  page.tsx         |       0 |        0 |       0 |       0 | 1-15              
+ .../review-status |       0 |        0 |       0 |       0 |                   
+  page.tsx         |       0 |        0 |       0 |       0 | 1-15              
+  ...us-client.tsx |       0 |        0 |       0 |       0 | 1-25              
+ ...eventId]/sales |       0 |        0 |       0 |       0 |                   
+  page.tsx         |       0 |        0 |       0 |       0 | 1-15              
+  sales-client.tsx |       0 |        0 |       0 |       0 | 1-13              
+ ...zer/events/new |       0 |        0 |       0 |       0 |                   
+  page.tsx         |       0 |        0 |       0 |       0 | 1-43              
+ src/app/(queue)   |       0 |        0 |       0 |       0 |                   
+  layout.tsx       |       0 |        0 |       0 |       0 | 1-8               
+ ...ting/[eventId] |       0 |        0 |       0 |       0 |                   
+  page.tsx         |       0 |        0 |       0 |       0 | 1-23              
+ ...pp/api/healthz |       0 |      100 |     100 |       0 |                   
+  route.ts         |       0 |      100 |     100 |       0 | 16-31             
+ ...app/api/readyz |       0 |        0 |       0 |       0 |                   
+  route.ts         |       0 |        0 |       0 |       0 | 1-35              
+ src/app/api/time  |       0 |      100 |     100 |       0 |                   
+  route.ts         |       0 |      100 |     100 |       0 | 6-27              
+ src/app/auth      |       0 |        0 |       0 |       0 |                   
+  layout.tsx       |       0 |        0 |       0 |       0 | 1-11              
+ ...orgot-password |       0 |        0 |       0 |       0 |                   
+  page.tsx         |       0 |        0 |       0 |       0 | 1-29              
+ ...p/auth/sign-in |       0 |        0 |       0 |       0 |                   
+  page.tsx         |       0 |        0 |       0 |       0 | 1-29              
+ ...p/auth/sign-up |       0 |        0 |       0 |       0 |                   
+  page.tsx         |       0 |        0 |       0 |       0 | 1-29              
+ ...p/unauthorized |       0 |        0 |       0 |       0 |                   
+  page.tsx         |       0 |        0 |       0 |       0 | 1-63              
+ ...ents/assistant |       0 |        0 |       0 |       0 |                   
+  ...ant-panel.tsx |       0 |        0 |       0 |       0 | 1-421             
+  chat-panel.tsx   |       0 |        0 |       0 |       0 | 1-306             
+  faq-chips.tsx    |       0 |        0 |       0 |       0 | 1-65              
+  index.ts         |       0 |        0 |       0 |       0 | 1                 
+  ...g-message.tsx |       0 |        0 |       0 |       0 | 1-115             
+ ...omponents/auth |       0 |        0 |       0 |       0 |                   
+  AuthLayout.tsx   |       0 |        0 |       0 |       0 | 1-66              
+  ...swordForm.tsx |       0 |        0 |       0 |       0 | 1-454             
+  LoginForm.tsx    |       0 |        0 |       0 |       0 | 1-327             
+  ...ification.tsx |       0 |        0 |       0 |       0 | 1-199             
+  RegisterForm.tsx |       0 |        0 |       0 |       0 | 1-674             
+  RoleGuard.tsx    |       0 |        0 |       0 |       0 | 1-49              
+ ...nents/checkout |       0 |        0 |       0 |       0 |                   
+  ...ld-dialog.tsx |       0 |        0 |       0 |       0 | 1-125             
+  ...ge-client.tsx |       0 |        0 |       0 |       0 | 1-9               
+  ...kout-view.tsx |       0 |        0 |       0 |       0 | 1-335             
+  ...sult-view.tsx |       0 |        0 |       0 |       0 | 1-366             
+  ...r-summary.tsx |       0 |        0 |       0 |       0 | 1-234             
+  ...doff-view.tsx |       0 |        0 |       0 |       0 | 1-293             
+  ...ge-client.tsx |       0 |        0 |       0 |       0 | 1-67              
+  ...ge-client.tsx |       0 |        0 |       0 |       0 | 1-34              
+  ticket-qr.tsx    |       0 |        0 |       0 |       0 | 1-60              
+  ...tier-card.tsx |       0 |        0 |       0 |       0 | 1-163             
+ ...mponents/event |       0 |        0 |       0 |       0 |                   
+  ...ion-panel.tsx |       0 |        0 |       0 |       0 | 1-168             
+  event-card.tsx   |       0 |        0 |       0 |       0 | 1-177             
+  ...list-view.tsx |       0 |        0 |       0 |       0 | 1-49              
+  event-loader.tsx |       0 |        0 |       0 |       0 | 1-49              
+  ...wser-list.tsx |       0 |        0 |       0 |       0 | 1-57              
+  lobby-notice.tsx |       0 |        0 |       0 |       0 | 1-28              
+  ...tier-list.tsx |       0 |        0 |       0 |       0 | 1-87              
+ ...omponents/i18n |       0 |        0 |       0 |       0 |                   
+  ...ge-toggle.tsx |       0 |        0 |       0 |       0 | 1-51              
+  ...-provider.tsx |       0 |        0 |       0 |       0 | 1-69              
+  t.tsx            |       0 |        0 |       0 |       0 | 1-12              
+ ...ponents/layout |       0 |       10 |      10 |       0 |                   
+  container.tsx    |       0 |        0 |       0 |       0 | 1-34              
+  focus-shell.tsx  |       0 |        0 |       0 |       0 | 1-28              
+  index.ts         |       0 |        0 |       0 |       0 | 1                 
+  nav-config.ts    |       0 |      100 |     100 |       0 | 24-69             
+  nav-link.tsx     |       0 |        0 |       0 |       0 | 1-57              
+  ...ic-footer.tsx |       0 |        0 |       0 |       0 | 1-18              
+  ...ic-header.tsx |       0 |        0 |       0 |       0 | 1-92              
+  public-shell.tsx |       0 |        0 |       0 |       0 | 1-21              
+  skip-link.tsx    |       0 |        0 |       0 |       0 | 1-17              
+  ...ace-shell.tsx |       0 |        0 |       0 |       0 | 1-121             
+ ...components/ops |       0 |        0 |       0 |       0 |                   
+  index.ts         |       0 |        0 |       0 |       0 | 1                 
+  ops-panels.tsx   |       0 |        0 |       0 |       0 | 1-282             
+  ops-war-room.tsx |       0 |        0 |       0 |       0 | 1-215             
+ ...ents/organizer |       0 |        0 |       0 |       0 |                   
+  event-list.tsx   |       0 |        0 |       0 |       0 | 1-243             
+  event-wizard.tsx |       0 |        0 |       0 |       0 | 1-764             
+  index.ts         |       0 |        0 |       0 |       0 | 1-4               
+  ...atus-card.tsx |       0 |        0 |       0 |       0 | 1-343             
+  ...dashboard.tsx |       0 |        0 |       0 |       0 | 1-347             
+ ...mponents/queue |       0 |        0 |       0 |       0 |                   
+  admit-banner.tsx |       0 |        0 |       0 |       0 | 1-76              
+  index.ts         |       0 |        0 |       0 |       0 | 1                 
+  ...ress-ring.tsx |       0 |        0 |       0 |       0 | 1-93              
+  ...-position.tsx |       0 |        0 |       0 |       0 | 1-88              
+  ...tus-panel.tsx |       0 |        0 |       0 |       0 | 1-295             
+  ...ge-client.tsx |       0 |        0 |       0 |       0 | 1-17              
+  waiting-room.tsx |       0 |        0 |       0 |       0 | 1-332             
+ ...nents/showcase |       0 |        0 |       0 |       0 |                   
+  ...n-gallery.tsx |       0 |        0 |       0 |       0 | 1-338             
+  ...e-gallery.tsx |       0 |        0 |       0 |       0 | 1-142             
+  section.tsx      |       0 |        0 |       0 |       0 | 1-34              
+  ...n-gallery.tsx |       0 |        0 |       0 |       0 | 1-103             
+ ...mponents/theme |       0 |        0 |       0 |       0 |                   
+  theme-script.tsx |       0 |        0 |       0 |       0 | 1-16              
+  theme-toggle.tsx |       0 |        0 |       0 |       0 | 1-29              
+ src/components/ui |       0 |        0 |       0 |       0 |                   
+  alert.tsx        |       0 |        0 |       0 |       0 | 1-76              
+  badge.tsx        |       0 |        0 |       0 |       0 | 1-56              
+  button.tsx       |       0 |        0 |       0 |       0 | 1-88              
+  card.tsx         |       0 |        0 |       0 |       0 | 1-37              
+  checkbox.tsx     |       0 |        0 |       0 |       0 | 1-65              
+  field.tsx        |       0 |        0 |       0 |       0 | 1-98              
+  index.ts         |       0 |        0 |       0 |       0 | 1                 
+  input.tsx        |       0 |        0 |       0 |       0 | 1-79              
+  radio.tsx        |       0 |        0 |       0 |       0 | 1-82              
+  select.tsx       |       0 |        0 |       0 |       0 | 1-57              
+  ...countdown.tsx |       0 |        0 |       0 |       0 | 1-129             
+  spinner.tsx      |       0 |        0 |       0 |       0 | 1-46              
+  toast.tsx        |       0 |        0 |       0 |       0 | 1-114             
+ src/hooks         |       0 |        0 |       0 |       0 |                   
+  use-assistant.ts |       0 |        0 |       0 |       0 | 1-268             
+  use-auth.ts      |       0 |        0 |       0 |       0 | 1-105             
+  use-event.ts     |       0 |        0 |       0 |       0 | 1-40              
+  ...hold-timer.ts |       0 |        0 |       0 |       0 | 1-211             
+  ...s-war-room.ts |       0 |        0 |       0 |       0 | 1-198             
+  ...der-status.ts |       0 |        0 |       0 |       0 | 1-229             
+  ...izer-sales.ts |       0 |        0 |       0 |       0 | 1-126             
+  ...nt-methods.ts |       0 |        0 |       0 |       0 | 1-37              
+  ...nt-session.ts |       0 |        0 |       0 |       0 | 1-194             
+  ...eue-status.ts |       0 |        0 |       0 |       0 | 1-270             
+  ...-countdown.ts |       0 |        0 |       0 |       0 | 1-82              
+  ...-time-sync.ts |       0 |        0 |       0 |       0 | 1-94              
+  use-theme.ts     |       0 |        0 |       0 |       0 | 1-34              
+ src/lib           |       0 |    56.52 |   56.52 |       0 |                   
+  api-base.ts      |       0 |      100 |     100 |       0 | 9-11              
+  api-client.ts    |       0 |        0 |       0 |       0 | 1-393             
+  ...ant-client.ts |       0 |      100 |     100 |       0 | 40-382            
+  backoff.ts       |       0 |      100 |     100 |       0 | 21-41             
+  cn.ts            |       0 |      100 |     100 |       0 | 6-8               
+  device.ts        |       0 |      100 |     100 |       0 | 7-42              
+  event-service.ts |       0 |        0 |       0 |       0 | 1-143             
+  format.ts        |       0 |      100 |     100 |       0 | 10-95             
+  hold-client.ts   |       0 |        0 |       0 |       0 | 1-312             
+  idempotency.ts   |       0 |      100 |     100 |       0 | 3-53              
+  jitter.ts        |       0 |      100 |     100 |       0 | 10-79             
+  money.ts         |       0 |        0 |       0 |       0 | 1-27              
+  ops-service.ts   |       0 |        0 |       0 |       0 | 1-217             
+  ...er-service.ts |       0 |        0 |       0 |       0 | 1-594             
+  ...ent-client.ts |       0 |        0 |       0 |       0 | 1-492             
+  queue-client.ts  |       0 |        0 |       0 |       0 | 1-102             
+  queue-status.ts  |       0 |        0 |       0 |       0 | 1-135             
+  queue-token.ts   |       0 |      100 |     100 |       0 | 9-46              
+  readiness.ts     |       0 |      100 |     100 |       0 | 30-106            
+  server-time.ts   |       0 |      100 |     100 |       0 | 11-56             
+  session.ts       |       0 |      100 |     100 |       0 | 26-365            
+  sse.ts           |       0 |        0 |       0 |       0 | 1-221             
+  theme.ts         |       0 |      100 |     100 |       0 | 7-48              
+ src/lib/api       |       0 |        0 |       0 |       0 |                   
+  auth.ts          |       0 |        0 |       0 |       0 | 1-142             
+ src/lib/debt      |       0 |        0 |       0 |       0 |                   
+  harness.ts       |       0 |        0 |       0 |       0 | 1-118             
+ src/lib/debt5     |       0 |        0 |       0 |       0 |                   
+  harness5.ts      |       0 |        0 |       0 |       0 | 1-45              
+ src/lib/i18n      |       0 |      100 |     100 |       0 |                   
+  messages.ts      |       0 |      100 |     100 |       0 | 7-204             
+ ...ib/sample-data |       0 |      100 |     100 |       0 |                   
+  events.ts        |       0 |      100 |     100 |       0 | 9-94              
+ src/lib/types     |       0 |        0 |       0 |       0 |                   
+  event.ts         |       0 |        0 |       0 |       0 |                   
+ src/test-utils    |       0 |        0 |       0 |       0 |                   
+  fetch-mock.ts    |       0 |        0 |       0 |       0 | 1-99              
+-------------------|---------|----------|---------|---------|-------------------
+ERROR: Coverage for lines (0%) does not meet global threshold (70%)
+ERROR: Coverage for functions (12.25%) does not meet global threshold (70%)
+ERROR: Coverage for statements (0%) does not meet global threshold (70%)
+ERROR: Coverage for branches (12.25%) does not meet global threshold (60%)
