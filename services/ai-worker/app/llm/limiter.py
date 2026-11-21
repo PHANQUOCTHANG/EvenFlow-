@@ -1,7 +1,7 @@
 """Bo dieu tiet toan cuc cho LLM API (Anthropic; truoc day Gemini).
 
 Bai toan: 30.000 nguoi trong phong cho, ~5.000 cau hoi moi phut, trong khi
-Gemini chi cho 60 request va 1 trieu token moi phut. Chenh lech ~80 lan.
+LLM chi cho ~60 request va 1 trieu token moi phut. Chenh lech ~80 lan.
 
 Cach lam SAI pho bien: goi that, gap 429, roi retry. Duoi tai cao cach nay sup
 do -- moi worker deu retry cung luc, tao ra dung cai dinh vua bi tu choi.
