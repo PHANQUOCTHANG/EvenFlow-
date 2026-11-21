@@ -234,3 +234,9 @@ a bot that rotates it is still seen by R4N and R1. A signed fp hash from identit
 ### Amendment 1 approval
 
 - Approved by TranDinhVo in the Claude Code session on 2026-11-22, all items as written (including the "Join queue" button when no snapshot exists and the K8s `ANTIBOT_HASH_KEY` changes).
+
+### Amendment 1, revision after plan review round 2 (approved)
+
+- Approved by TranDinhVo in the Claude Code session on 2026-11-22.
+- Item 3 is WITHDRAWN: no "Join queue" button. The waiting room keeps auto-joining; with no stored snapshot the client sends `{"v":1}`, which decodes as valid-but-empty and scores 0.40 (challenge → pass), or returns the existing slot (REJOIN). The 5 frozen web waiting-room tests stay unchanged. Trade-off recorded (N-3): a client sending `{"v":1}` with a browser UA passes.
+- K8s TCR approved (N-5): add `ANTIBOT_HASH_KEY` for waitingroom to the policy contract §8 secret table, `check_policy.py`, `rules.md` and the regenerated fixtures; additions only, existing checks unchanged.
