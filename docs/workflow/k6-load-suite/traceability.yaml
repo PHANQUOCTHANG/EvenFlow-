@@ -33,3 +33,12 @@ AC-11:
   - tests/load/lib/summary.test.mjs    # results path, SLO table with PASS/FAIL
 AC-12:
   - tests/load/lib/*.test.mjs          # all of the above, offline
+# Review round 1 (findings-review.json), new files only; frozen tests unchanged.
+R-1: [tests/load/lib/review-fixes.test.mjs]   # WEBHOOK_RATE >= CHECKOUT_RATE at init, 4800th buyer delay 0, never past HOLD_TTL - 60 s
+R-2: [tests/load/lib/review-fixes.test.mjs]   # seed-load.sh refuses non-load events, remote docker context / DOCKER_HOST
+R-3: [tests/load/lib/review-fixes.test.mjs]   # one DEFAULT_QUOTA / DEFAULT_HOLD_TTL_S read by seed-load.sh
+R-4: [tests/load/lib/review-fixes.test.mjs]   # checkout_issued >= 1, checkout_issue_timeout == 0, checkout_step_ok > 0.99
+R-5: [tests/load/README.md]                   # documented; summary labels requested rate "ramp only"
+R-6: [tests/load/lib/review-wiring.test.mjs]  # FEW_LEFT sellable, SOLD_OUT refused
+R-7: [tests/load/lib/review-wiring.test.mjs]  # run id captured at init, never "norun"
+R-8: [tests/load/lib/review-fixes.test.mjs, tests/load/README.md]  # REMOTE_CONFIRM=<host> + banner; ambient env documented
