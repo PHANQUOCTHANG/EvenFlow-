@@ -1,6 +1,6 @@
 """Metric nghiep vu cua ai-worker -- nhung con so Ops nhin trong war room.
 
-Gom mot cho de runtime, Gemini client va main.py dung chung mot registry, va de ten
+Gom mot cho de runtime, LLM client va main.py dung chung mot registry, va de ten
 metric khong troi khoi deploy/observability/alerts.yml.
 """
 
@@ -44,6 +44,12 @@ ASSISTANT_ACCEPT_SECONDS = Histogram(
     buckets=(0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1),
 )
 CACHE_HIT = Gauge("ai_semantic_cache_hit_ratio", "Ti le hit cache ngu nghia")
-RATE_LIMITED = Counter("ai_llm_429_total", "So lan bi Gemini tu choi vi rate-limit")
+RATE_LIMITED = Counter("ai_llm_429_total", "So lan bi nha cung cap LLM tu choi vi rate-limit")
+# Model tra loi khong tron ven (refusal, max_tokens, empty): de chinh AI_THINKING_HEADROOM_TOKENS.
+INCOMPLETE = Counter(
+    "ai_llm_incomplete_total",
+    "So lan LLM tra loi khong dung duoc theo ly do (refusal, max_tokens, empty)",
+    ["reason"],
+)
 PERMIT_DENIED = Counter("ai_permit_denied_total", "So lan limiter tu choi cap phep")
 MODE = Gauge("ai_degradation_mode", "Nac suy bien (0=NORMAL..3=OFF)")
