@@ -60,7 +60,14 @@ def report(label: str, kw: dict, resp, seconds: float) -> None:
 
 
 async def main() -> int:
-    settings = Settings(_env_file=REPO_ENV, ai_mock=False)
+    if not REPO_ENV.exists():
+        print(f"Chua co file {REPO_ENV}. Tao file nay va them dong: ANTHROPIC_API_KEY=sk-ant-...")
+        return 2
+    try:
+        settings = Settings(_env_file=REPO_ENV, ai_mock=False)
+    except ValueError as exc:  # pydantic ValidationError; khong in gia tri key
+        print(f"Cau hinh chua dung trong {REPO_ENV}: thieu hoac sai ANTHROPIC_API_KEY ({type(exc).__name__})")
+        return 2
     key = settings.anthropic_api_key.get_secret_value()
     if not key:
         print("ANTHROPIC_API_KEY is empty in .env")
