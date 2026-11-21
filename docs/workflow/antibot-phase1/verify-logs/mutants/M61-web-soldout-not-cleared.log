@@ -1,26 +1,42 @@
+\apps\web\node_modules\jsdom\lib\jsdom\living\generated\HTMLCanvasElement.js:131:58)
+    at runProbes (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\src\lib\antibot-signals.ts:199:22)
+    at Module.snapshotSignals (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\src\lib\antibot-signals.ts:275:13)
+    at D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\src\lib\antibot-signals.fixround1.test.ts:36:15
+    at file:///D:/Documents/Nam4-1/Project1/EvenFlow-antibot/apps/web/node_modules/@vitest/runner/dist/index.js:146:14
+    at file:///D:/Documents/Nam4-1/Project1/EvenFlow-antibot/apps/web/node_modules/@vitest/runner/dist/index.js:533:11
+    at runWithTimeout (file:///D:/Documents/Nam4-1/Project1/EvenFlow-antibot/apps/web/node_modules/@vitest/runner/dist/index.js:39:7)
+    at runTest (file:///D:/Documents/Nam4-1/Project1/EvenFlow-antibot/apps/web/node_modules/@vitest/runner/dist/index.js:1056:17) [90mundefined[39m
+Error: Not implemented: HTMLCanvasElement.prototype.getContext (without installing the canvas npm package)
+    at module.exports (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\node_modules\jsdom\lib\jsdom\browser\not-implemented.js:9:17)
+    at HTMLCanvasElementImpl.getContext (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\node_modules\jsdom\lib\jsdom\living\nodes\HTMLCanvasElement-impl.js:42:5)
+    at HTMLCanvasElement.getContext (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\node_modules\jsdom\lib\jsdom\living\generated\HTMLCanvasElement.js:131:58)
+    at runProbes (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\src\lib\antibot-signals.ts:199:47)
+    at Module.snapshotSignals (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\src\lib\antibot-signals.ts:275:13)
+    at D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\src\lib\antibot-signals.fixround1.test.ts:36:15
+    at file:///D:/Documents/Nam4-1/Project1/EvenFlow-antibot/apps/web/node_modules/@vitest/runner/dist/index.js:146:14
+    at file:///D:/Documents/Nam4-1/Project1/EvenFlow-antibot/apps/web/node_modules/@vitest/runner/dist/index.js:533:11
+    at runWithTimeout (file:///D:/Documents/Nam4-1/Project1/EvenFlow-antibot/apps/web/node_modules/@vitest/runner/dist/index.js:39:7)
+    at runTest (file:///D:/Documents/Nam4-1/Project1/EvenFlow-antibot/apps/web/node_modules/@vitest/runner/dist/index.js:1056:17) [90mundefined[39m
+Error: Not implemented: HTMLCanvasElement.prototype.getContext (without installing the canvas npm package)
+    at module.exports (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\node_modules\jsdom\lib\jsdom\browser\not-implemented.js:9:17)
+    at HTMLCanvasElementImpl.getContext (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\node_modules\jsdom\lib\jsdom\living\nodes\HTMLCanvasElement-impl.js:42:5)
+    at HTMLCanvasElement.getContext (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\node_modules\jsdom\lib\jsdom\living\generated\HTMLCanvasElement.js:131:58)
+    at runProbes (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\src\lib\antibot-signals.ts:200:52)
+    at Module.snapshotSignals (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\src\lib\antibot-signals.ts:275:13)
+    at D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\src\lib\antibot-signals.fixround1.test.ts:36:15
+    at file:///D:/Documents/Nam4-1/Project1/EvenFlow-antibot/apps/web/node_modules/@vitest/runner/dist/index.js:146:14
+    at file:///D:/Documents/Nam4-1/Project1/EvenFlow-antibot/apps/web/node_modules/@vitest/runner/dist/index.js:533:11
+    at runWithTimeout (file:///D:/Documents/Nam4-1/Project1/EvenFlow-antibot/apps/web/node_modules/@vitest/runner/dist/index.js:39:7)
+    at runTest (file:///D:/Documents/Nam4-1/Project1/EvenFlow-antibot/apps/web/node_modules/@vitest/runner/dist/index.js:1056:17) [90mundefined[39m
 
-[1m[7m[36m RUN [39m[27m[22m [36mv2.1.8 [39m[90mD:/Documents/Nam4-1/Project1/EvenFlow-antibot/apps/web[39m
-
- [32m✓[39m src/lib/session.contract.test.ts [2m([22m[2m17 tests[22m[2m)[22m[90m 19[2mms[22m[39m
- [32m✓[39m src/lib/antibot-signals.fixround1.test.ts [2m([22m[2m3 tests[22m[2m)[22m[90m 55[2mms[22m[39m
- [32m✓[39m src/components/event/event-action-panel.antibot.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[90m 200[2mms[22m[39m
- [32m✓[39m src/lib/antibot-signals.test.ts [2m([22m[2m17 tests[22m[2m)[22m[33m 510[2mms[22m[39m
- [32m✓[39m src/components/queue/waiting-room.antibot.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[90m 135[2mms[22m[39m
-
-[2m Test Files [22m [1m[32m5 passed[39m[22m[90m (5)[39m
-[2m      Tests [22m [1m[32m43 passed[39m[22m[90m (43)[39m
-[2m   Start at [22m 05:59:51
-[2m   Duration [22m 4.20s[2m (transform 744ms, setup 3.45s, collect 1.45s, tests 920ms, environment 9.05s, prepare 1.37s)[22m
-
-[33mThe CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.[39m
-[90mstderr[2m | src/lib/antibot-signals.fixround1.test.ts[2m > [22m[2mantibot collector, fix round 1[2m > [22m[2mX-8 / R-7: auto-repeat keydowns are counted but never enter iv (no machine rhythm for R1)
+[90mstderr[2m | src/lib/antibot-signals.fixround2.test.ts[2m > [22m[2mantibot collector reset (R2-5)[2m > [22m[2mresetSignalCollector drops the in-memory counters and intervals
 [22m[39mError: Not implemented: HTMLCanvasElement.prototype.getContext (without installing the canvas npm package)
     at module.exports (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\node_modules\jsdom\lib\jsdom\browser\not-implemented.js:9:17)
     at HTMLCanvasElementImpl.getContext (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\node_modules\jsdom\lib\jsdom\living\nodes\HTMLCanvasElement-impl.js:42:5)
     at HTMLCanvasElement.getContext (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\node_modules\jsdom\lib\jsdom\living\generated\HTMLCanvasElement.js:131:58)
-    at runProbes (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\src\lib\antibot-signals.ts:193:22)
-    at Module.snapshotSignals (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\src\lib\antibot-signals.ts:269:13)
-    at D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\src\lib\antibot-signals.fixround1.test.ts:36:15
+    at runProbes (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\src\lib\antibot-signals.ts:199:22)
+    at Module.snapshotSignals (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\src\lib\antibot-signals.ts:275:13)
+    at D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\src\lib\antibot-signals.fixround2.test.ts:31:15
     at file:///D:/Documents/Nam4-1/Project1/EvenFlow-antibot/apps/web/node_modules/@vitest/runner/dist/index.js:146:14
     at file:///D:/Documents/Nam4-1/Project1/EvenFlow-antibot/apps/web/node_modules/@vitest/runner/dist/index.js:533:11
     at runWithTimeout (file:///D:/Documents/Nam4-1/Project1/EvenFlow-antibot/apps/web/node_modules/@vitest/runner/dist/index.js:39:7)
@@ -29,9 +45,9 @@ Error: Not implemented: HTMLCanvasElement.prototype.getContext (without installi
     at module.exports (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\node_modules\jsdom\lib\jsdom\browser\not-implemented.js:9:17)
     at HTMLCanvasElementImpl.getContext (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\node_modules\jsdom\lib\jsdom\living\nodes\HTMLCanvasElement-impl.js:42:5)
     at HTMLCanvasElement.getContext (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\node_modules\jsdom\lib\jsdom\living\generated\HTMLCanvasElement.js:131:58)
-    at runProbes (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\src\lib\antibot-signals.ts:193:47)
-    at Module.snapshotSignals (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\src\lib\antibot-signals.ts:269:13)
-    at D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\src\lib\antibot-signals.fixround1.test.ts:36:15
+    at runProbes (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\src\lib\antibot-signals.ts:199:47)
+    at Module.snapshotSignals (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\src\lib\antibot-signals.ts:275:13)
+    at D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\src\lib\antibot-signals.fixround2.test.ts:31:15
     at file:///D:/Documents/Nam4-1/Project1/EvenFlow-antibot/apps/web/node_modules/@vitest/runner/dist/index.js:146:14
     at file:///D:/Documents/Nam4-1/Project1/EvenFlow-antibot/apps/web/node_modules/@vitest/runner/dist/index.js:533:11
     at runWithTimeout (file:///D:/Documents/Nam4-1/Project1/EvenFlow-antibot/apps/web/node_modules/@vitest/runner/dist/index.js:39:7)
@@ -40,9 +56,9 @@ Error: Not implemented: HTMLCanvasElement.prototype.getContext (without installi
     at module.exports (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\node_modules\jsdom\lib\jsdom\browser\not-implemented.js:9:17)
     at HTMLCanvasElementImpl.getContext (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\node_modules\jsdom\lib\jsdom\living\nodes\HTMLCanvasElement-impl.js:42:5)
     at HTMLCanvasElement.getContext (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\node_modules\jsdom\lib\jsdom\living\generated\HTMLCanvasElement.js:131:58)
-    at runProbes (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\src\lib\antibot-signals.ts:194:52)
-    at Module.snapshotSignals (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\src\lib\antibot-signals.ts:269:13)
-    at D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\src\lib\antibot-signals.fixround1.test.ts:36:15
+    at runProbes (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\src\lib\antibot-signals.ts:200:52)
+    at Module.snapshotSignals (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\src\lib\antibot-signals.ts:275:13)
+    at D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\src\lib\antibot-signals.fixround2.test.ts:31:15
     at file:///D:/Documents/Nam4-1/Project1/EvenFlow-antibot/apps/web/node_modules/@vitest/runner/dist/index.js:146:14
     at file:///D:/Documents/Nam4-1/Project1/EvenFlow-antibot/apps/web/node_modules/@vitest/runner/dist/index.js:533:11
     at runWithTimeout (file:///D:/Documents/Nam4-1/Project1/EvenFlow-antibot/apps/web/node_modules/@vitest/runner/dist/index.js:39:7)
@@ -66,8 +82,8 @@ This ensures that you're testing the behavior the user would see in the browser.
     at module.exports (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\node_modules\jsdom\lib\jsdom\browser\not-implemented.js:9:17)
     at HTMLCanvasElementImpl.getContext (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\node_modules\jsdom\lib\jsdom\living\nodes\HTMLCanvasElement-impl.js:42:5)
     at HTMLCanvasElement.getContext (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\node_modules\jsdom\lib\jsdom\living\generated\HTMLCanvasElement.js:131:58)
-    at runProbes (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\src\lib\antibot-signals.ts:193:22)
-    at Module.snapshotSignals (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\src\lib\antibot-signals.ts:269:13)
+    at runProbes (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\src\lib\antibot-signals.ts:199:22)
+    at Module.snapshotSignals (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\src\lib\antibot-signals.ts:275:13)
     at handleAction (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\src\components\event\event-action-panel.tsx:60:5)
     at handleClick (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\src\components\ui\button.tsx:55:5)
     at HTMLUnknownElement.callCallback (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\node_modules\react-dom\cjs\react-dom.development.js:4164:14)
@@ -77,8 +93,8 @@ Error: Not implemented: HTMLCanvasElement.prototype.getContext (without installi
     at module.exports (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\node_modules\jsdom\lib\jsdom\browser\not-implemented.js:9:17)
     at HTMLCanvasElementImpl.getContext (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\node_modules\jsdom\lib\jsdom\living\nodes\HTMLCanvasElement-impl.js:42:5)
     at HTMLCanvasElement.getContext (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\node_modules\jsdom\lib\jsdom\living\generated\HTMLCanvasElement.js:131:58)
-    at runProbes (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\src\lib\antibot-signals.ts:193:47)
-    at Module.snapshotSignals (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\src\lib\antibot-signals.ts:269:13)
+    at runProbes (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\src\lib\antibot-signals.ts:199:47)
+    at Module.snapshotSignals (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\src\lib\antibot-signals.ts:275:13)
     at handleAction (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\src\components\event\event-action-panel.tsx:60:5)
     at handleClick (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\src\components\ui\button.tsx:55:5)
     at HTMLUnknownElement.callCallback (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\node_modules\react-dom\cjs\react-dom.development.js:4164:14)
@@ -88,8 +104,8 @@ Error: Not implemented: HTMLCanvasElement.prototype.getContext (without installi
     at module.exports (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\node_modules\jsdom\lib\jsdom\browser\not-implemented.js:9:17)
     at HTMLCanvasElementImpl.getContext (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\node_modules\jsdom\lib\jsdom\living\nodes\HTMLCanvasElement-impl.js:42:5)
     at HTMLCanvasElement.getContext (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\node_modules\jsdom\lib\jsdom\living\generated\HTMLCanvasElement.js:131:58)
-    at runProbes (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\src\lib\antibot-signals.ts:194:52)
-    at Module.snapshotSignals (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\src\lib\antibot-signals.ts:269:13)
+    at runProbes (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\src\lib\antibot-signals.ts:200:52)
+    at Module.snapshotSignals (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\src\lib\antibot-signals.ts:275:13)
     at handleAction (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\src\components\event\event-action-panel.tsx:60:5)
     at handleClick (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\src\components\ui\button.tsx:55:5)
     at HTMLUnknownElement.callCallback (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\node_modules\react-dom\cjs\react-dom.development.js:4164:14)
@@ -101,8 +117,8 @@ Error: Not implemented: HTMLCanvasElement.prototype.getContext (without installi
     at module.exports (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\node_modules\jsdom\lib\jsdom\browser\not-implemented.js:9:17)
     at HTMLCanvasElementImpl.getContext (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\node_modules\jsdom\lib\jsdom\living\nodes\HTMLCanvasElement-impl.js:42:5)
     at HTMLCanvasElement.getContext (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\node_modules\jsdom\lib\jsdom\living\generated\HTMLCanvasElement.js:131:58)
-    at runProbes (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\src\lib\antibot-signals.ts:193:22)
-    at Module.snapshotSignals (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\src\lib\antibot-signals.ts:269:13)
+    at runProbes (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\src\lib\antibot-signals.ts:199:22)
+    at Module.snapshotSignals (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\src\lib\antibot-signals.ts:275:13)
     at D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\src\lib\antibot-signals.test.ts:71:5
     at file:///D:/Documents/Nam4-1/Project1/EvenFlow-antibot/apps/web/node_modules/@vitest/runner/dist/index.js:146:14
     at file:///D:/Documents/Nam4-1/Project1/EvenFlow-antibot/apps/web/node_modules/@vitest/runner/dist/index.js:533:11
@@ -112,8 +128,8 @@ Error: Not implemented: HTMLCanvasElement.prototype.getContext (without installi
     at module.exports (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\node_modules\jsdom\lib\jsdom\browser\not-implemented.js:9:17)
     at HTMLCanvasElementImpl.getContext (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\node_modules\jsdom\lib\jsdom\living\nodes\HTMLCanvasElement-impl.js:42:5)
     at HTMLCanvasElement.getContext (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\node_modules\jsdom\lib\jsdom\living\generated\HTMLCanvasElement.js:131:58)
-    at runProbes (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\src\lib\antibot-signals.ts:193:47)
-    at Module.snapshotSignals (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\src\lib\antibot-signals.ts:269:13)
+    at runProbes (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\src\lib\antibot-signals.ts:199:47)
+    at Module.snapshotSignals (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\src\lib\antibot-signals.ts:275:13)
     at D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\src\lib\antibot-signals.test.ts:71:5
     at file:///D:/Documents/Nam4-1/Project1/EvenFlow-antibot/apps/web/node_modules/@vitest/runner/dist/index.js:146:14
     at file:///D:/Documents/Nam4-1/Project1/EvenFlow-antibot/apps/web/node_modules/@vitest/runner/dist/index.js:533:11
@@ -123,11 +139,32 @@ Error: Not implemented: HTMLCanvasElement.prototype.getContext (without installi
     at module.exports (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\node_modules\jsdom\lib\jsdom\browser\not-implemented.js:9:17)
     at HTMLCanvasElementImpl.getContext (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\node_modules\jsdom\lib\jsdom\living\nodes\HTMLCanvasElement-impl.js:42:5)
     at HTMLCanvasElement.getContext (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\node_modules\jsdom\lib\jsdom\living\generated\HTMLCanvasElement.js:131:58)
-    at runProbes (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\src\lib\antibot-signals.ts:194:52)
-    at Module.snapshotSignals (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\src\lib\antibot-signals.ts:269:13)
+    at runProbes (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\src\lib\antibot-signals.ts:200:52)
+    at Module.snapshotSignals (D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\src\lib\antibot-signals.ts:275:13)
     at D:\Documents\Nam4-1\Project1\EvenFlow-antibot\apps\web\src\lib\antibot-signals.test.ts:71:5
     at file:///D:/Documents/Nam4-1/Project1/EvenFlow-antibot/apps/web/node_modules/@vitest/runner/dist/index.js:146:14
     at file:///D:/Documents/Nam4-1/Project1/EvenFlow-antibot/apps/web/node_modules/@vitest/runner/dist/index.js:533:11
     at runWithTimeout (file:///D:/Documents/Nam4-1/Project1/EvenFlow-antibot/apps/web/node_modules/@vitest/runner/dist/index.js:39:7)
     at runTest (file:///D:/Documents/Nam4-1/Project1/EvenFlow-antibot/apps/web/node_modules/@vitest/runner/dist/index.js:1056:17) [90mundefined[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[1m[7m Failed Tests 1 [27m[22m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[31m[1m[7m FAIL [27m[22m[39m src/components/queue/waiting-room.fixround2.test.tsx[2m > [22mWaitingRoom clears the anti-bot snapshot when the status poll turns SOLD_OUT (M61, AC-1)[2m > [22ma held token whose status becomes SOLD_OUT removes ef:ab:{eventId}
+[31m[1mAssertionError[22m: expected '{"v":1,"rt":4330,"pe":3,"se":1,"ke":2…' to be null[39m
+
+[32m- Expected:[39m 
+null
+
+[31m+ Received:[39m 
+"{\"v\":1,\"rt\":4330,\"pe\":3,\"se\":1,\"ke\":2,\"iv\":[120,340],\"wd\":false,\"gl\":true,\"fc\":12,\"tzo\":420}"
+
+[36m [2m❯[22m src/components/queue/waiting-room.fixround2.test.tsx:[2m40:58[22m[39m
+    [90m 38| [39m    [34mexpect[39m(fetchMock[33m.[39mmock[33m.[39mcalls[33m.[39m[34msome[39m(([u]) [33m=>[39m [33mString[39m(u)[33m.[39m[34mincludes[39m([32m"/que[39m…
+    [90m 39| [39m    [34mexpect[39m(fetchMock[33m.[39mmock[33m.[39mcalls[33m.[39m[34msome[39m(([u]) [33m=>[39m [33mString[39m(u)[33m.[39m[34mincludes[39m([32m"/que[39m…
+    [90m 40| [39m    [34mexpect[39m(window[33m.[39msessionStorage[33m.[39m[34mgetItem[39m([32m"ef:ab:evt-1"[39m))[33m.[39m[34mtoBeNull[39m()[33m;[39m
+    [90m   | [39m                                                         [31m^[39m
+    [90m 41| [39m  })[33m;[39m
+    [90m 42| [39m})[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯[22m[39m
 

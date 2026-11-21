@@ -1,3 +1,9 @@
-ok  	github.com/eventflow/eventflow/libs/go/antibot	8.845s
+--- FAIL: TestFix2_M16_OneProbeDuringRealHalfOpen (0.16s)
+    fixround2_test.go:75: 10 calls reached Redis during one half-open probe, want 2 (trip + probe)
+--- FAIL: TestFix2_R23_NonProbeResultIgnoredWhileHalfOpen (0.17s)
+    fixround2_test.go:108: a late non-probe success closed the breaker: calls 3->4 tags []
+FAIL
+FAIL	github.com/eventflow/eventflow/libs/go/antibot	10.006s
 ?   	github.com/eventflow/eventflow/libs/go/antibot/corpus	[no test files]
-ok  	github.com/eventflow/eventflow/libs/go/antibot/redisstate	1.919s
+ok  	github.com/eventflow/eventflow/libs/go/antibot/redisstate	2.156s
+FAIL

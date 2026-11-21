@@ -11,7 +11,8 @@ SUITES = {
     "W": (ROOT + "/services/waitingroom", ["go", "test", "-count=1", "./internal/adapter/http/", "./cmd/server/", "./internal/adapter/postgres/"]),
     "WEB": (ROOT + "/apps/web", ["npx.cmd", "vitest", "run", "src/lib/antibot-signals.test.ts", "src/lib/antibot-signals.fixround1.test.ts",
              "src/components/queue/waiting-room.antibot.test.tsx", "src/components/event/event-action-panel.antibot.test.tsx",
-             "src/lib/session.contract.test.ts"]),
+             "src/lib/session.contract.test.ts", "src/lib/antibot-signals.fixround2.test.ts",
+             "src/components/queue/waiting-room.fixround2.test.tsx"]),
 }
 
 muts = json.load(open(sys.argv[1], encoding="utf-8"))

@@ -1,0 +1,108 @@
+[
+ {
+  "id": "M16-halfopen-many-probes",
+  "status": "KILLED",
+  "rc": 1,
+  "secs": 12,
+  "fails": [
+   "--- FAIL: TestFix2_M16_OneProbeDuringRealHalfOpen (0.16s)",
+   "--- FAIL: TestFix2_R23_NonProbeResultIgnoredWhileHalfOpen (0.17s)"
+  ]
+ },
+ {
+  "id": "M47-shadow-pass-via-lane-path",
+  "status": "KILLED",
+  "rc": 1,
+  "secs": 6,
+  "fails": [
+   "--- FAIL: TestFix2_M47_ShadowUsesDevelopJoin (0.00s)"
+  ]
+ },
+ {
+  "id": "M53-pass-stored-as-PASS",
+  "status": "KILLED",
+  "rc": 1,
+  "secs": 6,
+  "fails": [
+   "--- FAIL: TestFix2_M53_DBActionMapping (0.00s)"
+  ]
+ },
+ {
+  "id": "M61-web-soldout-not-cleared",
+  "status": "KILLED",
+  "rc": 1,
+  "secs": 8,
+  "fails": [
+   "\u001b[31m   \u001b[31m\u00d7\u001b[31m WaitingRoom clears the anti-bot snapshot when the status poll turns SOLD_OUT (M61, AC-1)\u001b[2m > \u001b[22ma held token whose status becomes SOLD_OUT removes ef:ab:{eventId}\u001b[90m 79\u001b[2mms\u001b[22m\u001b[31m\u001b[39m",
+   "\u001b[31m\u001b[1m\u001b[7m FAIL \u001b[27m\u001b[22m\u001b[39m src/components/queue/waiting-room.fixround2.test.tsx\u001b[2m > \u001b[22mWaitingRoom clears the anti-bot snapshot when the status poll turns SOLD_OUT (M61, AC-1)\u001b[2m > \u001b[22ma held token whose status becomes SOLD_OUT removes ef:ab:{eventId}"
+  ]
+ },
+ {
+  "id": "F2-R21a-pooltimeout-equals-budget",
+  "status": "KILLED",
+  "rc": 1,
+  "secs": 12,
+  "fails": [
+   "--- FAIL: TestFix2_R21_PoolExhaustionIsClassified (0.00s)"
+  ]
+ },
+ {
+  "id": "F2-R21b-pool-timeout-not-detected",
+  "status": "KILLED",
+  "rc": 1,
+  "secs": 12,
+  "fails": [
+   "--- FAIL: TestFix2_R21_PoolExhaustionIsClassified (0.11s)"
+  ]
+ },
+ {
+  "id": "F2-R22a-marker-case-sensitive",
+  "status": "KILLED",
+  "rc": 1,
+  "secs": 12,
+  "fails": [
+   "--- FAIL: TestFix1_R5_ProductionRefusesDevKeys (0.00s)",
+   "--- FAIL: TestFix2_R22_RandomKeyWithDevIsAccepted (0.00s)"
+  ]
+ },
+ {
+  "id": "F2-R22b-plain-dev-substring",
+  "status": "KILLED",
+  "rc": 1,
+  "secs": 12,
+  "fails": [
+   "--- FAIL: TestFix1_R5_ProductionRefusesDevKeys (0.00s)",
+   "--- FAIL: TestFix2_R22_RandomKeyWithDevIsAccepted (0.00s)"
+  ]
+ },
+ {
+  "id": "F2-R23a-nonprobe-success-closes",
+  "status": "KILLED",
+  "rc": 1,
+  "secs": 12,
+  "fails": [
+   "--- FAIL: TestFix2_R23_NonProbeResultIgnoredWhileHalfOpen (0.17s)"
+  ]
+ },
+ {
+  "id": "F2-R23b-nonprobe-failure-retrips",
+  "status": "KILLED",
+  "rc": 1,
+  "secs": 12,
+  "fails": [
+   "--- FAIL: TestFix2_R23_NonProbeFailureIgnoredWhileHalfOpen (0.43s)"
+  ]
+ },
+ {
+  "id": "F2-R25-reset-not-called",
+  "status": "KILLED",
+  "rc": 1,
+  "secs": 8,
+  "fails": [
+   "\u001b[31m   \u001b[31m\u00d7\u001b[31m antibot collector reset (R2-5)\u001b[2m > \u001b[22mlogout resets the in-memory collector state, not only sessionStorage\u001b[90m 10\u001b[2mms\u001b[22m\u001b[31m\u001b[39m",
+   "\u001b[31m   \u001b[31m\u00d7\u001b[31m antibot collector reset (R2-5)\u001b[2m > \u001b[22mswitching account resets the in-memory collector state\u001b[90m 4\u001b[2mms\u001b[22m\u001b[31m\u001b[39m",
+   "\u001b[31m\u001b[1m\u001b[7m FAIL \u001b[27m\u001b[22m\u001b[39m src/lib/antibot-signals.fixround2.test.ts\u001b[2m > \u001b[22mantibot collector reset (R2-5)\u001b[2m > \u001b[22mlogout resets the in-memory collector state, not only sessionStorage",
+   "\u001b[31m\u001b[1m\u001b[7m FAIL \u001b[27m\u001b[22m\u001b[39m src/lib/antibot-signals.fixround2.test.ts\u001b[2m > \u001b[22mantibot collector reset (R2-5)\u001b[2m > \u001b[22mswitching account resets the in-memory collector state"
+  ]
+ }
+]
