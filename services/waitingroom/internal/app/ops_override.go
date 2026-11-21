@@ -113,35 +113,79 @@ func ValidRate(rate float64) bool {
 	return !math.IsNaN(rate) && !math.IsInf(rate, 0) && rate >= 0 && rate <= MaxOverrideRate && rate == math.Trunc(rate)
 }
 
-// zeroWidth: ky tu khong hien thi (U+200B..U+200D, U+FEFF) khong duoc tinh vao do dai toi thieu.
-func zeroWidth(r rune) bool {
-	return (r >= 0x200B && r <= 0x200D) || r == 0xFEFF
+// Nguyen nhan reason khong hop le (boc trong ErrInvalidOverride, handler dung de neu ro nguyen nhan).
+var (
+	ErrReasonControl = errors.New("reason chua ky tu dieu khien")
+	ErrReasonBidi    = errors.New("reason chua ky tu dieu khien huong van ban (bidi)")
+	ErrReasonLength  = errors.New("reason phai co 3..200 ky tu, it nhat 3 ky tu hien thi")
+)
+
+// isBidiControl: U+202A..U+202E, U+2066..U+2069, U+200E/U+200F, U+061C. Bi tu choi han vi co the dao
+// chieu hien thi cua dong audit (R2-1/X2-1).
+func isBidiControl(c rune) bool {
+	return (c >= 0x202A && c <= 0x202E) || (c >= 0x2066 && c <= 0x2069) || c == 0x200E || c == 0x200F || c == 0x061C
 }
 
-// NormalizeReason cat khoang trang Unicode va ky tu zero-width hai dau, tu choi ky tu dieu khien
-// (vd NUL lam INSERT audit hong, R-1) va kiem do dai: it nhat 3 ky tu hien thi, toi da 200 ky tu (X-4).
-func NormalizeReason(reason string) (string, bool) {
-	r := strings.TrimFunc(reason, func(c rune) bool { return unicode.IsSpace(c) || zeroWidth(c) })
-	if !utf8.ValidString(r) {
-		return r, false
+// isReasonControl: Cc, tinh ca U+0085 (NEL) du Go coi no la khoang trang (X2-5).
+func isReasonControl(c rune) bool { return unicode.IsControl(c) }
+
+// isEdgeBlank: ky tu bi cat o hai dau: khoang trang Unicode (tru U+0085) va Cf khong phai bidi.
+func isEdgeBlank(c rune) bool {
+	if c == 0x85 || isBidiControl(c) {
+		return false
 	}
+	return unicode.IsSpace(c) || unicode.Is(unicode.Cf, c)
+}
+
+// isVisible: ky tu duoc tinh vao toi thieu 3. Khong tinh: Cf, dau ket hop (Mn/Me, van duoc phep, vd tieng
+// Viet NFD), khoang trang, Hangul filler (U+115F, U+1160, U+3164, U+FFA0) va braille trong (U+2800).
+func isVisible(c rune) bool {
+	switch c {
+	case 0x115F, 0x1160, 0x3164, 0xFFA0, 0x2800:
+		return false
+	}
+	return !unicode.Is(unicode.Cf, c) && !unicode.In(c, unicode.Mn, unicode.Me) && !unicode.IsSpace(c)
+}
+
+// ValidateReason cat ky tu trong o hai dau roi kiem: khong ky tu dieu khien (R-1), khong bidi, 3..200 ky tu
+// voi it nhat 3 ky tu hien thi (X-4, R2-1). Loi tra ve la mot trong ErrReason*.
+func ValidateReason(reason string) (string, error) {
+	if !utf8.ValidString(reason) {
+		return reason, ErrReasonControl
+	}
+	r := strings.TrimFunc(reason, isEdgeBlank)
 	visible := 0
 	for _, c := range r {
-		if unicode.IsControl(c) {
-			return r, false
+		if isReasonControl(c) {
+			return r, ErrReasonControl
 		}
-		if !zeroWidth(c) {
+		if isBidiControl(c) {
+			return r, ErrReasonBidi
+		}
+		if isVisible(c) {
 			visible++
 		}
 	}
-	return r, visible >= minReasonLen && utf8.RuneCountInString(r) <= maxReasonLen
+	if visible < minReasonLen || utf8.RuneCountInString(r) > maxReasonLen {
+		return r, ErrReasonLength
+	}
+	return r, nil
+}
+
+// NormalizeReason: nhu ValidateReason, tra ok thay cho loi.
+func NormalizeReason(reason string) (string, bool) {
+	r, err := ValidateReason(reason)
+	return r, err == nil
 }
 
 // Set dat ghi de nhip admit = rate (nguoi/giay). rate 0 = tam dung khan cap.
 func (o *OpsOverride) Set(ctx context.Context, cmd OverrideCommand, rate float64) (OverrideResult, error) {
-	reason, ok := NormalizeReason(cmd.Reason)
-	if !ok || !ValidRate(rate) {
+	if !ValidRate(rate) {
 		return OverrideResult{}, ErrInvalidOverride
+	}
+	reason, rerr := ValidateReason(cmd.Reason)
+	if rerr != nil {
+		return OverrideResult{}, fmt.Errorf("%w: %w", ErrInvalidOverride, rerr)
 	}
 	cmd.Reason = reason
 	prev, err := o.precheck(ctx, cmd.EventID)
@@ -179,18 +223,18 @@ func (o *OpsOverride) Set(ctx context.Context, cmd OverrideCommand, rate float64
 		o.log.Warn("doc lai ghi de sau khi ap dung that bai, dung gia tri da gui", "event", cmd.EventID, "err", readErr)
 	}
 
+	// Phan hoi bao gia tri da luu (X-3); audit luon ghi LENH da gui (rate, action), khong bao gio gia tri doc lai:
+	// mot PUT khac chen vao khong duoc lam sai dong audit cua nguoi nay (X2-2).
 	res := OverrideResult{Active: false, AppliedAt: appliedAt}
-	auditRate := rate // lenh da ap dung; bi bo ngay sau thi audit van ghi nhip da dat
 	if storedActive {
 		res = OverrideResult{Active: true, RatePerSec: &stored, Paused: stored == 0, AppliedAt: appliedAt}
-		auditRate = stored
 	}
 	action := ActionOverrideSet
-	if auditRate == 0 {
+	if rate == 0 {
 		action = ActionPaused
 	}
 	res.Audit = o.audit(detached, cmd, action, map[string]any{
-		"rate_per_sec": auditRate,
+		"rate_per_sec": rate,
 		"previous":     prev,
 		"request_id":   cmd.RequestID,
 	})
@@ -199,9 +243,9 @@ func (o *OpsOverride) Set(ctx context.Context, cmd OverrideCommand, rate float64
 
 // Clear bo ghi de, tra quyen cho AIMD. Idempotent: bo khi khong co ghi de cung thanh cong (va duoc audit).
 func (o *OpsOverride) Clear(ctx context.Context, cmd OverrideCommand) (OverrideResult, error) {
-	reason, ok := NormalizeReason(cmd.Reason)
-	if !ok {
-		return OverrideResult{}, ErrInvalidOverride
+	reason, rerr := ValidateReason(cmd.Reason)
+	if rerr != nil {
+		return OverrideResult{}, fmt.Errorf("%w: %w", ErrInvalidOverride, rerr)
 	}
 	cmd.Reason = reason
 	prev, err := o.precheck(ctx, cmd.EventID)
