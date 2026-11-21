@@ -1,0 +1,130 @@
+# Unit test cho alert anti-bot (antibot-phase1, AC-17): `promtool test rules alerts_antibot_test.yml`.
+# Tach khoi alerts_test.yml (file test da dong bang) nhung cung rule_files.
+rule_files:
+  - alerts.yml
+
+evaluation_interval: 15s
+
+tests:
+  # AntibotDegraded: 2% quyet dinh DEGRADED keo dai -> keu; 0.5% thi khong.
+  - interval: 1m
+    input_series:
+      - series: 'antibot_decisions_total{action="PASS", applied="PASS", mode="shadow"}'
+        values: "0+1000x15"
+      - series: 'antibot_degraded_total{reason="redis_timeout"}'
+        values: "0+20x15"
+    alert_rule_test:
+      - eval_time: 3m
+        alertname: AntibotDegraded
+        exp_alerts: []
+      - eval_time: 12m
+        alertname: AntibotDegraded
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+            exp_annotations:
+              summary: "Hon 1% quyet dinh anti-bot dang DEGRADED (Redis cham/loi hoac breaker mo)"
+  - interval: 1m
+    input_series:
+      - series: 'antibot_decisions_total{action="PASS", applied="PASS", mode="shadow"}'
+        values: "0+1000x15"
+      - series: 'antibot_degraded_total{reason="redis_error"}'
+        values: "0+5x15"
+    alert_rule_test:
+      - eval_time: 12m
+        alertname: AntibotDegraded
+        exp_alerts: []
+
+  # AntibotSlow: moi quyet dinh 7.5..10 ms -> p99 > 5 ms -> keu; moi quyet dinh <= 1 ms thi khong.
+  - interval: 1m
+    input_series:
+      - series: 'antibot_decide_seconds_bucket{le="0.001"}'
+        values: "0+0x15"
+      - series: 'antibot_decide_seconds_bucket{le="0.005"}'
+        values: "0+0x15"
+      - series: 'antibot_decide_seconds_bucket{le="0.0075"}'
+        values: "0+0x15"
+      - series: 'antibot_decide_seconds_bucket{le="0.01"}'
+        values: "0+100x15"
+      - series: 'antibot_decide_seconds_bucket{le="+Inf"}'
+        values: "0+100x15"
+    alert_rule_test:
+      - eval_time: 3m
+        alertname: AntibotSlow
+        exp_alerts: []
+      - eval_time: 12m
+        alertname: AntibotSlow
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+            exp_annotations:
+              summary: "p99 cua antibot Decide vuot 5 ms"
+  - interval: 1m
+    input_series:
+      - series: 'antibot_decide_seconds_bucket{le="0.001"}'
+        values: "0+100x15"
+      - series: 'antibot_decide_seconds_bucket{le="0.005"}'
+        values: "0+100x15"
+      - series: 'antibot_decide_seconds_bucket{le="+Inf"}'
+        values: "0+100x15"
+    alert_rule_test:
+      - eval_time: 12m
+        alertname: AntibotSlow
+        exp_alerts: []
+
+  # AntibotBlockSpike: 30% join bi BLOCK (enforce) -> critical; 10% thi khong.
+  - interval: 1m
+    input_series:
+      - series: 'antibot_decisions_total{action="BLOCK", applied="BLOCK", mode="enforce"}'
+        values: "0+30x15"
+      - series: 'antibot_decisions_total{action="PASS", applied="PASS", mode="enforce"}'
+        values: "0+70x15"
+    alert_rule_test:
+      - eval_time: 3m
+        alertname: AntibotBlockSpike
+        exp_alerts: []
+      - eval_time: 12m
+        alertname: AntibotBlockSpike
+        exp_alerts:
+          - exp_labels:
+              severity: critical
+            exp_annotations:
+              summary: "Hon 20% lan join dang bi anti-bot BLOCK"
+  - interval: 1m
+    input_series:
+      - series: 'antibot_decisions_total{action="BLOCK", applied="BLOCK", mode="enforce"}'
+        values: "0+10x15"
+      - series: 'antibot_decisions_total{action="PASS", applied="PASS", mode="enforce"}'
+        values: "0+90x15"
+      # shadow: BLOCK tier nhung applied PASS -> khong tinh
+      - series: 'antibot_decisions_total{action="BLOCK", applied="PASS", mode="shadow"}'
+        values: "0+500x15"
+    alert_rule_test:
+      - eval_time: 12m
+        alertname: AntibotBlockSpike
+        exp_alerts: []
+
+  # AntibotNetSuppressed: co suppression lien tuc -> keu; khong co thi khong.
+  - interval: 1m
+    input_series:
+      - series: 'antibot_net_suppressed_total'
+        values: "0+3x15"
+    alert_rule_test:
+      - eval_time: 3m
+        alertname: AntibotNetSuppressed
+        exp_alerts: []
+      - eval_time: 12m
+        alertname: AntibotNetSuppressed
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+            exp_annotations:
+              summary: "R4N bi tat vi mot prefix mang chiem qua nhieu join (kiem tra TRUSTED_PROXY_CIDRS)"
+  - interval: 1m
+    input_series:
+      - series: 'antibot_net_suppressed_total'
+        values: "0+0x15"
+    alert_rule_test:
+      - eval_time: 12m
+        alertname: AntibotNetSuppressed
+        exp_alerts: []
