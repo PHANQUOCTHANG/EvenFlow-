@@ -59,6 +59,15 @@ Exit 0 = OK, 1 = violations, 2 = usage/input error (`ERROR ...` on stderr).
 | AC-32 | staging only. Forbidden (`MIN_SALE_LEAD_SECONDS`, `ACTIVE_EVENT_IDS`, `ADMIT_*`, `PAYMENT_SANDBOX_MODE`, `STRIPE_*`): present as a key of any rendered ConfigMap, or set on a container as a literal or via any `configMapKeyRef` (optional or not) to an existing key. Required present (literal, or non-optional `configMapKeyRef` to an existing key): ai-worker `GEMINI_MOCK="0"`, notification `EMAIL_PROVIDER="smtp"`, identity `GOOGLE_CLIENT_ID` non-empty, payment `PAYMENT_ENABLED_PROVIDERS` = {vnpay, momo}, `PAYMENT_DEFAULT_PROVIDER` in that list, and per enabled provider the callback URLs (non-empty) and secret keys (non-optional `secretKeyRef`). |
 | EXEMPT | An exemption key that is malformed, names AC-9, is not an allowed pair for the workload (web: `AC-12.readOnlyRootFilesystem`; ticketing-worker: `AC-11`; dev-infra: `AC-6`, `AC-10`, `AC-11`, `AC-20`, `AC-12.runAsNonRoot`), or has an empty reason. |
 
+### Contract rev 3 additions (fix round 1, 2026-11-20)
+
+The table above is rev 2; rev 3 adds checks without new ids (full list: `policy-contract.md` revision history r3):
+all pod-bearing kinds (Pod, DaemonSet, ReplicaSet, ReplicationController, CronJob) and ephemeral containers are
+workloads; AC-12 reads container-level overrides and fails `hostPort`, `procMount`, `shareProcessNamespace` and
+root groups; AC-13 covers any Dockerfile-like name and rejects uid 0; AC-15 rejects `endPort`; AC-17 widens names,
+matches `://:pw@` and `password=` DSNs, and scans `command`/`args` and `binaryData`; AC-21 rejects dev-infra objects
+in staging; AC-22 rejects a duplicate env name in one container; AC-32 rejects `envFrom.configMapRef` in staging.
+
 ## Mutation check (AC-25)
 
 Each rule was disabled one at a time (function body replaced by `return`; AC-13 by redirecting its output) and the

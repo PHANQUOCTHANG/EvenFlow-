@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""EventFlow Kubernetes policy checker (spec docs/workflow/k8s-all/spec.md, contract policy-contract.md rev 2).
+"""EventFlow Kubernetes policy checker (spec docs/workflow/k8s-all/spec.md, contract policy-contract.md rev 3).
 
     python3 -I check_policy.py --overlay {local|staging} --input <file.json|-> [--processes <csv>]
     python3 -I check_policy.py --dockerfiles <dir>
@@ -23,7 +23,11 @@ EXEMPT_PREFIX = "eventflow.io/policy-exempt"
 EXEMPT_RE = re.compile(r"^eventflow\.io/policy-exempt\.(AC-[0-9]+)(\.([A-Za-z]+))?$")
 TIER_LABEL = "eventflow.io/tier"
 SUFFIX_RE = re.compile(r"-[a-z0-9]{10}$")
-WORKLOAD_KINDS = ("Deployment", "StatefulSet", "Job")
+# rev 3 (X-3): every pod-bearing kind is a workload, so the pod-level rules see it
+WORKLOAD_KINDS = ("Deployment", "StatefulSet", "Job", "Pod", "DaemonSet", "ReplicaSet", "ReplicationController",
+                  "CronJob")
+BATCH_KINDS = ("Job", "CronJob")
+DOCKERFILE_RE = re.compile(r"(?i)^(.+\.dockerfile|dockerfile(\..+)?)$")
 OVERLAYS = ("local", "staging")
 
 # ---------------------------------------------------------------- spec 4.1 (+ E4) contract tables
@@ -113,8 +117,12 @@ EXTERNAL_SECRET_KEYS = {
     "eventflow-notification": {"SMTP_USER", "SMTP_PASSWORD"},
 }
 
-SECRET_NAME_RE = re.compile(r"(?i)(PASSWORD|SECRET|TOKEN|_KEY$|API_KEY)")
-CRED_URL_RE = re.compile(r"://[^/@\s]+:[^/@\s]+@")
+# rev 3 (X-5/R-7): also PASSPHRASE, PASSWD, a PASS word (DB_PASS), *_KEYS, CREDENTIAL; empty-user URLs (redis://:pw@);
+# key=value DSN passwords; and flag-style secrets in command/args
+SECRET_NAME_RE = re.compile(r"(?i)(PASSWORD|PASSPHRASE|PASSWD|(^|_)PASS($|_)|SECRET|TOKEN|_KEYS?$|API_KEY|CREDENTIAL)")
+CRED_URL_RE = re.compile(r"://[^/@\s]*:[^/@\s]+@")
+DSN_PASSWORD_RE = re.compile(r"(?i)\bpassword=[^\s&]")
+ARG_SECRET_RE = re.compile(r"(?i)^--?[a-z0-9_.-]*(password|passphrase|passwd|secret|token|api[_-]?key)[a-z0-9_.-]*=.")
 ALWAYS_SECRET_ENV = {"DATABASE_URL", "AMQP_URL", "RABBITMQ_URL"}
 
 PSA = {
@@ -236,9 +244,12 @@ class Workload:
         self.kind = obj.get("kind")
         self.name = name_of(obj)
         self.spec = d(obj.get("spec"))
-        tmpl = d(self.spec.get("template"))
-        if self.kind == "Job":
-            pass
+        if self.kind == "Pod":
+            tmpl = {"metadata": meta(obj), "spec": self.spec}
+        elif self.kind == "CronJob":
+            tmpl = d(d(d(self.spec.get("jobTemplate")).get("spec")).get("template"))
+        else:
+            tmpl = d(self.spec.get("template"))
         self.pod_meta = d(tmpl.get("metadata"))
         self.pod = d(tmpl.get("spec"))
         self.pod_labels = d(self.pod_meta.get("labels"))
@@ -248,7 +259,8 @@ class Workload:
             self.process = self.name[len("eventflow-"):]
         self.containers = [d(c) for c in lst(self.pod.get("containers"))]
         self.init_containers = [d(c) for c in lst(self.pod.get("initContainers"))]
-        self.all_containers = self.init_containers + self.containers
+        self.ephemeral_containers = [d(c) for c in lst(self.pod.get("ephemeralContainers"))]
+        self.all_containers = self.init_containers + self.containers + self.ephemeral_containers
         self.exempt = set()  # valid (rule, sub) pairs
 
     @property
@@ -426,7 +438,7 @@ def check_ac3(ctx):
 
 def check_ac4(ctx):
     for w in ctx.workloads:
-        if w.kind == "Job":
+        if w.kind in BATCH_KINDS:
             continue
         for c in w.containers:
             cn = c.get("name", "?")
@@ -465,7 +477,7 @@ def check_ac5(ctx):
 
 def check_ac6(ctx):
     for w in ctx.workloads:
-        if w.kind == "Job":
+        if w.kind in BATCH_KINDS:
             continue
         if w.app and w.process not in REQUEST_SERVING:
             continue
@@ -619,7 +631,7 @@ def _ac12_violations(w):
         yield "seccomp", "pod seccompProfile.type is not RuntimeDefault"
     if w.pod.get("automountServiceAccountToken") is not False:
         yield "automount", "automountServiceAccountToken is not false"
-    for k in ("hostNetwork", "hostPID", "hostIPC"):
+    for k in ("hostNetwork", "hostPID", "hostIPC", "shareProcessNamespace"):
         if w.pod.get(k):
             yield "hostNamespaces", "pod sets %s" % k
     for v in lst(w.pod.get("volumes")):
@@ -627,11 +639,28 @@ def _ac12_violations(w):
             yield "hostPath", "volume %s is a hostPath" % d(v).get("name")
     if psc.get("runAsUser") == 0:
         yield "rootUid", "pod runAsUser 0"
+    # rev 3 (X-7): root group counts as root
+    for k in ("runAsGroup", "fsGroup"):
+        if psc.get(k) == 0:
+            yield "rootUid", "pod %s 0" % k
+    if 0 in lst(psc.get("supplementalGroups")):
+        yield "rootUid", "pod supplementalGroups contains 0"
     if w.app and "runAsUser" in psc:
         yield "noRunAsUser", "app pod sets runAsUser (image uid must be used)"
     for c in w.all_containers:
         cn = c.get("name", "?")
         sc = d(c.get("securityContext"))
+        # rev 3 (X-7): a container-level value overrides the pod level
+        if "runAsNonRoot" in sc and sc.get("runAsNonRoot") is not True:
+            yield "runAsNonRoot", "container %s securityContext.runAsNonRoot is not true" % cn
+        if "seccompProfile" in sc and d(sc.get("seccompProfile")).get("type") != "RuntimeDefault":
+            yield "seccomp", "container %s seccompProfile.type is not RuntimeDefault" % cn
+        if sc.get("procMount", "Default") != "Default":
+            yield "privileged", "container %s procMount %r" % (cn, sc.get("procMount"))
+        if any("hostPort" in d(p) for p in lst(c.get("ports"))):
+            yield "hostNamespaces", "container %s uses a hostPort" % cn
+        if sc.get("runAsGroup") == 0:
+            yield "rootUid", "container %s runAsGroup 0" % cn
         if sc.get("allowPrivilegeEscalation") is not False:
             yield "allowPrivilegeEscalation", "container %s allowPrivilegeEscalation is not false" % cn
         caps = d(sc.get("capabilities"))
@@ -688,9 +717,10 @@ def _final_stage_user(text):
 
 
 def check_ac13(dirpath, ctx):
-    files = sorted(f for f in os.listdir(dirpath) if f.endswith(".Dockerfile") and os.path.isfile(os.path.join(dirpath, f)))
+    # rev 3 (X-10): any Dockerfile-like name, case-insensitive (x.Dockerfile, x.dockerfile, Dockerfile, Dockerfile.x)
+    files = sorted(f for f in os.listdir(dirpath) if DOCKERFILE_RE.match(f) and os.path.isfile(os.path.join(dirpath, f)))
     for f in files:
-        name = f[:-len(".Dockerfile")].lower()
+        name = re.sub(r"(?i)\.dockerfile$", "", f).lower()
         try:
             with open(os.path.join(dirpath, f), encoding="utf-8") as fh:
                 text = fh.read()
@@ -703,7 +733,10 @@ def check_ac13(dirpath, ctx):
             ctx.fail("AC-13", "Dockerfile", name, "final stage has no USER instruction")
         elif not re.match(r"^[0-9]+(:[0-9]+)?$", user):
             ctx.fail("AC-13", "Dockerfile", name, "final stage USER %r is not numeric uid[:gid]" % user)
+        elif int(user.split(":", 1)[0]) == 0:
+            ctx.fail("AC-13", "Dockerfile", name, "final stage USER %r is root (uid 0)" % user)
     return len(files)
+
 
 
 def check_ac14(ctx):
@@ -764,6 +797,9 @@ def check_ac15(ctx):
                     continue
                 rports = []
                 for rp in map(d, lst(rule.get("ports"))):
+                    if "endPort" in rp:  # rev 3 (X-8): a port range is never in the matrix
+                        ctx.fail("AC-15", "NetworkPolicy", nn, "ports entry for %s uses endPort %r (no port ranges)"
+                                 % (w.name, rp.get("endPort")))
                     v = rp.get("port")
                     rports.append(ports.get(v) if isinstance(v, str) else v)
                 for peer in frm:
@@ -811,14 +847,26 @@ def check_ac17(ctx):
                     ctx.wfail("AC-17", w, "env %s is a secret-like literal; use secretKeyRef" % n)
                 elif n in ALWAYS_SECRET_ENV:
                     ctx.wfail("AC-17", w, "env %s must come from a Secret" % n)
-                if CRED_URL_RE.search(v):
-                    ctx.wfail("AC-17", w, "env %s literal contains URL credentials" % n)
+                if CRED_URL_RE.search(v) or DSN_PASSWORD_RE.search(v):
+                    ctx.wfail("AC-17", w, "env %s literal contains credentials" % n)
+            # rev 3 (R-7/X-5): command and args
+            for i, a in enumerate(lst(c.get("command")) + lst(c.get("args"))):
+                a = str(a)
+                if CRED_URL_RE.search(a) or DSN_PASSWORD_RE.search(a) or ARG_SECRET_RE.search(a):
+                    ctx.wfail("AC-17", w, "container %s command/args item %d contains a credential" % (c.get("name", "?"), i))
     for cm in ctx.kind("ConfigMap"):
-        for k, v in d(cm.get("data")).items():
+        # rev 3 (X-5): binaryData too (value decoded from base64)
+        entries = [(k, str(v)) for k, v in d(cm.get("data")).items()]
+        for k, v in d(cm.get("binaryData")).items():
+            try:
+                entries.append((k, base64.b64decode(str(v), validate=False).decode("utf-8", "replace")))
+            except (binascii.Error, ValueError):
+                entries.append((k, ""))
+        for k, v in entries:
             if SECRET_NAME_RE.search(str(k)):
                 ctx.fail("AC-17", "ConfigMap", name_of(cm), "key %s looks like a secret" % k)
-            if CRED_URL_RE.search(str(v)):
-                ctx.fail("AC-17", "ConfigMap", name_of(cm), "value of %s contains URL credentials" % k)
+            if CRED_URL_RE.search(v) or DSN_PASSWORD_RE.search(v):
+                ctx.fail("AC-17", "ConfigMap", name_of(cm), "value of %s contains credentials" % k)
 
 
 def _secret_resolves_by_base(ctx, name, key):
@@ -933,6 +981,11 @@ def check_ac20(ctx):
 
 
 def check_ac21(ctx):
+    if ctx.overlay == "staging":  # rev 3 (X-4/R-6): dev-infra exists only in overlays/local (spec D6)
+        for o in ctx.objs:
+            sel = d(d(o.get("spec")).get("podSelector")) if o.get("kind") == "NetworkPolicy" else {}
+            if labels_of(o).get(TIER_LABEL) == "dev-infra" or d(sel.get("matchLabels")).get(TIER_LABEL) == "dev-infra":
+                ctx.fail("AC-21", o.get("kind"), name_of(o), "dev-infra object in the staging render (local only)")
     for w in ctx.workloads:
         if not w.dev_infra:
             continue
@@ -1005,6 +1058,13 @@ def check_ac22(ctx):
             ctx.fail("AC-22", "PodDisruptionBudget", name_of(p), "selector matches no workload")
     for w in ctx.workloads:
         for c in w.all_containers:
+            # rev 3 (X-1/R-2): Kubernetes keeps the LAST duplicate, every rule reads the first -> reject duplicates
+            seen = set()
+            for e in env_items(c):
+                n = e.get("name")
+                if n in seen:
+                    ctx.wfail("AC-22", w, "container %s sets env %s more than once" % (c.get("name", "?"), n))
+                seen.add(n)
             for e in env_items(c):
                 vf = d(e.get("valueFrom"))
                 sref, cref = d(vf.get("secretKeyRef")), d(vf.get("configMapKeyRef"))
@@ -1100,6 +1160,11 @@ def check_ac32(ctx):
                 ctx.fail("AC-32", "ConfigMap", name_of(cm), "forbidden staging key %s" % k)
     for w in ctx.workloads:
         for c in w.all_containers:
+            # rev 3 (X-2): envFrom.configMapRef (with or without prefix) can inject a forbidden key unseen
+            for ef in map(d, lst(c.get("envFrom"))):
+                if "configMapRef" in ef:
+                    ctx.wfail("AC-32", w, "container %s uses envFrom.configMapRef %s (not allowed in staging)"
+                              % (c.get("name", "?"), d(ef["configMapRef"]).get("name")))
             for e in env_items(c):
                 n = str(e.get("name", ""))
                 if not _forbidden(n):
