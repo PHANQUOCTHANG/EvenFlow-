@@ -442,3 +442,57 @@ Under k6 every join is missing (0.88) and is persisted, so `bot_decisions` gets 
 Fix N-2 in contracts 4, plan 2/3 and the store integration test. Add the N-1 test change request to plan 8 and
 `red-check.md`. Fold in or defer the other minors with a reason. Round 3 re-checks N-2 and the N-1 test change
 request only.
+
+---
+
+## Round 3
+
+Inputs: contracts.md revision 3 and plan.md §9 (0bb1706), and the human decisions at the end of spec.md (9bc1e92:
+D16 join button withdrawn, K8s TCR approved).
+
+### Verdict: **PASS** (round 3)
+
+No open blocker or major remains. One note is left for implementation (R3-1), and it does not block this plan.
+
+### N-2 (major): **resolved**
+
+The new formula works at on-sale volume:
+
+- **Same unit.** `share = Σ nj(prefix, 5 buckets) / Σ jc(5 buckets)` counts joins on both sides. The 64-member
+  `net` ZSET now only feeds the distinct-identity count, so it no longer caps the share (10% of 20 000 joins is
+  reachable).
+- **Floor and inputs.** The `R4N_SHARE_MIN_JOINS=1000` floor stops small events from suppressing on noise. `nj`
+  only counts joins with a known IP while `jc` counts every join, so the share errs low, towards not suppressing.
+  That is the safe direction.
+- **Test.** `TestNetShareSuppression` covers 10% (suppressed), 2.5% (not suppressed) and fewer than 1000 joins
+  (never suppressed).
+- **Cost.** One `INCR` and two 5-key `MGET`s per join, all on the same `{ev}` slot. The load gate already covers it.
+
+**Self-suppression trade-off: accepted.** A farm on one /24 must exceed 5% of all joins of the event (about 5 000
+joins in 5 min at 10^5) to hide from R4N. Hiding gains it at most 0.25 of score:
+
+- R4N only ever contributes 0.25.
+- R4D (shared fp), R1-server, R7, R5-UA and the sticky flag are unaffected.
+- Suppression is per prefix: R4N stays active for every other network.
+- It raises `AntibotNetSuppressed`, so a human sees the prefix within 5 minutes.
+
+### Round-2 minors re-checked
+
+| Finding | Status |
+|---|---|
+| N-1 | **Resolved by the human.** D16 is withdrawn: auto-join stays, with `readSignals(eventId) ?? {v:1}`. The 5 frozen waiting-room tests stay byte-identical (they assert the token, rank and error text, not the body), so no web TCR is needed. The 401 re-join keeps the snapshot. |
+| N-3 | Resolved: the trade-off is recorded in contracts 1 and in the human's approval, with worked rows in contracts 3 (0.40 CHALLENGE → pass; `REJOIN` with a slot). |
+| N-4 | Resolved: the rollout step 4 demotion rate counts only joins whose signals decode as valid; load windows are excluded; the missing-payload share is reported separately. |
+| N-5 | Resolved: TCR approved (additions only). The plan lists policy-contract §8, `check_policy.py` lines 86 and 116, `rules.md`, `gen_fixtures.py` with regenerated fixtures, and every bad fixture tripping its own rule. The gate adds `gen_fixtures.py --check`. |
+| N-6 | Resolved: R3 fires when `pe`, `se` and `ke` are each absent or 0 (the one exception to "absent = not evaluated"); `score_test` asserts it. |
+| N-7 | Resolved: the worst-case nature of the load gate is stated in gate 4 and goes into `evidence.md`. |
+| Held-key residual (P-2) | **Accepted.** Auto-repeat fires R1 alone, which scores 0.50 (CHALLENGE → pass), and a held-key population is in the corpus. It can only demote with another sign, for example R1+R4D = 0.80 SLOW_LANE (a household of 4 or more sharing a browser while holding a key), which is negligible. It never reaches BLOCK without two more positive signs. |
+
+### Implementation note (non-blocking)
+
+**R3-1.** Pass every key `observe.lua` touches in `KEYS`, including the 5 `jc` and 5 `nj` minute-bucket names, the
+`wr:{ev}:tok` key and the block flag. Build them in Go from `Input.Now`, as `join.lua` gets `now_ms`, instead of
+building them inside Lua. Redis Cluster only guarantees correct routing for keys declared in `KEYS`. It also keeps
+the "command count = 1" and "keys contain no raw fp/IP" tests straightforward.
+
+The plan is ready for step 3 (tests and red check).
