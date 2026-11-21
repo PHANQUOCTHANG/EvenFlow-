@@ -158,3 +158,13 @@ scoring of status/stream polls or hold/checkout requests, IP reputation/ASN feed
   fires) and wire payment-svc later? Default: yes.
 - **Q-4** CHALLENGE fallback default `pass` (lowest FP) or `slow_lane` (stricter)? Default: `pass`.
 - **Q-5** Tier boundaries lower-inclusive (`>= 0.85` = BLOCK) instead of the docs' `> 0.85`? Default: yes.
+
+## Human approval
+
+- Approver: TranDinhVo, in the Claude Code session on 2026-11-22.
+- Spec approved as written, with the plan's defaults for the open questions:
+  - Q-1: slow lane counts as "bot caught" for the ≥95% criterion.
+  - Q-2: mode and degraded state are recorded as tags in `fired_rules`; no migration.
+  - Q-3: R6 ships defined and tested but dormant; payment wiring later.
+  - Q-4: CHALLENGE falls back to `pass` (configurable to `slow_lane`).
+  - Q-5: tier boundaries are lower-inclusive (score ≥ 0.85 is BLOCK).
