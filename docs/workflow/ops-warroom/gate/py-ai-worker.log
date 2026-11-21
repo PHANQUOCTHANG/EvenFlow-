@@ -8,4 +8,4 @@ All checks passed!
     from starlette.testclient import TestClient as TestClient  # noqa
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-211 passed, 22 deselected, 1 warning in 9.03s
+211 passed, 22 deselected, 1 warning in 6.09s
