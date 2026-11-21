@@ -64,14 +64,20 @@ if ARGV[3] == '1' then
   out[3] = distinct(KEYS[4], r4w)
 end
 
--- Event join count per minute (every join), prefix join count per minute (joins with a known IP).
-redis.call('INCR', KEYS[11])
-redis.call('EXPIRE', KEYS[11], 360)
+-- Event join count per minute and prefix join count per minute (joins with a known IP). Only first joins
+-- count (hasSlot == 0, R-4): a re-join returns the existing slot for free, so counting it would let one slot
+-- holder loop joins to push its own /24 over R4N_SHARE and suppress R4N for the prefix.
+if hasSlot == 0 then
+  redis.call('INCR', KEYS[11])
+  redis.call('EXPIRE', KEYS[11], 360)
+end
 
 if ARGV[4] == '1' then
   out[4] = distinct(KEYS[5], r4w)
-  redis.call('INCR', KEYS[16])
-  redis.call('EXPIRE', KEYS[16], 360)
+  if hasSlot == 0 then
+    redis.call('INCR', KEYS[16])
+    redis.call('EXPIRE', KEYS[16], 360)
+  end
   local ej, pj = 0, 0
   local jc = redis.call('MGET', KEYS[7], KEYS[8], KEYS[9], KEYS[10], KEYS[11])
   local nj = redis.call('MGET', KEYS[12], KEYS[13], KEYS[14], KEYS[15], KEYS[16])
