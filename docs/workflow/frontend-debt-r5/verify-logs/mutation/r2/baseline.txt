@@ -1,0 +1,2 @@
+BASELINE SURVIVED failed=0 rc=0 | Tests  1260 passed (1260)
+DONE

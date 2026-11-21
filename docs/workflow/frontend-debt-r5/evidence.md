@@ -133,3 +133,59 @@ To fix, add four tests and rerun the mutants:
 4. Prev role from a different user id -> buyer.
 
 No production code change is expected to be needed. By code inspection, not by executed tests, each of these behaviours is correct in the current code; it is just unguarded.
+
+## Re-verification 2026-11-21
+
+Re-run by the independent verifier at HEAD 00e4afb, after the earlier FAIL above.
+
+### Scope of the change since the FAIL
+- `git diff --stat 91d8157 00e4afb` shows exactly 4 added files, 182 insertions, all tests under `apps/web/src/lib/debt5-verify/`: `m8-lock-non-string-token.test.ts`, `m11-used-copy-from-session-storage.test.ts`, `m12-shadowed-wipe-keeps-live-result.test.ts`, `m14-prev-role-other-user.test.ts`. No production code changed.
+- Gate-report commit c6dcff1 vs HEAD 00e4afb: the only later changes are these 4 test files plus docs/evidence under `docs/workflow/frontend-debt-r5/` (gate logs, findings-round2.json, spec.md note, verify-logs). No production source changed after the gate commit.
+
+### Mutation re-run
+Each mutant was applied with `verify-logs/mutation/apply.js` (unchanged), followed by `git checkout -- src`. The script is `verify-logs/mutation/run3.sh` and the logs are in `verify-logs/mutation/r2/`. The scope is wider than the first run: the FULL `src/lib` + `src/components/checkout` + `src/hooks`, run with `env -u VITEST_MAX_THREADS -u VITEST_MAX_FORKS npx vitest run <scope>`. Unmutated baseline: 1260/1260 green (`r2/baseline.txt`). The working tree was clean after the run.
+
+| ID | Result | Failing tests (of 1260) |
+|---|---|---|
+| M-1 | KILLED | 11 |
+| M-2 | KILLED | 2 |
+| M-3 | KILLED | 1 |
+| M-4 | KILLED | 5 |
+| M-5 | KILLED | 4 |
+| M-6 | KILLED | 2 |
+| M-7 | KILLED | 1 |
+| M-8 | **KILLED** (was SURVIVED) | 2 |
+| M-8b | KILLED | 6 |
+| M-9 | KILLED | 9 |
+| M-10 | KILLED | 9 |
+| M-11 | **KILLED** (was SURVIVED) | 1 |
+| M-12 | **KILLED** (was SURVIVED) | 1 |
+| M-13 | KILLED | 2 |
+| M-14 | **KILLED** (was SURVIVED) | 2 |
+| M-15 | KILLED | 2 |
+| M-16 | KILLED | 2 |
+| M-17 | SURVIVED, EQUIVALENT (reasoning in §4, unchanged) | 0 |
+| M-18 | SURVIVED, EQUIVALENT (reasoning in §4, unchanged) | 0 |
+| E-1 | KILLED | 2 |
+| E-2 | KILLED | 1 |
+| W-1 | KILLED | 16 |
+| W-2 | SURVIVED, EQUIVALENT (W-2b killed) | 0 |
+| W-2b | KILLED | 1 |
+| W-3 | KILLED | 2 |
+| W-4 | KILLED | 2 |
+| W-5 | KILLED | 7 |
+
+Score:
+- 24/27 mutants killed. 24/24 behaviour-changing mutants are killed. The 3 survivors, M-17, M-18 and W-2, are the equivalents already argued in §4.
+- WP-A: 16/16 non-equivalent killed.
+- WP-B: 4/4 non-equivalent killed, plus W-2b.
+- Extras: E-1, E-2 and M-8b, 3/3 killed.
+
+### Full vitest
+`npx vitest run` (all of apps/web): 186 files, 2586/2586 passed, exit 0 (`r2/full-vitest.log`). That is the previous 2579 plus 7 new tests, and above the c5fb598 baseline of 2419.
+
+### Not rerun
+E2E (Playwright) and `full-gate.sh` were NOT rerun. Port 3000 is occupied by an unrelated application on this machine, so the E2E web server cannot start cleanly. Because no production code changed after the gate commit c6dcff1, the committed gate logs (E2E 38 passed, Go logs) still describe the shipped code. Lint, typecheck and build were not rerun either: test-only additions do not affect the build, and vitest type-loads the new files.
+
+### Verdict
+PASS. The only blocker in §7, the High-risk mutation threshold, is now met. Every other criterion was already PASS and has not changed.
