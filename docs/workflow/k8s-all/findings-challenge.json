@@ -1,0 +1,132 @@
+[
+  {
+    "id": "X-1",
+    "severity": "major",
+    "file": "deploy/k8s/policy/check_policy.py",
+    "line": 1111,
+    "title": "AC-32 fail-closed is bypassed by a duplicate env entry (checker reads the first, kubelet uses the last)",
+    "repro": "Render staging with validate.sh --render-dir R, then in R/staging.json append to the container env list: ai-worker {\"name\":\"GEMINI_MOCK\",\"value\":\"1\"}; payment {\"name\":\"PAYMENT_ENABLED_PROVIDERS\",\"value\":\"sandbox\"} + {\"name\":\"PAYMENT_DEFAULT_PROVIDER\",\"value\":\"sandbox\"}; notification {\"name\":\"EMAIL_PROVIDER\",\"value\":\"log\"}. Run: python -I deploy/k8s/policy/check_policy.py --overlay staging --input R/staging.json. The same shape is produced by a JSON6902 `op: add, path: /spec/template/spec/containers/0/env/-` patch, which is exactly how overlays/staging/kustomization.yaml already adds SMTP_USER.",
+    "evidence": "All three mutations: exit 0, `policy: OK (57 objects, overlay=staging)`. present() (line 1111-1121) returns on the first env item with the name; Kubernetes accepts duplicate env names and the last one wins, so the pod runs with GEMINI_MOCK=1 / the sandbox payment provider / EMAIL_PROVIDER=log while the staging gate is green. kubeconform does not reject duplicate list entries.",
+    "fix": "Report any duplicate env name within a container as a violation (AC-22 or AC-32), or make present()/require() evaluate the LAST occurrence and require every occurrence to satisfy the rule. Add a bad fixture per required key."
+  },
+  {
+    "id": "X-2",
+    "severity": "major",
+    "file": "deploy/k8s/policy/check_policy.py",
+    "line": 1094,
+    "title": "AC-32 forbidden staging settings can be injected through envFrom.configMapRef with a prefix",
+    "repro": "In staging.json add ConfigMap {name: tuning, namespace: eventflow, data: {HEALTH_MODE: static, MAX_RATE: \"100000\"}} and set waitingroom-controller container envFrom: [{prefix: \"ADMIT_\", configMapRef: {name: tuning}}]; add ConfigMap {name: pay, data: {SANDBOX_MODE: success}} and payment envFrom: [{prefix: \"PAYMENT_\", configMapRef: {name: pay}}]. Run the checker with --overlay staging.",
+    "evidence": "exit 0, `policy: OK (59 objects, overlay=staging)`. The pods get ADMIT_HEALTH_MODE=static, ADMIT_MAX_RATE=100000 and PAYMENT_SANDBOX_MODE=success: the existing optional configMapKeyRef entries for those names point at missing keys, so the kubelet skips them and the envFrom value stays. check_ac32 only looks at ConfigMap key names and at `env` items (lines 1097-1109); envFrom is only inspected for secretRef (AC-18 line 841) and for existence (AC-22). Contract 2.2 claims a forbidden key cannot be picked up silently.",
+    "fix": "In staging (or everywhere) forbid envFrom.configMapRef on app workloads, or expand envFrom (prefix + every key of the referenced ConfigMap) into the effective env before running AC-17/AC-19/AC-32."
+  },
+  {
+    "id": "X-3",
+    "severity": "major",
+    "file": "deploy/k8s/policy/check_policy.py",
+    "line": 26,
+    "title": "Pod, DaemonSet, CronJob (and ReplicaSet) are invisible to every pod-level rule",
+    "repro": "Append to staging.json (and local.json) three namespaced objects in eventflow: a v1 Pod, an apps/v1 DaemonSet and a batch/v1 CronJob whose pod spec has hostNetwork: true, hostPID: true, a hostPath volume `/`, image docker.io/evil/root:latest, securityContext {privileged: true, runAsUser: 0}, env literals JWT_SECRET=prod-real-secret and DATABASE_URL=postgres://u:p@h/db. Run the checker for each overlay.",
+    "evidence": "staging: exit 0 `policy: OK (60 objects, overlay=staging)`; local: exit 0 `policy: OK (80 objects, overlay=local)`. WORKLOAD_KINDS (line 26) is Deployment/StatefulSet/Job only, so AC-4/8/12/17/18/20/21/22 never see these pod templates; AC-1 only checks the namespace of other kinds. Admission (PSA) would stop the privileged parts, but the literal secrets (AC-17), the unpinned foreign image (AC-20) and, in local (enforce=baseline), a root container are not stopped by anything.",
+    "fix": "Either reject any pod-bearing kind outside an allow-list (Pod, DaemonSet, ReplicaSet, ReplicationController, CronJob) with an AC-1 violation, or extend Workload to parse them (CronJob: spec.jobTemplate.spec.template; Pod: spec)."
+  },
+  {
+    "id": "X-4",
+    "severity": "major",
+    "file": "deploy/k8s/policy/check_policy.py",
+    "line": 245,
+    "title": "`eventflow.io/tier: dev-infra` is self-asserted and accepted in staging, which turns off the app rules",
+    "repro": "Copy Deployment+Service eventflow-redis, Deployment+Service eventflow-mailpit and NetworkPolicy allow-dev-infra from the local render into staging.json; run the checker with --overlay staging.",
+    "evidence": "exit 0, `policy: OK (62 objects, overlay=staging)`. Spec D6 / section 7 (line 266) says dev-infra exists only in overlays/local, and the staging kustomization comment says 'no dev-infra here', but no rule enforces it. Any workload that carries the label in staging is exempt from readOnlyRootFilesystem and noRunAsUser, may use an upstream image through the AC-20 exemption, needs no PDB/anti-affinity, is not counted by AC-1, and allow-dev-infra opens it on all ports to the whole namespace. An in-cluster unauthenticated Redis/Mailpit in staging passes the gate.",
+    "fix": "In staging fail (AC-1 or AC-21) on any object labelled eventflow.io/tier=dev-infra and on the allow-dev-infra NetworkPolicy; optionally restrict the label to an allow-list of workload names in local."
+  },
+  {
+    "id": "X-5",
+    "severity": "major",
+    "file": "deploy/k8s/policy/check_policy.py",
+    "line": 117,
+    "title": "AC-17 misses credentials: empty-user URLs (`redis://:pw@host`), args/command, binaryData, and common secret names",
+    "repro": "Four separate staging mutations: (a) gateway env literal CACHE_URL=redis://:Sup3rS3cretPw@redis.internal:6379/0; (b) gateway args [\"--jwt-secret=prod-real-secret\", \"--db=postgres://u:p4ss@h/db\"]; (c) ConfigMap eventflow-endpoints data.REDIS_URL=redis://:Sup3rS3cretPw@redis.internal:6379/0 plus binaryData.JWT_SECRET; (d) gateway env literals SIGNING_PASSPHRASE, DB_PASS, PII_ENC_KEYS = hunter2. Run the checker on each.",
+    "evidence": "All four: exit 0 `policy: OK (57 objects, overlay=staging)`. CRED_URL_RE `://[^/@\\s]+:[^/@\\s]+@` needs at least one character before the colon, so the standard Redis password form is not matched; REDIS_URL / REDIS_ADDR live in the eventflow-endpoints ConfigMap by design (overlays/staging/endpoints.env says Redis must be passwordless), so the first time someone adds a Redis password it lands in a ConfigMap undetected, and identity already reads REDIS_PASSWORD (services/identity/internal/config/config.go:48) with no Secret key for it in contract section 8. check_ac17 (line 803) never looks at command/args or ConfigMap.binaryData.",
+    "fix": "Change the URL regex to `://[^/@\\s]*:[^/@\\s]+@`, scan command/args with the same regexes, scan binaryData keys, and widen the name regex (PASS, PASSPHRASE, KEYS, CREDENTIAL). Add REDIS_PASSWORD to the secret contract instead of a URL in a ConfigMap."
+  },
+  {
+    "id": "X-6",
+    "severity": "minor",
+    "file": "deploy/k8s/policy/check_policy.py",
+    "line": 833,
+    "title": "AC-18 'a pod sees only its keys' and AC-12 automount are bypassed by secret / projected volumes",
+    "repro": "(a) staging: give eventflow-web volumes [{name: s, secret: {secretName: eventflow-payment}}, {name: d, secret: {secretName: eventflow-db}}] and matching volumeMounts. (b) staging: give eventflow-gateway serviceAccountName: cluster-admin-sa and a projected volume with sources [serviceAccountToken, secret eventflow-payment] mounted at /var/run/secrets/kubernetes.io/serviceaccount, and append a ServiceAccount plus a ClusterRoleBinding to cluster-admin. Run the checker.",
+    "evidence": "(a) exit 0 `policy: OK (57 objects)`; (b) exit 0 `policy: OK (59 objects)`. AC-18 only compares env secretKeyRefs; AC-22 only checks that a secret volume resolves (line ~1030) and ignores projected volumes; nothing restricts serviceAccountName, ServiceAccount, Role/ClusterRoleBinding objects, so automountServiceAccountToken=false is cosmetic.",
+    "fix": "Fail on secret/projected volumes on app workloads (no process needs one), on serviceAccountName other than default, and on any RBAC / ServiceAccount object in the render."
+  },
+  {
+    "id": "X-7",
+    "severity": "minor",
+    "file": "deploy/k8s/policy/check_policy.py",
+    "line": 616,
+    "title": "AC-12 checks pod-level runAsNonRoot/seccomp only; container-level overrides and several restricted-profile fields pass",
+    "repro": "staging: on the gateway container set securityContext.runAsNonRoot=false, seccompProfile.type=Unconfined, procMount=Unmasked, ports[0].hostPort=80, and pod shareProcessNamespace=true. local: set only container securityContext.runAsNonRoot=false. Also staging: pod securityContext fsGroup=0, runAsGroup=0, supplementalGroups=[0]. Run the checker.",
+    "evidence": "All exit 0 (`policy: OK`). Container-level securityContext wins over the pod level in Kubernetes. In staging PSA restricted would reject the first set at admission, but the offline gate claims to cover it; in local (enforce=baseline) container runAsNonRoot=false and root groups are admitted, so the checker is the only guard and it passes.",
+    "fix": "Evaluate the effective value per container (container overrides pod) for runAsNonRoot and seccompProfile; fail on hostPort, procMount, shareProcessNamespace, runAsGroup/fsGroup/supplementalGroups 0 for app workloads."
+  },
+  {
+    "id": "X-8",
+    "severity": "minor",
+    "file": "deploy/k8s/policy/check_policy.py",
+    "line": 768,
+    "title": "AC-15 ignores NetworkPolicy endPort, so a rule can open every port while naming an allowed one",
+    "repro": "staging: in NetworkPolicy allow-identity add endPort: 65535 to each ports entry (port stays 8083). Run the checker.",
+    "evidence": "exit 0 `policy: OK (57 objects, overlay=staging)`. Line 766-768 only reads `port`; with endPort the rule covers 8083-65535. kubeconform accepts it (endPort is GA).",
+    "fix": "Fail when a ports entry has endPort (or compute the range and require it to be inside the allowed set)."
+  },
+  {
+    "id": "X-9",
+    "severity": "minor",
+    "file": "deploy/k8s/policy/check_policy.py",
+    "line": 1086,
+    "title": "AC-23 / AC-4 leave exposure and probe-target fields unchecked (externalIPs, probe host/scheme)",
+    "repro": "staging: (a) Service eventflow-identity spec.externalIPs=[\"203.0.113.7\"]; (b) ticketing livenessProbe.httpGet.host=example.com and readinessProbe.httpGet.scheme=HTTPS. Run the checker.",
+    "evidence": "Both exit 0. (a) a ClusterIP Service with externalIPs is reachable from outside the cluster, which AC-23 ('no NodePort/LoadBalancer') is meant to prevent. (b) the liveness probe now targets an external host, so the kubelet no longer checks the pod; AC-4 compares path and port only.",
+    "fix": "AC-23: fail on spec.externalIPs and type ExternalName. AC-4: fail when httpGet.host is set or scheme is not HTTP."
+  },
+  {
+    "id": "X-10",
+    "severity": "minor",
+    "file": "deploy/k8s/policy/check_policy.py",
+    "line": 704,
+    "title": "AC-13 accepts numeric root (`USER 0`, `USER 0:0`) and skips files not named `*.Dockerfile`",
+    "repro": "mkdir d; printf 'FROM alpine\\nUSER 0:0\\n' > d/root.Dockerfile; printf 'FROM alpine\\nUSER root\\n' > d/named.dockerfile; printf 'FROM alpine\\n' > d/Dockerfile; python -I deploy/k8s/policy/check_policy.py --dockerfiles d",
+    "evidence": "`policy: OK (1 objects, overlay=dockerfiles)`, exit 0. The regex only demands digits, and the filter at line 691 is case-sensitive on the `.Dockerfile` suffix. A root image would be caught later by runAsNonRoot at pod start, not by the offline gate.",
+    "fix": "Reject uid 0 (and gid 0 if desired); match Dockerfile names case-insensitively and fail on any Dockerfile-like file in the directory that is skipped."
+  },
+  {
+    "id": "X-11",
+    "severity": "minor",
+    "file": ".github/scripts/gates.sh",
+    "line": 247,
+    "title": "gates.sh creates Namespace eventflow on whatever cluster the current context points at (no context guard)",
+    "repro": "Code path: with any reachable context (kubectl cluster-info succeeds, e.g. a shared or staging cluster) that has no namespace eventflow, lines 244-251 run `kubectl create namespace eventflow` for real, then line 276 runs a server dry-run of overlays/local. The docker-desktop / kind-* guard (line 259) only protects the Job delete.",
+    "evidence": "The namespace is persisted without PSA labels and is never removed by the script. The dry-run of the local overlay against a non-local cluster can also fail for cluster-specific reasons (existing immutable objects), turning a web gate red. Not run here: no kubectl context is set on this machine (`kubectl config current-context` -> not set).",
+    "fix": "Apply the same context allow-list to the namespace creation and the dry-run: on any other context print the 'not checked' message and skip, unless an explicit opt-in env var is set."
+  },
+  {
+    "id": "X-12",
+    "severity": "minor",
+    "file": "deploy/k8s/overlays/staging/app-config.env",
+    "line": 6,
+    "title": "Staging gate is green with placeholder and unsafe values (CORS `*`, example.com hosts, REPLACE-ME client id, non-existent image tag)",
+    "repro": "staging.json: set ConfigMap eventflow-app-config data.CORS_ALLOWED_ORIGINS=\"*\" and run the checker; also run it on the unmodified render, which contains https://staging.example.com, redis.example.internal, GOOGLE_CLIENT_ID=REPLACE-ME-staging.apps.googleusercontent.com and image tag sha-c5fb598 (a commit with no built image).",
+    "evidence": "exit 0 `policy: OK (57 objects, overlay=staging)` in both cases. AC-32 requires GOOGLE_CLIENT_ID and the provider URLs to be 'non-empty' only, so the committed placeholders satisfy the fail-closed rule; nothing distinguishes a real staging render from the template.",
+    "fix": "In staging fail on values containing `example.`, `REPLACE-ME`, `localtest.me`, on CORS `*` or http:// origins, or add a `--strict-placeholders` mode that the runbook's temporary overlay must pass before a real apply."
+  },
+  {
+    "id": "X-13",
+    "severity": "minor",
+    "file": "deploy/k8s/base/web/deployment.yaml",
+    "line": 18,
+    "title": "Web readOnlyRootFilesystem exemption reason does not match the image: /app is root-owned and the container runs as uid 1000",
+    "repro": "Code path, not executed: deploy/docker/web.Dockerfile lines 40-42 COPY the standalone build without --chown (owner root:root, mode 755) and line 55 sets USER 1000. The exemption text says 'Next ISR writes .next/cache'.",
+    "evidence": "As uid 1000 the process cannot create /app/.next/cache whether or not the root filesystem is read-only, so the exemption buys nothing and ISR/image-cache writes fail silently either way. Needs a pod run to confirm the exact Next behaviour; the ownership follows from the Dockerfile.",
+    "fix": "Mount an emptyDir at /app/.next/cache (and /tmp), set readOnlyRootFilesystem: true on web and drop the exemption; or chown the cache dir in the Dockerfile if writable ISR is really wanted."
+  }
+]

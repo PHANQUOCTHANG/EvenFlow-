@@ -1,0 +1,133 @@
+# PgBouncer cho overlay local (transaction pooling, giong compose).
+#
+# Tag pinned (AC-21): compose dung `edoburu/pgbouncer:latest`; o day dung v1.25.2-p0,
+# kiem tren Docker Hub ngay 2026-11-01 (day 2026-06-10).
+# Image dat `USER postgres` (ten, khong phai so) -> kubelet khong kiem duoc runAsNonRoot,
+# nen dat runAsUser so: `postgres:x:70:70` trong /etc/passwd cua image (r2-m2).
+# Entrypoint ghi pgbouncer.ini + userlist.txt vao /etc/pgbouncer (owner 70:0 trong image)
+# -> mount emptyDir o do, fsGroup 70 cho phep ghi.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: eventflow-pgbouncer
+  namespace: eventflow
+  labels:
+    app.kubernetes.io/name: eventflow-pgbouncer
+    app.kubernetes.io/part-of: eventflow
+    eventflow.io/tier: dev-infra
+  annotations:
+    eventflow.io/policy-exempt.AC-6: "dev connection pooler, single replica"
+    eventflow.io/policy-exempt.AC-10: "single replica dev tool, no PDB"
+    eventflow.io/policy-exempt.AC-11: "single replica, nothing to spread"
+    eventflow.io/policy-exempt.AC-20: "upstream image edoburu/pgbouncer, version pinned (AC-21)"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: eventflow-pgbouncer
+      app.kubernetes.io/part-of: eventflow
+      eventflow.io/tier: dev-infra
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: eventflow-pgbouncer
+        app.kubernetes.io/part-of: eventflow
+        eventflow.io/tier: dev-infra
+    spec:
+      automountServiceAccountToken: false
+      enableServiceLinks: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 70
+        runAsGroup: 70
+        fsGroup: 70
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: pgbouncer
+          image: edoburu/pgbouncer:v1.25.2-p0
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: DB_HOST
+              value: eventflow-postgres
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_USER
+              value: eventflow
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: eventflow-dev-infra
+                  key: POSTGRES_PASSWORD
+            - name: DB_NAME
+              value: eventflow
+            - name: LISTEN_PORT
+              value: "5432"
+            - name: POOL_MODE
+              value: transaction
+            # Postgres 16 mac dinh SCRAM; md5 trong userlist lam moi ket noi that bai
+            # ("cannot do SCRAM authentication: wrong password type"), xem compose.
+            - name: AUTH_TYPE
+              value: scram-sha-256
+            - name: MAX_CLIENT_CONN
+              value: "2000"
+            - name: DEFAULT_POOL_SIZE
+              value: "100"
+          ports:
+            - name: pgbouncer
+              containerPort: 5432
+          startupProbe:
+            tcpSocket:
+              port: pgbouncer
+            periodSeconds: 2
+            failureThreshold: 30
+          livenessProbe:
+            tcpSocket:
+              port: pgbouncer
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 3
+          readinessProbe:
+            tcpSocket:
+              port: pgbouncer
+            periodSeconds: 5
+            timeoutSeconds: 2
+          resources:
+            requests:
+              cpu: 50m
+              memory: 32Mi
+            limits:
+              cpu: 500m
+              memory: 128Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            privileged: false
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: config
+              mountPath: /etc/pgbouncer
+      volumes:
+        - name: config
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: eventflow-pgbouncer
+  namespace: eventflow
+  labels:
+    app.kubernetes.io/name: eventflow-pgbouncer
+    app.kubernetes.io/part-of: eventflow
+    eventflow.io/tier: dev-infra
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: eventflow-pgbouncer
+    app.kubernetes.io/part-of: eventflow
+    eventflow.io/tier: dev-infra
+  ports:
+    - name: pgbouncer
+      port: 5432
+      targetPort: pgbouncer

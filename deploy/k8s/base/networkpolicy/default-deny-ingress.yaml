@@ -1,0 +1,13 @@
+# Spec k8s-all 6.2 / AC-15. Ingress only; egress is not restricted in this task.
+# Selects every pod of the namespace and allows nothing; the allow-* policies open single paths.
+# Lockout recovery: kubectl -n eventflow delete networkpolicy --all
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  labels:
+    app.kubernetes.io/part-of: eventflow
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress

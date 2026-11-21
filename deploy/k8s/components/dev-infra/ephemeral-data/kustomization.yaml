@@ -1,0 +1,40 @@
+# Fallback r3-m4: du lieu Postgres/RabbitMQ tren emptyDir thay vi PVC.
+# Dung khi StorageClass local (vd. hostpath cua Docker Desktop) khong ap fsGroup va thu
+# muc PV khong ghi duoc bang uid cua image. Chap nhan mat du lieu dev khi pod bi xoa;
+# KHONG them exemption root/capability.
+#
+# Dung: trong overlays/local, sau `../../components/dev-infra`:
+#   components:
+#     - ../../components/dev-infra
+#     - ../../components/dev-infra/ephemeral-data
+# volumeClaimTemplates la immutable: StatefulSet da tao phai xoa truoc
+#   kubectl -n eventflow delete statefulset eventflow-postgres eventflow-rabbitmq
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+patches:
+  - target:
+      group: apps
+      version: v1
+      kind: StatefulSet
+      name: eventflow-postgres
+    patch: |-
+      - op: remove
+        path: /spec/volumeClaimTemplates
+      - op: add
+        path: /spec/template/spec/volumes/-
+        value:
+          name: data
+          emptyDir: {}
+  - target:
+      group: apps
+      version: v1
+      kind: StatefulSet
+      name: eventflow-rabbitmq
+    patch: |-
+      - op: remove
+        path: /spec/volumeClaimTemplates
+      - op: add
+        path: /spec/template/spec/volumes
+        value:
+          - name: data
+            emptyDir: {}

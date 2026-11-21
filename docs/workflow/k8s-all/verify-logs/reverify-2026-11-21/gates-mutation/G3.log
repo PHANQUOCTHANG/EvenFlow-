@@ -1,0 +1,28 @@
+PASS  G-prod-cluster: context khong phai docker-desktop/kind-* => khong dung vao cluster, exit 0
+PASS  G-docker-desktop-prod: context khong phai docker-desktop/kind-* => khong dung vao cluster, exit 0
+PASS  G-staging-kind-dev: context khong phai docker-desktop/kind-* => khong dung vao cluster, exit 0
+PASS  G-xkind-dev: context khong phai docker-desktop/kind-* => khong dung vao cluster, exit 0
+FAIL  G-unfinished: Job migrate chua xong => KHONG xoa, bi loai khoi dry-run
+      dry-run khong loai Job: apply --dry-run=server -k deploy/k8s/overlays/local -l app.kubernetes.io/name!=eventflow-migrate
+FAIL  G-pin-docker-desktop: moi lenh kubectl sau guard deu --context docker-desktop
+      lenh khong pin: get namespace eventflow
+FAIL  G-namespace: namespace chua co => tao tren context da pin
+      khong thay 'create namespace' pin context
+FAIL  G-finished: Job migrate da xong => xoa tren context da pin, dry-run khong loai Job
+      khong xoa Job voi --context kind-dev
+FAIL  G-pin-kind: moi lenh kubectl sau guard deu --context kind-dev
+      lenh khong pin: get namespace eventflow
+FAIL  G-no-job: khong co Job migrate => khong xoa, khong loai, van dry-run
+      dry-run sai: apply --dry-run=server -k deploy/k8s/overlays/local
+PASS  G-no-ctx: cluster-info OK nhung current-context rong => khong dung vao cluster
+
+== Ket qua: 5 PASS, 6 FAIL ==
+   ca fail: G-unfinished G-pin-docker-desktop G-namespace G-finished G-pin-kind G-no-job 
+
+--- gprobe
+P1 ok non-local ctx skipped
+P5 ok lookalike ctx skipped
+P2 ok unfinished Job kept and excluded
+P3 FAIL finished Job not deleted with --context
+P4 FAIL unpinned kubectl call: get namespace eventflow
+PROBE FAIL

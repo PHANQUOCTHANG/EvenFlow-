@@ -1,0 +1,33 @@
+# Spec k8s-all 6.2 / AC-15. Ingress only; egress is not restricted in this task.
+# ticketing: only gateway pods on the API port;
+# monitoring on the same port (/metrics). Never an empty `from` (F9: forged X-Identity-Id).
+# Monitoring = namespaces labelled eventflow.io/monitoring="true" (none exists yet).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ticketing
+  labels:
+    app.kubernetes.io/part-of: eventflow
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: eventflow-ticketing
+      app.kubernetes.io/part-of: eventflow
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: eventflow-gateway
+              app.kubernetes.io/part-of: eventflow
+      ports:
+        - protocol: TCP
+          port: 8082
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              eventflow.io/monitoring: "true"
+      ports:
+        - protocol: TCP
+          port: 8082

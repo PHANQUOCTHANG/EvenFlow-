@@ -1,0 +1,27 @@
+# Ingress for the public API (AC-23). Queue status uses SSE, so nginx must not buffer
+# and must keep the upstream read open for an hour. `localtest.me` resolves to 127.0.0.1.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: eventflow-gateway
+  namespace: eventflow
+  labels:
+    app.kubernetes.io/name: eventflow-gateway
+    app.kubernetes.io/part-of: eventflow
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-buffering: "off"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: api.eventflow.localtest.me
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: eventflow-gateway
+                port:
+                  name: http

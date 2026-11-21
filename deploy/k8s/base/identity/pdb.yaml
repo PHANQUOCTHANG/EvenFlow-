@@ -1,0 +1,15 @@
+# PDB for identity (AC-10): maxUnavailable 1, selector = pod labels exactly.
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: eventflow-identity
+  namespace: eventflow
+  labels:
+    app.kubernetes.io/name: eventflow-identity
+    app.kubernetes.io/part-of: eventflow
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: eventflow-identity
+      app.kubernetes.io/part-of: eventflow

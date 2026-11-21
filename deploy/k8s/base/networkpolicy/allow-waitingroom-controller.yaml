@@ -1,0 +1,24 @@
+# Spec k8s-all 6.2 / AC-15. Ingress only; egress is not restricted in this task.
+# waitingroom-controller: background process; only monitoring on its health/metrics port.
+# Monitoring = namespaces labelled eventflow.io/monitoring="true" (none exists yet).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-waitingroom-controller
+  labels:
+    app.kubernetes.io/part-of: eventflow
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: eventflow-waitingroom-controller
+      app.kubernetes.io/part-of: eventflow
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              eventflow.io/monitoring: "true"
+      ports:
+        - protocol: TCP
+          port: 9091

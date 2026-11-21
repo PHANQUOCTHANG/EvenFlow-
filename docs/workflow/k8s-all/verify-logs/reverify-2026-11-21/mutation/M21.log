@@ -1,0 +1,239 @@
+PASS [A-GEN-SYNC] committed fixtures match testdata/gen_fixtures.py
+PASS [A-COUNT] 184 bad fixtures
+PASS [A-COVER-AC-1] has bad fixture(s)
+PASS [A-COVER-AC-3] has bad fixture(s)
+PASS [A-COVER-AC-4] has bad fixture(s)
+PASS [A-COVER-AC-5] has bad fixture(s)
+PASS [A-COVER-AC-6] has bad fixture(s)
+PASS [A-COVER-AC-7] has bad fixture(s)
+PASS [A-COVER-AC-8] has bad fixture(s)
+PASS [A-COVER-AC-9] has bad fixture(s)
+PASS [A-COVER-AC-10] has bad fixture(s)
+PASS [A-COVER-AC-11] has bad fixture(s)
+PASS [A-COVER-AC-12] has bad fixture(s)
+PASS [A-COVER-AC-14] has bad fixture(s)
+PASS [A-COVER-AC-15] has bad fixture(s)
+PASS [A-COVER-AC-16] has bad fixture(s)
+PASS [A-COVER-AC-17] has bad fixture(s)
+PASS [A-COVER-AC-18] has bad fixture(s)
+PASS [A-COVER-AC-19] has bad fixture(s)
+PASS [A-COVER-AC-20] has bad fixture(s)
+PASS [A-COVER-AC-21] has bad fixture(s)
+PASS [A-COVER-AC-22] has bad fixture(s)
+PASS [A-COVER-AC-23] has bad fixture(s)
+PASS [A-COVER-AC-32] has bad fixture(s)
+PASS [A-COVER-EXEMPT] has bad fixture(s)
+PASS [A-COVER-AC-13] has bad dockerfile fixture(s)
+PASS [B-CHECKER-EXISTS] check_policy.py exists
+PASS [B-GOOD-good-local] accepted (exit 0, 'policy: OK' last line)
+PASS [B-GOOD-good-staging] accepted (exit 0, 'policy: OK' last line)
+PASS [C-AC-1--object-outside-namespace] rejected with AC-1 only
+PASS [C-AC-1--second-namespace] rejected with AC-1 only
+PASS [C-AC-10--dev-infra-exemption-removed] rejected with AC-10 only
+PASS [C-AC-10--event-max-unavailable-2] rejected with AC-10 only
+PASS [C-AC-10--gateway-pdb-missing] rejected with AC-10 only
+PASS [C-AC-10--identity-selector-subset] rejected with AC-10 only
+PASS [C-AC-10--worker-min-available] rejected with AC-10 only
+PASS [C-AC-11--ai-worker-spread-missing] rejected with AC-11 only
+PASS [C-AC-11--controller-not-exempt] rejected with AC-11 only
+PASS [C-AC-11--event-affinity-missing] rejected with AC-11 only
+PASS [C-AC-11--gateway-wrong-topology-key] rejected with AC-11 only
+PASS [C-AC-11--identity-do-not-schedule] rejected with AC-11 only
+PASS [C-AC-11--payment-required-not-preferred] rejected with AC-11 only
+PASS [C-AC-11--web-foreign-spread-selector] rejected with AC-11 only
+PASS [C-AC-12--ai-worker-hostpath] rejected with AC-12 only
+PASS [C-AC-12--ai-worker-no-drop-all] rejected with AC-12 only
+PASS [C-AC-12--ai-worker-no-tmp-emptydir] rejected with AC-12 only
+PASS [C-AC-12--container-procmount-unmasked] rejected with AC-12 only
+PASS [C-AC-12--container-runasnonroot-false] rejected with AC-12 only
+PASS [C-AC-12--container-seccomp-unconfined] rejected with AC-12 only
+PASS [C-AC-12--daemonset-hostpath] rejected with AC-12 only
+PASS [C-AC-12--dev-infra-drop-all-missing] rejected with AC-12 only
+PASS [C-AC-12--dev-infra-run-as-uid-0] rejected with AC-12 only
+PASS [C-AC-12--dev-infra-runasnonroot-false] rejected with AC-12 only
+PASS [C-AC-12--event-pod-runasuser] rejected with AC-12 only
+PASS [C-AC-12--gateway-hostport] rejected with AC-12 only
+PASS [C-AC-12--gateway-runasnonroot-false] rejected with AC-12 only
+PASS [C-AC-12--gateway-writable-rootfs] rejected with AC-12 only
+PASS [C-AC-12--identity-container-uid-0] rejected with AC-12 only
+PASS [C-AC-12--identity-hostnetwork] rejected with AC-12 only
+PASS [C-AC-12--notification-privesc-allowed] rejected with AC-12 only
+PASS [C-AC-12--payment-runasnonroot-missing] rejected with AC-12 only
+PASS [C-AC-12--pod-ephemeral-privileged] rejected with AC-12 only
+PASS [C-AC-12--pod-fsgroup-0] rejected with AC-12 only
+PASS [C-AC-12--replicaset-privileged] rejected with AC-12 only
+PASS [C-AC-12--share-process-namespace] rejected with AC-12 only
+PASS [C-AC-12--ticketing-seccomp-missing] rejected with AC-12 only
+PASS [C-AC-12--waitingroom-automount-true] rejected with AC-12 only
+PASS [C-AC-12--web-exempt-runasnonroot-missing] rejected with AC-12 only
+PASS [C-AC-12--web-exemption-missing] rejected with AC-12 only
+PASS [C-AC-12--worker-privileged] rejected with AC-12 only
+PASS [C-AC-14--local-enforce-privileged] rejected with AC-14 only
+PASS [C-AC-14--local-warn-missing] rejected with AC-14 only
+PASS [C-AC-14--staging-enforce-baseline] rejected with AC-14 only
+PASS [C-AC-14--staging-enforce-missing] rejected with AC-14 only
+PASS [C-AC-15--default-deny-missing] rejected with AC-15 only
+PASS [C-AC-15--default-deny-selects-subset] rejected with AC-15 only
+PASS [C-AC-15--event-all-namespaces] rejected with AC-15 only
+PASS [C-AC-15--identity-empty-from] rejected with AC-15 only
+PASS [C-AC-15--identity-endport] rejected with AC-15 only
+PASS [C-AC-15--identity-from-web] rejected with AC-15 only
+PASS [C-AC-15--ticketing-from-ai-worker] rejected with AC-15 only
+PASS [C-AC-15--worker-allow-missing] rejected with AC-15 only
+PASS [C-AC-16--local-unknown-secret] rejected with AC-16 only
+PASS [C-AC-16--local-value-without-dev] rejected with AC-16 only
+PASS [C-AC-16--staging-plain-secret] rejected with AC-16 only
+PASS [C-AC-17--configmap-binarydata-secret] rejected with AC-17 only
+PASS [C-AC-17--configmap-password-key] rejected with AC-17 only
+PASS [C-AC-17--configmap-url-with-credentials] rejected with AC-17 only
+PASS [C-AC-17--empty-user-redis-url] rejected with AC-17 only
+PASS [C-AC-17--gateway-args-dsn-password] rejected with AC-17 only
+PASS [C-AC-17--gateway-args-secret] rejected with AC-17 only
+PASS [C-AC-17--gateway-args-split-password] rejected with AC-17 only
+PASS [C-AC-17--gateway-shell-pgpassword] rejected with AC-17 only
+PASS [C-AC-17--literal-db-pass-name] rejected with AC-17 only
+PASS [C-AC-17--literal-dsn-password] rejected with AC-17 only
+PASS [C-AC-17--literal-keys-name] rejected with AC-17 only
+PASS [C-AC-17--literal-passphrase-name] rejected with AC-17 only
+PASS [C-AC-17--pod-secret-literal] rejected with AC-17 only
+PASS [C-AC-17--web-database-url-literal] rejected with AC-17 only
+PASS [C-AC-17--web-token-literal] rejected with AC-17 only
+PASS [C-AC-17--web-url-with-credentials] rejected with AC-17 only
+PASS [C-AC-18--identity-gets-queue-token] rejected with AC-18 only
+PASS [C-AC-18--identity-uses-pooled-db] rejected with AC-18 only
+PASS [C-AC-18--local-provider-key-optional] rejected with AC-18 only
+PASS [C-AC-18--notification-gets-jwt] rejected with AC-18 only
+PASS [C-AC-18--staging-identity-smtp-missing] rejected with AC-18 only
+PASS [C-AC-18--staging-optional-secret-ref] rejected with AC-18 only
+PASS [C-AC-18--staging-stripe-key-extra] rejected with AC-18 only
+PASS [C-AC-18--ticketing-gets-amqp] rejected with AC-18 only
+PASS [C-AC-18--ticketing-uses-direct-db] rejected with AC-18 only
+PASS [C-AC-18--web-envfrom-secret] rejected with AC-18 only
+PASS [C-AC-19--local-app-env-production] rejected with AC-19 only
+PASS [C-AC-19--staging-app-env-development] rejected with AC-19 only
+PASS [C-AC-19--staging-gateway-literal-development] rejected with AC-19 only
+PASS [C-AC-20--cronjob-foreign-image] rejected with AC-20 only
+PASS [C-AC-20--event-no-tag] rejected with AC-20 only
+PASS [C-AC-20--gateway-docker-hub] rejected with AC-20 only
+PASS [C-AC-20--identity-latest] rejected with AC-20 only
+PASS [C-AC-20--notification-wrong-name] rejected with AC-20 only
+PASS [C-AC-20--payment-semver] rejected with AC-20 only
+PASS [C-AC-20--ticketing-sha-too-long] rejected with AC-20 only
+PASS [C-AC-20--web-pull-always] rejected with AC-20 only
+PASS [C-AC-21--dev-infra-latest] rejected with AC-21 only
+PASS [C-AC-21--dev-infra-no-tag] rejected with AC-21 only
+PASS [C-AC-21--staging-dev-infra-mailpit] rejected with AC-21 only
+PASS [C-AC-21--staging-dev-infra-netpol] rejected with AC-21 only
+PASS [C-AC-22--configmap-key-missing] rejected with AC-22 only
+PASS [C-AC-22--configmap-missing] rejected with AC-22 only
+PASS [C-AC-22--hpa-target-missing] rejected with AC-22 only
+PASS [C-AC-22--ingress-port-missing] rejected with AC-22 only
+PASS [C-AC-22--ingress-service-missing] rejected with AC-22 only
+PASS [C-AC-22--pdb-selects-nothing] rejected with AC-22 only
+PASS [C-AC-22--ref-uses-base-name-local] rejected with AC-22 only
+PASS [C-AC-22--secret-key-missing-local] rejected with AC-22 only
+PASS [C-AC-22--secret-unknown-local] rejected with AC-22 only
+PASS [C-AC-22--secret-unknown-staging] rejected with AC-22 only
+PASS [C-AC-22--service-matches-nothing] rejected with AC-22 only
+PASS [C-AC-22--service-matches-two-workloads] rejected with AC-22 only
+PASS [C-AC-22--staging-duplicate-env-gemini-mock] rejected with AC-22 only
+PASS [C-AC-22--staging-duplicate-env-providers] rejected with AC-22 only
+PASS [C-AC-22--targetport-name-missing] rejected with AC-22 only
+PASS [C-AC-22--targetport-numeric-for-named] rejected with AC-22 only
+PASS [C-AC-23--gateway-buffering-on] rejected with AC-23 only
+PASS [C-AC-23--gateway-ingress-missing] rejected with AC-23 only
+PASS [C-AC-23--gateway-read-timeout-60] rejected with AC-23 only
+PASS [C-AC-23--gateway-wrong-host] rejected with AC-23 only
+PASS [C-AC-23--identity-ingress] rejected with AC-23 only
+PASS [C-AC-23--identity-nodeport] rejected with AC-23 only
+PASS [C-AC-23--ticketing-loadbalancer] rejected with AC-23 only
+PASS [C-AC-23--web-host-changed] rejected with AC-23 only
+PASS [C-AC-3--container-renamed] rejected with AC-3 only
+PASS [C-AC-3--extra-selector-label] rejected with AC-3 only
+PASS [C-AC-32--active-event-ids-configmap] rejected with AC-32 only
+PASS [C-AC-32--admit-min-rate-configmap] rejected with AC-32 only
+PASS [C-AC-32--default-provider-not-enabled] rejected with AC-32 only
+PASS [C-AC-32--default-provider-sandbox] rejected with AC-32 only
+PASS [C-AC-32--email-provider-mock] rejected with AC-32 only
+PASS [C-AC-32--enabled-providers-absent] rejected with AC-32 only
+PASS [C-AC-32--enabled-providers-include-sandbox] rejected with AC-32 only
+PASS [C-AC-32--envfrom-configmap-prefix] rejected with AC-32 only
+PASS [C-AC-32--gemini-mock-1-configmap] rejected with AC-32 only
+PASS [C-AC-32--gemini-mock-absent] rejected with AC-32 only
+PASS [C-AC-32--gemini-mock-optional-ref] rejected with AC-32 only
+PASS [C-AC-32--google-client-id-empty] rejected with AC-32 only
+PASS [C-AC-32--min-sale-lead-seconds-configmap] rejected with AC-32 only
+PASS [C-AC-32--min-sale-lead-seconds-env] rejected with AC-32 only
+PASS [C-AC-32--momo-notify-url-absent] rejected with AC-32 only
+PASS [C-AC-32--momo-secret-missing] rejected with AC-32 only
+PASS [C-AC-32--payment-sandbox-mode-configmap] rejected with AC-32 only
+PASS [C-AC-32--payment-sandbox-mode-env] rejected with AC-32 only
+PASS [C-AC-32--stripe-enabled] rejected with AC-32 only
+PASS [C-AC-32--stripe-url-in-configmap] rejected with AC-32 only
+PASS [C-AC-32--unreferenced-forbidden-configmap-key] rejected with AC-32 only
+PASS [C-AC-32--vnpay-return-url-empty] rejected with AC-32 only
+PASS [C-AC-4--dev-infra-liveness-missing] rejected with AC-4 only
+PASS [C-AC-4--dev-infra-readiness-missing] rejected with AC-4 only
+PASS [C-AC-4--gateway-liveness-missing] rejected with AC-4 only
+PASS [C-AC-4--identity-wrong-path] rejected with AC-4 only
+PASS [C-AC-4--numeric-probe-port] rejected with AC-4 only
+PASS [C-AC-4--payment-startup-missing] rejected with AC-4 only
+PASS [C-AC-4--ticketing-readiness-missing] rejected with AC-4 only
+PASS [C-AC-4--worker-http-path] rejected with AC-4 only
+PASS [C-AC-5--dev-infra-liveness-on-readyz] rejected with AC-5 only
+PASS [C-AC-6--gateway-grace-20] rejected with AC-6 only
+PASS [C-AC-6--gateway-unavailable-1] rejected with AC-6 only
+PASS [C-AC-6--payment-recreate] rejected with AC-6 only
+PASS [C-AC-6--ticketing-no-prestop] rejected with AC-6 only
+PASS [C-AC-7--controller-one-replica] rejected with AC-7 only
+PASS [C-AC-7--gateway-has-replicas] rejected with AC-7 only
+PASS [C-AC-7--worker-rolling] rejected with AC-7 only
+PASS [C-AC-7--worker-two-replicas] rejected with AC-7 only
+PASS [C-AC-8--ai-worker-no-memory-limit] rejected with AC-8 only
+PASS [C-AC-8--dev-infra-no-resources] rejected with AC-8 only
+PASS [C-AC-8--event-requests-missing] rejected with AC-8 only
+PASS [C-AC-8--identity-limits-missing] rejected with AC-8 only
+PASS [C-AC-8--notification-no-cpu-request] rejected with AC-8 only
+PASS [C-AC-8--ticketing-cpu-changed] rejected with AC-8 only
+PASS [C-AC-9--event-max-20] rejected with AC-9 only
+PASS [C-AC-9--gateway-hpa-missing] rejected with AC-9 only
+PASS [C-AC-9--hpa-on-controller] rejected with AC-9 only
+PASS [C-AC-9--hpa-on-ticketing-worker] rejected with AC-9 only
+PASS [C-AC-9--identity-min-1] rejected with AC-9 only
+PASS [C-AC-9--payment-cpu-90] rejected with AC-9 only
+PASS [C-AC-9--ticketing-no-behavior] rejected with AC-9 only
+PASS [C-AC-9--web-stabilization-60] rejected with AC-9 only
+PASS [C-EXEMPT--empty-reason-gateway-ac11] rejected with EXEMPT only
+PASS [C-EXEMPT--gateway-malformed-key] rejected with EXEMPT only
+FAIL [C-EXEMPT--unknown-pair-gateway-ac12] expected exit 1, got 0: policy: OK (28 objects, overlay=local)
+| 
+FAIL [C-EXEMPT--unknown-pair-worker-ac4] expected exit 1, got 0: policy: OK (31 objects, overlay=local)
+| 
+FAIL [C-EXEMPT--web-ac12-whole-rule] expected exit 1, got 0: policy: OK (28 objects, overlay=local)
+| 
+PASS [C-EXEMPT--web-allowed-pair-empty-reason] rejected with EXEMPT only
+FAIL [C-EXEMPT--web-unknown-subcheck] expected exit 1, got 0: policy: OK (28 objects, overlay=local)
+| 
+PASS [C-EXEMPT--worker-ac9] rejected with EXEMPT only
+PASS [C-DOCKERFILES-good] dockerfiles/good accepted
+PASS [C-DOCKERFILES-AC-13--lowercase-suffix] rejected with AC-13 only
+PASS [C-DOCKERFILES-AC-13--named-user] rejected with AC-13 only
+PASS [C-DOCKERFILES-AC-13--no-user] rejected with AC-13 only
+PASS [C-DOCKERFILES-AC-13--plain-dockerfile-name] rejected with AC-13 only
+PASS [C-DOCKERFILES-AC-13--user-only-in-build-stage] rejected with AC-13 only
+PASS [C-DOCKERFILES-AC-13--user-root-group] rejected with AC-13 only
+PASS [C-DOCKERFILES-AC-13--user-uid-0-no-gid] rejected with AC-13 only
+PASS [C-DOCKERFILES-AC-13--user-uid-0] rejected with AC-13 only
+PASS [C-EXIT2-NO-INPUT] missing --input -> exit 2 with ERROR on stderr
+PASS [C-EXIT2-NO-OVERLAY] missing --overlay -> exit 2 with ERROR on stderr
+PASS [C-EXIT2-BAD-OVERLAY] unknown overlay -> exit 2 with ERROR on stderr
+PASS [C-EXIT2-UNREADABLE] unreadable file -> exit 2 with ERROR on stderr
+PASS [C-EXIT2-NOT-ARRAY] JSON object instead of array -> exit 2 with ERROR on stderr
+PASS [C-EXIT2-DOCKERFILES-DIR] missing Dockerfile dir -> exit 2 with ERROR on stderr
+PASS [C-EXIT2-BAD-PROCESS] unknown process name -> exit 2 with ERROR on stderr
+PASS [D-USER-go-service.Dockerfile] last USER is 65532:65532
+PASS [D-USER-ticketing.Dockerfile] last USER is 65532:65532
+PASS [D-USER-waitingroom.Dockerfile] last USER is 65532:65532
+PASS [D-USER-ai-worker.Dockerfile] last USER is 10001
+selftest: 198/202
+RESULT pass=229 fail=4 skip=0

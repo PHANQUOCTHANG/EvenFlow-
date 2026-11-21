@@ -1,0 +1,15 @@
+Survivor demonstrations (original checker vs mutant; run from scratchpad copies, inputs in this folder)
+M02  user-0.Dockerfile (FROM ..., USER 0)
+  original: FAIL AC-13 Dockerfile/go-service: final stage USER '0' is root (uid 0) -> exit 1
+  M02     : policy: OK (1 objects, overlay=dockerfiles) -> exit 0
+M23  malformed.json (good-local + gateway annotation eventflow.io/policy-exempt.AC-12.read-only)
+  original: FAIL EXEMPT Deployment/eventflow-gateway: malformed exemption key ... -> exit 1
+  M23     : policy: OK (69 objects, overlay=local)
+M22  emptyreason.json (good-local, web policy-exempt.AC-12.readOnlyRootFilesystem reason " ")
+  original: FAIL EXEMPT Deployment/eventflow-web: exemption ... has an empty reason; policy: 2 violation(s)
+  M22     : policy: OK (69 objects, overlay=local)  (empty-reason exemption silently accepted)
+M28  emptyurl.json (good-staging, eventflow-app-config VNPAY_RETURN_URL = "")
+  original: FAIL AC-32 Deployment/eventflow-payment: VNPAY_RETURN_URL must be present with a non-empty value (got '')
+  M28     : policy: OK (57 objects, overlay=staging)
+M20  (no demo file) every AC-32 *-configmap fixture also references the forbidden key from a container env, so the
+     env-reference check fires first; an unreferenced forbidden ConfigMap key in staging is not covered by a fixture.

@@ -1,0 +1,14 @@
+# Namespace `eventflow` (spec k8s-all AC-1): every namespaced object of both overlays lives here.
+#
+# Pod Security Admission labels are NOT set here: each overlay patches them (AC-14).
+#   local   = enforce baseline, warn/audit restricted (dev-infra images may need it)
+#   staging = enforce restricted
+# Moved from deploy/k8s/00-namespace.yaml (web slice). The numeric file prefix is no longer
+# needed: kustomize orders Namespace objects first when it renders.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: eventflow
+  labels:
+    app.kubernetes.io/name: eventflow
+    app.kubernetes.io/part-of: eventflow

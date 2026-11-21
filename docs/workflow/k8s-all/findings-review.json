@@ -1,0 +1,142 @@
+[
+  {
+    "id": "R-1",
+    "reviewer": "correctness",
+    "severity": "major",
+    "file": "deploy/k8s/base/gateway/ingress.yaml",
+    "line": 1,
+    "title": "Behind the new gateway Ingress, every anonymous client shares one rate-limit bucket (the ingress-nginx pod IP)",
+    "evidence": "services/gateway/internal/proxy/gateway.go:192-210: rateKey uses \"ip:\"+clientIP(r) and clientIP = r.RemoteAddr (comment: 'dat sau ingress/LB thi phai cau hinh proxy tin cay truoc khi doi o day'). Auth routes (/api/v1/auth/, RateAuth 1 rps burst 10) are ALWAYS keyed by IP, even when logged in (gateway.go:193). AC-23 puts api.eventflow.localtest.me (and staging, runbook 4.1) behind ingress-nginx, so RemoteAddr is the controller pod IP for all users: login/register for the whole user base is limited to ~1 rps per gateway replica, anonymous Public routes share 10 rps. identity also logs X-Forwarded-For set by gateway = controller IP. Not listed in runbook section 9 or spec section 9.",
+    "fix": "Record as a staging blocker/known limit in runbook section 9 and spec section 9 (code change is out of scope here), and open a debt item: gateway trusts X-Forwarded-For only from a configured CIDR (ingress-nginx namespace pod CIDR) with ingress-nginx use-forwarded-headers/compute-full-forwarded-for and Service externalTrafficPolicy: Local. Interim: document RATE_AUTH/RATE_DEFAULT overrides for staging."
+  },
+  {
+    "id": "R-2",
+    "reviewer": "security",
+    "severity": "major",
+    "file": "deploy/k8s/policy/check_policy.py",
+    "line": 1111,
+    "title": "AC-32 fail-closed check is bypassed by a duplicate env name (checker reads the first entry, Kubernetes uses the last)",
+    "evidence": "present() returns the FIRST env item with the name; kubelet applies env in order so the LAST duplicate wins. The overlays add env with JSON-patch 'op: add path: .../env/-', exactly the idiom that appends a duplicate. Repro: take the staging render JSON, append {name: GEMINI_MOCK, value: '1'} to ai-worker and {name: PAYMENT_ENABLED_PROVIDERS, value: sandbox} to payment, run `python -I deploy/k8s/policy/check_policy.py --overlay staging --input dup.json` -> 'policy: OK (57 objects, overlay=staging)'. Effective config would be mock Gemini and the in-process sandbox provider in staging. kubeconform does not flag duplicate env names either.",
+    "fix": "Reject duplicate env names per container (new sub-check, via a TCR with one bad fixture), or at minimum make _env_value/present evaluate the last occurrence. Add a bad fixture 'AC-32--duplicate-env-overrides'."
+  },
+  {
+    "id": "R-3",
+    "reviewer": "security",
+    "severity": "minor",
+    "file": ".github/scripts/gates.sh",
+    "line": 247,
+    "title": "C4.4 creates namespace eventflow for real on whatever cluster the current context points at",
+    "evidence": "The Job delete is correctly guarded by ^(docker-desktop|kind-.+)$, but `kubectl create namespace eventflow` (line 247) and the server dry-run of overlays/local (dev-infra + dev Secret payloads) run on ANY reachable context, e.g. a staging/prod context. The namespace is created without PSA labels (restricted is only added by a later real apply). Pre-existing behaviour (old code applied 00-namespace.yaml), but now easy to hit when an operator's context points at staging.",
+    "fix": "Apply the same context guard to the namespace creation (and ideally to the whole C4.4 dry-run); on a non-local context log that C4.4 was skipped, or dry-run overlays/staging instead."
+  },
+  {
+    "id": "R-4",
+    "reviewer": "security",
+    "severity": "minor",
+    "file": "deploy/k8s/base/networkpolicy/allow-identity.yaml",
+    "line": 1,
+    "title": "Monitoring namespaces may reach backend API ports, not just /metrics",
+    "evidence": "Per spec 6.2, allow-{identity,event,waitingroom,ticketing,payment,ai-worker} admit any pod in a namespace labelled eventflow.io/monitoring=true on the API port. NetworkPolicy cannot restrict path, so such a pod can send forged X-Identity-Id to backends (F9) and POST /admin/mode/{mode} on ai-worker (services/ai-worker/app/main.py:185, blocked only at the gateway). The label is settable by anyone who can patch namespaces. Matches the approved matrix, so not a defect, but the residual risk is not written down.",
+    "fix": "Add to runbook section 8: only label namespaces that run Prometheus, and treat the label as privileged. Debt item: serve metrics on a separate port (as gateway/controller/worker do) and narrow the monitoring rule to it."
+  },
+  {
+    "id": "R-5",
+    "reviewer": "security",
+    "severity": "minor",
+    "file": "docs/workflow/k8s-all/spec.md",
+    "line": 288,
+    "title": "Spec mitigation 'secret scan in full gate' / D4 'secret scanning baseline must allow secrets.dev.env' has no implementation",
+    "evidence": "No gitleaks/trufflehog/detect-secrets config or step in .github/ or gates.sh (grep -ri gitleaks|trufflehog|detect-secrets .github -> nothing). Only AC-16/AC-17 guard credentials, and AC-17 only sees rendered env literals/ConfigMaps.",
+    "fix": "Either correct the spec/runbook (no secret scanner exists; AC-16/17 are the only guard) or add a pinned secret scan with an allowlist for overlays/local/secrets.dev.env and testdata."
+  },
+  {
+    "id": "R-6",
+    "reviewer": "security",
+    "severity": "minor",
+    "file": "deploy/k8s/policy/check_policy.py",
+    "line": 245,
+    "title": "A workload labelled eventflow.io/tier=dev-infra escapes app rules and is not rejected in the staging render",
+    "evidence": "dev_infra is decided only by the label; dev-infra skips noRunAsUser, readOnlyRootFilesystem, tmpEmptyDir, and may use AC-6/10/11/20 exemptions. No rule fails a dev-infra object in overlay=staging (spec D6: dev-infra is local only). A new non-process Deployment in staging could self-label dev-infra and carry an arbitrary upstream image. AC-1 only protects the 11 named processes.",
+    "fix": "Via TCR: fail any object with eventflow.io/tier=dev-infra when --overlay staging (e.g. under AC-21 or AC-1) and add one bad staging fixture."
+  },
+  {
+    "id": "R-7",
+    "reviewer": "security",
+    "severity": "minor",
+    "file": "deploy/k8s/policy/check_policy.py",
+    "line": 803,
+    "title": "AC-17 does not inspect container command/args or key=value DSNs",
+    "evidence": "check_ac17 only looks at env[].value and ConfigMap data. A credential in args (e.g. goose DSN 'host=... password=...' as in compose's migrate service) or a libpq key=value DSN in an env literal not named *PASSWORD* passes; CRED_URL_RE only matches URL userinfo.",
+    "fix": "Extend AC-17 to command/args and to a '(?i)\\bpassword=' pattern; add one fixture (TCR)."
+  },
+  {
+    "id": "R-8",
+    "reviewer": "correctness",
+    "severity": "minor",
+    "file": "docs/workflow/k8s-all/runbook.md",
+    "line": 186,
+    "title": "Runbook staging section does not cover TLS on the Ingresses",
+    "evidence": "Staging values are https (CORS_ALLOWED_ORIGINS, VNPAY/MOMO return URLs, MOMO_NOTIFY_URL=https://api.staging...), but base Ingresses have no tls section and runbook 4.1 only says to patch hosts. MoMo IPN and browsers will hit https; without a tls block/cert the staging apply cannot serve these URLs.",
+    "fix": "Add to runbook 4.1 a temporary-overlay patch adding spec.tls (secretName or cert-manager annotation) for both Ingresses, and list it as a precondition."
+  },
+  {
+    "id": "R-9",
+    "reviewer": "correctness",
+    "severity": "minor",
+    "file": "deploy/k8s/validate.sh",
+    "line": 153,
+    "title": "TOOLS=docker mode fails with the default render dir",
+    "evidence": "Default RENDER_DIR is $TMP/render (mktemp -d, outside the repo). relrender() returns the host path when RENDER_DIR is not under ROOT, but kubeconform/yq containers only mount ROOT at /w, so they cannot read the render. Default TOOLS=go and CI are unaffected; contract section 6 lists docker as an optional mode.",
+    "fix": "In docker mode default RENDER_DIR to a dir under the repo (gitignored) or mount RENDER_DIR into the containers."
+  },
+  {
+    "id": "R-10",
+    "reviewer": "correctness",
+    "severity": "minor",
+    "file": "docs/workflow/k8s-all/tcr-applied.md",
+    "line": 29,
+    "title": "TCR-WP5 applied to frozen fixtures without a recorded human approval",
+    "evidence": "tcr-applied.md says TCR-WP5 was applied by WP6; test-change-request-wp5.md line 3 still reads 'Status: open, optional ... Needs human approval like any test change after freeze'. The change only adds a fixture (strengthens tests), but the v3 process requires the approval to be recorded.",
+    "fix": "Record the human approval (date, who) in tcr-applied.md and update the request status, or revert the fixture."
+  },
+  {
+    "id": "R-11",
+    "reviewer": "security",
+    "severity": "minor",
+    "file": "deploy/k8s/components/dev-infra/postgres.yaml",
+    "line": 54,
+    "title": "Dev-infra image tags are floating minor/patch tags",
+    "evidence": "postgres:16-alpine, redis:7-alpine (redis.yaml:47), rabbitmq:3.13-management-alpine (rabbitmq.yaml:55), axllent/mailpit:v1.21 (mailpit.yaml:46) satisfy AC-21 but move under the same tag; the uids (70, 999:1000, 100:101, 1000) hard-coded in runAsUser were read from one specific build and could change. pgbouncer is pinned to v1.25.2-p0.",
+    "fix": "Pin to full patch versions (e.g. postgres:16.x-alpine3.y) or @sha256 digests; local-only, so low priority."
+  },
+  {
+    "id": "R-12",
+    "reviewer": "correctness",
+    "severity": "minor",
+    "file": ".github/scripts/gates.sh",
+    "line": 257,
+    "title": "C4.4 renders with kubectl's built-in kustomize, not the pinned v5.7.1 validated by validate.sh/CI",
+    "evidence": "`kubectl apply --dry-run=server -k overlays/local` uses whatever kustomize the local kubectl bundles (kubectl 1.30 ships kustomize v5.0.x); runbook 3.2 and validate.sh use the pinned binary. The dry-run may check a different render than the one the policy approved.",
+    "fix": "When ~/.cache/eventflow-k8s/bin/kustomize-<pin> exists, pipe its build into `kubectl apply --dry-run=server -f -` (filtering the migrate Job when needed); otherwise keep -k and log the kustomize version used."
+  },
+  {
+    "id": "R-13",
+    "reviewer": "correctness",
+    "severity": "minor",
+    "file": "deploy/k8s/overlays/local/secrets.dev.env",
+    "line": 1,
+    "title": "DEV ONLY header block is duplicated",
+    "evidence": "Lines 1-4 and 6-9 are the same comment block.",
+    "fix": "Delete the second copy."
+  },
+  {
+    "id": "R-14",
+    "reviewer": "correctness",
+    "severity": "minor",
+    "file": "docs/workflow/k8s-all/runbook.md",
+    "line": 1,
+    "title": "AC-30 and AC-31 are NOT VERIFIED; merge needs the explicit human sign-off the spec requires",
+    "evidence": "runbook section 9: overlays/local never applied (migrate Job, readiness, PDB, NetworkPolicy), staging server dry-run not run, image builds/uids not run. Several runtime assumptions are only reasoned, not observed (postgres/rabbitmq fsGroup on hostpath, pgbouncer/rabbitmq as non-root uid, distroless/python under readOnlyRootFilesystem).",
+    "fix": "Record the human sign-off for NOT VERIFIED explicitly before merge, or run section 3 on Docker Desktop/kind and attach the evidence."
+  }
+]

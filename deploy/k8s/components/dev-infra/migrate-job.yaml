@@ -1,0 +1,67 @@
+# Job goose cho overlay local: chay migrations/ len Postgres trong cluster.
+#
+# Image eventflow-migrate = deploy/docker/migrate.Dockerfile (goose-docker 3.22.0 +
+# migrations, USER 65532:65532). Tag sha-c5fb598 chi la gia tri mac dinh; overlay dat
+# tag that qua `images:` (AC-20).
+#
+# Ket noi thang Postgres (DATABASE_URL_DIRECT), khong qua PgBouncer: goose dung
+# transaction + advisory lock, khong hop transaction pooling.
+#
+# Job la immutable: ttlSecondsAfterFinished xoa Job sau 10 phut de lan apply sau tao lai
+# duoc; gates/runbook xoa Job da xong truoc khi apply (m3, r2-m6).
+# Postgres chua san sang thi goose thoat loi -> restartPolicy OnFailure + backoffLimit
+# thu lai cho den khi DB len.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: eventflow-migrate
+  namespace: eventflow
+  labels:
+    app.kubernetes.io/name: eventflow-migrate
+    app.kubernetes.io/part-of: eventflow
+    eventflow.io/tier: dev-infra
+  annotations:
+    eventflow.io/policy-exempt.AC-11: "run-to-completion Job, single pod"
+spec:
+  backoffLimit: 10
+  ttlSecondsAfterFinished: 600
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: eventflow-migrate
+        app.kubernetes.io/part-of: eventflow
+        eventflow.io/tier: dev-infra
+    spec:
+      restartPolicy: OnFailure
+      automountServiceAccountToken: false
+      enableServiceLinks: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: migrate
+          image: ghcr.io/phanquocthang/eventflow-migrate:sha-c5fb598
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: GOOSE_DRIVER
+              value: postgres
+            - name: GOOSE_DBSTRING
+              valueFrom:
+                secretKeyRef:
+                  name: eventflow-db
+                  key: DATABASE_URL_DIRECT
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 128Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            privileged: false
+            capabilities:
+              drop: ["ALL"]

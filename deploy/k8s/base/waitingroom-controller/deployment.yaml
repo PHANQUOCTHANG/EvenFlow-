@@ -1,0 +1,165 @@
+# Deployment for waitingroom-controller (k8s-all spec 4.1): admission controller; Redis leases + fencing make 2 replicas safe (spec F8).
+#
+# Values come from spec 4.1 and policy-contract.md; env = the compose block with hostnames
+# replaced by Service names or by keys of `eventflow-endpoints` / `eventflow-app-config` (per overlay),
+# and every secret from `secretKeyRef` per policy-contract.md section 8 (never optional,
+# never `envFrom`). Overlay-only secret keys are added by the overlay, not here.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: eventflow-waitingroom-controller
+  namespace: eventflow
+  labels:
+    app.kubernetes.io/name: eventflow-waitingroom-controller
+    app.kubernetes.io/part-of: eventflow
+spec:
+  # Fixed 2 replicas (AC-7): leases + fencing elect one leader per event (spec F8);
+  # the second pod is a warm standby. No HPA (AC-9).
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      # AC-6: never drop below the current Ready count during a rollout.
+      maxUnavailable: 0
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: eventflow-waitingroom-controller
+      app.kubernetes.io/part-of: eventflow
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: eventflow-waitingroom-controller
+        app.kubernetes.io/part-of: eventflow
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9091"
+        prometheus.io/path: /metrics
+    spec:
+      # App grace: ctx cancel; 30 s is ample.
+      terminationGracePeriodSeconds: 30
+      # AC-12: no process calls the Kubernetes API.
+      automountServiceAccountToken: false
+      # AC-11: soft rules only, so a one-node local cluster still schedules every replica.
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                topologyKey: kubernetes.io/hostname
+                labelSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: eventflow-waitingroom-controller
+                    app.kubernetes.io/part-of: eventflow
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/name: eventflow-waitingroom-controller
+              app.kubernetes.io/part-of: eventflow
+      securityContext:
+        # AC-12: the image sets a numeric USER (AC-13); no runAsUser here on purpose, so a
+        # Dockerfile regression fails loudly (CreateContainerConfigError) instead of being masked.
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: waitingroom-controller
+          # AC-20: no tag in base; the overlay `images:` list sets sha-<short>.
+          image: ghcr.io/phanquocthang/eventflow-waitingroom
+          imagePullPolicy: IfNotPresent
+          command: ["/controller"]
+          ports:
+            - name: metrics
+              containerPort: 9091
+              protocol: TCP
+          env:
+            - name: APP_ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: eventflow-app-config
+                  key: APP_ENV
+            - name: REDIS_ADDR
+              valueFrom:
+                configMapKeyRef:
+                  name: eventflow-endpoints
+                  key: REDIS_ADDR
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              valueFrom:
+                configMapKeyRef:
+                  name: eventflow-endpoints
+                  key: OTEL_EXPORTER_OTLP_ENDPOINT
+            - name: ACTIVE_EVENT_IDS
+              valueFrom:
+                configMapKeyRef:
+                  name: eventflow-app-config
+                  key: ACTIVE_EVENT_IDS
+                  optional: true
+            - name: ADMIT_MIN_RATE
+              valueFrom:
+                configMapKeyRef:
+                  name: eventflow-app-config
+                  key: ADMIT_MIN_RATE
+                  optional: true
+            - name: ADMIT_MAX_RATE
+              valueFrom:
+                configMapKeyRef:
+                  name: eventflow-app-config
+                  key: ADMIT_MAX_RATE
+                  optional: true
+            - name: ADMIT_STEP_UP
+              valueFrom:
+                configMapKeyRef:
+                  name: eventflow-app-config
+                  key: ADMIT_STEP_UP
+                  optional: true
+            - name: ADMIT_BACKOFF
+              valueFrom:
+                configMapKeyRef:
+                  name: eventflow-app-config
+                  key: ADMIT_BACKOFF
+                  optional: true
+            - name: ADMIT_TTL_SECONDS
+              valueFrom:
+                configMapKeyRef:
+                  name: eventflow-app-config
+                  key: ADMIT_TTL_SECONDS
+                  optional: true
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 250m
+              memory: 128Mi
+          # Spec F5/9: no health endpoint, only /metrics. The probes prove the process
+          # serves HTTP, not that the work loop is alive (known limit).
+          startupProbe:
+            httpGet:
+              path: /metrics
+              port: metrics
+            periodSeconds: 2
+            timeoutSeconds: 2
+            failureThreshold: 30
+          livenessProbe:
+            httpGet:
+              path: /metrics
+              port: metrics
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /metrics
+              port: metrics
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 3

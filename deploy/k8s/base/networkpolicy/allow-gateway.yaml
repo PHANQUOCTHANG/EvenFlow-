@@ -1,0 +1,40 @@
+# Spec k8s-all 6.2 / AC-15. Ingress only; egress is not restricted in this task.
+# gateway: ingress controller, web pods (SSR) and ai-worker (INTERNAL_API_BASE) on 8080;
+# monitoring on the metrics port 9094.
+# Monitoring = namespaces labelled eventflow.io/monitoring="true" (none exists yet).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-gateway
+  labels:
+    app.kubernetes.io/part-of: eventflow
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: eventflow-gateway
+      app.kubernetes.io/part-of: eventflow
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: eventflow-web
+              app.kubernetes.io/part-of: eventflow
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: eventflow-ai-worker
+              app.kubernetes.io/part-of: eventflow
+      ports:
+        - protocol: TCP
+          port: 8080
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              eventflow.io/monitoring: "true"
+      ports:
+        - protocol: TCP
+          port: 9094

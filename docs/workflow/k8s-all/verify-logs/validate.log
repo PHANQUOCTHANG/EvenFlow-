@@ -1,0 +1,22 @@
+== tools (TOOLS=go)
+pins: kustomize=v5.7.1 kubeconform=v0.8.0 yq=v4.44.3 k8s-schema=1.32.0
+go: go version go1.27.0 windows/amd64
+python: Python 3.12.12
+kustomize: v5.7.1
+kubeconform: development
+yq: yq (https://github.com/mikefarah/yq/) version v4.44.3
+== render
+rendered overlays/local -> /tmp/tmp.fPZvIDW0tl/render/local.yaml (77 objects)
+rendered overlays/staging -> /tmp/tmp.fPZvIDW0tl/render/staging.yaml (57 objects)
+== kubeconform -strict (k8s 1.32.0)
+kubeconform local: Summary: 77 resources found in 1 file - Valid: 77, Invalid: 0, Errors: 0, Skipped: 0
+kubeconform staging: Summary: 57 resources found in 1 file - Valid: 57, Invalid: 0, Errors: 0, Skipped: 0
+== policy (check_policy.py)
+policy: OK (77 objects, overlay=local)
+policy: OK (57 objects, overlay=staging)
+== AC-13 Dockerfiles
+policy: OK (6 objects, overlay=dockerfiles)
+== policy self-test (test_policy.sh --fixtures-only)
+selftest: 197/197
+RESULT pass=228 fail=0 skip=0
+validate: OK

@@ -1,0 +1,142 @@
+== kiem tinh workflow trong ./.github/workflows ==
+
+PASS  [AC-1] khong workflow nao con golangci/golangci-lint-action@v6 (hay cu hon)
+PASS  [AC-1] khong workflow nao con 'version: latest' (bo qua comment)
+PASS  [AC-1] job lint-go van goi golangci-lint
+PASS  [AC-1] golangci-lint-action trong lint-go la ban ho tro v2 (@v7+ hoac SHA)
+PASS  [AC-1] golangci-lint duoc pin dang vX.Y.Z voi X=2 (khop .golangci.yml version "2")
+PASS  [AC-2] cd-web: job CD co step aquasecurity/trivy-action
+PASS  [AC-2] cd-web: Trivy severity = CRITICAL (dung chinh sach trivy.yml)
+PASS  [AC-2] cd-web: Trivy ignore-unfixed = true
+PASS  [AC-2] cd-web: Trivy exit-code = '1'
+PASS  [AC-2] cd-web: Trivy quet IMAGE (image-ref, khong phai fs)
+PASS  [AC-2] cd-web: Trivy / job CD khong co continue-on-error: true
+PASS  [AC-2] cd-web: khong con 'push: true' o bat ky dau (K4.1)
+PASS  [AC-2] cd-web: moi docker/build-push-action dung load: true (K4.1)
+PASS  [AC-2] cd-web: build dung TRUOC Trivy (K4)
+PASS  [AC-2] cd-web: co 'docker push' va moi docker push dung SAU Trivy (K4.3)
+PASS  [AC-2] cd-web: step docker push khong co if: always()/failure()/cancelled()
+PASS  [AC-2] cd-web: khong build lai sau Trivy (push dung image da quet)
+PASS  [AC-2] cd-web: moi uses: ben thu ba (khong phai actions/*) pin SHA 40 hex (K4)
+PASS  [AC-2] cd-web: step Trivy KHONG co if:
+PASS  [AC-2] cd-web: image-ref cua Trivy la mot trong cac ref duoc docker push (K4.3)
+PASS  [AC-2] cd-web: moi ref duoc docker push la tag cua image da build (load) roi quet
+PASS  [AC-2] cd-web: docker/login-action nam SAU Trivy va TRUOC docker push
+PASS  [AC-2] cd-web: actions/checkout co persist-credentials: false
+PASS  [AC-3] cd-web: build-push-action truyen NEXT_PUBLIC_API_BASE=${{ vars.NEXT_PUBLIC_API_BASE }}
+PASS  [AC-3] cd-web: gia tri do nam duoi build-args:
+PASS  [AC-3] cd-web: co step in ::warning khi NEXT_PUBLIC_API_BASE rong (co kiem tra rong)
+PASS  [AC-3] khong workflow nao noi suy vars.NEXT_PUBLIC_API_BASE thang vao run: (K4)
+PASS  [AC-3] cd-web: step canh bao doc bien qua env: cua step (K4)
+PASS  [AC-3] cd-web: co dong job summary nhac API base (GITHUB_STEP_SUMMARY)
+PASS  [AC-4] oversell-gate: goi run-and-report-tests.sh TestNoOversell boc 'make test-oversell TESTFLAGS=-v'
+PASS  [AC-4] integration: smoke goi run-and-report-tests.sh TestNoOversell boc 'go test -v -run TestNoOversell -count=20'
+PASS  [AC-4] oversell-gate: exit code cua run-and-report-tests.sh khong bi nuot (|| true, ; true, continue-on-error)
+PASS  [AC-4] integration: exit code cua run-and-report-tests.sh khong bi nuot (|| true, ; true, continue-on-error)
+PASS  [AC-4] Makefile: recipe test-oversell dung $(TESTFLAGS) (K2)
+PASS  [AC-4] Makefile: khong truyen TESTFLAGS => lenh y het hien tai (K2, khong hoi quy)
+PASS  [AC-4] Makefile: TESTFLAGS=-v => them dung token -v, phan con lai giu nguyen (K2)
+PASS  [AC-4] oversell-gate: moi step wrapper dat REQUIRE_PASS=1 (0 PASS la do, khong chi canh bao)
+PASS  [AC-4] integration: moi step wrapper dat REQUIRE_PASS=1
+PASS  [AC-4] oversell-gate: co step rieng cho hold het han (make test-oversell-expiry, qua wrapper, -v)
+tr: warning: an unescaped backslash at end of string is not portable
+PASS  [AC-4] Makefile: test-oversell-expiry chay dung test het han, dung TESTFLAGS, -count=20
+PASS  [AC-4] Makefile: test-oversell (x200) khong chay test hold het han
+PASS  [AC-5] ci.yml: doi deploy/docker/web.Dockerfile => job lint-web chay
+PASS  [AC-5] ci.yml: doi deploy/docker/web.Dockerfile => job test-web chay
+PASS  [AC-5] ci.yml: doi .github/scripts/gates.sh => job lint-web chay
+PASS  [AC-5] ci.yml: doi .github/scripts/gates.sh => job test-web chay
+PASS  [AC-5] ci.yml: doi .github/workflows/ci.yml => job lint-web chay
+PASS  [AC-5] ci.yml: doi .github/workflows/ci.yml => job test-web chay
+PASS  [AC-5] ci.yml: doi .github/workflows/ci.yml => job lint-go chay
+PASS  [AC-5] ci.yml: doi .github/workflows/ci.yml => job test-go chay
+PASS  [AC-5] ci.yml: doi .github/workflows/ci.yml => job lint-python chay
+PASS  [AC-5] ci.yml: doi .github/workflows/ci.yml => job test-python chay
+PASS  [AC-5] ci.yml: doi deploy/k8s/** => co job chay 'kubeconform -strict'
+PASS  [AC-5] ci.yml: doi deploy/compose/** => co job chay 'docker compose ... config'
+PASS  [AC-5] trivy.yml: doi .github/workflows/trivy.yml => job trivy (scan) chay
+PASS  [AC-5] trivy.yml: doi go.work => job trivy (scan) chay
+PASS  [AC-5] trivy.yml: doi services/gateway/go.mod => job trivy (scan) chay
+PASS  [AC-5] trivy.yml: doi services/notification/cmd/main.go => job trivy (scan) chay
+PASS  [AC-5] trivy.yml: doi services/ai-worker/app/main.py => job trivy (scan) chay
+PASS  [AC-5] trivy.yml: doi .dockerignore => job trivy (scan) chay
+PASS  [AC-6] ci.yml: co job chay bash .github/scripts/gates.sh
+PASS  [AC-6] ci.yml: job gates checkout voi fetch-depth: 0
+PASS  [AC-6] ci.yml: job gates dat BASE_REF
+PASS  [AC-6] ci.yml: BASE_REF = base cua PR khi pull_request
+PASS  [AC-6] ci.yml: BASE_REF = commit truoc (github.event.before) khi push
+PASS  [AC-6] ci.yml: loi cua gates.sh khong bi nuot (khong continue-on-error / || true)
+PASS  [AC-7] cd-web.yml: khai permissions: (top-level, hoac o moi job)
+PASS  [AC-7] cd-web.yml: co contents: read
+PASS  [AC-7] cd-web.yml: co packages: write va KHONG co quyen ghi nao khac
+PASS  [AC-7] ci.yml: khai permissions: (top-level, hoac o moi job)
+PASS  [AC-7] ci.yml: co contents: read
+PASS  [AC-7] ci.yml: khong co quyen ghi nao (chi cd-web.yml duoc packages: write)
+PASS  [AC-7] ci.yml: dung dorny/paths-filter => co pull-requests: read
+PASS  [AC-7] e2e-nightly.yml: khai permissions: (top-level, hoac o moi job)
+PASS  [AC-7] e2e-nightly.yml: co contents: read
+PASS  [AC-7] e2e-nightly.yml: khong co quyen ghi nao (chi cd-web.yml duoc packages: write)
+PASS  [AC-7] e2e-web.yml: khai permissions: (top-level, hoac o moi job)
+PASS  [AC-7] e2e-web.yml: co contents: read
+PASS  [AC-7] e2e-web.yml: khong co quyen ghi nao (chi cd-web.yml duoc packages: write)
+PASS  [AC-7] integration.yml: khai permissions: (top-level, hoac o moi job)
+PASS  [AC-7] integration.yml: co contents: read
+PASS  [AC-7] integration.yml: khong co quyen ghi nao (chi cd-web.yml duoc packages: write)
+PASS  [AC-7] oversell-gate.yml: khai permissions: (top-level, hoac o moi job)
+PASS  [AC-7] oversell-gate.yml: co contents: read
+PASS  [AC-7] oversell-gate.yml: khong co quyen ghi nao (chi cd-web.yml duoc packages: write)
+PASS  [AC-7] trivy.yml: khai permissions: (top-level, hoac o moi job)
+PASS  [AC-7] trivy.yml: co contents: read
+PASS  [AC-7] trivy.yml: khong co quyen ghi nao (chi cd-web.yml duoc packages: write)
+PASS  [AC-7] trivy.yml: dung dorny/paths-filter => co pull-requests: read
+PASS  [AC-8] trivy.yml/trivy-gate: if: cua job DUNG BANG always() (K5)
+PASS  [AC-8] trivy.yml/trivy-gate: if: cua job KHONG chua failure/cancelled/contains (K5)
+PASS  [AC-8] trivy.yml/trivy-gate: co step doc needs.*.result, in ::error va exit 1 (K5)
+PASS  [AC-8] trivy.yml/trivy-gate: step gate xet ca 'failure' lan 'cancelled'
+PASS  [AC-8] trivy.yml/trivy-gate: step gate khong fail khi needs chi la success/skipped
+PASS  [AC-8] trivy.yml/trivy-gate: needs: chua MOI job khac trong file
+PASS  [AC-8] trivy.yml/trivy-gate: step gate / job khong co continue-on-error
+PASS  [AC-8] trivy.yml/trivy-gate: if: cua step gate bo trong hoac DUNG BANG always()
+PASS  [AC-8] trivy.yml/trivy-gate: step gate so ket qua bieu thuc voi dung literal 'true' (hoac != 'false')
+PASS  [AC-8] ci.yml/build: if: cua job DUNG BANG always() (K5)
+PASS  [AC-8] ci.yml/build: if: cua job KHONG chua failure/cancelled/contains (K5)
+PASS  [AC-8] ci.yml/build: co step doc needs.*.result, in ::error va exit 1 (K5)
+PASS  [AC-8] ci.yml/build: step gate xet ca 'failure' lan 'cancelled'
+PASS  [AC-8] ci.yml/build: step gate khong fail khi needs chi la success/skipped
+PASS  [AC-8] ci.yml/build: needs: chua MOI job khac trong file
+PASS  [AC-8] ci.yml/build: step gate / job khong co continue-on-error
+PASS  [AC-8] ci.yml/build: if: cua step gate bo trong hoac DUNG BANG always()
+PASS  [AC-8] ci.yml/build: step gate so ket qua bieu thuc voi dung literal 'true' (hoac != 'false')
+PASS  [AC-8] ci.yml/build: cac step build giu dieu kien theo filter go/web/python (K5)
+PASS  [AC-9] moi NODE_VERSION khai trong workflow = 22
+PASS  [AC-9] khong con node-version 20 / node:20 o workflow nao
+PASS  [AC-9] ci.yml: moi actions/setup-node co node-version = 22
+PASS  [AC-9] e2e-nightly.yml: moi actions/setup-node co node-version = 22
+PASS  [AC-9] e2e-web.yml: moi actions/setup-node co node-version = 22
+PASS  [AC-12] go.work co khoi use (...) doc duoc
+PASS  [AC-12] deploy/docker/ticketing.Dockerfile: COPY go.work + go.mod (hoac ca thu muc) cua MOI module trong go.work
+PASS  [AC-12] deploy/docker/waitingroom.Dockerfile: COPY go.work + go.mod (hoac ca thu muc) cua MOI module trong go.work
+PASS  [AC-11] K3: ci.yml con job 'detect-changes'
+PASS  [AC-11] K3: ci.yml con job 'lint-go'
+PASS  [AC-11] K3: ci.yml con job 'lint-web'
+PASS  [AC-11] K3: ci.yml con job 'lint-python'
+PASS  [AC-11] K3: ci.yml con job 'test-go'
+PASS  [AC-11] K3: ci.yml con job 'test-web'
+PASS  [AC-11] K3: ci.yml con job 'test-python'
+PASS  [AC-11] K3: ci.yml con job 'build'
+PASS  [AC-11] K3: trivy.yml con job 'detect-changes'
+PASS  [AC-11] K3: trivy.yml con job 'trivy'
+PASS  [AC-11] K3: trivy.yml con job 'trivy-gate'
+PASS  [AC-11] K3: cd-web.yml con job 'build & push ghcr web'
+PASS  [AC-11] K3: integration.yml con job 'integration'
+PASS  [AC-11] K3: oversell-gate.yml con job 'oversell-gate'
+PASS  [AC-11] K3: e2e-nightly.yml con job 'e2e'
+PASS  [AC-11] cd-web: if: con github.event.workflow_run.event == 'push'
+PASS  [AC-11] cd-web: if: con workflow_run.head_repository.full_name == github.repository
+PASS  [AC-11] cd-web: if: con github.ref == 'refs/heads/main' (workflow_dispatch)
+PASS  [AC-11] cd-web: if: con workflow_run.conclusion == 'success' (chi chay sau CI xanh)
+PASS  [AC-11] cd-web: van chi kich hoat sau workflow 'CI' tren main
+PASS  [AC-11] khong workflow nao chay kubectl apply/create/... hay helm install/upgrade that (khong --dry-run)
+PASS  [AC-11] chi cd-web.yml duoc push image
+
+== Ket qua: 137 PASS, 0 FAIL ==

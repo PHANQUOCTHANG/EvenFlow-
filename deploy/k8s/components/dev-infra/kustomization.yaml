@@ -1,0 +1,27 @@
+# Ha tang dev trong cluster (spec D6): chi overlays/local dung component nay.
+# Staging/prod tro toi DB/Redis/RabbitMQ/SMTP ngoai.
+#
+# Secret dung ten goc; secretGenerator cua overlay local (eventflow-dev-infra,
+# eventflow-db) gan hash suffix va kustomize tu doi ten trong secretKeyRef.
+#
+# uid/gid doc tu image (r2-m2, 2026-11-01, image config + /etc/passwd trong layer):
+#   postgres:16-alpine               70:70     (fsGroup 70)
+#   edoburu/pgbouncer:v1.25.2-p0      70:70     (USER postgres -> so 70)
+#   redis:7-alpine                    999:1000  (fsGroup 1000)
+#   rabbitmq:3.13-management-alpine   100:101   (fsGroup 101)
+#   axllent/mailpit:v1.21             1000:1000 (image khong co user, binary tinh)
+#   eventflow-migrate                 65532:65532 (USER trong migrate.Dockerfile)
+# Khong workload nao can root hay capability: khong co exemption AC-12.
+#
+# Neu PVC khong ghi duoc (vd. StorageClass hostpath khong ap fsGroup, r3-m4): them
+# `../../components/dev-infra/ephemeral-data` vao `components:` cua overlay.
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+resources:
+  - postgres.yaml
+  - pgbouncer.yaml
+  - redis.yaml
+  - rabbitmq.yaml
+  - mailpit.yaml
+  - migrate-job.yaml
+  - networkpolicy.yaml
