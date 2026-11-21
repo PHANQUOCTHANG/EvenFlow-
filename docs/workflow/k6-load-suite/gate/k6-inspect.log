@@ -1,0 +1,1 @@
+NOT RUN: k6 is not installed and Docker is not running (main.js is covered offline by main-wiring.test.mjs with stubbed k6 modules)

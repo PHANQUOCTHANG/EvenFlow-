@@ -1,0 +1,1 @@
+NOT RUN: no shellcheck binary and Docker is not running
