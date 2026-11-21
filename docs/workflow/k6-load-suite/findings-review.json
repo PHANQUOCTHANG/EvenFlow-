@@ -1,0 +1,74 @@
+[
+  {
+    "id": "R-1",
+    "severity": "major",
+    "file": "tests/load/main.js",
+    "line": 131,
+    "title": "Webhook slotting by identity index cannot keep up with default checkout/wait/full rates; holds expire before the webhook",
+    "evidence": "slot = startMs + (who.n - range.start) * 1000 / WEBHOOK_RATE (default 8/s, profiles.js:23). Identity k arrives at k/CHECKOUT_RATE (200/s) but its webhook slot is k/8 s, so the sleep grows linearly: identity 4800 already waits 600 s = HOLD_TTL_SECONDS default (seed.sh:23, BR-O2). Every later checkout sleeps past hold/order expiry, the webhook then hits an expired order, and ISSUED never arrives (checkout_issue_timeout). Same for wait: 20000 admitted VUs / 8 = 2500 s > 30 min. VUs pile up toward maxVUs and dropped_iterations. Smoke (20 identities, 2.5 s) is unaffected, so the smoke run cannot reveal it. D4 says full runs need RATE_DEFAULT raised, but nothing ties WEBHOOK_RATE to CHECKOUT_RATE and the defaults are inconsistent.",
+    "fix": "In resolveConfig, for profiles with a checkout phase (checkout/full/wait) default WEBHOOK_RATE to the expected purchase rate (CHECKOUT_RATE, or WAIT_VUS/admit rate) and throw at init when WEBHOOK_RATE < CHECKOUT_RATE unless an explicit override is given; also cap the slot delay below the hold TTL (skip/record 'webhook_delayed' instead of sleeping past it). Add a profiles test for the consistency rule."
+  },
+  {
+    "id": "R-2",
+    "severity": "minor",
+    "file": "tests/load/seed-load.sh",
+    "line": 31,
+    "title": "RESET=1 default wipes whatever LOAD_EVENT names; no guard against the demo event or a remote docker context",
+    "evidence": "LOAD_EVENT only has to be a UUID, then deploy/scripts/seed.sh RESET=1 deletes tickets/payments/orders/holds/queue_sessions/the event and Redis keys for it. LOAD_EVENT=11111111-1111-4111-8111-111111111111 (demo event) would destroy demo data. The 'refuse non-local DB' requirement is met only implicitly (docker compose exec postgres); a DOCKER_HOST/context pointing at a remote engine would seed and reset a remote DB. Identity inserts are safe (9000 range, ON CONFLICT DO NOTHING, count check), and verify is read-only.",
+    "fix": "Refuse LOAD_EVENT unless it matches 22222222-2222-4222-8222-0000000001xx (or equals the default), and abort when DOCKER_HOST is set to a non-local value or `docker context show` is not default/desktop-linux unless ALLOW_REMOTE=1."
+  },
+  {
+    "id": "R-3",
+    "severity": "minor",
+    "file": "tests/load/lib/profiles.js",
+    "line": 14,
+    "title": "Default QUOTA differs between seed (200) and non-smoke profiles (10000): oversell threshold silently weak",
+    "evidence": "seed-load.sh QUOTA=200 but spike/wait/checkout/full resolve quota=10000, so `checkout_holds_ok count<=10000` (abortOnFail) cannot trip when the seeded quota is 200. The invariant only holds if the user passes the same QUOTA to both make load-seed and make load (README example does, defaults do not).",
+    "fix": "Make the two defaults equal (e.g. seed-load.sh default QUOTA=10000 like seed.sh, or profile default 200), and have setup() log the quota it enforces."
+  },
+  {
+    "id": "R-4",
+    "severity": "minor",
+    "file": "tests/load/lib/profiles.js",
+    "line": 212,
+    "title": "Non-smoke profiles can pass with zero successful purchases",
+    "evidence": "http_req_failed counts 5xx/network only (expectedStatuses 200-499 in main.js:31), and check() results never affect the k6 exit code. Hold 403/422, payment 4xx, webhook 404 or checkout_issue_timeout therefore fail no threshold; wr_admitted/checkout_issued/wr_status_304_ratio thresholds exist only for smoke. A checkout/full run where every buyer times out still exits 0.",
+    "fix": "Add `checkout_issue_timeout: [count==0]` (or a ratio vs checkout_holds_ok) and a Rate metric checkout_step_ok > 0.99 for checkout/full/wait; keep the 4xx-excluded http_req_failed as is."
+  },
+  {
+    "id": "R-5",
+    "severity": "minor",
+    "file": "tests/load/lib/profiles.js",
+    "line": 79,
+    "title": "Spike tail makes total arrivals exceed JOIN_TARGET (about +20% at defaults)",
+    "evidence": "spikeShape: rate*ramp + (rate+tail)/2 + tail*24 = 119,800 arrivals for JOIN_TARGET=100000/5s. AC-8 says JOIN_TARGET total arrivals within JOIN_RAMP; the first 5 s do deliver exactly JOIN_TARGET (startRate == stage target, departure 3 is correct), but wr_join_arrivals will not equal JOIN_TARGET and users needed (identity range) is sized to the larger number.",
+    "fix": "Keep the shape; document in README/summary that arrivals = target + tail, and print arrivals in the first JOIN_RAMP seconds or label the requested row 'ramp only'."
+  },
+  {
+    "id": "R-6",
+    "severity": "minor",
+    "file": "tests/load/main.js",
+    "line": 56,
+    "title": "setup() accepts only AVAILABLE; a re-run with RESET=0 on a partly sold type fails with a misleading message",
+    "evidence": "FEW_LEFT (<= fewLeftPercent) is a sellable level but is rejected as 'not AVAILABLE ... run seed-load.sh first'. Default RESET=1 avoids it; RESET=0 or tiny QUOTA hits it.",
+    "fix": "Treat AVAILABLE and FEW_LEFT as ready; keep SOLD_OUT/no tier as the error."
+  },
+  {
+    "id": "R-7",
+    "severity": "minor",
+    "file": "tests/load/main.js",
+    "line": 262,
+    "title": "RUN_ID for result files relies on data.setup_data in handleSummary; falls back to the constant 'norun'",
+    "evidence": "If setup_data is absent from the handleSummary argument on the installed k6, every run without RUN_ID writes tests/load/results/<profile>-norun.json and overwrites the previous evidence (AC-11). Not verifiable here (k6 not installed, load-smoke NOT RUN).",
+    "fix": "Compute runId at init (RUN_ID env or a timestamp captured at init time) instead of in setup(), and pass it to setup via return value only for logging; confirm on the first real smoke run."
+  },
+  {
+    "id": "R-8",
+    "severity": "minor",
+    "file": "tests/load/lib/flow.js",
+    "line": 66,
+    "title": "ALLOW_REMOTE/BASE are read from the ambient process environment by k6",
+    "evidence": "k6 exposes the shell environment as __ENV, so a leftover `export ALLOW_REMOTE=1` plus a common `BASE=https://staging...` silently arms a remote run without any -e flag (guardTarget host matching itself is sound: localhost.evil.com, userinfo tricks and non-1 values are all refused).",
+    "fix": "Require the opt-in through the k6 CLI only (e.g. `-e ALLOW_REMOTE=1` is indistinguishable, so instead also require REMOTE_CONFIRM=<host> equal to the BASE host), or print a loud banner in setup() when the target is non-local."
+  }
+]
