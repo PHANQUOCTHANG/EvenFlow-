@@ -189,3 +189,11 @@ Frozen assertions that change once the defaults change (proposed new expectation
 Also `contracts.md` §3.1 (revision 4) records the Amendment 2 table as approved but not yet the default.
 
 </details>
+
+## Note (fix round 2, R2-4): no new TCR needed
+
+Re-review R2-4 asked about the two frozen files reformatted after the freeze
+(`services/waitingroom/internal/adapter/redis/lane_integration_test.go`,
+`services/waitingroom/test/antibot/antibot_bot_test.go`). Both changes are line breaks only and are covered by the
+approved **TCR-5** (commit 82252a4); `full-gate.sh` lists 82252a4 in `TCR_COMMITS` and its tamper step checks that
+no other commit touched them. Fix round 2 adds only new test files; no frozen test changes.

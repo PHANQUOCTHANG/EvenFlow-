@@ -72,7 +72,7 @@ AC-16:
   - not covered here: k8s Secret / policy changes (gate step `kustomize build ... | grep ANTIBOT_HASH_KEY`, check_policy.py TCR N-5)
 AC-17:
   - G/guard_test.go: TestGuard_AC17_DecisionMetrics (decisions_total, rule_fired_total, decide_seconds, capped_total); degraded/invalid/dropped/nonuuid counters in their own tests
-  - not covered here: alert cases appended to deploy/observability/alerts_test.yml (existing frozen test file: implementer appends the 4 new alert cases; promtool gate)
+  - deploy/observability/alerts_antibot_test.yml: promtool cases for AntibotDegraded, AntibotSlow, AntibotBlockSpike, AntibotNetSuppressed (positive + negative each; a new file because alerts_test.yml is frozen; CI runs both, contracts 6 drift note R-9) [promtool: needs Docker]
 AC-18:
   - G/corpus_test.go: TestCorpus_AC18_DefaultConfig (>= 95% / < 1% / BLOCK lists a rule; per-family + per-rule tables), HumansOnBothSidesOfThresholds, SensitivityTable (+-20%, printed), GeneratorDeterministic
   - G/corpus/corpus.go + G/testdata/corpus/README.md: generator and parameter sources
