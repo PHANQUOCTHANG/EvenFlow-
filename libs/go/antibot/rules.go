@@ -88,6 +88,9 @@ func evaluateRules(cfg *Config, in *Input, sig *Signals, st *State) ruleSet {
 		if sig.TZ != "" && sig.TZO.OK && zoneDisagrees(sig.TZ, sig.TZO.V, in.Now) {
 			weak++
 		}
+		if len(cfg.UAWeak) > 0 && uaDenied(cfg.UAWeak, in.UserAgent) {
+			weak++ // generic HTTP library UA (Amendment 2, X-5): never strong on its own
+		}
 		if weak >= 2 {
 			rs.fire(R5W)
 		}

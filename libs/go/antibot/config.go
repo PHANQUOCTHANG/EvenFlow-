@@ -1,6 +1,7 @@
 package antibot
 
 import (
+	"bytes"
 	"encoding/base64"
 	"fmt"
 	"math"
@@ -47,7 +48,8 @@ type Config struct {
 	BreakerWindow   time.Duration
 	BreakerOpen     time.Duration
 	PassSample      float64
-	UADeny          []string // lower case
+	UADeny          []string // lower case; a match is a strong R5 sign
+	UAWeak          []string // lower case; a match is one weak R5W sign (Amendment 2, X-5)
 
 	weights [len(allRules)]float64
 }
@@ -67,6 +69,11 @@ func DefaultRules() RuleParams {
 // DefaultUADeny is the built-in User-Agent deny list (case-insensitive substrings).
 var DefaultUADeny = []string{"HeadlessChrome", "PhantomJS", "python-requests", "python-httpx", "aiohttp", "curl/",
 	"Wget", "Go-http-client", "okhttp", "node-fetch", "axios/", "Scrapy", "Puppeteer", "Playwright", "Selenium"}
+
+// DefaultUAWeak is the built-in weak User-Agent list: generic HTTP libraries that legitimate first-party or test
+// clients also use (Amendment 2, X-5), so a match alone never blocks. Empty until TCR-6 moves the four
+// libraries out of DefaultUADeny (the frozen rule tests still expect them there).
+var DefaultUAWeak = []string{}
 
 // DefaultSlowLanePenalty is ANTIBOT_SLOW_LANE_PENALTY's default (also shuffle.lua's default).
 const DefaultSlowLanePenalty int64 = 100000
@@ -90,6 +97,9 @@ func DefaultConfig() Config {
 	}
 	for _, s := range DefaultUADeny {
 		c.UADeny = append(c.UADeny, strings.ToLower(s))
+	}
+	for _, s := range DefaultUAWeak {
+		c.UAWeak = append(c.UAWeak, strings.ToLower(s))
 	}
 	c.index()
 	return c
@@ -131,6 +141,7 @@ func LoadConfig(getenv func(string) string) (Config, error) {
 		{"ANTIBOT_BREAKER", c.loadBreaker},
 		{"ANTIBOT_PASS_SAMPLE", c.loadSample},
 		{"ANTIBOT_UA_DENY", c.loadUADeny},
+		{"ANTIBOT_UA_WEAK", c.loadUAWeak},
 	}
 	for _, s := range steps {
 		v := strings.TrimSpace(getenv(s.name))
@@ -173,6 +184,11 @@ func (c *Config) loadKey(v string, production bool) error {
 	}
 	if len(key) < 32 {
 		return fmt.Errorf("ANTIBOT_HASH_KEY: %d bytes, want at least 32", len(key))
+	}
+	// R-5: a public dev key would let anyone recompute the stored device_fp hashes (D10). Every committed dev
+	// value carries the marker "dev" (in the text or in the decoded bytes), so production refuses it.
+	if production && (bytes.Equal(key, devHashKey) || strings.Contains(v, "dev") || bytes.Contains(key, []byte("dev"))) {
+		return fmt.Errorf("ANTIBOT_HASH_KEY: a dev key (contains \"dev\") is not allowed when APP_ENV=production")
 	}
 	c.HashKey, c.DevKey = key, false
 	return nil
@@ -360,6 +376,21 @@ func (c *Config) loadSample(v string) error {
 	}
 	c.PassSample = f
 	return nil
+}
+
+func (c *Config) loadUAWeak(v string) error {
+	c.UAWeak = lowerList(v)
+	return nil
+}
+
+func lowerList(v string) []string {
+	var out []string
+	for _, s := range strings.Split(v, ",") {
+		if s = strings.TrimSpace(s); s != "" {
+			out = append(out, strings.ToLower(s))
+		}
+	}
+	return out
 }
 
 func (c *Config) loadUADeny(v string) error {
