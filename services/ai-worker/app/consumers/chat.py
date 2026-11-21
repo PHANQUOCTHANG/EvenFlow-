@@ -21,6 +21,7 @@ from dataclasses import dataclass
 from app.llm.client import RateLimited
 from app.llm.guarded import PermitDenied, guarded_generate
 from app.llm.limiter import GlobalRateLimiter
+from app.logx import error_fields
 from app.mq.protocol import MAX_ATTEMPTS, PermanentError
 from app.mq.runtime import Delivery
 from app.pipeline import degradation
@@ -123,10 +124,11 @@ class ChatConsumer:
             answer = await self._call_llm(job, policy)
         except Retry:
             raise
-        except Exception:
+        except Exception as exc:  # noqa: BLE001 - moi loi LLM deu ve FAQ; log khong traceback (X-1)
             # LLM hong (loi, timeout, tra loi khong tron ven) -> van tra loi duoc bang FAQ.
             # Khach khong bao gio thay loi ky thuat (BR-A1), phan do dang khong bi cache.
-            log.exception("goi llm that bai")
+            # Chi ten loi + ma HTTP, khong traceback: chuoi loi cua SDK co the chua key (X-1).
+            log.error("goi llm that bai", extra=error_fields(exc))
             await self._emit(job, self._faq.fallback(None), source="fallback", mode=mode)
             return None
         finally:
