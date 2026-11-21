@@ -1,0 +1,16 @@
+{
+  "task": "antibot-phase1",
+  "head_before_tests": "d920a1d (Go); 9bc1e92 (web re-run, docs-only commits since d920a1d)",
+  "method": "count of '--- PASS' lines (tests + subtests) from `go test ./... -count=1 -v`; vitest JSON reporter numPassedTests",
+  "modules": {
+    "libs/go": { "pass": 262, "fail": 0, "skip": 0, "note": "unit only (integration tests need -tags integration)" },
+    "services/waitingroom": { "pass": 228, "fail": 0, "skip": 0, "note": "unit only" },
+    "apps/web": { "pass": 2727, "fail": 0, "skipped": 0, "files": 766, "command": "env -u VITEST_MAX_THREADS -u VITEST_MAX_FORKS npx vitest run" }
+  },
+  "after_new_tests": {
+    "libs/go (excluding ./antibot/...)": { "pass": 262 },
+    "services/waitingroom (all packages, new test files moved aside)": { "pass": 228 },
+    "services/waitingroom (as committed)": { "pass": 143, "note": "packages internal/adapter/http and internal/adapter/postgres do not build until libs/go/antibot exists; their 85 existing tests are blocked, not failing" },
+    "apps/web": { "pass": 2727, "fail": 6, "note": "6 failures are the new component tests; antibot-signals.test.ts fails to import" }
+  }
+}

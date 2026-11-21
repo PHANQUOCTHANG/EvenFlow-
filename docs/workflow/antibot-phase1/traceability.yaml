@@ -1,0 +1,118 @@
+# AC -> tests for antibot-phase1 (v3 step 2a). Tags: [unit] runs in `go test` / vitest; [integration] needs
+# `-tags integration` + Docker; [pending] needs input the implementer cannot produce.
+# Paths: G = libs/go/antibot, W = services/waitingroom, Web = apps/web/src.
+
+AC-1:
+  - Web/lib/antibot-signals.test.ts: readSignals null when absent/corrupt; snapshot stored under ef:ab:{id}; v1 field types; join click counted; clearSignals
+  - Web/components/queue/waiting-room.antibot.test.tsx: join sends stored snapshot; no snapshot -> auto-join with {"v":1}; 401 re-join resends and keeps snapshot; sold-out removes snapshot
+  - Web/components/event/event-action-panel.antibot.test.tsx: passive collector on mount; snapshot written at click before jitter
+AC-2:
+  - Web/lib/antibot-signals.test.ts: passive listeners; cleanup removes listeners; no key values / coordinates; caps 10000 / 32 / 0..60000; pointermove sampled and not in iv; scroll burst only first is discrete; sq >= 12 events and >= 4 buckets, sn/sb ranges; <= 2 KiB; probes once per page
+AC-3:
+  - G/signals_test.go: TestDecodeSignals_AC3_* (valid, unknown fields, whole-payload reasons, {"v":1} valid-but-empty, 4 KiB boundary, out-of-range field, wrong type drops only that field, wrong type absent for rules, numbers rounded)
+  - G/golden_test.go + G/testdata/signals/*.json: shared golden snapshots decode valid, no rule fires
+  - Web/lib/antibot-signals.test.ts: scripted keyboard session matches testdata/signals/scripted_keyboard.json
+  - G/guard_test.go: TestGuard_AC3_InvalidSignalsMetric (antibot_signals_invalid_total{reason}, BodyErr counted)
+  - W/internal/adapter/http/antibot_handler_test.go: TestAntibotJoin_AC3_BadBodiesStillJoin (oversize, bad json, no signals -> 200; BodyErr / missing reach the guard)
+  - W/test/antibot/antibot_bot_test.go: TestAC3_InvalidSignalsCountedEndToEnd [integration]
+AC-4:
+  - G/rules_test.go: TestRule_AC4_R1Client, R1Server, R2, R3, VersionOnlyScoresR3Only, R4D, R4N (incl. suppressed), R5Strong (each deny entry, case, custom list), R5Weak (mobile fc exemption, DST zone, invalid zone), R6 (dormant -1), R7 (sn/sb floors, config); TestEvaluate_AC4_BaselineFiresNothing; TestEvaluate_AC4_OnlyKnownRuleIDs
+  - G/signals_test.go: FuzzDecodeSignals
+  - G/score_test.go: FuzzEvaluate
+AC-5:
+  - G/engine_bench_test.go: BenchmarkEvaluate; TestEvaluate_AC5_P99 (pure engine p99 < 0.2 ms; batch-of-50 timing on Windows; skipped under -race / -short)
+  - G/redisstate/store_integration_test.go: TestGuard_AC5_DecideP99Sequential, TestGuard_AC5_DecideP99Concurrent (64 goroutines) [integration]
+  - load gate (opening-spike.js develop vs branch) is a gate step, not a test file here
+AC-6:
+  - G/redisstate/store_integration_test.go: TestStore_AC6_CountsDistinctIdentities, WindowsUseInputNow, Caps, TTLs, KeysAreScopedAndPrivate, AbsentInputsSkipped, OneScriptCall [integration]
+  - G/guard_test.go: TestGuard_AC6_ObserveGetsHashPrefixAndSq
+AC-7:
+  - G/guard_test.go: TestGuard_AC7_TimeoutDegrades, ErrorDegrades, PanicPasses, BreakerOpensAndCloses, ConcurrentDecide
+  - G/rules_test.go: TestEvaluate_AC7_UnknownStateUsesStatelessRulesOnly
+  - G/redisstate/store_integration_test.go: TestGuard_AC7_RedisTimeoutDegrades (CLIENT PAUSE), TestGuard_AC7_RedisDownDegrades [integration]
+AC-8:
+  - G/score_test.go: TestScore_AC8_DefaultOutcomesTable (every contracts 3 row), NoisyOrRounded, TierBoundariesLowerInclusive, BlockEligibilityCap (D11)
+AC-9:
+  - W/internal/adapter/http/antibot_handler_test.go: TestAntibotJoin_AC9_PassIsDevelop
+  - W/internal/adapter/redis/lane_integration_test.go: TestLane_AC9_NormalLaneIsDevelop [integration]
+AC-10:
+  - G/score_test.go: TestScore_AC10_AC13_AppliedMatrix (fallback pass / slow_lane; tier kept as CHALLENGE)
+AC-11:
+  - G/score_test.go: TestScore_AC11_RejoinKeepsSlotUnlessBlock (D12)
+  - W/internal/adapter/http/antibot_handler_test.go: TestAntibotJoin_AC11_SlowLaneSameResponse, TestAntibotJoin_P4_SlowLaneFallbackWithoutLaneStore
+  - W/internal/adapter/redis/lane_integration_test.go: SlowAfterT0IsPLater, IdempotentRejoinPerLane, SlowBeforeT0IsLobby, ShufflePlacesSlowLobbyBehind (incl. 1e12+seq+P+m), ShuffleWithEmptyMainLobby, TestLane_BRQ1_FairnessPerLane, TestLane_D12_ExistingSlotBeforeFlag [integration]
+  - G/redisstate/store_integration_test.go: TestStore_D12_HasSlotAndNoJoinTimes [integration]
+AC-12:
+  - G/score_test.go: TestScore_AC12_Sticky
+  - G/guard_test.go: TestGuard_AC12_StickyBlocks
+  - W/internal/adapter/http/antibot_handler_test.go: TestAntibotJoin_AC12_BlockDeniesAndRevokes, TestAntibotJoin_P4_BlockWithoutLaneStore, TestAntibotJoin_D6_JoinLaneBlocked
+  - W/internal/adapter/redis/lane_integration_test.go: TestLane_AC12_RevokeEverywhere, RevokeAbsent, TestLane_D6_FlagBlocksLanePathOnly [integration]
+  - G/redisstate/store_integration_test.go: TestStore_AC12_Sticky [integration]
+  - W/test/antibot/antibot_bot_test.go: TestAC12_StickyEndToEnd [integration]
+AC-13:
+  - G/score_test.go: TestScore_AC10_AC13_AppliedMatrix (shadow -> PASS + MODE_SHADOW)
+  - G/guard_test.go: TestGuard_AC13_ShadowAlwaysPasses, TestGuard_AC17_DecisionMetrics (mode="shadow")
+  - W/internal/adapter/http/antibot_handler_test.go: TestAntibotJoin_AC13_OffIsDevelop, TestAntibotJoin_AC13_ShadowProceeds
+  - not covered here: cmd/server buildGuard returns untyped nil for off (main wiring; checked in review / verify)
+AC-14:
+  - G/guard_test.go: TestGuard_AC14_SinkSelection (>= 0.30 always, PASS sample 0 / 1 / default ~1%)
+  - G/score_test.go: TestScore_AC14_FiredSorted
+  - W/internal/adapter/postgres/bot_decisions_test.go: TestDecisionWriter_AC14_NoPoolDropsAndCounts
+  - W/internal/adapter/postgres/bot_decisions_integration_test.go: RowShape (ALLOW, tags, INET prefix, STICKY 1.000, tier not applied), NonUUIDAsNull, BoundedBufferNeverBlocks [integration]
+  - G/corpus_test.go: every BLOCK lists >= 1 rule or STICKY
+AC-15:
+  - G/privacy_test.go: TestFPHash_AC15_IsTruncatedHMAC, TestNetPrefix_AC15
+  - G/score_test.go: TestEvaluate_AC15_DecisionHasNoRawValues
+  - G/guard_test.go: TestGuard_AC15_NoRawValuesInDecision
+  - W/internal/adapter/http/antibot_handler_test.go: TestAntibotJoin_AC15_LogsHaveNoRawValues
+  - G/redisstate/store_integration_test.go: TestStore_AC6_AC15_KeysAreScopedAndPrivate [integration]
+  - W/internal/adapter/postgres/bot_decisions_integration_test.go: RowShape (no raw fp / IP / UA in any column) [integration]
+AC-16:
+  - G/config_test.go: DefaultsInDev, ProductionWithKey, InvalidValueNamesVariable (37 cases incl. breaker, legacy R4 ids), ShadowAlsoValidates, OffSkipsValidation, ModesAccepted, PartialListsMergeAndValidValuesLoad
+  - not covered here: k8s Secret / policy changes (gate step `kustomize build ... | grep ANTIBOT_HASH_KEY`, check_policy.py TCR N-5)
+AC-17:
+  - G/guard_test.go: TestGuard_AC17_DecisionMetrics (decisions_total, rule_fired_total, decide_seconds, capped_total); degraded/invalid/dropped/nonuuid counters in their own tests
+  - not covered here: alert cases appended to deploy/observability/alerts_test.yml (existing frozen test file: implementer appends the 4 new alert cases; promtool gate)
+AC-18:
+  - G/corpus_test.go: TestCorpus_AC18_DefaultConfig (>= 95% / < 1% / BLOCK lists a rule; per-family + per-rule tables), HumansOnBothSidesOfThresholds, SensitivityTable (+-20%, printed), GeneratorDeterministic
+  - G/corpus/corpus.go + G/testdata/corpus/README.md: generator and parameter sources
+  - G/corpus_test.go: TestCorpus_AC18_RecordedSessions [pending: team records 50-100 sessions into G/testdata/corpus/recorded/]
+AC-19:
+  - W/test/antibot/antibot_bot_test.go: TestAC19_BotScriptAndHumanReplay [integration]
+AC-20:
+  - not a test: rollout go/no-go (Secret present, same image, shadow demotion < 1% on valid-signal joins)
+
+mutation_targets:
+  # engine (G)
+  - rules R1 client: `cv < R1_CLIENT_CV` -> `<=`; min samples 8 -> 7
+  - rules R1 server: ignore R1_SERVER_MIN; evaluate when !Known
+  - rules R2: `rt < R2_MS` -> `<=`
+  - rules R3: fire when only one count is 0; not fire for missing payload
+  - rules R4D: `> R4D_MAX` -> `>=`; evaluate without fp
+  - rules R4N: ignore NetSuppressed; `> R4N_MAX` -> `>=`
+  - rules R5: drop lower-casing of UA; empty UA not strong; missing treated as block-eligible
+  - rules R5W: weak count `>= 2` -> `>= 1`; drop mobile fc exemption; invalid zone counted as disagreement
+  - rules R6: fire on CardIdentities -1
+  - rules R7: drop sn/sb floors; `>= R7_MIN_IDS` -> `>`
+  - score: remove 3-decimal rounding / tier computed from unrounded score; `>=` -> `>` at cut-offs
+  - D11 cap removed (missing-only reaches BLOCK) / CAPPED tag missing
+  - D12 REJOIN removed (slot holder demoted or applied BLOCK on non-eligible)
+  - sticky: evaluates rules / score != 1
+  - shadow: Applied = tier; MODE_SHADOW missing
+  - fallback: ANTIBOT_CHALLENGE_FALLBACK ignored
+  - decoder: wrong-typed field invalidates whole payload; no rounding; {"v":1} treated as missing; 4096 bytes rejected
+  - config: error message without variable name; partial lists replace instead of merge; off validates
+  - guard: no context timeout around Observe; breaker never opens / never closes; recover() removed; invalid metric not incremented; BodyErr ignored; sink offered every PASS
+  - privacy: FPHash length / key unused; NetPrefix /16 or full address
+  # Redis (G/redisstate + W scripts)
+  - observe.lua: jt pushed for slot holders; ZSET cap not applied; window from server TIME; share from distinct identities instead of nj counters
+  - join.lua: flag check skipped on lane path / applied on 4-arg path; slow post-T0 score missing P or m; idempotency ignores lobby_slow
+  - shuffle.lua: early return when main lobby empty (P-5); slow lobby counted in lottery_size; lobby_slow not deleted
+  - status.lua: lobby_slow not reported as LOBBY
+  - revoke.lua: lobby_slow / admitted not removed; flag not set or TTL != 24 h
+  # handler / writer (W)
+  - handler: BLOCK without Revoke; 403 body leaks rule ids; SLOW_LANE uses normal lane; BLOCKED state returns 200; UA not truncated; XFF last element used; oversize body rejected
+  - writer: PASS stored as 'PASS'; Applied stored instead of tier; non-UUID not NULL; Offer blocks when buffer full; Close does not flush
+  # web
+  - collector: listeners not passive; pointermove intervals in iv; every scroll discrete; sq without entropy floor; key value stored; snapshot after jitter
+  - waiting room: readSignals {} sent instead of {"v":1}; snapshot cleared on 401 re-join; not cleared on sold-out
