@@ -39,6 +39,7 @@ import (
 	"github.com/redis/go-redis/v9"
 
 	"github.com/eventflow/eventflow/libs/go/activeevents"
+	"github.com/eventflow/eventflow/libs/go/antibot"
 	"github.com/eventflow/eventflow/libs/go/leader"
 	"github.com/eventflow/eventflow/libs/go/loadsignal"
 	"github.com/eventflow/eventflow/libs/go/otelx"
@@ -81,6 +82,11 @@ func run(log *slog.Logger) error {
 	if err != nil {
 		return err
 	}
+	// Anti-bot slow lane: shuffle.lua xep slow lobby sau P nguoi vao sau T0 (D5). Cung bien voi waitingroom.
+	slowPenalty, err := antibot.SlowLanePenaltyFromEnv(os.Getenv)
+	if err != nil {
+		return err
+	}
 
 	shutdownTrace, err := otelx.Init(ctx, "waitingroom-controller")
 	if err != nil {
@@ -112,6 +118,7 @@ func run(log *slog.Logger) error {
 	if err != nil {
 		return err
 	}
+	queue.WithSlowLanePenalty(slowPenalty)
 
 	var probe app.HealthProbe
 	if healthCfg.Static {
