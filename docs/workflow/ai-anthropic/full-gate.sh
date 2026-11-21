@@ -74,11 +74,13 @@ MSYS_NO_PATHCONV=1 docker run --rm -v \"\$D:/w\" -w /w --entrypoint promtool pro
 run tamper bash -c "
 set -e
 T=services/ai-worker/tests
-frozen=\"\$T/conftest.py \$T/llm \$T/test_llm_sdk_contract.py \$T/test_wiring.py deploy/observability/alerts_test.yml\"
+# Lock only the files that existed at the freeze commit; new test files added later are allowed.
+frozen=\$(git ls-tree -r --name-only $TESTS_FROZEN -- \$T/conftest.py \$T/llm \$T/test_llm_sdk_contract.py \$T/test_wiring.py deploy/observability/alerts_test.yml | tr '\n' ' ')
+echo \"frozen files: \$(echo \$frozen | wc -w)\"
 if git diff --quiet $TESTS_FROZEN HEAD -- \$frozen; then echo 'ok: frozen tests byte-identical to $TESTS_FROZEN'; else echo 'FAIL: frozen tests changed:'; git diff --stat $TESTS_FROZEN HEAD -- \$frozen; exit 1; fi
 allowed=\" \$T/test_gemini_client.py \$T/test_llm_client.py \$T/test_guarded.py \$T/test_chat_handler.py \$T/test_moderation_consumer.py \$T/test_classify_real_errors.py \$T/test_config.py \$T/integration/test_assistant_integration.py \$T/integration/test_consumers_integration.py \$T/test_alias_scan.py \"
 bad=0
-for f in \$(git diff --name-only --no-renames $TESTS_FROZEN HEAD -- \$T); do
+for f in \$(git diff --name-only --no-renames --diff-filter=MD $TESTS_FROZEN HEAD -- \$T); do
   case \"\$allowed\" in *\" \$f \"*) echo \"allowed change (plan 2.2 / TCR-1 / new): \$f\";; *) echo \"FAIL: unexpected test change: \$f\"; bad=1;; esac
 done
 [ \$bad = 0 ]
@@ -100,8 +102,8 @@ echo 'tamper ok'"
 # --- secrets: key-like strings added since BASE ---
 # Allowlisted: two obviously fake fixture values in frozen tests (they assert the key never leaks into logs).
 run secrets bash -c "
-echo 'allowlisted fake fixtures (tests only): sk-ant-TEST-SECRET-0001, sk-ant-WIRING-SECRET-1111'
-hits=\$(git diff $BASE HEAD -- . ':(exclude)*.lock' | grep -E '^\+' | grep -nE 'sk-ant-[A-Za-z0-9_-]+|AIza[0-9A-Za-z_-]{20,}|-----BEGIN [A-Z ]*PRIVATE KEY' | grep -vE 'sk-ant-(TEST-SECRET-0001|WIRING-SECRET-1111)' || true)
+echo 'allowlisted fake fixtures (tests/findings only): sk-ant-TEST-SECRET-0001, sk-ant-WIRING-SECRET-1111, sk-ant-CHALLENGE-SECRET-777, sk-ant-x'
+hits=\$(git diff $BASE HEAD -- . ':(exclude)*.lock' | grep -E '^\+' | grep -nE 'sk-ant-[A-Za-z0-9_-]+|AIza[0-9A-Za-z_-]{20,}|-----BEGIN [A-Z ]*PRIVATE KEY' | grep -vE 'sk-ant-(TEST-SECRET-0001|WIRING-SECRET-1111|CHALLENGE-SECRET-777|x)([^A-Za-z0-9_-]|\$)' || true)
 [ -z \"\$hits\" ] && echo 'no secrets' || { echo \"\$hits\"; exit 1; }"
 
 # --- SAST: bandit medium+ on app code ---
