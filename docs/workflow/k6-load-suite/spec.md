@@ -105,3 +105,13 @@ idempotency key format (AC-6), remote-target guard (AC-4).
   need compose; AC-3 latencies, AC-8, AC-9 at scale need the k8s stack (EVF-120..122) and a large generator.
 - Admission rate on compose is AIMD-limited; the smoke relies on the sale being open at seed time (`SALE_START_IN_SECONDS=0`).
 - Gateway forwarding of `ETag` / `If-None-Match` / `X-Poll-After-Ms` is assumed; the smoke (AC-1 "one 304") proves it.
+
+## Human approval
+
+- Approver: TranDinhVo, in the Claude Code session on 2026-11-22.
+- Spec approved with the recommended answers:
+  1. D1: VUs mint access tokens from `JWT_SECRET`; local targets only unless `ALLOW_REMOTE=1`.
+  2. Full-scale runs raise `RATE_DEFAULT` on the load environment only; no code change.
+  3. Load runs require `ANTIBOT_MODE=shadow`; no anti-bot exemption is added.
+  4. D3: no CI job in this task (follow-up: one step in `e2e-nightly.yml`).
+  5. Smoke size 20 VUs / 50 users / quota 200 with `SLO_SCALE=4`.
