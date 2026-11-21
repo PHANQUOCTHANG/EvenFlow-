@@ -1,4 +1,4 @@
-# Policy interface contract: k8s-all (FROZEN, revision 2 = round 3)
+# Policy interface contract: k8s-all (FROZEN, revision 3 = fix round 1)
 
 Frozen interface between WP0 (test designer: fixtures + `test_policy.sh`) and WP5 (implementer:
 `check_policy.py`, `validate.sh`). Hand this file to WP0 together with `spec.md` (incl. errata E1-E8).
@@ -6,13 +6,38 @@ Changes after freeze need a change request approved by the human, like a test ch
 
 Revision history:
 - r1: round 2.
-- r2 (this revision): round 3, contract change request approved by the human as erratum E8 (2026-11-01). Changes:
+- r2: round 3, contract change request approved by the human as erratum E8 (2026-11-01). Changes:
   - §3: exemptions scoped to sub-checks; AC-9 is not exemptable.
   - §2: AC-1/AC-12/AC-18/AC-22/AC-32 semantics; new AC-13 dir mode.
   - §8 (per-overlay secret table) and §9 (name matching) are new.
   - §4: `null` input entries are ignored.
 
 The fixtures that must change because of r2 are listed in `plan.md` "Round 3" §C.
+
+- r3 (2026-11-20, fix round 1 after review; fixtures only added, via `test-change-request-2.md`, approved by
+  TranDinhVo via coordinator). Rule ids, CLI, output format, §3 exemption table and §8 are unchanged. Where a rev 2
+  table below says otherwise, this note wins. Added checks only:
+  - "Workload" (§2) = Deployment, StatefulSet, Job, **Pod, DaemonSet, ReplicaSet, ReplicationController, CronJob**
+    (pod spec = `spec` for Pod, `spec.jobTemplate.spec.template.spec` for CronJob); "every container" includes
+    `initContainers` and **`ephemeralContainers`**. AC-4 / AC-6 skip CronJob like Job. (X-3)
+  - AC-12 (§2.1, same sub-check ids): container-level `runAsNonRoot` set to anything but true -> `runAsNonRoot`;
+    container-level `seccompProfile.type` other than RuntimeDefault -> `seccomp`; `procMount` other than Default ->
+    `privileged`; any container `hostPort` or pod `shareProcessNamespace` -> `hostNamespaces`; pod `runAsGroup` 0,
+    `fsGroup` 0, `supplementalGroups` containing 0, container `runAsGroup` 0 -> `rootUid`. (X-7)
+  - AC-13: every regular file directly in the dir whose name matches `(?i)^(.+\.dockerfile|dockerfile(\..+)?)$`
+    (not only `*.Dockerfile`); a numeric `USER` with uid 0 fails. (X-10)
+  - AC-15: a ports entry with `endPort` in a policy selecting a process pod fails. (X-8)
+  - AC-17: name pattern `(?i)(PASSWORD|PASSPHRASE|PASSWD|(^|_)PASS($|_)|SECRET|TOKEN|_KEYS?$|API_KEY|CREDENTIAL)`;
+    credential URL pattern `://[^/@\s]*:[^/@\s]+@` (empty user allowed); `(?i)\bpassword=[^\s&]` (key=value DSN) on
+    env literals and ConfigMap values; container `command`/`args` items checked with both value patterns and with
+    `(?i)^--?[a-z0-9_.-]*(password|passphrase|passwd|secret|token|api[_-]?key)[a-z0-9_.-]*=.`; ConfigMap
+    `binaryData` keys and base64-decoded values checked like `data`. (X-5, R-7)
+  - AC-21 (staging): any object labelled `eventflow.io/tier: dev-infra`, or a NetworkPolicy whose podSelector
+    matches that label, fails (dev-infra is local only, spec D6). (X-4, R-6)
+  - AC-22: a container that sets the same env name more than once fails (Kubernetes keeps the last entry, the rules
+    read the first). (X-1, R-2)
+  - AC-32 (staging): any `envFrom.configMapRef` on a workload container fails (a prefix can inject a forbidden key;
+    `envFrom.secretRef` stays AC-18). (X-2)
 
 ## 1. Files
 

@@ -364,3 +364,9 @@ NetworkPolicy lockout recovery: `kubectl -n eventflow delete networkpolicy --all
 - Staging Redis private and passwordless; SMTP must accept AUTH; `SMS_PROVIDER=mock`; MoMo needs a public notify
   host; Stripe disabled in staging with the webhook signature debt above.
 - web keeps a writable root filesystem (`policy-exempt.AC-12.readOnlyRootFilesystem`, Next ISR cache).
+- **Gateway rate limit behind the Ingress (review R-1, staging blocker until fixed):** the gateway keys its rate
+  limit on `r.RemoteAddr`, which behind ingress-nginx is the controller pod IP, so all anonymous clients (and every
+  `/api/v1/auth/` call, always keyed by IP) share one bucket per gateway replica (auth ~1 rps, public 10 rps).
+  Follow-up: a **separate gateway task** makes the gateway trust `X-Forwarded-For` only from a configured proxy
+  CIDR (ingress-nginx), with `use-forwarded-headers` on the controller. Until then, do not put real users on
+  staging through the Ingress; raise `RATE_AUTH` / `RATE_DEFAULT` for a test only.

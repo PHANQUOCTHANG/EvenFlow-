@@ -276,6 +276,9 @@ Kubelet probes are not affected by NetworkPolicy on mainstream CNIs; stated as a
 - Docker Desktop: no metrics-server (HPA shows `<unknown>`, min replicas still applied), no ingress controller,
   no NetworkPolicy enforcement.
 - Images other than web are not published to GHCR; local clusters use locally built images.
+- (Added 2026-11-20, review R-1) Behind the Ingress every client shares the gateway rate-limit bucket of the
+  ingress-nginx pod IP (`clientIP = r.RemoteAddr`). Fixed in a separate gateway task (trusted-proxy
+  `X-Forwarded-For`); see runbook section 9.
 
 ## 10. Risks
 

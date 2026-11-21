@@ -35,3 +35,16 @@ Scope: `deploy/k8s/policy/test_policy.sh` and `deploy/k8s/policy/testdata/**` on
   `FAIL AC-12 StatefulSet/eventflow-postgres: rootUid: pod runAsUser 0`. Now 153 bad fixtures, selftest total 166.
 - Second row of the request (invalid exemption taking effect) is not applied: it needs two ids in one fixture, which
   contract §7 forbids. Recorded as an accepted limitation in `deploy/k8s/policy/rules.md`.
+
+## TCR-WP5 approval status (review finding R-10, 2026-11-20)
+
+- The human approval of TCR-WP5 is **pending confirmation**: no dated approval is recorded for
+  `test-change-request-wp5.md` (its status line still reads "open, optional"). The fixture only adds a test and is
+  kept; the coordinator is asking TranDinhVo to confirm. This entry does not claim it was approved.
+
+## TCR-2: fixtures for the review / challenge bypasses (test-change-request-2.md), approved by TranDinhVo 2026-11-20 via coordinator
+
+- Added tests only, no existing assertion or fixture changed: `gen_fixtures.py` gains 25 mutants and 3 Dockerfile
+  cases; regenerating changed no other file and `gen_fixtures.py --check` is clean. `test_policy.sh` unchanged.
+- Covers R-2, X-1..X-5, X-7, X-8, X-10 (table in test-change-request-2.md); checks are contract rev 3.
+- Now 178 bad fixtures and 6 bad Dockerfile cases.
