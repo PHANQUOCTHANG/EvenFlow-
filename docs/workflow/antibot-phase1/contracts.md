@@ -125,7 +125,7 @@ type LaneStore interface {
 |---|---|---|
 | `ANTIBOT_MODE` | `shadow` | `off`/`shadow`/`enforce` |
 | `ANTIBOT_HASH_KEY` | dev key + warning; required when `APP_ENV=production` and mode != off | base64 of >= 32 bytes |
-| `ANTIBOT_WEIGHTS` **(R2)** | `R1=0.50,R2=0.40,R3=0.40,R4D=0.60,R4N=0.25,R5=0.80,R5W=0.45,R6=0.60,R7=0.50` | known IDs, each in [0,1); a partial list **merges** with the defaults |
+| `ANTIBOT_WEIGHTS` **(R2)** | `R1=0.50,R2=0.40,R3=0.40,R4D=0.60,R4N=0.25,R5=0.85,R5W=0.45,R6=0.60,R7=0.50` **(R4: R5 0.80 → 0.85)** | known IDs, each in [0,1); a partial list **merges** with the defaults |
 | `ANTIBOT_TIERS` | `0.30,0.60,0.85` | strictly increasing in (0,1); compared to the rounded score, lower bound inclusive |
 | `ANTIBOT_CHALLENGE_FALLBACK` | `pass` | `pass`/`slow_lane` |
 | `ANTIBOT_SLOW_LANE_PENALTY` | `100000` | integer 1..1e9 (also read by the controller for `shuffle.lua`) |
@@ -133,8 +133,8 @@ type LaneStore interface {
 | `ANTIBOT_REDIS_TIMEOUT_MS` | `4` | 1..50 |
 | `ANTIBOT_BREAKER` **(R2)** | `20/1s,open=3s` | N 1..10000, durations 100 ms..60 s |
 | `ANTIBOT_PASS_SAMPLE` | `0.01` | [0,1] |
-| `ANTIBOT_UA_DENY` | built-in: `HeadlessChrome PhantomJS python-requests python-httpx aiohttp curl/ Wget Go-http-client okhttp node-fetch axios/ Scrapy Puppeteer Playwright Selenium` | comma list replaces built-in; case-insensitive substring |
-| `ANTIBOT_UA_WEAK` **(R4)** | built-in: empty (Amendment 2 target: `okhttp Go-http-client axios/ node-fetch`, see 3.1) | comma list replaces built-in; case-insensitive substring; a match is **one** R5W weak sign, never strong |
+| `ANTIBOT_UA_DENY` | built-in **(R4)**: `HeadlessChrome PhantomJS python-requests python-httpx aiohttp curl/ Wget Scrapy Puppeteer Playwright Selenium` | comma list replaces built-in; case-insensitive substring |
+| `ANTIBOT_UA_WEAK` **(R4)** | built-in: `okhttp Go-http-client axios/ node-fetch` | comma list replaces built-in; case-insensitive substring; a match is **one** R5W weak sign, never strong |
 
 R5 details **(R2)**: strong = UA deny, empty UA, `wd` true, or missing payload (the last one is **not** block
 eligible). Weak = `gl` false, `fc` < `R5_FONTS_MIN` (not evaluated when the UA contains `Android`, `iPhone`,
@@ -165,20 +165,19 @@ Default outcomes **(R2, re-checked; each row asserted in `score_test.go`)**:
 | Human, fast click + privacy browser | R2, R5W | 0.670 | SLOW_LANE |
 | Human, R1 + R7 (now rare, D14) | R1, R7 | 0.750 | SLOW_LANE (was BLOCK in R1) |
 
-### 3.1 Revision 4 (fix round 1, spec Amendment 2 approved 2026-11-22) — status: approved, NOT yet the code default
+### 3.1 Revision 4 (fix round 1, spec Amendment 2 and its revision, approved 2026-11-22) — the built-in defaults
 
-Amendment 2 changes three defaults: `R5=0.85` (X-4: a strong automation sign alone reaches BLOCK), `R4D=0.55`
-(X-6: a shared device alone is CHALLENGE), and `okhttp Go-http-client axios/ node-fetch` move from
-`ANTIBOT_UA_DENY` to `ANTIBOT_UA_WEAK` (X-5). The code implements the mechanism (`ANTIBOT_UA_WEAK`, any weights
-via `ANTIBOT_WEIGHTS`) and `libs/go/antibot/fixround1_test.go` asserts the worked examples below with that
-configuration. The built-in defaults stay at revision 3 because (a) the frozen `score_test.go` / `rules_test.go`
-assert the revision-3 weights and deny list (TCR-6, open) and (b) with Amendment 2 the corpus gate drops to
-**91.0%** bots caught (account_farm 140/200; humans 0.00%), below AC-18's 95%, so per the fix-round brief nothing
-was tuned and the decision is with the human.
+Amendment 2 revision: `R5=0.85` (X-4: a strong automation sign alone reaches BLOCK) and `okhttp Go-http-client axios/
+node-fetch` move from `ANTIBOT_UA_DENY` to `ANTIBOT_UA_WEAK` (X-5: one weak R5W sign, never strong). X-6 is
+withdrawn: `R4D` stays 0.60 (the 0.55 variant dropped bots caught to 91.0%). Corpus with these defaults: bots caught
+95.80% (958/1000), humans demoted 0.10% (5/5000), per family identical to revision 3. Frozen tests updated under
+TCR-6 (approved). The table in section 3 above still holds except for rows with R5 (recomputed here); asserted in
+`score_test.go` (TCR-6) and `fixround1_test.go`.
 
-| Case (Amendment 2 config) | Fired | Score | Tier |
+| Case | Fired | Score | Tier |
 |---|---|---|---|
 | Missing payload, browser UA | R3, R5(missing) | 0.910 | SLOW_LANE `CAPPED` |
+| Missing payload, identity holds a slot | R3, R5(missing) | 0.910 | SLOW_LANE `CAPPED`; applied PASS `REJOIN` |
 | Raw HTTP, `python-requests` UA, no signals | R3, R5 | 0.910 | BLOCK |
 | `python-requests` UA + forged `{"v":1,"pe":1}` (X-4) | R5 | 0.850 | BLOCK |
 | `wd` true alone (X-4) | R5 | 0.850 | BLOCK |
@@ -186,10 +185,9 @@ was tuned and the decision is with the human.
 | `okhttp` UA, no signals (X-5) | R3, R5(missing) | 0.910 | SLOW_LANE `CAPPED` (never BLOCK) |
 | `okhttp` UA, valid human signals | — | 0 | PASS |
 | `okhttp` UA + one more weak sign (`gl` false) | R5W | 0.450 | CHALLENGE → pass |
-| Shared fp only (X-6) | R4D | 0.550 | CHALLENGE → pass |
-| Account farm (shared fp + shared /24) | R4D, R4N | 0.663 | SLOW_LANE |
-| Shared fp + privacy browser | R4D, R5W | 0.753 | SLOW_LANE |
-| Stealth rhythm, `{"v":1}`, CGNAT / cluster rows, R1 + R7 | unchanged from the table above (no R4D / R5) | | |
+| Shared fp only (R4D 0.60, unchanged) | R4D | 0.600 | SLOW_LANE |
+| Account farm (unchanged) | R4D, R4N | 0.700 | SLOW_LANE |
+| Shared fp + privacy browser | R4D, R5W | 0.780 | SLOW_LANE |
 
 ### 3.2 Revision 4 notes (fix round 1)
 

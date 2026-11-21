@@ -11,9 +11,9 @@ OUT=$WF/gate
 BASE=918667c            # merge-base with origin/develop (tier.json base_commit)
 TESTS_FROZEN=36aab08    # red tests frozen (step 2a)
 TCR_COMMIT=f3ce1a6      # human-approved TCR-1..TCR-4 applied to frozen files
-TCR_COMMITS="f3ce1a6 82252a4" # TCR-1..TCR-4, then TCR-5 (formatting only, approved)
-# the only frozen files the TCR commits may change (test-change-request.md TCR-1..TCR-5)
-TCR_FILES="apps/web/src/lib/antibot-signals.test.ts libs/go/antibot/corpus/corpus.go libs/go/antibot/corpus_test.go libs/go/antibot/redisstate/store_integration_test.go services/waitingroom/test/antibot/antibot_bot_test.go services/waitingroom/internal/adapter/redis/lane_integration_test.go"
+TCR_COMMITS="f3ce1a6 82252a4 8fc8ede" # TCR-1..TCR-4, TCR-5 (formatting only), TCR-6 (Amendment 2 R5 weight / deny list), all approved
+# the only frozen files the TCR commits may change (test-change-request.md TCR-1..TCR-6)
+TCR_FILES="apps/web/src/lib/antibot-signals.test.ts libs/go/antibot/corpus/corpus.go libs/go/antibot/corpus_test.go libs/go/antibot/redisstate/store_integration_test.go services/waitingroom/test/antibot/antibot_bot_test.go services/waitingroom/internal/adapter/redis/lane_integration_test.go libs/go/antibot/score_test.go libs/go/antibot/rules_test.go"
 GOLANGCI_VERSION=2.12.2 # .github/workflows/ci.yml
 DEV_HASH_KEY='devAntibotHashKeyLocalClusterOnlyNeverProdA='
 mkdir -p "$OUT"
