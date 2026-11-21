@@ -1,0 +1,14 @@
+--- FAIL: TestOpsRoutes_AC19_RoleMatrixAndUpstream (0.01s)
+FAIL
+FAIL	github.com/eventflow/eventflow/services/gateway/internal/proxy	0.458s
+FAIL
+---- tail ----
+?   	github.com/eventflow/eventflow/services/gateway/cmd/server	[no test files]
+ok  	github.com/eventflow/eventflow/services/gateway/internal/config	0.716s
+--- FAIL: TestOpsRoutes_AC19_RoleMatrixAndUpstream (0.01s)
+    ops_routes_test.go:41: PUT /v1/ops/events/33333333-3333-4333-8333-333333333333/admit-override role=organizer: 200, want 403
+    ops_routes_test.go:44: PUT /v1/ops/events/33333333-3333-4333-8333-333333333333/admit-override role=organizer: request reached upstream
+FAIL
+FAIL	github.com/eventflow/eventflow/services/gateway/internal/proxy	0.458s
+ok  	github.com/eventflow/eventflow/services/gateway/internal/ratelimit	0.359s
+FAIL

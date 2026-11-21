@@ -1,0 +1,17 @@
+--- FAIL: TestOpsWrite_AC12_NoAuditStoreFailsClosedButReadWorks (0.00s)
+FAIL
+FAIL	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/http	3.242s
+FAIL
+---- tail ----
+--- FAIL: TestOpsWrite_AC12_NoAuditStoreFailsClosedButReadWorks (0.00s)
+    ops_handler_test.go:583: 200 
+FAIL
+FAIL	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/http	3.242s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/metrics	2.009s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/postgres	0.128s
+?   	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/redis	[no test files]
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/signal	0.417s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/app	0.855s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/config	0.364s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/domain	0.428s
+FAIL

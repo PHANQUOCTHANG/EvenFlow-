@@ -1,0 +1,17 @@
+--- FAIL: TestOpsRound2Fix_X22_AuditRecordsCommandNotReadBack (0.00s)
+FAIL
+FAIL	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/http	3.259s
+FAIL
+---- tail ----
+--- FAIL: TestOpsRound2Fix_X22_AuditRecordsCommandNotReadBack (0.00s)
+    ops_round2_fix_test.go:130: mine=500: audit must record the command, got action=ADMIT_OVERRIDE_SET meta=map[previous:{false <nil>} rate_per_sec:0 request_id:req-123]
+FAIL
+FAIL	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/http	3.259s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/metrics	2.038s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/postgres	0.131s
+?   	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/redis	[no test files]
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/signal	0.419s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/app	0.858s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/config	0.367s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/domain	0.431s
+FAIL

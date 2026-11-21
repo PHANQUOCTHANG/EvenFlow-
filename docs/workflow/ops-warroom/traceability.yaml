@@ -1,0 +1,76 @@
+# AC -> tests (all red on 81d742c unless marked GUARD in baseline.json red_check)
+AC-1:
+  - services/waitingroom/internal/adapter/http/ops_handler_test.go   # TestOpsQueue_AC1_* (shape, no-store, paused derivation). Redis pipeline itself: implementer integration test services/waitingroom/test/<pkg>/TestTichHop_*
+AC-2:
+  runtime_evidence: Redis integration TestTichHop_* (expired admitted members not counted) by implementer WP1 under services/waitingroom/test/; mutation 6
+AC-3:
+  - services/waitingroom/internal/adapter/http/ops_handler_test.go   # TestOpsQueue_AC3_*
+AC-4:
+  - services/waitingroom/internal/adapter/http/ops_handler_test.go   # TestOpsQueue_AC4_Errors, TestOpsWrite_AC4_*
+AC-5:
+  - services/waitingroom/internal/adapter/http/ops_handler_test.go   # TestOpsQueue_AC5_RoleAndPrincipal
+AC-6:
+  - services/waitingroom/internal/adapter/http/ops_handler_test.go   # TestOpsPut_AC6_AC10_AppliesAndAudits, TestOpsPut_AC6_BoundariesAccepted
+AC-7:
+  runtime_evidence: integration test with the real controller + Redis (implementer, services/waitingroom/test/, TestTichHop_*); after DELETE do not assert an immediate MinRate (controller may stay at 0 up to 5 ticks)
+AC-8:
+  - services/waitingroom/internal/adapter/http/ops_handler_test.go   # TestOpsDelete_AC8_AC10_ClearsIdempotentlyAndAudits
+AC-9:
+  - services/waitingroom/internal/adapter/http/ops_handler_test.go   # TestOpsWrite_AC9_* (15 PUT + 5 DELETE invalid inputs, boundaries)
+AC-10:
+  - services/waitingroom/internal/adapter/http/ops_handler_test.go   # TestOpsPut_AC10_*, TestOpsDelete_AC8_AC10_*
+AC-11:
+  - services/waitingroom/internal/adapter/http/ops_handler_test.go   # TestOpsWrite_AC11_AuditErrorKeepsOverrideAndLogsError, _AuditHangIsBoundedBy2s (auditor present but failing/unreachable => 200 audit:failed)
+AC-12:
+  - services/waitingroom/internal/adapter/http/ops_handler_test.go   # TestOpsWrite_AC12_NoAuditStoreFailsClosedButReadWorks
+  runtime_evidence: readiness independent of Postgres (cmd/server wiring; reviewer + compose smoke)
+AC-13:
+  - services/waitingroom/internal/adapter/http/ops_handler_test.go   # TestOpsWrite_AC13_*
+AC-14:
+  - services/ticketing/internal/adapter/http/ops_handler_test.go                      # TestOpsInventory_AC14_*
+  - services/ticketing/internal/adapter/postgres/ops_repository_integration_test.go   # SQL definitions incl. PAID order with unconsumed hold not double counted (contracts rev 2)
+AC-15:
+  - services/ticketing/internal/adapter/http/ops_handler_test.go                      # TestOpsSales_AC15_*
+  - services/ticketing/internal/adapter/postgres/ops_repository_integration_test.go   # TestOpsRepository_AC15_*
+AC-16:
+  - services/ticketing/internal/adapter/http/ops_handler_test.go                      # TestOpsSales_AC16_*, TestOpsInventory_AC16_*, TestOpsCache_AC16_OwnershipCheckedBeforeCache
+  - services/ticketing/internal/adapter/postgres/ops_repository_integration_test.go   # TestOpsRepository_AC16_EventOwner
+AC-17:
+  - services/ticketing/internal/adapter/http/ops_handler_test.go   # TestOpsCache_AC17_* (single-flight, per-event key, 2 s expiry, errors not cached)
+  runtime_evidence: the 2 s statement timeout lives in the Postgres adapter (reviewer)
+AC-18:
+  - services/ai-worker/tests/test_ops_api.py
+AC-19:
+  - services/gateway/internal/proxy/ops_routes_test.go
+AC-20:
+  - apps/web/src/lib/ops-service.contract.test.ts   # calls (parallel), mapping, generatedAt, checkout null, saleState table
+AC-21:
+  - apps/web/src/lib/ops-service.contract.test.ts   # source health
+  - apps/web/src/components/ops/ops-war-room.real.test.tsx   # no healthy indicator when a source is not ok
+AC-22:
+  - apps/web/src/lib/ops-service.contract.test.ts
+  - apps/web/src/lib/ops-service.auth.contract.test.ts
+AC-23:
+  - apps/web/src/components/ops/ops-war-room.real.test.tsx   # sample label, paused / soldOut / no-leader, checkout block
+AC-24:
+  - apps/web/src/components/ops/ops-war-room.real.test.tsx   # controls, confirm, resume only when MANUAL, disabled states, client validation
+  - apps/web/src/lib/ops-service.contract.test.ts            # setAdmitOverride / clearAdmitOverride validation
+AC-25:
+  - apps/web/src/components/ops/ops-war-room.real.test.tsx
+  - apps/web/src/lib/ops-service.contract.test.ts
+AC-26:
+  - apps/web/src/app/(ops)/ops-pages.real.test.tsx
+  - apps/web/src/lib/ops-service.contract.test.ts   # listOpsEvents
+AC-27:
+  - apps/web/src/app/(ops)/ops-pages.real.test.tsx
+AC-28:
+  - apps/web/src/ops-warroom.no-sample.contract.test.ts
+  - apps/web/src/lib/ops-service.contract.test.ts   # __setOpsSampleOverride removed
+AC-29:
+  - apps/web/src/lib/organizer-service.sales.contract.test.ts
+AC-30:
+  - apps/web/src/components/organizer/sales-dashboard.real.test.tsx
+AC-31:
+  runtime_evidence: full gate (gofmt, vet, -race, golangci-lint, ruff, pytest, web lint/typecheck/vitest/build, Playwright incl. rewritten ops-war-room.spec.ts)
+AC-32:
+  runtime_evidence: go.mod / package.json / pyproject diff check at review

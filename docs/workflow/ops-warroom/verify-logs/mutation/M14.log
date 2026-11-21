@@ -1,0 +1,17 @@
+--- FAIL: TestOpsWriteFix_X2_AuditorPanicIsRecoveredAsFailed (0.00s)
+FAIL
+FAIL	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/http	3.278s
+FAIL
+---- tail ----
+--- FAIL: TestOpsWriteFix_X2_AuditorPanicIsRecoveredAsFailed (0.00s)
+    ops_audit_panic_fix_test.go:47: want audit failed: {"event_id":"11111111-1111-4111-8111-111111111111","override":{"active":true,"rate_per_sec":0},"paused":true,"applied_at":"2026-11-21T07:29:02Z","audit":"recorded"}
+FAIL
+FAIL	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/http	3.278s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/metrics	2.082s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/postgres	0.139s
+?   	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/redis	[no test files]
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/signal	0.420s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/app	0.870s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/config	0.390s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/domain	0.430s
+FAIL

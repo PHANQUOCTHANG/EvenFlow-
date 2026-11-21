@@ -1,0 +1,10 @@
+?   	github.com/eventflow/eventflow/services/waitingroom/cmd/controller	[no test files]
+?   	github.com/eventflow/eventflow/services/waitingroom/cmd/server	[no test files]
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/http	3.225s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/metrics	2.076s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/postgres	0.131s
+?   	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/redis	[no test files]
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/signal	0.490s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/app	1.073s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/config	0.340s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/domain	0.430s

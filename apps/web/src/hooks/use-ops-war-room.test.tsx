@@ -15,12 +15,7 @@ import { act, cleanup, renderHook } from "@testing-library/react";
 import { StrictMode, type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import {
-  OPS_POLL_INTERVAL_MS,
-  __setOpsSampleOverride,
-  getOpsWarRoom,
-  type OpsWarRoomSnapshot,
-} from "@/lib/ops-service";
+import { OPS_POLL_INTERVAL_MS, OpsServiceError, type OpsWarRoomSnapshot } from "@/lib/ops-service";
 
 import { useOpsWarRoom } from "./use-ops-war-room";
 
@@ -37,13 +32,23 @@ function makeSnapshot(
     saleState: "ON_SALE",
     generatedAt: new Date(generatedAtMs).toISOString(),
     funnel: { lobby: 911, queued: 822, admitted: 733, holding: 644, paid: 555, issued: 466 },
-    admission: { ratePerSec: 37, mode: "AUTO", queueDepth: 489 },
+    admission: {
+      ratePerSec: 37,
+      mode: "AUTO",
+      queueDepth: 489,
+      overrideRatePerSec: null,
+      paused: false,
+      soldOut: false,
+      stockZero: false,
+      leaderPresent: true,
+    },
+    checkout: { p99Ms: 420, errorRate: 0.004, dbPoolUsage: 0.61, pods: 3 },
     inventory: [
       { tierId: "t1", name: "Standard Pass", quota: 300, held: 21, paid: 102, issued: 93, available: 84 },
     ],
     ai: { mode: "NORMAL", manualOverride: false, chatQueueLagSeconds: 17, budgetUsedRatio: 0.63 },
     sources: { waitingroom: "ok", ticketing: "ok", ai: "ok" },
-    isSample: true,
+    isSample: false,
     ...overrides,
   };
 }
@@ -59,18 +64,10 @@ function deferred<T>() {
   return { promise, resolve, reject };
 }
 
-/** Lấy một OpsServiceError thật với status mong muốn qua hook test của service
- *  (hợp đồng không chốt chữ ký constructor của OpsServiceError). */
+/** Một OpsServiceError thật với status mong muốn (ops-warroom: dữ liệu mẫu và __setOpsSampleOverride đã bị gỡ,
+ *  nên dựng lỗi bằng constructor thay vì ép lỗi qua service). */
 async function realOpsError(status: number): Promise<Error> {
-  __setOpsSampleOverride(EVENT_ID, { error: status });
-  try {
-    await getOpsWarRoom(EVENT_ID);
-  } catch (err) {
-    return err as Error;
-  } finally {
-    __setOpsSampleOverride(EVENT_ID, null);
-  }
-  throw new Error(`Ky vong getOpsWarRoom nem loi ${status}`);
+  return new OpsServiceError(status);
 }
 
 async function advance(ms: number) {
@@ -94,7 +91,6 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup();
-  __setOpsSampleOverride(EVENT_ID, null);
   vi.restoreAllMocks();
   vi.useRealTimers();
 });

@@ -1,0 +1,14 @@
+--- FAIL: TestOpsRoutes_AC19_RoleMatrixAndUpstream (0.02s)
+FAIL
+FAIL	github.com/eventflow/eventflow/services/gateway/internal/proxy	0.479s
+FAIL
+---- tail ----
+?   	github.com/eventflow/eventflow/services/gateway/cmd/server	[no test files]
+ok  	github.com/eventflow/eventflow/services/gateway/internal/config	0.673s
+--- FAIL: TestOpsRoutes_AC19_RoleMatrixAndUpstream (0.02s)
+    ops_routes_test.go:41: GET /v1/organizer/events/33333333-3333-4333-8333-333333333333/sales role=buyer: 200, want 403
+    ops_routes_test.go:44: GET /v1/organizer/events/33333333-3333-4333-8333-333333333333/sales role=buyer: request reached upstream
+FAIL
+FAIL	github.com/eventflow/eventflow/services/gateway/internal/proxy	0.479s
+ok  	github.com/eventflow/eventflow/services/gateway/internal/ratelimit	0.344s
+FAIL

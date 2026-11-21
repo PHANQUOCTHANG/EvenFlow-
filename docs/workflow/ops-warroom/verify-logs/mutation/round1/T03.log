@@ -1,0 +1,20 @@
+--- FAIL: TestOpsCache_AC17_ConcurrentRequestsShareOneQueryRound (4.06s)
+FAIL
+FAIL	github.com/eventflow/eventflow/services/ticketing/internal/adapter/http	7.239s
+FAIL
+---- tail ----
+    ops_handler_test.go:347: sales DB rounds = 25, want 1
+    ops_handler_test.go:353: cache miss inside TTL: inv=26 sales=26
+FAIL
+FAIL	github.com/eventflow/eventflow/services/ticketing/internal/adapter/http	7.239s
+ok  	github.com/eventflow/eventflow/services/ticketing/internal/adapter/metrics	1.095s
+?   	github.com/eventflow/eventflow/services/ticketing/internal/adapter/mq	[no test files]
+ok  	github.com/eventflow/eventflow/services/ticketing/internal/adapter/postgres	0.135s
+ok  	github.com/eventflow/eventflow/services/ticketing/internal/adapter/redis	0.114s
+ok  	github.com/eventflow/eventflow/services/ticketing/internal/app	0.270s
+ok  	github.com/eventflow/eventflow/services/ticketing/internal/domain	0.185s
+?   	github.com/eventflow/eventflow/services/ticketing/internal/port	[no test files]
+ok  	github.com/eventflow/eventflow/services/ticketing/internal/worker	0.402s
+ok  	github.com/eventflow/eventflow/services/ticketing/cmd/server	0.146s
+?   	github.com/eventflow/eventflow/services/ticketing/cmd/worker	[no test files]
+FAIL

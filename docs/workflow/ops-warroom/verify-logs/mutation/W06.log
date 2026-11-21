@@ -1,0 +1,17 @@
+[31m   [31m×[31m setAdmitOverride[2m > [22minvalid input (fraction) => INVALID and no request[90m 19[2mms[22m[31m[39m
+[31m[1m[7m FAIL [27m[22m[39m src/lib/ops-service.contract.test.ts[2m > [22msetAdmitOverride[2m > [22minvalid input (fraction) => INVALID and no request
+---- tail ----
+"INVALID"
+
+[31m+ Received:[39m 
+undefined
+
+[36m [2m❯[22m src/lib/ops-service.contract.test.ts:[2m314:21[22m[39m
+    [90m312| [39m    [35mconst[39m { calls } [33m=[39m [34minstallFetch[39m(() [33m=>[39m [34mjson[39m([33mOK_SET[39m))[33m;[39m
+    [90m313| [39m    [35mconst[39m e [33m=[39m ([35mawait[39m [34mrejection[39m([34msetAdmitOverride[39m([33mEV[39m[33m,[39m rate [35mas[39m number[33m,[39m re…
+    [90m314| [39m    [34mexpect[39m(e[33m?.[39mcode)[33m.[39m[34mtoBe[39m([32m"INVALID"[39m)[33m;[39m
+    [90m   | [39m                    [31m^[39m
+    [90m315| [39m    [34mexpect[39m(calls)[33m.[39m[34mtoHaveLength[39m([34m0[39m)[33m;[39m
+    [90m316| [39m  })[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯[22m[39m

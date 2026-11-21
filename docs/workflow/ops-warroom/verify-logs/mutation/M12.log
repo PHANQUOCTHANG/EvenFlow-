@@ -1,0 +1,17 @@
+--- FAIL: TestOpsPut_ApplyFailureIsNotAudited (0.00s)
+FAIL
+FAIL	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/http	3.293s
+FAIL
+---- tail ----
+--- FAIL: TestOpsPut_ApplyFailureIsNotAudited (0.00s)
+    ops_mutation_gap_test.go:106: audit rows = 1 after a failed apply, want 0
+FAIL
+FAIL	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/http	3.293s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/metrics	2.174s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/postgres	0.135s
+?   	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/redis	[no test files]
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/signal	0.396s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/app	0.845s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/config	0.373s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/domain	0.427s
+FAIL

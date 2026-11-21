@@ -1,0 +1,17 @@
+--- FAIL: TestOpsPut_RequestCancelledMidApplyStillAppliesAndAudits (0.00s)
+FAIL
+FAIL	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/http	3.235s
+FAIL
+---- tail ----
+--- FAIL: TestOpsPut_RequestCancelledMidApplyStillAppliesAndAudits (0.00s)
+    ops_mutation_gap_test.go:123: status 503, want 200: {"detail":"khong ap dung duoc lenh, vui long thu lai","status":503,"title":"Service Unavailable","type":"about:blank"}
+FAIL
+FAIL	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/http	3.235s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/metrics	2.215s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/postgres	0.131s
+?   	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/redis	[no test files]
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/signal	0.437s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/app	0.876s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/config	0.386s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/domain	0.425s
+FAIL

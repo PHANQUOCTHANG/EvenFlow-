@@ -1,0 +1,17 @@
+--- FAIL: TestOpsRound2Fix_X24_DuplicateOrCaseMismatchedKeysAre400 (0.00s)
+FAIL
+FAIL	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/http	3.255s
+FAIL
+---- tail ----
+--- FAIL: TestOpsRound2Fix_X24_DuplicateOrCaseMismatchedKeysAre400 (0.00s)
+    ops_round2_fix_test.go:188: PUT {"rate_per_sec":5,"rate_per_sec":0,"reason":"abc"}: 200 writes=1
+FAIL
+FAIL	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/http	3.255s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/metrics	1.871s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/postgres	0.126s
+?   	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/redis	[no test files]
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/signal	0.422s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/app	0.858s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/config	0.376s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/domain	0.409s
+FAIL

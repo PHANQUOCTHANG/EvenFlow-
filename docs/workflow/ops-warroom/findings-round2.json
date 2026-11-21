@@ -1,0 +1,89 @@
+{
+  "round": 2,
+  "scope": "git diff 43eba3f HEAD (fix round 1), gate PASS at 84d623b",
+  "reviewers": ["correctness", "security"],
+  "summary": {"blocker": 0, "major": 0, "minor": 3, "nit": 3},
+  "original_findings": [
+    {"id": "R-1", "status": "fixed", "evidence": "NormalizeReason rejects unicode.IsControl (Cc, incl. NUL/C1); client mirrors with \\p{Cc}. Tests ops_reason_fix_test.go, ops-service.reason.fix.test.ts (PUT and DELETE, nothing applied/audited)."},
+    {"id": "R-2", "status": "open (not in fix round; minor carried as debt)"},
+    {"id": "R-3", "status": "fixed", "evidence": "RFC3339Nano in both ticketing handlers; ops_generated_at_fix_test.go."},
+    {"id": "R-4", "status": "fixed", "evidence": "audit === 'recorded' ? 'recorded' : 'failed'; ops-service.wire.fix.test.ts."},
+    {"id": "R-5", "status": "fixed", "evidence": "AUTH_REQUIRED in ErrorOutcome -> SignInRequired; plain 401 mapped to ApiError AUTH_REQUIRED; ops-auth.fix.test.tsx. See R2-4 (polling not stopped)."},
+    {"id": "R-6", "status": "fixed", "evidence": "stale Routes comment removed (2b41792)."},
+    {"id": "R-7", "status": "open (out of scope, follow-up debt: bind 8090 to 127.0.0.1)"},
+    {"id": "R-8", "status": "open (needs human confirmation in sign-off; no code change)"},
+    {"id": "X-1", "status": "fixed", "evidence": "parseRate accepts digits only, ParseInt, len<=6; 1e2/1E2/100.0/-0/01/+ rejected, 0/1/100/10000 pass; TCR-4 applied in ops_handler_test.go; ops_rate_literal_fix_test.go. Checked: empty, sign, JSON string, null -> 400; leading zeros rejected by the JSON decoder; 10001/100000 -> ValidRate false -> 400."},
+    {"id": "X-2", "status": "fixed", "evidence": "recover() inside the audit closure (withTimeout is synchronous, so the recover is in the right goroutine); panic -> AuditFailed + ERROR line with all fields; context errors still flow through the normal err path, not swallowed. ops_audit_panic_fix_test.go."},
+    {"id": "X-3", "status": "fixed (read-back inactive); partial for read-back error, see R2-3", "evidence": "ops_readback_fix_test.go covers concurrent clear -> active:false, rate null, paused false."},
+    {"id": "X-4", "status": "partially fixed, see R2-1", "evidence": "Only U+200B..U+200D and U+FEFF are discounted; other invisible Cf runes still count as visible."},
+    {"id": "X-5", "status": "open (not in fix round; gateway encoded dot-segment, minor)"},
+    {"id": "X-6", "status": "fixed", "evidence": "getJson rejects non-object bodies -> SourceError(0); nested ?. reads; isWireOverrideResult -> OpsWriteError UNAVAILABLE; sales body validated -> ApiError INVALID_RESPONSE. ops-service.wire.fix.test.ts, organizer-service.sales.fix.test.ts."},
+    {"id": "X-7", "status": "fixed", "evidence": "plain 401 -> SourceError(401, auth) / ApiError AUTH_REQUIRED in getJson, sendOverride, getRealtimeSales; UI shows SignInRequired (static Link, no auto redirect, so no redirect loop)."},
+    {"id": "X-8", "status": "fixed", "evidence": "strings.EqualFold on organizer id; ops_owner_case_fix_test.go."},
+    {"id": "X-9", "status": "fixed", "evidence": "ai-worker: UUID fullmatch (same regex as authx.uuidRe), role compared exactly without strip; matches authx.PrincipalFromHeaders/Valid. test_ops_identity_fix.py."},
+    {"id": "X-10", "status": "fixed (covered by the X-2 recover)"},
+    {"id": "X-11", "status": "open, see R2-5", "evidence": "gate runs `go vet -tags integration` only; go-ticketing postgres package ran in 0.248s without the integration tag, so the SQL suites were not executed."}
+  ],
+  "findings": [
+    {
+      "id": "R2-1",
+      "reviewer": "security",
+      "severity": "minor",
+      "file": "services/waitingroom/internal/app/ops_override.go",
+      "line": 117,
+      "title": "X-4 only partly fixed: other invisible format characters (U+2060, U+00AD, bidi U+202A..U+202E, U+2066..U+2069) count as visible and are accepted",
+      "evidence": "Ran the shipped NormalizeReason standalone: \"\\u2060\\u2060\\u2060\" -> true, \"\\u00ad\\u00ad\\u00ad\" -> true, \"ab\\u202ec\" -> true. A reason can still be visually empty, and a bidi override (RLO) can make the audit_logs reason render reversed/spoofed in any viewer. Client mirror (ops-service.ts:361) has the same gap. Vietnamese NFC and NFD input (combining marks are Mn) is accepted, which is correct and must stay.",
+      "fix": "Treat the whole Cf category as invisible: use unicode.Is(unicode.Cf, c) instead of zeroWidth (do not count toward the 3, trim at edges), and optionally reject bidi controls U+202A..U+202E and U+2066..U+2069 outright. Mirror with /\\p{Cf}/u on the client. Do not touch Mn/Mc so Vietnamese combining marks stay valid; add a test with an NFD Vietnamese reason (e.g. \"Kha\\u0302\\u0309n\") to lock that in."
+    },
+    {
+      "id": "R2-2",
+      "reviewer": "correctness",
+      "severity": "nit",
+      "file": "apps/web/src/lib/ops-service.ts",
+      "line": 362,
+      "title": "Client and server edge-trim sets differ for U+0085 (NEL)",
+      "evidence": "Go unicode.IsSpace includes U+0085, so the server trims \"\\u0085abc\" and accepts it (verified). JS /\\s/u does not include U+0085, which then hits \\p{Cc} and the client rejects. The client is stricter, so this is only an inconsistency, not a bypass.",
+      "fix": "Add \\u0085 to isEdgeBlank, or note the difference in the comment that says the rules match app.NormalizeReason."
+    },
+    {
+      "id": "R2-3",
+      "reviewer": "correctness",
+      "severity": "minor",
+      "file": "services/waitingroom/internal/app/ops_override.go",
+      "line": 178,
+      "title": "X-3 read-back failure still answers active:true with the submitted rate (not the stored value)",
+      "evidence": "On RateOverride error storedActive stays true and stored = rate, so the response echoes the request; only a WARN is logged. X-3 named both the concurrent-DELETE case (now fixed) and the failed read-back case. No test covers the read-error branch.",
+      "fix": "Either accept and document it in contracts (\"on read-back failure the applied value is reported\"), with a test pinning that behaviour, or do HSET + HGET in one Lua script/MULTI so the response always comes from Redis."
+    },
+    {
+      "id": "R2-4",
+      "reviewer": "correctness",
+      "severity": "nit",
+      "file": "apps/web/src/hooks/use-ops-war-room.ts",
+      "line": 139,
+      "title": "Polling keeps running after a 401 while the sign-in prompt is shown",
+      "evidence": "Only 403 sets stoppedRef; LiveWarRoom renders SignInRequired on errorStatus 401 but the hook stays mounted and polls. No redirect loop (SignInRequired is a plain Link), and recovery after re-login in another tab is arguably useful, but each tick re-runs the auth path. The sales dashboard behaves the same.",
+      "fix": "Optional: stop polling on 401 like 403, or back off. Also consider passing a return-to parameter on the /auth/sign-in link."
+    },
+    {
+      "id": "R2-5",
+      "reviewer": "correctness",
+      "severity": "minor",
+      "file": "docs/workflow/ops-warroom/full-gate.sh",
+      "line": 42,
+      "title": "X-11 still open: Postgres/Redis integration suites (build tag integration) are only vetted, never executed in the gate",
+      "evidence": "full-gate.sh runs `go vet -tags integration ./...` then `go test ./...` without the tag; gate/go-ticketing.log shows internal/adapter/postgres ok in 0.248s. AC-14/15/16 SQL and controller-follows-override timing remain unverified by execution.",
+      "fix": "In the verify step run `go test -tags integration ./...` for ticketing and waitingroom with Docker up and attach the log, or record the human waiver."
+    },
+    {
+      "id": "R2-6",
+      "reviewer": "security",
+      "severity": "nit",
+      "file": "docs/workflow/ops-warroom/full-gate.sh",
+      "line": 54,
+      "title": "Tamper check threshold for approved frozen tests raised from 4 to 5 changed lines",
+      "evidence": "Needed for the approved TCR-4 edit of ops_handler_test.go; the change is consistent with tcr-applied.md (TCR-4 approved 2026-11-20). Recording so the sign-off sees the gate was loosened.",
+      "fix": "None required; mention in the human sign-off record."
+    }
+  ]
+}

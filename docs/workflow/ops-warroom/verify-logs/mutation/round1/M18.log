@@ -1,0 +1,21 @@
+--- FAIL: TestOpsQueue_AC5_RoleAndPrincipal (0.00s)
+--- FAIL: TestOpsWrite_AC13_NonOpsForbiddenNothingAppliedOrAudited (0.00s)
+FAIL
+FAIL	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/http	3.237s
+FAIL
+---- tail ----
+    ops_handler_test.go:515: DELETE organizer: applied or audited
+    ops_handler_test.go:512: PUT moderator: 200 
+    ops_handler_test.go:515: PUT moderator: applied or audited
+    ops_handler_test.go:512: DELETE moderator: 200 
+    ops_handler_test.go:515: DELETE moderator: applied or audited
+FAIL
+FAIL	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/http	3.237s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/metrics	1.663s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/postgres	0.130s
+?   	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/redis	[no test files]
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/signal	0.422s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/app	0.823s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/config	0.338s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/domain	0.419s
+FAIL

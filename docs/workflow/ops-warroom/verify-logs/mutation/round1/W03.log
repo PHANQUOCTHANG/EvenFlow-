@@ -1,0 +1,21 @@
+[31m   [31m×[31m getOpsWarRoom - errors (AC-22)[2m > [22ma 403 from the queue source => OpsServiceError(403), not 'unavailable'[90m 19[2mms[22m[31m[39m
+[31m   [31m×[31m getOpsWarRoom - errors (AC-22)[2m > [22ma 403 from the inv source => OpsServiceError(403), not 'unavailable'[90m 5[2mms[22m[31m[39m
+[31m   [31m×[31m getOpsWarRoom - errors (AC-22)[2m > [22ma 403 from the ai source => OpsServiceError(403), not 'unavailable'[90m 6[2mms[22m[31m[39m
+[31m[1m[7m FAIL [27m[22m[39m src/lib/ops-service.contract.test.ts[2m > [22mgetOpsWarRoom - errors (AC-22)[2m > [22ma 403 from the queue source => OpsServiceError(403), not 'unavailable'
+[31m[1m[7m FAIL [27m[22m[39m src/lib/ops-service.contract.test.ts[2m > [22mgetOpsWarRoom - errors (AC-22)[2m > [22ma 403 from the inv source => OpsServiceError(403), not 'unavailable'
+[31m[1m[7m FAIL [27m[22m[39m src/lib/ops-service.contract.test.ts[2m > [22mgetOpsWarRoom - errors (AC-22)[2m > [22ma 403 from the ai source => OpsServiceError(403), not 'unavailable'
+---- tail ----
+
+[31m[1m[7m FAIL [27m[22m[39m src/lib/ops-service.contract.test.ts[2m > [22mgetOpsWarRoom - errors (AC-22)[2m > [22ma 403 from the queue source => OpsServiceError(403), not 'unavailable'
+[31m[1m[7m FAIL [27m[22m[39m src/lib/ops-service.contract.test.ts[2m > [22mgetOpsWarRoom - errors (AC-22)[2m > [22ma 403 from the inv source => OpsServiceError(403), not 'unavailable'
+[31m[1m[7m FAIL [27m[22m[39m src/lib/ops-service.contract.test.ts[2m > [22mgetOpsWarRoom - errors (AC-22)[2m > [22ma 403 from the ai source => OpsServiceError(403), not 'unavailable'
+[31m[1mAssertionError[22m: expected undefined to be an instance of OpsServiceError[39m
+[36m [2m❯[22m src/lib/ops-service.contract.test.ts:[2m236:15[22m[39m
+    [90m234| [39m    [34minstallFetch[39m([34mwire[39m({ [k][33m:[39m () [33m=>[39m [34mproblem[39m([34m403[39m[33m,[39m [32m"/problems/forbidden"[39m)…
+    [90m235| [39m    [35mconst[39m e [33m=[39m [35mawait[39m [34mrejection[39m([34mgetOpsWarRoom[39m([33mEV[39m))[33m;[39m
+    [90m236| [39m    [34mexpect[39m(e)[33m.[39m[34mtoBeInstanceOf[39m([33mOpsServiceError[39m)[33m;[39m
+    [90m   | [39m              [31m^[39m
+    [90m237| [39m    [34mexpect[39m((e [35mas[39m [33mOpsServiceError[39m)[33m.[39mstatus)[33m.[39m[34mtoBe[39m([34m403[39m)[33m;[39m
+    [90m238| [39m  })[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯[22m[39m

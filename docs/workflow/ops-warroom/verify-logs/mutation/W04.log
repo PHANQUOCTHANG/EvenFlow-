@@ -1,0 +1,17 @@
+[31m   [31m×[31m getOpsWarRoom - errors (AC-22)[2m > [22mall three sources failing => OpsServiceError(503)[90m 19[2mms[22m[31m[39m
+[31m[1m[7m FAIL [27m[22m[39m src/lib/ops-service.contract.test.ts[2m > [22mgetOpsWarRoom - errors (AC-22)[2m > [22mall three sources failing => OpsServiceError(503)
+---- tail ----
+
+[31m⎯⎯⎯⎯⎯⎯⎯[1m[7m Failed Tests 1 [27m[22m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[31m[1m[7m FAIL [27m[22m[39m src/lib/ops-service.contract.test.ts[2m > [22mgetOpsWarRoom - errors (AC-22)[2m > [22mall three sources failing => OpsServiceError(503)
+[31m[1mAssertionError[22m: expected undefined to be an instance of OpsServiceError[39m
+[36m [2m❯[22m src/lib/ops-service.contract.test.ts:[2m254:15[22m[39m
+    [90m252| [39m    )[33m;[39m
+    [90m253| [39m    [35mconst[39m e [33m=[39m [35mawait[39m [34mrejection[39m([34mgetOpsWarRoom[39m([33mEV[39m))[33m;[39m
+    [90m254| [39m    [34mexpect[39m(e)[33m.[39m[34mtoBeInstanceOf[39m([33mOpsServiceError[39m)[33m;[39m
+    [90m   | [39m              [31m^[39m
+    [90m255| [39m    [34mexpect[39m((e [35mas[39m [33mOpsServiceError[39m)[33m.[39mstatus)[33m.[39m[34mtoBe[39m([34m503[39m)[33m;[39m
+    [90m256| [39m  })[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯[22m[39m

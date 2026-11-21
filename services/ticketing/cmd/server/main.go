@@ -135,7 +135,8 @@ func run(log *slog.Logger) error {
 		WithCheckIn(checkInUC).
 		WithOrderOwner(repo).
 		WithOrders(app.NewGetOrder(repo, repo), app.NewCancelHold(repo, gate, log),
-			app.NewGetAvailability(availabilitySource{tiers: repo, stock: gate}))
+			app.NewGetAvailability(availabilitySource{tiers: repo, stock: gate})).
+		WithOps(app.NewGetOpsInventory(repo), app.NewGetOrganizerSales(repo))
 
 	// BR-O5. Dinh danh lay tu X-Identity-Id cho toi khi gateway cap JWT (giai doan 3); no nam
 	// trong hash cua request nen nguoi khac dung trung key khong nhan duoc response cua nhau.

@@ -1,0 +1,62 @@
+[
+  {
+    "id": "X2-1",
+    "severity": "minor",
+    "file": "services/waitingroom/internal/app/ops_override.go",
+    "line": 117,
+    "title": "X-4 is only partly fixed: the mandatory reason can still be invisible, and bidi override characters are stored in the audit reason",
+    "repro": "Executed (go test -overlay, scratch probe in package httpadapter_test). app.NormalizeReason returns ok=true for three code points of any of: U+202E (RLO), U+2066..U+2069 (isolates), U+2060 (word joiner), U+00AD (soft hyphen), U+200E/U+200F (LRM/RLM), U+061C, U+180E, U+2061..U+2064, U+0301 (combining acute, no base), U+FE0F (variation selector), U+E0020 (tag), U+3164 (Hangul filler), U+2800 (braille blank), U+E000 (private use), U+FFFF. Over HTTP: PUT {\"rate_per_sec\":0,\"reason\":\"<U+202E x3>\"} -> 200, sets=[0], audit row action=ADMIT_PAUSED with reason = three RLO characters. Also accepted: \"resume <U+202E>esuap<U+202C> ok\" (renders as 'resume pause ok' in a bidi-aware audit viewer), and \"<U+D800 escaped x3>\" which the Go decoder turns into three U+FFFD and stores.",
+    "evidence": "zeroWidth() lists only U+200B..U+200D and U+FEFF; unicode.IsControl covers category Cc only, so category Cf (format), Mn (combining), and blank-looking Lo/So code points count as visible. Probe output: 'REASON RLO x3 U+202E ok=true', 'word joiner U+2060 x3 ok=true', 'soft hyphen x3 ok=true', 'combining acute x3 ok=true', 'hangul filler x3 ok=true', 'bidi spoof ok=true', 'HTTP REASON <RLO x3> -> 200 sets=[0] audit=... action=ADMIT_PAUSED'. The web normalizeOverrideReason (apps/web/src/lib/ops-service.ts:361-376) has the same list and accepts the same strings (checked with node). Correctly rejected now: ZWSP/ZWJ/BOM-only, NBSP-only, NUL, 201 runes, raw invalid UTF-8.",
+    "fix": "In NormalizeReason and normalizeOverrideReason: reject (or strip before counting) every rune in unicode.Cf except ZWJ/ZWNJ between letters, and require at least 3 runes that are letters or digits (unicode.IsLetter || unicode.IsNumber) instead of 'not in a 4-entry zero-width list'. That closes Cf, Mn-only, fillers and private use in one rule. JS equivalent: /[\\p{L}\\p{N}]/u count >= 3 and reject /\\p{Cf}/u other than U+200C/U+200D."
+  },
+  {
+    "id": "X2-2",
+    "severity": "minor",
+    "file": "services/waitingroom/internal/app/ops_override.go",
+    "line": 186,
+    "title": "Concurrent PUTs: the audit row of operator A records operator B's rate and action (A sent 500, audit says ADMIT_PAUSED rate 0 under A's actor id and reason)",
+    "repro": "Executed. Store fake where a second SetRateOverride(other) lands between our HSET and our read-back. Case 1: request {\"rate_per_sec\":500,\"reason\":\"my command\"}, other=0 -> 200 override{active:true,rate_per_sec:0} paused:true; audit entry action=ADMIT_PAUSED, metadata.rate_per_sec=0, reason='my command'. Case 2: request rate 0, other=500 -> audit entry action=ADMIT_OVERRIDE_SET, metadata.rate_per_sec=500 for a command that was an emergency pause.",
+    "evidence": "Set(): `if storedActive { ...; auditRate = stored }` then `action` and metadata rate_per_sec are derived from auditRate. The round 1 fix kept the commanded rate only for the concurrent-DELETE branch (comment: 'audit van ghi nhip da dat') but still overwrites it with the read-back value when another PUT won. contracts.md 3.4 defines the row per applied command (metadata.rate_per_sec = the command's rate, ADMIT_PAUSED when rate = 0). The response using the stored value is correct per 3.2; the audit row is not. Window is one Redis round trip, so it needs two operators acting in the same millisecond, but the result is a false forensic record (someone who resumed is logged as having paused).",
+    "fix": "Always audit the commanded rate: action and metadata.rate_per_sec from `rate`, never from the read-back. Optionally add metadata.stored = {active, rate_per_sec} when the read-back differs. Add a fix test with a store that applies a second Set before the read-back."
+  },
+  {
+    "id": "X2-3",
+    "severity": "minor",
+    "file": "apps/web/src/lib/ops-service.ts",
+    "line": 264,
+    "title": "X-7 fix widens the blast radius of a single 401: one source answering a plain 401 replaces the whole war room (including the pause controls) with the sign-in notice",
+    "repro": "Not executed (read only; no scratch vitest run). getJson line 226 now turns any HTTP 401 into SourceError(401, auth=true) for all four sources, including the public event detail (auth:false) and /v1/ops/ai/mode. getOpsWarRoom line 264: `if (failures.some((f) => f?.auth)) throw new OpsServiceError(401)`. LiveWarRoom (ops-war-room.tsx:103) returns <SignInRequired/> for errorStatus 401 even when a snapshot is already on screen, so OpsControls is unmounted. Before the fix a plain 401 from one source only marked that source unavailable.",
+    "evidence": "A plain 401 reaching getJson means apiFetch did not raise AUTH_REQUIRED (the session/refresh path considers the session alive). Example that hits one source only: ai-worker answers 401 on its own identity check (main.py:213) or any upstream answers 401 for a reason other than the gateway token. The least important tile (AI mode) can then take away the emergency pause button while waitingroom is healthy and the session is valid. Polling continues (hook stops only on 403), so it recovers by itself when the source recovers.",
+    "fix": "Treat a plain 401 as session loss only when it comes from the gateway-authenticated core source (queue), or when every authenticated source returns 401; otherwise mark that source unavailable as for other statuses. Keep the controls mounted while a snapshot exists and show the sign-in notice as a banner. Add a wire test: queue 200 + inventory 200 + ai 401 -> snapshot with ai source unavailable."
+  },
+  {
+    "id": "X2-4",
+    "severity": "nit",
+    "file": "services/waitingroom/internal/adapter/http/ops_handler.go",
+    "line": 178,
+    "title": "decodeStrict is not strict about keys: duplicate keys are last-wins and key names are case-insensitive",
+    "repro": "Executed. {\"rate_per_sec\":5,\"rate_per_sec\":0,\"reason\":\"abc\"} -> 200, sets=[0] (pause applied). {\"RATE_PER_SEC\":0,\"REASON\":\"abc\"} -> 200, sets=[0]. {\"rate_per_sec\":5,\"reason\":\"abcdef\",\"reason\":\"   xyz  \"} -> 200, audit reason 'xyz'.",
+    "evidence": "encoding/json matches field names case-insensitively and keeps the last duplicate; DisallowUnknownFields does not change either. Any component that reads the body before the service (access log, WAF, a future request-signing or approval step) and takes the first key sees rate 5 while the service applies 0. No such component exists today, so there is no exploit now. The rate literal parsing itself held: \"5\", 1e2, 1E0, 0e0, -0, 0x10, +5, 5.0, 010, 00, 26 digits, 10001, 100000, fullwidth and Arabic-Indic digits, null, true, [5] all -> 400; 0, 10000 and whitespace-padded 7 -> 200; trailing data and a body over 4 KiB -> 400.",
+    "fix": "Optional: decode into map[string]json.RawMessage with a token loop that rejects duplicate keys and requires exact key names, or accept the behaviour and state it in contracts.md 3.2."
+  },
+  {
+    "id": "X2-5",
+    "severity": "nit",
+    "file": "apps/web/src/lib/ops-service.ts",
+    "line": 366,
+    "title": "Reason rules: small client/server mismatch and a misleading error text for control characters",
+    "repro": "Executed (Go probe + node). Reason \"<U+0085>abc<U+0085>\": Go trims NEL as space and accepts 'abc'; the web normaliser does not trim it (JS \\s excludes U+0085) and returns null because it is Cc. Reason with an interior tab or newline ('ab<TAB>cd', pasted text): both sides reject, and the UI shows REASON_ERROR 'Ly do phai dai tu 3 den 200 ky tu' although the length is valid; the API detail says the same.",
+    "evidence": "NormalizeReason: unicode.IsSpace (includes U+0085) for trimming, unicode.IsControl rejects after trimming. Web: isEdgeBlank uses /^\\s$/u, then /^\\p{Cc}$/u rejects. The docstring claims 'Cung luat voi waitingroom'. Length counting itself is consistent (code points on both sides: 200 emoji accepted, 201 rejected; 100 x 'e'+U+0301 accepted, 101 rejected; 'abc'+196 ZWSP+'d' accepted because the 200 limit counts zero-width runes while the 3 minimum does not).",
+    "fix": "Replace interior tab/newline runs with one space before validating (on both sides), trim U+0085 in the web normaliser, and mention 'khong chua ky tu dieu khien' in the message. Low priority."
+  },
+  {
+    "id": "X2-6",
+    "severity": "nit",
+    "file": "services/ai-worker/app/main.py",
+    "line": 213,
+    "title": "ai-worker identity check still differs from authx.PrincipalFromHeaders in two edge cases (no spoofing path found)",
+    "repro": "Not executed (read only). (a) X-Identity-Id valid + X-Identity-Role 'admin' (not in authx validRoles): Go services answer 401 (Principal invalid), ai-worker answers 403. (b) X-Device-Id present but not a UUID: Go 401, ai-worker ignores the header.",
+    "evidence": "libs/go/authx/principal.go:51-53 and :76-90 versus main.py:213-216. The parts that matter hold: re.fullmatch (no trailing-newline acceptance), exact role compare without strip, same UUID pattern as authx uuidRe. The gateway strips client X-Identity-* on every request, so a client cannot inject these through the gateway; a caller with direct network access to the ai-worker port can send any identity, exactly as for the Go services (trust boundary by design, unchanged by this round).",
+    "fix": "None required. If full parity is wanted: 401 when the role is not one of buyer/organizer/moderator/ops, and 401 for a malformed X-Device-Id."
+  }
+]
