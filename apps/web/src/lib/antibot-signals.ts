@@ -156,6 +156,12 @@ const LISTENERS: Array<[string, (e?: Event) => void]> = [
   ["scroll", onScroll],
 ];
 
+/** Xoa trang thai collector trong bo nho (R2-5): goi khi dang xuat / doi tai khoan, de tai khoan sau khong ke
+ *  thua so dem va khoang cach cua tai khoan truoc. Listener (neu dang chay) van tiep tuc dem tu dau. */
+export function resetSignalCollector(): void {
+  state = freshState();
+}
+
 /** Bat dau thu tin hieu (listener passive tren window). Tra ham don dep. */
 export function startSignalCollector(eventId: string): () => void {
   void eventId; // snapshot gan voi event luc bam join; collector chi do mot trang
