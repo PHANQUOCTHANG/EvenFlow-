@@ -1,0 +1,20 @@
+--- FAIL: TestOpsCache_AC17_PerEventKeyAndExpiry (2.20s)
+FAIL
+FAIL	github.com/eventflow/eventflow/services/ticketing/internal/adapter/http	3.782s
+FAIL
+---- tail ----
+--- FAIL: TestOpsCache_AC17_PerEventKeyAndExpiry (2.20s)
+    ops_handler_test.go:368: entry must expire after ~2 s: calls=2
+FAIL
+FAIL	github.com/eventflow/eventflow/services/ticketing/internal/adapter/http	3.782s
+ok  	github.com/eventflow/eventflow/services/ticketing/internal/adapter/metrics	1.572s
+?   	github.com/eventflow/eventflow/services/ticketing/internal/adapter/mq	[no test files]
+ok  	github.com/eventflow/eventflow/services/ticketing/internal/adapter/postgres	0.245s
+ok  	github.com/eventflow/eventflow/services/ticketing/internal/adapter/redis	0.240s
+ok  	github.com/eventflow/eventflow/services/ticketing/internal/app	0.598s
+ok  	github.com/eventflow/eventflow/services/ticketing/internal/domain	0.403s
+?   	github.com/eventflow/eventflow/services/ticketing/internal/port	[no test files]
+ok  	github.com/eventflow/eventflow/services/ticketing/internal/worker	0.537s
+ok  	github.com/eventflow/eventflow/services/ticketing/cmd/server	0.237s
+?   	github.com/eventflow/eventflow/services/ticketing/cmd/worker	[no test files]
+FAIL

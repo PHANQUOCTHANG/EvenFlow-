@@ -1,0 +1,14 @@
+--- FAIL: TestOpsRoutes_AC19_OtherMethodsNotForwarded (0.01s)
+FAIL
+FAIL	github.com/eventflow/eventflow/services/gateway/internal/proxy	0.507s
+FAIL
+---- tail ----
+?   	github.com/eventflow/eventflow/services/gateway/cmd/server	[no test files]
+ok  	github.com/eventflow/eventflow/services/gateway/internal/config	0.671s
+--- FAIL: TestOpsRoutes_AC19_OtherMethodsNotForwarded (0.01s)
+    ops_routes_test.go:92: POST /v1/ops/events/33333333-3333-4333-8333-333333333333/inventory: 200, want 404/405
+    ops_routes_test.go:96: unsupported method was forwarded to an upstream
+FAIL
+FAIL	github.com/eventflow/eventflow/services/gateway/internal/proxy	0.507s
+ok  	github.com/eventflow/eventflow/services/gateway/internal/ratelimit	0.381s
+FAIL

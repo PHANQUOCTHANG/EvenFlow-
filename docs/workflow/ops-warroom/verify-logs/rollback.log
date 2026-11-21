@@ -1,0 +1,14 @@
+# rollback check at c5fb598 (2026-11-21T07:07:15Z)
+## services/waitingroom: go build ./... && go vet ./... && go test ./... -count=1
+exit 0
+## services/ticketing: go build ./... && go vet ./... && go test ./... -count=1
+exit 0
+## services/gateway: go build ./... && go vet ./... && go test ./... -count=1
+exit 0
+## services/ai-worker: uv run pytest -q
+!!!!!!!!!!!!!!!!!!! Interrupted: 7 errors during collection !!!!!!!!!!!!!!!!!!!
+23 warnings, 7 errors in 4.85s
+## (re-run) fresh worktree venv lacked extras -> uv sync --all-extras; uv run pytest -q
+203 passed, 22 deselected, 1 warning
+## schema: no migrations/*.sql touched in c5fb598..cfc630e; audit_logs pre-exists in migrations/0001_core.sql at c5fb598
+## deploy: only additive DATABASE_URL + pgbouncer depends_on for waitingroom in docker-compose.yml

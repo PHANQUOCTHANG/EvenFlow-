@@ -1,0 +1,18 @@
+--- FAIL: TestOpsWrite_AC9_InvalidInputIs400AndNothingApplied (0.00s)
+FAIL
+FAIL	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/http	3.213s
+FAIL
+---- tail ----
+--- FAIL: TestOpsWrite_AC9_InvalidInputIs400AndNothingApplied (0.00s)
+    ops_handler_test.go:421: PUT string rate: 200 
+    ops_handler_test.go:424: PUT string rate: state changed or audited
+FAIL
+FAIL	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/http	3.213s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/metrics	1.775s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/postgres	0.123s
+?   	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/redis	[no test files]
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/signal	0.423s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/app	0.860s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/config	0.343s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/domain	0.419s
+FAIL
