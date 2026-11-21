@@ -1,8 +1,8 @@
 {
-  "commit_sha": "d5a590f206ece683099ee5005ca3a364f070e70d",
+  "commit_sha": "254f556fad35b3970da9410b218b27775e1c1d90",
   "base": "c5fb598",
   "tests_frozen": "0763f2a",
-  "generated_at": "2026-11-21T06:59:53Z",
+  "generated_at": "2026-11-21T07:29:18Z",
   "note": "exit 77 = NOT RUN (tool or engine missing), never a pass",
   "results": {
     "py-ai-worker": {"exit": 0, "status": "PASS", "log": "gate/py-ai-worker.log"},
