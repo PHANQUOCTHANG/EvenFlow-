@@ -128,3 +128,62 @@ is found, commit it under `testdata/fuzz/FuzzResolve/`.
 - **Startup log:** `[]netip.Prefix` renders through `String()` in slog JSON. Fine.
 - **Rollback:** a revert of the merge commit, or leaving the env empty, restores develop exactly. With P-1 applied,
   that also holds for odd peers.
+
+## Round 2
+
+| Item | Value |
+|---|---|
+| Input | `spec.md`, `plan.md` at `8cbccf2` (diff against `c141073`) |
+| Date | 2026-11-21 |
+
+### Verdict: **PASS** (round 2)
+
+Both majors are resolved. P-3..P-6 are addressed. The revision introduced no blocker or major. Three new minor
+findings (R2-1..R2-3) can be fixed during step 3 without another plan review.
+
+### Re-check of round 1
+
+- **P-1: resolved.** Spec 3.2 defines `peerKey` as today's `clientIP` (SplitHostPort host, else raw). 3.3 returns it
+  on every fallback: trust empty, peer that netip cannot parse, untrusted peer, malformed element, hop cap, empty
+  list. The netip form is used only for `Contains`. Each case traced against develop:
+  - `[fe80::1%eth0]:51234` → `fe80::1%eth0` with trust on or off, so there is no port in the key and no bucket per
+    connection.
+  - `[::ffff:1.2.3.4]:5` → `::ffff:1.2.3.4`, as today.
+  - `garbage` → raw `garbage`, as today.
+  - The upstream XFF on every fallback is `SetXForwarded`'s SplitHostPort host, which is the same string as `peerKey`.
+
+  AC-1, AC-6, AC-7 and AC-11 and the table rows match. The fuzz invariant now runs both a trusted set and an empty
+  set.
+- **P-2: resolved.** `newPeerFixture` lives in package `proxy_test`. It reuses `upstreams`, `seen`, `token()` and
+  `secret` from the frozen file, all accessible there. It calls `proxy.New` itself behind a wrapper that sets
+  `RemoteAddr`, and never touches `newFixture` or a running server, so there is no `-race` hazard. `gateway_test.go`
+  and `config_test.go` are declared byte-identical.
+- **P-3: resolved** by `peerKey`.
+- **P-4: resolved.** The zone and `Is4In6` checks on bare IPs, `Masked()` and `Bits()==0` are in the spec, and
+  `::ffff:10.0.0.1` is in AC-8.
+- **P-5: resolved.** XFF lines are split on newline, the fuzz run uses no `-race`, and crashers go to `testdata/fuzz`.
+- **P-6: resolved.**
+  - The benchmark adds the empty-elements case, and the linear bound is written down.
+  - `WithContext` comes before `MaxBytesReader`, with an unexported key.
+  - The config tests are in a new `config_trusted_test.go`.
+  - Mutations are 8/8.
+  - AC-1 sends XFF, `X-Real-IP` and `Forwarded`.
+  - Q-1..Q-3 are recorded as open, with defaults.
+
+### New findings (minor)
+
+- **R2-1 (minor): AC-9 vs an unparsable `RemoteAddr`.** AC-9 says "for AC-2..AC-7 inputs, the upstream receives
+  exactly one XFF element". For the AC-7 row with an unparsable `RemoteAddr`, `SetXForwarded` **deletes** XFF, as
+  develop does, so the upstream gets none. **Fix:** exempt that row in AC-9 ("upstream XFF absent, as develop"), or
+  keep it as a `clientip` unit row only, not an integration case.
+- **R2-2 (minor): a literal newline in `plan.md`.** Rows 25 and 69 contain a real newline inside the backticks of
+  "split on `\n`", which breaks both markdown table rows. **Fix:** write `` `\n` `` (backslash-n) so each row stays on
+  one line.
+- **R2-3 (minor): peer normalisation and visibility.**
+  - Spec 3.3 step 2 says "normalise the peer with netip" without the exact input. Pin it to `netip.ParseAddr(peerKey)`,
+    then reject a zone, then `Unmap()`. A port-less `RemoteAddr` such as `10.1.2.3` then gives a deterministic
+    result: it is trusted, and its fallback key is `10.1.2.3`.
+  - `FuzzResolve` asserts on the unexported `peerKey`, so `clientip_test.go` must use the internal package
+    `clientip`, not `clientip_test`.
+  - The spec still names the identity reader `deviceFrom`. The function is `newDevice` (`handler.go:53`). This only
+    affects the docs.
