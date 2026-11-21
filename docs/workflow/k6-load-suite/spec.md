@@ -115,3 +115,9 @@ idempotency key format (AC-6), remote-target guard (AC-4).
   3. Load runs require `ANTIBOT_MODE=shadow`; no anti-bot exemption is added.
   4. D3: no CI job in this task (follow-up: one step in `e2e-nightly.yml`).
   5. Smoke size 20 VUs / 50 users / quota 200 with `SLO_SCALE=4`.
+
+## Amendment 2026-11-22 (wording only, Medium tier, no re-approval)
+
+- AC-12: read `node --test tests/load/lib` as `node --test tests/load/lib/*.test.mjs`. On Node 22 a bare directory
+  argument is resolved as a module path and fails with MODULE_NOT_FOUND; the glob runs the same files. `make
+  test-load-lib` and the gate use the glob. The acceptance content of AC-12 is unchanged.

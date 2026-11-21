@@ -6,14 +6,20 @@ One entry script, `tests/load/main.js`, with a `PROFILE` switch. Spec and decisi
 | Profile | What it does | Defaults |
 |---|---|---|
 | `smoke` | 20 VUs: join -> poll -> hold -> payment -> sandbox webhook -> `ISSUED` | `USERS=50 QUOTA=200 SLO_SCALE=4`, < 2 min |
-| `spike` | opening spike: `JOIN_TARGET` joins within `JOIN_RAMP` (ramping-arrival-rate), jitter 0..`JITTER_MS` | `100000` in `5s`, jitter `5000` |
+| `spike` | opening spike: `JOIN_TARGET` joins within `JOIN_RAMP` (ramping-arrival-rate), then a late tail; jitter 0..`JITTER_MS` | `100000` in `5s`, jitter `5000` |
 | `wait` | `WAIT_VUS` VUs join once and poll for `WAIT_DURATION`, honouring `poll_after_ms` / `X-Poll-After-Ms` / `ETag` | `20000` for `30m` |
-| `checkout` | `CHECKOUT_RATE` new buyers per second join, wait for `ADMITTED`, buy | `200/s` for `5m` |
+| `checkout` | `CHECKOUT_RATE` new buyers per second join, wait for `ADMITTED`, buy | `200/s` for `5m`, `WEBHOOK_RATE=CHECKOUT_RATE` |
 | `full` | spike at 0 s, wait from 10 s, checkout from 60 s | union |
 
 All traffic goes **through the gateway** with an HS256 access token that each VU mints from `JWT_SECRET` (default: the
 compose dev secret). No `/api/v1/auth/*` call is made; the identities `00000000-0000-4000-9000-{n}` are seeded by
-`seed-load.sh`. A `BASE` other than `localhost` / `127.0.0.1` / `[::1]` is refused unless `ALLOW_REMOTE=1`.
+`seed-load.sh`. A `BASE` other than `localhost` / `127.0.0.1` / `[::1]` is refused unless **both** `ALLOW_REMOTE=1`
+and `REMOTE_CONFIRM=<host of BASE>` are set; `setup()` then prints a REMOTE TARGET banner.
+
+**Ambient environment.** k6 copies the whole shell environment into `__ENV`, so any variable listed below that is
+exported in your shell (`BASE`, `QUOTA`, `ALLOW_REMOTE`, ...) applies to the run even without `-e`. That is why a remote
+target needs the second, host-specific `REMOTE_CONFIRM`. Check `env | grep -E '^(BASE|ALLOW_REMOTE|REMOTE_CONFIRM|QUOTA)='`
+before a run, or start k6 with `--include-system-env-vars=false` and pass everything with `-e`.
 
 ## Requirement: anti-bot in shadow mode
 
@@ -35,6 +41,14 @@ make load-seed USERS=6000 QUOTA=2000
 make load PROFILE=spike JOIN_TARGET=5000 USERS=6000 QUOTA=2000
 ```
 
+**Quota.** One default, `DEFAULT_QUOTA` in `lib/profiles.js` (200), is read by both `seed-load.sh` and k6. When you
+override it, pass the same `QUOTA` to `make load-seed` and `make load` (setup() prints the quota it enforces): the
+`checkout_holds_ok count <= QUOTA` invariant is only as strong as that match. `HOLD_TTL` (600 s) is shared the same way.
+
+`seed-load.sh` only accepts load events `22222222-2222-4222-8222-0000000001xx` (it RESETs them; the demo event is
+refused) and refuses a non-local Docker engine (`DOCKER_HOST` tcp/ssh, a docker context other than
+default/desktop-*/colima/orbstack/rancher-desktop) unless `ALLOW_REMOTE=1`.
+
 No local k6: use the image (pin a version, e.g. `grafana/k6:0.57.0`):
 
 ```bash
@@ -51,7 +65,19 @@ init before any request.
 `join p(99) < 300 ms`, `status p(99) < 150 ms`, `hold` and `payment p(99) < 800 ms` (each multiplied by `SLO_SCALE`),
 `join success > 99.5%`, `http_req_failed < 1%` (5xx and network errors only), `status 429 rate < 0.1%`,
 `checkout_holds_ok count <= QUOTA` and `idem_mismatch count == 0` (never scaled, abort the run on failure).
-Smoke also requires at least one `ADMITTED`, one `ISSUED` and one `304`.
+Every profile with a checkout phase (smoke, wait, checkout, full) also requires `checkout_issued count >= 1`,
+`checkout_issue_timeout count == 0` and `checkout_step_ok rate > 0.99`, so a run that buys nothing fails.
+Smoke also requires at least one `ADMITTED` and one `304`.
+
+**Spike arrivals.** The first `JOIN_RAMP` seconds deliver exactly `JOIN_TARGET` arrivals; a late tail follows (1 s step
+down to 2% of the rate, then 24 s at that rate), so `wr_join_arrivals` is about `JOIN_TARGET` + 20% at defaults
+(119,800 for 100,000 / 5 s) and the identity range is sized for that. The summary's "requested" rate is the ramp only.
+
+**Webhook pacing.** The sandbox webhook is public and rate limited per IP. In `checkout` / `full` the k-th buyer of
+the wave posts at start + k / `WEBHOOK_RATE`; `WEBHOOK_RATE` defaults to `CHECKOUT_RATE` and k6 refuses to start when
+it is lower (webhooks would fall behind and holds expire). A webhook that would land within 60 s of the hold expiry
+(`HOLD_TTL`) is skipped and counted in `webhook_delayed`. Buyers of smoke / wait are admitted at the server's pace:
+no slot, a 429 is retried with `Retry-After`. Raise `RATE_DEFAULT` on the target for big waves (spec D4).
 
 ## Results
 
