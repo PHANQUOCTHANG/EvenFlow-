@@ -2,7 +2,7 @@
 
 ## TCR-1: convert the old Gemini-shaped fakes and expectations in pre-existing tests
 
-Status: **open, awaiting human approval.** Raised at plan round 3 (tests frozen at 0763f2a).
+Status: **approved** by TranDinhVo in the Claude Code session on 2026-11-21 (all 11 items as written). Raised at plan round 3 (tests frozen at 0763f2a).
 
 ### Why
 
