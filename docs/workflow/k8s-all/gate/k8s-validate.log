@@ -6,8 +6,8 @@ kustomize: v5.7.1
 kubeconform: development
 yq: yq (https://github.com/mikefarah/yq/) version v4.44.3
 == render
-rendered overlays/local -> /tmp/tmp.bXYsIvE07o/render/local.yaml (77 objects)
-rendered overlays/staging -> /tmp/tmp.bXYsIvE07o/render/staging.yaml (57 objects)
+rendered overlays/local -> /tmp/tmp.duBtI53bFC/render/local.yaml (77 objects)
+rendered overlays/staging -> /tmp/tmp.duBtI53bFC/render/staging.yaml (57 objects)
 == kubeconform -strict (k8s 1.32.0)
 kubeconform local: Summary: 77 resources found in 1 file - Valid: 77, Invalid: 0, Errors: 0, Skipped: 0
 kubeconform staging: Summary: 57 resources found in 1 file - Valid: 57, Invalid: 0, Errors: 0, Skipped: 0
@@ -17,6 +17,6 @@ policy: OK (57 objects, overlay=staging)
 == AC-13 Dockerfiles
 policy: OK (6 objects, overlay=dockerfiles)
 == policy self-test (test_policy.sh --fixtures-only)
-selftest: 202/202
-RESULT pass=233 fail=0 skip=0
+selftest: 204/204
+RESULT pass=235 fail=0 skip=0
 validate: OK

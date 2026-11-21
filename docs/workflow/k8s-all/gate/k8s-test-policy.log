@@ -1,5 +1,5 @@
 PASS [A-GEN-SYNC] committed fixtures match testdata/gen_fixtures.py
-PASS [A-COUNT] 184 bad fixtures
+PASS [A-COUNT] 186 bad fixtures
 PASS [A-COVER-AC-1] has bad fixture(s)
 PASS [A-COVER-AC-3] has bad fixture(s)
 PASS [A-COVER-AC-4] has bad fixture(s)
@@ -106,8 +106,10 @@ PASS [C-AC-18--notification-gets-jwt] rejected with AC-18 only
 PASS [C-AC-18--staging-identity-smtp-missing] rejected with AC-18 only
 PASS [C-AC-18--staging-optional-secret-ref] rejected with AC-18 only
 PASS [C-AC-18--staging-stripe-key-extra] rejected with AC-18 only
+PASS [C-AC-18--staging-waitingroom-uses-direct-db] rejected with AC-18 only
 PASS [C-AC-18--ticketing-gets-amqp] rejected with AC-18 only
 PASS [C-AC-18--ticketing-uses-direct-db] rejected with AC-18 only
+PASS [C-AC-18--waitingroom-uses-direct-db] rejected with AC-18 only
 PASS [C-AC-18--web-envfrom-secret] rejected with AC-18 only
 PASS [C-AC-19--local-app-env-production] rejected with AC-19 only
 PASS [C-AC-19--staging-app-env-development] rejected with AC-19 only
@@ -248,5 +250,5 @@ PASS [E-AC24-POLICY-local] policy: OK (77 objects, overlay=local)
 PASS [E-AC2-KUBECONFORM-staging] Summary: 57 resources found parsing stdin - Valid: 57, Invalid: 0, Errors: 0, Skipped: 0
 PASS [E-AC24-POLICY-staging] policy: OK (57 objects, overlay=staging)
 PASS [E-AC27-COMPOSE] docker compose config -q
-selftest: 202/202
-RESULT pass=250 fail=0 skip=0
+selftest: 204/204
+RESULT pass=252 fail=0 skip=0

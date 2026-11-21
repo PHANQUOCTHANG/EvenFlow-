@@ -1,9 +1,9 @@
 {
   "task": "k8s-all",
-  "commit_sha": "eb2c3cb20038dda9d0b32e48b6933b063e2ced1f",
+  "commit_sha": "568e188d50ff2ad6cb31b971c27f207f79b98fc0",
   "base": "c5fb598",
   "tests_frozen": "e408ea3",
-  "generated_at": "2026-11-21T09:07:39Z",
+  "generated_at": "2026-11-21T10:15:31Z",
   "exit_codes": "0 pass, 77 NOT RUN, other fail",
   "results": {
     "k8s-validate": {"exit": 0, "log": "gate/k8s-validate.log"},
