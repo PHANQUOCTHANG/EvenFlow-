@@ -231,9 +231,14 @@ log "check C4.4: validate manifest trong ${K8S_DIR}/"
 # kubectl" (B1). Da kiem tren may that: --dry-run=client KHONG phai che do
 # offline, no tai openapi tu API server va fail khi chua co cluster.
 K8S_CTX=""
+K8S_UP=0
 if kubectl cluster-info >/dev/null 2>&1; then
+  K8S_UP=1
   K8S_CTX="$(kubectl config current-context 2>/dev/null || true)"
 fi
+# k8s-all round 2 R2-4: every kubectl call after the guard is pinned to the context the guard approved,
+# so a context switch mid-run (another terminal) cannot redirect namespace create / job delete / apply.
+kc() { kubectl --context "$K8S_CTX" "$@"; }
 if [ -n "$K8S_CTX" ] && ! [[ "$K8S_CTX" =~ ^(docker-desktop|kind-.+)$ ]]; then
   # k8s-all review R-3/X-11: C4.4 tao namespace THAT va dry-run overlays/local (dev-infra + dev Secret).
   # Chi lam vay tren cluster local (docker-desktop / kind-*). Context khac (staging, shared...) -> KHONG
@@ -253,9 +258,9 @@ elif [ -n "$K8S_CTX" ]; then
   # ton tai that. Admission plugin NamespaceLifecycle se tu choi moi resource namespaced
   # bang `namespaces "eventflow" not found`. Nen tao THAT namespace truoc (idempotent);
   # PSA labels cua no do lan apply that theo runbook dat, dry-run duoi day van kiem chung.
-  if ! kubectl get namespace eventflow >/dev/null 2>&1; then
+  if ! kc get namespace eventflow >/dev/null 2>&1; then
     log "  context ${K8S_CTX}: tao truoc namespace eventflow (that) de --dry-run=server khong bi NamespaceLifecycle tu choi"
-    if ! kubectl create namespace eventflow >/dev/null; then
+    if ! kc create namespace eventflow >/dev/null; then
       fail "khong tao duoc namespace eventflow"
       exit 1
     fi
@@ -265,11 +270,11 @@ elif [ -n "$K8S_CTX" ]; then
   # fail du manifest dung. Chi XOA Job khi Job da chay xong (status.succeeded >= 1); context da
   # chac chan la docker-desktop / kind-* o tren. Con lai: KHONG xoa, bo Job ra khoi dry-run.
   sel_args=()
-  if kubectl -n eventflow get job eventflow-migrate >/dev/null 2>&1; then
-    succeeded="$(kubectl -n eventflow get job eventflow-migrate -o jsonpath='{.status.succeeded}' 2>/dev/null || true)"
+  if kc -n eventflow get job eventflow-migrate >/dev/null 2>&1; then
+    succeeded="$(kc -n eventflow get job eventflow-migrate -o jsonpath='{.status.succeeded}' 2>/dev/null || true)"
     if [[ "${succeeded:-0}" =~ ^[0-9]+$ ]] && [ "${succeeded:-0}" -ge 1 ]; then
       log "  context ${K8S_CTX}: xoa job/eventflow-migrate da xong (Job immutable) truoc khi dry-run"
-      if ! kubectl -n eventflow delete job eventflow-migrate --ignore-not-found >/dev/null; then
+      if ! kc -n eventflow delete job eventflow-migrate --ignore-not-found >/dev/null; then
         fail "khong xoa duoc job/eventflow-migrate"
         exit 1
       fi
@@ -289,13 +294,13 @@ elif [ -n "$K8S_CTX" ]; then
   done
   rc=0
   if [ -n "$KUSTOMIZE_BIN" ]; then
-    log "  co cluster -> kustomize ${KUSTOMIZE_VERSION} build ${K8S_OVERLAY} | kubectl apply --dry-run=server -f - ${sel_args[*]:-}"
-    "$KUSTOMIZE_BIN" build "$K8S_OVERLAY" | kubectl apply --dry-run=server -f - ${sel_args[@]+"${sel_args[@]}"} || rc=$?
+    log "  co cluster -> kustomize ${KUSTOMIZE_VERSION} build ${K8S_OVERLAY} | kubectl --context ${K8S_CTX} apply --dry-run=server -f - ${sel_args[*]:-}"
+    "$KUSTOMIZE_BIN" build "$K8S_OVERLAY" | kc apply --dry-run=server -f - ${sel_args[@]+"${sel_args[@]}"} || rc=$?
   else
     log "  KHONG thay kustomize ${KUSTOMIZE_VERSION:-?} da pin (chay bash deploy/k8s/validate.sh mot lan de build);"
     log "  dung kustomize built-in cua kubectl: $(kubectl version --client 2>/dev/null | grep -i kustomize || echo '?')"
-    log "  co cluster -> kubectl apply --dry-run=server -k ${K8S_OVERLAY} ${sel_args[*]:-}"
-    kubectl apply --dry-run=server -k "$K8S_OVERLAY" ${sel_args[@]+"${sel_args[@]}"} || rc=$?
+    log "  co cluster -> kubectl --context ${K8S_CTX} apply --dry-run=server -k ${K8S_OVERLAY} ${sel_args[*]:-}"
+    kc apply --dry-run=server -k "$K8S_OVERLAY" ${sel_args[@]+"${sel_args[@]}"} || rc=$?
   fi
   if [ "$rc" -ne 0 ]; then
     fail "kubectl apply --dry-run=server that bai (exit ${rc})."
@@ -308,7 +313,12 @@ else
   # sai cap securityContext, selector khong khop, probe sai path) deu la YAML
   # hop le hoan hao. In "da parse cu phap" se bi doc thanh "da kiem o muc co
   # ban" -- an toan gia, dung thu C4.4 sinh ra de chong (D2).
-  echo "[gates] BO QUA validate k8s: khong co cluster (kubectl cluster-info that bai)."
+  if [ "$K8S_UP" -eq 1 ]; then
+    # R2-4: cluster-info OK nhung khong co current-context (vd in-cluster config) -> khong pin duoc context.
+    echo "[gates] BO QUA validate k8s: kubectl cluster-info OK nhung khong co current-context (khong pin duoc context)."
+  else
+    echo "[gates] BO QUA validate k8s: khong co cluster (kubectl cluster-info that bai)."
+  fi
   echo "[gates] KHONG kiem duoc apiVersion, ten field, selector, hay duong dan probe."
   echo "[gates] Chay lai sau khi bat Kubernetes cua Docker Desktop."
 fi

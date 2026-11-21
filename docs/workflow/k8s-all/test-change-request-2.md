@@ -41,3 +41,17 @@ Each bad fixture trips exactly one rule id (contract section 7).
 | X-10 | `dockerfiles/bad/AC-13--plain-dockerfile-name/Dockerfile` | dockerfiles | file named `Dockerfile`, no `USER` |
 
 Counts: bad YAML fixtures 153 -> 178 (+25), Dockerfile bad cases 3 -> 6 (+3).
+
+## Additions, fix round 2 (findings-round2.json R2-1 / R2-2, 2026-11-21)
+
+Within the approved TCR-2 scope (add fixtures only). `gen_fixtures.py` gains 2 mutants and 1 Dockerfile case;
+regenerating changed no existing file (`gen_fixtures.py --check` clean). `test_policy.sh` unchanged. Checks: contract r3
+section on AC-17 command/args and AC-13 (root group counts as root, as at pod level).
+
+| Finding | Fixture | Overlay | Mutation |
+|---|---|---|---|
+| R2-1 | `bad/AC-17--gateway-args-split-password.yaml` | staging | gateway `args: [--password, hunter2-real]` (flag and value split) |
+| R2-1 | `bad/AC-17--gateway-shell-pgpassword.yaml` | staging | gateway `command: [sh, -c, "PGPASSWORD=hunter2 psql -h db"]` |
+| R2-2 | `dockerfiles/bad/AC-13--user-root-group/go-service.Dockerfile` | dockerfiles | final stage `USER 10001:0` |
+
+Counts: bad YAML fixtures 178 -> 180 (+2), Dockerfile bad cases 6 -> 7 (+1).

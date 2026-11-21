@@ -910,6 +910,9 @@ mut("AC-12", "share-process-namespace", lambda o: pod(o, "gateway").update({"sha
 mut("AC-12", "pod-fsgroup-0", lambda o: pod(o, "gateway")["securityContext"].update({"fsGroup": 0}), overlay="staging")
 # X-8: NetworkPolicy endPort
 mut("AC-15", "identity-endport", endport, overlay="staging")
+# R2-1 (TCR-2 additions): split secret flag; env-style assignment inside a shell string
+mut("AC-17", "gateway-args-split-password", lambda o: ctr(o, "gateway").update({"args": ["--password", "hunter2-real"]}), overlay="staging")
+mut("AC-17", "gateway-shell-pgpassword", lambda o: ctr(o, "gateway").update({"command": ["sh", "-c", "PGPASSWORD=hunter2 psql -h db"]}), overlay="staging")
 
 
 # ---- Dockerfile fixtures (AC-13, --dockerfiles mode) -------------------------
@@ -929,6 +932,8 @@ DF_BAD = {
     "user-uid-0": {"go-service.Dockerfile": "FROM gcr.io/distroless/static-debian12\nCOPY server /server\nUSER 0:0\nENTRYPOINT [\"/server\"]\n"},
     "lowercase-suffix": {"named.dockerfile": "FROM alpine:3.20\nUSER root\n"},
     "plain-dockerfile-name": {"Dockerfile": "FROM alpine:3.20\nCMD [\"sh\"]\n"},
+    # R2-2 (TCR-2 additions): root primary group
+    "user-root-group": {"go-service.Dockerfile": "FROM gcr.io/distroless/static-debian12\nCOPY server /server\nUSER 10001:0\nENTRYPOINT [\"/server\"]\n"},
 }
 
 

@@ -121,8 +121,14 @@ EXTERNAL_SECRET_KEYS = {
 # key=value DSN passwords; and flag-style secrets in command/args
 SECRET_NAME_RE = re.compile(r"(?i)(PASSWORD|PASSPHRASE|PASSWD|(^|_)PASS($|_)|SECRET|TOKEN|_KEYS?$|API_KEY|CREDENTIAL)")
 CRED_URL_RE = re.compile(r"://[^/@\s]*:[^/@\s]+@")
-DSN_PASSWORD_RE = re.compile(r"(?i)\bpassword=[^\s&]")
+# R2-1: no leading word boundary, so env-style assignments inside shell strings match too (PGPASSWORD=..., MYSQL_PWD=...)
+DSN_PASSWORD_RE = re.compile(r"(?i)(password|passwd|pwd)=[^\s&]")
 ARG_SECRET_RE = re.compile(r"(?i)^--?[a-z0-9_.-]*(password|passphrase|passwd|secret|token|api[_-]?key)[a-z0-9_.-]*=.")
+# R2-1: a secret-named flag whose value is the next item (--password VALUE). Flags naming a file/path/dir take no
+# secret value; a next item that is another flag or a whole Kubernetes $(VAR) expansion is not a literal.
+ARG_SECRET_FLAG_RE = re.compile(r"(?i)^--?[a-z0-9_.-]*(password|passphrase|passwd|secret|token|api[_-]?key)[a-z0-9_.-]*$")
+ARG_SECRET_FLAG_EXEMPT_RE = re.compile(r"(?i)[-_.](file|path|dir)$")
+ARG_NOT_LITERAL_RE = re.compile(r"^(-|\$\([A-Za-z_][A-Za-z0-9_]*\)$)")
 ALWAYS_SECRET_ENV = {"DATABASE_URL", "AMQP_URL", "RABBITMQ_URL"}
 
 PSA = {
@@ -735,6 +741,9 @@ def check_ac13(dirpath, ctx):
             ctx.fail("AC-13", "Dockerfile", name, "final stage USER %r is not numeric uid[:gid]" % user)
         elif int(user.split(":", 1)[0]) == 0:
             ctx.fail("AC-13", "Dockerfile", name, "final stage USER %r is root (uid 0)" % user)
+        elif ":" in user and int(user.split(":", 1)[1]) == 0:
+            # R2-2: root primary group counts as root, consistent with pod-level runAsGroup/fsGroup 0 (rev 3, X-7)
+            ctx.fail("AC-13", "Dockerfile", name, "final stage USER %r has root group (gid 0)" % user)
     return len(files)
 
 
@@ -850,9 +859,12 @@ def check_ac17(ctx):
                 if CRED_URL_RE.search(v) or DSN_PASSWORD_RE.search(v):
                     ctx.wfail("AC-17", w, "env %s literal contains credentials" % n)
             # rev 3 (R-7/X-5): command and args
-            for i, a in enumerate(lst(c.get("command")) + lst(c.get("args"))):
-                a = str(a)
-                if CRED_URL_RE.search(a) or DSN_PASSWORD_RE.search(a) or ARG_SECRET_RE.search(a):
+            items = [str(a) for a in lst(c.get("command")) + lst(c.get("args"))]
+            for i, a in enumerate(items):
+                nxt = items[i + 1] if i + 1 < len(items) else ""
+                split_flag = (ARG_SECRET_FLAG_RE.search(a) and not ARG_SECRET_FLAG_EXEMPT_RE.search(a)
+                              and nxt != "" and not ARG_NOT_LITERAL_RE.search(nxt))
+                if CRED_URL_RE.search(a) or DSN_PASSWORD_RE.search(a) or ARG_SECRET_RE.search(a) or split_flag:
                     ctx.wfail("AC-17", w, "container %s command/args item %d contains a credential" % (c.get("name", "?"), i))
     for cm in ctx.kind("ConfigMap"):
         # rev 3 (X-5): binaryData too (value decoded from base64)

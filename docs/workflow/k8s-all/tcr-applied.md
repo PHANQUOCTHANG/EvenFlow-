@@ -48,3 +48,11 @@ Scope: `deploy/k8s/policy/test_policy.sh` and `deploy/k8s/policy/testdata/**` on
   cases; regenerating changed no other file and `gen_fixtures.py --check` is clean. `test_policy.sh` unchanged.
 - Covers R-2, X-1..X-5, X-7, X-8, X-10 (table in test-change-request-2.md); checks are contract rev 3.
 - Now 178 bad fixtures and 6 bad Dockerfile cases.
+
+## TCR-2 additions (fix round 2, findings-round2.json R2-1 / R2-2), 2026-11-21, under the TCR-2 approval
+
+- Added tests only: 2 mutants (`AC-17--gateway-args-split-password`, `AC-17--gateway-shell-pgpassword`) and 1 Dockerfile
+  case (`AC-13--user-root-group`). No existing fixture or assertion changed; `gen_fixtures.py --check` clean;
+  `test_policy.sh` unchanged. Now 180 bad fixtures and 7 bad Dockerfile cases.
+- R-13 closed as no-op (not reproducible). R-10 (TCR-WP5 confirmation) and R-14 (AC-30/31 sign-off) are tracked as
+  human merge preconditions in `merge-preconditions.md`.

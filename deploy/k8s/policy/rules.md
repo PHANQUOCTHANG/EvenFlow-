@@ -68,6 +68,11 @@ root groups; AC-13 covers any Dockerfile-like name and rejects uid 0; AC-15 reje
 matches `://:pw@` and `password=` DSNs, and scans `command`/`args` and `binaryData`; AC-21 rejects dev-infra objects
 in staging; AC-22 rejects a duplicate env name in one container; AC-32 rejects `envFrom.configMapRef` in staging.
 
+Fix round 2 (2026-11-21, findings-round2.json): AC-17 also fails a secret-named flag whose value is the next
+`command`/`args` item (`--password VALUE`; not `*-file`/`*-path`/`*-dir` flags, not when the next item is a flag or a
+whole `$(VAR)`), and matches `password=`/`passwd=`/`pwd=` without a leading word boundary, so `PGPASSWORD=...` and
+`MYSQL_PWD=...` inside shell strings are caught. AC-13 rejects a root primary group (`USER <uid>:0`).
+
 ## Mutation check (AC-25)
 
 Each rule was disabled one at a time (function body replaced by `return`; AC-13 by redirecting its output) and the

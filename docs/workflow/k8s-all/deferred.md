@@ -15,3 +15,11 @@ by the human; one line on why.
 | R-8 | minor | Staging TLS on the Ingresses is a staging-apply precondition (cert/secret is environment-specific); runbook follow-up. |
 | R-9 | minor | `TOOLS=docker` is optional; default go mode and CI are unaffected. |
 | R-11 | minor | Dev-infra tags are local-only; pinning to digests needs the uids re-read per image. |
+
+## Round 2 (findings-round2.json, 2026-11-21)
+
+| Id | Sev | Status |
+|---|---|---|
+| R-13 | minor | Closed, no-op: not reproducible. `overlays/local/secrets.dev.env` has a single DEV ONLY header; lines 1-4 and 6-9 differ. Nothing to change. |
+| R-10 | minor | Open, **merge precondition (human)**: see `merge-preconditions.md` item MP-2. |
+| R-14 | minor | Open, **merge precondition (human)**: see `merge-preconditions.md` item MP-1. |
