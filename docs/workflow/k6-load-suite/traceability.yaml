@@ -1,0 +1,32 @@
+# AC -> tests / evidence (k6-load-suite). Offline = node --test tests/load/lib/*.test.mjs (red at the red-check commit).
+AC-1:
+  - tests/load/lib/profiles.test.mjs   # smoke shape + AC-1 count thresholds (wr_admitted, checkout_issued, 304 ratio)
+  - evidence.md                        # make load-smoke run (needs Docker + k6) - NOT RUN offline
+AC-2:
+  - tests/load/lib/profiles.test.mjs   # 5 profiles, defaults, env overrides, unknown profile / malformed value throw at init
+AC-3:
+  - tests/load/lib/profiles.test.mjs   # SLO thresholds, SLO_SCALE latency only, abortOnFail on count invariants
+AC-4:
+  - tests/load/lib/jwt.test.mjs        # byte-identical to authx.SignAccessToken fixture; iss/aud/typ/ver/did; exp >= run end + 5 min
+  - tests/load/lib/flow.test.mjs       # identity range 9000, device id, guardTarget local/remote/ALLOW_REMOTE
+  - tests/load/seed-load.sh            # idempotent seed (ON CONFLICT) - run evidence needs Docker
+AC-5:
+  - tests/load/lib/flow.test.mjs       # nextPollDelayMs: 200 body, 304 header, 429 Retry-After, floor, jitter >= 0
+AC-6:
+  - tests/load/lib/flow.test.mjs       # idemKey format + validation, shouldReplay sampling
+  - evidence.md                        # replay same hold_id/payment_id (needs compose) - NOT RUN offline
+AC-7:
+  - tests/load/lib/signals.test.mjs    # v1 ranges, human-like (R1/R2/R5), sq unique, fp = device, size <= 2 KiB, min/none
+AC-8:
+  - tests/load/lib/profiles.test.mjs   # ramping-arrival-rate reaches JOIN_TARGET within JOIN_RAMP
+  - tests/load/lib/summary.test.mjs    # dropped_iterations in the summary
+AC-9:
+  - tests/load/lib/profiles.test.mjs   # wait: constant-vus WAIT_VUS for WAIT_DURATION
+  - tests/load/lib/jwt.test.mjs        # token lifetime covers the run
+AC-10:
+  - tests/load/lib/summary.test.mjs    # oversell_suspected from checkout_holds_ok vs QUOTA
+  - tests/load/seed-load.sh            # verify: issued + open holds <= quota (needs Docker) - NOT RUN offline
+AC-11:
+  - tests/load/lib/summary.test.mjs    # results path, SLO table with PASS/FAIL
+AC-12:
+  - tests/load/lib/*.test.mjs          # all of the above, offline
