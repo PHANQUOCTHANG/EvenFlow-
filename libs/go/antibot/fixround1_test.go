@@ -250,11 +250,12 @@ func TestFix1_R5_ProductionRefusesDevKeys(t *testing.T) {
 	}
 }
 
-// ---- Amendment 2 (X-4, X-5, X-6), as configuration until TCR-6 changes the defaults ----------------------
+// ---- Amendment 2 revision (X-4, X-5; X-6 withdrawn): now the built-in defaults (TCR-6 approved) -------------
 
-// amendment2 is the approved Amendment 2 configuration: R5 0.85, R4D 0.55, the four HTTP-library UAs weak.
+// amendment2 restates the approved configuration explicitly; it equals the built-in defaults, so the tests below
+// also pin the defaults.
 var amendment2 = []string{
-	"ANTIBOT_WEIGHTS", "R5=0.85,R4D=0.55",
+	"ANTIBOT_WEIGHTS", "R5=0.85,R4D=0.60",
 	"ANTIBOT_UA_DENY", "HeadlessChrome,PhantomJS,python-requests,python-httpx,aiohttp,curl/,Wget,Scrapy,Puppeteer,Playwright,Selenium",
 	"ANTIBOT_UA_WEAK", "okhttp,Go-http-client,axios/,node-fetch",
 }
@@ -284,9 +285,9 @@ func TestFix1_Amendment2_WorkedExamples(t *testing.T) {
 		{"X-5 okhttp, valid signals", []byte(validSignals), "okhttp/4.12", nil, "", 0, pass, false},
 		{"X-5 okhttp + privacy browser sign", payload(t, map[string]any{"gl": false}), "okhttp/4.12", nil, "R5W", 0.45, challenge, false},
 		{"headless default", payload(t, map[string]any{"wd": true, "rt": 40, "pe": 1, "se": 0, "ke": 0}), "", nil, "R2,R5", 0.91, block, false},
-		{"X-6 shared fp only", []byte(validSignals), "", func(s *antibot.State) { s.FPIdentities = 4 }, "R4D", 0.55, challenge, false},
-		{"account farm", []byte(validSignals), "", func(s *antibot.State) { s.FPIdentities = 4; s.NetIdentities = 31 }, "R4D,R4N", 0.663, slowLane, false},
-		{"shared fp + privacy browser", payload(t, map[string]any{"gl": false, "fc": 2}), "", func(s *antibot.State) { s.FPIdentities = 4 }, "R4D,R5W", 0.753, slowLane, false},
+		{"shared fp only (X-6 withdrawn, R4D 0.60)", []byte(validSignals), "", func(s *antibot.State) { s.FPIdentities = 4 }, "R4D", 0.60, slowLane, false},
+		{"account farm", []byte(validSignals), "", func(s *antibot.State) { s.FPIdentities = 4; s.NetIdentities = 31 }, "R4D,R4N", 0.70, slowLane, false},
+		{"shared fp + privacy browser", payload(t, map[string]any{"gl": false, "fc": 2}), "", func(s *antibot.State) { s.FPIdentities = 4 }, "R4D,R5W", 0.78, slowLane, false},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -299,6 +300,9 @@ func TestFix1_Amendment2_WorkedExamples(t *testing.T) {
 				c.st(&st)
 			}
 			d := eval(t, cfgA2(t), in, st)
+			if dd := eval(t, cfgWith(t), in, st); dd.Score != d.Score || dd.Action != d.Action {
+				t.Fatalf("built-in defaults differ from Amendment 2: %v %s vs %v %s", dd.Score, dd.Action, d.Score, d.Action)
+			}
 			if ids(d) != c.fired || math.Abs(d.Score-c.score) > 0.0011 || d.Action != c.action || hasTag(d, "CAPPED") != c.capped {
 				t.Fatalf("fired %s score %v action %s tags %v, want %s %v %s capped=%v", ids(d), d.Score, d.Action, d.Tags, c.fired, c.score, c.action, c.capped)
 			}
@@ -306,7 +310,7 @@ func TestFix1_Amendment2_WorkedExamples(t *testing.T) {
 	}
 }
 
-// Amendment 2 corpus: per-family table with the new weights and lists (AC-18 regression report).
+// Amendment 2 corpus: per-family table; the AC-18 gate holds with the approved configuration.
 func TestFix1_Amendment2_Corpus(t *testing.T) {
 	c := corpus.Generate(corpus.DefaultSeed)
 	res := replayCorpus(t, cfgA2(t), c)
@@ -327,9 +331,7 @@ func TestFix1_Amendment2_Corpus(t *testing.T) {
 	r := summarize(c, res)
 	t.Logf("Amendment 2:%s\nbots caught %.2f%% (%d/%d), humans demoted %.2f%% (%d/%d)", b.String(),
 		100*r.bot(), r.botsCaught, r.botsTotal, 100*r.human(), r.humansDemoted, r.humansTotal)
-	// Reported, not asserted: with R4D at 0.55 the account_farm family falls to 70% and the gated total to 91%
-	// (below AC-18's 95%). Per the fix-round brief nothing was tuned; the decision is with the human (TCR-6).
 	if r.bot() < 0.95 || r.human() >= 0.01 {
-		t.Logf("NOTE: Amendment 2 misses the AC-18 gate: bots %.2f%% humans %.2f%% (TCR-6, open)", 100*r.bot(), 100*r.human())
+		t.Fatalf("Amendment 2 misses the AC-18 gate: bots %.2f%% humans %.2f%%", 100*r.bot(), 100*r.human())
 	}
 }
