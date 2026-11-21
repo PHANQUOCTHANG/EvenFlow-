@@ -223,3 +223,79 @@ OVERLAY=staging  # rebuild RUN per runbook 2
 
 Both are still `_pending_`. Separately from both, this verification asks for TCR-3 (section 4, Remedy) before the
 mutation threshold can be called met.
+
+## Re-verification 2026-11-21 (after TCR-3)
+
+### Verdict: **PASS** (34/34 mutants killed by the repo's own suites; AC-30/AC-31 NOT VERIFIED, accepted by the human as MP-1)
+
+- TCR-3 (approved by TranDinhVo 2026-11-21, `test-change-request-3.md`) added, as tests only: 4 bad YAML fixtures and
+  1 bad Dockerfile case via `gen_fixtures.py` (21 lines added, 0 removed; `--check` clean), and
+  `.github/scripts/tests/test-gates-context-guard.sh` (11 cases, stub kubectl). `check_policy.py` (md5 `a4385d82…`
+  unchanged), `gates.sh`, `test_policy.sh` and `test-workflows.sh` are not modified.
+- Commits: `aa36e1f` (fixtures), `a6f019c` (C4.4 test + `full-gate.sh` step), `eb2c3cb` (TCR-3 docs + `gmutate.py`).
+- CI: the `lint-ci` job already runs every `.github/scripts/tests/*.sh`, so the new test runs in CI with no `ci.yml` edit.
+
+### Proving checks (full gate at `eb2c3cb`, `gate-report.json` verdict PASS)
+
+| Check | Result |
+|---|---|
+| `bash deploy/k8s/validate.sh` | `selftest: 202/202`, `RESULT pass=233 fail=0 skip=0`, `validate: OK` |
+| `bash deploy/k8s/policy/test_policy.sh` | `selftest: 202/202`, `RESULT pass=250 fail=0 skip=0` |
+| `gen_fixtures.py --check` | fixtures in sync |
+| `bash .github/scripts/tests/test-workflows.sh` | 137 PASS, 0 FAIL |
+| `bash .github/scripts/tests/test-gates-context-guard.sh` | 11 PASS, 0 FAIL |
+| actionlint, go build, ai-worker ruff + pytest (203 passed), tamper, secrets | exit 0 |
+| ac30-local-apply, ac31-staging-dry-run | 77 NOT RUN (MP-1) |
+
+### Mutation kill table (repo suites only)
+
+Policy mutants: `verify-logs/tools/mutate.py` (unchanged) in 7 scratch copies of `deploy/`, each running
+`test_policy.sh --fixtures-only`. After the run all 7 copies and the worktree `check_policy.py` have md5 `a4385d82…`.
+Gates mutants: new `verify-logs/tools/gmutate.py` writes G1-G6 (the mutants of 4.2) to scratch copies of `gates.sh`
+and runs the repo test with `SUT=<copy>` plus `gprobe.sh`. Logs: `verify-logs/reverify-2026-11-21/`.
+
+| Id | Result | Killed by (first failing case) |
+|---|---|---|
+| M01 | KILLED | C-AC-12--dev-infra-runasnonroot-false (+3) |
+| M02 | KILLED (was SURVIVED) | C-DOCKERFILES-AC-13--user-uid-0-no-gid |
+| M03 | KILLED | C-DOCKERFILES-AC-13--user-root-group |
+| M04 | KILLED | C-DOCKERFILES-AC-13--lowercase-suffix (+1) |
+| M05 | KILLED | C-AC-15--identity-endport |
+| M06 | KILLED | C-AC-15--identity-empty-from |
+| M07 | KILLED | C-AC-17--gateway-args-dsn-password (+2) |
+| M08 | KILLED | C-AC-17--gateway-args-split-password |
+| M09 | KILLED | C-AC-17--configmap-url-with-credentials (+2) |
+| M10 | KILLED | C-AC-18--web-envfrom-secret |
+| M11 | KILLED | C-AC-18--local-provider-key-optional (+1) |
+| M12 | KILLED | C-AC-12--daemonset-hostpath (+4) |
+| M13 | KILLED | C-AC-20--cronjob-foreign-image |
+| M14 | KILLED | C-AC-21--staging-dev-infra-mailpit (+1) |
+| M15 | KILLED | C-AC-22--staging-duplicate-env-gemini-mock (+1) |
+| M16 | KILLED | C-AC-32--gemini-mock-1-configmap |
+| M17 | KILLED | C-AC-32--email-provider-mock |
+| M18 | KILLED | C-AC-32--google-client-id-empty |
+| M19 | KILLED | C-AC-32--envfrom-configmap-prefix |
+| M20 | KILLED (was SURVIVED) | C-AC-32--unreferenced-forbidden-configmap-key |
+| M21 | KILLED | C-EXEMPT--unknown-pair-gateway-ac12 (+3) |
+| M22 | KILLED (was SURVIVED) | C-EXEMPT--web-allowed-pair-empty-reason |
+| M23 | KILLED (was SURVIVED) | C-EXEMPT--gateway-malformed-key |
+| M24 | KILLED | C-EXEMPT--worker-ac9 |
+| M25 | KILLED | C-AC-9--hpa-on-controller (+1) |
+| M26 | KILLED | C-AC-16--staging-plain-secret |
+| M27 | KILLED | C-AC-12--web-exempt-runasnonroot-missing (+1) |
+| M28 | KILLED (was SURVIVED) | C-AC-32--vnpay-return-url-empty |
+| G0 | control: repo test PASS, probe PASS | - |
+| G1 | KILLED (repo test; probe also) | G-prod-cluster |
+| G2 | KILLED (repo test; probe also) | G-docker-desktop-prod |
+| G3 | KILLED (repo test; probe also) | G-unfinished (unpinned apply) |
+| G4 | KILLED (repo test; probe also) | G-unfinished (Job deleted) |
+| G5 | KILLED (repo test; probe also) | G-unfinished (Job not excluded) |
+| G6 | KILLED (repo test; probe also) | G-prod-cluster |
+
+Total: **34 of 34 killed by the repo's own suites** (28/28 policy, 6/6 gates.sh C4.4); previously 23/34.
+
+### Status changes vs section 3
+
+- AC-13 (grep part), AC-25, AC-32, EXEMPT: V with no mutation gaps. AC-26: V (stub, now a repo test) / NV (real cluster).
+- AC-30, AC-31: still **NOT VERIFIED** (no Docker daemon, no kube context). Accepted by TranDinhVo on 2026-11-21 as
+  MP-1 in `merge-preconditions.md`; the live run follows runbook sections 1-4 later.

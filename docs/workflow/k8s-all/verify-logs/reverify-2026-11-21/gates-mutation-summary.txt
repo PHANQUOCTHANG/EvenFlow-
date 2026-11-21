@@ -1,0 +1,7 @@
+G0|control (unmutated)|repo test PASS (exit 0; first: -)|probe PASS
+G1|context guard accepts any context|repo test KILLED (exit 1; first: FAIL  G-prod-cluster: context khong phai docker-desktop/kind-* => khong dung vao cluster, exit 0)|probe KILLED
+G2|context guard regex unanchored at end|repo test KILLED (exit 1; first: FAIL  G-docker-desktop-prod: context khong phai docker-desktop/kind-* => khong dung vao cluster, exit 0)|probe KILLED
+G3|kubectl calls not pinned to approved context|repo test KILLED (exit 1; first: FAIL  G-unfinished: Job migrate chua xong => KHONG xoa, bi loai khoi dry-run)|probe KILLED
+G4|migrate Job deleted even when not finished|repo test KILLED (exit 1; first: FAIL  G-unfinished: Job migrate chua xong => KHONG xoa, bi loai khoi dry-run)|probe KILLED
+G5|unfinished Job not excluded from dry-run|repo test KILLED (exit 1; first: FAIL  G-unfinished: Job migrate chua xong => KHONG xoa, bi loai khoi dry-run)|probe KILLED
+G6|guard skipped: non-local branch removed|repo test KILLED (exit 1; first: FAIL  G-prod-cluster: context khong phai docker-desktop/kind-* => khong dung vao cluster, exit 0)|probe KILLED

@@ -1,9 +1,9 @@
 {
   "task": "k8s-all",
-  "commit_sha": "f746bcd5d7da9968f7558595b91e4fe0dddd7103",
+  "commit_sha": "eb2c3cb20038dda9d0b32e48b6933b063e2ced1f",
   "base": "c5fb598",
   "tests_frozen": "e408ea3",
-  "generated_at": "2026-11-21T07:42:32Z",
+  "generated_at": "2026-11-21T09:07:39Z",
   "exit_codes": "0 pass, 77 NOT RUN, other fail",
   "results": {
     "k8s-validate": {"exit": 0, "log": "gate/k8s-validate.log"},
@@ -11,6 +11,7 @@
     "k8s-fixtures-sync": {"exit": 0, "log": "gate/k8s-fixtures-sync.log"},
     "ci-test-workflows": {"exit": 0, "log": "gate/ci-test-workflows.log"},
     "gates-syntax": {"exit": 0, "log": "gate/gates-syntax.log"},
+    "gates-context-guard": {"exit": 0, "log": "gate/gates-context-guard.log"},
     "actionlint": {"exit": 0, "log": "gate/actionlint.log"},
     "go-build": {"exit": 0, "log": "gate/go-build.log"},
     "py-ai-worker": {"exit": 0, "log": "gate/py-ai-worker.log"},

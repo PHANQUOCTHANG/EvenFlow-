@@ -1,5 +1,5 @@
 Resolved 65 packages in 1ms
-Checked 63 packages in 59ms
+Checked 63 packages in 13ms
 All checks passed!
 ........................................................................ [ 35%]
 ........................................................................ [ 70%]
@@ -10,4 +10,4 @@ All checks passed!
     from starlette.testclient import TestClient as TestClient  # noqa
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-203 passed, 22 deselected, 1 warning in 5.20s
+203 passed, 22 deselected, 1 warning in 4.25s

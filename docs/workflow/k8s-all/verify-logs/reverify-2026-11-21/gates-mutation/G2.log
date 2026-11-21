@@ -1,0 +1,23 @@
+PASS  G-prod-cluster: context khong phai docker-desktop/kind-* => khong dung vao cluster, exit 0
+FAIL  G-docker-desktop-prod: context khong phai docker-desktop/kind-* => khong dung vao cluster, exit 0
+      kubectl da goi: --context docker-desktop-prod get namespace eventflow
+PASS  G-staging-kind-dev: context khong phai docker-desktop/kind-* => khong dung vao cluster, exit 0
+PASS  G-xkind-dev: context khong phai docker-desktop/kind-* => khong dung vao cluster, exit 0
+PASS  G-unfinished: Job migrate chua xong => KHONG xoa, bi loai khoi dry-run
+PASS  G-pin-docker-desktop: moi lenh kubectl sau guard deu --context docker-desktop
+PASS  G-namespace: namespace chua co => tao tren context da pin
+PASS  G-finished: Job migrate da xong => xoa tren context da pin, dry-run khong loai Job
+PASS  G-pin-kind: moi lenh kubectl sau guard deu --context kind-dev
+PASS  G-no-job: khong co Job migrate => khong xoa, khong loai, van dry-run
+PASS  G-no-ctx: cluster-info OK nhung current-context rong => khong dung vao cluster
+
+== Ket qua: 10 PASS, 1 FAIL ==
+   ca fail: G-docker-desktop-prod 
+
+--- gprobe
+P1 ok non-local ctx skipped
+P5 FAIL ctx docker-desktop-prod touched cluster
+P2 ok unfinished Job kept and excluded
+P3 ok finished Job deleted on pinned ctx
+P4 ok all calls pinned
+PROBE FAIL

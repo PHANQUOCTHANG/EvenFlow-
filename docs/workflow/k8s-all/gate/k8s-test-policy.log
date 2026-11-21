@@ -1,5 +1,5 @@
 PASS [A-GEN-SYNC] committed fixtures match testdata/gen_fixtures.py
-PASS [A-COUNT] 180 bad fixtures
+PASS [A-COUNT] 184 bad fixtures
 PASS [A-COVER-AC-1] has bad fixture(s)
 PASS [A-COVER-AC-3] has bad fixture(s)
 PASS [A-COVER-AC-4] has bad fixture(s)
@@ -170,6 +170,8 @@ PASS [C-AC-32--payment-sandbox-mode-configmap] rejected with AC-32 only
 PASS [C-AC-32--payment-sandbox-mode-env] rejected with AC-32 only
 PASS [C-AC-32--stripe-enabled] rejected with AC-32 only
 PASS [C-AC-32--stripe-url-in-configmap] rejected with AC-32 only
+PASS [C-AC-32--unreferenced-forbidden-configmap-key] rejected with AC-32 only
+PASS [C-AC-32--vnpay-return-url-empty] rejected with AC-32 only
 PASS [C-AC-4--dev-infra-liveness-missing] rejected with AC-4 only
 PASS [C-AC-4--dev-infra-readiness-missing] rejected with AC-4 only
 PASS [C-AC-4--gateway-liveness-missing] rejected with AC-4 only
@@ -202,9 +204,11 @@ PASS [C-AC-9--payment-cpu-90] rejected with AC-9 only
 PASS [C-AC-9--ticketing-no-behavior] rejected with AC-9 only
 PASS [C-AC-9--web-stabilization-60] rejected with AC-9 only
 PASS [C-EXEMPT--empty-reason-gateway-ac11] rejected with EXEMPT only
+PASS [C-EXEMPT--gateway-malformed-key] rejected with EXEMPT only
 PASS [C-EXEMPT--unknown-pair-gateway-ac12] rejected with EXEMPT only
 PASS [C-EXEMPT--unknown-pair-worker-ac4] rejected with EXEMPT only
 PASS [C-EXEMPT--web-ac12-whole-rule] rejected with EXEMPT only
+PASS [C-EXEMPT--web-allowed-pair-empty-reason] rejected with EXEMPT only
 PASS [C-EXEMPT--web-unknown-subcheck] rejected with EXEMPT only
 PASS [C-EXEMPT--worker-ac9] rejected with EXEMPT only
 PASS [C-DOCKERFILES-good] dockerfiles/good accepted
@@ -214,6 +218,7 @@ PASS [C-DOCKERFILES-AC-13--no-user] rejected with AC-13 only
 PASS [C-DOCKERFILES-AC-13--plain-dockerfile-name] rejected with AC-13 only
 PASS [C-DOCKERFILES-AC-13--user-only-in-build-stage] rejected with AC-13 only
 PASS [C-DOCKERFILES-AC-13--user-root-group] rejected with AC-13 only
+PASS [C-DOCKERFILES-AC-13--user-uid-0-no-gid] rejected with AC-13 only
 PASS [C-DOCKERFILES-AC-13--user-uid-0] rejected with AC-13 only
 PASS [C-EXIT2-NO-INPUT] missing --input -> exit 2 with ERROR on stderr
 PASS [C-EXIT2-NO-OVERLAY] missing --overlay -> exit 2 with ERROR on stderr
@@ -243,5 +248,5 @@ PASS [E-AC24-POLICY-local] policy: OK (77 objects, overlay=local)
 PASS [E-AC2-KUBECONFORM-staging] Summary: 57 resources found parsing stdin - Valid: 57, Invalid: 0, Errors: 0, Skipped: 0
 PASS [E-AC24-POLICY-staging] policy: OK (57 objects, overlay=staging)
 PASS [E-AC27-COMPOSE] docker compose config -q
-selftest: 197/197
-RESULT pass=245 fail=0 skip=0
+selftest: 202/202
+RESULT pass=250 fail=0 skip=0
