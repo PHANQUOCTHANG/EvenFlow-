@@ -37,3 +37,13 @@ added. Counts are `it(` / `it.each(` declarations before (HEAD f5c6d44) → afte
 ## TCR-4 (approved)
 
 APPROVED by the human (TranDinhVo) on 2026-11-20 in the Claude Code session, asked directly by the coordinator. Change: `TestOpsPut_AC6_BoundariesAccepted` no longer accepts `1e2`; `TestOpsWrite_AC9_InvalidInputIs400AndNothingApplied` gains `1e2` and `1E2` as invalid (400). Edit applied by the coordinator. Reason: contract says rate_per_sec is a JSON integer; exponent forms are not integers.
+
+## TCR-5 (lint-only)
+
+APPROVED by the human (TranDinhVo) on 2026-11-21, relayed by the coordinator. Scope: style-only lint fixes in existing test files; no assertion changes, no test removal.
+
+| File | Change |
+|---|---|
+| `services/waitingroom/internal/adapter/http/ops_readback_fix_test.go:21` | staticcheck QF1008: `r.fakeOverrideStore.ClearRateOverride(ctx, ev)` -> `r.ClearRateOverride(ctx, ev)` (promoted method, same call; `raceStore` does not override `ClearRateOverride`). Line 20 keeps the explicit selector because `raceStore` overrides `SetRateOverride`. No assertion change |
+
+This file was created after the freeze commit (`ca8e756`), so the full-gate tamper check does not lock it; `full-gate.sh` allow-list unchanged.
