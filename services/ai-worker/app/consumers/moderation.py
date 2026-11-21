@@ -4,7 +4,7 @@ Consumer nay nhan cac job kiem duyet su kien khi Organizer nop su kien (POST /su
 tien hanh quet 4 truc rui ro (BR-E4) bang Gemini, va goi callback ve event service
 qua endpoint noi bo PATCH /internal/v1/events/{id}/ai-verdict.
 
-Moi lan goi Gemini that deu qua limiter (app.gemini.guarded): kiem duyet dung chung han
+Moi lan goi Gemini that deu qua limiter (app.llm.guarded): kiem duyet dung chung han
 muc voi tro ly cua khach dang cho, nen khong duoc goi "chen ngang".
 """
 
@@ -19,8 +19,8 @@ from typing import Any
 import httpx
 
 from app.domain.moderation import AiVerdict, ModerationJob, ModerationResult
-from app.gemini.client import GeminiClient, RateLimited
-from app.gemini.guarded import PermitDenied, guarded_generate
+from app.llm.client import LlmClient, RateLimited
+from app.llm.guarded import PermitDenied, guarded_generate
 from app.mq.protocol import MAX_ATTEMPTS, PermanentError
 from app.mq.runtime import Delivery
 
@@ -34,17 +34,17 @@ AI_UNAVAILABLE_REASON = "AI kiểm duyệt tạm thời không khả dụng, chu
 class ModerationConsumer:
     def __init__(
         self,
-        gemini: GeminiClient,
+        llm: LlmClient,
         api_base: str,
         client: httpx.AsyncClient | None = None,
         callback_fn: Callable[[str, ModerationResult], Any] | None = None,
         limiter: Any = None,
     ) -> None:
-        self._gemini = gemini
+        self._llm = llm
         self._api_base = api_base.rstrip("/")
         self._client = client or httpx.AsyncClient(timeout=10.0)
         self._callback_fn = callback_fn
-        self._generate = functools.partial(guarded_generate, limiter, gemini) if limiter is not None else None
+        self._generate = functools.partial(guarded_generate, limiter, llm) if limiter is not None else None
 
     @staticmethod
     def parse(body: bytes) -> ModerationJob:
@@ -61,7 +61,7 @@ class ModerationConsumer:
         job = self.parse(body)
 
         log.info("Bat dau kiem duyet su kien %s (job=%s)", job.event_id, job.job_id)
-        result = await self._gemini.scan_moderation(job, generate=self._generate)
+        result = await self._llm.scan_moderation(job, generate=self._generate)
         log.info(
             "Ket qua kiem duyet su kien %s: verdict=%s, score=%.2f",
             job.event_id,

@@ -14,7 +14,7 @@ def test_MacDinhHopLe() -> None:
     s = Settings(_env_file=None)
     assert s.chat_consumers == 20
     assert s.report_consumers == 1
-    assert s.gemini_timeout_seconds > 0
+    assert s.ai_timeout_seconds > 0
     assert s.shutdown_grace_seconds > 0
 
 
@@ -25,10 +25,10 @@ def test_MacDinhHopLe() -> None:
         {"moderation_consumers": 0},
         {"anomaly_consumers": -1},
         {"report_consumers": -1},
-        {"gemini_timeout_seconds": 0},
+        {"ai_timeout_seconds": 0},
         {"shutdown_grace_seconds": -1},
-        {"gemini_rpm": 0},
-        {"gemini_tpm": 0},
+        {"ai_rpm": 0},
+        {"ai_tpm": 0},
     ],
 )
 def test_GiaTriSaiBiTuChoi(override) -> None:

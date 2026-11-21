@@ -28,8 +28,8 @@ from app.api.assistant import router as assistant_router
 from app.api.quota import AssistantQuota
 from app.config import Settings, settings
 from app.consumers import chat, moderation, unsupported
-from app.gemini.client import GeminiClient
-from app.gemini.limiter import GlobalRateLimiter, LimiterConfig
+from app.llm.client import LlmClient
+from app.llm.limiter import GlobalRateLimiter, LimiterConfig
 from app.mq.publisher import JobPublisher
 from app.mq.runtime import ConsumerRuntime, Handler, PoolSpec
 from app.mq.topology import declare, load_ai_topology
@@ -85,7 +85,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             await declare(ch, load_ai_topology(settings.ai_topology_file))
         _state["connection"] = connection
 
-        gemini = GeminiClient(
+        gemini = LlmClient(
             api_key=settings.gemini_api_key,
             model=settings.gemini_model_fast,
             mock=settings.gemini_mock,
@@ -100,7 +100,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             cache=SemanticCache(redis, gemini),
             faq=FaqMatcher(),
             flight=SingleFlight(redis),
-            gemini=gemini,
+            llm=gemini,
             tools=tools,
             signals=_signals_now,
             publish_result=RedisResultSink(redis).publish,

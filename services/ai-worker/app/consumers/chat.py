@@ -18,9 +18,9 @@ import logging
 import time
 from dataclasses import dataclass
 
-from app.gemini.client import RateLimited
-from app.gemini.guarded import PermitDenied, guarded_generate
-from app.gemini.limiter import GlobalRateLimiter
+from app.llm.client import RateLimited
+from app.llm.guarded import PermitDenied, guarded_generate
+from app.llm.limiter import GlobalRateLimiter
 from app.mq.protocol import MAX_ATTEMPTS, PermanentError
 from app.mq.runtime import Delivery
 from app.pipeline import degradation
@@ -56,7 +56,7 @@ class ChatConsumer:
         cache: SemanticCache,
         faq: FaqMatcher,
         flight: SingleFlight,
-        gemini,        # app.gemini.client.GeminiClient
+        llm,           # app.llm.client.LlmClient
         tools,         # app.pipeline.tools.SystemTools
         signals,       # callable -> degradation.Signals
         publish_result,  # callable(job_id, payload) -> None
@@ -65,7 +65,7 @@ class ChatConsumer:
         self._cache = cache
         self._faq = faq
         self._flight = flight
-        self._gemini = gemini
+        self._llm = llm
         self._tools = tools
         self._signals = signals
         self._publish = publish_result
@@ -120,13 +120,13 @@ class ChatConsumer:
         # Nguoi dan dau that bai hoac qua lau -> tu minh lam tiep.
 
         try:
-            answer = await self._call_gemini(job, policy)
+            answer = await self._call_llm(job, policy)
         except Retry:
             raise
         except Exception:
             # Gemini hong -> van tra loi duoc bang FAQ. Khach khong bao gio thay
             # loi ky thuat (BR-A1).
-            log.exception("goi gemini that bai")
+            log.exception("goi llm that bai")
             await self._emit(job, self._faq.fallback(None), source="fallback", mode=mode)
             return None
         finally:
@@ -137,12 +137,12 @@ class ChatConsumer:
         await self._emit(job, answer, source="llm", mode=mode)
         return None
 
-    async def _call_gemini(self, job: ChatJob, policy: degradation.Policy) -> str:
+    async def _call_llm(self, job: ChatJob, policy: degradation.Policy) -> str:
         # ---- L6: xin phep TRUOC khi goi ----
-        prompt = await self._gemini.build_prompt(job, self._tools)
+        prompt = await self._llm.build_prompt(job, self._tools)
         try:
             result = await guarded_generate(
-                self._limiter, self._gemini, prompt, max_output_tokens=policy.max_output_tokens,
+                self._limiter, self._llm, prompt, max_output_tokens=policy.max_output_tokens,
             )
         except PermitDenied as exc:
             # KHONG sleep o day. Dua ve hang tre de consumer nay ranh tay xu ly job

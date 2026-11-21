@@ -44,6 +44,6 @@ ASSISTANT_ACCEPT_SECONDS = Histogram(
     buckets=(0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1),
 )
 CACHE_HIT = Gauge("ai_semantic_cache_hit_ratio", "Ti le hit cache ngu nghia")
-RATE_LIMITED = Counter("ai_gemini_429_total", "So lan bi Gemini tu choi vi rate-limit")
+RATE_LIMITED = Counter("ai_llm_429_total", "So lan bi Gemini tu choi vi rate-limit")
 PERMIT_DENIED = Counter("ai_permit_denied_total", "So lan limiter tu choi cap phep")
 MODE = Gauge("ai_degradation_mode", "Nac suy bien (0=NORMAL..3=OFF)")

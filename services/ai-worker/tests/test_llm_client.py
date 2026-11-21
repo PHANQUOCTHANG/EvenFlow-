@@ -9,7 +9,7 @@ import pytest
 from google.genai import errors
 from prometheus_client import REGISTRY
 
-from app.gemini.client import GeminiClient, RateLimited, mock_embedding
+from app.llm.client import LlmClient, RateLimited, mock_embedding
 
 
 class FakeModels:
@@ -31,9 +31,9 @@ class FakeModels:
         return SimpleNamespace(embeddings=[SimpleNamespace(values=[0.1, 0.2, 0.3])])
 
 
-def _client(models: FakeModels, **kw) -> GeminiClient:
+def _client(models: FakeModels, **kw) -> LlmClient:
     sdk = SimpleNamespace(aio=SimpleNamespace(models=models))
-    return GeminiClient(api_key="k", model="gemini-test", mock=False, sdk=sdk, **kw)
+    return LlmClient(api_key="k", model="gemini-test", mock=False, sdk=sdk, **kw)
 
 
 async def test_Generate_TraTokenThatVaGioiHanDauRa() -> None:
@@ -61,13 +61,13 @@ async def test_Generate_QuaTimeoutThiLoi() -> None:
 
 
 async def test_Generate_429ThanhRateLimitedVaTangCounter() -> None:
-    before = REGISTRY.get_sample_value("ai_gemini_429_total") or 0.0
+    before = REGISTRY.get_sample_value("ai_llm_429_total") or 0.0
     exc = errors.ClientError(429, {"error": {"code": 429, "message": "quota", "status": "RESOURCE_EXHAUSTED"}})
 
     with pytest.raises(RateLimited):
         await _client(FakeModels(raise_exc=exc)).generate("p", max_output_tokens=10)
 
-    assert REGISTRY.get_sample_value("ai_gemini_429_total") == before + 1
+    assert REGISTRY.get_sample_value("ai_llm_429_total") == before + 1
 
 
 async def test_Generate_Loi4xxKhacKhongPhaiRateLimited() -> None:
@@ -84,7 +84,7 @@ async def test_Embed_That() -> None:
 
 
 async def test_Embed_MockTatDinhVaBoDau() -> None:
-    c = GeminiClient(mock=True)
+    c = LlmClient(mock=True)
     a = await c.embed("Còn vé không?")
     b = await c.embed("con ve khong")
     assert a == b
@@ -102,10 +102,10 @@ def test_mock_embedding_CauRong() -> None:
 
 def test_ThatMaThieuKey_TuChoi() -> None:
     with pytest.raises(RuntimeError, match="GEMINI_API_KEY"):
-        GeminiClient(api_key="", mock=False)
+        LlmClient(api_key="", mock=False)
 
 
 def test_KhongThamSo_VanDungDuocOCheDoMock(monkeypatch) -> None:
-    # Hop dong cu cua test kiem duyet: GeminiClient() doc GEMINI_MOCK tu env.
+    # Hop dong cu cua test kiem duyet: LlmClient() doc GEMINI_MOCK tu env.
     monkeypatch.setenv("GEMINI_MOCK", "1")
-    GeminiClient()
+    LlmClient()

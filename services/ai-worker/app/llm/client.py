@@ -81,7 +81,7 @@ def wrap_untrusted(label: str, content: str) -> str:
     return f'<du_lieu nguon="{label}">\n{safe}\n</du_lieu>'
 
 
-class GeminiClient:
+class LlmClient:
     def __init__(
         self,
         api_key: str | None = None,
@@ -121,7 +121,7 @@ class GeminiClient:
     ) -> ModerationResult:
         """Kiem duyet noi dung su kien theo 4 truc (BR-E4).
 
-        `generate`: duong goi Gemini da qua limiter (app.gemini.guarded). Bo trong thi goi
+        `generate`: duong goi Gemini da qua limiter (app.llm.guarded). Bo trong thi goi
         thang -- chi de giu hop dong cu; worker luon truyen vao.
         """
         if self._mock:

@@ -6,8 +6,8 @@ import httpx
 import pytest
 from google.genai import errors as genai_errors
 
-from app.gemini.client import RateLimited
-from app.gemini.guarded import PermitDenied
+from app.llm.client import RateLimited
+from app.llm.guarded import PermitDenied
 from app.mq.protocol import is_permanent
 
 

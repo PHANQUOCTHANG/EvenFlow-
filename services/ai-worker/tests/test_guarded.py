@@ -9,9 +9,9 @@ import pytest
 
 from app.consumers.moderation import ModerationConsumer, make_handler
 from app.domain.moderation import AiVerdict
-from app.gemini.client import GeminiClient, Generation, RateLimited
-from app.gemini.guarded import PermitDenied, guarded_generate
-from app.gemini.limiter import Permit
+from app.llm.client import LlmClient, Generation, RateLimited
+from app.llm.guarded import PermitDenied, guarded_generate
+from app.llm.limiter import Permit
 from app.mq.protocol import MAX_ATTEMPTS
 from app.mq.runtime import Delivery
 
@@ -100,7 +100,7 @@ class FakeModels:
 
 def _real_gemini(text: str = '{"score": 0.1, "axes": {}, "reasons": ["ok"]}'):
     models = FakeModels(text)
-    client = GeminiClient(api_key="k", mock=False, sdk=SimpleNamespace(aio=SimpleNamespace(models=models)))
+    client = LlmClient(api_key="k", mock=False, sdk=SimpleNamespace(aio=SimpleNamespace(models=models)))
     return client, models
 
 
@@ -169,7 +169,7 @@ async def test_KiemDuyet_LanCuoiVanKhongGoiDuoc_ChuyenNguoiDuyet() -> None:
 
 
 async def test_KiemDuyet_LanCuoi429_CungChuyenNguoiDuyet() -> None:
-    gemini = GeminiClient(api_key="k", mock=False, sdk=SimpleNamespace(aio=SimpleNamespace(models=None)))
+    gemini = LlmClient(api_key="k", mock=False, sdk=SimpleNamespace(aio=SimpleNamespace(models=None)))
     verdicts: list = []
 
     async def cb(event_id, result):
@@ -195,6 +195,6 @@ async def test_KiemDuyetMock_VanChayKhongCanLimiter() -> None:
     async def cb(event_id, result):
         verdicts.append(result)
 
-    consumer = ModerationConsumer(GeminiClient(mock=True), "http://x", callback_fn=cb)
+    consumer = ModerationConsumer(LlmClient(mock=True), "http://x", callback_fn=cb)
     await consumer.handle_message(_job_bytes())
     assert verdicts[0].verdict == AiVerdict.AUTO_APPROVED

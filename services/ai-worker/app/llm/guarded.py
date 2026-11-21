@@ -11,8 +11,8 @@ from __future__ import annotations
 from typing import Any
 
 from app import metrics
-from app.gemini.client import Generation, RateLimited
-from app.gemini.limiter import estimate_tokens
+from app.llm.client import Generation, RateLimited
+from app.llm.limiter import estimate_tokens
 
 
 class PermitDenied(Exception):

@@ -10,7 +10,7 @@ from app.domain.moderation import (
     AiVerdict,
     calculate_verdict,
 )
-from app.gemini.client import GeminiClient
+from app.llm.client import LlmClient
 
 
 def test_calculate_verdict_thresholds() -> None:
@@ -33,11 +33,11 @@ def test_calculate_verdict_thresholds() -> None:
 
 @pytest.mark.asyncio
 async def test_moderation_consumer_auto_approved() -> None:
-    gemini = GeminiClient()
+    gemini = LlmClient()
     callback_mock = AsyncMock()
 
     consumer = ModerationConsumer(
-        gemini=gemini,
+        llm=gemini,
         api_base="http://testserver",
         callback_fn=callback_mock,
     )
@@ -60,11 +60,11 @@ async def test_moderation_consumer_auto_approved() -> None:
 
 @pytest.mark.asyncio
 async def test_moderation_consumer_auto_rejected() -> None:
-    gemini = GeminiClient()
+    gemini = LlmClient()
     callback_mock = AsyncMock()
 
     consumer = ModerationConsumer(
-        gemini=gemini,
+        llm=gemini,
         api_base="http://testserver",
         callback_fn=callback_mock,
     )
@@ -87,11 +87,11 @@ async def test_moderation_consumer_auto_rejected() -> None:
 
 @pytest.mark.asyncio
 async def test_moderation_consumer_needs_human() -> None:
-    gemini = GeminiClient()
+    gemini = LlmClient()
     callback_mock = AsyncMock()
 
     consumer = ModerationConsumer(
-        gemini=gemini,
+        llm=gemini,
         api_base="http://testserver",
         callback_fn=callback_mock,
     )

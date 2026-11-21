@@ -8,8 +8,8 @@ import time
 import pytest
 
 from app.consumers.chat import ChatConsumer, Retry
-from app.gemini.client import Generation, RateLimited
-from app.gemini.limiter import Permit
+from app.llm.client import Generation, RateLimited
+from app.llm.limiter import Permit
 from app.mq.protocol import PermanentError
 from app.pipeline import degradation
 
@@ -83,7 +83,7 @@ def _consumer(gemini: FakeGemini, limiter: FakeLimiter | None = None, out: list 
         cache=FakeCache(),
         faq=FakeFaq(),
         flight=FakeFlight(),
-        gemini=gemini,
+        llm=gemini,
         tools=None,
         signals=lambda: degradation.Signals(0.0, 0.0, False),
         publish_result=publish,
