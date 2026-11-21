@@ -43,11 +43,11 @@ func TestScore_AC8_DefaultOutcomesTable(t *testing.T) {
 		tags    []string
 		notTags []string
 	}{
-		{name: "missing payload, browser UA", missing: true, fired: "R3,R5", score: 0.88, action: slowLane, applied: slowLane, tags: []string{"CAPPED"}},
+		{name: "missing payload, browser UA", missing: true, fired: "R3,R5", score: 0.91, action: slowLane, applied: slowLane, tags: []string{"CAPPED"}},
 		{name: "missing payload, identity holds a slot", missing: true, st: func(s *antibot.State) { s.HasSlot = true },
-			fired: "R3,R5", score: 0.88, action: slowLane, applied: pass, tags: []string{"CAPPED", "REJOIN"}},
-		{name: "raw HTTP python-requests", missing: true, ua: "python-requests/2.32.3", fired: "R3,R5", score: 0.88, action: block, applied: block, notTags: []string{"CAPPED"}},
-		{name: "headless default", raw: payload(t, map[string]any{"wd": true, "rt": 40, "pe": 1, "se": 0, "ke": 0}), fired: "R2,R5", score: 0.88, action: block, applied: block},
+			fired: "R3,R5", score: 0.91, action: slowLane, applied: pass, tags: []string{"CAPPED", "REJOIN"}},
+		{name: "raw HTTP python-requests", missing: true, ua: "python-requests/2.32.3", fired: "R3,R5", score: 0.91, action: block, applied: block, notTags: []string{"CAPPED"}},
+		{name: "headless default", raw: payload(t, map[string]any{"wd": true, "rt": 40, "pe": 1, "se": 0, "ke": 0}), fired: "R2,R5", score: 0.91, action: block, applied: block},
 		{name: "stealth fixed rhythm", raw: payload(t, map[string]any{"rt": 90, "iv": repeatIv(10, 100, 100)}), fired: "R1,R2", score: 0.70, action: slowLane, applied: slowLane},
 		{name: "account farm", st: func(s *antibot.State) { s.FPIdentities = 4; s.NetIdentities = 31 }, fired: "R4D,R4N", score: 0.70, action: slowLane, applied: slowLane},
 		{name: "shared fp only", st: func(s *antibot.State) { s.FPIdentities = 4 }, fired: "R4D", score: 0.60, action: slowLane, applied: slowLane},

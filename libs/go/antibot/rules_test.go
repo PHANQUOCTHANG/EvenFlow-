@@ -149,9 +149,12 @@ func TestRule_AC4_R5Strong(t *testing.T) {
 		{name: "custom list entry", in: ua("Mozilla/5.0 evilcrawler/1.0"), cfg: []string{"ANTIBOT_UA_DENY", "MyBot,EvilCrawler"}, want: true},
 	}
 	for _, deny := range []string{"HeadlessChrome/131.0", "PhantomJS/2.1", "python-requests/2.31", "python-httpx/0.27",
-		"Python/3.12 aiohttp/3.9", "curl/8.5.0", "Wget/1.21", "Go-http-client/1.1", "okhttp/4.12", "node-fetch/1.0",
-		"axios/1.7.2", "Scrapy/2.11", "Puppeteer", "Playwright/1.48", "Selenium/4.25"} {
+		"Python/3.12 aiohttp/3.9", "curl/8.5.0", "Wget/1.21", "Scrapy/2.11", "Puppeteer", "Playwright/1.48", "Selenium/4.25"} {
 		cases = append(cases, ruleCase{name: "deny " + deny, in: ua(deny), want: true})
+	}
+	// TCR-6 (Amendment 2, X-5): generic HTTP libraries are a weak sign, never a strong R5 sign.
+	for _, weak := range []string{"Go-http-client/1.1", "okhttp/4.12", "node-fetch/1.0", "axios/1.7.2"} {
+		cases = append(cases, ruleCase{name: "weak " + weak, in: ua(weak), want: false})
 	}
 	runRule(t, "R5", cases)
 }
