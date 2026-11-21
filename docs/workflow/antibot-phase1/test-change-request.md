@@ -97,3 +97,19 @@ Proposed change (resolve the path without the Vite-rewritten pattern):
 +  "../../../../libs/go/antibot/testdata/signals/scripted_keyboard.json",
 +);
 ```
+
+## TCR-4: golangci-lint (CI `lint-go`, v2.12.2) fails on the frozen corpus fixture and corpus test
+
+`golangci-lint run ./...` in `libs/go` reports 5 issues, all in files added by 36aab08; the implementation files
+report 0 (and `services/waitingroom` reports 0 issues). CI's `lint-go` job runs this exact command, so it fails
+until these lines change:
+
+| File (frozen) | Line | Linter | Issue | Proposed change |
+|---|---|---|---|---|
+| `libs/go/antibot/corpus/corpus.go` | 233 | errcheck | `fmt.Fprintf(h, "rtb:%d", rtb)` unchecked | `_, _ = fmt.Fprintf(...)` |
+| `libs/go/antibot/corpus/corpus.go` | 238 | errcheck | `fmt.Fprintf(h, "\|%s:%d", e.kind, b)` unchecked | `_, _ = fmt.Fprintf(...)` |
+| `libs/go/antibot/corpus/corpus.go` | 321 | gocritic ifElseChain | `if autorepeat {...} else if ...` | rewrite as `switch` |
+| `libs/go/antibot/corpus_test.go` | 124 | staticcheck QF1002 | `switch {` on `d.Applied` | `switch d.Applied {` |
+| `libs/go/antibot/corpus_test.go` | 471 | staticcheck S1009 | `j.Signals != nil && len(j.Signals) > 2048` | drop the nil check |
+
+All are behaviour-neutral (the generator output and every assertion stay the same). Not changed by the implementer.
