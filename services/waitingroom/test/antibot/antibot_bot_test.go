@@ -6,6 +6,7 @@ package antibot
 
 import (
 	"context"
+	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -111,10 +112,10 @@ func (e *env) join(t *testing.T, s *corpus.Session, j corpus.Join) antibot.Actio
 		body = string(b)
 	}
 	req := httptest.NewRequest(http.MethodPost, "/v1/events/"+e.ev+"/queue/join", strings.NewReader(body))
-	req.Header.Set(authx.HeaderIdentityID, s.IdentityID)
+	req.Header.Set(authx.HeaderIdentityID, asUUID(s.IdentityID))
 	req.Header.Set(authx.HeaderIdentityRole, "buyer")
 	req.Header.Set(authx.HeaderIdentityVerified, "true")
-	req.Header.Set(authx.HeaderDeviceID, s.DeviceID)
+	req.Header.Set(authx.HeaderDeviceID, asUUID(s.DeviceID))
 	req.Header.Set("User-Agent", j.UserAgent)
 	req.Header.Set("X-Forwarded-For", j.IP)
 	rec := httptest.NewRecorder()
@@ -268,4 +269,17 @@ func TestAC3_InvalidSignalsCountedEndToEnd(t *testing.T) {
 	if total != 1 {
 		t.Fatalf("antibot_signals_invalid_total = %v, want 1", total)
 	}
+}
+
+// asUUID maps a corpus id (e.g. "hum-000001") to a distinct, stable UUID v4 so the gateway identity headers pass
+// authx.PrincipalFromHeaders (TCR-2). Ids that already look like UUIDs are returned unchanged.
+func asUUID(id string) string {
+	if len(id) == 36 && id[8] == '-' && id[13] == '-' && id[18] == '-' && id[23] == '-' {
+		return id
+	}
+	sum := sha256.Sum256([]byte(id))
+	b := sum[:16]
+	b[6] = (b[6] & 0x0f) | 0x40
+	b[8] = (b[8] & 0x3f) | 0x80
+	return fmt.Sprintf("%x-%x-%x-%x-%x", b[0:4], b[4:6], b[6:8], b[8:10], b[10:16])
 }

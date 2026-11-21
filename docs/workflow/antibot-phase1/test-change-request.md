@@ -1,6 +1,6 @@
 # Test change request — antibot-phase1
 
-Status: **open** (needs the test designer / human; the implementer has not edited any frozen test)
+Status: **approved** by TranDinhVo in the Claude Code session on 2026-11-22 (TCR-1..TCR-4 as written); applied by the coordinator session.
 
 ## TCR-1: `TestStore_AC6_WindowsUseInputNow` asserts an identity outside the R7 window is still counted
 

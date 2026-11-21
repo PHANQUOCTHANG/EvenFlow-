@@ -1,4 +1,5 @@
 import { readFileSync, writeFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -10,8 +11,9 @@ const EV = "evt-ab-1";
 const KEY = `ef:ab:${EV}`;
 
 // Shared golden fixture, decoded by libs/go/antibot/golden_test.go (contracts 1, R2).
-const GOLDEN = fileURLToPath(
-  new URL("../../../../libs/go/antibot/testdata/signals/scripted_keyboard.json", import.meta.url),
+const GOLDEN = resolve(
+  dirname(fileURLToPath(import.meta.url)),
+  "../../../../libs/go/antibot/testdata/signals/scripted_keyboard.json",
 );
 
 function stored(): Record<string, unknown> {

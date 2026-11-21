@@ -230,12 +230,12 @@ func fold(rt int, evs []event, s *snapshot) {
 	buckets := map[int]bool{}
 	h := fnv.New64a()
 	rtb := min(rt/250, 40)
-	fmt.Fprintf(h, "rtb:%d", rtb)
+	_, _ = fmt.Fprintf(h, "rtb:%d", rtb)
 	buckets[rtb] = true
 	for _, e := range last {
 		b := min(e.gap/50, 40)
 		buckets[b] = true
-		fmt.Fprintf(h, "|%s:%d", e.kind, b)
+		_, _ = fmt.Fprintf(h, "|%s:%d", e.kind, b)
 	}
 	if len(last) >= 12 && len(buckets) >= 4 {
 		s.SQ = fmt.Sprintf("%016x", h.Sum64())
@@ -318,14 +318,15 @@ func (g *gen) human() Session {
 	// the join click itself (recorded before the snapshot). Auto-repeat users hold Enter on the focused, still
 	// disabled button until it enables at T0: the join is triggered by one more repeat.
 	clickGap := int(g.lognormal(600, 0.8))
-	if autorepeat {
+	switch {
+	case autorepeat:
 		evs = append(evs, event{kind: "k", gap: 30 + g.r.IntN(6)})
 		ke++
-	} else if keyboardOnly {
+	case keyboardOnly:
 		evs = append(evs, event{kind: "k", gap: clickGap})
 		ke++
 		kind += "/keyboard"
-	} else {
+	default:
 		evs = append(evs, event{kind: "p", gap: clickGap})
 		pe++
 	}

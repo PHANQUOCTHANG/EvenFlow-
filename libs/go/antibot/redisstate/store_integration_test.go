@@ -134,9 +134,9 @@ func TestStore_AC6_WindowsUseInputNow(t *testing.T) {
 	if st.SeqIdentities != 4 {
 		t.Fatalf("sq within 900 s: %d, want 4", st.SeqIdentities)
 	}
-	st = e.observe(t, "y", 1202*time.Second, fph, pfx, "00000000000000bb")
+	st = e.observe(t, "y", 1200*time.Second, fph, pfx, "00000000000000bb")
 	if st.SeqIdentities != 2 { // z (301 s) still inside, a/b/c expired
-		t.Fatalf("sq after 1202 s: %d, want 2", st.SeqIdentities)
+		t.Fatalf("sq after 1200 s: %d, want 2", st.SeqIdentities)
 	}
 }
 

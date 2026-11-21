@@ -121,8 +121,8 @@ func (e *emulator) observe(id, fp string, prefix netip.Prefix, sq string, now in
 
 // apply records the queue effect of an enforce decision.
 func (e *emulator) apply(id string, d antibot.Decision) {
-	switch {
-	case d.Applied == block:
+	switch d.Applied {
+	case block:
 		delete(e.slots, id)
 		e.blocked[id] = true
 	default:
@@ -468,7 +468,7 @@ func TestCorpus_GeneratorDeterministic(t *testing.T) {
 	}
 	for _, s := range append(append([]corpus.Session{}, a.Bots...), a.Humans...) {
 		for _, j := range s.Joins {
-			if j.Signals != nil && len(j.Signals) > 2048 {
+			if len(j.Signals) > 2048 {
 				t.Fatalf("%s: snapshot %d bytes > 2 KiB", s.Family, len(j.Signals))
 			}
 		}
