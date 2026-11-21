@@ -915,6 +915,25 @@ mut("AC-17", "gateway-args-split-password", lambda o: ctr(o, "gateway").update({
 mut("AC-17", "gateway-shell-pgpassword", lambda o: ctr(o, "gateway").update({"command": ["sh", "-c", "PGPASSWORD=hunter2 psql -h db"]}), overlay="staging")
 
 
+# ---- TCR-3 additions (verifier mutation survivors M20, M22, M23, M28) --------
+def web_allowed_pair_empty_reason(o):
+    # rootfs is read-only anyway, so the empty-reason exemption is the only violation (EXEMPT, no AC-12)
+    ctr(o, "web")["securityContext"]["readOnlyRootFilesystem"] = True
+    exempt(o, "web", "AC-12.readOnlyRootFilesystem", " ")
+
+
+def unreferenced_forbidden_cm(o):
+    # no container references this ConfigMap, so only the ConfigMap data scan can catch the key
+    o.append({"apiVersion": "v1", "kind": "ConfigMap", "metadata": {"name": "eventflow-unused-flags", "namespace": NS},
+              "data": {"PAYMENT_SANDBOX_MODE": "true"}})
+
+
+mut("EXEMPT", "web-allowed-pair-empty-reason", web_allowed_pair_empty_reason)
+mut("EXEMPT", "gateway-malformed-key", lambda o: exempt(o, "gateway", "AC-12.read-only", "rootfs needs writes"))
+mut("AC-32", "vnpay-return-url-empty", lambda o: cfg(o).update({"VNPAY_RETURN_URL": ""}), overlay="staging", extra=("payment",))
+mut("AC-32", "unreferenced-forbidden-configmap-key", unreferenced_forbidden_cm, overlay="staging")
+
+
 # ---- Dockerfile fixtures (AC-13, --dockerfiles mode) -------------------------
 DF_GOOD = {
     "go-service.Dockerfile": "FROM golang:1.23 AS build\nRUN go build -o /out/server ./cmd/server\n\nFROM gcr.io/distroless/static-debian12\nCOPY --from=build /out/server /server\nUSER 65532:65532\nENTRYPOINT [\"/server\"]\n",
@@ -934,6 +953,8 @@ DF_BAD = {
     "plain-dockerfile-name": {"Dockerfile": "FROM alpine:3.20\nCMD [\"sh\"]\n"},
     # R2-2 (TCR-2 additions): root primary group
     "user-root-group": {"go-service.Dockerfile": "FROM gcr.io/distroless/static-debian12\nCOPY server /server\nUSER 10001:0\nENTRYPOINT [\"/server\"]\n"},
+    # TCR-3 (verifier mutant M02): root uid with no group part
+    "user-uid-0-no-gid": {"go-service.Dockerfile": "FROM gcr.io/distroless/static-debian12\nCOPY server /server\nUSER 0\nENTRYPOINT [\"/server\"]\n"},
 }
 
 
