@@ -261,7 +261,9 @@ export async function getOpsWarRoom(eventId: string): Promise<OpsWarRoomSnapshot
 
   // Thu tu quyet dinh (AC-22): phien mat -> 401; su kien khong ton tai -> 404; mot nguon tu choi quyen -> 403
   // (khong coi la "unavailable"); su kien loi khac hoac ca ba nguon hong -> 503.
-  if (failures.some((f) => f?.auth)) throw new OpsServiceError(401);
+  // Chi 401 cua nguon loi (queue, qua gateway) moi la phien mat. 401 cua o AI / ton kho chi lam o do "unavailable";
+  // 401 cua chi tiet su kien cong khai (khong gui token) xu ly nhu loi su kien khac (503, giu snapshot cu), X2-3.
+  if (queueErr?.auth) throw new OpsServiceError(401);
   if (eventErr?.status === 404 || eventErr?.status === 400) throw new OpsServiceError(404);
   if (failures.some((f) => f?.status === 403)) throw new OpsServiceError(403);
   if (eventR.status !== "fulfilled") throw new OpsServiceError(503);
@@ -358,21 +360,42 @@ export function isValidOverrideRate(rate: number): boolean {
   return Number.isInteger(rate) && rate >= 0 && rate <= MAX_OVERRIDE_RATE;
 }
 
-const isZeroWidth = (c: string) => /^[\u200B-\u200D\uFEFF]$/.test(c);
-const isEdgeBlank = (c: string) => /^\s$/u.test(c) || isZeroWidth(c);
+/** Nguyen nhan ly do khong hop le: ky tu dieu khien, ky tu dieu khien huong van ban (bidi), do dai / so ky tu hien thi. */
+export type ReasonProblem = "CONTROL" | "BIDI" | "LENGTH";
 
-/** Ly do da cat khoang trang Unicode va ky tu zero-width hai dau. null khi co ky tu dieu khien (R-1), it hon 3 ky tu
- * hien thi (X-4) hoac dai qua 200 ky tu. Cung luat voi waitingroom (app.NormalizeReason). */
-export function normalizeOverrideReason(reason: string): string | null {
+const isBidiControl = (c: string) => /^[\u202A-\u202E\u2066-\u2069\u200E\u200F\u061C]$/u.test(c);
+// Cc, tinh ca U+0085 (NEL), giong unicode.IsControl cua Go (X2-5).
+const isControl = (c: string) => /^\p{Cc}$/u.test(c);
+// Cat hai dau: khoang trang Unicode (tru U+0085, la Cc) va Cf khong phai bidi.
+const isEdgeBlank = (c: string) => !isControl(c) && !isBidiControl(c) && /^[\s\p{Cf}]$/u.test(c);
+// Khong tinh vao toi thieu 3: Cf, dau ket hop Mn/Me (van duoc phep, vd tieng Viet NFD), khoang trang,
+// Hangul filler (U+115F, U+1160, U+3164, U+FFA0), braille trong (U+2800).
+const isVisible = (c: string) => !/^[\p{Cf}\p{Mn}\p{Me}\s\u115F\u1160\u3164\uFFA0\u2800]$/u.test(c);
+
+function trimReason(reason: string): string[] {
   const chars = Array.from(reason ?? "");
   let start = 0;
   let end = chars.length;
   while (start < end && isEdgeBlank(chars[start])) start++;
   while (end > start && isEdgeBlank(chars[end - 1])) end--;
-  const kept = chars.slice(start, end);
-  if (kept.some((c) => /^\p{Cc}$/u.test(c))) return null;
-  const visible = kept.filter((c) => !isZeroWidth(c)).length;
-  return visible >= MIN_REASON_LENGTH && kept.length <= MAX_REASON_LENGTH ? kept.join("") : null;
+  return chars.slice(start, end);
+}
+
+/** Nguyen nhan ly do bi tu choi, null khi hop le. Cung luat va cung thu tu voi waitingroom (app.ValidateReason). */
+export function reasonProblem(reason: string): ReasonProblem | null {
+  const kept = trimReason(reason);
+  for (const c of kept) {
+    if (isControl(c)) return "CONTROL";
+    if (isBidiControl(c)) return "BIDI";
+  }
+  const visible = kept.filter(isVisible).length;
+  return visible >= MIN_REASON_LENGTH && kept.length <= MAX_REASON_LENGTH ? null : "LENGTH";
+}
+
+/** Ly do da cat khoang trang Unicode va ky tu Cf hai dau. null khi co ky tu dieu khien (R-1), bidi (R2-1), it hon 3 ky
+ * tu hien thi (X-4) hoac dai qua 200 ky tu. Cung luat voi waitingroom (app.NormalizeReason). */
+export function normalizeOverrideReason(reason: string): string | null {
+  return reasonProblem(reason) === null ? trimReason(reason).join("") : null;
 }
 
 export type OpsWriteErrorCode = "INVALID" | "FORBIDDEN" | "NOT_FOUND" | "UNAVAILABLE";
