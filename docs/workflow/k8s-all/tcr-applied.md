@@ -59,3 +59,12 @@ Scope: `deploy/k8s/policy/test_policy.sh` and `deploy/k8s/policy/testdata/**` on
 
 - TCR-WP5: approved by TranDinhVo on 2026-11-21 in the Claude Code session (was pending confirmation).
 - TCR-3: approved by TranDinhVo on 2026-11-21 in the Claude Code session (additions only; see test-change-request-3.md once applied).
+
+## TCR-3: fixtures and a C4.4 test for the verifier's mutation survivors (test-change-request-3.md), approved by TranDinhVo 2026-11-21
+
+- Added tests only: 4 mutants in `gen_fixtures.py` (`AC-32--unreferenced-forbidden-configmap-key`,
+  `AC-32--vnpay-return-url-empty`, `EXEMPT--web-allowed-pair-empty-reason`, `EXEMPT--gateway-malformed-key`) and 1
+  Dockerfile case (`AC-13--user-uid-0-no-gid`). No existing fixture or assertion changed; `gen_fixtures.py --check`
+  clean; `test_policy.sh` unchanged. Now 184 bad fixtures and 8 bad Dockerfile cases (selftest 202).
+- New `.github/scripts/tests/test-gates-context-guard.sh` (11 cases, stub kubectl), run by CI `lint-ci` and by
+  `full-gate.sh` step `gates-context-guard`.
