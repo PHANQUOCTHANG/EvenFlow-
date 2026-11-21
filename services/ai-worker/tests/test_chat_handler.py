@@ -71,6 +71,9 @@ class FakeGemini:
             raise self._exc
         return Generation(text="tra loi", total_tokens=self._total, model="fake")
 
+    def sent_max_tokens(self, budget):
+        return budget
+
 
 def _consumer(gemini: FakeGemini, limiter: FakeLimiter | None = None, out: list | None = None):
     out = out if out is not None else []

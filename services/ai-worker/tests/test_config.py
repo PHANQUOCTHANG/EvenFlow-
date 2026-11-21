@@ -59,8 +59,8 @@ def test_TopologyMacDinh_TrongImageKhongVoLucImport() -> None:
 
 
 def test_GeminiThatMaThieuKeyThiTuChoi() -> None:
-    with pytest.raises(ValidationError, match="GEMINI_API_KEY"):
-        Settings(_env_file=None, gemini_mock=False, gemini_api_key="")
+    with pytest.raises(ValidationError, match="ANTHROPIC_API_KEY"):
+        Settings(_env_file=None, ai_mock=False, anthropic_api_key="")
 
 
 def test_KiemDuyetGoiThangEventServiceKhiCauHinh() -> None:
