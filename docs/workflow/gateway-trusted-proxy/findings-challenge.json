@@ -1,0 +1,72 @@
+[
+  {
+    "id": "C-1",
+    "severity": "minor",
+    "file": "services/gateway/internal/clientip/clientip.go",
+    "line": 65,
+    "title": "Only /0 is rejected: 0.0.0.0/1,128.0.0.0/1 (or 2000::/3) loads and trusts the whole internet",
+    "repro": "ParseTrusted(\"0.0.0.0/1,128.0.0.0/1\") returns no error. Gateway with that trust set, public peer 203.0.113.9:4000, 50 POST /api/v1/auth/login each with a different X-Forwarded-For (2001:db8::1 .. ::32).",
+    "evidence": "Scratch e2e probe: 0 of 50 requests got 429 (auth burst is 10) and the upstream received X-Forwarded-For: 2001:db8::32, i.e. the forged value reaches identity newDevice / payment vnp_IpAddr. Also accepted: 0.0.0.0/1 alone, ::/1,8000::/1, 2000::/3 (all global IPv6). The spec 3.1 rationale for rejecting /0 (trust the world = spoofable) is sidestepped by one extra element.",
+    "fix": "Spec decision: reject prefixes shorter than a floor (suggest IPv4 < /8, IPv6 < /7 so fc00::/7 and fd00::/8 still load), with the same fail-fast error; add the pairs above to AC-8. Minimum alternative: warn at startup when the set covers non-private space."
+  },
+  {
+    "id": "C-2",
+    "severity": "minor",
+    "file": "services/gateway/internal/proxy/gateway.go",
+    "line": 200,
+    "title": "Auth limit is keyed on the full IPv6 /128: one host rotating inside its /64 is never limited",
+    "repro": "Trust 10.0.0.0/8, peer 10.1.2.3:4000, 200 POST /api/v1/auth/login with X-Forwarded-For: 2001:db8:1:1::1 .. ::c8 (one /64, i.e. one subscriber).",
+    "evidence": "Scratch e2e probe: 0 of 200 got 429. Not introduced by this diff (develop keys a direct IPv6 peer the same way), but before this change everything behind the ingress shared one bucket, so after it an IPv6-reachable ingress allows unlimited password guessing from one machine, which is what the auth class exists to stop. Not reachable on an IPv4-only ingress. Related, lower impact: IPv4-embedded spellings (::198.51.100.1, 64:ff9b::198.51.100.1, 2002:c633:6401::) are separate buckets from 198.51.100.1 (48 logins over 4 spellings, only 8 limited); a client cannot choose the spelling behind an honest proxy.",
+    "fix": "Key IPv6 clients by their /64 for rate limiting (netip.PrefixFrom(a, 64).Masked().Addr()) while still sending the full address upstream; or record it as an accepted limit in the spec and the k8s-all runbook if the ingress stays IPv4-only."
+  },
+  {
+    "id": "C-3",
+    "severity": "minor",
+    "file": "services/gateway/internal/proxy/gateway.go",
+    "line": 227,
+    "title": "Client-sent X-Real-IP, True-Client-IP and X-Original-Forwarded-For still reach upstreams unchanged",
+    "repro": "Raw request from untrusted peer 203.0.113.9 (trust 10.0.0.0/8) with X-Real-IP: 5.5.5.5, True-Client-IP: 7.7.7.7, X-Original-Forwarded-For: 8.8.8.8, Forwarded: for=6.6.6.6, X-Forwarded-Host: evil.",
+    "evidence": "Upstream saw X-Forwarded-For=[203.0.113.9] (correct), Forwarded and the forged X-Forwarded-Host dropped (correct), but X-Real-Ip=[5.5.5.5], True-Client-Ip=[7.7.7.7], X-Original-Forwarded-For=[8.8.8.8]. Same on develop and with trust empty, so no regression. No upstream reads them today (identity handler.go:55 and payment handler.go:150 read only X-Forwarded-For), so the impact is latent: the first service or middleware that prefers X-Real-IP gets an attacker-chosen IP. Spec 3.4 promises that forged entries never reach upstreams only for XFF.",
+    "fix": "In Rewrite, delete X-Real-IP (and optionally True-Client-IP, X-Original-Forwarded-For, CF-Connecting-IP) from pr.Out, or set X-Real-IP to the resolved client; add an assertion to the AC-1/AC-9 tests. Otherwise state in the spec that upstreams must read only X-Forwarded-For."
+  },
+  {
+    "id": "C-4",
+    "severity": "minor",
+    "file": "docs/workflow/gateway-trusted-proxy/spec.md",
+    "line": 144,
+    "title": "Pod-CIDR trust (Q-1, accepted): a pod that can reach the gateway can lock out a chosen victim IP and escape the limit, not only forge XFF",
+    "repro": "Trust 10.244.0.0/16, peer 10.244.9.9 (any pod). (a) 10 logins with X-Forwarded-For: 198.51.100.77, then the victim's own login. (b) 50 logins with X-Forwarded-For: 9.9.9.0 .. 9.9.9.49.",
+    "evidence": "Scratch e2e probe: (a) the victim's request returns 429; (b) 0 of 50 limited. Works as specified and the human accepted Q-1; recorded because the runbook wording (can forge XFF) understates it: targeted lockout of any user, unlimited credential stuffing, and a chosen IP in identity last_ip / payment vnp_IpAddr. Web SSR pods sit in the same CIDR, so they are already trusted proxies (Q-2 treats that as a later step); the web app currently forwards no client headers (grep of apps/web found none), so there is no live path.",
+    "fix": "k8s-all runbook and policy test: require the NetworkPolicy that limits gateway ingress to the ingress-nginx namespace (and web) as a precondition for setting TRUSTED_PROXY_CIDRS, and spell out the three consequences above. No code change here."
+  },
+  {
+    "id": "C-5",
+    "severity": "nit",
+    "file": "services/gateway/internal/clientip/clientip.go",
+    "line": 155,
+    "title": "parseAddr accepts element forms the spec calls malformed: unvalidated port and bracketed IPv4",
+    "repro": "Resolver trust 10.0.0.0/8, peer 10.1.2.3:1, X-Forwarded-For one of: 1.2.3.4: | 1.2.3.4:abc | 1.2.3.4:99999999 | [1.2.3.4] | [1.2.3.4]:80",
+    "evidence": "Each resolves to (1.2.3.4, true) instead of falling back to the peer; net.SplitHostPort does not validate the port and the bracket branch does not require IPv6. Likewise RemoteAddr [10.1.2.3]:1 is treated as trusted. Only a trusted proxy can send these and RemoteAddr is set by net/http, so there is no security impact; the result is still canonical.",
+    "fix": "Optional: require a 1-5 digit port <= 65535 and Is6() inside brackets, or widen spec 3.2 to say these forms are tolerated."
+  },
+  {
+    "id": "C-6",
+    "severity": "nit",
+    "file": "services/gateway/internal/clientip/clientip.go",
+    "line": 130,
+    "title": "Leading-tab trimming of an XFF element is not covered by any test",
+    "repro": "Change line 130 to: for len(s) > 0 && s[0] == ' ' {  then run go test ./services/gateway/internal/...",
+    "evidence": "All packages still pass (mutant survives). 14 other mutants tried were all killed: peer Unmap, XFF Unmap, hop cap > to >=, cap 16 to 17, header line order, XFF zone check, malformed to continue, both Is4In6 config checks, colon count, fromXFF guard, Set to Add, rate key source, resolver built with nil.",
+    "fix": "Add AC-6 cases with a tab directly after the comma and a tab-prefixed middle element, e.g. 198.51.100.1,<TAB>10.0.0.5."
+  },
+  {
+    "id": "C-7",
+    "severity": "nit",
+    "file": "services/gateway/internal/clientip/clientip.go",
+    "line": 31,
+    "title": "A trailing newline in TRUSTED_PROXY_CIDRS makes the gateway exit at startup",
+    "repro": "ParseTrusted with 10.244.0.0/16 followed by LF, or by CRLF.",
+    "evidence": "Both return: phan tu \"10.244.0.0/16\\n\": khong phai CIDR hop le. Fails closed, so safe, but a ConfigMap written with a YAML block scalar or an env file with CRLF gives a CrashLoopBackOff whose cause is easy to miss.",
+    "fix": "Trim each element with strings.TrimSpace (still reject inner whitespace), or note it in the k8s-all follow-up."
+  }
+]

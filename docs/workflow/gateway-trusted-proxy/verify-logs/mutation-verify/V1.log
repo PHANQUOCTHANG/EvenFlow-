@@ -1,0 +1,28 @@
+# V1: drop X-Real-IP from clientIPHeaders (header no longer stripped)
+diff --git a/services/gateway/internal/proxy/gateway.go b/services/gateway/internal/proxy/gateway.go
+index 8dad2f8..4a6ba14 100644
+--- a/services/gateway/internal/proxy/gateway.go
++++ b/services/gateway/internal/proxy/gateway.go
+@@ -215,7 +215,7 @@ type forwardedClientKey struct{}
+ // client gui truoc khi gan lai, nen client khong gia duoc IP qua header. Khi IP client lay tu
+ // X-Forwarded-For cua proxy tin cay, upstream nhan dung mot phan tu la IP do.
+ // clientIPHeaders la cac header mang IP client ma gateway khong dat; client gui thi bi xoa.
+-var clientIPHeaders = []string{"Forwarded", "X-Real-IP", "True-Client-IP", "X-Original-Forwarded-For", "CF-Connecting-IP"}
++var clientIPHeaders = []string{"Forwarded", "True-Client-IP", "X-Original-Forwarded-For", "CF-Connecting-IP"}
+ 
+ func newReverseProxy(target *url.URL, log *slog.Logger) *httputil.ReverseProxy {
+ 	transport := http.DefaultTransport.(*http.Transport).Clone()
+?   	github.com/eventflow/eventflow/services/gateway/cmd/server	[no test files]
+ok  	github.com/eventflow/eventflow/services/gateway/internal/clientip	1.025s
+ok  	github.com/eventflow/eventflow/services/gateway/internal/config	0.628s
+--- FAIL: TestTrustedProxy_Round1_ClientIPHeadersStripped (0.01s)
+    --- FAIL: TestTrustedProxy_Round1_ClientIPHeadersStripped/trust_off (0.00s)
+        trusted_proxy_round1_test.go:44: POST /api/v1/auth/login: upstream got X-Real-IP=["5.5.5.5"], want none
+    --- FAIL: TestTrustedProxy_Round1_ClientIPHeadersStripped/untrusted_peer (0.00s)
+        trusted_proxy_round1_test.go:44: POST /api/v1/auth/login: upstream got X-Real-IP=["5.5.5.5"], want none
+    --- FAIL: TestTrustedProxy_Round1_ClientIPHeadersStripped/trusted_peer (0.00s)
+        trusted_proxy_round1_test.go:44: POST /api/v1/auth/login: upstream got X-Real-IP=["5.5.5.5"], want none
+FAIL
+FAIL	github.com/eventflow/eventflow/services/gateway/internal/proxy	0.687s
+ok  	github.com/eventflow/eventflow/services/gateway/internal/ratelimit	0.351s
+FAIL

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log/slog"
 	"math"
-	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -18,6 +17,7 @@ import (
 	"github.com/eventflow/eventflow/libs/go/authx"
 	"github.com/eventflow/eventflow/libs/go/httpx"
 	"github.com/eventflow/eventflow/libs/go/otelx"
+	"github.com/eventflow/eventflow/services/gateway/internal/clientip"
 	"github.com/eventflow/eventflow/services/gateway/internal/config"
 	"github.com/eventflow/eventflow/services/gateway/internal/ratelimit"
 )
@@ -39,6 +39,7 @@ type Gateway struct {
 	proxies  map[string]http.Handler
 	limiters map[string]*ratelimit.Limiter
 	maxBody  int64
+	ips      *clientip.Resolver
 	now      func() time.Time
 	log      *slog.Logger
 }
@@ -58,6 +59,7 @@ func New(cfg *config.Config, log *slog.Logger, opts ...Option) (http.Handler, er
 		proxies:  map[string]http.Handler{},
 		limiters: map[string]*ratelimit.Limiter{},
 		maxBody:  cfg.MaxBodyBytes,
+		ips:      clientip.New(cfg.TrustedProxies),
 		now:      time.Now,
 		log:      log,
 	}
@@ -128,8 +130,10 @@ func (g *Gateway) routeHandler(rt Route) (http.Handler, error) {
 		}
 
 		// 3. Gioi han toc do: theo nguoi neu da dang nhap, nguoc lai theo IP. Lop auth luon theo
-		// IP: muc dich la chan do mat khau tu mot may.
-		if ok, wait := limiter.Allow(rateKey(rt, r, principal)); !ok {
+		// IP: muc dich la chan do mat khau tu mot may. IP chi lay tu X-Forwarded-For khi peer la
+		// proxy tin cay (TRUSTED_PROXY_CIDRS).
+		ip, fromXFF := g.ips.Resolve(r.RemoteAddr, r.Header.Values("X-Forwarded-For"))
+		if ok, wait := limiter.Allow(rateKey(rt, r, principal, ip)); !ok {
 			w.Header().Set("Retry-After", strconv.Itoa(int(math.Ceil(wait.Seconds()))))
 			httpx.WriteProblemType(w, http.StatusTooManyRequests, ProblemRateLimited, "qua nhieu request, vui long thu lai sau")
 			return
@@ -145,6 +149,10 @@ func (g *Gateway) routeHandler(rt Route) (http.Handler, error) {
 		if r.ContentLength > g.maxBody {
 			httpx.WriteProblemType(w, http.StatusRequestEntityTooLarge, ProblemTooLarge, "noi dung request qua lon")
 			return
+		}
+		if fromXFF {
+			// Rewrite doc lai IP nay de gui upstream dung client that, bo moi phan tu khac.
+			r = r.WithContext(context.WithValue(r.Context(), forwardedClientKey{}, ip))
 		}
 		if r.Body != nil && r.Body != http.NoBody {
 			// Body chunked khong khai Content-Length: cat o day, upstream nhan loi doc body.
@@ -188,8 +196,8 @@ func writeUnauthorized(w http.ResponseWriter, err error) {
 	httpx.WriteProblemType(w, http.StatusUnauthorized, ProblemUnauthorized, "can dang nhap")
 }
 
-func rateKey(rt Route, r *http.Request, p *authx.Principal) string {
-	key := "ip:" + clientIP(r)
+func rateKey(rt Route, r *http.Request, p *authx.Principal, ip string) string {
+	key := "ip:" + ip
 	if p != nil && rt.Rate != config.RateAuth {
 		key = "id:" + p.ID
 	}
@@ -200,18 +208,15 @@ func rateKey(rt Route, r *http.Request, p *authx.Principal) string {
 	return key
 }
 
-// clientIP lay IP cua ket noi. Gateway la lop ngoai cung nen KHONG tin X-Forwarded-For do
-// client gui; dat sau ingress/LB thi phai cau hinh proxy tin cay truoc khi doi o day.
-func clientIP(r *http.Request) string {
-	host, _, err := net.SplitHostPort(r.RemoteAddr)
-	if err != nil {
-		return r.RemoteAddr
-	}
-	return host
-}
+// forwardedClientKey giu IP client lay tu X-Forwarded-For cua proxy tin cay.
+type forwardedClientKey struct{}
 
 // newReverseProxy chuyen tiep toi target. Rewrite (khac Director) tu xoa X-Forwarded-* do
-// client gui truoc khi gan lai, nen client khong gia duoc IP qua header.
+// client gui truoc khi gan lai, nen client khong gia duoc IP qua header. Khi IP client lay tu
+// X-Forwarded-For cua proxy tin cay, upstream nhan dung mot phan tu la IP do.
+// clientIPHeaders la cac header mang IP client ma gateway khong dat; client gui thi bi xoa.
+var clientIPHeaders = []string{"Forwarded", "X-Real-IP", "True-Client-IP", "X-Original-Forwarded-For", "CF-Connecting-IP"}
+
 func newReverseProxy(target *url.URL, log *slog.Logger) *httputil.ReverseProxy {
 	transport := http.DefaultTransport.(*http.Transport).Clone()
 	transport.MaxIdleConnsPerHost = 256
@@ -220,7 +225,15 @@ func newReverseProxy(target *url.URL, log *slog.Logger) *httputil.ReverseProxy {
 	return &httputil.ReverseProxy{
 		Rewrite: func(pr *httputil.ProxyRequest) {
 			pr.SetURL(target)
+			// Rewrite da bo Forwarded/X-Forwarded-*; cac header IP client khac cung do client gui,
+			// xoa de upstream khong bao gio doc phai IP gia mao (chi tin X-Forwarded-For).
+			for _, h := range clientIPHeaders {
+				pr.Out.Header.Del(h)
+			}
 			pr.SetXForwarded()
+			if ip, ok := pr.In.Context().Value(forwardedClientKey{}).(string); ok {
+				pr.Out.Header.Set("X-Forwarded-For", ip)
+			}
 			// Noi trace sang service phia sau (traceparent) de mot yeu cau la mot trace.
 			otelx.InjectHTTP(pr.In.Context(), pr.Out.Header)
 		},

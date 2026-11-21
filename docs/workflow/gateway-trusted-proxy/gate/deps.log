@@ -1,0 +1,13 @@
+warning: in the working copy of 'services/gateway/go.mod', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'services/gateway/go.sum', LF will be replaced by CRLF the next time Git touches it
+tidy drift [base]:  services/gateway/go.mod | 31 +++++++++++++++++++-
+tidy drift [base]:  services/gateway/go.sum | 75 +++++++++++++++++++++++++++++++++++++++++++++++++
+tidy drift [base]:  2 files changed, 105 insertions(+), 1 deletion(-)
+warning: in the working copy of 'services/gateway/go.mod', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'services/gateway/go.sum', LF will be replaced by CRLF the next time Git touches it
+tidy drift [head]:  services/gateway/go.mod | 31 +++++++++++++++++++-
+tidy drift [head]:  services/gateway/go.sum | 75 +++++++++++++++++++++++++++++++++++++++++++++++++
+tidy drift [head]:  2 files changed, 105 insertions(+), 1 deletion(-)
+ok: tidied go.mod identical at base and HEAD
+ok: tidied go.sum identical at base and HEAD
+ok: go.mod/go.sum unchanged vs c5fb598

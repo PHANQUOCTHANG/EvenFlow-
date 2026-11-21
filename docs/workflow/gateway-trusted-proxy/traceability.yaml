@@ -1,0 +1,89 @@
+task: gateway-trusted-proxy
+base: b946bf8
+round1_test_files:  # fix round 1, new files only
+  - services/gateway/internal/clientip/clientip_round1_test.go
+  - services/gateway/internal/config/config_trusted_round1_test.go
+  - services/gateway/internal/proxy/trusted_proxy_round1_test.go
+frozen_test_files:  # must not change in step 3
+  - services/gateway/internal/clientip/clientip_test.go
+  - services/gateway/internal/config/config_trusted_test.go
+  - services/gateway/internal/proxy/trusted_proxy_test.go
+unchanged_existing:
+  - services/gateway/internal/proxy/gateway_test.go
+  - services/gateway/internal/config/config_test.go
+acceptance:
+  AC-1:
+    - clientip.TestResolve/AC1_*  # trust nil and empty slice; ipv4, mapped, zoned, garbage, empty peers
+    - clientip.TestPeerKeyMatchesDevelop
+    - proxy_test.TestTrustedProxy_AC1_TrustOffIgnoresForwardingHeaders  # forged XFF + X-Real-IP + Forwarded
+    - proxy_test.TestGateway_XoaDanhTinhGiaMaoTrenMoiRoute  # existing, unmodified
+  AC-2:
+    - clientip.TestResolve/AC2_*
+    - proxy_test.TestTrustedProxy_AC2_UntrustedPeerCannotSpoof
+  AC-3:
+    - clientip.TestResolve/AC3_*
+    - proxy_test.TestTrustedProxy_AC3_ClientsBehindTrustedProxyHaveOwnBucket
+  AC-4:
+    - clientip.TestResolve/AC4_*
+    - clientip.TestResolve_ForgedPrefixNeverChangesResult
+    - proxy_test.TestTrustedProxy_AC4_ForgedLeftmostSharesBucket
+  AC-5:
+    - clientip.TestResolve/AC5_*
+    - proxy_test.TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC5_*
+  AC-6:
+    - clientip.TestResolve/AC6_*
+    - proxy_test.TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC6_*
+    - clientip.TestResolve_Round1_StrictElementForms  # Amendment 1 (C-5/R-2)
+    - clientip.TestResolve_Round1_LeadingTab          # C-6
+  AC-7:
+    - clientip.TestResolve/AC7_*  # malformed x6, malformed left ignored, empty, all trusted, 16/17 hops, zoned/unparsable peer
+    - proxy_test.TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC7_*
+  AC-8:
+    - clientip.TestParseTrusted
+    - config_test.TestLoad_TrustedProxyCIDRsHopLe
+    - config_test.TestLoad_TrustedProxyCIDRsHongThiLoi
+    - inspection: cmd/server/main.go returns on config.Load error (proxy.New not reached)
+    - clientip.TestParseTrusted_Round1_WidePrefixRejected      # Amendment 1 (C-1/R-1)
+    - clientip.TestParseTrusted_Round1_FloorBoundaryAccepted
+    - clientip.TestParseTrusted_Round1_TrimsNewlines           # Amendment 1 (C-7)
+    - config_test.TestLoad_Round1_WidePrefixFailsFast
+    - config_test.TestLoad_Round1_TrailingNewlineLoads
+  AC-9:
+    - proxy_test.TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly  # R2-1: unparsable RemoteAddr row asserts no XFF
+    - proxy_test.TestTrustedProxy_AC2_UntrustedPeerCannotSpoof
+    - proxy_test.TestTrustedProxy_AC3_ClientsBehindTrustedProxyHaveOwnBucket
+    - proxy_test.TestGateway_XoaDanhTinhGiaMaoTrenMoiRoute  # existing, unmodified
+    - inspection: r.RemoteAddr not rewritten
+    - proxy_test.TestTrustedProxy_Round1_ClientIPHeadersStripped  # Amendment 1 (C-3)
+  AC-10:
+    - proxy_test.TestTrustedProxy_AC10_KeyClasses
+    - proxy_test.TestGateway_GioiHanTocDo  # existing, unmodified
+  AC-11:
+    - clientip.FuzzResolve  # gate: go test ./internal/clientip -run=^$ -fuzz=FuzzResolve -fuzztime=30s (no -race)
+  spec-3.3-linear-cost:
+    - clientip.BenchmarkResolve  # sanity, not a gate
+mutations:  # plan section 4, threshold 8/8
+  - id: M1
+    change: walk left to right (take first element)
+    killed_by: [clientip.TestResolve/AC4_forged_leftmost, proxy_test.TestTrustedProxy_AC4_ForgedLeftmostSharesBucket]
+  - id: M2
+    change: skip the peer-trusted check (always read XFF)
+    killed_by: [clientip.TestResolve/AC2_untrusted_peer, clientip.FuzzResolve, proxy_test.TestTrustedProxy_AC2_UntrustedPeerCannotSpoof]
+  - id: M3
+    change: on a malformed element continue instead of returning the peer
+    killed_by: [clientip.TestResolve/AC7_rightmost_unknown, proxy_test.TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC7_malformed_rightmost]
+  - id: M4
+    change: drop Unmap()
+    killed_by: [clientip.TestResolve/AC6_mapped_element_unmapped, clientip.TestResolve/AC6_mapped_peer_matches_ipv4_cidr]
+  - id: M5
+    change: disable the prefix-width floor in ParseTrusted (round 1; was "accept /0", the floor subsumes it)
+    killed_by: [clientip.TestParseTrusted, config_test.TestLoad_TrustedProxyCIDRsHongThiLoi, clientip.TestParseTrusted_Round1_WidePrefixRejected, config_test.TestLoad_Round1_WidePrefixFailsFast]
+  - id: M6
+    change: remove the X-Forwarded-For override in Rewrite
+    killed_by: [proxy_test.TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly, proxy_test.TestTrustedProxy_AC3_ClientsBehindTrustedProxyHaveOwnBucket]
+  - id: M7
+    change: remove the 16-hop cap
+    killed_by: [clientip.TestResolve/AC7_17_trusted_hops, proxy_test.TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC7_17_trusted_hops]
+  - id: M8
+    change: drop the host-bits check (p != p.Masked())
+    killed_by: [clientip.TestParseTrusted, config_test.TestLoad_TrustedProxyCIDRsHongThiLoi]

@@ -1,0 +1,26 @@
+# V10: accept IPv4-mapped bare IP in TRUSTED_PROXY_CIDRS
+diff --git a/services/gateway/internal/clientip/clientip.go b/services/gateway/internal/clientip/clientip.go
+index e4eb6cc..a774d8a 100644
+--- a/services/gateway/internal/clientip/clientip.go
++++ b/services/gateway/internal/clientip/clientip.go
+@@ -58,7 +58,7 @@ func parseTrustedElement(e string) (netip.Prefix, error) {
+ 		if a.Zone() != "" {
+ 			return netip.Prefix{}, fmt.Errorf("khong chap nhan zone")
+ 		}
+-		if a.Is4In6() {
++		if false && a.Is4In6() {
+ 			return netip.Prefix{}, fmt.Errorf("IPv4-mapped IPv6, hay viet dang IPv4")
+ 		}
+ 		return netip.PrefixFrom(a, a.BitLen()), nil
+?   	github.com/eventflow/eventflow/services/gateway/cmd/server	[no test files]
+--- FAIL: TestParseTrusted (0.00s)
+    clientip_test.go:226: ParseTrusted("::ffff:10.0.0.1") = [::ffff:10.0.0.1/128], want error
+FAIL
+FAIL	github.com/eventflow/eventflow/services/gateway/internal/clientip	0.964s
+--- FAIL: TestLoad_TrustedProxyCIDRsHongThiLoi (0.00s)
+    config_trusted_test.go:63: TRUSTED_PROXY_CIDRS="::ffff:10.0.0.1": Load ok ([::ffff:10.0.0.1/128]), want error
+FAIL
+FAIL	github.com/eventflow/eventflow/services/gateway/internal/config	0.611s
+ok  	github.com/eventflow/eventflow/services/gateway/internal/proxy	0.614s
+ok  	github.com/eventflow/eventflow/services/gateway/internal/ratelimit	0.346s
+FAIL

@@ -1,0 +1,30 @@
+# V6: per-element TrimSpace removed in ParseTrusted
+diff --git a/services/gateway/internal/clientip/clientip.go b/services/gateway/internal/clientip/clientip.go
+index e4eb6cc..0882357 100644
+--- a/services/gateway/internal/clientip/clientip.go
++++ b/services/gateway/internal/clientip/clientip.go
+@@ -36,7 +36,7 @@ const (
+ func ParseTrusted(s string) ([]netip.Prefix, error) {
+ 	var out []netip.Prefix
+ 	for _, e := range strings.Split(strings.TrimSpace(s), ",") {
+-		e = strings.TrimSpace(e)
++		_ = 0
+ 		if e == "" {
+ 			continue
+ 		}
+?   	github.com/eventflow/eventflow/services/gateway/cmd/server	[no test files]
+--- FAIL: TestParseTrusted_Round1_TrimsNewlines (0.00s)
+    clientip_round1_test.go:65: ParseTrusted("\n10.244.0.0/16,\n fd00::/8\n") error phan tu "\n fd00::/8": khong phai CIDR hop le
+--- FAIL: TestParseTrusted (0.00s)
+    clientip_test.go:193: ParseTrusted(" , ,") error phan tu " ": khong phai IP hay CIDR
+FAIL
+FAIL	github.com/eventflow/eventflow/services/gateway/internal/clientip	0.941s
+--- FAIL: TestLoad_Round1_TrailingNewlineLoads (0.00s)
+    config_trusted_round1_test.go:30: TRUSTED_PROXY_CIDRS="10.244.0.0/16,\nfd00::/8\n": Load error TRUSTED_PROXY_CIDRS: phan tu "\nfd00::/8": khong phai CIDR hop le
+--- FAIL: TestLoad_TrustedProxyCIDRsHopLe (0.00s)
+    config_trusted_test.go:35: TRUSTED_PROXY_CIDRS="10.244.0.0/16, fd00::/8": TRUSTED_PROXY_CIDRS: phan tu " fd00::/8": khong phai CIDR hop le
+FAIL
+FAIL	github.com/eventflow/eventflow/services/gateway/internal/config	0.573s
+ok  	github.com/eventflow/eventflow/services/gateway/internal/proxy	0.657s
+ok  	github.com/eventflow/eventflow/services/gateway/internal/ratelimit	0.399s
+FAIL
