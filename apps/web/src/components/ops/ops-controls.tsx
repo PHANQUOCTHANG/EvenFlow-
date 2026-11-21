@@ -18,6 +18,7 @@ import {
   clearAdmitOverride,
   isValidOverrideRate,
   normalizeOverrideReason,
+  reasonProblem,
   setAdmitOverride,
   type AdmitOverrideResult,
   type OpsWarRoomSnapshot,
@@ -36,6 +37,16 @@ interface FieldErrors {
 
 const RATE_ERROR = `Tốc độ phải là số nguyên từ 0 đến ${MAX_OVERRIDE_RATE}.`;
 const REASON_ERROR = "Lý do phải dài từ 3 đến 200 ký tự.";
+const REASON_CONTROL_ERROR = "Lý do không được chứa ký tự điều khiển (tab, xuống dòng, ...).";
+const REASON_BIDI_ERROR = "Lý do không được chứa ký tự điều khiển hướng văn bản (bidi).";
+
+/** Câu lỗi nêu rõ nguyên nhân lý do bị từ chối (X2-5). */
+function reasonError(reason: string): string {
+  const p = reasonProblem(reason);
+  if (p === "CONTROL") return REASON_CONTROL_ERROR;
+  if (p === "BIDI") return REASON_BIDI_ERROR;
+  return REASON_ERROR;
+}
 
 function parseRate(raw: string): number | null {
   const t = raw.trim();
@@ -148,7 +159,7 @@ export function OpsControlsPanel({ eventId, snapshot, onApplied }: OpsControlsPa
   function submitOverride() {
     const n = parseRate(rate);
     const r = validReason();
-    const next: FieldErrors = { rate: n === null ? RATE_ERROR : undefined, reason: r === null ? REASON_ERROR : undefined };
+    const next: FieldErrors = { rate: n === null ? RATE_ERROR : undefined, reason: r === null ? reasonError(reason) : undefined };
     setErrors(next);
     if (n === null || r === null) return;
     void run({ kind: "set", rate: n }, r);
@@ -156,14 +167,14 @@ export function OpsControlsPanel({ eventId, snapshot, onApplied }: OpsControlsPa
 
   function confirmPauseNow() {
     const r = validReason();
-    setErrors({ reason: r === null ? REASON_ERROR : undefined });
+    setErrors({ reason: r === null ? reasonError(reason) : undefined });
     if (r === null) return;
     void run({ kind: "pause" }, r);
   }
 
   function submitClear() {
     const r = validReason();
-    setErrors({ reason: r === null ? REASON_ERROR : undefined });
+    setErrors({ reason: r === null ? reasonError(reason) : undefined });
     if (r === null) return;
     void run({ kind: "clear" }, r);
   }
