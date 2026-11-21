@@ -49,7 +49,9 @@ async def guarded_generate(
             kwargs["model"] = model
         result = await client.generate(prompt, **kwargs)
         if result.total_tokens is not None:
-            actual = result.total_tokens
+            # Kep trong [0, phan dat cho]: so am tung hoan du ca mot xo TPM (findings X-6).
+            # Dung nhieu hon phan dat cho thi chi khong hoan (limiter khong tru them sau cap phep).
+            actual = min(max(result.total_tokens, 0), permit.reserved_tokens)
         return result
     except RateLimited:
         # 429: request bi tu choi, khong ton token -> hoan het.

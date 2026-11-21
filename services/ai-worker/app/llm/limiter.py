@@ -100,7 +100,9 @@ class GlobalRateLimiter:
         Vi luon uoc luong thua, buoc nay lay lai duoc dang ke thong luong --
         thuong 20-40% quota TPM trong thuc te.
         """
-        delta = reserved - actual
+        # Hoan toi da dung phan da dat cho: actual am (usage hong) tung cong ca mot xo TPM
+        # vao han muc (findings X-6).
+        delta = min(reserved - actual, reserved)
         if delta <= 0:
             return
         sha = await self._script()
