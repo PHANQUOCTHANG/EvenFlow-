@@ -9,7 +9,7 @@ import pytest
 
 from app.consumers.moderation import ModerationConsumer, make_handler
 from app.domain.moderation import AiVerdict
-from app.llm.client import LlmClient, Generation, RateLimited
+from app.llm.client import Generation, LlmClient, RateLimited
 from app.llm.guarded import PermitDenied, guarded_generate
 from app.llm.limiter import Permit
 from app.mq.protocol import MAX_ATTEMPTS
