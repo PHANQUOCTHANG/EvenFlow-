@@ -19,7 +19,7 @@
 \\?\D:\Documents\Nam4-1\Project1\EvenFlow-ops-warroom\apps\web\node_modules\@next\swc-win32-x64-msvc\next-swc.win32-x64-msvc.node
  ⚠ Attempted to load @next/swc-win32-x64-msvc, but an error occurred: A dynamic link library (DLL) initialization routine failed.
 \\?\D:\Documents\Nam4-1\Project1\EvenFlow-ops-warroom\apps\web\node_modules\@next\swc-win32-x64-msvc\next-swc.win32-x64-msvc.node
- ✓ Compiled successfully in 12.8s
+ ✓ Compiled successfully in 24.9s
    Linting and checking validity of types ...
 
 ./src/components/auth/ForgotPasswordForm.tsx
@@ -76,13 +76,13 @@ Route (app)                                       Size  First Load JS  Revalidat
 ├ ƒ /checkout/[eventId]/result                   16 kB         136 kB
 ├ ○ /events                                    3.73 kB         118 kB          1m      1y
 ├ ● /events/[slug]                             5.97 kB         117 kB
-├ ƒ /ops/events                                  971 B         115 kB
-├ ƒ /ops/events/[eventId]                        136 B         121 kB
+├ ƒ /ops/events                                  971 B         116 kB
+├ ƒ /ops/events/[eventId]                        136 B         125 kB
 ├ ○ /organizer                                   140 B         103 kB
 ├ ○ /organizer/events                            737 B         120 kB
 ├ ƒ /organizer/events/[eventId]/edit           1.75 kB         123 kB
 ├ ƒ /organizer/events/[eventId]/review-status  3.56 kB         123 kB
-├ ƒ /organizer/events/[eventId]/sales          3.91 kB         120 kB
+├ ƒ /organizer/events/[eventId]/sales          7.21 kB         123 kB
 ├ ○ /organizer/events/new                        478 B         122 kB
 ├ ○ /showcase                                  10.1 kB         129 kB
 ├ ○ /unauthorized                              2.42 kB         112 kB
