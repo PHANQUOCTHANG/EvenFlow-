@@ -18,7 +18,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-import os
+import math
 import random
 import re
 from collections.abc import Awaitable, Callable
@@ -29,7 +29,7 @@ from typing import Any
 import anthropic
 
 from app import metrics
-from app.config import DEFAULT_MODEL, resolve_mock_flag
+from app.config import DEFAULT_MODEL, clean_api_key, raw_env, resolve_mock_flag
 from app.domain.moderation import (
     AiVerdict,
     ModerationJob,
@@ -59,6 +59,18 @@ MODERATION_MAX_TOKENS = 512
 
 PARSE_FAIL_REASON = "Không phân tích được phản hồi từ AI, chuyển người duyệt"
 INCOMPLETE_REASON = "AI không đưa ra kết luận, chuyển người duyệt"
+
+# stop_reason duy nhat cho biet cau tra loi tron ven (allowlist, findings X-4). Moi gia tri
+# khac -- max_tokens, model_context_window_exceeded, pause_turn, tool_use, None, gia tri moi
+# cua SDK sau nay -- deu la phan do dang, khong bao gio duoc hien, cache hay chia se.
+COMPLETE_STOP_REASONS = frozenset({"end_turn", "stop_sequence"})
+# Nhan cua ai_llm_incomplete_total giu co dinh: gia tri la cua stop_reason gom ve "other".
+_STOP_LABELS = frozenset({"refusal", "max_tokens"})
+
+# Gioi han phan hoi kiem duyet truoc khi gui callback (findings X-3).
+MAX_MODERATION_REASONS = 10
+MAX_MODERATION_REASON_CHARS = 500
+MAX_MODERATION_AXES = 16
 
 _FENCE = re.compile(r"```[\w-]*[ \t]*\n(.*?)\n?[ \t]*```", re.DOTALL)
 
@@ -133,6 +145,50 @@ def _is_int(value: Any) -> bool:
     return isinstance(value, int) and not isinstance(value, bool)
 
 
+def _unit_number(value: Any) -> float | None:
+    """So thuc that (khong bool, khong chuoi), huu han, trong [0, 1]; khong thi None."""
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return None
+    f = float(value)
+    return f if math.isfinite(f) and 0.0 <= f <= 1.0 else None
+
+
+def parse_moderation(text: str) -> ModerationResult | None:
+    """JSON kiem duyet -> ket qua; bat ky sai lech nao -> None (nguoi goi chuyen nguoi duyet).
+
+    Dong kin (fail closed, findings R-2/X-2/X-3): thieu `score`, sai kieu, NaN/vo cuc hay
+    ngoai [0, 1] KHONG bao gio thanh diem mac dinh -- mot phan hoi rong '{}' tung duoc
+    AUTO_APPROVED. `axes`/`reasons` co the vang (-> rong) nhung neu co thi phai dung kieu,
+    vi event-service tu choi callback sai kieu (400 -> DLQ, su kien ket o PENDING_REVIEW).
+    """
+    try:
+        data = json.loads(_strip_fence(text))
+    except ValueError:
+        return None
+    if not isinstance(data, dict) or "score" not in data:
+        return None
+    score = _unit_number(data["score"])
+    if score is None:
+        return None
+
+    axes_raw = data.get("axes", {})
+    if not isinstance(axes_raw, dict) or len(axes_raw) > MAX_MODERATION_AXES:
+        return None
+    axes: dict[str, float] = {}
+    for name, value in axes_raw.items():
+        v = _unit_number(value)
+        if not isinstance(name, str) or v is None:
+            return None
+        axes[name] = v
+
+    reasons_raw = data.get("reasons", [])
+    if not isinstance(reasons_raw, list) or not all(isinstance(r, str) for r in reasons_raw):
+        return None
+    reasons = [r[:MAX_MODERATION_REASON_CHARS] for r in reasons_raw[:MAX_MODERATION_REASONS]]
+
+    return ModerationResult(score=score, verdict=calculate_verdict(score), axes=axes, reasons=reasons)
+
+
 class LlmClient:
     def __init__(
         self,
@@ -148,9 +204,18 @@ class LlmClient:
         embed_model: str | None = None,
         embed_sdk: Any = None,
     ) -> None:
-        # mock=None: doc env nhu truoc (AI_MOCK, alias GEMINI_MOCK; khong co gi -> mock).
-        self._mock = resolve_mock_flag(os.environ) if mock is None else mock
-        self._api_key = api_key if api_key is not None else os.getenv("ANTHROPIC_API_KEY", "")
+        # Tham so bo trong: doc cung nguon va cung luat voi Settings -- os.environ de len .env
+        # trong thu muc hien tai, AI_MOCK (bat ky nguon nao) thang GEMINI_MOCK (findings X-5).
+        need_env = mock is None or api_key is None or gemini_api_key is None
+        env = {k: v for k, v in raw_env(".env").items() if v is not None} if need_env else {}
+        self._mock = resolve_mock_flag(env) if mock is None else mock
+        if api_key is None:
+            api_key = env.get("ANTHROPIC_API_KEY", "")
+        try:
+            # Bo \n cuoi mot lan, tu choi khoang trang ben trong (findings X-1).
+            self._api_key = clean_api_key("ANTHROPIC_API_KEY", api_key)
+        except ValueError as exc:
+            raise RuntimeError(str(exc)) from None
         if not self._mock and not self._api_key:
             raise RuntimeError("AI_MOCK=0 nhung thieu ANTHROPIC_API_KEY")
         self._sdk = sdk
@@ -163,7 +228,11 @@ class LlmClient:
         self._system = _read_prompt("assistant.v3.md")
         self._system_mod = _read_prompt("moderation.v1.md")
         if gemini_api_key is None:
-            gemini_api_key = os.getenv("GEMINI_API_KEY", "")
+            gemini_api_key = env.get("GEMINI_API_KEY", "")
+        try:
+            gemini_api_key = clean_api_key("GEMINI_API_KEY", gemini_api_key)
+        except ValueError as exc:
+            raise RuntimeError(str(exc)) from None
         # None o che do that khi khong co GEMINI_API_KEY: cache L3 tat (spec D2/AC-13).
         self.embedder: Embedder | None = make_embedder(
             mock=self._mock,
@@ -224,21 +293,12 @@ class LlmClient:
             return ModerationResult(
                 score=0.5, verdict=AiVerdict.NEEDS_HUMAN, axes={}, reasons=[INCOMPLETE_REASON],
             )
-        try:
-            data = json.loads(_strip_fence(gen.text))
-            if not isinstance(data, dict):
-                raise TypeError("phan hoi kiem duyet khong phai object JSON")
-            score = float(data.get("score", 0.0))
-            return ModerationResult(
-                score=score,
-                verdict=calculate_verdict(score),
-                axes=data.get("axes", {}),
-                reasons=data.get("reasons", []),
-            )
-        except (json.JSONDecodeError, ValueError, KeyError, TypeError, AttributeError):
+        result = parse_moderation(gen.text)
+        if result is None:
             return ModerationResult(
                 score=0.5, verdict=AiVerdict.NEEDS_HUMAN, axes={}, reasons=[PARSE_FAIL_REASON],
             )
+        return result
 
     async def _mock_moderation(self, job: ModerationJob) -> ModerationResult:
         await asyncio.sleep(0.05)
@@ -314,11 +374,11 @@ class LlmClient:
         except anthropic.APITimeoutError as exc:
             raise TimeoutError("llm qua thoi gian cho") from exc
 
-        # stop_reason truoc noi dung: refusal / max_tokens la cau tra loi khong dung duoc,
-        # du co text (phan do dang khong bao gio duoc hien, cache hay chia se).
+        # stop_reason truoc noi dung, theo allowlist: chi end_turn / stop_sequence la tron ven.
+        # Con lai la cau tra loi khong dung duoc du co text (khong hien, cache hay chia se).
         stop = getattr(resp, "stop_reason", None)
-        if stop in ("refusal", "max_tokens"):
-            self._incomplete(stop, model_id)
+        if stop not in COMPLETE_STOP_REASONS:
+            self._incomplete(stop if stop in _STOP_LABELS else "other", model_id)
         text = "".join(
             block.text
             for block in (getattr(resp, "content", None) or [])
@@ -330,7 +390,8 @@ class LlmClient:
         usage = getattr(resp, "usage", None)
         inp = getattr(usage, "input_tokens", None)
         out = getattr(usage, "output_tokens", None)
-        total = inp + out if _is_int(inp) and _is_int(out) else None
+        # Am hay khong phai so nguyen = khong biet: None -> guarded khong hoan (findings X-6).
+        total = inp + out if _is_int(inp) and _is_int(out) and inp >= 0 and out >= 0 else None
         return Generation(text=text, total_tokens=total, model=model_id)
 
     def _incomplete(self, reason: str, model_id: str) -> None:

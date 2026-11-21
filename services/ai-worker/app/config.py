@@ -7,12 +7,14 @@ te nhat co the. Tha khong khoi dong duoc con hon.
 from __future__ import annotations
 
 import os
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from pathlib import Path
+from typing import Any
 
 from dotenv import dotenv_values
-from pydantic import AliasChoices, Field, SecretStr, model_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import AliasChoices, Field, SecretStr, field_validator, model_validator
+from pydantic.fields import FieldInfo
+from pydantic_settings import BaseSettings, PydanticBaseSettingsSource, SettingsConfigDict
 
 # Bien cu (truoc khi chuyen sang Anthropic) -> ten moi. Van doc duoc trong mot ban phat hanh
 # (spec C1/C2); dung bien cu thi khoi dong canh bao mot lan (app.llm.wiring.log_startup).
@@ -25,6 +27,69 @@ DEPRECATED_ALIASES: dict[str, str] = {
 
 DEFAULT_MODEL = "claude-haiku-5-5"
 _FALSE = {"0", "false", "f", "no", "n", "off"}
+
+EnvFiles = str | Path | Sequence[str | Path] | None
+
+
+def clean_api_key(name: str, value: str) -> str:
+    """Bo khoang trang bao ngoai (key doc tu file / k8s secret hay co \n cuoi) mot lan.
+
+    Con khoang trang hay ky tu dieu khien / khong phai ASCII nhin thay o giua thi tu choi:
+    SDK dat key vao header HTTP, header loi thi traceback cua httpx in lai nguyen key
+    (findings X-1). Thong bao loi KHONG bao gio chua gia tri.
+    """
+    key = value.strip()
+    if any(not (0x21 <= ord(ch) <= 0x7E) for ch in key):
+        raise ValueError(f"{name} chua khoang trang hoac ky tu khong hop le (gia tri khong duoc in ra)")
+    return key
+
+
+def raw_env(env_file: EnvFiles = ".env") -> dict[str, str | None]:
+    """Bien moi truong tho (khoa viet hoa): file .env (file sau de file truoc), roi os.environ de len.
+
+    Giu nguyen TEN bien da dat -- pydantic-settings thi doi alias ve mot khoa, nen khong
+    biet duoc ten moi hay ten cu dang co hieu luc.
+    """
+    files: list[str | Path]
+    if env_file is None:
+        files = []
+    elif isinstance(env_file, (str, Path)):
+        files = [env_file]
+    else:
+        files = list(env_file)
+    merged: dict[str, str | None] = {}
+    for f in files:
+        if Path(f).is_file():
+            merged.update({k.upper(): v for k, v in dotenv_values(f).items()})
+    merged.update({k.upper(): v for k, v in os.environ.items()})
+    return merged
+
+
+class _AliasPrecedence(PydanticBaseSettingsSource):
+    """Ten moi thang alias cu BAT KE nguon nao (spec C1, findings X-5/R-3).
+
+    Mac dinh pydantic-settings ap thu tu nguon truoc thu tu AliasChoices: GEMINI_MOCK=0
+    trong shell thang AI_MOCK=1 trong .env. Nguon nay dung truoc env/.env, chon ten moi neu
+    no co o bat ky dau, chi lui ve ten cu khi ten moi khong co o dau ca.
+    """
+
+    def __init__(self, settings_cls: type[BaseSettings], env_file: EnvFiles) -> None:
+        super().__init__(settings_cls)
+        self._env_file = env_file
+
+    def get_field_value(self, field: FieldInfo, field_name: str) -> tuple[Any, str, bool]:
+        return None, field_name, False
+
+    def __call__(self) -> dict[str, Any]:
+        env = raw_env(self._env_file)
+        out: dict[str, Any] = {}
+        for old, new in DEPRECATED_ALIASES.items():
+            for name in (new, old):
+                if name in env and env[name] is not None:
+                    # Khoa = ten moi (alias dau tien): de len khoa ma nguon env/.env tra ve.
+                    out[new] = env[name]
+                    break
+        return out
 
 
 def default_topology_file(config_file: Path | None = None) -> Path:
@@ -90,6 +155,29 @@ class Settings(BaseSettings):
     # Rong thi dung internal_api_base (giu hanh vi cu).
     moderation_api_base: str = ""
 
+    @classmethod
+    def settings_customise_sources(
+        cls,
+        settings_cls: type[BaseSettings],
+        init_settings: PydanticBaseSettingsSource,
+        env_settings: PydanticBaseSettingsSource,
+        dotenv_settings: PydanticBaseSettingsSource,
+        file_secret_settings: PydanticBaseSettingsSource,
+    ) -> tuple[PydanticBaseSettingsSource, ...]:
+        env_file = getattr(dotenv_settings, "env_file", None)
+        return (
+            init_settings,
+            _AliasPrecedence(settings_cls, env_file),
+            env_settings,
+            dotenv_settings,
+            file_secret_settings,
+        )
+
+    @field_validator("anthropic_api_key", "gemini_api_key")
+    @classmethod
+    def _key_sach(cls, v: SecretStr, info: Any) -> SecretStr:
+        return SecretStr(clean_api_key(str(info.field_name).upper(), v.get_secret_value()))
+
     @property
     def moderation_base(self) -> str:
         return self.moderation_api_base or self.internal_api_base
@@ -118,11 +206,9 @@ def deprecated_aliases_used(env_file: str | Path | None = ".env") -> list[str]:
     """Ten bien cu dang co hieu luc: co dat (os.environ hoac file .env) ma ten moi thi khong.
 
     Khong phan biet hoa thuong, giong pydantic-settings. env_file=None: chi xem os.environ.
+    Khop voi Settings: ten moi o bat ky nguon nao thi alias khong co hieu luc (_AliasPrecedence).
     """
-    merged: dict[str, str | None] = {}
-    if env_file is not None and Path(env_file).is_file():
-        merged.update({k.upper(): v for k, v in dotenv_values(env_file).items()})
-    merged.update({k.upper(): v for k, v in os.environ.items()})
+    merged = raw_env(env_file)
     return [old for old, new in DEPRECATED_ALIASES.items() if old in merged and new not in merged]
 
 

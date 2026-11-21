@@ -48,7 +48,7 @@ RATE_LIMITED = Counter("ai_llm_429_total", "So lan bi nha cung cap LLM tu choi v
 # Model tra loi khong tron ven (refusal, max_tokens, empty): de chinh AI_THINKING_HEADROOM_TOKENS.
 INCOMPLETE = Counter(
     "ai_llm_incomplete_total",
-    "So lan LLM tra loi khong dung duoc theo ly do (refusal, max_tokens, empty)",
+    "So lan LLM tra loi khong dung duoc theo ly do (refusal, max_tokens, empty, other)",
     ["reason"],
 )
 PERMIT_DENIED = Counter("ai_permit_denied_total", "So lan limiter tu choi cap phep")
