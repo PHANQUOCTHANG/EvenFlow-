@@ -55,7 +55,7 @@ type Store struct {
 	jtWindow  string
 }
 
-// New loads observe.lua on the server (so the first on-sale request does not hit NOSCRIPT).
+// New loads observe.lua on the server (so the first on-sale request does not hit NOSCRIPT) and returns the store.
 func New(ctx context.Context, rdb *redis.Client, cfg antibot.Config) (*Store, error) {
 	if rdb == nil {
 		return nil, errors.New("redisstate: nil client")
@@ -63,6 +63,12 @@ func New(ctx context.Context, rdb *redis.Client, cfg antibot.Config) (*Store, er
 	if err := observeScript.Load(ctx, rdb).Err(); err != nil {
 		return nil, fmt.Errorf("redisstate: load observe.lua: %w", err)
 	}
+	return NewLazy(rdb, cfg), nil
+}
+
+// NewLazy returns a store without loading the script first (used when Redis is down at startup: the first
+// successful call after a NOSCRIPT falls back to EVAL, which caches the script).
+func NewLazy(rdb *redis.Client, cfg antibot.Config) *Store {
 	r := cfg.Rules
 	if r.R4WindowS <= 0 {
 		r = antibot.DefaultRules()
@@ -74,7 +80,7 @@ func New(ctx context.Context, rdb *redis.Client, cfg antibot.Config) (*Store, er
 		share:     strconv.FormatFloat(r.R4NShare, 'g', -1, 64),
 		shareMin:  strconv.Itoa(r.R4NShareMinJoins),
 		jtWindow:  strconv.Itoa(joinTimeWindowMs),
-	}, nil
+	}
 }
 
 func key(ev, suffix string) string { return "ab:{" + ev + "}:" + suffix }
