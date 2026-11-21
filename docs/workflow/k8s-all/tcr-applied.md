@@ -100,3 +100,14 @@ Source: `docs/workflow/antibot-phase1/contracts.md` §7 (rev 3) and `plan-review
   `ANTIBOT_SLOW_LANE_PENALTY`; both overlays' `app-config.env` set `ANTIBOT_MODE=shadow`,
   `ANTIBOT_SLOW_LANE_PENALTY=100000`; local `secrets.dev.env` + a replacement into `eventflow-auth`; staging
   kustomization header lists the key. Staging rollout: create the key in Secret `eventflow-auth` before applying (AC-20).
+
+### antibot-phase1 fix round 1, R-6 (2026-11-22, under TCR N-5 as directed by the coordinator)
+
+- `deploy/k8s/base/waitingroom/deployment.yaml`: the `ANTIBOT_HASH_KEY` secretKeyRef is `optional: true`
+  (findings-review.json R-6: a missing key must not stop the waiting room; `ANTIBOT_MODE=off` stays a rollback).
+- `check_policy.py`: AC-18 skips its optional-ref failure only for `OPTIONAL_SECRET_OK = {("waitingroom",
+  "ANTIBOT_HASH_KEY")}`. This narrows an existing check for one ref (not an addition); flagged for human
+  confirmation in the antibot-phase1 fix-round report. Contract §8 and `rules.md` say so.
+- `gen_fixtures.py`: the good waitingroom env marks the ref optional; 2 new mutants
+  (`AC-18--waitingroom-queue-token-optional`, `AC-18--staging-waitingroom-queue-token-optional`). Regenerated;
+  `--check` clean; now 188 bad fixtures; `test_policy.sh` unchanged.

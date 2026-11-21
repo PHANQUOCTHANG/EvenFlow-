@@ -107,6 +107,10 @@ STAGING_PROVIDER_SECRETS = {k: ("eventflow-payment", k) for k in _VNPAY_MOMO}
 # ops audit log (EVF-60). Allowed, not required: without it the app keeps serving and only the ops override
 # fails closed. Any other source (e.g. DIRECT) is still an unexpected secret env.
 EXTRA_SECRET_ENV_BOTH = {"waitingroom": {"DATABASE_URL": _DB_POOLED}}
+# antibot-phase1 fix round 1 (R-6, under TCR N-5): the one secretKeyRef that may be optional. A missing anti-bot
+# key must not stop the waiting room (ANTIBOT_MODE=off is the rollback); the app itself refuses to start without
+# it when APP_ENV=production and the mode is not off (AC-16). Every other optional secretKeyRef is still AC-18.
+OPTIONAL_SECRET_OK = {("waitingroom", "ANTIBOT_HASH_KEY")}
 
 LOCAL_SECRETS = {"eventflow-db", "eventflow-mq", "eventflow-auth", "eventflow-qr", "eventflow-identity",
                  "eventflow-payment", "eventflow-ai", "eventflow-dev-infra"}
@@ -900,7 +904,7 @@ def check_ac18(ctx):
         for c in w.all_containers:
             for e in env_items(c):
                 ref = d(d(e.get("valueFrom")).get("secretKeyRef"))
-                if ref.get("optional") is True:
+                if ref.get("optional") is True and (w.process, e.get("name")) not in OPTIONAL_SECRET_OK:
                     ctx.wfail("AC-18", w, "env %s secretKeyRef is optional" % e.get("name"))
             for ef in map(d, lst(c.get("envFrom"))):
                 if "secretRef" in ef:

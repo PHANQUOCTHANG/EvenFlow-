@@ -225,7 +225,10 @@ K8S_SCHEMA_VERSION=1.32.0
 
 ## 8. Secret keys per process and overlay (AC-18; replaces the spec E3 table)
 
-Format: env name ← `<Secret base name>/<key>`. No ref is optional, in either overlay.
+Format: env name ← `<Secret base name>/<key>`. No ref is optional, in either overlay, with one exception
+(antibot-phase1 fix round 1, R-6, under TCR N-5): waitingroom `ANTIBOT_HASH_KEY` is `optional: true`, so a missing
+anti-bot key never stops the waiting room; the app refuses to start without it when `APP_ENV=production` and
+`ANTIBOT_MODE` is not off (AC-16).
 
 | Process | Both overlays | local only | staging only |
 |---|---|---|---|
