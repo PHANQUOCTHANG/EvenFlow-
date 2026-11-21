@@ -138,7 +138,7 @@ Commit and push after each step.
   docker compose -f deploy/compose/docker-compose.yml --env-file "$NEW/.env.example" config >/dev/null && echo compose-ok
   cd services/ai-worker && uv sync --locked
   set -a; . "$NEW/.env.example"; set +a
-  uv run python -c "from app.config import Settings; from app.gemini.client import GeminiClient; s=Settings(_env_file=None); c=GeminiClient(); print(s.gemini_mock, c.mock)"
+  uv run python -c "from app.config import Settings; from app.gemini.client import GeminiClient; s=Settings(_env_file=None); c=GeminiClient(); print(s.gemini_mock, c._mock)"
   cd "$NEW" && git worktree remove ../evf-rollback
   ```
   Expect `compose-ok` and `True True` (mock mode, no exception). Record the output in evidence.
