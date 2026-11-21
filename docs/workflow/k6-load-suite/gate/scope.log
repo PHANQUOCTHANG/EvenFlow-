@@ -1,6 +1,17 @@
 .gitignore
 Makefile
+docs/workflow/k6-load-suite/findings-review.json
 docs/workflow/k6-load-suite/full-gate.sh
+docs/workflow/k6-load-suite/gate-report.json
+docs/workflow/k6-load-suite/gate/bash-syntax.log
+docs/workflow/k6-load-suite/gate/k6-inspect.log
+docs/workflow/k6-load-suite/gate/load-smoke.log
+docs/workflow/k6-load-suite/gate/make-dry-run.log
+docs/workflow/k6-load-suite/gate/node-unit.log
+docs/workflow/k6-load-suite/gate/scope.log
+docs/workflow/k6-load-suite/gate/secrets.log
+docs/workflow/k6-load-suite/gate/shellcheck.log
+docs/workflow/k6-load-suite/gate/tamper.log
 docs/workflow/k6-load-suite/gate_secret_scan.py
 docs/workflow/k6-load-suite/plan.md
 docs/workflow/k6-load-suite/red-check.md
@@ -19,6 +30,8 @@ tests/load/lib/main-wiring.test.mjs
 tests/load/lib/metrics.js
 tests/load/lib/profiles.js
 tests/load/lib/profiles.test.mjs
+tests/load/lib/review-fixes.test.mjs
+tests/load/lib/review-wiring.test.mjs
 tests/load/lib/rng.js
 tests/load/lib/signals.js
 tests/load/lib/signals.test.mjs

@@ -1,9 +1,9 @@
 {
   "task": "k6-load-suite",
-  "commit_sha": "22a151a5b491bc7f1fab4f213d199db41b01eb0c",
+  "commit_sha": "e3bd2c1bda39bed039a3e09f85834c55d21eb093",
   "base": "918667c",
   "tests_frozen": "9f69937",
-  "generated_at": "2026-11-21T17:29:04Z",
+  "generated_at": "2026-11-21T17:38:14Z",
   "exit_codes": "0 pass, 77 NOT RUN, other fail",
   "results": {
     "node-unit": {"exit": 0, "log": "gate/node-unit.log"},

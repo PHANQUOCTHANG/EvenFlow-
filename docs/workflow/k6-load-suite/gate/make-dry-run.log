@@ -1,6 +1,6 @@
 == make -n load
 mkdir -p tests/load/results
-k6 run -e PROFILE=smoke                     tests/load/main.js
+k6 run -e PROFILE=smoke                       tests/load/main.js
 == make -n load-seed
 bash tests/load/seed-load.sh seed
 == make -n load-verify
@@ -9,7 +9,7 @@ bash tests/load/seed-load.sh verify
 bash tests/load/seed-load.sh seed
 /usr/bin/make --no-print-directory load PROFILE=smoke
 mkdir -p tests/load/results
-k6 run -e PROFILE=smoke                     tests/load/main.js
+k6 run -e PROFILE=smoke                       tests/load/main.js
 == make -n test-load-lib
 node --test tests/load/lib/*.test.mjs
 == make -n load PROFILE=spike JOIN_TARGET=5000
