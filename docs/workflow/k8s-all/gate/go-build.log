@@ -1,0 +1,8 @@
+== go build ./... in services/antibot
+== go build ./... in services/event
+== go build ./... in services/gateway
+== go build ./... in services/identity
+== go build ./... in services/notification
+== go build ./... in services/payment
+== go build ./... in services/ticketing
+== go build ./... in services/waitingroom

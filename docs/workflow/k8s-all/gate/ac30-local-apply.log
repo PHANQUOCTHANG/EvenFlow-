@@ -1,0 +1,1 @@
+NOT RUN: AC-30: apply overlays/local len Docker Desktop/kind (migrate Job, readiness, PDB, NetworkPolicy) can cluster; xem merge-preconditions.md MP-1

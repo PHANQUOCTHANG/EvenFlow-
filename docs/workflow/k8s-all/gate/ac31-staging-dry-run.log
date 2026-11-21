@@ -1,0 +1,1 @@
+NOT RUN: AC-31: staging --dry-run=server + build image/uid can cluster va registry; xem merge-preconditions.md MP-1
