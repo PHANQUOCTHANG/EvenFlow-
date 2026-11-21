@@ -11,8 +11,9 @@ OUT=$WF/gate
 BASE=918667c            # merge-base with origin/develop (tier.json base_commit)
 TESTS_FROZEN=36aab08    # red tests frozen (step 2a)
 TCR_COMMIT=f3ce1a6      # human-approved TCR-1..TCR-4 applied to frozen files
-# the only frozen files TCR_COMMIT may change (test-change-request.md TCR-1..TCR-4)
-TCR_FILES="apps/web/src/lib/antibot-signals.test.ts libs/go/antibot/corpus/corpus.go libs/go/antibot/corpus_test.go libs/go/antibot/redisstate/store_integration_test.go services/waitingroom/test/antibot/antibot_bot_test.go"
+TCR_COMMITS="f3ce1a6 82252a4" # TCR-1..TCR-4, then TCR-5 (formatting only, approved)
+# the only frozen files the TCR commits may change (test-change-request.md TCR-1..TCR-5)
+TCR_FILES="apps/web/src/lib/antibot-signals.test.ts libs/go/antibot/corpus/corpus.go libs/go/antibot/corpus_test.go libs/go/antibot/redisstate/store_integration_test.go services/waitingroom/test/antibot/antibot_bot_test.go services/waitingroom/internal/adapter/redis/lane_integration_test.go"
 GOLANGCI_VERSION=2.12.2 # .github/workflows/ci.yml
 DEV_HASH_KEY='devAntibotHashKeyLocalClusterOnlyNeverProdA='
 mkdir -p "$OUT"
@@ -20,7 +21,7 @@ export PATH="/c/Program Files/Go/bin:$PATH" GOTOOLCHAIN=local
 SHA=$(git rev-parse HEAD)
 STEPS="go-libs go-waitingroom integration web-npm-ci web-lint web-typecheck web-test-coverage web-build web-audit e2e k8s promtool corpus fuzz tamper secrets deps govulncheck"
 TMP=$(mktemp -d)
-export ROOT TMP BASE TESTS_FROZEN TCR_COMMIT TCR_FILES GOLANGCI_VERSION DEV_HASH_KEY WF OUT
+export ROOT TMP BASE TESTS_FROZEN TCR_COMMIT TCR_COMMITS TCR_FILES GOLANGCI_VERSION DEV_HASH_KEY WF OUT
 declare -A R
 
 run() { # run <name> <cmd...>
@@ -172,13 +173,15 @@ frozen=$(git diff --name-only --diff-filter=AM $TESTS_FROZEN~1 $TESTS_FROZEN -- 
 for f in $frozen; do
   if git diff --quiet $TESTS_FROZEN HEAD -- "$f"; then echo "ok: frozen unchanged: $f"; continue; fi
   case " $TCR_FILES " in
-    *" $f "*) by=$(git log --format=%H $TESTS_FROZEN..HEAD -- "$f" | tr "\n" " ")
-              if [ "$by" = "$(git rev-parse $TCR_COMMIT) " ] && git diff --quiet $TCR_COMMIT HEAD -- "$f"; then echo "ok: TCR-approved change only by $TCR_COMMIT: $f ($(git diff --numstat $TESTS_FROZEN HEAD -- "$f" | awk "{print \$1\"+/\"\$2\"-\"}"))"
-              else echo "FAIL: TCR file changed by commits other than $TCR_COMMIT: $f ($by)"; rc=1; fi;;
+    *" $f "*) allowed=" $(for c in $TCR_COMMITS; do git rev-parse $c; done | tr "\n" " ")"
+              by=$(git log --format=%H $TESTS_FROZEN..HEAD -- "$f" | tr "\n" " "); okc=1; last=""
+              for c in $by; do case "$allowed" in *" $c "*) [ -z "$last" ] && last=$c ;; *) okc=0 ;; esac; done
+              if [ $okc = 1 ] && [ -n "$last" ] && git diff --quiet $last HEAD -- "$f"; then echo "ok: TCR-approved change only by TCR commits ($TCR_COMMITS): $f ($(git diff --numstat $TESTS_FROZEN HEAD -- "$f" | awk "{print \$1\"+/\"\$2\"-\"}"))"
+              else echo "FAIL: TCR file changed by commits other than $TCR_COMMITS: $f ($by)"; rc=1; fi;;
     *) echo "FAIL: frozen file changed: $f"; rc=1;;
   esac
 done
-for f in $TCR_FILES; do git diff --quiet $TESTS_FROZEN $TCR_COMMIT -- "$f" && echo "note: TCR file not changed by $TCR_COMMIT: $f"; done
+for f in $TCR_FILES; do git diff --quiet $TESTS_FROZEN HEAD -- "$f" && echo "note: TCR file not changed: $f"; done
 # 2. no test that existed at BASE changed or was removed
 pat="(_test\.go|\.test\.tsx?|\.spec\.ts|_test\.ya?ml|test_policy\.sh|/test_[^/]*\.py)$"
 for f in $(git ls-tree -r --name-only $BASE | grep -E "$pat"); do
