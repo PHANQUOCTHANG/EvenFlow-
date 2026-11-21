@@ -18,6 +18,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   formatClock,
   formatCount,
+  formatDateTimeVn,
   formatDecimal,
   formatTimeVn,
   formatVnd,
@@ -403,5 +404,21 @@ describe("mutant sống M24, M28 (C-6)", () => {
   it("formatTimeVn('xZ') — đúng đuôi Z nhưng ngày hỏng — trả '--:--:--'", () => {
     expect(formatTimeVn("xZ")).toBe("--:--:--");
     expect(formatTimeVn("2026-13-45T99:00:00Z")).toBe("--:--:--");
+  });
+});
+
+describe("formatDateTimeVn — dd/MM/yyyy HH:mm theo gio Viet Nam (EV-121)", () => {
+  it("doi UTC sang UTC+7, qua ngay dung", () => {
+    expect(formatDateTimeVn("2026-10-20T17:30:00Z")).toBe("21/10/2026 00:30");
+  });
+
+  it("nhan offset khac", () => {
+    expect(formatDateTimeVn("2026-10-20T08:00:00+07:00")).toBe("20/10/2026 08:00");
+  });
+
+  it("thieu mui gio hoac hong -> ky hieu trong, khong doan", () => {
+    expect(formatDateTimeVn("2026-10-20T08:00:00")).toBe("--/--/---- --:--");
+    expect(formatDateTimeVn("")).toBe("--/--/---- --:--");
+    expect(formatDateTimeVn("rac")).toBe("--/--/---- --:--");
   });
 });

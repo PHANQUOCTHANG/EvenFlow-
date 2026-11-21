@@ -18,5 +18,9 @@ var (
 	ErrUnauthorizedOrganizer   = errors.New("unauthorized organizer for this event")
 	ErrModReviewNotFound       = errors.New("moderation review not found")
 	ErrRejectReasonRequired    = errors.New("reject reason is required")
-	ErrInvalidAiScore          = errors.New("ai score must be between 0.0 and 1.0")
+	// BR-E5 / EV-121: lat nguoc quyet dinh AI (duyet su kien AI da tu choi) bat buoc ly do.
+	ErrOverrideReasonRequired = errors.New("override reason is required")
+	// EV-121: ho so da co quyet dinh cua Moderator khac (hoac trang thai da doi) -> 409.
+	ErrAlreadyDecided = errors.New("moderation already decided")
+	ErrInvalidAiScore = errors.New("ai score must be between 0.0 and 1.0")
 )

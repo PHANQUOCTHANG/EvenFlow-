@@ -247,10 +247,11 @@ func (r *fakeModRepo) GetLatestByEventID(ctx context.Context, eventID uuid.UUID)
 	return rev, nil
 }
 
-func (r *fakeModRepo) ListNeedsHuman(ctx context.Context) ([]*domain.ModerationReview, error) {
+func (r *fakeModRepo) ListPendingHuman(ctx context.Context) ([]*domain.ModerationReview, error) {
 	var list []*domain.ModerationReview
-	for _, rev := range r.reviews {
-		if rev.AiVerdict == domain.VerdictNeedsHuman && rev.HumanVerdict == nil {
+	for _, rev := range r.byEvent {
+		pending := rev.AiVerdict == domain.VerdictNeedsHuman || rev.AiVerdict == domain.VerdictAutoRejected
+		if pending && rev.HumanVerdict == nil {
 			list = append(list, rev)
 		}
 	}
@@ -304,10 +305,12 @@ func setupModerationTestServer() (http.Handler, *fakeRepo, *fakeModRepo, *fakeAu
 
 	aiVerdictUC := app.NewHandleAiVerdictUseCase(repo, modRepo, auditRepo)
 	modQueueUC := app.NewListModerationQueueUseCase(repo, modRepo)
-	modActionUC := app.NewModeratorActionUseCase(repo, modRepo, auditRepo)
+	lastDecisionStore = &fakeDecisionStore{repo: repo, mod: modRepo, audit: auditRepo}
+	modActionUC := app.NewModeratorActionUseCase(repo, modRepo, lastDecisionStore)
 
 	h := adapterHTTP.NewEventHandler(createUC, updateUC, tiersUC, transitionUC, getUC).
 		WithModeration(aiVerdictUC, modQueueUC, modActionUC).
+		WithModerationDetail(app.NewGetModerationDetailUseCase(repo, modRepo, auditRepo)).
 		WithAudit(auditRepo)
 
 	return adapterHTTP.NewRouter(h), repo, modRepo, auditRepo
@@ -354,7 +357,12 @@ func TestHTTP_ModerationQueue(t *testing.T) {
 		uuid.New(), "indie-gig", "Indie Gig", "desc", "bar",
 		now.Add(24*time.Hour), now.Add(2*time.Hour), nil,
 	)
-	_ = evt.SubmitForReview()
+	// Can hang ve de nop duyet hop le (BR-E1); thieu thi su kien o DRAFT va review khong con hieu luc.
+	tier, _ := domain.NewTicketTier(evt.ID, "GA", 100000, 10)
+	_ = evt.AddTier(*tier)
+	if err := evt.SubmitForReview(); err != nil {
+		t.Fatalf("submit: %v", err)
+	}
 	_ = repo.Create(context.Background(), evt)
 
 	_ = modRepo.Create(context.Background(), &domain.ModerationReview{

@@ -19,6 +19,7 @@ import { describe, expect, it } from "vitest";
 import { translate } from "@/lib/i18n/messages";
 
 import {
+  MODERATOR_NAV,
   OPS_NAV,
   ORGANIZER_NAV,
   PUBLIC_NAV,
@@ -31,6 +32,7 @@ const CONFIGS: Array<[string, NavItem[]]> = [
   ["PUBLIC_NAV", PUBLIC_NAV],
   ["ORGANIZER_NAV", ORGANIZER_NAV],
   ["OPS_NAV", OPS_NAV],
+  ["MODERATOR_NAV", MODERATOR_NAV],
 ];
 
 describe("nav-config — hinh dang danh sach nav", () => {
@@ -267,5 +269,12 @@ describe("PUBLIC_NAV — labelKey (EV-188 AC-8)", () => {
       expect(english.trim().length).toBeGreaterThan(0);
       expect(english).not.toBe(item.label);
     }
+  });
+});
+
+describe("MODERATOR_NAV (EV-121)", () => {
+  it("hang doi tham dinh da co route; khieu nai anti-bot chua co (EV-177) nen ready: false", () => {
+    expect(MODERATOR_NAV.find((i) => i.href === "/moderator/reviews")?.ready).toBe(true);
+    expect(MODERATOR_NAV.find((i) => i.href === "/moderator/appeals")?.ready).toBe(false);
   });
 });

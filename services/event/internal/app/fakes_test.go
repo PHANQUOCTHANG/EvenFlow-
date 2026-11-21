@@ -16,12 +16,14 @@ type fakeEventRepo struct {
 	getErr    error
 	updateErr error
 	outbox    []port.OutboxMessage
+	statuses  map[uuid.UUID]domain.EventStatus
 }
 
 func newFakeRepo() *fakeEventRepo {
 	return &fakeEventRepo{
-		events: make(map[uuid.UUID]*domain.Event),
-		tiers:  make(map[uuid.UUID][]domain.TicketTier),
+		events:   make(map[uuid.UUID]*domain.Event),
+		tiers:    make(map[uuid.UUID][]domain.TicketTier),
+		statuses: make(map[uuid.UUID]domain.EventStatus),
 	}
 }
 
@@ -30,6 +32,7 @@ func (r *fakeEventRepo) Create(ctx context.Context, event *domain.Event) error {
 		return r.createErr
 	}
 	r.events[event.ID] = event
+	r.statuses[event.ID] = event.Status
 	return nil
 }
 
@@ -42,6 +45,12 @@ func (r *fakeEventRepo) GetByID(ctx context.Context, id uuid.UUID) (*domain.Even
 		return nil, domain.ErrEventNotFound
 	}
 	return evt, nil
+}
+
+// committed tra trang thai da "commit" qua Create/Update/ApplyDecision. Repo gia luu con tro nen
+// use case sua su kien trong bo nho cung lam doi `events`; trang thai that nam o day.
+func (r *fakeEventRepo) committed(id uuid.UUID) domain.EventStatus {
+	return r.statuses[id]
 }
 
 func (r *fakeEventRepo) GetBySlug(ctx context.Context, slug string) (*domain.Event, error) {
@@ -71,6 +80,7 @@ func (r *fakeEventRepo) Update(ctx context.Context, event *domain.Event) error {
 		return r.updateErr
 	}
 	r.events[event.ID] = event
+	r.statuses[event.ID] = event.Status
 	return nil
 }
 
@@ -80,6 +90,7 @@ func (r *fakeEventRepo) UpdateWithOutbox(ctx context.Context, event *domain.Even
 		return r.updateErr
 	}
 	r.events[event.ID] = event
+	r.statuses[event.ID] = event.Status
 	r.outbox = append(r.outbox, msgs...)
 	return nil
 }
@@ -135,10 +146,12 @@ func (r *fakeModerationRepo) GetLatestByEventID(ctx context.Context, eventID uui
 	return rev, nil
 }
 
-func (r *fakeModerationRepo) ListNeedsHuman(ctx context.Context) ([]*domain.ModerationReview, error) {
+// ListPendingHuman: review MOI NHAT cua moi su kien, AI NEEDS_HUMAN hoac AUTO_REJECTED, chua co quyet dinh nguoi.
+func (r *fakeModerationRepo) ListPendingHuman(ctx context.Context) ([]*domain.ModerationReview, error) {
 	var list []*domain.ModerationReview
-	for _, rev := range r.reviews {
-		if rev.AiVerdict == domain.VerdictNeedsHuman && rev.HumanVerdict == nil {
+	for _, rev := range r.byEvent {
+		pending := rev.AiVerdict == domain.VerdictNeedsHuman || rev.AiVerdict == domain.VerdictAutoRejected
+		if pending && rev.HumanVerdict == nil {
 			list = append(list, rev)
 		}
 	}
@@ -178,4 +191,39 @@ func (r *fakeAuditRepo) ListBySubject(ctx context.Context, subject string) ([]*d
 		}
 	}
 	return list, nil
+}
+
+// fakeDecisionStore mo phong MOT transaction: kiem dieu kien truoc, loi thi khong ghi gi.
+type fakeDecisionStore struct {
+	events *fakeEventRepo
+	mod    *fakeModerationRepo
+	audit  *fakeAuditRepo
+	err    error
+	calls  []port.ModerationDecision
+}
+
+func newFakeDecisionStore(e *fakeEventRepo, m *fakeModerationRepo, a *fakeAuditRepo) *fakeDecisionStore {
+	return &fakeDecisionStore{events: e, mod: m, audit: a}
+}
+
+func (s *fakeDecisionStore) ApplyDecision(ctx context.Context, d port.ModerationDecision) error {
+	s.calls = append(s.calls, d)
+	if s.err != nil {
+		return s.err
+	}
+	if stored, ok := s.events.statuses[d.Event.ID]; ok && stored != d.PrevStatus {
+		return domain.ErrAlreadyDecided
+	}
+	if d.ReviewID != nil {
+		rev, ok := s.mod.reviews[*d.ReviewID]
+		if !ok {
+			return domain.ErrModReviewNotFound
+		}
+		verdict, note, at, human := d.Verdict, d.Note, d.DecidedAt, d.HumanID
+		rev.HumanVerdict, rev.HumanNote, rev.DecidedAt, rev.HumanID = &verdict, &note, &at, &human
+	}
+	s.events.events[d.Event.ID] = d.Event
+	s.events.statuses[d.Event.ID] = d.Event.Status
+	s.audit.logs = append(s.audit.logs, d.Audit)
+	return nil
 }

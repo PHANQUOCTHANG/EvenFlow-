@@ -3,6 +3,7 @@ package http
 import (
 	"time"
 
+	"github.com/eventflow/eventflow/services/event/internal/app"
 	"github.com/eventflow/eventflow/services/event/internal/domain"
 	"github.com/google/uuid"
 )
@@ -107,4 +108,23 @@ func ToEventResponse(e *domain.Event) EventResponse {
 		UpdatedAt:      e.UpdatedAt,
 		Tiers:          e.Tiers,
 	}
+}
+
+// Loai loi RFC 7807 cua kiem duyet (EV-121).
+const (
+	ProblemOverrideReasonRequired = "/problems/override-reason-required"
+	ProblemAlreadyDecided         = "/problems/already-decided"
+)
+
+// ModerationDetailResponse la ho so tham dinh (EV-121). `event` la noi dung GOC cua BTC; `review`,
+// `ai_axes` la phan tich AI -- UI phai hien hai phan tach biet.
+type ModerationDetailResponse struct {
+	Event  EventResponse            `json:"event"`
+	Review *domain.ModerationReview `json:"review"`
+	AiAxes map[string]float64       `json:"ai_axes"`
+	Audit  []*domain.AuditLog       `json:"audit"`
+}
+
+func ToModerationDetailResponse(d *app.ModerationDetail) ModerationDetailResponse {
+	return ModerationDetailResponse{Event: ToEventResponse(d.Event), Review: d.Review, AiAxes: d.AiAxes, Audit: d.Audit}
 }
