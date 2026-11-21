@@ -43,9 +43,9 @@ groups:
         labels: { severity: warning }
 
       # Limiter dang lam dung viec thi con so nay phai bang 0. Khac 0 nghia la
-      # co duong goi Gemini nao do di vong qua limiter.
-      - alert: GeminiRateLimited
-        expr: increase(ai_gemini_429_total[5m]) > 0
+      # co duong goi LLM nao do di vong qua limiter.
+      - alert: LlmRateLimited
+        expr: increase(ai_llm_429_total[5m]) > 0
         for: 0m
         labels: { severity: warning }
 
@@ -58,7 +58,7 @@ groups:
         annotations:
           summary: "ai.dlq dang co {{ $value }} message chua ai xu ly"
 
-      # Hang loat job vao DLQ: Gemini/event service hong dien rong hoac mot ban deploy loi.
+      # Hang loat job vao DLQ: LLM/event service hong dien rong hoac mot ban deploy loi.
       - alert: AiDeadLetterSpike
         expr: sum(rate(ai_dead_lettered_total[5m])) * 60 > 10
         for: 5m
