@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 
-import { Alert } from "@/components/ui";
+import { Alert, Button } from "@/components/ui";
+import { CancelHoldDialog } from "@/components/checkout/cancel-hold-dialog";
 import { OrderSummary, type OrderSummaryItem } from "@/components/checkout/order-summary";
 import {
   TicketTierCard,
@@ -13,6 +14,7 @@ import { useHoldTimer } from "@/hooks/use-hold-timer";
 import { useServerTimeSync } from "@/hooks/use-server-time-sync";
 import { useT } from "@/components/i18n/locale-provider";
 import { cn } from "@/lib/cn";
+import type { HoldClientError } from "@/lib/hold-client";
 import { clearQueueToken } from "@/lib/queue-token";
 import type { EventDetailSnapshot } from "@/lib/event-service";
 
@@ -73,6 +75,8 @@ export function CheckoutView({
     error,
     createHold,
     resetHold,
+    cancelActiveHold,
+    cancelling,
   } = useHoldTimer({
     eventId: event.id,
     queueToken: initialQueueToken,
@@ -119,10 +123,51 @@ export function CheckoutView({
     }
   };
 
+  // AC-11: "Huy giu ve" chi mo hop thoai xac nhan; chi nut xac nhan moi gui DELETE.
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [cancelError, setCancelError] = useState<HoldClientError | null>(null);
+  const cancelTriggerRef = useRef<HTMLButtonElement>(null);
+  const primaryRef = useRef<HTMLButtonElement>(null);
+  const holdActive = holdState === "active" && hold !== null;
+
+  // Hold roi trang thai active (het han, da huy) -> dong hop thoai, bo loi huy cu.
+  useEffect(() => {
+    if (!holdActive) {
+      setConfirmOpen(false);
+      setCancelError(null);
+    }
+  }, [holdActive]);
+
+  // Hop thoai vua dong -> tra focus ve nut kich hoat; nut do da bi go (idle/expired) -> nut chinh (R2-3).
+  const wasOpenRef = useRef(false);
+  useEffect(() => {
+    if (confirmOpen) {
+      wasOpenRef.current = true;
+      return;
+    }
+    if (!wasOpenRef.current) return;
+    wasOpenRef.current = false;
+    const trigger = cancelTriggerRef.current;
+    if (trigger && trigger.isConnected) trigger.focus();
+    else primaryRef.current?.focus();
+  }, [confirmOpen]);
+
+  const handleConfirmCancel = async () => {
+    setCancelError(null);
+    const outcome = await cancelActiveHold();
+    if (outcome.status === "ignored") return;
+    if (outcome.status === "failed") setCancelError(outcome.error);
+    setConfirmOpen(false);
+  };
+
+  // Loi huy chi co nghia khi hold van dang active.
+  const visibleCancelError = holdActive ? cancelError : null;
+  const isCancelAuthRequired = visibleCancelError?.type === "AUTH_REQUIRED";
+
   const isAdmittedError = error?.type === "NOT_ADMITTED";
   // Queue token het han/sai (AC-10): bo token cu de phong cho cap lai, roi dua nguoi dung ve phong cho.
   const isTokenInvalid = error?.type === "QUEUE_TOKEN_INVALID";
-  const isAuthRequired = error?.type === "AUTH_REQUIRED";
+  const isAuthRequired = error?.type === "AUTH_REQUIRED" || isCancelAuthRequired;
   const limitMessage =
     error?.type === "PER_IDENTITY_LIMIT"
       ? t("checkout.perIdentityLimit")
@@ -160,6 +205,12 @@ export function CheckoutView({
           >
             {t("checkout.signInAction")}
           </Link>
+        </Alert>
+      ) : null}
+
+      {visibleCancelError && !isCancelAuthRequired ? (
+        <Alert variant="error" className="mb-md">
+          {t("checkout.cancelHoldFailed")}
         </Alert>
       ) : null}
 
@@ -232,7 +283,7 @@ export function CheckoutView({
                   maxSelectable={maxSelectablePerOrder}
                   quantity={isSelected ? activeQuantity : 0}
                   selected={isSelected}
-                  disabled={holdState === "creating" || (holdState === "active" && !isSelected)}
+                  disabled={holdState === "creating" || cancelling || (holdState === "active" && !isSelected)}
                   hasActiveHoldElsewhere={hasActiveHoldElsewhere}
                   onQuantityChange={(nextQty) => {
                     if (holdState === "active") return; // Khoa sua so luong khi da active hold
@@ -253,7 +304,30 @@ export function CheckoutView({
             holdExpiresAt={hold?.expiresAt}
             offsetMs={offsetMs}
             onPrimaryAction={handlePrimaryAction}
+            primaryDisabled={cancelling && holdState === "active"}
+            primaryRef={primaryRef}
           />
+          {holdActive ? (
+            <Button
+              ref={cancelTriggerRef}
+              variant="secondary"
+              className="mt-sm w-full"
+              disabled={cancelling}
+              onClick={() => {
+                setCancelError(null);
+                setConfirmOpen(true);
+              }}
+            >
+              {t("checkout.cancelHold")}
+            </Button>
+          ) : null}
+          {confirmOpen && holdActive ? (
+            <CancelHoldDialog
+              busy={cancelling}
+              onConfirm={() => void handleConfirmCancel()}
+              onDismiss={() => setConfirmOpen(false)}
+            />
+          ) : null}
         </aside>
       </div>
     </div>

@@ -3,10 +3,13 @@ package config
 
 import (
 	"fmt"
+	"net/netip"
 	"net/url"
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/eventflow/eventflow/services/gateway/internal/clientip"
 )
 
 // DevJWTSecret trung gia tri mac dinh cua identity de local chay duoc khong can .env.
@@ -27,6 +30,9 @@ type Config struct {
 	AllowedOrigins []string
 	Rates          map[string]Rate
 	MaxBodyBytes   int64
+	// TrustedProxies: chi tin X-Forwarded-For khi ket noi truc tiep den tu cac dai nay
+	// (TRUSTED_PROXY_CIDRS). Rong = khong bao gio tin.
+	TrustedProxies []netip.Prefix
 }
 
 // Ten upstream dung trong bang route.
@@ -61,8 +67,8 @@ var rateDefaults = map[string]Rate{
 	RateDefault:   {PerSecond: 10, Burst: 30},
 }
 
-// Load doc cau hinh. Loi khi URL upstream hong, rate sai cu phap, hoac production ma thieu
-// JWT_SECRET.
+// Load doc cau hinh. Loi khi URL upstream hong, rate sai cu phap, TRUSTED_PROXY_CIDRS hong,
+// hoac production ma thieu JWT_SECRET.
 func Load() (*Config, error) {
 	c := &Config{
 		HTTPAddr:     getenv("HTTP_ADDR", ":8080"),
@@ -101,6 +107,12 @@ func Load() (*Config, error) {
 		}
 		c.Rates[class] = r
 	}
+
+	trusted, err := clientip.ParseTrusted(os.Getenv("TRUSTED_PROXY_CIDRS"))
+	if err != nil {
+		return nil, fmt.Errorf("TRUSTED_PROXY_CIDRS: %w", err)
+	}
+	c.TrustedProxies = trusted
 	return c, nil
 }
 

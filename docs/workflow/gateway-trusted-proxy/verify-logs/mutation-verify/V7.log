@@ -1,0 +1,27 @@
+# V7: XFF override applied even when not fromXFF
+diff --git a/services/gateway/internal/proxy/gateway.go b/services/gateway/internal/proxy/gateway.go
+index 8dad2f8..e2350cb 100644
+--- a/services/gateway/internal/proxy/gateway.go
++++ b/services/gateway/internal/proxy/gateway.go
+@@ -150,7 +150,7 @@ func (g *Gateway) routeHandler(rt Route) (http.Handler, error) {
+ 			httpx.WriteProblemType(w, http.StatusRequestEntityTooLarge, ProblemTooLarge, "noi dung request qua lon")
+ 			return
+ 		}
+-		if fromXFF {
++		if true || fromXFF {
+ 			// Rewrite doc lai IP nay de gui upstream dung client that, bo moi phan tu khac.
+ 			r = r.WithContext(context.WithValue(r.Context(), forwardedClientKey{}, ip))
+ 		}
+?   	github.com/eventflow/eventflow/services/gateway/cmd/server	[no test files]
+ok  	github.com/eventflow/eventflow/services/gateway/internal/clientip	1.029s
+ok  	github.com/eventflow/eventflow/services/gateway/internal/config	0.646s
+--- FAIL: TestTrustedProxy_AC1_TrustOffIgnoresForwardingHeaders (0.07s)
+    --- FAIL: TestTrustedProxy_AC1_TrustOffIgnoresForwardingHeaders/garbage (0.00s)
+        trusted_proxy_test.go:150: upstream XFF = ["garbage"], want none (as develop)
+--- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly (0.07s)
+    --- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC7_unparsable_RemoteAddr (0.00s)
+        trusted_proxy_test.go:283: upstream XFF = ["garbage"], want none (as develop)
+FAIL
+FAIL	github.com/eventflow/eventflow/services/gateway/internal/proxy	0.650s
+ok  	github.com/eventflow/eventflow/services/gateway/internal/ratelimit	0.366s
+FAIL

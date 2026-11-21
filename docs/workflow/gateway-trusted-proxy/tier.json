@@ -1,0 +1,30 @@
+{
+  "task": "gateway-trusted-proxy",
+  "branch": "feature/gateway-trusted-proxy",
+  "base_commit": "c5fb598",
+  "tier": "high-risk",
+  "rule_hits": [
+    "auth: login/register brute-force protection depends on the rate-limit key (services/gateway/internal/proxy/gateway.go rateKey/clientIP)",
+    "security: trust boundary for client-supplied X-Forwarded-For (spoofing surface)",
+    "config: new env TRUSTED_PROXY_CIDRS that fails startup when invalid"
+  ],
+  "llm_assessment": "high-risk (agrees with rules; cannot lower)",
+  "user_override": null,
+  "source": "k8s-all review finding R-1 (gateway rate-limits by ingress pod IP behind ingress-nginx)",
+  "human_decision": "trust X-Forwarded-For only when RemoteAddr is inside TRUSTED_PROXY_CIDRS; empty = never trust (current behaviour)",
+  "consequences": [
+    "human approves spec.md before implementation",
+    "plan review mandatory",
+    "correctness + security review and a challenge on a different model",
+    "fuzz test on the XFF parser + mutation test on the trust walk + rollback check",
+    "human sign-off before merge to develop"
+  ],
+  "no_migrations": true,
+  "no_new_dependencies": true,
+  "no_frontend_changes": true,
+  "touches_other_services": false,
+  "out_of_scope": [
+    "deploy/k8s (lives on unmerged feature/k8s-all; follow-up listed in spec section 6)",
+    "identity/payment readers of X-Forwarded-For (they keep reading the first entry, which the gateway now sets)"
+  ]
+}
