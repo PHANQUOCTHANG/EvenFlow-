@@ -24,8 +24,12 @@ import json
 import logging
 import re
 import unicodedata
+from typing import TYPE_CHECKING
 
 from redis.asyncio import Redis
+
+if TYPE_CHECKING:
+    from app.llm.embedder import Embedder
 
 log = logging.getLogger(__name__)
 
@@ -51,7 +55,7 @@ class SemanticCache:
     def __init__(
         self,
         redis: Redis,
-        embedder,
+        embedder: Embedder | None,
         similarity_threshold: float = SIMILARITY_THRESHOLD,
     ) -> None:
         self._redis = redis
@@ -71,6 +75,11 @@ class SemanticCache:
         # Tang 1: exact hash, khong ton gi.
         if (hit := await self._redis.get(self.key(event_id, question))) is not None:
             return hit.decode() if isinstance(hit, bytes) else hit
+
+        # L3 tat (che do that, khong GEMINI_API_KEY): chi con exact hash, im lang --
+        # da log mot lan luc khoi dong (app.llm.wiring), khong log moi request.
+        if self._embedder is None:
+            return None
 
         # Tang 2: lang gieng gan nhat theo embedding.
         try:
@@ -92,6 +101,8 @@ class SemanticCache:
 
     async def put(self, event_id: str, question: str, answer: str) -> None:
         await self._redis.setex(self.key(event_id, question), TTL_SECONDS, answer)
+        if self._embedder is None:
+            return
         try:
             vec = await self._embedder.embed(question)
         except Exception:
