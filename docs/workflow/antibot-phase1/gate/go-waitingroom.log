@@ -4,11 +4,13 @@ gofmt ok: services/waitingroom/cmd/server/guard_test.go
 gofmt ok: services/waitingroom/cmd/server/main.go
 gofmt ok: services/waitingroom/internal/adapter/http/antibot.go
 gofmt ok: services/waitingroom/internal/adapter/http/antibot_fixround1_test.go
+gofmt ok: services/waitingroom/internal/adapter/http/antibot_fixround2_test.go
 gofmt ok: services/waitingroom/internal/adapter/http/antibot_handler_test.go
 gofmt ok: services/waitingroom/internal/adapter/http/handler.go
 gofmt ok: services/waitingroom/internal/adapter/http/ops_handler.go
 gofmt ok: services/waitingroom/internal/adapter/postgres/bot_decisions.go
 gofmt ok: services/waitingroom/internal/adapter/postgres/bot_decisions_integration_test.go
+gofmt ok: services/waitingroom/internal/adapter/postgres/bot_decisions_internal_test.go
 gofmt ok: services/waitingroom/internal/adapter/postgres/bot_decisions_test.go
 gofmt ok: services/waitingroom/internal/adapter/postgres/pool.go
 gofmt ok: services/waitingroom/internal/adapter/redis/lane_fixround1_integration_test.go
@@ -28,9 +30,11 @@ golangci-lint v2.12.2: clean
 === RUN   TestBuildGuard_D7_RedisDownStillBuilds
 --- PASS: TestBuildGuard_D7_RedisDownStillBuilds (0.01s)
 PASS
-ok  	github.com/eventflow/eventflow/services/waitingroom/cmd/server	1.218s
+ok  	github.com/eventflow/eventflow/services/waitingroom/cmd/server	1.239s
 === RUN   TestFix1_R2_StickyDoesNotRevokeAgain
 --- PASS: TestFix1_R2_StickyDoesNotRevokeAgain (0.00s)
+=== RUN   TestFix2_M47_ShadowUsesDevelopJoin
+--- PASS: TestFix2_M47_ShadowUsesDevelopJoin (0.00s)
 === RUN   TestAntibotJoin_AC13_OffIsDevelop
 --- PASS: TestAntibotJoin_AC13_OffIsDevelop (0.00s)
 === RUN   TestAntibotJoin_AC9_PassIsDevelop
@@ -164,7 +168,7 @@ ok  	github.com/eventflow/eventflow/services/waitingroom/cmd/server	1.218s
 === RUN   TestOpsPut_TrailingBytesAfterJSONIs400
 --- PASS: TestOpsPut_TrailingBytesAfterJSONIs400 (0.00s)
 === RUN   TestOpsPutFix_X1_RateMustBeIntegerLiteral
---- PASS: TestOpsPutFix_X1_RateMustBeIntegerLiteral (0.00s)
+--- PASS: TestOpsPutFix_X1_RateMustBeIntegerLiteral (0.01s)
 === RUN   TestOpsPutFix_X3_ResponseReflectsStoredStateAfterConcurrentClear
 --- PASS: TestOpsPutFix_X3_ResponseReflectsStoredStateAfterConcurrentClear (0.00s)
 === RUN   TestOpsWriteFix_R1_X4_ReasonControlOrInvisibleIs400
@@ -204,7 +208,7 @@ ok  	github.com/eventflow/eventflow/services/waitingroom/cmd/server	1.218s
 === RUN   TestOpsRound2Fix_X21_InvisibleBidiOrControlReasonIs400/NEL_edges
 === RUN   TestOpsRound2Fix_X21_InvisibleBidiOrControlReasonIs400/NEL_inside
 === RUN   TestOpsRound2Fix_X21_InvisibleBidiOrControlReasonIs400/interior_tab
---- PASS: TestOpsRound2Fix_X21_InvisibleBidiOrControlReasonIs400 (0.02s)
+--- PASS: TestOpsRound2Fix_X21_InvisibleBidiOrControlReasonIs400 (0.01s)
     --- PASS: TestOpsRound2Fix_X21_InvisibleBidiOrControlReasonIs400/RLO_x3 (0.00s)
     --- PASS: TestOpsRound2Fix_X21_InvisibleBidiOrControlReasonIs400/isolates (0.00s)
     --- PASS: TestOpsRound2Fix_X21_InvisibleBidiOrControlReasonIs400/LRM (0.00s)
@@ -234,13 +238,15 @@ ok  	github.com/eventflow/eventflow/services/waitingroom/cmd/server	1.218s
 === RUN   TestOpsRound2Fix_X24_DuplicateOrCaseMismatchedKeysAre400
 --- PASS: TestOpsRound2Fix_X24_DuplicateOrCaseMismatchedKeysAre400 (0.00s)
 PASS
-ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/http	5.068s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/http	5.122s
 === RUN   TestProm_AdmitState_TheoTungSuKien
 --- PASS: TestProm_AdmitState_TheoTungSuKien (0.00s)
 === RUN   TestProm_LeaderVaAdjust
 --- PASS: TestProm_LeaderVaAdjust (0.00s)
 PASS
-ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/metrics	1.816s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/metrics	1.961s
+=== RUN   TestFix2_M53_DBActionMapping
+--- PASS: TestFix2_M53_DBActionMapping (0.00s)
 === RUN   TestNewAuditorFromEnv_AC12_UnsetEmptyOrUnparsableIsPlainNil
 --- PASS: TestNewAuditorFromEnv_AC12_UnsetEmptyOrUnparsableIsPlainNil (0.01s)
 === RUN   TestNewAuditorFromEnv_AC12_UnreachableKeepsAuditor
@@ -248,7 +254,7 @@ ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/metric
 === RUN   TestDecisionWriter_AC14_NoPoolDropsAndCounts
 --- PASS: TestDecisionWriter_AC14_NoPoolDropsAndCounts (0.00s)
 PASS
-ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/postgres	3.649s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/postgres	3.951s
 ?   	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/redis	[no test files]
 === RUN   TestProbe_DichDungTinHieu
 --- PASS: TestProbe_DichDungTinHieu (0.00s)
@@ -257,7 +263,7 @@ ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/postgr
 === RUN   TestProbe_PodBaoCaoKhongYeuCau_LaKhoe
 --- PASS: TestProbe_PodBaoCaoKhongYeuCau_LaKhoe (0.00s)
 PASS
-ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/signal	1.535s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/signal	1.490s
 === RUN   TestRun_BiFencingKhiAdmit_ThoatNgayVaKhongThaThem
 --- PASS: TestRun_BiFencingKhiAdmit_ThoatNgayVaKhongThaThem (0.05s)
 === RUN   TestRun_BiFencingKhiGhiNhip_CungThoaiVi
@@ -371,7 +377,7 @@ ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/signal
 === RUN   TestRun_LotteryFailureStopsBeforeAnyAdmission
 --- PASS: TestRun_LotteryFailureStopsBeforeAnyAdmission (0.00s)
 === RUN   TestRun_StopsWhenContextCancelled
---- PASS: TestRun_StopsWhenContextCancelled (0.02s)
+--- PASS: TestRun_StopsWhenContextCancelled (0.03s)
 === RUN   TestRun_TransientTickFailureDoesNotStopTheQueue
 --- PASS: TestRun_TransientTickFailureDoesNotStopTheQueue (0.03s)
 === RUN   TestRun_OverrideFromOpsWhileRunningIsRaceFree
@@ -455,7 +461,7 @@ ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/signal
 === RUN   TestClear_Errors
 --- PASS: TestClear_Errors (0.00s)
 PASS
-ok  	github.com/eventflow/eventflow/services/waitingroom/internal/app	1.975s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/app	2.022s
 === RUN   TestAdmitConfig_KhongCoEnv_DungMacDinh
 --- PASS: TestAdmitConfig_KhongCoEnv_DungMacDinh (0.00s)
 === RUN   TestAdmitConfig_EnvGhiDeMacDinh
@@ -482,30 +488,30 @@ ok  	github.com/eventflow/eventflow/services/waitingroom/internal/app	1.975s
     --- PASS: TestHealthConfig/tuoi_khong_so (0.00s)
 === RUN   TestAdmitConfig_GiaTriSai_PhaiTuChoiLucKhoiDong
 === RUN   TestAdmitConfig_GiaTriSai_PhaiTuChoiLucKhoiDong/max_nho_hon_min
-=== RUN   TestAdmitConfig_GiaTriSai_PhaiTuChoiLucKhoiDong/backoff_lon_hon_1
-=== RUN   TestAdmitConfig_GiaTriSai_PhaiTuChoiLucKhoiDong/step_up_am
 === RUN   TestAdmitConfig_GiaTriSai_PhaiTuChoiLucKhoiDong/backoff_=_1
 === RUN   TestAdmitConfig_GiaTriSai_PhaiTuChoiLucKhoiDong/backoff_=_0
 === RUN   TestAdmitConfig_GiaTriSai_PhaiTuChoiLucKhoiDong/ttl_am
 === RUN   TestAdmitConfig_GiaTriSai_PhaiTuChoiLucKhoiDong/ttl_khong_phai_so
 === RUN   TestAdmitConfig_GiaTriSai_PhaiTuChoiLucKhoiDong/khong_phai_so
 === RUN   TestAdmitConfig_GiaTriSai_PhaiTuChoiLucKhoiDong/min_=_0
+=== RUN   TestAdmitConfig_GiaTriSai_PhaiTuChoiLucKhoiDong/step_up_am
+=== RUN   TestAdmitConfig_GiaTriSai_PhaiTuChoiLucKhoiDong/backoff_lon_hon_1
 --- PASS: TestAdmitConfig_GiaTriSai_PhaiTuChoiLucKhoiDong (0.00s)
     --- PASS: TestAdmitConfig_GiaTriSai_PhaiTuChoiLucKhoiDong/max_nho_hon_min (0.00s)
-    --- PASS: TestAdmitConfig_GiaTriSai_PhaiTuChoiLucKhoiDong/backoff_lon_hon_1 (0.00s)
-    --- PASS: TestAdmitConfig_GiaTriSai_PhaiTuChoiLucKhoiDong/step_up_am (0.00s)
     --- PASS: TestAdmitConfig_GiaTriSai_PhaiTuChoiLucKhoiDong/backoff_=_1 (0.00s)
     --- PASS: TestAdmitConfig_GiaTriSai_PhaiTuChoiLucKhoiDong/backoff_=_0 (0.00s)
     --- PASS: TestAdmitConfig_GiaTriSai_PhaiTuChoiLucKhoiDong/ttl_am (0.00s)
     --- PASS: TestAdmitConfig_GiaTriSai_PhaiTuChoiLucKhoiDong/ttl_khong_phai_so (0.00s)
     --- PASS: TestAdmitConfig_GiaTriSai_PhaiTuChoiLucKhoiDong/khong_phai_so (0.00s)
     --- PASS: TestAdmitConfig_GiaTriSai_PhaiTuChoiLucKhoiDong/min_=_0 (0.00s)
+    --- PASS: TestAdmitConfig_GiaTriSai_PhaiTuChoiLucKhoiDong/step_up_am (0.00s)
+    --- PASS: TestAdmitConfig_GiaTriSai_PhaiTuChoiLucKhoiDong/backoff_lon_hon_1 (0.00s)
 === RUN   TestAdmitConfig_LoiNoiRoTenBien
 --- PASS: TestAdmitConfig_LoiNoiRoTenBien (0.00s)
 === RUN   TestSplitCSV
 --- PASS: TestSplitCSV (0.00s)
 PASS
-ok  	github.com/eventflow/eventflow/services/waitingroom/internal/config	1.427s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/config	1.412s
 === RUN   TestPollInterval_QueuedNearTurnPollsEvery3s
 --- PASS: TestPollInterval_QueuedNearTurnPollsEvery3s (0.00s)
 === RUN   TestPollInterval_SoldOutIsAFinalStateWithSlowCadence
@@ -539,7 +545,7 @@ ok  	github.com/eventflow/eventflow/services/waitingroom/internal/config	1.427s
 === RUN   TestPosition_JSONContractForClient
 --- PASS: TestPosition_JSONContractForClient (0.00s)
 PASS
-ok  	github.com/eventflow/eventflow/services/waitingroom/internal/domain	1.459s
-PASS lines (tests+subtests): 250, baseline before task: 228
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/domain	1.523s
+PASS lines (tests+subtests): 252, baseline before task: 228
 ok: services/waitingroom
 [waitingroom] coverage domain/app: 99.0% (nguong 70%)

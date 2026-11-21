@@ -12,7 +12,7 @@
    ▲ Next.js 15.5.28
 
    Creating an optimized production build ...
- ✓ Compiled successfully in 10.2s
+ ✓ Compiled successfully in 10.8s
    Linting and checking validity of types ...
 
 ./src/components/auth/ForgotPasswordForm.tsx
@@ -59,25 +59,25 @@ Route (app)                                       Size  First Load JS  Revalidat
 ├ ƒ /api/healthz                                 140 B         103 kB
 ├ ƒ /api/readyz                                  140 B         103 kB
 ├ ƒ /api/time                                    140 B         103 kB
-├ ○ /auth/forgot-password                       6.4 kB         162 kB
-├ ○ /auth/sign-in                                 3 kB         126 kB
-├ ○ /auth/sign-up                              6.57 kB         165 kB
-├ ƒ /checkout/[eventId]                        8.29 kB         129 kB
-├ ƒ /checkout/[eventId]/payment                7.37 kB         128 kB
-├ ƒ /checkout/[eventId]/result                 17.7 kB         139 kB
-├ ○ /events                                    3.73 kB         119 kB          1m      1y
-├ ● /events/[slug]                             8.04 kB         119 kB
-├ ƒ /ops/events                                  971 B         116 kB
-├ ƒ /ops/events/[eventId]                        135 B         126 kB
+├ ○ /auth/forgot-password                       6.4 kB         164 kB
+├ ○ /auth/sign-in                                 3 kB         127 kB
+├ ○ /auth/sign-up                              6.57 kB         167 kB
+├ ƒ /checkout/[eventId]                        8.29 kB         131 kB
+├ ƒ /checkout/[eventId]/payment                7.37 kB         130 kB
+├ ƒ /checkout/[eventId]/result                 16.2 kB         139 kB
+├ ○ /events                                    3.73 kB         120 kB          1m      1y
+├ ● /events/[slug]                             8.05 kB         119 kB
+├ ƒ /ops/events                                  971 B         118 kB
+├ ƒ /ops/events/[eventId]                        135 B         128 kB
 ├ ○ /organizer                                   140 B         103 kB
-├ ○ /organizer/events                            736 B         121 kB
-├ ƒ /organizer/events/[eventId]/edit           1.76 kB         124 kB
-├ ƒ /organizer/events/[eventId]/review-status  3.56 kB         123 kB
-├ ƒ /organizer/events/[eventId]/sales          7.46 kB         124 kB
-├ ○ /organizer/events/new                        478 B         122 kB
+├ ○ /organizer/events                            736 B         122 kB
+├ ƒ /organizer/events/[eventId]/edit           1.76 kB         125 kB
+├ ƒ /organizer/events/[eventId]/review-status  3.56 kB         125 kB
+├ ƒ /organizer/events/[eventId]/sales          7.46 kB         125 kB
+├ ○ /organizer/events/new                        478 B         124 kB
 ├ ○ /showcase                                  10.1 kB         129 kB
-├ ○ /unauthorized                              2.42 kB         113 kB
-└ ƒ /waiting/[eventId]                         8.78 kB         138 kB
+├ ○ /unauthorized                              2.42 kB         114 kB
+└ ƒ /waiting/[eventId]                         7.29 kB         138 kB
 + First Load JS shared by all                   103 kB
   ├ chunks/1255-dc3ddf72a1dc71a7.js            46.6 kB
   ├ chunks/4bd1b696-f785427dddbba9fb.js        54.2 kB
