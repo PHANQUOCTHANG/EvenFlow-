@@ -1,0 +1,9 @@
+added lines: 169
+added package: name = "anthropic"
+added package: name = "docstring-parser"
+added package: name = "httpcore2"
+added package: name = "httpx2"
+added package: name = "httpx2-jsfetch"
+added package: name = "jiter"
+added package: name = "truststore"
+ok: no removed lines

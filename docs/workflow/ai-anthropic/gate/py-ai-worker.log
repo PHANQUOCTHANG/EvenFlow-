@@ -1,0 +1,24 @@
+Resolved 72 packages in 1ms
+warning: Failed to hardlink files; falling back to full copy. This may lead to degraded performance.
+         If the cache and target directories are on different filesystems, hardlinking may not be supported.
+         If this is intentional, set `export UV_LINK_MODE=copy` or use `--link-mode=copy` to suppress this warning.
+Installed 10 packages in 1.68s
+ + colorama==0.4.6
+ + docker==7.2.0
+ + iniconfig==2.3.1
+ + pluggy==1.6.0
+ + pygments==2.21.0
+ + pytest==9.1.1
+ + pytest-asyncio==1.4.0
+ + pywin32==312
+ + ruff==0.16.10
+ + testcontainers==4.15.0
+All checks passed!
+........................................................................ [ 20%]
+........................................................................ [ 41%]
+........................................................................ [ 62%]
+........................................................................ [ 83%]
+.........................................................                [100%]
+345 passed, 22 deselected in 15.90s
+summary: 345 passed, 22 deselected in 15.90s
+ok: passed=345 (baseline 203), deselected=22 (integration), none skipped

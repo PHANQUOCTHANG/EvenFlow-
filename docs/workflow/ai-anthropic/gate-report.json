@@ -1,0 +1,17 @@
+{
+  "commit_sha": "d5a590f206ece683099ee5005ca3a364f070e70d",
+  "base": "c5fb598",
+  "tests_frozen": "0763f2a",
+  "generated_at": "2026-11-21T06:59:53Z",
+  "note": "exit 77 = NOT RUN (tool or engine missing), never a pass",
+  "results": {
+    "py-ai-worker": {"exit": 0, "status": "PASS", "log": "gate/py-ai-worker.log"},
+    "lock-diff": {"exit": 0, "status": "PASS", "log": "gate/lock-diff.log"},
+    "compose": {"exit": 0, "status": "PASS", "log": "gate/compose.log"},
+    "alerts": {"exit": 77, "status": "NOT_RUN", "log": "gate/alerts.log"},
+    "tamper": {"exit": 0, "status": "PASS", "log": "gate/tamper.log"},
+    "secrets": {"exit": 0, "status": "PASS", "log": "gate/secrets.log"},
+    "sast": {"exit": 0, "status": "PASS", "log": "gate/sast.log"},
+    "audit": {"exit": 0, "status": "PASS", "log": "gate/audit.log"}
+  }
+}

@@ -1,0 +1,13 @@
+ok: frozen tests byte-identical to 0763f2a
+allowed change (plan 2.2 / TCR-1 / new): services/ai-worker/tests/integration/test_assistant_integration.py
+allowed change (plan 2.2 / TCR-1 / new): services/ai-worker/tests/integration/test_consumers_integration.py
+allowed change (plan 2.2 / TCR-1 / new): services/ai-worker/tests/test_alias_scan.py
+allowed change (plan 2.2 / TCR-1 / new): services/ai-worker/tests/test_chat_handler.py
+allowed change (plan 2.2 / TCR-1 / new): services/ai-worker/tests/test_classify_real_errors.py
+allowed change (plan 2.2 / TCR-1 / new): services/ai-worker/tests/test_config.py
+allowed change (plan 2.2 / TCR-1 / new): services/ai-worker/tests/test_gemini_client.py
+allowed change (plan 2.2 / TCR-1 / new): services/ai-worker/tests/test_guarded.py
+allowed change (plan 2.2 / TCR-1 / new): services/ai-worker/tests/test_llm_client.py
+allowed change (plan 2.2 / TCR-1 / new): services/ai-worker/tests/test_moderation_consumer.py
+test functions: base=169 head=260
+tamper ok
