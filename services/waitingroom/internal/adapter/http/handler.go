@@ -13,6 +13,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/eventflow/eventflow/libs/go/antibot"
 	"github.com/eventflow/eventflow/libs/go/authx"
 	"github.com/eventflow/eventflow/libs/go/httpx"
 	"github.com/eventflow/eventflow/services/waitingroom/internal/domain"
@@ -31,15 +32,26 @@ type JoinResult struct {
 	IsNew bool
 }
 
-// BotGuard cham diem rui ro truoc khi cho ghi danh (E8).
+// BotGuard cham diem rui ro truoc khi cho ghi danh (E8, antibot-phase1). Decide khong bao gio loi: khi chinh
+// anti-bot hong no tra PASS (D7).
 type BotGuard interface {
-	Check(ctx context.Context, eventID, identityID string, signals map[string]any) (allow bool, challenge bool, err error)
+	Decide(ctx context.Context, in antibot.Input) antibot.Decision
+}
+
+// LaneStore la phan tuy chon cua store cho anti-bot (contracts 2, P-4), tim bang type assertion. Store khong co
+// no van chay: SLOW_LANE roi ve Join (kem canh bao), BLOCK chi tra 403.
+type LaneStore interface {
+	JoinLane(ctx context.Context, eventID, identityID, newToken string, lane domain.Lane, penalty int64) (JoinResult, error)
+	Revoke(ctx context.Context, eventID, identityID string) (bool, error) // dong thoi dat co chan 24 h
 }
 
 type Handler struct {
 	store QueueStore
 	bots  BotGuard
 	log   *slog.Logger
+
+	slowPenalty int64            // P cua slow lane (ANTIBOT_SLOW_LANE_PENALTY)
+	abMetrics   *antibot.Metrics // tuy chon: dem slot bi revoke
 
 	secret        []byte // ky / xac minh queue token (EV-137); rong -> tu choi moi yeu cau co token
 	requireDevice bool
@@ -58,7 +70,21 @@ func (h *Handler) WithQueueTokens(secret []byte, requireDevice bool) *Handler {
 const queueTokenTTL = 24 * time.Hour
 
 func New(store QueueStore, bots BotGuard, log *slog.Logger) *Handler {
-	return &Handler{store: store, bots: bots, log: log, now: time.Now}
+	return &Handler{store: store, bots: bots, log: log, now: time.Now, slowPenalty: antibot.DefaultSlowLanePenalty}
+}
+
+// WithSlowLanePenalty dat P cho JoinLane(slow). p <= 0 giu mac dinh.
+func (h *Handler) WithSlowLanePenalty(p int64) *Handler {
+	if p > 0 {
+		h.slowPenalty = p
+	}
+	return h
+}
+
+// WithAntibotMetrics noi collector cua anti-bot (antibot_slot_revoked_total).
+func (h *Handler) WithAntibotMetrics(m *antibot.Metrics) *Handler {
+	h.abMetrics = m
+	return h
 }
 
 func (h *Handler) Routes(mux *http.ServeMux) {
@@ -68,8 +94,11 @@ func (h *Handler) Routes(mux *http.ServeMux) {
 }
 
 type joinRequest struct {
-	Signals map[string]any `json:"signals"` // tin hieu hanh vi cho anti-bot
+	Signals json.RawMessage `json:"signals"` // tin hieu hanh vi cho anti-bot; giai ma trong Guard.Decide
 }
+
+// maxUAForAntibot: chi 512 byte dau cua User-Agent vao anti-bot (contracts 1).
+const maxUAForAntibot = 512
 
 func (h *Handler) join(w http.ResponseWriter, r *http.Request) {
 	eventID := r.PathValue("eventID")
@@ -93,27 +122,20 @@ func (h *Handler) join(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req joinRequest
-	_ = json.NewDecoder(r.Body).Decode(&req)
-
-	if h.bots != nil {
-		allow, challenge, err := h.bots.Check(r.Context(), eventID, identityID, req.Signals)
-		switch {
-		case err != nil:
-			// Anti-bot hong thi KHONG chan khach that. Fail-open o day la lua chon
-			// co y: chan nham nguoi that trong dot mo ban ton kem hon nhieu so voi
-			// de lot vai bot trong vai phut.
-			h.log.Error("antibot loi, tam thoi cho qua", "err", err)
-		case challenge:
-			httpx.WriteProblem(w, http.StatusForbidden, "can xac minh them truoc khi vao hang cho")
-			return
-		case !allow:
-			httpx.WriteProblem(w, http.StatusForbidden, "yeu cau bi tu choi")
+	var res JoinResult
+	var err error
+	if h.bots == nil {
+		// ANTIBOT_MODE=off: guard khong duoc noi, hanh vi develop.
+		var req joinRequest
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		res, err = h.store.Join(r.Context(), eventID, identityID, newToken())
+	} else {
+		var denied bool
+		res, denied, err = h.joinWithAntibot(w, r, eventID, p)
+		if denied {
 			return
 		}
 	}
-
-	res, err := h.store.Join(r.Context(), eventID, identityID, newToken())
 	if err != nil {
 		h.log.Error("join that bai", "event", eventID, "err", err)
 		httpx.WriteProblem(w, http.StatusServiceUnavailable, "phong cho dang qua tai, vui long thu lai")
