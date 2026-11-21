@@ -142,3 +142,11 @@ browser IP (see question Q-2), and any edit to the `feature/k8s-all` branch.
 | Q-1 | K8s trust scope: whole pod CIDR or a narrower ingress-nginx range? | Pod CIDR; the k8s-all runbook records the risk that any compromised pod can then forge XFF |
 | Q-2 | Web SSR pods share one bucket at the gateway. Accept or fix now? | Accept; follow-up task where web forwards the browser IP and its pods join the trusted set |
 | Q-3 | Every XFF element trusted: leftmost or peer? | Leftmost (spec 3.3 step 5) |
+
+## Human approval
+
+- Approver: TranDinhVo, in the Claude Code session on 2026-11-21.
+- Spec approved as revised in round 2 (plan review round 2 PASS).
+- Q-1: trust the pod CIDR in K8s; record the compromised-pod risk in the k8s-all runbook.
+- Q-2: accept that web SSR traffic shares one bucket for now; open a follow-up for forwarding the browser IP.
+- Q-3: when every entry is trusted, use the leftmost entry.
