@@ -1,7 +1,7 @@
 [project]
 name = "eventflow-ai-worker"
 version = "0.1.0"
-description = "Consumer Gemini cho EventFlow: tro ly phong cho, kiem duyet, phat hien bat thuong, bao cao"
+description = "Consumer AI (Anthropic) cho EventFlow: tro ly phong cho, kiem duyet, phat hien bat thuong, bao cao"
 requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.115",
@@ -16,6 +16,7 @@ dependencies = [
     "opentelemetry-instrumentation-fastapi>=0.49b0",
     # Import truc tiep (tools.py, consumers/moderation.py): khong dua vao phu thuoc bac cau.
     "httpx>=0.28",
+    "anthropic>=2.12.0",
 ]
 
 [project.optional-dependencies]
