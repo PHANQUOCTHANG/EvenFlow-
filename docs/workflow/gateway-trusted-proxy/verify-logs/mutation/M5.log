@@ -1,34 +1,39 @@
 == M5: services/gateway/internal/clientip/clientip.go
-perl -0pi -e 's/\tif p\.Bits\(\) == 0 \{\r?\n[^\n]*\n\t\}\r?\n//'
+perl -0pi -e 's/if p\.Bits\(\) < floor \{/if false \&\& p.Bits() < floor {/'
 warning: in the working copy of 'services/gateway/internal/clientip/clientip.go', LF will be replaced by CRLF the next time Git touches it
 warning: in the working copy of 'services/gateway/internal/clientip/clientip.go', LF will be replaced by CRLF the next time Git touches it
 diff --git a/services/gateway/internal/clientip/clientip.go b/services/gateway/internal/clientip/clientip.go
-index f2c1628..b62a42a 100644
+index e4eb6cc..bed457c 100644
 --- a/services/gateway/internal/clientip/clientip.go
 +++ b/services/gateway/internal/clientip/clientip.go
-@@ -62,9 +62,6 @@ func parseTrustedElement(e string) (netip.Prefix, error) {
- 	if p.Addr().Is4In6() {
- 		return netip.Prefix{}, fmt.Errorf("IPv4-mapped IPv6, hay viet dang IPv4")
+@@ -74,7 +74,7 @@ func parseTrustedElement(e string) (netip.Prefix, error) {
+ 	if p.Addr().Is4() {
+ 		floor = minBitsIPv4
  	}
--	if p.Bits() == 0 {
--		return netip.Prefix{}, fmt.Errorf("prefix /0 tin ca the gioi")
--	}
+-	if p.Bits() < floor {
++	if false && p.Bits() < floor {
+ 		return netip.Prefix{}, fmt.Errorf("prefix /%d qua rong (toi thieu /%d), tin ca Internet", p.Bits(), floor)
+ 	}
  	if p != p.Masked() {
- 		return netip.Prefix{}, fmt.Errorf("co bit host, hay dung %s", p.Masked())
- 	}
 ?   	github.com/eventflow/eventflow/services/gateway/cmd/server	[no test files]
+--- FAIL: TestParseTrusted_Round1_WidePrefixRejected (0.00s)
+    clientip_round1_test.go:24: ParseTrusted("0.0.0.0/1") = [0.0.0.0/1], want error
 --- FAIL: TestParseTrusted (0.00s)
     clientip_test.go:226: ParseTrusted("0.0.0.0/0") = [0.0.0.0/0], want error
 FAIL
-FAIL	github.com/eventflow/eventflow/services/gateway/internal/clientip	0.949s
+FAIL	github.com/eventflow/eventflow/services/gateway/internal/clientip	0.894s
+--- FAIL: TestLoad_Round1_WidePrefixFailsFast (0.00s)
+    config_trusted_round1_test.go:17: TRUSTED_PROXY_CIDRS="0.0.0.0/1,128.0.0.0/1": Load = (&{:8080 s false map[assistant:http://localhost:8090 event:http://localhost:8084 identity:http://localhost:8083 payment:http://localhost:8085 ticketing:http://localhost:8082 waitingroom:http://localhost:8081] [http://localhost:3000] map[auth:{1 10} default:{10 30} queue_poll:{0.5 3}] 1048576 [0.0.0.0/1 128.0.0.0/1]}, <nil>), want error and nil config
 --- FAIL: TestLoad_TrustedProxyCIDRsHongThiLoi (0.00s)
     config_trusted_test.go:63: TRUSTED_PROXY_CIDRS="0.0.0.0/0": Load ok ([0.0.0.0/0]), want error
 FAIL
-FAIL	github.com/eventflow/eventflow/services/gateway/internal/config	0.590s
-ok  	github.com/eventflow/eventflow/services/gateway/internal/proxy	0.750s
-ok  	github.com/eventflow/eventflow/services/gateway/internal/ratelimit	0.374s
+FAIL	github.com/eventflow/eventflow/services/gateway/internal/config	0.554s
+ok  	github.com/eventflow/eventflow/services/gateway/internal/proxy	0.635s
+ok  	github.com/eventflow/eventflow/services/gateway/internal/ratelimit	0.357s
 FAIL
 --- failing tests:
+--- FAIL: TestLoad_Round1_WidePrefixFailsFast (0.00s)
 --- FAIL: TestLoad_TrustedProxyCIDRsHongThiLoi (0.00s)
 --- FAIL: TestParseTrusted (0.00s)
+--- FAIL: TestParseTrusted_Round1_WidePrefixRejected (0.00s)
 RESULT M5 KILLED

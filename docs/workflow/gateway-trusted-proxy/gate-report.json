@@ -1,10 +1,10 @@
 {
   "task": "gateway-trusted-proxy",
-  "commit_sha": "e3959b5608872915a07ac9b5e54741dfc26c57eb",
+  "commit_sha": "4abf6a1ebe072c53331a2b4811b73f25ec21b0ab",
   "base": "c5fb598",
   "tests_frozen": "142ab18",
   "go": "go1.27.0 windows/amd64",
-  "generated_at": "2026-11-21T07:28:36Z",
+  "generated_at": "2026-11-21T07:41:49Z",
   "note": "exit 77 = NOT RUN (tool missing or fetch failed), never a pass",
   "mutation": {"killed": 8, "total": 8, "threshold": "8/8", "logs": "verify-logs/mutation/"},
   "results": {

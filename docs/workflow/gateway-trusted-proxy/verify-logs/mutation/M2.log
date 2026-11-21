@@ -3,10 +3,10 @@ perl -0pi -e 's/ \|\| !r\.isTrusted\(peer\.Unmap\(\)\) \{/ {/'
 warning: in the working copy of 'services/gateway/internal/clientip/clientip.go', LF will be replaced by CRLF the next time Git touches it
 warning: in the working copy of 'services/gateway/internal/clientip/clientip.go', LF will be replaced by CRLF the next time Git touches it
 diff --git a/services/gateway/internal/clientip/clientip.go b/services/gateway/internal/clientip/clientip.go
-index f2c1628..00c5cfa 100644
+index e4eb6cc..0b5270c 100644
 --- a/services/gateway/internal/clientip/clientip.go
 +++ b/services/gateway/internal/clientip/clientip.go
-@@ -79,7 +79,7 @@ func (r *Resolver) Resolve(remoteAddr string, xff []string) (string, bool) {
+@@ -91,7 +91,7 @@ func (r *Resolver) Resolve(remoteAddr string, xff []string) (string, bool) {
  		return key, false
  	}
  	peer, err := netip.ParseAddr(key)
@@ -31,16 +31,19 @@ index f2c1628..00c5cfa 100644
     --- FAIL: FuzzResolve/seed#11 (0.00s)
         clientip_test.go:306: trust=[10.0.0.0/8 2001:db8::/32] untrusted peer="[fd00::1]:443" xff="198.51.100.1": got ("198.51.100.1", true), want peerKey "fd00::1"
 FAIL
-FAIL	github.com/eventflow/eventflow/services/gateway/internal/clientip	1.047s
-ok  	github.com/eventflow/eventflow/services/gateway/internal/config	0.672s
+FAIL	github.com/eventflow/eventflow/services/gateway/internal/clientip	0.915s
+ok  	github.com/eventflow/eventflow/services/gateway/internal/config	0.451s
+--- FAIL: TestTrustedProxy_Round1_ClientIPHeadersStripped (0.01s)
+    --- FAIL: TestTrustedProxy_Round1_ClientIPHeadersStripped/untrusted_peer (0.00s)
+        trusted_proxy_round1_test.go:47: upstream X-Forwarded-For = ["198.51.100.1"], want exactly ["203.0.113.9"]
 --- FAIL: TestTrustedProxy_AC2_UntrustedPeerCannotSpoof (0.00s)
     trusted_proxy_test.go:179: upstream X-Forwarded-For = ["1.2.3.1"], want exactly ["203.0.113.9"]
 --- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly (0.07s)
-    --- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC2_untrusted_peer (0.01s)
+    --- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC2_untrusted_peer (0.00s)
         trusted_proxy_test.go:268: upstream X-Forwarded-For = ["1.2.3.4"], want exactly ["203.0.113.9"]
 FAIL
-FAIL	github.com/eventflow/eventflow/services/gateway/internal/proxy	0.726s
-ok  	github.com/eventflow/eventflow/services/gateway/internal/ratelimit	0.404s
+FAIL	github.com/eventflow/eventflow/services/gateway/internal/proxy	0.660s
+ok  	github.com/eventflow/eventflow/services/gateway/internal/ratelimit	0.349s
 FAIL
 --- failing tests:
     --- FAIL: FuzzResolve/seed#0 (0.00s)
@@ -50,8 +53,10 @@ FAIL
     --- FAIL: TestResolve/AC2_untrusted_ipv6_peer (0.00s)
     --- FAIL: TestResolve/AC2_untrusted_peer (0.00s)
     --- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC2_untrusted_peer (0.00s)
+    --- FAIL: TestTrustedProxy_Round1_ClientIPHeadersStripped/untrusted_peer (0.00s)
 --- FAIL: FuzzResolve (0.00s)
 --- FAIL: TestResolve (0.00s)
 --- FAIL: TestTrustedProxy_AC2_UntrustedPeerCannotSpoof (0.00s)
 --- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly (0.07s)
+--- FAIL: TestTrustedProxy_Round1_ClientIPHeadersStripped (0.01s)
 RESULT M2 KILLED

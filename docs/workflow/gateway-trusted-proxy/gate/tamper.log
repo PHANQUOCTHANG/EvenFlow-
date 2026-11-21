@@ -7,5 +7,5 @@ ok: unchanged vs c5fb598: services/gateway/internal/proxy/frontend_real_api_cont
 ok: unchanged vs c5fb598: services/gateway/internal/proxy/gateway_test.go
 ok: unchanged vs c5fb598: services/gateway/internal/proxy/trace_test.go
 ok: unchanged vs c5fb598: services/gateway/internal/ratelimit/limiter_test.go
-ok: only new test files are the frozen ones
+ok: only new test files are the frozen ones + round-1 files
 ok: no new skips

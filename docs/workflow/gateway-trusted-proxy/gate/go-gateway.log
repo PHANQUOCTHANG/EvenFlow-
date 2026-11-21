@@ -1,12 +1,25 @@
 gofmt ok: services/gateway/cmd/server/main.go
 gofmt ok: services/gateway/internal/clientip/clientip.go
+gofmt ok: services/gateway/internal/clientip/clientip_round1_test.go
 gofmt ok: services/gateway/internal/clientip/clientip_test.go
 gofmt ok: services/gateway/internal/config/config.go
+gofmt ok: services/gateway/internal/config/config_trusted_round1_test.go
 gofmt ok: services/gateway/internal/config/config_trusted_test.go
 gofmt ok: services/gateway/internal/proxy/gateway.go
+gofmt ok: services/gateway/internal/proxy/trusted_proxy_round1_test.go
 gofmt ok: services/gateway/internal/proxy/trusted_proxy_test.go
 go vet: clean
 ?   	github.com/eventflow/eventflow/services/gateway/cmd/server	[no test files]
+=== RUN   TestParseTrusted_Round1_WidePrefixRejected
+--- PASS: TestParseTrusted_Round1_WidePrefixRejected (0.00s)
+=== RUN   TestParseTrusted_Round1_FloorBoundaryAccepted
+--- PASS: TestParseTrusted_Round1_FloorBoundaryAccepted (0.00s)
+=== RUN   TestParseTrusted_Round1_TrimsNewlines
+--- PASS: TestParseTrusted_Round1_TrimsNewlines (0.00s)
+=== RUN   TestResolve_Round1_StrictElementForms
+--- PASS: TestResolve_Round1_StrictElementForms (0.00s)
+=== RUN   TestResolve_Round1_LeadingTab
+--- PASS: TestResolve_Round1_LeadingTab (0.00s)
 === RUN   TestResolve
 === RUN   TestResolve/AC1_trust_off_ipv4_peer
 === RUN   TestResolve/AC1_trust_off_peer_would_be_trusted
@@ -219,7 +232,7 @@ go vet: clean
 === RUN   FuzzResolve/seed#68
 === RUN   FuzzResolve/seed#69
 === RUN   FuzzResolve/seed#70
---- PASS: FuzzResolve (0.01s)
+--- PASS: FuzzResolve (0.02s)
     --- PASS: FuzzResolve/seed#0 (0.00s)
     --- PASS: FuzzResolve/seed#1 (0.00s)
     --- PASS: FuzzResolve/seed#2 (0.00s)
@@ -292,7 +305,7 @@ go vet: clean
     --- PASS: FuzzResolve/seed#69 (0.00s)
     --- PASS: FuzzResolve/seed#70 (0.00s)
 PASS
-ok  	github.com/eventflow/eventflow/services/gateway/internal/clientip	2.140s
+ok  	github.com/eventflow/eventflow/services/gateway/internal/clientip	2.351s
 === RUN   TestLoad_MacDinhChoDev
 --- PASS: TestLoad_MacDinhChoDev (0.00s)
 === RUN   TestLoad_ProductionBatBuocJWTSecret
@@ -309,12 +322,16 @@ ok  	github.com/eventflow/eventflow/services/gateway/internal/clientip	2.140s
     --- PASS: TestLoad_TuChoiCauHinhHong/RATE_QUEUE_POLL (0.00s)
     --- PASS: TestLoad_TuChoiCauHinhHong/RATE_AUTH (0.00s)
     --- PASS: TestLoad_TuChoiCauHinhHong/RATE_DEFAULT (0.00s)
+=== RUN   TestLoad_Round1_WidePrefixFailsFast
+--- PASS: TestLoad_Round1_WidePrefixFailsFast (0.00s)
+=== RUN   TestLoad_Round1_TrailingNewlineLoads
+--- PASS: TestLoad_Round1_TrailingNewlineLoads (0.00s)
 === RUN   TestLoad_TrustedProxyCIDRsHopLe
 --- PASS: TestLoad_TrustedProxyCIDRsHopLe (0.00s)
 === RUN   TestLoad_TrustedProxyCIDRsHongThiLoi
 --- PASS: TestLoad_TrustedProxyCIDRsHongThiLoi (0.00s)
 PASS
-ok  	github.com/eventflow/eventflow/services/gateway/internal/config	1.470s
+ok  	github.com/eventflow/eventflow/services/gateway/internal/config	1.484s
 === RUN   TestGateway_CORS_PreflightChoPhepHeaderCuaPhongCho
 --- PASS: TestGateway_CORS_PreflightChoPhepHeaderCuaPhongCho (0.01s)
 === RUN   TestGateway_CORS_ExposeHeaders
@@ -322,17 +339,17 @@ ok  	github.com/eventflow/eventflow/services/gateway/internal/config	1.470s
 === RUN   TestGateway_CORS_KhongCoAllowCredentials
 --- PASS: TestGateway_CORS_KhongCoAllowCredentials (0.01s)
 === RUN   TestGateway_CORS_OriginLaKhongDoi
---- PASS: TestGateway_CORS_OriginLaKhongDoi (0.01s)
+--- PASS: TestGateway_CORS_OriginLaKhongDoi (0.00s)
 === RUN   TestGateway_EventsPublic_CongKhaiToiEventService
 --- PASS: TestGateway_EventsPublic_CongKhaiToiEventService (0.01s)
 === RUN   TestGateway_EventsPublic_TokenHongBiBoQua
 --- PASS: TestGateway_EventsPublic_TokenHongBiBoQua (0.01s)
 === RUN   TestGateway_EventsPublic_KhongLamHongRouteCu
---- PASS: TestGateway_EventsPublic_KhongLamHongRouteCu (0.01s)
+--- PASS: TestGateway_EventsPublic_KhongLamHongRouteCu (0.02s)
 === RUN   TestGateway_XoaDanhTinhGiaMaoTrenMoiRoute
 --- PASS: TestGateway_XoaDanhTinhGiaMaoTrenMoiRoute (0.01s)
 === RUN   TestGateway_ChuyenCoXacThucOTPTuToken
---- PASS: TestGateway_ChuyenCoXacThucOTPTuToken (0.01s)
+--- PASS: TestGateway_ChuyenCoXacThucOTPTuToken (0.02s)
 === RUN   TestGateway_ChuyenThietBiTuToken
 --- PASS: TestGateway_ChuyenThietBiTuToken (0.01s)
 === RUN   TestGateway_RouteCanDangNhapTuChoiTokenKhongHopLe
@@ -350,7 +367,7 @@ ok  	github.com/eventflow/eventflow/services/gateway/internal/config	1.470s
     --- PASS: TestGateway_RouteCanDangNhapTuChoiTokenKhongHopLe/role_khong_ton_tai (0.00s)
     --- PASS: TestGateway_RouteCanDangNhapTuChoiTokenKhongHopLe/sub_khong_phai_uuid (0.00s)
 === RUN   TestGateway_ChanDuongDanNoiBo
---- PASS: TestGateway_ChanDuongDanNoiBo (0.02s)
+--- PASS: TestGateway_ChanDuongDanNoiBo (0.01s)
 === RUN   TestGateway_RouteTheoRole
 --- PASS: TestGateway_RouteTheoRole (0.02s)
 === RUN   TestGateway_DinhTuyenDungService
@@ -373,6 +390,14 @@ ok  	github.com/eventflow/eventflow/services/gateway/internal/config	1.470s
 --- PASS: TestGateway_NoiTraceSangUpstream (0.01s)
 === RUN   TestGateway_KhoiTaoTraceKhiClientKhongGui
 --- PASS: TestGateway_KhoiTaoTraceKhiClientKhongGui (0.01s)
+=== RUN   TestTrustedProxy_Round1_ClientIPHeadersStripped
+=== RUN   TestTrustedProxy_Round1_ClientIPHeadersStripped/trust_off
+=== RUN   TestTrustedProxy_Round1_ClientIPHeadersStripped/untrusted_peer
+=== RUN   TestTrustedProxy_Round1_ClientIPHeadersStripped/trusted_peer
+--- PASS: TestTrustedProxy_Round1_ClientIPHeadersStripped (0.02s)
+    --- PASS: TestTrustedProxy_Round1_ClientIPHeadersStripped/trust_off (0.01s)
+    --- PASS: TestTrustedProxy_Round1_ClientIPHeadersStripped/untrusted_peer (0.01s)
+    --- PASS: TestTrustedProxy_Round1_ClientIPHeadersStripped/trusted_peer (0.01s)
 === RUN   TestTrustedProxy_AC1_TrustOffIgnoresForwardingHeaders
 === RUN   TestTrustedProxy_AC1_TrustOffIgnoresForwardingHeaders/203.0.113.9:4000
 === RUN   TestTrustedProxy_AC1_TrustOffIgnoresForwardingHeaders/10.1.2.3:4000
@@ -388,7 +413,7 @@ ok  	github.com/eventflow/eventflow/services/gateway/internal/config	1.470s
 === RUN   TestTrustedProxy_AC2_UntrustedPeerCannotSpoof
 --- PASS: TestTrustedProxy_AC2_UntrustedPeerCannotSpoof (0.02s)
 === RUN   TestTrustedProxy_AC3_ClientsBehindTrustedProxyHaveOwnBucket
---- PASS: TestTrustedProxy_AC3_ClientsBehindTrustedProxyHaveOwnBucket (0.02s)
+--- PASS: TestTrustedProxy_AC3_ClientsBehindTrustedProxyHaveOwnBucket (0.03s)
 === RUN   TestTrustedProxy_AC4_ForgedLeftmostSharesBucket
 --- PASS: TestTrustedProxy_AC4_ForgedLeftmostSharesBucket (0.02s)
 === RUN   TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly
@@ -412,7 +437,7 @@ ok  	github.com/eventflow/eventflow/services/gateway/internal/config	1.470s
 === RUN   TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC7_17_trusted_hops
 === RUN   TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC7_zoned_peer
 === RUN   TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC7_unparsable_RemoteAddr
---- PASS: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly (0.15s)
+--- PASS: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly (0.23s)
     --- PASS: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC2_untrusted_peer (0.01s)
     --- PASS: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC3_trusted_peer (0.01s)
     --- PASS: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC4_forged_leftmost (0.01s)
@@ -428,9 +453,9 @@ ok  	github.com/eventflow/eventflow/services/gateway/internal/config	1.470s
     --- PASS: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC7_malformed_rightmost (0.01s)
     --- PASS: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC7_malformed_left_of_client (0.01s)
     --- PASS: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC7_no_xff (0.01s)
-    --- PASS: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC7_only_empty_elements (0.01s)
-    --- PASS: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC7_all_trusted_leftmost (0.01s)
-    --- PASS: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC7_17_trusted_hops (0.01s)
+    --- PASS: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC7_only_empty_elements (0.02s)
+    --- PASS: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC7_all_trusted_leftmost (0.02s)
+    --- PASS: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC7_17_trusted_hops (0.02s)
     --- PASS: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC7_zoned_peer (0.01s)
     --- PASS: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC7_unparsable_RemoteAddr (0.01s)
 === RUN   TestTrustedProxy_AC10_KeyClasses
@@ -438,13 +463,13 @@ ok  	github.com/eventflow/eventflow/services/gateway/internal/config	1.470s
 === RUN   TestTrustedProxy_AC10_KeyClasses/default_route_anonymous_keyed_by_resolved_IP
 === RUN   TestTrustedProxy_AC10_KeyClasses/default_route_logged_in_keyed_by_id
 === RUN   TestTrustedProxy_AC10_KeyClasses/queue_poll_keeps_event_suffix
---- PASS: TestTrustedProxy_AC10_KeyClasses (0.06s)
-    --- PASS: TestTrustedProxy_AC10_KeyClasses/auth_route_keyed_by_resolved_IP_even_when_logged_in (0.03s)
-    --- PASS: TestTrustedProxy_AC10_KeyClasses/default_route_anonymous_keyed_by_resolved_IP (0.01s)
-    --- PASS: TestTrustedProxy_AC10_KeyClasses/default_route_logged_in_keyed_by_id (0.01s)
-    --- PASS: TestTrustedProxy_AC10_KeyClasses/queue_poll_keeps_event_suffix (0.01s)
+--- PASS: TestTrustedProxy_AC10_KeyClasses (0.20s)
+    --- PASS: TestTrustedProxy_AC10_KeyClasses/auth_route_keyed_by_resolved_IP_even_when_logged_in (0.10s)
+    --- PASS: TestTrustedProxy_AC10_KeyClasses/default_route_anonymous_keyed_by_resolved_IP (0.04s)
+    --- PASS: TestTrustedProxy_AC10_KeyClasses/default_route_logged_in_keyed_by_id (0.03s)
+    --- PASS: TestTrustedProxy_AC10_KeyClasses/queue_poll_keeps_event_suffix (0.02s)
 PASS
-ok  	github.com/eventflow/eventflow/services/gateway/internal/proxy	1.950s
+ok  	github.com/eventflow/eventflow/services/gateway/internal/proxy	2.274s
 === RUN   TestLimiter_ChoDotBienRoiChan
 --- PASS: TestLimiter_ChoDotBienRoiChan (0.00s)
 === RUN   TestLimiter_NapLaiTheoThoiGian
@@ -454,7 +479,7 @@ ok  	github.com/eventflow/eventflow/services/gateway/internal/proxy	1.950s
 === RUN   TestLimiter_DonBucketNhanRoi
 --- PASS: TestLimiter_DonBucketNhanRoi (0.00s)
 PASS
-ok  	github.com/eventflow/eventflow/services/gateway/internal/ratelimit	1.439s
-head: top-level=44 subtests=176
+ok  	github.com/eventflow/eventflow/services/gateway/internal/ratelimit	1.459s
+head: top-level=52 subtests=179
 baseline (c5fb598-equivalent b946bf8): top-level=31 subtests=10
 ok: all base test functions pass, none skipped, counts >= baseline

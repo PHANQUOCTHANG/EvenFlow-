@@ -1,15 +1,15 @@
-fuzz: elapsed: 0s, gathering baseline coverage: 0/311 completed
-fuzz: elapsed: 1s, gathering baseline coverage: 311/311 completed, now fuzzing with 32 workers
-fuzz: elapsed: 3s, execs: 924524 (308100/sec), new interesting: 3 (total: 314)
-fuzz: elapsed: 6s, execs: 2171105 (415465/sec), new interesting: 4 (total: 315)
-fuzz: elapsed: 9s, execs: 3481016 (436405/sec), new interesting: 5 (total: 316)
-fuzz: elapsed: 12s, execs: 4873461 (464342/sec), new interesting: 6 (total: 317)
-fuzz: elapsed: 15s, execs: 5968703 (364958/sec), new interesting: 6 (total: 317)
-fuzz: elapsed: 18s, execs: 7147589 (392795/sec), new interesting: 6 (total: 317)
-fuzz: elapsed: 21s, execs: 8378498 (410649/sec), new interesting: 6 (total: 317)
-fuzz: elapsed: 24s, execs: 9691216 (437100/sec), new interesting: 7 (total: 318)
-fuzz: elapsed: 27s, execs: 10870767 (392698/sec), new interesting: 7 (total: 318)
-fuzz: elapsed: 30s, execs: 11930925 (354064/sec), new interesting: 7 (total: 318)
-fuzz: elapsed: 30s, execs: 11930925 (0/sec), new interesting: 7 (total: 318)
+fuzz: elapsed: 0s, gathering baseline coverage: 0/318 completed
+fuzz: elapsed: 1s, gathering baseline coverage: 318/318 completed, now fuzzing with 32 workers
+fuzz: elapsed: 3s, execs: 676507 (225066/sec), new interesting: 5 (total: 323)
+fuzz: elapsed: 6s, execs: 1637237 (319954/sec), new interesting: 5 (total: 323)
+fuzz: elapsed: 9s, execs: 2904559 (422903/sec), new interesting: 6 (total: 324)
+fuzz: elapsed: 12s, execs: 4238355 (444570/sec), new interesting: 6 (total: 324)
+fuzz: elapsed: 15s, execs: 5387335 (378753/sec), new interesting: 6 (total: 324)
+fuzz: elapsed: 18s, execs: 6159691 (260318/sec), new interesting: 6 (total: 324)
+fuzz: elapsed: 21s, execs: 7043336 (293743/sec), new interesting: 6 (total: 324)
+fuzz: elapsed: 24s, execs: 8012870 (324006/sec), new interesting: 6 (total: 324)
+fuzz: elapsed: 27s, execs: 8965406 (318133/sec), new interesting: 6 (total: 324)
+fuzz: elapsed: 30s, execs: 9653712 (229476/sec), new interesting: 6 (total: 324)
+fuzz: elapsed: 31s, execs: 9653712 (0/sec), new interesting: 6 (total: 324)
 PASS
-ok  	github.com/eventflow/eventflow/services/gateway/internal/clientip	31.326s
+ok  	github.com/eventflow/eventflow/services/gateway/internal/clientip	32.573s
