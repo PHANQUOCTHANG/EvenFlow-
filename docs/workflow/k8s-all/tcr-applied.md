@@ -56,3 +56,6 @@ Scope: `deploy/k8s/policy/test_policy.sh` and `deploy/k8s/policy/testdata/**` on
   `test_policy.sh` unchanged. Now 180 bad fixtures and 7 bad Dockerfile cases.
 - R-13 closed as no-op (not reproducible). R-10 (TCR-WP5 confirmation) and R-14 (AC-30/31 sign-off) are tracked as
   human merge preconditions in `merge-preconditions.md`.
+
+- TCR-WP5: approved by TranDinhVo on 2026-11-21 in the Claude Code session (was pending confirmation).
+- TCR-3: approved by TranDinhVo on 2026-11-21 in the Claude Code session (additions only; see test-change-request-3.md once applied).

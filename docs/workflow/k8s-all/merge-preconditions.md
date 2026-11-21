@@ -10,3 +10,9 @@ sign-off line filled in below (who, date, decision). Source: `findings-review.js
 | MP-2 | R-10 | Confirm (date, who) the approval of TCR-WP5 (`test-change-request-wp5.md`, fixture `bad/AC-12--dev-infra-run-as-uid-0.yaml`, additions only), or ask for the fixture to be reverted. `tcr-applied.md` records it as pending confirmation. | _pending_ |
 
 Closed without action: R-13 (not reproducible, see `deferred.md`).
+
+## Human decisions (TranDinhVo, Claude Code session, 2026-11-21)
+
+- MP-1: accepted. AC-30 and AC-31 stay NOT VERIFIED (no Docker daemon or kube context on this host). The offline checks (kustomize render, kubeconform, policy, CI workflow tests) are the merge evidence; the live run follows runbook sections 1–4 later.
+- MP-2: TCR-WP5 approved (one added fixture `bad/AC-12--dev-infra-run-as-uid-0.yaml`, no assertion changed).
+- TCR-3 approved: add five bad fixtures for the surviving mutants M02, M20, M22, M23, M28 and one stub-kubectl test for the gates.sh C4.4 context guard. Additions only.
