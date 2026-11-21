@@ -136,6 +136,9 @@ func (s *Store) Observe(ctx context.Context, in antibot.Input, fpHash string, ne
 		res, err = s.rdb.Eval(ctx, observeSrc, keys, args...).Slice()
 	}
 	if err != nil {
+		if isPoolTimeout(err) {
+			return antibot.State{}, fmt.Errorf("%w: %w", antibot.ErrPoolExhausted, err)
+		}
 		return antibot.State{}, err
 	}
 	if len(res) < 6 {
@@ -159,6 +162,9 @@ func (s *Store) Observe(ctx context.Context, in antibot.Input, fpHash string, ne
 	}
 	return st, nil
 }
+
+// isPoolTimeout matches go-redis' internal pool.ErrPoolTimeout (not exported by the redis package in v9.7).
+func isPoolTimeout(err error) bool { return err.Error() == "redis: connection pool timeout" }
 
 func isNoScript(err error) bool { return strings.HasPrefix(err.Error(), "NOSCRIPT") }
 

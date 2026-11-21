@@ -98,13 +98,20 @@ func (g *Guard) decide(ctx context.Context, in Input) Decision {
 
 // observe calls the store under the Redis budget and the breaker. Failure returns an unknown state.
 func (g *Guard) observe(ctx context.Context, in Input, fp string, prefix netip.Prefix, sq string) State {
+	unknown := State{CardIdentities: -1}
 	if g.store == nil {
-		return State{CardIdentities: -1}
+		return unknown
+	}
+	// X-1 / R-1: the buyer already went away (tab closed, reload). Nothing is wrong with Redis: do not call it,
+	// do not count a Redis failure and do not feed the breaker.
+	if ctx.Err() != nil {
+		return unknown
 	}
 	now := time.Now()
-	if !g.br.allow(now) {
+	probe, ok := g.br.allow(now)
+	if !ok {
 		g.m.Degraded.WithLabelValues(DegradedBreakerOpen).Inc()
-		return State{CardIdentities: -1}
+		return unknown
 	}
 	timeout := g.cfg.RedisTimeout
 	if timeout <= 0 {
@@ -113,18 +120,32 @@ func (g *Guard) observe(ctx context.Context, in Input, fp string, prefix netip.P
 	cctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 	st, err := g.store.Observe(cctx, in, fp, prefix, sq)
-	if err != nil {
-		reason := DegradedRedisError
-		if isTimeout(err) || errors.Is(cctx.Err(), context.DeadlineExceeded) {
-			reason = DegradedRedisTimeout
-		}
-		g.m.Degraded.WithLabelValues(reason).Inc()
-		g.br.fail(time.Now())
-		return State{CardIdentities: -1}
+	if err == nil {
+		g.br.success(probe)
+		st.Known = true
+		return st
 	}
-	st.Known = true
-	return st
+	if ctx.Err() != nil { // the parent was cancelled while waiting: not a Redis failure (X-1)
+		g.br.abandon(probe)
+		return unknown
+	}
+	kind := failHard
+	reason := DegradedRedisError
+	switch {
+	case errors.Is(err, ErrPoolExhausted):
+		// X-2: every connection of the antibot pool is busy. That is local pressure (a burst of joins), not a
+		// Redis outage, so it is counted but never opens the breaker.
+		kind, reason = failPool, DegradedRedisTimeout
+	case isTimeout(err) || errors.Is(cctx.Err(), context.DeadlineExceeded):
+		kind, reason = failSlow, DegradedRedisTimeout
+	}
+	g.m.Degraded.WithLabelValues(reason).Inc()
+	g.br.fail(time.Now(), kind, probe)
+	return unknown
 }
+
+// ErrPoolExhausted is returned (wrapped) by a StateStore when no connection was free within the budget.
+var ErrPoolExhausted = errors.New("antibot: state store pool exhausted")
 
 func isTimeout(err error) bool {
 	if errors.Is(err, context.DeadlineExceeded) {
@@ -134,38 +155,136 @@ func isTimeout(err error) bool {
 	return errors.As(err, &ne) && ne.Timeout()
 }
 
-// breaker opens after n failures within window and stays open for open (D7).
+type failKind int
+
+const (
+	failHard failKind = iota // connection refused, READONLY, script error...: opens the breaker at once
+	failSlow                 // over the budget: opens only when the slowness lasts (minSlowSpan)
+	failPool                 // pool exhausted: never opens the breaker
+)
+
+// Breaker thresholds (X-2), documented in contracts 3 (ANTIBOT_BREAKER):
+//   - closed -> open after n failures within window. Hard errors count at once. Timeouts count only once the
+//     failures span at least minSlowSpan (min(250 ms, window/2)): a Redis stall of a few ms (shuffle.lua placing
+//     a big lobby at T0) makes those joins DEGRADED one by one but does not turn history rules off for the whole
+//     open period. Pool exhaustion never counts.
+//   - open -> half-open after the open duration: exactly one request probes Redis, the others stay degraded.
+//   - half-open -> closed on a successful probe; -> open again on a failed probe, with the open duration doubled
+//     each time up to maxOpenFactor x the configured one.
+const (
+	maxSlowSpan   = 250 * time.Millisecond
+	maxOpenFactor = 4
+)
+
+type breakerState int
+
+const (
+	brClosed breakerState = iota
+	brOpen
+	brHalfOpen
+)
+
 type breaker struct {
 	n            int
 	window, open time.Duration
 
 	mu          sync.Mutex
+	state       breakerState
 	windowStart time.Time
 	failures    int
+	hard        bool
 	openUntil   time.Time
+	openFor     time.Duration
+	probing     bool
 }
 
-func (b *breaker) allow(now time.Time) bool {
+func (b *breaker) minSlowSpan() time.Duration {
+	if b.window/2 < maxSlowSpan {
+		return b.window / 2
+	}
+	return maxSlowSpan
+}
+
+// allow reports whether a call may go to Redis; probe is true for the single half-open probe.
+func (b *breaker) allow(now time.Time) (probe, ok bool) {
 	if b.n <= 0 {
-		return true
+		return false, true
 	}
 	b.mu.Lock()
 	defer b.mu.Unlock()
-	return !now.Before(b.openUntil)
+	switch b.state {
+	case brOpen:
+		if now.Before(b.openUntil) {
+			return false, false
+		}
+		b.state = brHalfOpen
+		fallthrough
+	case brHalfOpen:
+		if b.probing {
+			return false, false
+		}
+		b.probing = true
+		return true, true
+	}
+	return false, true
 }
 
-func (b *breaker) fail(now time.Time) {
+func (b *breaker) success(probe bool) {
 	if b.n <= 0 {
 		return
 	}
 	b.mu.Lock()
 	defer b.mu.Unlock()
+	if probe || b.state == brHalfOpen {
+		b.state, b.probing, b.openFor = brClosed, false, 0
+		b.windowStart, b.failures, b.hard = time.Time{}, 0, false
+	}
+}
+
+// abandon releases a probe whose caller went away without an answer from Redis.
+func (b *breaker) abandon(probe bool) {
+	if !probe || b.n <= 0 {
+		return
+	}
+	b.mu.Lock()
+	b.probing = false
+	b.mu.Unlock()
+}
+
+func (b *breaker) fail(now time.Time, kind failKind, probe bool) {
+	if b.n <= 0 {
+		return
+	}
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	if probe || b.state == brHalfOpen {
+		if kind == failPool {
+			b.probing = false
+			return
+		}
+		b.openFor = min(b.openFor*2, b.open*maxOpenFactor)
+		b.trip(now)
+		return
+	}
+	if kind == failPool || b.state != brClosed {
+		return
+	}
 	if b.windowStart.IsZero() || now.Sub(b.windowStart) > b.window {
-		b.windowStart, b.failures = now, 0
+		b.windowStart, b.failures, b.hard = now, 0, false
 	}
 	b.failures++
-	if b.failures >= b.n {
-		b.openUntil = now.Add(b.open)
-		b.windowStart, b.failures = time.Time{}, 0
+	b.hard = b.hard || kind == failHard
+	if b.failures >= b.n && (b.hard || now.Sub(b.windowStart) >= b.minSlowSpan()) {
+		b.openFor = b.open
+		b.trip(now)
 	}
+}
+
+func (b *breaker) trip(now time.Time) {
+	if b.openFor <= 0 {
+		b.openFor = b.open
+	}
+	b.state, b.probing = brOpen, false
+	b.openUntil = now.Add(b.openFor)
+	b.windowStart, b.failures, b.hard = time.Time{}, 0, false
 }
