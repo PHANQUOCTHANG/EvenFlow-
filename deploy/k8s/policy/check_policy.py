@@ -102,6 +102,10 @@ SECRET_ENV_STAGING = {
 }
 # staging payment provider keys: AC-18 checks only for extras; presence is AC-32
 STAGING_PROVIDER_SECRETS = {k: ("eventflow-payment", k) for k in _VNPAY_MOMO}
+# contract section 8 addendum (k8s-all integration, develop PR #99): waitingroom may read the POOLED URL for the
+# ops audit log (EVF-60). Allowed, not required: without it the app keeps serving and only the ops override
+# fails closed. Any other source (e.g. DIRECT) is still an unexpected secret env.
+EXTRA_SECRET_ENV_BOTH = {"waitingroom": {"DATABASE_URL": _DB_POOLED}}
 
 LOCAL_SECRETS = {"eventflow-db", "eventflow-mq", "eventflow-auth", "eventflow-qr", "eventflow-identity",
                  "eventflow-payment", "eventflow-ai", "eventflow-dev-infra"}
@@ -904,13 +908,13 @@ def check_ac18(ctx):
         if not ctx.wanted(p):
             continue
         want = dict(SECRET_ENV_BOTH[p])
-        extra_ok = {}
+        extra_ok = dict(EXTRA_SECRET_ENV_BOTH.get(p, {}))
         if ctx.overlay == "local":
             want.update(SECRET_ENV_LOCAL.get(p, {}))
         else:
             want.update(SECRET_ENV_STAGING.get(p, {}))
             if p == "payment":
-                extra_ok = STAGING_PROVIDER_SECRETS
+                extra_ok.update(STAGING_PROVIDER_SECRETS)
         got, unresolved = {}, set()
         for c in w.all_containers:
             for e in env_items(c):

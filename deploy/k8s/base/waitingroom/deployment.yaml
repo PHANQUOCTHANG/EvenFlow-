@@ -1,4 +1,5 @@
 # Deployment for waitingroom (k8s-all spec 4.1): virtual queue (Redis); /readyz pings Redis.
+# Postgres (pooled) is used only for the ops audit log.
 #
 # Values come from spec 4.1 and policy-contract.md; env = the compose block with hostnames
 # replaced by Service names or by keys of `eventflow-endpoints` / `eventflow-app-config` (per overlay),
@@ -90,6 +91,13 @@ spec:
                 configMapKeyRef:
                   name: eventflow-endpoints
                   key: OTEL_EXPORTER_OTLP_ENDPOINT
+            # Ops audit log only (EVF-60, compose since PR #99), through PgBouncer like ticketing. A missing or
+            # unreachable DB never blocks startup, readiness or the buy path; only the ops override fails closed.
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: eventflow-db
+                  key: DATABASE_URL_POOLED
             - name: QUEUE_TOKEN_SECRET
               valueFrom:
                 secretKeyRef:

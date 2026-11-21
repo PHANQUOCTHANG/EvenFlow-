@@ -798,6 +798,9 @@ mut("AC-18", "local-provider-key-optional", lambda o: optional_secret(o, "paymen
 mut("AC-18", "staging-optional-secret-ref", lambda o: optional_secret(o, "ai-worker", "GEMINI_API_KEY"), overlay="staging")
 mut("AC-18", "staging-stripe-key-extra", lambda o: ctr(o, "payment")["env"].append({"name": "STRIPE_SECRET_KEY", "valueFrom": SECRET("eventflow-payment", "STRIPE_SECRET_KEY")}), overlay="staging")
 mut("AC-18", "staging-identity-smtp-missing", lambda o: rm_env(o, "identity", "SMTP_PASS"), overlay="staging")
+# k8s-all integration (develop PR #99): waitingroom may hold DATABASE_URL only from the POOLED key
+mut("AC-18", "waitingroom-uses-direct-db", lambda o: ctr(o, "waitingroom")["env"].append({"name": "DATABASE_URL", "valueFrom": SX(o, "eventflow-db", "DATABASE_URL_DIRECT")}))
+mut("AC-18", "staging-waitingroom-uses-direct-db", lambda o: ctr(o, "waitingroom")["env"].append({"name": "DATABASE_URL", "valueFrom": SECRET("eventflow-db", "DATABASE_URL_DIRECT")}), overlay="staging")
 mut("AC-22", "ref-uses-base-name-local", lambda o: setenv(o, "event", "RABBITMQ_URL", valueFrom=SECRET("eventflow-mq", "AMQP_URL")))
 mut("AC-32", "gemini-mock-absent", gemini_absent, overlay="staging", extra=("ai-worker",))
 mut("AC-32", "gemini-mock-optional-ref", lambda o: opt_ref(o, "ai-worker", "GEMINI_MOCK"), overlay="staging")
