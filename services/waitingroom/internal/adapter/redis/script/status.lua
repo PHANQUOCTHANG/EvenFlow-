@@ -8,6 +8,7 @@
 -- KEYS[3] = wr:{ev}:admitted   ZSET
 -- KEYS[4] = wr:{ev}:lobby      SET
 -- KEYS[5] = wr:{ev}:meta       HASH
+-- KEYS[6] = wr:{ev}:lobby_slow SET (anti-bot slow lane truoc T0; tuy chon)
 -- ARGV[1] = token
 -- ARGV[2] = now_ms
 --
@@ -41,7 +42,7 @@ if rank then
   return { 'QUEUED', rank + 1, depth, admit_rate, 0, lottery }
 end
 
-if redis.call('SISMEMBER', KEYS[4], token) == 1 then
+if redis.call('SISMEMBER', KEYS[4], token) == 1 or (KEYS[6] and redis.call('SISMEMBER', KEYS[6], token) == 1) then
   if sold_out then return { 'SOLD_OUT', -1, depth, admit_rate, 0, lottery } end
   return { 'LOBBY', -1, depth, admit_rate, 0, lottery }
 end
