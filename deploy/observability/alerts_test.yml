@@ -54,3 +54,23 @@ tests:
       - eval_time: 11m
         alertname: AiDeadLetterSpike
         exp_alerts: []
+
+  # ai-anthropic AC-18: mot lan 429 tu Anthropic trong 5 phut -> keu (limiter de lot request).
+  - interval: 1m
+    input_series:
+      - series: 'ai_llm_429_total{instance="ai-worker:8090", job="ai-worker"}'
+        values: "0 0 0 1 1 1 1 1 1 1 1 1"
+    alert_rule_test:
+      - eval_time: 2m
+        alertname: LlmRateLimited
+        exp_alerts: []
+      - eval_time: 4m
+        alertname: LlmRateLimited
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+              instance: ai-worker:8090
+              job: ai-worker
+      - eval_time: 11m
+        alertname: LlmRateLimited
+        exp_alerts: []

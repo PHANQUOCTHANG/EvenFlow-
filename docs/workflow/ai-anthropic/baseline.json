@@ -1,0 +1,1 @@
+{"pytest_passed": 203, "pytest_deselected": 22, "commit": "169035e", "command": "cd services/ai-worker && uv sync --all-extras --locked && uv run pytest -q"}
