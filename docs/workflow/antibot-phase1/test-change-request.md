@@ -118,3 +118,48 @@ All are behaviour-neutral (the generator output and every assertion stay the sam
 
 - Approved by TranDinhVo in the Claude Code session on 2026-11-22; applied by the coordinator session.
 - `gofmt -w` on `services/waitingroom/internal/adapter/redis/lane_integration_test.go` (one-line `afterT0`/`beforeT0`) and `services/waitingroom/test/antibot/antibot_bot_test.go` (one-line `store.Revoke`). Line breaks only; no assertion changed.
+
+## TCR-6 (open): spec Amendment 2 defaults conflict with frozen tests, and miss the corpus gate
+
+Amendment 2 (approved) sets `R5=0.85`, `R4D=0.55` and moves `okhttp`, `Go-http-client`, `axios/`, `node-fetch`
+from the R5 deny list to a weak list. The frozen tests assert the revision-3 values, so the implementer did **not**
+change the built-in defaults (fix-round brief: stop and file a TCR). The mechanism is implemented
+(`ANTIBOT_UA_WEAK`; weights through `ANTIBOT_WEIGHTS`) and `libs/go/antibot/fixround1_test.go` checks the Amendment 2
+worked examples with that configuration; switching the defaults is then a two-line change in `config.go`
+(`DefaultWeights`, `DefaultUADeny` / `DefaultUAWeak`).
+
+**Blocker found while checking (needs a human decision before any tuning):** with the Amendment 2 configuration the
+frozen corpus gate fails. `TestFix1_Amendment2_Corpus` (report only, not asserted):
+
+| family | demoted (rev 3 defaults) | demoted (Amendment 2) |
+|---|---|---|
+| raw_http | 200/200 | 200/200 |
+| headless | 200/200 | 200/200 |
+| stealth_rhythm | 200/200 | 200/200 |
+| account_farm | 188/200 | **140/200** |
+| replay_proxy_pool | 170/200 | 170/200 |
+| replay_residential (not gated) | 0/50 | 0/50 |
+| **gated bots caught** | 95.80% (958/1000) | **91.00% (910/1000)** |
+| humans demoted | 0.10% (5/5000) | 0.00% (0/5000) |
+
+The drop is R4D 0.55: farm members that fire R4D alone (no R4N on their /24) now score 0.55 = CHALLENGE → pass.
+Options for the human: keep R4D 0.60 (X-6 then needs another mitigation, e.g. the X-6 snapshot clearing already
+done), accept a lower AC-18 target, or adjust the generator's farm family (frozen corpus.go).
+
+Frozen assertions that change once the defaults change (proposed new expectations, all in `libs/go/antibot`):
+
+| Test (frozen) | Case | Now asserts | With Amendment 2 |
+|---|---|---|---|
+| `score_test.go` `TestScore_AC8_DefaultOutcomesTable` | missing payload, browser UA | R3,R5 0.88 SLOW_LANE CAPPED | 0.91, same tier/tags |
+| same | missing payload, slot holder | 0.88 | 0.91 |
+| same | raw HTTP python-requests | 0.88 BLOCK | 0.91 BLOCK |
+| same | headless default | R2,R5 0.88 BLOCK | 0.91 BLOCK |
+| same | account farm | R4D,R4N 0.70 | 0.6625 (tol 0.0011) SLOW_LANE |
+| same | shared fp only | R4D 0.60 SLOW_LANE | 0.55 CHALLENGE / applied PASS |
+| `score_test.go` `TestScore_AC10_AC13_AppliedMatrix` | SLOW_LANE input `FPIdentities=4` | tier SLOW_LANE | CHALLENGE: needs another slow-lane input (e.g. R1+R2: `rt` 90 + fixed `iv`) |
+| `score_test.go` `TestScore_AC8_BlockEligibilityCap` | missing + R1-server | R1,R3,R5 0.94 BLOCK | 0.955 BLOCK (unchanged assertion: action + ids only) |
+| `rules_test.go` `TestRule_AC4_R5Strong` | deny entries `Go-http-client/1.1`, `okhttp/4.12`, `node-fetch/1.0`, `axios/1.7.2` | R5 fires | move these 4 to a weak-sign case (R5 false; R5W only with a second weak sign) |
+| `guard_test.go` `TestGuard_AC14_SinkSelection` | `wd` true | "0.80" comment only | 0.85 (comment) |
+| `corpus_test.go` `TestCorpus_AC18_DefaultConfig` | gate | >= 95% | fails at 91.0% (see above) |
+
+Also `contracts.md` §3.1 (revision 4) records the Amendment 2 table as approved but not yet the default.

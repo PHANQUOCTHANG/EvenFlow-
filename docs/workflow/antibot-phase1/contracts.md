@@ -134,6 +134,7 @@ type LaneStore interface {
 | `ANTIBOT_BREAKER` **(R2)** | `20/1s,open=3s` | N 1..10000, durations 100 ms..60 s |
 | `ANTIBOT_PASS_SAMPLE` | `0.01` | [0,1] |
 | `ANTIBOT_UA_DENY` | built-in: `HeadlessChrome PhantomJS python-requests python-httpx aiohttp curl/ Wget Go-http-client okhttp node-fetch axios/ Scrapy Puppeteer Playwright Selenium` | comma list replaces built-in; case-insensitive substring |
+| `ANTIBOT_UA_WEAK` **(R4)** | built-in: empty (Amendment 2 target: `okhttp Go-http-client axios/ node-fetch`, see 3.1) | comma list replaces built-in; case-insensitive substring; a match is **one** R5W weak sign, never strong |
 
 R5 details **(R2)**: strong = UA deny, empty UA, `wd` true, or missing payload (the last one is **not** block
 eligible). Weak = `gl` false, `fc` < `R5_FONTS_MIN` (not evaluated when the UA contains `Android`, `iPhone`,
@@ -164,6 +165,46 @@ Default outcomes **(R2, re-checked; each row asserted in `score_test.go`)**:
 | Human, fast click + privacy browser | R2, R5W | 0.670 | SLOW_LANE |
 | Human, R1 + R7 (now rare, D14) | R1, R7 | 0.750 | SLOW_LANE (was BLOCK in R1) |
 
+### 3.1 Revision 4 (fix round 1, spec Amendment 2 approved 2026-11-22) — status: approved, NOT yet the code default
+
+Amendment 2 changes three defaults: `R5=0.85` (X-4: a strong automation sign alone reaches BLOCK), `R4D=0.55`
+(X-6: a shared device alone is CHALLENGE), and `okhttp Go-http-client axios/ node-fetch` move from
+`ANTIBOT_UA_DENY` to `ANTIBOT_UA_WEAK` (X-5). The code implements the mechanism (`ANTIBOT_UA_WEAK`, any weights
+via `ANTIBOT_WEIGHTS`) and `libs/go/antibot/fixround1_test.go` asserts the worked examples below with that
+configuration. The built-in defaults stay at revision 3 because (a) the frozen `score_test.go` / `rules_test.go`
+assert the revision-3 weights and deny list (TCR-6, open) and (b) with Amendment 2 the corpus gate drops to
+**91.0%** bots caught (account_farm 140/200; humans 0.00%), below AC-18's 95%, so per the fix-round brief nothing
+was tuned and the decision is with the human.
+
+| Case (Amendment 2 config) | Fired | Score | Tier |
+|---|---|---|---|
+| Missing payload, browser UA | R3, R5(missing) | 0.910 | SLOW_LANE `CAPPED` |
+| Raw HTTP, `python-requests` UA, no signals | R3, R5 | 0.910 | BLOCK |
+| `python-requests` UA + forged `{"v":1,"pe":1}` (X-4) | R5 | 0.850 | BLOCK |
+| `wd` true alone (X-4) | R5 | 0.850 | BLOCK |
+| Headless default (`wd`, `rt` < 120) | R2, R5 | 0.910 | BLOCK |
+| `okhttp` UA, no signals (X-5) | R3, R5(missing) | 0.910 | SLOW_LANE `CAPPED` (never BLOCK) |
+| `okhttp` UA, valid human signals | — | 0 | PASS |
+| `okhttp` UA + one more weak sign (`gl` false) | R5W | 0.450 | CHALLENGE → pass |
+| Shared fp only (X-6) | R4D | 0.550 | CHALLENGE → pass |
+| Account farm (shared fp + shared /24) | R4D, R4N | 0.663 | SLOW_LANE |
+| Shared fp + privacy browser | R4D, R5W | 0.753 | SLOW_LANE |
+| Stealth rhythm, `{"v":1}`, CGNAT / cluster rows, R1 + R7 | unchanged from the table above (no R4D / R5) | | |
+
+### 3.2 Revision 4 notes (fix round 1)
+
+- **Breaker (X-2).** closed → open after `N` failures within the window; hard errors count at once, timeouts only
+  once the failures span at least `min(250 ms, window/2)` (a Redis stall of a few ms, e.g. `shuffle.lua` placing a
+  big lobby at T0, degrades those joins one by one but does not switch history rules off for the open period);
+  pool exhaustion (`antibot.ErrPoolExhausted`) is counted as `redis_timeout` but never opens the breaker. open →
+  half-open after the open duration: one probe goes to Redis, the others stay `breaker_open`. A good probe closes
+  the breaker; a failed one re-opens it with the open duration doubled, capped at 4 × the configured value.
+- **Client aborts (X-1, R-1).** When the request context is already cancelled (or is cancelled during the call),
+  `Decide` skips or abandons the store call, counts nothing in `antibot_degraded_total` and does not feed the
+  breaker; the decision is still made from stateless rules (`DEGRADED` tag).
+- **Production key (R-5).** `APP_ENV=production` refuses a key equal to the built-in dev key or containing `dev`
+  in its text or decoded bytes (every committed dev value carries that marker).
+
 ## 4. Redis
 
 Antibot client **(R2, P-9)**: own `redis.Client`, same `REDIS_ADDR`; `ReadTimeout`/`WriteTimeout` and
@@ -175,8 +216,8 @@ Antibot client **(R2, P-9)**: own `redis.Client`, same `REDIS_ADDR`; `ReadTimeou
 | `ab:{ev}:jt:{identity}` | LIST join ms | `LPUSH` + `LTRIM 0 8`, only when no slot | 9 items, TTL 300 s |
 | `ab:{ev}:fp:{fphash}` | ZSET identity → ms | `ZADD`, `ZREMRANGEBYSCORE`; `ZREMRANGEBYRANK` only when `ZCARD` > 64 | TTL 2 × R4 window |
 | `ab:{ev}:net:{prefix}` | ZSET identity → ms | same | same |
-| `ab:{ev}:jc:{minute}` **(R2)** | STRING event join count | `INCR` per join | TTL 360 s |
-| `ab:{ev}:nj:{prefix}:{minute}` **(R3, N-2)** | STRING prefix join count | `INCR` per join with a known IP | TTL 360 s |
+| `ab:{ev}:jc:{minute}` **(R2, R4)** | STRING event join count | `INCR` per **first** join (no slot; R-4) | TTL 360 s |
+| `ab:{ev}:nj:{prefix}:{minute}` **(R3, N-2, R4)** | STRING prefix join count | `INCR` per **first** join with a known IP (R-4) | TTL 360 s |
 | `ab:{ev}:sq:{sq}` | ZSET identity → ms | same as fp | TTL 2 × R7 window |
 | `ab:{ev}:blk:{identity}` | STRING `1` | **(R2)** set only by `revoke.lua` | `EX 86400` |
 
@@ -198,6 +239,15 @@ Waitingroom scripts:
 | `shuffle.lua` | **(R2)** main lottery as today when n > 0; then, in **both** branches (also n == 0), Fisher-Yates over `lobby_slow`, scores `1e12 + P + i` (i = 1..m), `HSET meta slow_lottery_size m`, `DEL lobby_slow`; `lottery_size` = main lane only. P = optional `ARGV[3]` (default 100000) |
 | `status.lua` | `SISMEMBER lobby_slow` → `LOBBY` |
 | `revoke.lua` (new) | **(R2)** `HGET tok identity` → token; `SREM lobby`, `SREM lobby_slow`, `ZREM queue`, `ZREM admitted`, `HDEL tok`, `HDEL sess token`; `SET ab:{ev}:blk:{identity} 1 EX 86400`. Returns 1 if a slot was removed |
+
+**(R4) Fix round 1.** R-4: re-joins of a slot holder no longer increment `jc` / `nj` (one identity cannot loop
+re-joins to push its own /24 over `R4N_SHARE`). R-2: `revoke.lua` sets the flag with `NX`, so the 24 h window
+starts at the first BLOCK and a retry never extends it; the handler also skips `Revoke` for a `STICKY` decision.
+R-3 / X-7: a slow join after T0 but before the shuffle uses `m = SCARD lobby_slow` (already final) instead of
+`slow_lottery_size` (0 then), so it sorts behind every pre-T0 slow member. R-8: the ops snapshot reports
+`lobby_slow` separately from `lobby`. **X-9 (accepted, D10):** the network prefix (/24, /64) is stored in clear in
+`ab:{ev}:net:` / `nj:` keys (TTL <= 10 min) and in `bot_decisions.ip`, by design (D10: "IP only as its network
+prefix"); hashing it and a `bot_decisions` retention job are follow-ups.
 
 ## 5. `bot_decisions` row (existing table, migrations/0001_core.sql:211; no migration)
 
@@ -230,7 +280,9 @@ Written: score >= 0.30, plus a `ANTIBOT_PASS_SAMPLE` sample of PASS. Writer **(R
 | `antibot_net_suppressed_total` **(R2)** | counter | — |
 | `antibot_capped_total` **(R2)** | counter | — |
 
-No `event`/`identity` labels. Alerts (new cases only appended to the existing `alerts_test.yml`): `AntibotDegraded`
+No `event`/`identity` labels. **(R4, R-9) drift note:** the alert cases live in a new file
+`deploy/observability/alerts_antibot_test.yml` (the existing `alerts_test.yml` was frozen), and the CI promtool step
+runs both files; contents are as specified below. Alerts: `AntibotDegraded`
 (> 1% for 5 m), `AntibotSlow` (p99 > 5 ms for 5 m), `AntibotBlockSpike` (applied BLOCK > 20% for 5 m), **(R2)**
 `AntibotNetSuppressed` (any suppression for 5 m: likely a proxy missing from `TRUSTED_PROXY_CIDRS`).
 
