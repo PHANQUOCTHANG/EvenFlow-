@@ -1,0 +1,15 @@
+fuzz: elapsed: 0s, gathering baseline coverage: 0/311 completed
+fuzz: elapsed: 1s, gathering baseline coverage: 311/311 completed, now fuzzing with 32 workers
+fuzz: elapsed: 3s, execs: 924524 (308100/sec), new interesting: 3 (total: 314)
+fuzz: elapsed: 6s, execs: 2171105 (415465/sec), new interesting: 4 (total: 315)
+fuzz: elapsed: 9s, execs: 3481016 (436405/sec), new interesting: 5 (total: 316)
+fuzz: elapsed: 12s, execs: 4873461 (464342/sec), new interesting: 6 (total: 317)
+fuzz: elapsed: 15s, execs: 5968703 (364958/sec), new interesting: 6 (total: 317)
+fuzz: elapsed: 18s, execs: 7147589 (392795/sec), new interesting: 6 (total: 317)
+fuzz: elapsed: 21s, execs: 8378498 (410649/sec), new interesting: 6 (total: 317)
+fuzz: elapsed: 24s, execs: 9691216 (437100/sec), new interesting: 7 (total: 318)
+fuzz: elapsed: 27s, execs: 10870767 (392698/sec), new interesting: 7 (total: 318)
+fuzz: elapsed: 30s, execs: 11930925 (354064/sec), new interesting: 7 (total: 318)
+fuzz: elapsed: 30s, execs: 11930925 (0/sec), new interesting: 7 (total: 318)
+PASS
+ok  	github.com/eventflow/eventflow/services/gateway/internal/clientip	31.326s

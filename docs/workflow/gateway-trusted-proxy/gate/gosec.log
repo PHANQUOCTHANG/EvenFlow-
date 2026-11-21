@@ -1,0 +1,10 @@
+[gosec] 2026/11/21 14:27:39 Including rules: default
+[gosec] 2026/11/21 14:27:39 Excluding rules: default
+[gosec] 2026/11/21 14:27:39 Including analyzers: default
+[gosec] 2026/11/21 14:27:39 Excluding analyzers: default
+[gosec] 2026/11/21 14:27:39 Import directory: D:\Documents\Nam4-1\Project1\EvenFlow-gateway-proxy\services\gateway\internal\config
+[gosec] 2026/11/21 14:27:39 Import directory: D:\Documents\Nam4-1\Project1\EvenFlow-gateway-proxy\services\gateway\internal\clientip
+[gosec] 2026/11/21 14:27:39 Import directory: D:\Documents\Nam4-1\Project1\EvenFlow-gateway-proxy\services\gateway\internal\proxy
+2026/11/21 14:27:40 internal error: package "fmt" without types was imported from "command-line-arguments"
+exit status 1
+NOT RUN: gosec v2.22.4 loader incompatible with go1.27.0

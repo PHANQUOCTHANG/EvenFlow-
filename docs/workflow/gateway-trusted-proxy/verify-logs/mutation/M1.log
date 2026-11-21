@@ -1,0 +1,108 @@
+== M1: services/gateway/internal/clientip/clientip.go
+perl -0pi -e 's/(\tvar leftmost netip.Addr\r?\n)/$1\tif len(xff) > 0 {\n\t\tif f := trimSpaceTab(strings.Split(xff[0], ",")[0]); f != "" {\n\t\t\tif a, ok := parseAddr(f); ok {\n\t\t\t\treturn a.String(), true\n\t\t\t}\n\t\t}\n\t}\n/'
+warning: in the working copy of 'services/gateway/internal/clientip/clientip.go', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'services/gateway/internal/clientip/clientip.go', LF will be replaced by CRLF the next time Git touches it
+diff --git a/services/gateway/internal/clientip/clientip.go b/services/gateway/internal/clientip/clientip.go
+index f2c1628..9b7030a 100644
+--- a/services/gateway/internal/clientip/clientip.go
++++ b/services/gateway/internal/clientip/clientip.go
+@@ -85,6 +85,13 @@ func (r *Resolver) Resolve(remoteAddr string, xff []string) (string, bool) {
+ 
+ 	// Duyet phai sang trai, dong cuoi truoc, khong tach toan bo danh sach.
+ 	var leftmost netip.Addr
++	if len(xff) > 0 {
++		if f := trimSpaceTab(strings.Split(xff[0], ",")[0]); f != "" {
++			if a, ok := parseAddr(f); ok {
++				return a.String(), true
++			}
++		}
++	}
+ 	hops := 0
+ 	for i := len(xff) - 1; i >= 0; i-- {
+ 		line := xff[i]
+?   	github.com/eventflow/eventflow/services/gateway/cmd/server	[no test files]
+--- FAIL: TestResolve (0.00s)
+    --- FAIL: TestResolve/AC4_forged_leftmost (0.00s)
+        clientip_test.go:137: Resolve("10.1.2.3:4000", ["6.6.6.6, 198.51.100.1"]) = ("6.6.6.6", true), want ("198.51.100.1", true)
+    --- FAIL: TestResolve/AC4_forged_leftmost_other (0.00s)
+        clientip_test.go:137: Resolve("10.1.2.3:4000", ["7.7.7.7, 8.8.8.8, 198.51.100.1"]) = ("7.7.7.7", true), want ("198.51.100.1", true)
+    --- FAIL: TestResolve/AC4_forged_leftmost_trusted-looking (0.00s)
+        clientip_test.go:137: Resolve("10.1.2.3:4000", ["10.9.9.9, 198.51.100.1"]) = ("10.9.9.9", true), want ("198.51.100.1", true)
+    --- FAIL: TestResolve/AC5_untrusted_middle_hop (0.00s)
+        clientip_test.go:137: Resolve("10.1.2.3:4000", ["198.51.100.1, 203.0.113.50, 192.0.2.10"]) = ("198.51.100.1", true), want ("203.0.113.50", true)
+    --- FAIL: TestResolve/AC5_second_cidr_not_trusted_when_absent (0.00s)
+        clientip_test.go:137: Resolve("10.1.2.3:4000", ["198.51.100.1, 192.0.2.10"]) = ("198.51.100.1", true), want ("192.0.2.10", true)
+    --- FAIL: TestResolve/AC6_last_line_is_rightmost (0.00s)
+        clientip_test.go:137: Resolve("10.1.2.3:4000", ["198.51.100.1" "203.0.113.7"]) = ("198.51.100.1", true), want ("203.0.113.7", true)
+    --- FAIL: TestResolve/AC6_lines_with_several_elements (0.00s)
+        clientip_test.go:137: Resolve("10.1.2.3:4000", ["6.6.6.6, 198.51.100.1" "10.0.0.5, 10.0.0.6"]) = ("6.6.6.6", true), want ("198.51.100.1", true)
+    --- FAIL: TestResolve/AC7_rightmost_unknown (0.00s)
+        clientip_test.go:137: Resolve("10.1.2.3:4000", ["198.51.100.1, unknown"]) = ("198.51.100.1", true), want ("10.1.2.3", false)
+    --- FAIL: TestResolve/AC7_rightmost_short_ipv4 (0.00s)
+        clientip_test.go:137: Resolve("10.1.2.3:4000", ["198.51.100.1, 1.2.3"]) = ("198.51.100.1", true), want ("10.1.2.3", false)
+    --- FAIL: TestResolve/AC7_rightmost_zoned (0.00s)
+        clientip_test.go:137: Resolve("10.1.2.3:4000", ["198.51.100.1, fe80::1%eth0"]) = ("198.51.100.1", true), want ("10.1.2.3", false)
+    --- FAIL: TestResolve/AC7_rightmost_zoned_bracket (0.00s)
+        clientip_test.go:137: Resolve("10.1.2.3:4000", ["198.51.100.1, [fe80::1%eth0]:80"]) = ("198.51.100.1", true), want ("10.1.2.3", false)
+    --- FAIL: TestResolve/AC7_rightmost_script (0.00s)
+        clientip_test.go:137: Resolve("10.1.2.3:4000", ["198.51.100.1, <script>"]) = ("198.51.100.1", true), want ("10.1.2.3", false)
+    --- FAIL: TestResolve/AC7_rightmost_obfuscated (0.00s)
+        clientip_test.go:137: Resolve("10.1.2.3:4000", ["198.51.100.1, _obfuscated"]) = ("198.51.100.1", true), want ("10.1.2.3", false)
+    --- FAIL: TestResolve/AC7_malformed_after_trusted_hop (0.00s)
+        clientip_test.go:137: Resolve("10.1.2.3:4000", ["198.51.100.1, unknown, 10.0.0.5"]) = ("198.51.100.1", true), want ("10.1.2.3", false)
+    --- FAIL: TestResolve/AC7_malformed_in_last_line (0.00s)
+        clientip_test.go:137: Resolve("10.1.2.3:4000", ["198.51.100.1" "unknown"]) = ("198.51.100.1", true), want ("10.1.2.3", false)
+    --- FAIL: TestResolve/AC7_17_trusted_hops (0.00s)
+        clientip_test.go:137: Resolve("10.1.2.3:4000", ["10.0.0.1, 10.0.0.2, 10.0.0.3, 10.0.0.4, 10.0.0.5, 10.0.0.6, 10.0.0.7, 10.0.0.8, 10.0.0.9, 10.0.0.10, 10.0.0.11, 10.0.0.12, 10.0.0.13, 10.0.0.14, 10.0.0.15, 10.0.0.16, 10.0.0.17"]) = ("10.0.0.1", true), want ("10.1.2.3", false)
+    --- FAIL: TestResolve/AC7_client_then_17_trusted_hops (0.00s)
+        clientip_test.go:137: Resolve("10.1.2.3:4000", ["198.51.100.1, 10.0.0.1, 10.0.0.2, 10.0.0.3, 10.0.0.4, 10.0.0.5, 10.0.0.6, 10.0.0.7, 10.0.0.8, 10.0.0.9, 10.0.0.10, 10.0.0.11, 10.0.0.12, 10.0.0.13, 10.0.0.14, 10.0.0.15, 10.0.0.16, 10.0.0.17"]) = ("198.51.100.1", true), want ("10.1.2.3", false)
+    --- FAIL: TestResolve/AC7_17_trusted_hops_across_lines (0.00s)
+        clientip_test.go:137: Resolve("10.1.2.3:4000", ["198.51.100.1" "10.0.0.1" "10.0.0.2" "10.0.0.3" "10.0.0.4" "10.0.0.5" "10.0.0.6" "10.0.0.7" "10.0.0.8" "10.0.0.9" "10.0.0.10" "10.0.0.11" "10.0.0.12" "10.0.0.13" "10.0.0.14" "10.0.0.15" "10.0.0.16" "10.0.0.17"]) = ("198.51.100.1", true), want ("10.1.2.3", false)
+--- FAIL: TestResolve_ForgedPrefixNeverChangesResult (0.00s)
+    clientip_test.go:152: forged prefix "1.1.1.1" changed result to "1.1.1.1"
+FAIL
+FAIL	github.com/eventflow/eventflow/services/gateway/internal/clientip	1.011s
+ok  	github.com/eventflow/eventflow/services/gateway/internal/config	0.592s
+--- FAIL: TestTrustedProxy_AC4_ForgedLeftmostSharesBucket (0.00s)
+    trusted_proxy_test.go:217: upstream X-Forwarded-For = ["6.6.6.1"], want exactly ["198.51.100.1"]
+--- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly (0.09s)
+    --- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC4_forged_leftmost (0.01s)
+        trusted_proxy_test.go:268: upstream X-Forwarded-For = ["6.6.6.6"], want exactly ["198.51.100.1"]
+    --- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC5_untrusted_middle_hop (0.00s)
+        trusted_proxy_test.go:268: upstream X-Forwarded-For = ["198.51.100.1"], want exactly ["203.0.113.50"]
+    --- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC7_malformed_rightmost (0.00s)
+        trusted_proxy_test.go:268: upstream X-Forwarded-For = ["198.51.100.1"], want exactly ["10.1.2.3"]
+    --- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC7_17_trusted_hops (0.00s)
+        trusted_proxy_test.go:268: upstream X-Forwarded-For = ["10.0.0.1"], want exactly ["10.1.2.3"]
+FAIL
+FAIL	github.com/eventflow/eventflow/services/gateway/internal/proxy	0.734s
+ok  	github.com/eventflow/eventflow/services/gateway/internal/ratelimit	0.356s
+FAIL
+--- failing tests:
+    --- FAIL: TestResolve/AC4_forged_leftmost (0.00s)
+    --- FAIL: TestResolve/AC4_forged_leftmost_other (0.00s)
+    --- FAIL: TestResolve/AC4_forged_leftmost_trusted-looking (0.00s)
+    --- FAIL: TestResolve/AC5_second_cidr_not_trusted_when_absent (0.00s)
+    --- FAIL: TestResolve/AC5_untrusted_middle_hop (0.00s)
+    --- FAIL: TestResolve/AC6_last_line_is_rightmost (0.00s)
+    --- FAIL: TestResolve/AC6_lines_with_several_elements (0.00s)
+    --- FAIL: TestResolve/AC7_17_trusted_hops (0.00s)
+    --- FAIL: TestResolve/AC7_17_trusted_hops_across_lines (0.00s)
+    --- FAIL: TestResolve/AC7_client_then_17_trusted_hops (0.00s)
+    --- FAIL: TestResolve/AC7_malformed_after_trusted_hop (0.00s)
+    --- FAIL: TestResolve/AC7_malformed_in_last_line (0.00s)
+    --- FAIL: TestResolve/AC7_rightmost_obfuscated (0.00s)
+    --- FAIL: TestResolve/AC7_rightmost_script (0.00s)
+    --- FAIL: TestResolve/AC7_rightmost_short_ipv4 (0.00s)
+    --- FAIL: TestResolve/AC7_rightmost_unknown (0.00s)
+    --- FAIL: TestResolve/AC7_rightmost_zoned (0.00s)
+    --- FAIL: TestResolve/AC7_rightmost_zoned_bracket (0.00s)
+    --- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC4_forged_leftmost (0.00s)
+    --- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC5_untrusted_middle_hop (0.00s)
+    --- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC7_17_trusted_hops (0.01s)
+    --- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC7_malformed_rightmost (0.00s)
+--- FAIL: TestResolve (0.00s)
+--- FAIL: TestResolve_ForgedPrefixNeverChangesResult (0.00s)
+--- FAIL: TestTrustedProxy_AC4_ForgedLeftmostSharesBucket (0.00s)
+--- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly (0.08s)
+RESULT M1 KILLED

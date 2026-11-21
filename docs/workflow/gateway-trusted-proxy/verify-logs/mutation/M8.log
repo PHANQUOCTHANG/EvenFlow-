@@ -1,0 +1,33 @@
+== M8: services/gateway/internal/clientip/clientip.go
+perl -0pi -e 's/if p != p\.Masked\(\) \{/if false \&\& p != p.Masked() {/'
+warning: in the working copy of 'services/gateway/internal/clientip/clientip.go', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'services/gateway/internal/clientip/clientip.go', LF will be replaced by CRLF the next time Git touches it
+diff --git a/services/gateway/internal/clientip/clientip.go b/services/gateway/internal/clientip/clientip.go
+index f2c1628..565020c 100644
+--- a/services/gateway/internal/clientip/clientip.go
++++ b/services/gateway/internal/clientip/clientip.go
+@@ -65,7 +65,7 @@ func parseTrustedElement(e string) (netip.Prefix, error) {
+ 	if p.Bits() == 0 {
+ 		return netip.Prefix{}, fmt.Errorf("prefix /0 tin ca the gioi")
+ 	}
+-	if p != p.Masked() {
++	if false && p != p.Masked() {
+ 		return netip.Prefix{}, fmt.Errorf("co bit host, hay dung %s", p.Masked())
+ 	}
+ 	return p, nil
+?   	github.com/eventflow/eventflow/services/gateway/cmd/server	[no test files]
+--- FAIL: TestParseTrusted (0.00s)
+    clientip_test.go:226: ParseTrusted("10.0.0.1/8") = [10.0.0.1/8], want error
+FAIL
+FAIL	github.com/eventflow/eventflow/services/gateway/internal/clientip	0.986s
+--- FAIL: TestLoad_TrustedProxyCIDRsHongThiLoi (0.00s)
+    config_trusted_test.go:63: TRUSTED_PROXY_CIDRS="10.0.0.1/8": Load ok ([10.0.0.1/8]), want error
+FAIL
+FAIL	github.com/eventflow/eventflow/services/gateway/internal/config	0.601s
+ok  	github.com/eventflow/eventflow/services/gateway/internal/proxy	0.696s
+ok  	github.com/eventflow/eventflow/services/gateway/internal/ratelimit	0.364s
+FAIL
+--- failing tests:
+--- FAIL: TestLoad_TrustedProxyCIDRsHongThiLoi (0.00s)
+--- FAIL: TestParseTrusted (0.00s)
+RESULT M8 KILLED

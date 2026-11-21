@@ -1,0 +1,516 @@
+== HEAD (exit 3)
+=== Symbol Results ===
+
+Vulnerability #1: GO-2026-6859
+    HTTP/1 server crash due to MaxBytesReader header race in net/http
+  More info: https://pkg.go.dev/vuln/GO-2026-6859
+  Standard library
+    Found in: net/http@go1.27
+    Fixed in: net/http@go1.27.4
+    Example traces found:
+      #1: internal/proxy/gateway.go:19:2: proxy.init calls otelx.init, which eventually calls http.CanonicalHeaderKey
+      #2: cmd/server/main.go:39:34: server.run calls otelx.Init, which eventually calls http.Client.Do
+      #3: internal/proxy/gateway.go:19:2: proxy.init calls otelx.init, which eventually calls http.HandleFunc
+      #4: internal/proxy/gateway.go:9:2: proxy.init calls http.init, which eventually calls http.Header.Add
+      #5: internal/proxy/gateway.go:19:2: proxy.init calls otelx.init, which eventually calls http.Header.Del
+      #6: cmd/server/main.go:39:34: server.run calls otelx.Init, which eventually calls http.Header.Get
+      #7: cmd/server/main.go:39:34: server.run calls otelx.Init, which eventually calls http.Header.Set
+      #8: cmd/server/main.go:39:34: server.run calls otelx.Init, which eventually calls http.NewRequestWithContext
+      #9: cmd/server/main.go:39:34: server.run calls otelx.Init, which eventually calls http.ParseTime
+      #10: internal/proxy/gateway.go:9:2: proxy.init calls http.init, which eventually calls http.ReadResponse
+      #11: internal/proxy/gateway.go:9:2: proxy.init calls http.init, which eventually calls http.Request.Write
+      #12: internal/proxy/gateway.go:9:2: proxy.init calls http.init, which eventually calls http.Response.Write
+      #13: internal/proxy/gateway.go:83:13: proxy.New calls http.ServeMux.Handle
+      #14: internal/proxy/gateway.go:77:14: proxy.New calls httpx.Health, which calls http.ServeMux.HandleFunc
+      #15: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls http.Server.Close
+      #16: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls http.Server.Serve
+      #17: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls http.Server.Shutdown
+      #18: internal/proxy/gateway.go:218:60: proxy.newReverseProxy calls http.Transport.Clone
+      #19: cmd/server/main.go:39:34: server.run calls otelx.Init, which eventually calls http.body.Close
+      #20: internal/proxy/gateway.go:19:2: proxy.init calls otelx.init, which eventually calls http.body.Read
+      #21: cmd/server/main.go:39:34: server.run calls otelx.Init, which eventually calls http.bodyEOFSignal.Close
+      #22: internal/proxy/gateway.go:9:2: proxy.init calls http.init, which eventually calls http.bodyEOFSignal.Read
+      #23: internal/proxy/gateway.go:9:2: proxy.init calls http.init, which eventually calls http.bodyLocked.Read
+      #24: internal/config/config.go:82:26: config.Load calls fmt.Errorf, which eventually calls http.bufioFlushWriter.Write
+      #25: cmd/server/main.go:39:34: server.run calls otelx.Init, which eventually calls http.cancelTimerBody.Close
+      #26: internal/proxy/gateway.go:9:2: proxy.init calls http.init, which eventually calls http.cancelTimerBody.Read
+      #27: internal/config/config.go:82:26: config.Load calls fmt.Errorf, which eventually calls http.checkConnErrorWriter.Write
+      #28: internal/config/config.go:82:26: config.Load calls fmt.Errorf, which eventually calls http.chunkWriter.Write
+      #29: internal/proxy/gateway.go:9:2: proxy.init calls http.init, which eventually calls http.connReader.Read
+      #30: internal/proxy/gateway.go:9:2: proxy.init calls http.init, which eventually calls http.expectContinueReader.Close
+      #31: internal/proxy/gateway.go:19:2: proxy.init calls otelx.init, which eventually calls http.expectContinueReader.Read
+      #32: cmd/server/main.go:39:34: server.run calls otelx.Init, which eventually calls http.gzipReader.Close
+      #33: internal/proxy/gateway.go:9:2: proxy.init calls http.init, which eventually calls http.gzipReader.Read
+      #34: internal/proxy/gateway.go:9:2: proxy.init calls http.init, which eventually calls http.loggingConn.Read
+      #35: internal/config/config.go:82:26: config.Load calls fmt.Errorf, which eventually calls http.loggingConn.Write
+      #36: internal/proxy/gateway.go:9:2: proxy.init calls http.init, which eventually calls http.maxBytesReader.Close
+      #37: internal/proxy/gateway.go:19:2: proxy.init calls otelx.init, which eventually calls http.maxBytesReader.Read
+      #38: internal/proxy/gateway.go:9:2: proxy.init calls http.init, which eventually calls http.onceCloseListener.Close
+      #39: internal/proxy/gateway.go:9:2: proxy.init calls http.init, which eventually calls http.persistConn.Read
+      #40: cmd/server/main.go:39:34: server.run calls otelx.Init, which eventually calls http.persistConnWriter.ReadFrom
+      #41: internal/config/config.go:82:26: config.Load calls fmt.Errorf, which eventually calls http.persistConnWriter.Write
+      #42: internal/proxy/gateway.go:9:2: proxy.init calls http.init, which eventually calls http.readTrackingBody.Close
+      #43: internal/proxy/gateway.go:19:2: proxy.init calls otelx.init, which eventually calls http.readTrackingBody.Read
+      #44: internal/proxy/gateway.go:9:2: proxy.init calls http.init, which eventually calls http.readWriteCloserBody.Read
+      #45: cmd/server/main.go:39:34: server.run calls otelx.Init, which eventually calls http.response.ReadFrom
+      #46: internal/config/config.go:82:26: config.Load calls fmt.Errorf, which eventually calls http.response.Write
+      #47: internal/config/config.go:82:26: config.Load calls fmt.Errorf, which eventually calls http.response.WriteHeader
+      #48: internal/config/config.go:82:26: config.Load calls fmt.Errorf, which eventually calls http.response.WriteString
+      #49: internal/config/config.go:82:26: config.Load calls fmt.Errorf, which eventually calls http.timeoutWriter.Write
+      #50: internal/config/config.go:82:26: config.Load calls fmt.Errorf, which eventually calls http.timeoutWriter.WriteHeader
+      #51: internal/config/config.go:82:26: config.Load calls fmt.Errorf, which eventually calls http.transportReadFromServerError.Error
+
+Vulnerability #2: GO-2026-6809
+    Distrust compromised intermediate certificates in crypto/x509
+  More info: https://pkg.go.dev/vuln/GO-2026-6809
+  Standard library
+    Found in: crypto/x509@go1.27
+    Fixed in: crypto/x509@go1.27.3
+    Example traces found:
+      #1: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls x509.Certificate.Verify
+
+Vulnerability #3: GO-2026-6617
+    HTTP/2 server crash due to HPACK encoder race in net/http
+  More info: https://pkg.go.dev/vuln/GO-2026-6617
+  Module: golang.org/x/net
+    Found in: golang.org/x/net@v0.58.0
+    Fixed in: golang.org/x/net@v0.60.0
+    Example traces found:
+      #1: internal/config/config.go:82:26: config.Load calls fmt.Errorf, which eventually calls http2.ConnectionError.Error
+      #2: internal/config/config.go:82:26: config.Load calls fmt.Errorf, which eventually calls http2.ErrCode.String
+      #3: internal/config/config.go:82:26: config.Load calls fmt.Errorf, which eventually calls http2.FrameHeader.String
+      #4: internal/config/config.go:82:26: config.Load calls fmt.Errorf, which eventually calls http2.FrameType.String
+      #5: internal/proxy/gateway.go:218:60: proxy.newReverseProxy calls http.Transport.Clone, which eventually calls http2.Framer.ReadFrame
+      #6: internal/proxy/gateway.go:218:60: proxy.newReverseProxy calls http.Transport.Clone, which eventually calls http2.Framer.ReadFrameForHeader
+      #7: internal/proxy/gateway.go:218:60: proxy.newReverseProxy calls http.Transport.Clone, which eventually calls http2.Framer.ReadFrameHeader
+      #8: internal/proxy/gateway.go:218:60: proxy.newReverseProxy calls http.Transport.Clone, which eventually calls http2.Framer.WriteContinuation
+      #9: internal/proxy/gateway.go:218:60: proxy.newReverseProxy calls http.Transport.Clone, which eventually calls http2.Framer.WriteGoAway
+      #10: internal/proxy/gateway.go:218:60: proxy.newReverseProxy calls http.Transport.Clone, which eventually calls http2.Framer.WriteHeaders
+      #11: internal/proxy/gateway.go:218:60: proxy.newReverseProxy calls http.Transport.Clone, which eventually calls http2.Framer.WritePing
+      #12: internal/proxy/gateway.go:218:60: proxy.newReverseProxy calls http.Transport.Clone, which eventually calls http2.Framer.WriteRSTStream
+      #13: internal/proxy/gateway.go:218:60: proxy.newReverseProxy calls http.Transport.Clone, which eventually calls http2.Framer.WriteSettings
+      #14: internal/proxy/gateway.go:218:60: proxy.newReverseProxy calls http.Transport.Clone, which eventually calls http2.Framer.WriteSettingsAck
+      #15: internal/proxy/gateway.go:218:60: proxy.newReverseProxy calls http.Transport.Clone, which eventually calls http2.Framer.WriteWindowUpdate
+      #16: internal/config/config.go:82:26: config.Load calls fmt.Errorf, which eventually calls http2.SettingID.String
+      #17: internal/proxy/gateway.go:218:60: proxy.newReverseProxy calls http.Transport.Clone, which eventually calls http2.SettingsFrame.ForeachSetting
+      #18: internal/config/config.go:82:26: config.Load calls fmt.Errorf, which eventually calls http2.StreamError.Error
+      #19: internal/proxy/gateway.go:161:21: proxy.routeHandler calls httputil.ReverseProxy.ServeHTTP, which eventually calls http2.Transport.RoundTrip
+      #20: internal/config/config.go:82:26: config.Load calls fmt.Errorf, which eventually calls http2.connError.Error
+      #21: internal/config/config.go:82:26: config.Load calls fmt.Errorf, which eventually calls http2.duplicatePseudoHeaderError.Error
+      #22: internal/config/config.go:82:26: config.Load calls fmt.Errorf, which eventually calls http2.headerFieldNameError.Error
+      #23: internal/config/config.go:82:26: config.Load calls fmt.Errorf, which eventually calls http2.headerFieldValueError.Error
+      #24: internal/config/config.go:82:26: config.Load calls fmt.Errorf, which eventually calls http2.pseudoHeaderError.Error
+
+  Standard library
+    Found in: net/http/internal/http2@go1.27
+    Fixed in: net/http/internal/http2@go1.27.2
+    Example traces found:
+      #1: internal/proxy/gateway.go:161:21: proxy.routeHandler calls httputil.ReverseProxy.ServeHTTP, which eventually calls http2.NetHTTPClientConn.Close
+      #2: internal/proxy/gateway.go:161:21: proxy.routeHandler calls httputil.ReverseProxy.ServeHTTP, which eventually calls http2.NetHTTPClientConn.Close
+      #3: internal/proxy/gateway.go:161:21: proxy.routeHandler calls httputil.ReverseProxy.ServeHTTP, which eventually calls http2.NetHTTPClientConn.RoundTrip
+      #4: internal/proxy/gateway.go:161:21: proxy.routeHandler calls httputil.ReverseProxy.ServeHTTP, which eventually calls http2.NetHTTPClientConn.RoundTrip
+      #5: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls http2.Server.GracefulShutdown
+      #6: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls http2.Server.GracefulShutdown
+      #7: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls http2.Server.ServeConn
+      #8: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls http2.Server.ServeConn
+      #9: internal/proxy/gateway.go:161:21: proxy.routeHandler calls httputil.ReverseProxy.ServeHTTP, which eventually calls http2.Transport.AddConn
+      #10: internal/proxy/gateway.go:161:21: proxy.routeHandler calls httputil.ReverseProxy.ServeHTTP, which eventually calls http2.Transport.AddConn
+      #11: internal/proxy/gateway.go:161:21: proxy.routeHandler calls httputil.ReverseProxy.ServeHTTP, which eventually calls http2.Transport.NewClientConn
+      #12: internal/proxy/gateway.go:161:21: proxy.routeHandler calls httputil.ReverseProxy.ServeHTTP, which eventually calls http2.Transport.NewClientConn
+      #13: internal/proxy/gateway.go:161:21: proxy.routeHandler calls httputil.ReverseProxy.ServeHTTP, which eventually calls http2.Transport.RoundTrip
+      #14: internal/proxy/gateway.go:161:21: proxy.routeHandler calls httputil.ReverseProxy.ServeHTTP, which eventually calls http2.Transport.RoundTrip
+      #15: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls http2.bufferedWriterTimeoutWriter.Write
+      #16: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls http2.bufferedWriterTimeoutWriter.Write
+      #17: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls http2.chunkWriter.Write
+      #18: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls http2.chunkWriter.Write
+      #19: internal/proxy/gateway.go:161:21: proxy.routeHandler calls httputil.ReverseProxy.ServeHTTP, which calls http2.gzipReader.Close
+      #20: internal/proxy/gateway.go:161:21: proxy.routeHandler calls httputil.ReverseProxy.ServeHTTP, which calls http2.gzipReader.Close
+      #21: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls http2.gzipReader.Read
+      #22: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls http2.gzipReader.Read
+      #23: internal/proxy/gateway.go:161:21: proxy.routeHandler calls httputil.ReverseProxy.ServeHTTP, which calls http2.requestBody.Close
+      #24: internal/proxy/gateway.go:161:21: proxy.routeHandler calls httputil.ReverseProxy.ServeHTTP, which calls http2.requestBody.Close
+      #25: internal/proxy/gateway.go:161:21: proxy.routeHandler calls httputil.ReverseProxy.ServeHTTP, which eventually calls http2.responseWriter.FlushError
+      #26: internal/proxy/gateway.go:161:21: proxy.routeHandler calls httputil.ReverseProxy.ServeHTTP, which eventually calls http2.responseWriter.FlushError
+      #27: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls http2.responseWriter.Write
+      #28: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls http2.responseWriter.Write
+      #29: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls http2.responseWriter.WriteHeader
+      #30: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls http2.responseWriter.WriteHeader
+      #31: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls http2.responseWriter.WriteString
+      #32: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls http2.responseWriter.WriteString
+      #33: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls http2.stickyErrWriter.Write
+      #34: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls http2.stickyErrWriter.Write
+      #35: internal/proxy/gateway.go:161:21: proxy.routeHandler calls httputil.ReverseProxy.ServeHTTP, which calls http2.transportResponseBody.Close
+      #36: internal/proxy/gateway.go:161:21: proxy.routeHandler calls httputil.ReverseProxy.ServeHTTP, which calls http2.transportResponseBody.Close
+      #37: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls http2.transportResponseBody.Read
+      #38: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls http2.transportResponseBody.Read
+
+Vulnerability #4: GO-2026-6613
+    HTTP/1 server connection desynchronization after 2xx CONNECT response in
+    net/http
+  More info: https://pkg.go.dev/vuln/GO-2026-6613
+  Standard library
+    Found in: net/http@go1.27
+    Fixed in: net/http@go1.27.2
+    Example traces found:
+      #1: internal/proxy/gateway.go:19:2: proxy.init calls otelx.init, which eventually calls http.CanonicalHeaderKey
+      #2: cmd/server/main.go:39:34: server.run calls otelx.Init, which eventually calls http.Client.Do
+      #3: internal/proxy/gateway.go:19:2: proxy.init calls otelx.init, which eventually calls http.HandleFunc
+      #4: internal/proxy/gateway.go:9:2: proxy.init calls http.init, which eventually calls http.Header.Add
+      #5: internal/proxy/gateway.go:19:2: proxy.init calls otelx.init, which eventually calls http.Header.Del
+      #6: cmd/server/main.go:39:34: server.run calls otelx.Init, which eventually calls http.Header.Get
+      #7: cmd/server/main.go:39:34: server.run calls otelx.Init, which eventually calls http.Header.Set
+      #8: cmd/server/main.go:39:34: server.run calls otelx.Init, which eventually calls http.NewRequestWithContext
+      #9: cmd/server/main.go:39:34: server.run calls otelx.Init, which eventually calls http.ParseTime
+      #10: internal/proxy/gateway.go:9:2: proxy.init calls http.init, which eventually calls http.ReadResponse
+      #11: internal/proxy/gateway.go:9:2: proxy.init calls http.init, which eventually calls http.Request.Write
+      #12: internal/proxy/gateway.go:9:2: proxy.init calls http.init, which eventually calls http.Response.Write
+      #13: internal/proxy/gateway.go:83:13: proxy.New calls http.ServeMux.Handle
+      #14: internal/proxy/gateway.go:77:14: proxy.New calls httpx.Health, which calls http.ServeMux.HandleFunc
+      #15: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls http.Server.Close
+      #16: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls http.Server.Serve
+      #17: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls http.Server.Shutdown
+      #18: internal/proxy/gateway.go:218:60: proxy.newReverseProxy calls http.Transport.Clone
+      #19: cmd/server/main.go:39:34: server.run calls otelx.Init, which eventually calls http.body.Close
+      #20: internal/proxy/gateway.go:19:2: proxy.init calls otelx.init, which eventually calls http.body.Read
+      #21: cmd/server/main.go:39:34: server.run calls otelx.Init, which eventually calls http.bodyEOFSignal.Close
+      #22: internal/proxy/gateway.go:9:2: proxy.init calls http.init, which eventually calls http.bodyEOFSignal.Read
+      #23: internal/proxy/gateway.go:9:2: proxy.init calls http.init, which eventually calls http.bodyLocked.Read
+      #24: internal/config/config.go:82:26: config.Load calls fmt.Errorf, which eventually calls http.bufioFlushWriter.Write
+      #25: cmd/server/main.go:39:34: server.run calls otelx.Init, which eventually calls http.cancelTimerBody.Close
+      #26: internal/proxy/gateway.go:9:2: proxy.init calls http.init, which eventually calls http.cancelTimerBody.Read
+      #27: internal/config/config.go:82:26: config.Load calls fmt.Errorf, which eventually calls http.checkConnErrorWriter.Write
+      #28: internal/config/config.go:82:26: config.Load calls fmt.Errorf, which eventually calls http.chunkWriter.Write
+      #29: internal/proxy/gateway.go:9:2: proxy.init calls http.init, which eventually calls http.connReader.Read
+      #30: internal/proxy/gateway.go:9:2: proxy.init calls http.init, which eventually calls http.expectContinueReader.Close
+      #31: internal/proxy/gateway.go:19:2: proxy.init calls otelx.init, which eventually calls http.expectContinueReader.Read
+      #32: cmd/server/main.go:39:34: server.run calls otelx.Init, which eventually calls http.gzipReader.Close
+      #33: internal/proxy/gateway.go:9:2: proxy.init calls http.init, which eventually calls http.gzipReader.Read
+      #34: internal/proxy/gateway.go:9:2: proxy.init calls http.init, which eventually calls http.loggingConn.Read
+      #35: internal/config/config.go:82:26: config.Load calls fmt.Errorf, which eventually calls http.loggingConn.Write
+      #36: internal/proxy/gateway.go:9:2: proxy.init calls http.init, which eventually calls http.maxBytesReader.Close
+      #37: internal/proxy/gateway.go:19:2: proxy.init calls otelx.init, which eventually calls http.maxBytesReader.Read
+      #38: internal/proxy/gateway.go:9:2: proxy.init calls http.init, which eventually calls http.onceCloseListener.Close
+      #39: internal/proxy/gateway.go:9:2: proxy.init calls http.init, which eventually calls http.persistConn.Read
+      #40: cmd/server/main.go:39:34: server.run calls otelx.Init, which eventually calls http.persistConnWriter.ReadFrom
+      #41: internal/config/config.go:82:26: config.Load calls fmt.Errorf, which eventually calls http.persistConnWriter.Write
+      #42: internal/proxy/gateway.go:9:2: proxy.init calls http.init, which eventually calls http.readTrackingBody.Close
+      #43: internal/proxy/gateway.go:19:2: proxy.init calls otelx.init, which eventually calls http.readTrackingBody.Read
+      #44: internal/proxy/gateway.go:9:2: proxy.init calls http.init, which eventually calls http.readWriteCloserBody.Read
+      #45: cmd/server/main.go:39:34: server.run calls otelx.Init, which eventually calls http.response.ReadFrom
+      #46: internal/config/config.go:82:26: config.Load calls fmt.Errorf, which eventually calls http.response.Write
+      #47: internal/config/config.go:82:26: config.Load calls fmt.Errorf, which eventually calls http.response.WriteHeader
+      #48: internal/config/config.go:82:26: config.Load calls fmt.Errorf, which eventually calls http.response.WriteString
+      #49: internal/config/config.go:82:26: config.Load calls fmt.Errorf, which eventually calls http.timeoutWriter.Write
+      #50: internal/config/config.go:82:26: config.Load calls fmt.Errorf, which eventually calls http.timeoutWriter.WriteHeader
+      #51: internal/config/config.go:82:26: config.Load calls fmt.Errorf, which eventually calls http.transportReadFromServerError.Error
+
+Vulnerability #5: GO-2026-6612
+    Double flow control refund on HTTP/2 server streams in net/http
+  More info: https://pkg.go.dev/vuln/GO-2026-6612
+  Module: golang.org/x/net
+    Found in: golang.org/x/net@v0.58.0
+    Fixed in: golang.org/x/net@v0.60.0
+    Example traces found:
+      #1: internal/config/config.go:82:26: config.Load calls fmt.Errorf, which eventually calls http2.ConnectionError.Error
+      #2: internal/config/config.go:82:26: config.Load calls fmt.Errorf, which eventually calls http2.ErrCode.String
+      #3: internal/config/config.go:82:26: config.Load calls fmt.Errorf, which eventually calls http2.FrameHeader.String
+      #4: internal/config/config.go:82:26: config.Load calls fmt.Errorf, which eventually calls http2.FrameType.String
+      #5: internal/proxy/gateway.go:218:60: proxy.newReverseProxy calls http.Transport.Clone, which eventually calls http2.Framer.ReadFrame
+      #6: internal/proxy/gateway.go:218:60: proxy.newReverseProxy calls http.Transport.Clone, which eventually calls http2.Framer.ReadFrameForHeader
+      #7: internal/proxy/gateway.go:218:60: proxy.newReverseProxy calls http.Transport.Clone, which eventually calls http2.Framer.ReadFrameHeader
+      #8: internal/proxy/gateway.go:218:60: proxy.newReverseProxy calls http.Transport.Clone, which eventually calls http2.Framer.WriteContinuation
+      #9: internal/proxy/gateway.go:218:60: proxy.newReverseProxy calls http.Transport.Clone, which eventually calls http2.Framer.WriteGoAway
+      #10: internal/proxy/gateway.go:218:60: proxy.newReverseProxy calls http.Transport.Clone, which eventually calls http2.Framer.WriteHeaders
+      #11: internal/proxy/gateway.go:218:60: proxy.newReverseProxy calls http.Transport.Clone, which eventually calls http2.Framer.WritePing
+      #12: internal/proxy/gateway.go:218:60: proxy.newReverseProxy calls http.Transport.Clone, which eventually calls http2.Framer.WriteRSTStream
+      #13: internal/proxy/gateway.go:218:60: proxy.newReverseProxy calls http.Transport.Clone, which eventually calls http2.Framer.WriteSettings
+      #14: internal/proxy/gateway.go:218:60: proxy.newReverseProxy calls http.Transport.Clone, which eventually calls http2.Framer.WriteSettingsAck
+      #15: internal/proxy/gateway.go:218:60: proxy.newReverseProxy calls http.Transport.Clone, which eventually calls http2.Framer.WriteWindowUpdate
+      #16: internal/config/config.go:82:26: config.Load calls fmt.Errorf, which eventually calls http2.SettingID.String
+      #17: internal/proxy/gateway.go:218:60: proxy.newReverseProxy calls http.Transport.Clone, which eventually calls http2.SettingsFrame.ForeachSetting
+      #18: internal/config/config.go:82:26: config.Load calls fmt.Errorf, which eventually calls http2.StreamError.Error
+      #19: internal/proxy/gateway.go:161:21: proxy.routeHandler calls httputil.ReverseProxy.ServeHTTP, which eventually calls http2.Transport.RoundTrip
+      #20: internal/config/config.go:82:26: config.Load calls fmt.Errorf, which eventually calls http2.connError.Error
+      #21: internal/config/config.go:82:26: config.Load calls fmt.Errorf, which eventually calls http2.duplicatePseudoHeaderError.Error
+      #22: internal/config/config.go:82:26: config.Load calls fmt.Errorf, which eventually calls http2.headerFieldNameError.Error
+      #23: internal/config/config.go:82:26: config.Load calls fmt.Errorf, which eventually calls http2.headerFieldValueError.Error
+      #24: internal/config/config.go:82:26: config.Load calls fmt.Errorf, which eventually calls http2.pseudoHeaderError.Error
+
+  Standard library
+    Found in: net/http/internal/http2@go1.27
+    Fixed in: net/http/internal/http2@go1.27.2
+    Example traces found:
+      #1: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls http2.Server.ServeConn
+      #2: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls http2.Server.ServeConn
+      #3: internal/proxy/gateway.go:161:21: proxy.routeHandler calls httputil.ReverseProxy.ServeHTTP, which calls http2.requestBody.Close
+      #4: internal/proxy/gateway.go:161:21: proxy.routeHandler calls httputil.ReverseProxy.ServeHTTP, which calls http2.requestBody.Close
+      #5: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls http2.requestBody.Read
+      #6: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls http2.requestBody.Read
+
+Vulnerability #6: GO-2026-6611
+    Excessive CPU consumption from repeated initial window changes in net/http
+  More info: https://pkg.go.dev/vuln/GO-2026-6611
+  Module: golang.org/x/net
+    Found in: golang.org/x/net@v0.58.0
+    Fixed in: golang.org/x/net@v0.60.0
+    Example traces found:
+      #1: internal/config/config.go:82:26: config.Load calls fmt.Errorf, which eventually calls http2.ConnectionError.Error
+      #2: internal/config/config.go:82:26: config.Load calls fmt.Errorf, which eventually calls http2.ErrCode.String
+      #3: internal/config/config.go:82:26: config.Load calls fmt.Errorf, which eventually calls http2.FrameHeader.String
+      #4: internal/config/config.go:82:26: config.Load calls fmt.Errorf, which eventually calls http2.FrameType.String
+      #5: internal/proxy/gateway.go:218:60: proxy.newReverseProxy calls http.Transport.Clone, which eventually calls http2.Framer.ReadFrame
+      #6: internal/proxy/gateway.go:218:60: proxy.newReverseProxy calls http.Transport.Clone, which eventually calls http2.Framer.ReadFrameForHeader
+      #7: internal/proxy/gateway.go:218:60: proxy.newReverseProxy calls http.Transport.Clone, which eventually calls http2.Framer.ReadFrameHeader
+      #8: internal/proxy/gateway.go:218:60: proxy.newReverseProxy calls http.Transport.Clone, which eventually calls http2.Framer.WriteContinuation
+      #9: internal/proxy/gateway.go:218:60: proxy.newReverseProxy calls http.Transport.Clone, which eventually calls http2.Framer.WriteGoAway
+      #10: internal/proxy/gateway.go:218:60: proxy.newReverseProxy calls http.Transport.Clone, which eventually calls http2.Framer.WriteHeaders
+      #11: internal/proxy/gateway.go:218:60: proxy.newReverseProxy calls http.Transport.Clone, which eventually calls http2.Framer.WritePing
+      #12: internal/proxy/gateway.go:218:60: proxy.newReverseProxy calls http.Transport.Clone, which eventually calls http2.Framer.WriteRSTStream
+      #13: internal/proxy/gateway.go:218:60: proxy.newReverseProxy calls http.Transport.Clone, which eventually calls http2.Framer.WriteSettings
+      #14: internal/proxy/gateway.go:218:60: proxy.newReverseProxy calls http.Transport.Clone, which eventually calls http2.Framer.WriteSettingsAck
+      #15: internal/proxy/gateway.go:218:60: proxy.newReverseProxy calls http.Transport.Clone, which eventually calls http2.Framer.WriteWindowUpdate
+      #16: internal/config/config.go:82:26: config.Load calls fmt.Errorf, which eventually calls http2.SettingID.String
+      #17: internal/proxy/gateway.go:218:60: proxy.newReverseProxy calls http.Transport.Clone, which eventually calls http2.SettingsFrame.ForeachSetting
+      #18: internal/config/config.go:82:26: config.Load calls fmt.Errorf, which eventually calls http2.StreamError.Error
+      #19: internal/proxy/gateway.go:161:21: proxy.routeHandler calls httputil.ReverseProxy.ServeHTTP, which eventually calls http2.Transport.RoundTrip
+      #20: internal/config/config.go:82:26: config.Load calls fmt.Errorf, which eventually calls http2.connError.Error
+      #21: internal/config/config.go:82:26: config.Load calls fmt.Errorf, which eventually calls http2.duplicatePseudoHeaderError.Error
+      #22: internal/config/config.go:82:26: config.Load calls fmt.Errorf, which eventually calls http2.headerFieldNameError.Error
+      #23: internal/config/config.go:82:26: config.Load calls fmt.Errorf, which eventually calls http2.headerFieldValueError.Error
+      #24: internal/config/config.go:82:26: config.Load calls fmt.Errorf, which eventually calls http2.pseudoHeaderError.Error
+
+  Standard library
+    Found in: net/http/internal/http2@go1.27
+    Fixed in: net/http/internal/http2@go1.27.2
+    Example traces found:
+      #1: internal/proxy/gateway.go:161:21: proxy.routeHandler calls httputil.ReverseProxy.ServeHTTP, which eventually calls http2.NetHTTPClientConn.Close
+      #2: internal/proxy/gateway.go:161:21: proxy.routeHandler calls httputil.ReverseProxy.ServeHTTP, which eventually calls http2.NetHTTPClientConn.Close
+      #3: internal/proxy/gateway.go:161:21: proxy.routeHandler calls httputil.ReverseProxy.ServeHTTP, which eventually calls http2.NetHTTPClientConn.RoundTrip
+      #4: internal/proxy/gateway.go:161:21: proxy.routeHandler calls httputil.ReverseProxy.ServeHTTP, which eventually calls http2.NetHTTPClientConn.RoundTrip
+      #5: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls http2.Server.GracefulShutdown
+      #6: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls http2.Server.GracefulShutdown
+      #7: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls http2.Server.ServeConn
+      #8: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls http2.Server.ServeConn
+      #9: internal/proxy/gateway.go:161:21: proxy.routeHandler calls httputil.ReverseProxy.ServeHTTP, which eventually calls http2.Transport.AddConn
+      #10: internal/proxy/gateway.go:161:21: proxy.routeHandler calls httputil.ReverseProxy.ServeHTTP, which eventually calls http2.Transport.AddConn
+      #11: internal/proxy/gateway.go:161:21: proxy.routeHandler calls httputil.ReverseProxy.ServeHTTP, which eventually calls http2.Transport.NewClientConn
+      #12: internal/proxy/gateway.go:161:21: proxy.routeHandler calls httputil.ReverseProxy.ServeHTTP, which eventually calls http2.Transport.NewClientConn
+      #13: internal/proxy/gateway.go:161:21: proxy.routeHandler calls httputil.ReverseProxy.ServeHTTP, which eventually calls http2.Transport.RoundTrip
+      #14: internal/proxy/gateway.go:161:21: proxy.routeHandler calls httputil.ReverseProxy.ServeHTTP, which eventually calls http2.Transport.RoundTrip
+      #15: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls http2.bufferedWriterTimeoutWriter.Write
+      #16: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls http2.bufferedWriterTimeoutWriter.Write
+      #17: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls http2.chunkWriter.Write
+      #18: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls http2.chunkWriter.Write
+      #19: internal/proxy/gateway.go:161:21: proxy.routeHandler calls httputil.ReverseProxy.ServeHTTP, which calls http2.gzipReader.Close
+      #20: internal/proxy/gateway.go:161:21: proxy.routeHandler calls httputil.ReverseProxy.ServeHTTP, which calls http2.gzipReader.Close
+      #21: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls http2.gzipReader.Read
+      #22: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls http2.gzipReader.Read
+      #23: internal/proxy/gateway.go:161:21: proxy.routeHandler calls httputil.ReverseProxy.ServeHTTP, which calls http2.requestBody.Close
+      #24: internal/proxy/gateway.go:161:21: proxy.routeHandler calls httputil.ReverseProxy.ServeHTTP, which calls http2.requestBody.Close
+      #25: internal/proxy/gateway.go:161:21: proxy.routeHandler calls httputil.ReverseProxy.ServeHTTP, which eventually calls http2.responseWriter.FlushError
+      #26: internal/proxy/gateway.go:161:21: proxy.routeHandler calls httputil.ReverseProxy.ServeHTTP, which eventually calls http2.responseWriter.FlushError
+      #27: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls http2.responseWriter.Write
+      #28: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls http2.responseWriter.Write
+      #29: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls http2.responseWriter.WriteHeader
+      #30: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls http2.responseWriter.WriteHeader
+      #31: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls http2.responseWriter.WriteString
+      #32: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls http2.responseWriter.WriteString
+      #33: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls http2.stickyErrWriter.Write
+      #34: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls http2.stickyErrWriter.Write
+      #35: internal/proxy/gateway.go:161:21: proxy.routeHandler calls httputil.ReverseProxy.ServeHTTP, which calls http2.transportResponseBody.Close
+      #36: internal/proxy/gateway.go:161:21: proxy.routeHandler calls httputil.ReverseProxy.ServeHTTP, which calls http2.transportResponseBody.Close
+      #37: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls http2.transportResponseBody.Read
+      #38: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls http2.transportResponseBody.Read
+
+Vulnerability #7: GO-2026-6610
+    HTTP/2 transport accepts malformed framing-related headers in net/http
+  More info: https://pkg.go.dev/vuln/GO-2026-6610
+  Module: golang.org/x/net
+    Found in: golang.org/x/net@v0.58.0
+    Fixed in: golang.org/x/net@v0.60.0
+    Example traces found:
+      #1: internal/proxy/gateway.go:161:21: proxy.routeHandler calls httputil.ReverseProxy.ServeHTTP, which eventually calls http2.Transport.RoundTrip
+
+  Standard library
+    Found in: net/http/internal/http2@go1.27
+    Fixed in: net/http/internal/http2@go1.27.2
+    Example traces found:
+      #1: internal/proxy/gateway.go:161:21: proxy.routeHandler calls httputil.ReverseProxy.ServeHTTP, which eventually calls http2.Transport.AddConn
+      #2: internal/proxy/gateway.go:161:21: proxy.routeHandler calls httputil.ReverseProxy.ServeHTTP, which eventually calls http2.Transport.AddConn
+      #3: internal/proxy/gateway.go:161:21: proxy.routeHandler calls httputil.ReverseProxy.ServeHTTP, which eventually calls http2.Transport.NewClientConn
+      #4: internal/proxy/gateway.go:161:21: proxy.routeHandler calls httputil.ReverseProxy.ServeHTTP, which eventually calls http2.Transport.NewClientConn
+      #5: internal/proxy/gateway.go:161:21: proxy.routeHandler calls httputil.ReverseProxy.ServeHTTP, which eventually calls http2.Transport.RoundTrip
+      #6: internal/proxy/gateway.go:161:21: proxy.routeHandler calls httputil.ReverseProxy.ServeHTTP, which eventually calls http2.Transport.RoundTrip
+
+Vulnerability #8: GO-2026-6608
+    Memory limit bypass when parsing MIME headers in net/textproto,
+    mime/multipart
+  More info: https://pkg.go.dev/vuln/GO-2026-6608
+  Standard library
+    Found in: net/textproto@go1.27
+    Fixed in: net/textproto@go1.27.2
+    Example traces found:
+      #1: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls multipart.Reader.ReadForm
+      #2: internal/proxy/gateway.go:218:60: proxy.newReverseProxy calls http.Transport.Clone, which eventually calls textproto.Reader.ReadMIMEHeader
+
+Vulnerability #9: GO-2026-6607
+    Reject malformed ECH outer extension references in crypto/tls
+  More info: https://pkg.go.dev/vuln/GO-2026-6607
+  Standard library
+    Found in: crypto/tls@go1.27
+    Fixed in: crypto/tls@go1.27.2
+    Example traces found:
+      #1: internal/proxy/gateway.go:161:21: proxy.routeHandler calls httputil.ReverseProxy.ServeHTTP, which eventually calls tls.Conn.HandshakeContext
+      #2: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls tls.Conn.Read
+      #3: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls tls.Conn.Write
+      #4: internal/proxy/gateway.go:161:21: proxy.routeHandler calls httputil.ReverseProxy.ServeHTTP, which eventually calls tls.Dialer.DialContext
+
+Vulnerability #10: GO-2026-6605
+    HTTP/1 client connection desynchronization after CONNECT rejection in
+    net/http
+  More info: https://pkg.go.dev/vuln/GO-2026-6605
+  Standard library
+    Found in: net/http@go1.27
+    Fixed in: net/http@go1.27.2
+    Example traces found:
+      #1: cmd/server/main.go:39:34: server.run calls otelx.Init, which eventually calls http.Client.Do
+      #2: internal/proxy/gateway.go:161:21: proxy.routeHandler calls httputil.ReverseProxy.ServeHTTP, which calls http.Transport.RoundTrip
+      #3: internal/proxy/gateway.go:161:21: proxy.routeHandler calls httputil.ReverseProxy.ServeHTTP
+
+Vulnerability #11: GO-2026-6603
+    HTTP/2 server memory exhaustion due to Trailer headers in net/http
+  More info: https://pkg.go.dev/vuln/GO-2026-6603
+  Module: golang.org/x/net
+    Found in: golang.org/x/net@v0.58.0
+    Fixed in: golang.org/x/net@v0.60.0
+    Example traces found:
+      #1: internal/config/config.go:82:26: config.Load calls fmt.Errorf, which eventually calls http2.ConnectionError.Error
+      #2: internal/config/config.go:82:26: config.Load calls fmt.Errorf, which eventually calls http2.ErrCode.String
+      #3: internal/config/config.go:82:26: config.Load calls fmt.Errorf, which eventually calls http2.FrameHeader.String
+      #4: internal/config/config.go:82:26: config.Load calls fmt.Errorf, which eventually calls http2.FrameType.String
+      #5: internal/proxy/gateway.go:218:60: proxy.newReverseProxy calls http.Transport.Clone, which eventually calls http2.Framer.ReadFrame
+      #6: internal/proxy/gateway.go:218:60: proxy.newReverseProxy calls http.Transport.Clone, which eventually calls http2.Framer.ReadFrameForHeader
+      #7: internal/proxy/gateway.go:218:60: proxy.newReverseProxy calls http.Transport.Clone, which eventually calls http2.Framer.ReadFrameHeader
+      #8: internal/proxy/gateway.go:218:60: proxy.newReverseProxy calls http.Transport.Clone, which eventually calls http2.Framer.WriteContinuation
+      #9: internal/proxy/gateway.go:218:60: proxy.newReverseProxy calls http.Transport.Clone, which eventually calls http2.Framer.WriteGoAway
+      #10: internal/proxy/gateway.go:218:60: proxy.newReverseProxy calls http.Transport.Clone, which eventually calls http2.Framer.WriteHeaders
+      #11: internal/proxy/gateway.go:218:60: proxy.newReverseProxy calls http.Transport.Clone, which eventually calls http2.Framer.WritePing
+      #12: internal/proxy/gateway.go:218:60: proxy.newReverseProxy calls http.Transport.Clone, which eventually calls http2.Framer.WriteRSTStream
+      #13: internal/proxy/gateway.go:218:60: proxy.newReverseProxy calls http.Transport.Clone, which eventually calls http2.Framer.WriteSettings
+      #14: internal/proxy/gateway.go:218:60: proxy.newReverseProxy calls http.Transport.Clone, which eventually calls http2.Framer.WriteSettingsAck
+      #15: internal/proxy/gateway.go:218:60: proxy.newReverseProxy calls http.Transport.Clone, which eventually calls http2.Framer.WriteWindowUpdate
+      #16: internal/config/config.go:82:26: config.Load calls fmt.Errorf, which eventually calls http2.SettingID.String
+      #17: internal/proxy/gateway.go:218:60: proxy.newReverseProxy calls http.Transport.Clone, which eventually calls http2.SettingsFrame.ForeachSetting
+      #18: internal/config/config.go:82:26: config.Load calls fmt.Errorf, which eventually calls http2.StreamError.Error
+      #19: internal/proxy/gateway.go:161:21: proxy.routeHandler calls httputil.ReverseProxy.ServeHTTP, which eventually calls http2.Transport.RoundTrip
+      #20: internal/config/config.go:82:26: config.Load calls fmt.Errorf, which eventually calls http2.connError.Error
+      #21: internal/config/config.go:82:26: config.Load calls fmt.Errorf, which eventually calls http2.duplicatePseudoHeaderError.Error
+      #22: internal/config/config.go:82:26: config.Load calls fmt.Errorf, which eventually calls http2.headerFieldNameError.Error
+      #23: internal/config/config.go:82:26: config.Load calls fmt.Errorf, which eventually calls http2.headerFieldValueError.Error
+      #24: internal/config/config.go:82:26: config.Load calls fmt.Errorf, which eventually calls http2.pseudoHeaderError.Error
+
+  Standard library
+    Found in: net/http/internal/http2@go1.27
+    Fixed in: net/http/internal/http2@go1.27.2
+    Example traces found:
+      #1: internal/proxy/gateway.go:161:21: proxy.routeHandler calls httputil.ReverseProxy.ServeHTTP, which eventually calls http2.NetHTTPClientConn.Close
+      #2: internal/proxy/gateway.go:161:21: proxy.routeHandler calls httputil.ReverseProxy.ServeHTTP, which eventually calls http2.NetHTTPClientConn.Close
+      #3: internal/proxy/gateway.go:161:21: proxy.routeHandler calls httputil.ReverseProxy.ServeHTTP, which eventually calls http2.NetHTTPClientConn.RoundTrip
+      #4: internal/proxy/gateway.go:161:21: proxy.routeHandler calls httputil.ReverseProxy.ServeHTTP, which eventually calls http2.NetHTTPClientConn.RoundTrip
+      #5: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls http2.Server.GracefulShutdown
+      #6: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls http2.Server.GracefulShutdown
+      #7: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls http2.Server.ServeConn
+      #8: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls http2.Server.ServeConn
+      #9: internal/proxy/gateway.go:161:21: proxy.routeHandler calls httputil.ReverseProxy.ServeHTTP, which eventually calls http2.Transport.AddConn
+      #10: internal/proxy/gateway.go:161:21: proxy.routeHandler calls httputil.ReverseProxy.ServeHTTP, which eventually calls http2.Transport.AddConn
+      #11: internal/proxy/gateway.go:161:21: proxy.routeHandler calls httputil.ReverseProxy.ServeHTTP, which eventually calls http2.Transport.NewClientConn
+      #12: internal/proxy/gateway.go:161:21: proxy.routeHandler calls httputil.ReverseProxy.ServeHTTP, which eventually calls http2.Transport.NewClientConn
+      #13: internal/proxy/gateway.go:161:21: proxy.routeHandler calls httputil.ReverseProxy.ServeHTTP, which eventually calls http2.Transport.RoundTrip
+      #14: internal/proxy/gateway.go:161:21: proxy.routeHandler calls httputil.ReverseProxy.ServeHTTP, which eventually calls http2.Transport.RoundTrip
+      #15: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls http2.bufferedWriterTimeoutWriter.Write
+      #16: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls http2.bufferedWriterTimeoutWriter.Write
+      #17: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls http2.chunkWriter.Write
+      #18: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls http2.chunkWriter.Write
+      #19: internal/proxy/gateway.go:161:21: proxy.routeHandler calls httputil.ReverseProxy.ServeHTTP, which calls http2.gzipReader.Close
+      #20: internal/proxy/gateway.go:161:21: proxy.routeHandler calls httputil.ReverseProxy.ServeHTTP, which calls http2.gzipReader.Close
+      #21: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls http2.gzipReader.Read
+      #22: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls http2.gzipReader.Read
+      #23: internal/proxy/gateway.go:161:21: proxy.routeHandler calls httputil.ReverseProxy.ServeHTTP, which calls http2.requestBody.Close
+      #24: internal/proxy/gateway.go:161:21: proxy.routeHandler calls httputil.ReverseProxy.ServeHTTP, which calls http2.requestBody.Close
+      #25: internal/proxy/gateway.go:161:21: proxy.routeHandler calls httputil.ReverseProxy.ServeHTTP, which eventually calls http2.responseWriter.FlushError
+      #26: internal/proxy/gateway.go:161:21: proxy.routeHandler calls httputil.ReverseProxy.ServeHTTP, which eventually calls http2.responseWriter.FlushError
+      #27: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls http2.responseWriter.Write
+      #28: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls http2.responseWriter.Write
+      #29: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls http2.responseWriter.WriteHeader
+      #30: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls http2.responseWriter.WriteHeader
+      #31: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls http2.responseWriter.WriteString
+      #32: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls http2.responseWriter.WriteString
+      #33: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls http2.stickyErrWriter.Write
+      #34: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls http2.stickyErrWriter.Write
+      #35: internal/proxy/gateway.go:161:21: proxy.routeHandler calls httputil.ReverseProxy.ServeHTTP, which calls http2.transportResponseBody.Close
+      #36: internal/proxy/gateway.go:161:21: proxy.routeHandler calls httputil.ReverseProxy.ServeHTTP, which calls http2.transportResponseBody.Close
+      #37: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls http2.transportResponseBody.Read
+      #38: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls http2.transportResponseBody.Read
+
+Vulnerability #12: GO-2026-6600
+    Recognize yield as regexp preceder keyword in html/template
+  More info: https://pkg.go.dev/vuln/GO-2026-6600
+  Standard library
+    Found in: html/template@go1.27
+    Fixed in: html/template@go1.27.2
+    Example traces found:
+      #1: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls template.Template.Execute
+      #2: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls template.Template.ExecuteTemplate
+
+Vulnerability #13: GO-2026-6599
+    Reset context tracking on consecutive template expressions in html/template
+  More info: https://pkg.go.dev/vuln/GO-2026-6599
+  Standard library
+    Found in: html/template@go1.27
+    Fixed in: html/template@go1.27.2
+    Example traces found:
+      #1: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls template.Template.Execute
+      #2: cmd/server/main.go:78:18: server.run calls httpx.Run, which eventually calls template.Template.ExecuteTemplate
+
+Your code is affected by 13 vulnerabilities from the Go standard library.
+This scan also found 2 vulnerabilities in packages you import and 2
+vulnerabilities in modules you require, but your code doesn't appear to call
+these vulnerabilities.
+Use '-show verbose' for more details.
+== BASE c5fb598 (exit 3)
+Vulnerability #1: GO-2026-6859
+    Found in: net/http@go1.27
+Vulnerability #2: GO-2026-6809
+    Found in: crypto/x509@go1.27
+Vulnerability #3: GO-2026-6617
+    Found in: golang.org/x/net@v0.58.0
+    Found in: net/http/internal/http2@go1.27
+Vulnerability #4: GO-2026-6613
+    Found in: net/http@go1.27
+Vulnerability #5: GO-2026-6612
+    Found in: golang.org/x/net@v0.58.0
+    Found in: net/http/internal/http2@go1.27
+Vulnerability #6: GO-2026-6611
+    Found in: golang.org/x/net@v0.58.0
+    Found in: net/http/internal/http2@go1.27
+Vulnerability #7: GO-2026-6610
+    Found in: golang.org/x/net@v0.58.0
+    Found in: net/http/internal/http2@go1.27
+Vulnerability #8: GO-2026-6608
+    Found in: net/textproto@go1.27
+Vulnerability #9: GO-2026-6607
+    Found in: crypto/tls@go1.27
+Vulnerability #10: GO-2026-6605
+    Found in: net/http/httputil@go1.27
+Vulnerability #11: GO-2026-6603
+    Found in: golang.org/x/net@v0.58.0
+    Found in: net/http/internal/http2@go1.27
+Vulnerability #12: GO-2026-6600
+    Found in: html/template@go1.27
+Vulnerability #13: GO-2026-6599
+    Found in: html/template@go1.27
+Your code is affected by 13 vulnerabilities from the Go standard library.
+reachable advisories: HEAD=13 BASE=13
+non-stdlib modules flagged at HEAD (info, compared by ID below):
+    Found in: golang.org/x/net@v0.58.0
+ok: no advisory reachable at HEAD that is not reachable at c5fb598 (pre-existing: toolchain go1.27.0 stdlib + workspace golang.org/x/net)

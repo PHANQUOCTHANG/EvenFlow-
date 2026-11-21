@@ -1,0 +1,21 @@
+== services/identity
+?   	github.com/eventflow/eventflow/services/identity/cmd/server	[no test files]
+ok  	github.com/eventflow/eventflow/services/identity/internal/adapter/http	0.320s
+?   	github.com/eventflow/eventflow/services/identity/internal/adapter/postgres	[no test files]
+?   	github.com/eventflow/eventflow/services/identity/internal/adapter/redis	[no test files]
+?   	github.com/eventflow/eventflow/services/identity/internal/adapter/smtp	[no test files]
+?   	github.com/eventflow/eventflow/services/identity/internal/adapter/telegram	[no test files]
+ok  	github.com/eventflow/eventflow/services/identity/internal/app	0.218s
+ok  	github.com/eventflow/eventflow/services/identity/internal/config	0.382s
+ok  	github.com/eventflow/eventflow/services/identity/internal/domain	0.469s
+== services/payment
+?   	github.com/eventflow/eventflow/services/payment/cmd/server	[no test files]
+ok  	github.com/eventflow/eventflow/services/payment/internal/adapter/gateway	0.763s
+ok  	github.com/eventflow/eventflow/services/payment/internal/adapter/http	0.325s
+ok  	github.com/eventflow/eventflow/services/payment/internal/adapter/metrics	2.013s
+ok  	github.com/eventflow/eventflow/services/payment/internal/adapter/postgres	0.451s
+ok  	github.com/eventflow/eventflow/services/payment/internal/app	0.767s
+?   	github.com/eventflow/eventflow/services/payment/internal/config	[no test files]
+ok  	github.com/eventflow/eventflow/services/payment/internal/domain	0.373s
+?   	github.com/eventflow/eventflow/services/payment/internal/port	[no test files]
+ok  	github.com/eventflow/eventflow/services/payment/internal/worker	0.210s

@@ -1,0 +1,43 @@
+== M7: services/gateway/internal/clientip/clientip.go
+perl -0pi -e 's/if hops > maxTrustedHops \{/if false \&\& hops > maxTrustedHops {/'
+warning: in the working copy of 'services/gateway/internal/clientip/clientip.go', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'services/gateway/internal/clientip/clientip.go', LF will be replaced by CRLF the next time Git touches it
+diff --git a/services/gateway/internal/clientip/clientip.go b/services/gateway/internal/clientip/clientip.go
+index f2c1628..ae46da4 100644
+--- a/services/gateway/internal/clientip/clientip.go
++++ b/services/gateway/internal/clientip/clientip.go
+@@ -104,7 +104,7 @@ func (r *Resolver) Resolve(remoteAddr string, xff []string) (string, bool) {
+ 					return a.String(), true
+ 				}
+ 				hops++
+-				if hops > maxTrustedHops {
++				if false && hops > maxTrustedHops {
+ 					return key, false
+ 				}
+ 				leftmost = a
+?   	github.com/eventflow/eventflow/services/gateway/cmd/server	[no test files]
+--- FAIL: TestResolve (0.00s)
+    --- FAIL: TestResolve/AC7_17_trusted_hops (0.00s)
+        clientip_test.go:137: Resolve("10.1.2.3:4000", ["10.0.0.1, 10.0.0.2, 10.0.0.3, 10.0.0.4, 10.0.0.5, 10.0.0.6, 10.0.0.7, 10.0.0.8, 10.0.0.9, 10.0.0.10, 10.0.0.11, 10.0.0.12, 10.0.0.13, 10.0.0.14, 10.0.0.15, 10.0.0.16, 10.0.0.17"]) = ("10.0.0.1", true), want ("10.1.2.3", false)
+    --- FAIL: TestResolve/AC7_client_then_17_trusted_hops (0.00s)
+        clientip_test.go:137: Resolve("10.1.2.3:4000", ["198.51.100.1, 10.0.0.1, 10.0.0.2, 10.0.0.3, 10.0.0.4, 10.0.0.5, 10.0.0.6, 10.0.0.7, 10.0.0.8, 10.0.0.9, 10.0.0.10, 10.0.0.11, 10.0.0.12, 10.0.0.13, 10.0.0.14, 10.0.0.15, 10.0.0.16, 10.0.0.17"]) = ("198.51.100.1", true), want ("10.1.2.3", false)
+    --- FAIL: TestResolve/AC7_17_trusted_hops_across_lines (0.00s)
+        clientip_test.go:137: Resolve("10.1.2.3:4000", ["198.51.100.1" "10.0.0.1" "10.0.0.2" "10.0.0.3" "10.0.0.4" "10.0.0.5" "10.0.0.6" "10.0.0.7" "10.0.0.8" "10.0.0.9" "10.0.0.10" "10.0.0.11" "10.0.0.12" "10.0.0.13" "10.0.0.14" "10.0.0.15" "10.0.0.16" "10.0.0.17"]) = ("198.51.100.1", true), want ("10.1.2.3", false)
+FAIL
+FAIL	github.com/eventflow/eventflow/services/gateway/internal/clientip	1.019s
+ok  	github.com/eventflow/eventflow/services/gateway/internal/config	0.631s
+--- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly (0.08s)
+    --- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC7_17_trusted_hops (0.00s)
+        trusted_proxy_test.go:268: upstream X-Forwarded-For = ["10.0.0.1"], want exactly ["10.1.2.3"]
+FAIL
+FAIL	github.com/eventflow/eventflow/services/gateway/internal/proxy	0.792s
+ok  	github.com/eventflow/eventflow/services/gateway/internal/ratelimit	0.415s
+FAIL
+--- failing tests:
+    --- FAIL: TestResolve/AC7_17_trusted_hops (0.00s)
+    --- FAIL: TestResolve/AC7_17_trusted_hops_across_lines (0.00s)
+    --- FAIL: TestResolve/AC7_client_then_17_trusted_hops (0.00s)
+    --- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC7_17_trusted_hops (0.00s)
+--- FAIL: TestResolve (0.00s)
+--- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly (0.07s)
+RESULT M7 KILLED
