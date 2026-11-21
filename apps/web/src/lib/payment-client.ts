@@ -144,6 +144,21 @@ export function generateIdempotencyKey(): string {
   });
 }
 
+/** AC-10 (S-4, phan client): chi giu redirect_url tuong doi hoac http(s) tuyet doi (cung bo phan tich URL WHATWG voi
+ *  `location.href`, nen khoang trang/tab/xuong dong/hoa-thuong deu bi bat). Con lai (javascript:, data:, khong phan tich
+ *  duoc...) -> `fallback`. Allow-list host cua nha cung cap la phan server (hoan lai). */
+function safeRedirect(raw: unknown, fallback: string): string {
+  if (typeof raw !== "string" || !raw) return fallback;
+  const origin = typeof window !== "undefined" ? window.location?.origin : undefined;
+  const base = origin && origin !== "null" ? origin : "http://localhost";
+  try {
+    const { protocol } = new URL(raw, base);
+    return protocol === "http:" || protocol === "https:" ? raw : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 const PAY_KEY_PREFIX = "ef:pay:";
 
 /** Bam FNV-1a 32 bit (chi de phan biet noi dung yeu cau trong khoa sessionStorage, khong phai bao mat). */
@@ -291,8 +306,7 @@ export async function initiatePayment(
     return {
       paymentId: data.payment_id,
       orderId: typeof data.order_id === "string" ? data.order_id : orderId,
-      redirectUrl:
-        typeof data.redirect_url === "string" && data.redirect_url ? data.redirect_url : effectiveReturnUrl,
+      redirectUrl: safeRedirect(data.redirect_url, effectiveReturnUrl),
       status: data.status === "PROCESSING" ? "PROCESSING" : "PENDING",
       providerTxnId: typeof data.provider_txn_id === "string" ? data.provider_txn_id : undefined,
     };

@@ -1,0 +1,73 @@
+# V8: trimSpaceTab is identity (XFF element whitespace not trimmed)
+diff --git a/services/gateway/internal/clientip/clientip.go b/services/gateway/internal/clientip/clientip.go
+index e4eb6cc..2645d06 100644
+--- a/services/gateway/internal/clientip/clientip.go
++++ b/services/gateway/internal/clientip/clientip.go
+@@ -139,6 +139,7 @@ func (r *Resolver) isTrusted(a netip.Addr) bool {
+ }
+ 
+ func trimSpaceTab(s string) string {
++	return s
+ 	for len(s) > 0 && (s[0] == ' ' || s[0] == '\t') {
+ 		s = s[1:]
+ 	}
+?   	github.com/eventflow/eventflow/services/gateway/cmd/server	[no test files]
+--- FAIL: TestResolve_Round1_LeadingTab (0.00s)
+    clientip_round1_test.go:125: Resolve(["198.51.100.1,\t10.0.0.5"]) = ("10.1.2.3", false), want ("198.51.100.1", true)
+--- FAIL: TestResolve (0.00s)
+    --- FAIL: TestResolve/AC4_forged_leftmost (0.00s)
+        clientip_test.go:137: Resolve("10.1.2.3:4000", ["6.6.6.6, 198.51.100.1"]) = ("10.1.2.3", false), want ("198.51.100.1", true)
+    --- FAIL: TestResolve/AC4_forged_leftmost_other (0.00s)
+        clientip_test.go:137: Resolve("10.1.2.3:4000", ["7.7.7.7, 8.8.8.8, 198.51.100.1"]) = ("10.1.2.3", false), want ("198.51.100.1", true)
+    --- FAIL: TestResolve/AC4_forged_leftmost_trusted-looking (0.00s)
+        clientip_test.go:137: Resolve("10.1.2.3:4000", ["10.9.9.9, 198.51.100.1"]) = ("10.1.2.3", false), want ("198.51.100.1", true)
+    --- FAIL: TestResolve/AC5_chain (0.00s)
+        clientip_test.go:137: Resolve("10.1.2.3:4000", ["198.51.100.1, 192.0.2.10"]) = ("10.1.2.3", false), want ("198.51.100.1", true)
+    --- FAIL: TestResolve/AC5_untrusted_middle_hop (0.00s)
+        clientip_test.go:137: Resolve("10.1.2.3:4000", ["198.51.100.1, 203.0.113.50, 192.0.2.10"]) = ("10.1.2.3", false), want ("203.0.113.50", true)
+    --- FAIL: TestResolve/AC5_second_cidr_not_trusted_when_absent (0.00s)
+        clientip_test.go:137: Resolve("10.1.2.3:4000", ["198.51.100.1, 192.0.2.10"]) = ("10.1.2.3", false), want ("192.0.2.10", true)
+    --- FAIL: TestResolve/AC6_one_line_equivalent (0.00s)
+        clientip_test.go:137: Resolve("10.1.2.3:4000", ["198.51.100.1, 10.0.0.5"]) = ("10.1.2.3", false), want ("198.51.100.1", true)
+    --- FAIL: TestResolve/AC6_lines_with_several_elements (0.00s)
+        clientip_test.go:137: Resolve("10.1.2.3:4000", ["6.6.6.6, 198.51.100.1" "10.0.0.5, 10.0.0.6"]) = ("10.1.2.3", false), want ("198.51.100.1", true)
+    --- FAIL: TestResolve/AC6_spaces_tabs_empty_elements (0.00s)
+        clientip_test.go:137: Resolve("10.1.2.3:4000", [" \t198.51.100.1\t , ,, \t10.0.0.5 , "]) = ("10.1.2.3", false), want ("198.51.100.1", true)
+    --- FAIL: TestResolve/AC6_trusted_hop_with_port (0.00s)
+        clientip_test.go:137: Resolve("10.1.2.3:4000", ["198.51.100.1, 10.0.0.5:80"]) = ("10.1.2.3", false), want ("198.51.100.1", true)
+    --- FAIL: TestResolve/AC6_mapped_trusted_hop_matches_ipv4_cidr (0.00s)
+        clientip_test.go:137: Resolve("10.1.2.3:4000", ["198.51.100.1, ::ffff:10.0.0.5"]) = ("10.1.2.3", false), want ("198.51.100.1", true)
+    --- FAIL: TestResolve/AC6_ipv6_trusted_cidr (0.00s)
+        clientip_test.go:137: Resolve("10.1.2.3:4000", ["198.51.100.1, [fd00::7]:80"]) = ("10.1.2.3", false), want ("198.51.100.1", true)
+    --- FAIL: TestResolve/AC7_malformed_left_of_client_ignored (0.00s)
+        clientip_test.go:137: Resolve("10.1.2.3:4000", ["unknown, 198.51.100.1"]) = ("10.1.2.3", false), want ("198.51.100.1", true)
+    --- FAIL: TestResolve/AC7_all_trusted_leftmost (0.00s)
+        clientip_test.go:137: Resolve("10.1.2.3:4000", ["10.0.0.7, 10.0.0.8"]) = ("10.1.2.3", false), want ("10.0.0.7", true)
+    --- FAIL: TestResolve/AC7_16_trusted_hops_leftmost (0.00s)
+        clientip_test.go:137: Resolve("10.1.2.3:4000", ["10.0.0.1, 10.0.0.2, 10.0.0.3, 10.0.0.4, 10.0.0.5, 10.0.0.6, 10.0.0.7, 10.0.0.8, 10.0.0.9, 10.0.0.10, 10.0.0.11, 10.0.0.12, 10.0.0.13, 10.0.0.14, 10.0.0.15, 10.0.0.16"]) = ("10.1.2.3", false), want ("10.0.0.1", true)
+    --- FAIL: TestResolve/AC7_client_then_16_trusted_hops (0.00s)
+        clientip_test.go:137: Resolve("10.1.2.3:4000", ["198.51.100.1, 10.0.0.1, 10.0.0.2, 10.0.0.3, 10.0.0.4, 10.0.0.5, 10.0.0.6, 10.0.0.7, 10.0.0.8, 10.0.0.9, 10.0.0.10, 10.0.0.11, 10.0.0.12, 10.0.0.13, 10.0.0.14, 10.0.0.15, 10.0.0.16"]) = ("10.1.2.3", false), want ("198.51.100.1", true)
+    --- FAIL: TestResolve/AC7_empty_elements_do_not_count_as_hops (0.00s)
+        clientip_test.go:137: Resolve("10.1.2.3:4000", ["198.51.100.1,  , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , ,10.0.0.1, 10.0.0.2, 10.0.0.3, 10.0.0.4, 10.0.0.5, 10.0.0.6, 10.0.0.7, 10.0.0.8, 10.0.0.9, 10.0.0.10, 10.0.0.11, 10.0.0.12, 10.0.0.13, 10.0.0.14, 10.0.0.15, 10.0.0.16"]) = ("10.1.2.3", false), want ("198.51.100.1", true)
+--- FAIL: TestResolve_ForgedPrefixNeverChangesResult (0.00s)
+    clientip_test.go:152: forged prefix "" changed result to "10.1.2.3"
+FAIL
+FAIL	github.com/eventflow/eventflow/services/gateway/internal/clientip	0.959s
+ok  	github.com/eventflow/eventflow/services/gateway/internal/config	0.640s
+--- FAIL: TestTrustedProxy_AC4_ForgedLeftmostSharesBucket (0.00s)
+    trusted_proxy_test.go:217: upstream X-Forwarded-For = ["10.1.2.3"], want exactly ["198.51.100.1"]
+--- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly (0.07s)
+    --- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC4_forged_leftmost (0.00s)
+        trusted_proxy_test.go:268: upstream X-Forwarded-For = ["10.1.2.3"], want exactly ["198.51.100.1"]
+    --- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC5_chain (0.00s)
+        trusted_proxy_test.go:268: upstream X-Forwarded-For = ["10.1.2.3"], want exactly ["198.51.100.1"]
+    --- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC5_untrusted_middle_hop (0.00s)
+        trusted_proxy_test.go:268: upstream X-Forwarded-For = ["10.1.2.3"], want exactly ["203.0.113.50"]
+    --- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC7_malformed_left_of_client (0.00s)
+        trusted_proxy_test.go:268: upstream X-Forwarded-For = ["10.1.2.3"], want exactly ["198.51.100.1"]
+    --- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC7_all_trusted_leftmost (0.00s)
+        trusted_proxy_test.go:268: upstream X-Forwarded-For = ["10.1.2.3"], want exactly ["10.0.0.7"]
+FAIL
+FAIL	github.com/eventflow/eventflow/services/gateway/internal/proxy	0.689s
+ok  	github.com/eventflow/eventflow/services/gateway/internal/ratelimit	0.372s
+FAIL

@@ -1,0 +1,21 @@
+{
+  "task": "gateway-trusted-proxy",
+  "commit_sha": "4abf6a1ebe072c53331a2b4811b73f25ec21b0ab",
+  "base": "c5fb598",
+  "tests_frozen": "142ab18",
+  "go": "go1.27.0 windows/amd64",
+  "generated_at": "2026-11-21T07:41:49Z",
+  "note": "exit 77 = NOT RUN (tool missing or fetch failed), never a pass",
+  "mutation": {"killed": 8, "total": 8, "threshold": "8/8", "logs": "verify-logs/mutation/"},
+  "results": {
+    "go-gateway": {"exit": 0, "status": "PASS", "log": "gate/go-gateway.log"},
+    "go-others": {"exit": 0, "status": "PASS", "log": "gate/go-others.log"},
+    "fuzz": {"exit": 0, "status": "PASS", "log": "gate/fuzz.log"},
+    "deps": {"exit": 0, "status": "PASS", "log": "gate/deps.log"},
+    "tamper": {"exit": 0, "status": "PASS", "log": "gate/tamper.log"},
+    "secrets": {"exit": 0, "status": "PASS", "log": "gate/secrets.log"},
+    "govulncheck": {"exit": 0, "status": "PASS", "log": "gate/govulncheck.log"},
+    "gosec": {"exit": 77, "status": "NOT_RUN", "log": "gate/gosec.log"},
+    "mutation": {"exit": 0, "status": "PASS", "log": "gate/mutation.log"}
+  }
+}

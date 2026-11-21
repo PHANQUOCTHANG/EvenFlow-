@@ -1,0 +1,61 @@
+== M3: services/gateway/internal/clientip/clientip.go
+perl -0pi -e 's/(if !ok \{\r?\n\t+)return key, false/${1}continue/'
+warning: in the working copy of 'services/gateway/internal/clientip/clientip.go', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'services/gateway/internal/clientip/clientip.go', LF will be replaced by CRLF the next time Git touches it
+diff --git a/services/gateway/internal/clientip/clientip.go b/services/gateway/internal/clientip/clientip.go
+index e4eb6cc..c979866 100644
+--- a/services/gateway/internal/clientip/clientip.go
++++ b/services/gateway/internal/clientip/clientip.go
+@@ -110,7 +110,7 @@ func (r *Resolver) Resolve(remoteAddr string, xff []string) (string, bool) {
+ 			if e != "" {
+ 				a, ok := parseAddr(e)
+ 				if !ok {
+-					return key, false
++					continue
+ 				}
+ 				if !r.isTrusted(a) {
+ 					return a.String(), true
+?   	github.com/eventflow/eventflow/services/gateway/cmd/server	[no test files]
+--- FAIL: TestResolve_Round1_StrictElementForms (0.00s)
+    clientip_round1_test.go:94: Resolve("198.51.100.1, [10.0.0.5]") = ("198.51.100.1", true), want (10.1.2.3, false)
+--- FAIL: TestResolve (0.00s)
+    --- FAIL: TestResolve/AC7_rightmost_unknown (0.00s)
+        clientip_test.go:137: Resolve("10.1.2.3:4000", ["198.51.100.1, unknown"]) = ("198.51.100.1", true), want ("10.1.2.3", false)
+    --- FAIL: TestResolve/AC7_rightmost_short_ipv4 (0.00s)
+        clientip_test.go:137: Resolve("10.1.2.3:4000", ["198.51.100.1, 1.2.3"]) = ("198.51.100.1", true), want ("10.1.2.3", false)
+    --- FAIL: TestResolve/AC7_rightmost_zoned (0.00s)
+        clientip_test.go:137: Resolve("10.1.2.3:4000", ["198.51.100.1, fe80::1%eth0"]) = ("198.51.100.1", true), want ("10.1.2.3", false)
+    --- FAIL: TestResolve/AC7_rightmost_zoned_bracket (0.00s)
+        clientip_test.go:137: Resolve("10.1.2.3:4000", ["198.51.100.1, [fe80::1%eth0]:80"]) = ("198.51.100.1", true), want ("10.1.2.3", false)
+    --- FAIL: TestResolve/AC7_rightmost_script (0.00s)
+        clientip_test.go:137: Resolve("10.1.2.3:4000", ["198.51.100.1, <script>"]) = ("198.51.100.1", true), want ("10.1.2.3", false)
+    --- FAIL: TestResolve/AC7_rightmost_obfuscated (0.00s)
+        clientip_test.go:137: Resolve("10.1.2.3:4000", ["198.51.100.1, _obfuscated"]) = ("198.51.100.1", true), want ("10.1.2.3", false)
+    --- FAIL: TestResolve/AC7_malformed_after_trusted_hop (0.00s)
+        clientip_test.go:137: Resolve("10.1.2.3:4000", ["198.51.100.1, unknown, 10.0.0.5"]) = ("198.51.100.1", true), want ("10.1.2.3", false)
+    --- FAIL: TestResolve/AC7_malformed_in_last_line (0.00s)
+        clientip_test.go:137: Resolve("10.1.2.3:4000", ["198.51.100.1" "unknown"]) = ("198.51.100.1", true), want ("10.1.2.3", false)
+FAIL
+FAIL	github.com/eventflow/eventflow/services/gateway/internal/clientip	0.989s
+ok  	github.com/eventflow/eventflow/services/gateway/internal/config	0.453s
+--- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly (0.06s)
+    --- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC7_malformed_rightmost (0.00s)
+        trusted_proxy_test.go:268: upstream X-Forwarded-For = ["198.51.100.1"], want exactly ["10.1.2.3"]
+FAIL
+FAIL	github.com/eventflow/eventflow/services/gateway/internal/proxy	0.656s
+ok  	github.com/eventflow/eventflow/services/gateway/internal/ratelimit	0.375s
+FAIL
+--- failing tests:
+    --- FAIL: TestResolve/AC7_malformed_after_trusted_hop (0.00s)
+    --- FAIL: TestResolve/AC7_malformed_in_last_line (0.00s)
+    --- FAIL: TestResolve/AC7_rightmost_obfuscated (0.00s)
+    --- FAIL: TestResolve/AC7_rightmost_script (0.00s)
+    --- FAIL: TestResolve/AC7_rightmost_short_ipv4 (0.00s)
+    --- FAIL: TestResolve/AC7_rightmost_unknown (0.00s)
+    --- FAIL: TestResolve/AC7_rightmost_zoned (0.00s)
+    --- FAIL: TestResolve/AC7_rightmost_zoned_bracket (0.00s)
+    --- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC7_malformed_rightmost (0.00s)
+--- FAIL: TestResolve (0.00s)
+--- FAIL: TestResolve_Round1_StrictElementForms (0.00s)
+--- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly (0.07s)
+RESULT M3 KILLED

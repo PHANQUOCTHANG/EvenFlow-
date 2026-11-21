@@ -1,0 +1,75 @@
+== M6: services/gateway/internal/proxy/gateway.go
+perl -0pi -e 's/pr\.Out\.Header\.Set\("X-Forwarded-For", ip\)/_ = ip/'
+warning: in the working copy of 'services/gateway/internal/proxy/gateway.go', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'services/gateway/internal/proxy/gateway.go', LF will be replaced by CRLF the next time Git touches it
+diff --git a/services/gateway/internal/proxy/gateway.go b/services/gateway/internal/proxy/gateway.go
+index 8dad2f8..31d71b1 100644
+--- a/services/gateway/internal/proxy/gateway.go
++++ b/services/gateway/internal/proxy/gateway.go
+@@ -232,7 +232,7 @@ func newReverseProxy(target *url.URL, log *slog.Logger) *httputil.ReverseProxy {
+ 			}
+ 			pr.SetXForwarded()
+ 			if ip, ok := pr.In.Context().Value(forwardedClientKey{}).(string); ok {
+-				pr.Out.Header.Set("X-Forwarded-For", ip)
++				_ = ip
+ 			}
+ 			// Noi trace sang service phia sau (traceparent) de mot yeu cau la mot trace.
+ 			otelx.InjectHTTP(pr.In.Context(), pr.Out.Header)
+?   	github.com/eventflow/eventflow/services/gateway/cmd/server	[no test files]
+ok  	github.com/eventflow/eventflow/services/gateway/internal/clientip	0.948s
+ok  	github.com/eventflow/eventflow/services/gateway/internal/config	0.590s
+--- FAIL: TestTrustedProxy_Round1_ClientIPHeadersStripped (0.01s)
+    --- FAIL: TestTrustedProxy_Round1_ClientIPHeadersStripped/trusted_peer (0.00s)
+        trusted_proxy_round1_test.go:47: upstream X-Forwarded-For = ["10.1.2.3"], want exactly ["198.51.100.1"]
+--- FAIL: TestTrustedProxy_AC3_ClientsBehindTrustedProxyHaveOwnBucket (0.01s)
+    trusted_proxy_test.go:193: upstream X-Forwarded-For = ["10.1.2.3"], want exactly ["198.51.100.1"]
+--- FAIL: TestTrustedProxy_AC4_ForgedLeftmostSharesBucket (0.00s)
+    trusted_proxy_test.go:217: upstream X-Forwarded-For = ["10.1.2.3"], want exactly ["198.51.100.1"]
+--- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly (0.07s)
+    --- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC3_trusted_peer (0.00s)
+        trusted_proxy_test.go:268: upstream X-Forwarded-For = ["10.1.2.3"], want exactly ["198.51.100.1"]
+    --- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC4_forged_leftmost (0.00s)
+        trusted_proxy_test.go:268: upstream X-Forwarded-For = ["10.1.2.3"], want exactly ["198.51.100.1"]
+    --- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC5_chain (0.00s)
+        trusted_proxy_test.go:268: upstream X-Forwarded-For = ["10.1.2.3"], want exactly ["198.51.100.1"]
+    --- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC5_untrusted_middle_hop (0.00s)
+        trusted_proxy_test.go:268: upstream X-Forwarded-For = ["10.1.2.3"], want exactly ["203.0.113.50"]
+    --- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC6_two_header_lines (0.00s)
+        trusted_proxy_test.go:268: upstream X-Forwarded-For = ["10.1.2.3"], want exactly ["198.51.100.1"]
+    --- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC6_ipv4_port (0.00s)
+        trusted_proxy_test.go:268: upstream X-Forwarded-For = ["10.1.2.3"], want exactly ["198.51.100.1"]
+    --- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC6_ipv6_bracket_port (0.00s)
+        trusted_proxy_test.go:268: upstream X-Forwarded-For = ["10.1.2.3"], want exactly ["2001:db8::1"]
+    --- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC6_ipv6_upper_case (0.00s)
+        trusted_proxy_test.go:268: upstream X-Forwarded-For = ["10.1.2.3"], want exactly ["2001:db8::1"]
+    --- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC6_mapped_element (0.00s)
+        trusted_proxy_test.go:268: upstream X-Forwarded-For = ["10.1.2.3"], want exactly ["198.51.100.1"]
+    --- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC6_mapped_peer (0.00s)
+        trusted_proxy_test.go:268: upstream X-Forwarded-For = ["::ffff:10.1.2.3"], want exactly ["198.51.100.1"]
+    --- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC7_malformed_left_of_client (0.00s)
+        trusted_proxy_test.go:268: upstream X-Forwarded-For = ["10.1.2.3"], want exactly ["198.51.100.1"]
+    --- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC7_all_trusted_leftmost (0.00s)
+        trusted_proxy_test.go:268: upstream X-Forwarded-For = ["10.1.2.3"], want exactly ["10.0.0.7"]
+FAIL
+FAIL	github.com/eventflow/eventflow/services/gateway/internal/proxy	0.616s
+ok  	github.com/eventflow/eventflow/services/gateway/internal/ratelimit	0.341s
+FAIL
+--- failing tests:
+    --- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC3_trusted_peer (0.00s)
+    --- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC4_forged_leftmost (0.00s)
+    --- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC5_chain (0.00s)
+    --- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC5_untrusted_middle_hop (0.00s)
+    --- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC6_ipv4_port (0.00s)
+    --- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC6_ipv6_bracket_port (0.00s)
+    --- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC6_ipv6_upper_case (0.00s)
+    --- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC6_mapped_element (0.00s)
+    --- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC6_mapped_peer (0.00s)
+    --- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC6_two_header_lines (0.00s)
+    --- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC7_all_trusted_leftmost (0.00s)
+    --- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC7_malformed_left_of_client (0.00s)
+    --- FAIL: TestTrustedProxy_Round1_ClientIPHeadersStripped/trusted_peer (0.00s)
+--- FAIL: TestTrustedProxy_AC3_ClientsBehindTrustedProxyHaveOwnBucket (0.01s)
+--- FAIL: TestTrustedProxy_AC4_ForgedLeftmostSharesBucket (0.00s)
+--- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly (0.08s)
+--- FAIL: TestTrustedProxy_Round1_ClientIPHeadersStripped (0.01s)
+RESULT M6 KILLED

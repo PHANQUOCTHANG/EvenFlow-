@@ -1,0 +1,11 @@
+V1 KILLED drop X-Real-IP from clientIPHeaders (header no longer stripped)
+V2 KILLED fromXFF always false (upstream XFF override never applied)
+V3 KILLED hop cap off-by-one 16 -> 17
+V4 KILLED port range upper bound 65535 -> 65536
+V5 KILLED IPv6 prefix floor /7 -> /6
+V6 KILLED per-element TrimSpace removed in ParseTrusted
+V7 KILLED XFF override applied even when not fromXFF
+V8 KILLED trimSpaceTab is identity (XFF element whitespace not trimmed)
+V9 KILLED accept bracketed IPv4 ([1.2.3.4]) in XFF
+V10 KILLED accept IPv4-mapped bare IP in TRUSTED_PROXY_CIDRS
+tree clean

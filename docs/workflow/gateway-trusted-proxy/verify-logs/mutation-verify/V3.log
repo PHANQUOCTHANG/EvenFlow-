@@ -1,0 +1,32 @@
+# V3: hop cap off-by-one 16 -> 17
+diff --git a/services/gateway/internal/clientip/clientip.go b/services/gateway/internal/clientip/clientip.go
+index e4eb6cc..83a4338 100644
+--- a/services/gateway/internal/clientip/clientip.go
++++ b/services/gateway/internal/clientip/clientip.go
+@@ -10,7 +10,7 @@ import (
+ )
+ 
+ // maxTrustedHops gioi han so phan tu tin cay duoc duyet trong X-Forwarded-For.
+-const maxTrustedHops = 16
++const maxTrustedHops = 17
+ 
+ // Resolver tra IP client theo tap proxy tin cay. Gia tri zero (hoac tap rong) khong bao gio
+ // tin X-Forwarded-For.
+?   	github.com/eventflow/eventflow/services/gateway/cmd/server	[no test files]
+--- FAIL: TestResolve (0.00s)
+    --- FAIL: TestResolve/AC7_17_trusted_hops (0.00s)
+        clientip_test.go:137: Resolve("10.1.2.3:4000", ["10.0.0.1, 10.0.0.2, 10.0.0.3, 10.0.0.4, 10.0.0.5, 10.0.0.6, 10.0.0.7, 10.0.0.8, 10.0.0.9, 10.0.0.10, 10.0.0.11, 10.0.0.12, 10.0.0.13, 10.0.0.14, 10.0.0.15, 10.0.0.16, 10.0.0.17"]) = ("10.0.0.1", true), want ("10.1.2.3", false)
+    --- FAIL: TestResolve/AC7_client_then_17_trusted_hops (0.00s)
+        clientip_test.go:137: Resolve("10.1.2.3:4000", ["198.51.100.1, 10.0.0.1, 10.0.0.2, 10.0.0.3, 10.0.0.4, 10.0.0.5, 10.0.0.6, 10.0.0.7, 10.0.0.8, 10.0.0.9, 10.0.0.10, 10.0.0.11, 10.0.0.12, 10.0.0.13, 10.0.0.14, 10.0.0.15, 10.0.0.16, 10.0.0.17"]) = ("198.51.100.1", true), want ("10.1.2.3", false)
+    --- FAIL: TestResolve/AC7_17_trusted_hops_across_lines (0.00s)
+        clientip_test.go:137: Resolve("10.1.2.3:4000", ["198.51.100.1" "10.0.0.1" "10.0.0.2" "10.0.0.3" "10.0.0.4" "10.0.0.5" "10.0.0.6" "10.0.0.7" "10.0.0.8" "10.0.0.9" "10.0.0.10" "10.0.0.11" "10.0.0.12" "10.0.0.13" "10.0.0.14" "10.0.0.15" "10.0.0.16" "10.0.0.17"]) = ("198.51.100.1", true), want ("10.1.2.3", false)
+FAIL
+FAIL	github.com/eventflow/eventflow/services/gateway/internal/clientip	0.978s
+ok  	github.com/eventflow/eventflow/services/gateway/internal/config	0.624s
+--- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly (0.07s)
+    --- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC7_17_trusted_hops (0.00s)
+        trusted_proxy_test.go:268: upstream X-Forwarded-For = ["10.0.0.1"], want exactly ["10.1.2.3"]
+FAIL
+FAIL	github.com/eventflow/eventflow/services/gateway/internal/proxy	0.674s
+ok  	github.com/eventflow/eventflow/services/gateway/internal/ratelimit	0.371s
+FAIL

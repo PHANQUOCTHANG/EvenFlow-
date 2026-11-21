@@ -1,0 +1,53 @@
+# V2: fromXFF always false (upstream XFF override never applied)
+diff --git a/services/gateway/internal/proxy/gateway.go b/services/gateway/internal/proxy/gateway.go
+index 8dad2f8..d815972 100644
+--- a/services/gateway/internal/proxy/gateway.go
++++ b/services/gateway/internal/proxy/gateway.go
+@@ -150,7 +150,7 @@ func (g *Gateway) routeHandler(rt Route) (http.Handler, error) {
+ 			httpx.WriteProblemType(w, http.StatusRequestEntityTooLarge, ProblemTooLarge, "noi dung request qua lon")
+ 			return
+ 		}
+-		if fromXFF {
++		if false && fromXFF {
+ 			// Rewrite doc lai IP nay de gui upstream dung client that, bo moi phan tu khac.
+ 			r = r.WithContext(context.WithValue(r.Context(), forwardedClientKey{}, ip))
+ 		}
+?   	github.com/eventflow/eventflow/services/gateway/cmd/server	[no test files]
+ok  	github.com/eventflow/eventflow/services/gateway/internal/clientip	1.005s
+ok  	github.com/eventflow/eventflow/services/gateway/internal/config	0.663s
+--- FAIL: TestTrustedProxy_Round1_ClientIPHeadersStripped (0.01s)
+    --- FAIL: TestTrustedProxy_Round1_ClientIPHeadersStripped/trusted_peer (0.00s)
+        trusted_proxy_round1_test.go:47: upstream X-Forwarded-For = ["10.1.2.3"], want exactly ["198.51.100.1"]
+--- FAIL: TestTrustedProxy_AC3_ClientsBehindTrustedProxyHaveOwnBucket (0.01s)
+    trusted_proxy_test.go:193: upstream X-Forwarded-For = ["10.1.2.3"], want exactly ["198.51.100.1"]
+--- FAIL: TestTrustedProxy_AC4_ForgedLeftmostSharesBucket (0.00s)
+    trusted_proxy_test.go:217: upstream X-Forwarded-For = ["10.1.2.3"], want exactly ["198.51.100.1"]
+--- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly (0.06s)
+    --- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC3_trusted_peer (0.00s)
+        trusted_proxy_test.go:268: upstream X-Forwarded-For = ["10.1.2.3"], want exactly ["198.51.100.1"]
+    --- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC4_forged_leftmost (0.00s)
+        trusted_proxy_test.go:268: upstream X-Forwarded-For = ["10.1.2.3"], want exactly ["198.51.100.1"]
+    --- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC5_chain (0.00s)
+        trusted_proxy_test.go:268: upstream X-Forwarded-For = ["10.1.2.3"], want exactly ["198.51.100.1"]
+    --- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC5_untrusted_middle_hop (0.00s)
+        trusted_proxy_test.go:268: upstream X-Forwarded-For = ["10.1.2.3"], want exactly ["203.0.113.50"]
+    --- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC6_two_header_lines (0.00s)
+        trusted_proxy_test.go:268: upstream X-Forwarded-For = ["10.1.2.3"], want exactly ["198.51.100.1"]
+    --- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC6_ipv4_port (0.00s)
+        trusted_proxy_test.go:268: upstream X-Forwarded-For = ["10.1.2.3"], want exactly ["198.51.100.1"]
+    --- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC6_ipv6_bracket_port (0.00s)
+        trusted_proxy_test.go:268: upstream X-Forwarded-For = ["10.1.2.3"], want exactly ["2001:db8::1"]
+    --- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC6_ipv6_upper_case (0.00s)
+        trusted_proxy_test.go:268: upstream X-Forwarded-For = ["10.1.2.3"], want exactly ["2001:db8::1"]
+    --- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC6_mapped_element (0.00s)
+        trusted_proxy_test.go:268: upstream X-Forwarded-For = ["10.1.2.3"], want exactly ["198.51.100.1"]
+    --- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC6_mapped_peer (0.00s)
+        trusted_proxy_test.go:268: upstream X-Forwarded-For = ["::ffff:10.1.2.3"], want exactly ["198.51.100.1"]
+    --- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC7_malformed_left_of_client (0.00s)
+        trusted_proxy_test.go:268: upstream X-Forwarded-For = ["10.1.2.3"], want exactly ["198.51.100.1"]
+    --- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC7_all_trusted_leftmost (0.00s)
+        trusted_proxy_test.go:268: upstream X-Forwarded-For = ["10.1.2.3"], want exactly ["10.0.0.7"]
+FAIL
+FAIL	github.com/eventflow/eventflow/services/gateway/internal/proxy	0.692s
+ok  	github.com/eventflow/eventflow/services/gateway/internal/ratelimit	0.412s
+FAIL

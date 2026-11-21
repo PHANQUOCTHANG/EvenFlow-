@@ -1,0 +1,75 @@
+== M4: services/gateway/internal/clientip/clientip.go
+perl -0pi -e 's/return a\.Unmap\(\), true/return a, true/; s/!r\.isTrusted\(peer\.Unmap\(\)\)/!r.isTrusted(peer)/'
+warning: in the working copy of 'services/gateway/internal/clientip/clientip.go', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'services/gateway/internal/clientip/clientip.go', LF will be replaced by CRLF the next time Git touches it
+diff --git a/services/gateway/internal/clientip/clientip.go b/services/gateway/internal/clientip/clientip.go
+index e4eb6cc..1fddc04 100644
+--- a/services/gateway/internal/clientip/clientip.go
++++ b/services/gateway/internal/clientip/clientip.go
+@@ -91,7 +91,7 @@ func (r *Resolver) Resolve(remoteAddr string, xff []string) (string, bool) {
+ 		return key, false
+ 	}
+ 	peer, err := netip.ParseAddr(key)
+-	if err != nil || peer.Zone() != "" || !r.isTrusted(peer.Unmap()) {
++	if err != nil || peer.Zone() != "" || !r.isTrusted(peer) {
+ 		return key, false
+ 	}
+ 
+@@ -179,7 +179,7 @@ func parseAddr(e string) (netip.Addr, bool) {
+ 	if err != nil || a.Zone() != "" || (bracketed && !a.Is6()) {
+ 		return netip.Addr{}, false
+ 	}
+-	return a.Unmap(), true
++	return a, true
+ }
+ 
+ // validPort: 1-5 chu so thap phan, gia tri <= 65535.
+?   	github.com/eventflow/eventflow/services/gateway/cmd/server	[no test files]
+--- FAIL: TestResolve_Round1_StrictElementForms (0.00s)
+    clientip_round1_test.go:107: Resolve("[::ffff:1.2.3.4]:80") = ("::ffff:1.2.3.4", true), want ("1.2.3.4", true)
+--- FAIL: TestResolve (0.00s)
+    --- FAIL: TestResolve/AC6_mapped_element_unmapped (0.00s)
+        clientip_test.go:137: Resolve("10.1.2.3:4000", ["::ffff:198.51.100.1"]) = ("::ffff:198.51.100.1", true), want ("198.51.100.1", true)
+    --- FAIL: TestResolve/AC6_mapped_element_bracket_port (0.00s)
+        clientip_test.go:137: Resolve("10.1.2.3:4000", ["[::ffff:198.51.100.1]:80"]) = ("::ffff:198.51.100.1", true), want ("198.51.100.1", true)
+    --- FAIL: TestResolve/AC6_mapped_trusted_hop_matches_ipv4_cidr (0.00s)
+        clientip_test.go:137: Resolve("10.1.2.3:4000", ["198.51.100.1, ::ffff:10.0.0.5"]) = ("::ffff:10.0.0.5", true), want ("198.51.100.1", true)
+    --- FAIL: TestResolve/AC6_mapped_peer_matches_ipv4_cidr (0.00s)
+        clientip_test.go:137: Resolve("[::ffff:10.1.2.3]:4000", ["198.51.100.1"]) = ("::ffff:10.1.2.3", false), want ("198.51.100.1", true)
+--- FAIL: FuzzResolve (0.00s)
+    --- FAIL: FuzzResolve/seed#32 (0.00s)
+        clientip_test.go:303: trust=[10.0.0.0/8 2001:db8::/32] peer="10.1.2.3:4000" xff="::ffff:198.51.100.1": "::ffff:198.51.100.1" is neither peerKey nor a canonical XFF element
+    --- FAIL: FuzzResolve/seed#33 (0.00s)
+        clientip_test.go:303: trust=[10.0.0.0/8 2001:db8::/32] peer="10.1.2.3:4000" xff="[::ffff:198.51.100.1]:80": "::ffff:198.51.100.1" is neither peerKey nor a canonical XFF element
+    --- FAIL: FuzzResolve/seed#34 (0.00s)
+        clientip_test.go:303: trust=[10.0.0.0/8 2001:db8::/32] peer="10.1.2.3:4000" xff="198.51.100.1, ::ffff:10.0.0.5": "::ffff:10.0.0.5" is neither peerKey nor a canonical XFF element
+    --- FAIL: FuzzResolve/seed#67 (0.00s)
+        clientip_test.go:303: trust=[10.0.0.0/8 2001:db8::/32] peer="10.0.0.1:1" xff="[fe80::1%25eth0]:80, ::ffff:0:0": "::ffff:0.0.0.0" is neither peerKey nor a canonical XFF element
+FAIL
+FAIL	github.com/eventflow/eventflow/services/gateway/internal/clientip	0.999s
+ok  	github.com/eventflow/eventflow/services/gateway/internal/config	0.560s
+--- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly (0.11s)
+    --- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC6_mapped_element (0.01s)
+        trusted_proxy_test.go:268: upstream X-Forwarded-For = ["::ffff:198.51.100.1"], want exactly ["198.51.100.1"]
+    --- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC6_mapped_peer (0.00s)
+        trusted_proxy_test.go:268: upstream X-Forwarded-For = ["::ffff:10.1.2.3"], want exactly ["198.51.100.1"]
+FAIL
+FAIL	github.com/eventflow/eventflow/services/gateway/internal/proxy	0.779s
+ok  	github.com/eventflow/eventflow/services/gateway/internal/ratelimit	0.388s
+FAIL
+--- failing tests:
+    --- FAIL: FuzzResolve/seed#32 (0.00s)
+    --- FAIL: FuzzResolve/seed#33 (0.00s)
+    --- FAIL: FuzzResolve/seed#34 (0.00s)
+    --- FAIL: FuzzResolve/seed#67 (0.00s)
+    --- FAIL: TestResolve/AC6_mapped_element_bracket_port (0.00s)
+    --- FAIL: TestResolve/AC6_mapped_element_unmapped (0.00s)
+    --- FAIL: TestResolve/AC6_mapped_peer_matches_ipv4_cidr (0.00s)
+    --- FAIL: TestResolve/AC6_mapped_trusted_hop_matches_ipv4_cidr (0.00s)
+    --- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC6_mapped_element (0.00s)
+    --- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC6_mapped_peer (0.00s)
+--- FAIL: FuzzResolve (0.00s)
+--- FAIL: TestResolve (0.00s)
+--- FAIL: TestResolve_Round1_StrictElementForms (0.00s)
+--- FAIL: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly (0.07s)
+RESULT M4 KILLED
