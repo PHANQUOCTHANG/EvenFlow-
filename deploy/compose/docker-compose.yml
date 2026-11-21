@@ -149,6 +149,11 @@ services:
       # Chi de ghi audit_logs cho lenh ghi de admit rate cua Ops (EVF-60). Pool ket noi luoi: Postgres
       # cham / chet khong chan khoi dong, readiness hay duong mua ve.
       DATABASE_URL: "postgres://eventflow:eventflow@pgbouncer:5432/eventflow?sslmode=disable"
+      # Anti-bot (antibot-phase1): shadow = cham diem + ghi bot_decisions, moi join van PASS. off = develop.
+      # Key dev (base64 cua dung 32 byte, chuoi co chu "dev"); production bat buoc key that (AC-16).
+      ANTIBOT_MODE: "${ANTIBOT_MODE:-shadow}"
+      ANTIBOT_HASH_KEY: "${ANTIBOT_HASH_KEY:-devAntibotHashKeyLocalClusterOnlyNeverProdA=}"
+      ANTIBOT_SLOW_LANE_PENALTY: "${ANTIBOT_SLOW_LANE_PENALTY:-100000}"
     # Chi loopback: ai goi thang service se gia danh duoc X-Identity-Id. Cong ra ngoai la gateway:8080.
     ports: ["127.0.0.1:8081:8081"]
     depends_on:
@@ -174,6 +179,8 @@ services:
       ADMIT_STEP_UP: "${ADMIT_STEP_UP:-10}"
       ADMIT_BACKOFF: "${ADMIT_BACKOFF:-0.7}"
       ADMIT_TTL_SECONDS: "${ADMIT_TTL_SECONDS:-900}"
+      # shuffle.lua xep slow lobby cua anti-bot sau P nguoi; cung gia tri voi waitingroom.
+      ANTIBOT_SLOW_LANE_PENALTY: "${ANTIBOT_SLOW_LANE_PENALTY:-100000}"
     depends_on:
       redis: {condition: service_healthy}
     restart: unless-stopped
