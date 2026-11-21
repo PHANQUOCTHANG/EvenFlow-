@@ -73,6 +73,7 @@ func run(log *slog.Logger) error {
 	for name, u := range cfg.Upstreams {
 		upstreams[name] = u.String()
 	}
-	log.Info("gateway dang lang nghe", "addr", cfg.HTTPAddr, "upstreams", upstreams, "cors", cfg.AllowedOrigins)
+	log.Info("gateway dang lang nghe", "addr", cfg.HTTPAddr, "upstreams", upstreams, "cors", cfg.AllowedOrigins,
+		"trusted_proxies", cfg.TrustedProxies)
 	return httpx.Run(ctx, srv, 20*time.Second)
 }

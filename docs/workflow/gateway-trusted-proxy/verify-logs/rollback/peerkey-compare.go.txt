@@ -1,0 +1,47 @@
+// Compares the branch's Resolve (trust unset) against develop's clientIP (copied verbatim from c5fb598).
+package main
+
+import (
+	"fmt"
+	"net"
+	"net/http"
+	"os"
+
+	"rollbackcheck/clientip"
+)
+
+// developClientIP: verbatim body of clientIP at c5fb598 services/gateway/internal/proxy/gateway.go.
+func developClientIP(r *http.Request) string {
+	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		return r.RemoteAddr
+	}
+	return host
+}
+
+func main() {
+	peers := []string{"203.0.113.9:443", "10.1.2.3:5000", "[2001:db8::1]:80", "[::ffff:10.1.2.3]:1", "[fe80::1%eth0]:9",
+		"1.2.3.4", "garbage", "", "[::1]", ":80", "1.2.3.4:", "[2001:db8::1%25en0]:443", "127.0.0.1:0", "a:b:c"}
+	xffs := [][]string{nil, {"198.51.100.1"}, {"1.1.1.1, 10.0.0.5"}, {"unknown"}, {"198.51.100.1", "10.0.0.5"}}
+	empty, _ := clientip.ParseTrusted("")
+	resolvers := map[string]*clientip.Resolver{"nil": clientip.New(nil), "ParseTrusted(\"\")": clientip.New(empty), "empty-slice": clientip.New(empty[:0:0])}
+	n, bad := 0, 0
+	for name, res := range resolvers {
+		for _, p := range peers {
+			for _, x := range xffs {
+				r := &http.Request{RemoteAddr: p, Header: http.Header{"X-Forwarded-For": x}}
+				got, from := res.Resolve(p, r.Header.Values("X-Forwarded-For"))
+				want := developClientIP(r)
+				n++
+				if got != want || from {
+					bad++
+					fmt.Printf("MISMATCH %s peer=%q xff=%q got=%q from=%v want=%q\n", name, p, x, got, from, want)
+				}
+			}
+		}
+	}
+	fmt.Printf("cases=%d mismatches=%d\n", n, bad)
+	if bad > 0 {
+		os.Exit(1)
+	}
+}

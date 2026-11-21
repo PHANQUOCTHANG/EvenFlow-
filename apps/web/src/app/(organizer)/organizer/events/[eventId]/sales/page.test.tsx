@@ -41,10 +41,11 @@ const event: OrganizerEvent = {
   updatedAt: "",
 };
 
+// ops-warroom (test change request): snapshot that, khong con nhan mau.
 const snapshot: RealtimeSalesSnapshot = {
-  isSample: true,
+  isSample: false,
   eventId: EVT,
-  timestamp: "12:00:00",
+  timestamp: "2026-11-01T05:00:00Z",
   grossRevenue: 7200000,
   totalTicketsSold: 72,
   totalQuota: 100,
@@ -63,6 +64,11 @@ const snapshot: RealtimeSalesSnapshot = {
       fillRatePercentage: 72,
     },
   ],
+  postSaleReport: {
+    averageOrderValue: 180000,
+    peakSalesVelocityTps: null,
+    paymentBreakdown: [{ provider: "vnpay", orders: 40, amount: 7200000 }],
+  },
 };
 
 beforeEach(() => {
@@ -71,15 +77,15 @@ beforeEach(() => {
 });
 
 describe("OrganizerSalesPage route (/organizer/events/[eventId]/sales - AC-24)", () => {
-  it("hiện dashboard doanh số được gắn nhãn dữ liệu mẫu", async () => {
+  it("hiện dashboard doanh số thật, không còn nhãn dữ liệu mẫu", async () => {
     mocks.getById.mockResolvedValue(event);
     mocks.sales.mockResolvedValue(snapshot);
     render(await OrganizerSalesPage({ params: Promise.resolve({ eventId: EVT }) }));
 
     expect(await screen.findByText("Rock Fest")).toBeInTheDocument();
     expect(await screen.findByText("Tổng doanh thu")).toBeInTheDocument();
-    expect(screen.getByText("Dữ liệu mẫu — chưa khả dụng từ hệ thống")).toBeInTheDocument();
-    expect(screen.getByText(/Dữ liệu mẫu · mô phỏng Realtime/)).toBeInTheDocument();
+    expect(screen.queryByText(/Dữ liệu mẫu/)).not.toBeInTheDocument();
+    expect(screen.getByText(/Realtime \(≤ 5s\)/)).toBeInTheDocument();
     expect(mocks.sales).toHaveBeenCalledWith(EVT);
   });
 

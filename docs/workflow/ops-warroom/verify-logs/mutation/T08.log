@@ -1,0 +1,20 @@
+--- FAIL: TestGetOrganizerSales_Contract42_BreakdownSumsToTotals (0.00s)
+FAIL
+FAIL	github.com/eventflow/eventflow/services/ticketing/internal/app	0.909s
+FAIL
+---- tail ----
+--- FAIL: TestGetOrganizerSales_Contract42_BreakdownSumsToTotals (0.00s)
+    --- FAIL: TestGetOrganizerSales_Contract42_BreakdownSumsToTotals/remaining_orders_with_zero_amount_(free_tier,_no_SUCCEEDED_payment) (0.00s)
+        ops_sales_invariant_test.go:79: breakdown sums orders=2 amount=100000, totals paid_orders=3 gross=100000 ([{Provider:vnpay Orders:2 AmountCents:100000}])
+    --- FAIL: TestGetOrganizerSales_Contract42_BreakdownSumsToTotals/all_orders_free_and_unpaid (0.00s)
+        ops_sales_invariant_test.go:79: breakdown sums orders=0 amount=0, totals paid_orders=2 gross=0 ([])
+    --- FAIL: TestGetOrganizerSales_Contract42_BreakdownSumsToTotals/counts_match_but_amount_differs (0.00s)
+        ops_sales_invariant_test.go:79: breakdown sums orders=2 amount=200, totals paid_orders=2 gross=300 ([{Provider:momo Orders:2 AmountCents:200}])
+FAIL
+FAIL	github.com/eventflow/eventflow/services/ticketing/internal/app	0.909s
+ok  	github.com/eventflow/eventflow/services/ticketing/internal/domain	0.375s
+?   	github.com/eventflow/eventflow/services/ticketing/internal/port	[no test files]
+ok  	github.com/eventflow/eventflow/services/ticketing/internal/worker	0.611s
+ok  	github.com/eventflow/eventflow/services/ticketing/cmd/server	0.226s
+?   	github.com/eventflow/eventflow/services/ticketing/cmd/worker	[no test files]
+FAIL

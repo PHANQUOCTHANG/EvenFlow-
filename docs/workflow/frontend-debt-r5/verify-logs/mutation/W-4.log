@@ -1,0 +1,699 @@
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+[33mThe CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.[39m
+
+[1m[7m[36m RUN [39m[27m[22m [36mv2.1.8 [39m[90mD:/Documents/Nam4-1/Project1/EvenFlow-r5-verify/apps/web[39m
+
+[90mstderr[2m | src/hooks/use-server-countdown.test.tsx[2m > [22m[2museServerCountdown — chua co moc thi KHONG phai het han (AC-4, hop dong §5)[2m > [22m[2mstring khong parse duoc -> giong null: remainingMs 0, expired FALSE
+[22m[39m[server-time] moc thoi han "soon" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+[server-time] moc thoi han "soon" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+[90mstderr[2m | src/hooks/use-server-countdown.test.tsx[2m > [22m[2museServerCountdown — chua co moc thi KHONG phai het han (AC-4, hop dong §5)[2m > [22m[2mstring rong cung khong phai het han
+[22m[39m[server-time] moc thoi han "" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+[server-time] moc thoi han "" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+[90mstderr[2m | src/hooks/use-server-countdown.test.tsx[2m > [22m[2museServerCountdown — chua co moc thi KHONG phai het han (AC-4, hop dong §5)[2m > [22m[2mstring khong parse duoc + thoi gian troi van khong thanh expired
+[22m[39m[server-time] moc thoi han "not-a-date" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+[server-time] moc thoi han "not-a-date" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+[90mstderr[2m | src/hooks/use-server-countdown.test.tsx[2m > [22m[2museServerCountdown — ready sau khi mount (AC-4)[2m > [22m[2mmoc khong doc duoc () -> ready FALSE va expired FALSE
+[22m[39m[server-time] moc thoi han "" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+[server-time] moc thoi han "" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+[90mstderr[2m | src/hooks/use-server-countdown.test.tsx[2m > [22m[2museServerCountdown — ready sau khi mount (AC-4)[2m > [22m[2mmoc khong doc duoc (soon) -> ready FALSE va expired FALSE
+[22m[39m[server-time] moc thoi han "soon" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+[server-time] moc thoi han "soon" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+[90mstderr[2m | src/hooks/use-server-countdown.test.tsx[2m > [22m[2museServerCountdown — ready sau khi mount (AC-4)[2m > [22m[2mmoc khong doc duoc (2026-10-03) -> ready FALSE va expired FALSE
+[22m[39m[server-time] moc thoi han "2026-10-03" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+[server-time] moc thoi han "2026-10-03" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+[90mstderr[2m | src/hooks/use-server-countdown.test.tsx[2m > [22m[2museServerCountdown — ready sau khi mount (AC-4)[2m > [22m[2mmoc khong doc duoc (2026-10-03T09:00:00) -> ready FALSE va expired FALSE
+[22m[39m[server-time] moc thoi han "2026-10-03T09:00:00" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+[server-time] moc thoi han "2026-10-03T09:00:00" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+[90mstderr[2m | src/hooks/use-server-countdown.test.tsx[2m > [22m[2museServerCountdown — ready sau khi mount (AC-4)[2m > [22m[2mready khong bao gio true cung luc voi moc khong doc duoc, du thoi gian troi
+[22m[39m[server-time] moc thoi han "khong-phai-ngay" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+[server-time] moc thoi han "khong-phai-ngay" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+ [32m✓[39m src/hooks/use-server-countdown.test.tsx [2m([22m[2m48 tests[22m[2m)[22m[90m 205[2mms[22m[39m
+ [32m✓[39m src/hooks/use-ops-war-room.test.tsx [2m([22m[2m34 tests[22m[2m)[22m[90m 208[2mms[22m[39m
+ [32m✓[39m src/lib/fix2/g1-lock-refresh.test.ts [2m([22m[2m9 tests[22m[2m)[22m[33m 400[2mms[22m[39m
+ [32m✓[39m src/lib/debt/ac2-refresh-deadlines.test.ts [2m([22m[2m18 tests[22m[2m)[22m[33m 486[2mms[22m[39m
+ [32m✓[39m src/components/checkout/ticket-tier-card.test.tsx [2m([22m[2m52 tests[22m[2m)[22m[33m 367[2mms[22m[39m
+ [32m✓[39m src/components/checkout/order-summary.test.tsx [2m([22m[2m74 tests[22m[2m)[22m[33m 770[2mms[22m[39m
+[90mstderr[2m | src/components/checkout/order-result-view.test.tsx[2m > [22m[2mOrderResultView — phat hanh ve va loi (AC-14, AC-15)[2m > [22m[2mchua phat hanh (rong): hien trang thai cho, KHONG ve QR nao, thanh cong khi thu lai
+[22m[39mWarning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to TicketQr inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at TicketQr (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\ticket-qr.tsx:8:21)
+    at div
+    at div
+    at div
+    at Card2 (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\ui\card.tsx:7:64)
+    at div
+    at section
+    at div
+    at div
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to TicketQr inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at TicketQr (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\ticket-qr.tsx:8:21)
+    at div
+    at div
+    at div
+    at Card2 (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\ui\card.tsx:7:64)
+    at div
+    at section
+    at div
+    at div
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+
+[90mstderr[2m | src/components/checkout/order-result-view.test.tsx[2m > [22m[2mOrderResultView — phat hanh ve va loi (AC-14, AC-15)[2m > [22m[2mhet luot thu lai van chua co ve: bao loi + nut lay ve lai, van khong co QR, so lan thu co gioi han
+[22m[39mWarning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to ForwardRef(LinkComponent) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at LinkComponent (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\node_modules\next\dist\client\link.js:138:19)
+    at div
+    at div
+    at div
+    at div
+    at Card2 (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\ui\card.tsx:7:64)
+    at div
+    at div
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+
+[90mstderr[2m | src/components/checkout/order-result-view.test.tsx[2m > [22m[2mOrderResultView — phat hanh ve va loi (AC-14, AC-15)[2m > [22m[2mhet luot thu lai van chua co ve: bao loi + nut lay ve lai, van khong co QR, so lan thu co gioi han
+[22m[39mWarning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+
+[90mstderr[2m | src/components/checkout/order-result-view.test.tsx[2m > [22m[2mOrderResultView — phat hanh ve va loi (AC-14, AC-15)[2m > [22m[2mhet luot thu lai van chua co ve: bao loi + nut lay ve lai, van khong co QR, so lan thu co gioi han
+[22m[39mWarning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+
+[90mstderr[2m | src/components/checkout/order-result-view.test.tsx[2m > [22m[2mOrderResultView — phat hanh ve va loi (AC-14, AC-15)[2m > [22m[2mhet luot thu lai van chua co ve: bao loi + nut lay ve lai, van khong co QR, so lan thu co gioi han
+[22m[39mWarning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+
+[90mstderr[2m | src/components/checkout/order-result-view.test.tsx[2m > [22m[2mOrderResultView — phat hanh ve va loi (AC-14, AC-15)[2m > [22m[2mhet luot thu lai van chua co ve: bao loi + nut lay ve lai, van khong co QR, so lan thu co gioi han
+[22m[39mWarning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+
+[90mstderr[2m | src/components/checkout/order-result-view.test.tsx[2m > [22m[2mOrderResultView — phat hanh ve va loi (AC-14, AC-15)[2m > [22m[2mhet luot thu lai van chua co ve: bao loi + nut lay ve lai, van khong co QR, so lan thu co gioi han
+[22m[39mWarning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+
+ [32m✓[39m src/components/checkout/order-result-view.test.tsx [2m([22m[2m12 tests[22m[2m)[22m[33m 825[2mms[22m[39m
+ [32m✓[39m src/components/checkout/checkout-view.debt5.test.tsx [2m([22m[2m21 tests[22m[2m)[22m[33m 1469[2mms[22m[39m
+[90mstderr[2m | src/hooks/use-hold-timer.test.tsx[2m > [22m[2museHoldTimer (EVF-113, BR-O2, BR-O5)[2m > [22m[2mBấm đặt nhiều lần không tạo hold trùng (BR-O5)
+[22m[39mWarning: An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at TestComponent (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\node_modules\@testing-library\react\dist\pure.js:307:5)
+Warning: An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at TestComponent (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\node_modules\@testing-library\react\dist\pure.js:307:5)
+
+ [32m✓[39m src/hooks/use-hold-timer.test.tsx [2m([22m[2m12 tests[22m[2m)[22m[90m 102[2mms[22m[39m
+ [32m✓[39m src/hooks/use-queue-status.test.tsx [2m([22m[2m10 tests[22m[2m)[22m[90m 121[2mms[22m[39m
+ [32m✓[39m src/lib/debt5/ac2-used-refresh.test.ts [2m([22m[2m21 tests[22m[2m)[22m[33m 460[2mms[22m[39m
+ [32m✓[39m src/components/checkout/checkout-view.test.tsx [2m([22m[2m11 tests[22m[2m)[22m[33m 702[2mms[22m[39m
+ [31m❯[39m src/components/checkout/order-result-view.debt5.test.tsx [2m([22m[2m11 tests[22m[2m | [22m[31m2 failed[39m[2m)[22m[33m 600[2mms[22m[39m
+[31m   [31m×[31m AC-9 ticket issuing stops on an expired session[2m > [22mR3-3: PAID + issue-tickets 401 -> one prompt with sign-in link, no 'Lấy vé lại', no failed alert, 1 POST over 120 s[90m 73[2mms[22m[31m[39m
+[31m     → expected null not to be null[39m
+[31m   [31m×[31m AC-9 ticket issuing stops on an expired session[2m > [22mthe auth prompt appears exactly once (no duplicate text)[90m 22[2mms[22m[31m[39m
+[31m     → expected [] to have a length of 1 but got +0[39m
+ [32m✓[39m src/lib/debt5/ac3-same-user-reuse.test.ts [2m([22m[2m11 tests[22m[2m)[22m[90m 229[2mms[22m[39m
+[90mstderr[2m | src/components/checkout/payment-handoff-view.test.tsx[2m > [22m[2mPaymentHandoffView component (EVF-114, BR-O2, BR-O5)[2m > [22m[2mgọi onPaymentSuccess khi nhập đầy đủ thông tin và submit thành công (BR-O5)
+[22m[39mWarning: An update to PaymentHandoffView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at PaymentHandoffView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\payment-handoff-view.tsx:21:3)
+
+ [32m✓[39m src/components/checkout/payment-handoff-view.test.tsx [2m([22m[2m8 tests[22m[2m)[22m[33m 774[2mms[22m[39m
+ [32m✓[39m src/lib/debt/ac4-cross-tab-owner.test.tsx [2m([22m[2m10 tests[22m[2m)[22m[90m 206[2mms[22m[39m
+ [32m✓[39m src/lib/debt5/ac6-role-validation.test.ts [2m([22m[2m33 tests[22m[2m)[22m[90m 86[2mms[22m[39m
+ [32m✓[39m src/hooks/use-theme.test.tsx [2m([22m[2m13 tests[22m[2m)[22m[90m 80[2mms[22m[39m
+ [32m✓[39m src/lib/debt/ac1-user-switch.test.ts [2m([22m[2m6 tests[22m[2m)[22m[90m 127[2mms[22m[39m
+[90mstderr[2m | src/hooks/use-organizer-sales.test.tsx[2m > [22m[2museOrganizerSales — Hook doanh số realtime (AC-4)[2m > [22m[2mdùng initialData nếu được truyền vào để tránh loading skeleton
+[22m[39mWarning: An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at TestComponent (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\node_modules\@testing-library\react\dist\pure.js:307:5)
+Warning: An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at TestComponent (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\node_modules\@testing-library\react\dist\pure.js:307:5)
+Warning: An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at TestComponent (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\node_modules\@testing-library\react\dist\pure.js:307:5)
+
+ [32m✓[39m src/hooks/use-organizer-sales.test.tsx [2m([22m[2m6 tests[22m[2m)[22m[90m 76[2mms[22m[39m
+ [32m✓[39m src/hooks/use-assistant.test.tsx [2m([22m[2m7 tests[22m[2m)[22m[90m 75[2mms[22m[39m
+ [32m✓[39m src/lib/debt/ac3-locks-errors.test.ts [2m([22m[2m11 tests[22m[2m)[22m[90m 194[2mms[22m[39m
+ [32m✓[39m src/components/checkout/order-result-view.fix2.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[33m 400[2mms[22m[39m
+ [32m✓[39m src/components/checkout/cancel-hold-dialog.test.tsx [2m([22m[2m7 tests[22m[2m)[22m[33m 300[2mms[22m[39m
+ [32m✓[39m src/lib/debt5/ac4-ac5-no-bearerless-send.test.ts [2m([22m[2m6 tests[22m[2m)[22m[90m 119[2mms[22m[39m
+ [32m✓[39m src/hooks/use-payment-session.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[90m 49[2mms[22m[39m
+ [32m✓[39m src/hooks/use-order-status.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[90m 56[2mms[22m[39m
+ [32m✓[39m src/hooks/use-auth.contract.test.tsx [2m([22m[2m6 tests[22m[2m)[22m[90m 102[2mms[22m[39m
+ [32m✓[39m src/lib/debt5/ac1-refresh-body.test.ts [2m([22m[2m8 tests[22m[2m)[22m[90m 156[2mms[22m[39m
+ [32m✓[39m src/components/checkout/cancel-hold-dialog-fallback.test.tsx [2m([22m[2m7 tests[22m[2m)[22m[33m 337[2mms[22m[39m
+ [32m✓[39m src/components/checkout/payment-page-client.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[90m 250[2mms[22m[39m
+ [32m✓[39m src/components/checkout/checkout-view.wp2.test.tsx [2m([22m[2m5 tests[22m[2m)[22m[33m 482[2mms[22m[39m
+ [32m✓[39m src/components/checkout/checkout-view.cancel-focus.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[33m 448[2mms[22m[39m
+   [33m[2m✓[22m[39m AC-11 focus[2m > [22mfocus moves into the dialog, and back to the trigger after 'Giữ lại' [33m316[2mms[22m[39m
+ [32m✓[39m src/hooks/use-order-status.debt5.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[90m 86[2mms[22m[39m
+ [32m✓[39m src/lib/fix2/g5-g6-payment-key.test.ts [2m([22m[2m2 tests[22m[2m)[22m[90m 40[2mms[22m[39m
+ [32m✓[39m src/lib/fix2/g7-signin-prefill.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[33m 388[2mms[22m[39m
+   [33m[2m✓[22m[39m G-7[2m > [22mregister -> sign-in link has no identifier in the URL and stores it one-shot in sessionStorage [33m346[2mms[22m[39m
+[90mstderr[2m | src/lib/fix2/g7-signin-prefill.test.tsx[2m > [22m[2mG-7[2m > [22m[2mLoginForm prefills from the one-shot key and removes it
+[22m[39mError: Not implemented: navigation (except hash changes)
+    at module.exports (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\node_modules\jsdom\lib\jsdom\browser\not-implemented.js:9:17)
+    at navigateFetch (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\node_modules\jsdom\lib\jsdom\living\window\navigation.js:77:3)
+    at exports.navigate (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\node_modules\jsdom\lib\jsdom\living\window\navigation.js:55:3)
+    at Timeout._onTimeout (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\node_modules\jsdom\lib\jsdom\living\nodes\HTMLHyperlinkElementUtils-impl.js:81:7)
+    at listOnTimeout (node:internal/timers:588:17)
+    at processTimers (node:internal/timers:523:7) [90mundefined[39m
+
+ [32m✓[39m src/lib/debt/ac6-payment-forbidden.test.ts [2m([22m[2m10 tests[22m[2m)[22m[90m 44[2mms[22m[39m
+ [32m✓[39m src/lib/debt5/ac10-safe-redirect.test.ts [2m([22m[2m21 tests[22m[2m)[22m[90m 68[2mms[22m[39m
+ [32m✓[39m src/hooks/use-server-time-sync.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[90m 260[2mms[22m[39m
+ [32m✓[39m src/components/checkout/ticket-qr.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[90m 263[2mms[22m[39m
+ [32m✓[39m src/lib/debt/fix1-f5-clear-guards.test.ts [2m([22m[2m2 tests[22m[2m)[22m[90m 72[2mms[22m[39m
+ [32m✓[39m src/components/checkout/order-result-view.debt.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[90m 157[2mms[22m[39m
+ [32m✓[39m src/lib/debt5-fix/r2-used-record-eviction.test.ts [2m([22m[2m3 tests[22m[2m)[22m[90m 48[2mms[22m[39m
+ [32m✓[39m src/components/checkout/payment-handoff-view.debt.test.tsx [2m([22m[2m1 test[22m[2m)[22m[33m 353[2mms[22m[39m
+   [33m[2m✓[22m[39m PaymentHandoffView 403 forbidden (AC-6)[2m > [22mshows checkout.forbidden (not the generic HTTP 403 text) and sends exactly one payment POST [33m351[2mms[22m[39m
+ [32m✓[39m src/components/checkout/order-result-view.fix1.test.tsx [2m([22m[2m1 test[22m[2m)[22m[90m 118[2mms[22m[39m
+ [32m✓[39m src/components/checkout/result-page-client.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[90m 129[2mms[22m[39m
+ [32m✓[39m src/lib/debt5-fix/x2-empty-lock-token.test.ts [2m([22m[2m2 tests[22m[2m)[22m[90m 57[2mms[22m[39m
+ [32m✓[39m src/hooks/use-payment-session.debt.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[90m 40[2mms[22m[39m
+ [32m✓[39m src/lib/debt/fix1-f2-no-refresh-token.test.ts [2m([22m[2m1 test[22m[2m)[22m[90m 43[2mms[22m[39m
+ [32m✓[39m src/lib/debt5-fix/x4-throwing-getitem.test.ts [2m([22m[2m3 tests[22m[2m)[22m[90m 46[2mms[22m[39m
+ [32m✓[39m src/components/checkout/checkout-view.fix3.test.tsx [2m([22m[2m1 test[22m[2m)[22m[90m 244[2mms[22m[39m
+ [32m✓[39m src/lib/debt/fix1-f3-empty-user-id.test.ts [2m([22m[2m1 test[22m[2m)[22m[90m 42[2mms[22m[39m
+ [32m✓[39m src/lib/fix2/g4-involuntary-expiry.test.ts [2m([22m[2m2 tests[22m[2m)[22m[90m 36[2mms[22m[39m
+ [32m✓[39m src/hooks/use-payment-session.fix1.test.tsx [2m([22m[2m1 test[22m[2m)[22m[90m 38[2mms[22m[39m
+ [32m✓[39m src/hooks/use-auth.test.ts [2m([22m[2m2 tests[22m[2m)[22m[90m 5[2mms[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[1m[7m Failed Tests 2 [27m[22m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[31m[1m[7m FAIL [27m[22m[39m src/components/checkout/order-result-view.debt5.test.tsx[2m > [22mAC-9 ticket issuing stops on an expired session[2m > [22mR3-3: PAID + issue-tickets 401 -> one prompt with sign-in link, no 'Lấy vé lại', no failed alert, 1 POST over 120 s
+[31m[1mAssertionError[22m: expected null not to be null[39m
+[36m [2m❯[22m src/components/checkout/order-result-view.debt5.test.tsx:[2m153:47[22m[39m
+    [90m151| [39m    [34mrender[39m([33m<[39m[33mOrderResultView[39m [33meventId[39m[33m=[39m[32m"e1"[39m [33morderId[39m[33m=[39m[32m"o1"[39m [33minitialOrder[39m[33m=[39m[33m{[39mpa…
+    [90m152| [39m    [35mawait[39m [34mstep[39m([34m120_000[39m)[33m;[39m
+    [90m153| [39m    [34mexpect[39m(screen[33m.[39m[34mqueryByText[39m([33mAUTH_TEXT[39m))[33m.[39mnot[33m.[39m[34mtoBeNull[39m()[33m;[39m
+    [90m   | [39m                                              [31m^[39m
+    [90m154| [39m    [34mexpect[39m([34msignInLinks[39m())[33m.[39m[34mtoHaveLength[39m([34m1[39m)[33m;[39m
+    [90m155| [39m    [34mexpect[39m([34msignInLinks[39m()[[34m0[39m][33m.[39m[34mgetAttribute[39m([32m"href"[39m))[33m.[39m[34mtoBe[39m([32m"/auth/sign-in"[39m…
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m src/components/checkout/order-result-view.debt5.test.tsx[2m > [22mAC-9 ticket issuing stops on an expired session[2m > [22mthe auth prompt appears exactly once (no duplicate text)
+[31m[1mAssertionError[22m: expected [] to have a length of 1 but got +0[39m
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 1[39m
+[31m+ 0[39m
+
+[36m [2m❯[22m src/components/checkout/order-result-view.debt5.test.tsx:[2m165:46[22m[39m
+    [90m163| [39m    [34mrender[39m([33m<[39m[33mOrderResultView[39m [33meventId[39m[33m=[39m[32m"e1"[39m [33morderId[39m[33m=[39m[32m"o1"[39m [33minitialOrder[39m[33m=[39m[33m{[39mpa…
+    [90m164| [39m    [35mawait[39m [34mstep[39m([34m10_000[39m)[33m;[39m
+    [90m165| [39m    [34mexpect[39m(screen[33m.[39m[34mqueryAllByText[39m([33mAUTH_TEXT[39m))[33m.[39m[34mtoHaveLength[39m([34m1[39m)[33m;[39m
+    [90m   | [39m                                             [31m^[39m
+    [90m166| [39m  })[33m;[39m
+    [90m167| [39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯[22m[39m
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[2m | [22m[1m[32m54 passed[39m[22m[90m (55)[39m
+[2m      Tests [22m [1m[31m2 failed[39m[22m[2m | [22m[1m[32m564 passed[39m[22m[90m (566)[39m
+[2m   Start at [22m 10:55:17
+[2m   Duration [22m 34.99s[2m (transform 2.83s, setup 45.33s, collect 10.63s, tests 13.84s, environment 116.49s, prepare 12.12s)[22m
+

@@ -1,0 +1,485 @@
+gofmt ok: services/gateway/cmd/server/main.go
+gofmt ok: services/gateway/internal/clientip/clientip.go
+gofmt ok: services/gateway/internal/clientip/clientip_round1_test.go
+gofmt ok: services/gateway/internal/clientip/clientip_test.go
+gofmt ok: services/gateway/internal/config/config.go
+gofmt ok: services/gateway/internal/config/config_trusted_round1_test.go
+gofmt ok: services/gateway/internal/config/config_trusted_test.go
+gofmt ok: services/gateway/internal/proxy/gateway.go
+gofmt ok: services/gateway/internal/proxy/trusted_proxy_round1_test.go
+gofmt ok: services/gateway/internal/proxy/trusted_proxy_test.go
+go vet: clean
+?   	github.com/eventflow/eventflow/services/gateway/cmd/server	[no test files]
+=== RUN   TestParseTrusted_Round1_WidePrefixRejected
+--- PASS: TestParseTrusted_Round1_WidePrefixRejected (0.00s)
+=== RUN   TestParseTrusted_Round1_FloorBoundaryAccepted
+--- PASS: TestParseTrusted_Round1_FloorBoundaryAccepted (0.00s)
+=== RUN   TestParseTrusted_Round1_TrimsNewlines
+--- PASS: TestParseTrusted_Round1_TrimsNewlines (0.00s)
+=== RUN   TestResolve_Round1_StrictElementForms
+--- PASS: TestResolve_Round1_StrictElementForms (0.00s)
+=== RUN   TestResolve_Round1_LeadingTab
+--- PASS: TestResolve_Round1_LeadingTab (0.00s)
+=== RUN   TestResolve
+=== RUN   TestResolve/AC1_trust_off_ipv4_peer
+=== RUN   TestResolve/AC1_trust_off_peer_would_be_trusted
+=== RUN   TestResolve/AC1_trust_off_mapped_peer
+=== RUN   TestResolve/AC1_trust_off_zoned_peer
+=== RUN   TestResolve/AC1_trust_off_garbage_peer
+=== RUN   TestResolve/AC1_trust_off_empty_RemoteAddr
+=== RUN   TestResolve/AC1_trust_empty_slice
+=== RUN   TestResolve/AC2_untrusted_peer
+=== RUN   TestResolve/AC2_untrusted_ipv6_peer
+=== RUN   TestResolve/AC3_trusted_peer_single_client
+=== RUN   TestResolve/AC3_trusted_peer_without_port
+=== RUN   TestResolve/AC3_trusted_ipv6_peer
+=== RUN   TestResolve/AC4_forged_leftmost
+=== RUN   TestResolve/AC4_forged_leftmost_other
+=== RUN   TestResolve/AC4_forged_leftmost_trusted-looking
+=== RUN   TestResolve/AC5_chain
+=== RUN   TestResolve/AC5_untrusted_middle_hop
+=== RUN   TestResolve/AC5_second_cidr_not_trusted_when_absent
+=== RUN   TestResolve/AC6_two_header_lines
+=== RUN   TestResolve/AC6_one_line_equivalent
+=== RUN   TestResolve/AC6_last_line_is_rightmost
+=== RUN   TestResolve/AC6_lines_with_several_elements
+=== RUN   TestResolve/AC6_empty_middle_line
+=== RUN   TestResolve/AC6_spaces_tabs_empty_elements
+=== RUN   TestResolve/AC6_trailing_empty_elements
+=== RUN   TestResolve/AC6_ipv4_with_port
+=== RUN   TestResolve/AC6_trusted_hop_with_port
+=== RUN   TestResolve/AC6_ipv6_brackets_and_port
+=== RUN   TestResolve/AC6_ipv6_brackets_only
+=== RUN   TestResolve/AC6_ipv6_upper_case
+=== RUN   TestResolve/AC6_ipv6_uncompressed
+=== RUN   TestResolve/AC6_bare_ipv6_is_not_host:port
+=== RUN   TestResolve/AC6_mapped_element_unmapped
+=== RUN   TestResolve/AC6_mapped_element_bracket_port
+=== RUN   TestResolve/AC6_mapped_trusted_hop_matches_ipv4_cidr
+=== RUN   TestResolve/AC6_mapped_peer_matches_ipv4_cidr
+=== RUN   TestResolve/AC6_mapped_peer_fallback_key
+=== RUN   TestResolve/AC6_ipv6_trusted_cidr
+=== RUN   TestResolve/AC7_rightmost_unknown
+=== RUN   TestResolve/AC7_rightmost_short_ipv4
+=== RUN   TestResolve/AC7_rightmost_zoned
+=== RUN   TestResolve/AC7_rightmost_zoned_bracket
+=== RUN   TestResolve/AC7_rightmost_script
+=== RUN   TestResolve/AC7_rightmost_obfuscated
+=== RUN   TestResolve/AC7_only_malformed
+=== RUN   TestResolve/AC7_malformed_after_trusted_hop
+=== RUN   TestResolve/AC7_malformed_in_last_line
+=== RUN   TestResolve/AC7_malformed_left_of_client_ignored
+=== RUN   TestResolve/AC7_malformed_line_left_of_client_ignored
+=== RUN   TestResolve/AC7_no_xff
+=== RUN   TestResolve/AC7_empty_xff_line
+=== RUN   TestResolve/AC7_only_empty_elements
+=== RUN   TestResolve/AC7_all_trusted_single
+=== RUN   TestResolve/AC7_all_trusted_leftmost
+=== RUN   TestResolve/AC7_all_trusted_leftmost_across_lines
+=== RUN   TestResolve/AC7_16_trusted_hops_leftmost
+=== RUN   TestResolve/AC7_client_then_16_trusted_hops
+=== RUN   TestResolve/AC7_17_trusted_hops
+=== RUN   TestResolve/AC7_client_then_17_trusted_hops
+=== RUN   TestResolve/AC7_17_trusted_hops_across_lines
+=== RUN   TestResolve/AC7_empty_elements_do_not_count_as_hops
+=== RUN   TestResolve/AC7_zoned_peer_trust_on
+=== RUN   TestResolve/AC7_zoned_peer_never_trusted
+=== RUN   TestResolve/AC7_unparsable_RemoteAddr
+=== RUN   TestResolve/AC7_RemoteAddr_with_empty_port_is_trusted
+=== RUN   TestResolve/AC7_empty_RemoteAddr
+--- PASS: TestResolve (0.01s)
+    --- PASS: TestResolve/AC1_trust_off_ipv4_peer (0.00s)
+    --- PASS: TestResolve/AC1_trust_off_peer_would_be_trusted (0.00s)
+    --- PASS: TestResolve/AC1_trust_off_mapped_peer (0.00s)
+    --- PASS: TestResolve/AC1_trust_off_zoned_peer (0.00s)
+    --- PASS: TestResolve/AC1_trust_off_garbage_peer (0.00s)
+    --- PASS: TestResolve/AC1_trust_off_empty_RemoteAddr (0.00s)
+    --- PASS: TestResolve/AC1_trust_empty_slice (0.00s)
+    --- PASS: TestResolve/AC2_untrusted_peer (0.00s)
+    --- PASS: TestResolve/AC2_untrusted_ipv6_peer (0.00s)
+    --- PASS: TestResolve/AC3_trusted_peer_single_client (0.00s)
+    --- PASS: TestResolve/AC3_trusted_peer_without_port (0.00s)
+    --- PASS: TestResolve/AC3_trusted_ipv6_peer (0.00s)
+    --- PASS: TestResolve/AC4_forged_leftmost (0.00s)
+    --- PASS: TestResolve/AC4_forged_leftmost_other (0.00s)
+    --- PASS: TestResolve/AC4_forged_leftmost_trusted-looking (0.00s)
+    --- PASS: TestResolve/AC5_chain (0.00s)
+    --- PASS: TestResolve/AC5_untrusted_middle_hop (0.00s)
+    --- PASS: TestResolve/AC5_second_cidr_not_trusted_when_absent (0.00s)
+    --- PASS: TestResolve/AC6_two_header_lines (0.00s)
+    --- PASS: TestResolve/AC6_one_line_equivalent (0.00s)
+    --- PASS: TestResolve/AC6_last_line_is_rightmost (0.00s)
+    --- PASS: TestResolve/AC6_lines_with_several_elements (0.00s)
+    --- PASS: TestResolve/AC6_empty_middle_line (0.00s)
+    --- PASS: TestResolve/AC6_spaces_tabs_empty_elements (0.00s)
+    --- PASS: TestResolve/AC6_trailing_empty_elements (0.00s)
+    --- PASS: TestResolve/AC6_ipv4_with_port (0.00s)
+    --- PASS: TestResolve/AC6_trusted_hop_with_port (0.00s)
+    --- PASS: TestResolve/AC6_ipv6_brackets_and_port (0.00s)
+    --- PASS: TestResolve/AC6_ipv6_brackets_only (0.00s)
+    --- PASS: TestResolve/AC6_ipv6_upper_case (0.00s)
+    --- PASS: TestResolve/AC6_ipv6_uncompressed (0.00s)
+    --- PASS: TestResolve/AC6_bare_ipv6_is_not_host:port (0.00s)
+    --- PASS: TestResolve/AC6_mapped_element_unmapped (0.00s)
+    --- PASS: TestResolve/AC6_mapped_element_bracket_port (0.00s)
+    --- PASS: TestResolve/AC6_mapped_trusted_hop_matches_ipv4_cidr (0.00s)
+    --- PASS: TestResolve/AC6_mapped_peer_matches_ipv4_cidr (0.00s)
+    --- PASS: TestResolve/AC6_mapped_peer_fallback_key (0.00s)
+    --- PASS: TestResolve/AC6_ipv6_trusted_cidr (0.00s)
+    --- PASS: TestResolve/AC7_rightmost_unknown (0.00s)
+    --- PASS: TestResolve/AC7_rightmost_short_ipv4 (0.00s)
+    --- PASS: TestResolve/AC7_rightmost_zoned (0.00s)
+    --- PASS: TestResolve/AC7_rightmost_zoned_bracket (0.00s)
+    --- PASS: TestResolve/AC7_rightmost_script (0.00s)
+    --- PASS: TestResolve/AC7_rightmost_obfuscated (0.00s)
+    --- PASS: TestResolve/AC7_only_malformed (0.00s)
+    --- PASS: TestResolve/AC7_malformed_after_trusted_hop (0.00s)
+    --- PASS: TestResolve/AC7_malformed_in_last_line (0.00s)
+    --- PASS: TestResolve/AC7_malformed_left_of_client_ignored (0.00s)
+    --- PASS: TestResolve/AC7_malformed_line_left_of_client_ignored (0.00s)
+    --- PASS: TestResolve/AC7_no_xff (0.00s)
+    --- PASS: TestResolve/AC7_empty_xff_line (0.00s)
+    --- PASS: TestResolve/AC7_only_empty_elements (0.00s)
+    --- PASS: TestResolve/AC7_all_trusted_single (0.00s)
+    --- PASS: TestResolve/AC7_all_trusted_leftmost (0.00s)
+    --- PASS: TestResolve/AC7_all_trusted_leftmost_across_lines (0.00s)
+    --- PASS: TestResolve/AC7_16_trusted_hops_leftmost (0.00s)
+    --- PASS: TestResolve/AC7_client_then_16_trusted_hops (0.00s)
+    --- PASS: TestResolve/AC7_17_trusted_hops (0.00s)
+    --- PASS: TestResolve/AC7_client_then_17_trusted_hops (0.00s)
+    --- PASS: TestResolve/AC7_17_trusted_hops_across_lines (0.00s)
+    --- PASS: TestResolve/AC7_empty_elements_do_not_count_as_hops (0.00s)
+    --- PASS: TestResolve/AC7_zoned_peer_trust_on (0.00s)
+    --- PASS: TestResolve/AC7_zoned_peer_never_trusted (0.00s)
+    --- PASS: TestResolve/AC7_unparsable_RemoteAddr (0.00s)
+    --- PASS: TestResolve/AC7_RemoteAddr_with_empty_port_is_trusted (0.00s)
+    --- PASS: TestResolve/AC7_empty_RemoteAddr (0.00s)
+=== RUN   TestResolve_ForgedPrefixNeverChangesResult
+--- PASS: TestResolve_ForgedPrefixNeverChangesResult (0.00s)
+=== RUN   TestPeerKeyMatchesDevelop
+--- PASS: TestPeerKeyMatchesDevelop (0.00s)
+=== RUN   TestParseTrusted
+--- PASS: TestParseTrusted (0.00s)
+=== RUN   FuzzResolve
+=== RUN   FuzzResolve/seed#0
+=== RUN   FuzzResolve/seed#1
+=== RUN   FuzzResolve/seed#2
+=== RUN   FuzzResolve/seed#3
+=== RUN   FuzzResolve/seed#4
+=== RUN   FuzzResolve/seed#5
+=== RUN   FuzzResolve/seed#6
+=== RUN   FuzzResolve/seed#7
+=== RUN   FuzzResolve/seed#8
+=== RUN   FuzzResolve/seed#9
+=== RUN   FuzzResolve/seed#10
+=== RUN   FuzzResolve/seed#11
+=== RUN   FuzzResolve/seed#12
+=== RUN   FuzzResolve/seed#13
+=== RUN   FuzzResolve/seed#14
+=== RUN   FuzzResolve/seed#15
+=== RUN   FuzzResolve/seed#16
+=== RUN   FuzzResolve/seed#17
+=== RUN   FuzzResolve/seed#18
+=== RUN   FuzzResolve/seed#19
+=== RUN   FuzzResolve/seed#20
+=== RUN   FuzzResolve/seed#21
+=== RUN   FuzzResolve/seed#22
+=== RUN   FuzzResolve/seed#23
+=== RUN   FuzzResolve/seed#24
+=== RUN   FuzzResolve/seed#25
+=== RUN   FuzzResolve/seed#26
+=== RUN   FuzzResolve/seed#27
+=== RUN   FuzzResolve/seed#28
+=== RUN   FuzzResolve/seed#29
+=== RUN   FuzzResolve/seed#30
+=== RUN   FuzzResolve/seed#31
+=== RUN   FuzzResolve/seed#32
+=== RUN   FuzzResolve/seed#33
+=== RUN   FuzzResolve/seed#34
+=== RUN   FuzzResolve/seed#35
+=== RUN   FuzzResolve/seed#36
+=== RUN   FuzzResolve/seed#37
+=== RUN   FuzzResolve/seed#38
+=== RUN   FuzzResolve/seed#39
+=== RUN   FuzzResolve/seed#40
+=== RUN   FuzzResolve/seed#41
+=== RUN   FuzzResolve/seed#42
+=== RUN   FuzzResolve/seed#43
+=== RUN   FuzzResolve/seed#44
+=== RUN   FuzzResolve/seed#45
+=== RUN   FuzzResolve/seed#46
+=== RUN   FuzzResolve/seed#47
+=== RUN   FuzzResolve/seed#48
+=== RUN   FuzzResolve/seed#49
+=== RUN   FuzzResolve/seed#50
+=== RUN   FuzzResolve/seed#51
+=== RUN   FuzzResolve/seed#52
+=== RUN   FuzzResolve/seed#53
+=== RUN   FuzzResolve/seed#54
+=== RUN   FuzzResolve/seed#55
+=== RUN   FuzzResolve/seed#56
+=== RUN   FuzzResolve/seed#57
+=== RUN   FuzzResolve/seed#58
+=== RUN   FuzzResolve/seed#59
+=== RUN   FuzzResolve/seed#60
+=== RUN   FuzzResolve/seed#61
+=== RUN   FuzzResolve/seed#62
+=== RUN   FuzzResolve/seed#63
+=== RUN   FuzzResolve/seed#64
+=== RUN   FuzzResolve/seed#65
+=== RUN   FuzzResolve/seed#66
+=== RUN   FuzzResolve/seed#67
+=== RUN   FuzzResolve/seed#68
+=== RUN   FuzzResolve/seed#69
+=== RUN   FuzzResolve/seed#70
+--- PASS: FuzzResolve (0.02s)
+    --- PASS: FuzzResolve/seed#0 (0.00s)
+    --- PASS: FuzzResolve/seed#1 (0.00s)
+    --- PASS: FuzzResolve/seed#2 (0.00s)
+    --- PASS: FuzzResolve/seed#3 (0.00s)
+    --- PASS: FuzzResolve/seed#4 (0.00s)
+    --- PASS: FuzzResolve/seed#5 (0.00s)
+    --- PASS: FuzzResolve/seed#6 (0.00s)
+    --- PASS: FuzzResolve/seed#7 (0.00s)
+    --- PASS: FuzzResolve/seed#8 (0.00s)
+    --- PASS: FuzzResolve/seed#9 (0.00s)
+    --- PASS: FuzzResolve/seed#10 (0.00s)
+    --- PASS: FuzzResolve/seed#11 (0.00s)
+    --- PASS: FuzzResolve/seed#12 (0.00s)
+    --- PASS: FuzzResolve/seed#13 (0.00s)
+    --- PASS: FuzzResolve/seed#14 (0.00s)
+    --- PASS: FuzzResolve/seed#15 (0.00s)
+    --- PASS: FuzzResolve/seed#16 (0.00s)
+    --- PASS: FuzzResolve/seed#17 (0.00s)
+    --- PASS: FuzzResolve/seed#18 (0.00s)
+    --- PASS: FuzzResolve/seed#19 (0.00s)
+    --- PASS: FuzzResolve/seed#20 (0.00s)
+    --- PASS: FuzzResolve/seed#21 (0.00s)
+    --- PASS: FuzzResolve/seed#22 (0.00s)
+    --- PASS: FuzzResolve/seed#23 (0.00s)
+    --- PASS: FuzzResolve/seed#24 (0.00s)
+    --- PASS: FuzzResolve/seed#25 (0.00s)
+    --- PASS: FuzzResolve/seed#26 (0.00s)
+    --- PASS: FuzzResolve/seed#27 (0.00s)
+    --- PASS: FuzzResolve/seed#28 (0.00s)
+    --- PASS: FuzzResolve/seed#29 (0.00s)
+    --- PASS: FuzzResolve/seed#30 (0.00s)
+    --- PASS: FuzzResolve/seed#31 (0.00s)
+    --- PASS: FuzzResolve/seed#32 (0.00s)
+    --- PASS: FuzzResolve/seed#33 (0.00s)
+    --- PASS: FuzzResolve/seed#34 (0.00s)
+    --- PASS: FuzzResolve/seed#35 (0.00s)
+    --- PASS: FuzzResolve/seed#36 (0.00s)
+    --- PASS: FuzzResolve/seed#37 (0.00s)
+    --- PASS: FuzzResolve/seed#38 (0.00s)
+    --- PASS: FuzzResolve/seed#39 (0.00s)
+    --- PASS: FuzzResolve/seed#40 (0.00s)
+    --- PASS: FuzzResolve/seed#41 (0.00s)
+    --- PASS: FuzzResolve/seed#42 (0.00s)
+    --- PASS: FuzzResolve/seed#43 (0.00s)
+    --- PASS: FuzzResolve/seed#44 (0.00s)
+    --- PASS: FuzzResolve/seed#45 (0.00s)
+    --- PASS: FuzzResolve/seed#46 (0.00s)
+    --- PASS: FuzzResolve/seed#47 (0.00s)
+    --- PASS: FuzzResolve/seed#48 (0.00s)
+    --- PASS: FuzzResolve/seed#49 (0.00s)
+    --- PASS: FuzzResolve/seed#50 (0.00s)
+    --- PASS: FuzzResolve/seed#51 (0.00s)
+    --- PASS: FuzzResolve/seed#52 (0.00s)
+    --- PASS: FuzzResolve/seed#53 (0.00s)
+    --- PASS: FuzzResolve/seed#54 (0.00s)
+    --- PASS: FuzzResolve/seed#55 (0.00s)
+    --- PASS: FuzzResolve/seed#56 (0.00s)
+    --- PASS: FuzzResolve/seed#57 (0.00s)
+    --- PASS: FuzzResolve/seed#58 (0.00s)
+    --- PASS: FuzzResolve/seed#59 (0.00s)
+    --- PASS: FuzzResolve/seed#60 (0.00s)
+    --- PASS: FuzzResolve/seed#61 (0.00s)
+    --- PASS: FuzzResolve/seed#62 (0.00s)
+    --- PASS: FuzzResolve/seed#63 (0.00s)
+    --- PASS: FuzzResolve/seed#64 (0.00s)
+    --- PASS: FuzzResolve/seed#65 (0.00s)
+    --- PASS: FuzzResolve/seed#66 (0.00s)
+    --- PASS: FuzzResolve/seed#67 (0.00s)
+    --- PASS: FuzzResolve/seed#68 (0.00s)
+    --- PASS: FuzzResolve/seed#69 (0.00s)
+    --- PASS: FuzzResolve/seed#70 (0.00s)
+PASS
+ok  	github.com/eventflow/eventflow/services/gateway/internal/clientip	2.351s
+=== RUN   TestLoad_MacDinhChoDev
+--- PASS: TestLoad_MacDinhChoDev (0.00s)
+=== RUN   TestLoad_ProductionBatBuocJWTSecret
+--- PASS: TestLoad_ProductionBatBuocJWTSecret (0.00s)
+=== RUN   TestLoad_DocBienMoiTruong
+--- PASS: TestLoad_DocBienMoiTruong (0.00s)
+=== RUN   TestLoad_TuChoiCauHinhHong
+=== RUN   TestLoad_TuChoiCauHinhHong/TICKETING_URL
+=== RUN   TestLoad_TuChoiCauHinhHong/RATE_QUEUE_POLL
+=== RUN   TestLoad_TuChoiCauHinhHong/RATE_AUTH
+=== RUN   TestLoad_TuChoiCauHinhHong/RATE_DEFAULT
+--- PASS: TestLoad_TuChoiCauHinhHong (0.00s)
+    --- PASS: TestLoad_TuChoiCauHinhHong/TICKETING_URL (0.00s)
+    --- PASS: TestLoad_TuChoiCauHinhHong/RATE_QUEUE_POLL (0.00s)
+    --- PASS: TestLoad_TuChoiCauHinhHong/RATE_AUTH (0.00s)
+    --- PASS: TestLoad_TuChoiCauHinhHong/RATE_DEFAULT (0.00s)
+=== RUN   TestLoad_Round1_WidePrefixFailsFast
+--- PASS: TestLoad_Round1_WidePrefixFailsFast (0.00s)
+=== RUN   TestLoad_Round1_TrailingNewlineLoads
+--- PASS: TestLoad_Round1_TrailingNewlineLoads (0.00s)
+=== RUN   TestLoad_TrustedProxyCIDRsHopLe
+--- PASS: TestLoad_TrustedProxyCIDRsHopLe (0.00s)
+=== RUN   TestLoad_TrustedProxyCIDRsHongThiLoi
+--- PASS: TestLoad_TrustedProxyCIDRsHongThiLoi (0.00s)
+PASS
+ok  	github.com/eventflow/eventflow/services/gateway/internal/config	1.484s
+=== RUN   TestGateway_CORS_PreflightChoPhepHeaderCuaPhongCho
+--- PASS: TestGateway_CORS_PreflightChoPhepHeaderCuaPhongCho (0.01s)
+=== RUN   TestGateway_CORS_ExposeHeaders
+--- PASS: TestGateway_CORS_ExposeHeaders (0.01s)
+=== RUN   TestGateway_CORS_KhongCoAllowCredentials
+--- PASS: TestGateway_CORS_KhongCoAllowCredentials (0.01s)
+=== RUN   TestGateway_CORS_OriginLaKhongDoi
+--- PASS: TestGateway_CORS_OriginLaKhongDoi (0.00s)
+=== RUN   TestGateway_EventsPublic_CongKhaiToiEventService
+--- PASS: TestGateway_EventsPublic_CongKhaiToiEventService (0.01s)
+=== RUN   TestGateway_EventsPublic_TokenHongBiBoQua
+--- PASS: TestGateway_EventsPublic_TokenHongBiBoQua (0.01s)
+=== RUN   TestGateway_EventsPublic_KhongLamHongRouteCu
+--- PASS: TestGateway_EventsPublic_KhongLamHongRouteCu (0.02s)
+=== RUN   TestGateway_XoaDanhTinhGiaMaoTrenMoiRoute
+--- PASS: TestGateway_XoaDanhTinhGiaMaoTrenMoiRoute (0.01s)
+=== RUN   TestGateway_ChuyenCoXacThucOTPTuToken
+--- PASS: TestGateway_ChuyenCoXacThucOTPTuToken (0.02s)
+=== RUN   TestGateway_ChuyenThietBiTuToken
+--- PASS: TestGateway_ChuyenThietBiTuToken (0.01s)
+=== RUN   TestGateway_RouteCanDangNhapTuChoiTokenKhongHopLe
+=== RUN   TestGateway_RouteCanDangNhapTuChoiTokenKhongHopLe/thieu_token
+=== RUN   TestGateway_RouteCanDangNhapTuChoiTokenKhongHopLe/token_rac
+=== RUN   TestGateway_RouteCanDangNhapTuChoiTokenKhongHopLe/sai_secret
+=== RUN   TestGateway_RouteCanDangNhapTuChoiTokenKhongHopLe/het_han
+=== RUN   TestGateway_RouteCanDangNhapTuChoiTokenKhongHopLe/role_khong_ton_tai
+=== RUN   TestGateway_RouteCanDangNhapTuChoiTokenKhongHopLe/sub_khong_phai_uuid
+--- PASS: TestGateway_RouteCanDangNhapTuChoiTokenKhongHopLe (0.02s)
+    --- PASS: TestGateway_RouteCanDangNhapTuChoiTokenKhongHopLe/thieu_token (0.00s)
+    --- PASS: TestGateway_RouteCanDangNhapTuChoiTokenKhongHopLe/token_rac (0.00s)
+    --- PASS: TestGateway_RouteCanDangNhapTuChoiTokenKhongHopLe/sai_secret (0.00s)
+    --- PASS: TestGateway_RouteCanDangNhapTuChoiTokenKhongHopLe/het_han (0.00s)
+    --- PASS: TestGateway_RouteCanDangNhapTuChoiTokenKhongHopLe/role_khong_ton_tai (0.00s)
+    --- PASS: TestGateway_RouteCanDangNhapTuChoiTokenKhongHopLe/sub_khong_phai_uuid (0.00s)
+=== RUN   TestGateway_ChanDuongDanNoiBo
+--- PASS: TestGateway_ChanDuongDanNoiBo (0.01s)
+=== RUN   TestGateway_RouteTheoRole
+--- PASS: TestGateway_RouteTheoRole (0.02s)
+=== RUN   TestGateway_DinhTuyenDungService
+--- PASS: TestGateway_DinhTuyenDungService (0.06s)
+=== RUN   TestGateway_RouteCongKhaiGanDanhTinhNeuTokenHopLe
+--- PASS: TestGateway_RouteCongKhaiGanDanhTinhNeuTokenHopLe (0.01s)
+=== RUN   TestGateway_GioiHanTocDo
+--- PASS: TestGateway_GioiHanTocDo (0.03s)
+=== RUN   TestGateway_CORS
+--- PASS: TestGateway_CORS (0.01s)
+=== RUN   TestGateway_UpstreamSapTra502
+--- PASS: TestGateway_UpstreamSapTra502 (0.01s)
+=== RUN   TestGateway_GioiHanKichThuocBody
+--- PASS: TestGateway_GioiHanKichThuocBody (0.01s)
+=== RUN   TestGateway_SSEDuocDayNgay
+--- PASS: TestGateway_SSEDuocDayNgay (0.01s)
+=== RUN   TestGateway_SecurityHeaders
+--- PASS: TestGateway_SecurityHeaders (0.01s)
+=== RUN   TestGateway_NoiTraceSangUpstream
+--- PASS: TestGateway_NoiTraceSangUpstream (0.01s)
+=== RUN   TestGateway_KhoiTaoTraceKhiClientKhongGui
+--- PASS: TestGateway_KhoiTaoTraceKhiClientKhongGui (0.01s)
+=== RUN   TestTrustedProxy_Round1_ClientIPHeadersStripped
+=== RUN   TestTrustedProxy_Round1_ClientIPHeadersStripped/trust_off
+=== RUN   TestTrustedProxy_Round1_ClientIPHeadersStripped/untrusted_peer
+=== RUN   TestTrustedProxy_Round1_ClientIPHeadersStripped/trusted_peer
+--- PASS: TestTrustedProxy_Round1_ClientIPHeadersStripped (0.02s)
+    --- PASS: TestTrustedProxy_Round1_ClientIPHeadersStripped/trust_off (0.01s)
+    --- PASS: TestTrustedProxy_Round1_ClientIPHeadersStripped/untrusted_peer (0.01s)
+    --- PASS: TestTrustedProxy_Round1_ClientIPHeadersStripped/trusted_peer (0.01s)
+=== RUN   TestTrustedProxy_AC1_TrustOffIgnoresForwardingHeaders
+=== RUN   TestTrustedProxy_AC1_TrustOffIgnoresForwardingHeaders/203.0.113.9:4000
+=== RUN   TestTrustedProxy_AC1_TrustOffIgnoresForwardingHeaders/10.1.2.3:4000
+=== RUN   TestTrustedProxy_AC1_TrustOffIgnoresForwardingHeaders/[::ffff:10.1.2.3]:4000
+=== RUN   TestTrustedProxy_AC1_TrustOffIgnoresForwardingHeaders/[fe80::1%eth0]:51234
+=== RUN   TestTrustedProxy_AC1_TrustOffIgnoresForwardingHeaders/garbage
+--- PASS: TestTrustedProxy_AC1_TrustOffIgnoresForwardingHeaders (0.20s)
+    --- PASS: TestTrustedProxy_AC1_TrustOffIgnoresForwardingHeaders/203.0.113.9:4000 (0.04s)
+    --- PASS: TestTrustedProxy_AC1_TrustOffIgnoresForwardingHeaders/10.1.2.3:4000 (0.04s)
+    --- PASS: TestTrustedProxy_AC1_TrustOffIgnoresForwardingHeaders/[::ffff:10.1.2.3]:4000 (0.04s)
+    --- PASS: TestTrustedProxy_AC1_TrustOffIgnoresForwardingHeaders/[fe80::1%eth0]:51234 (0.04s)
+    --- PASS: TestTrustedProxy_AC1_TrustOffIgnoresForwardingHeaders/garbage (0.04s)
+=== RUN   TestTrustedProxy_AC2_UntrustedPeerCannotSpoof
+--- PASS: TestTrustedProxy_AC2_UntrustedPeerCannotSpoof (0.02s)
+=== RUN   TestTrustedProxy_AC3_ClientsBehindTrustedProxyHaveOwnBucket
+--- PASS: TestTrustedProxy_AC3_ClientsBehindTrustedProxyHaveOwnBucket (0.03s)
+=== RUN   TestTrustedProxy_AC4_ForgedLeftmostSharesBucket
+--- PASS: TestTrustedProxy_AC4_ForgedLeftmostSharesBucket (0.02s)
+=== RUN   TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly
+=== RUN   TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC2_untrusted_peer
+=== RUN   TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC3_trusted_peer
+=== RUN   TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC4_forged_leftmost
+=== RUN   TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC5_chain
+=== RUN   TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC5_untrusted_middle_hop
+=== RUN   TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC6_two_header_lines
+=== RUN   TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC6_ipv4_port
+=== RUN   TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC6_ipv6_bracket_port
+=== RUN   TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC6_ipv6_upper_case
+=== RUN   TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC6_mapped_element
+=== RUN   TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC6_mapped_peer
+=== RUN   TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC6_mapped_peer_no_xff
+=== RUN   TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC7_malformed_rightmost
+=== RUN   TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC7_malformed_left_of_client
+=== RUN   TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC7_no_xff
+=== RUN   TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC7_only_empty_elements
+=== RUN   TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC7_all_trusted_leftmost
+=== RUN   TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC7_17_trusted_hops
+=== RUN   TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC7_zoned_peer
+=== RUN   TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC7_unparsable_RemoteAddr
+--- PASS: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly (0.23s)
+    --- PASS: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC2_untrusted_peer (0.01s)
+    --- PASS: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC3_trusted_peer (0.01s)
+    --- PASS: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC4_forged_leftmost (0.01s)
+    --- PASS: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC5_chain (0.01s)
+    --- PASS: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC5_untrusted_middle_hop (0.01s)
+    --- PASS: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC6_two_header_lines (0.01s)
+    --- PASS: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC6_ipv4_port (0.01s)
+    --- PASS: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC6_ipv6_bracket_port (0.01s)
+    --- PASS: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC6_ipv6_upper_case (0.01s)
+    --- PASS: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC6_mapped_element (0.01s)
+    --- PASS: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC6_mapped_peer (0.01s)
+    --- PASS: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC6_mapped_peer_no_xff (0.01s)
+    --- PASS: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC7_malformed_rightmost (0.01s)
+    --- PASS: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC7_malformed_left_of_client (0.01s)
+    --- PASS: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC7_no_xff (0.01s)
+    --- PASS: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC7_only_empty_elements (0.02s)
+    --- PASS: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC7_all_trusted_leftmost (0.02s)
+    --- PASS: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC7_17_trusted_hops (0.02s)
+    --- PASS: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC7_zoned_peer (0.01s)
+    --- PASS: TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC7_unparsable_RemoteAddr (0.01s)
+=== RUN   TestTrustedProxy_AC10_KeyClasses
+=== RUN   TestTrustedProxy_AC10_KeyClasses/auth_route_keyed_by_resolved_IP_even_when_logged_in
+=== RUN   TestTrustedProxy_AC10_KeyClasses/default_route_anonymous_keyed_by_resolved_IP
+=== RUN   TestTrustedProxy_AC10_KeyClasses/default_route_logged_in_keyed_by_id
+=== RUN   TestTrustedProxy_AC10_KeyClasses/queue_poll_keeps_event_suffix
+--- PASS: TestTrustedProxy_AC10_KeyClasses (0.20s)
+    --- PASS: TestTrustedProxy_AC10_KeyClasses/auth_route_keyed_by_resolved_IP_even_when_logged_in (0.10s)
+    --- PASS: TestTrustedProxy_AC10_KeyClasses/default_route_anonymous_keyed_by_resolved_IP (0.04s)
+    --- PASS: TestTrustedProxy_AC10_KeyClasses/default_route_logged_in_keyed_by_id (0.03s)
+    --- PASS: TestTrustedProxy_AC10_KeyClasses/queue_poll_keeps_event_suffix (0.02s)
+PASS
+ok  	github.com/eventflow/eventflow/services/gateway/internal/proxy	2.274s
+=== RUN   TestLimiter_ChoDotBienRoiChan
+--- PASS: TestLimiter_ChoDotBienRoiChan (0.00s)
+=== RUN   TestLimiter_NapLaiTheoThoiGian
+--- PASS: TestLimiter_NapLaiTheoThoiGian (0.00s)
+=== RUN   TestLimiter_KhoaDocLap
+--- PASS: TestLimiter_KhoaDocLap (0.00s)
+=== RUN   TestLimiter_DonBucketNhanRoi
+--- PASS: TestLimiter_DonBucketNhanRoi (0.00s)
+PASS
+ok  	github.com/eventflow/eventflow/services/gateway/internal/ratelimit	1.459s
+head: top-level=52 subtests=179
+baseline (c5fb598-equivalent b946bf8): top-level=31 subtests=10
+ok: all base test functions pass, none skipped, counts >= baseline

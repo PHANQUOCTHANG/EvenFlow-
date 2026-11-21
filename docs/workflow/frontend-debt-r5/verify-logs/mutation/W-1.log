@@ -1,0 +1,2300 @@
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+[33mThe CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.[39m
+
+[1m[7m[36m RUN [39m[27m[22m [36mv2.1.8 [39m[90mD:/Documents/Nam4-1/Project1/EvenFlow-r5-verify/apps/web[39m
+
+[90mstderr[2m | src/hooks/use-server-countdown.test.tsx[2m > [22m[2museServerCountdown — chua co moc thi KHONG phai het han (AC-4, hop dong §5)[2m > [22m[2mstring khong parse duoc -> giong null: remainingMs 0, expired FALSE
+[22m[39m[server-time] moc thoi han "soon" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+[server-time] moc thoi han "soon" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+[90mstderr[2m | src/hooks/use-server-countdown.test.tsx[2m > [22m[2museServerCountdown — chua co moc thi KHONG phai het han (AC-4, hop dong §5)[2m > [22m[2mstring rong cung khong phai het han
+[22m[39m[server-time] moc thoi han "" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+[server-time] moc thoi han "" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+[90mstderr[2m | src/hooks/use-server-countdown.test.tsx[2m > [22m[2museServerCountdown — chua co moc thi KHONG phai het han (AC-4, hop dong §5)[2m > [22m[2mstring khong parse duoc + thoi gian troi van khong thanh expired
+[22m[39m[server-time] moc thoi han "not-a-date" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+[server-time] moc thoi han "not-a-date" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+[90mstderr[2m | src/hooks/use-server-countdown.test.tsx[2m > [22m[2museServerCountdown — ready sau khi mount (AC-4)[2m > [22m[2mmoc khong doc duoc () -> ready FALSE va expired FALSE
+[22m[39m[server-time] moc thoi han "" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+[server-time] moc thoi han "" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+[90mstderr[2m | src/hooks/use-server-countdown.test.tsx[2m > [22m[2museServerCountdown — ready sau khi mount (AC-4)[2m > [22m[2mmoc khong doc duoc (soon) -> ready FALSE va expired FALSE
+[22m[39m[server-time] moc thoi han "soon" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+[server-time] moc thoi han "soon" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+[90mstderr[2m | src/hooks/use-server-countdown.test.tsx[2m > [22m[2museServerCountdown — ready sau khi mount (AC-4)[2m > [22m[2mmoc khong doc duoc (2026-10-03) -> ready FALSE va expired FALSE
+[22m[39m[server-time] moc thoi han "2026-10-03" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+[server-time] moc thoi han "2026-10-03" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+[90mstderr[2m | src/hooks/use-server-countdown.test.tsx[2m > [22m[2museServerCountdown — ready sau khi mount (AC-4)[2m > [22m[2mmoc khong doc duoc (2026-10-03T09:00:00) -> ready FALSE va expired FALSE
+[22m[39m[server-time] moc thoi han "2026-10-03T09:00:00" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+[server-time] moc thoi han "2026-10-03T09:00:00" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+[90mstderr[2m | src/hooks/use-server-countdown.test.tsx[2m > [22m[2museServerCountdown — ready sau khi mount (AC-4)[2m > [22m[2mready khong bao gio true cung luc voi moc khong doc duoc, du thoi gian troi
+[22m[39m[server-time] moc thoi han "khong-phai-ngay" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+[server-time] moc thoi han "khong-phai-ngay" khong co mui gio nen bi bo qua. Can ISO-8601 co offset, vi du "2026-10-03T09:00:00+07:00" hoac "...Z".
+
+ [32m✓[39m src/hooks/use-server-countdown.test.tsx [2m([22m[2m48 tests[22m[2m)[22m[90m 199[2mms[22m[39m
+ [32m✓[39m src/hooks/use-ops-war-room.test.tsx [2m([22m[2m34 tests[22m[2m)[22m[90m 210[2mms[22m[39m
+ [32m✓[39m src/lib/fix2/g1-lock-refresh.test.ts [2m([22m[2m9 tests[22m[2m)[22m[33m 407[2mms[22m[39m
+ [32m✓[39m src/lib/debt/ac2-refresh-deadlines.test.ts [2m([22m[2m18 tests[22m[2m)[22m[33m 512[2mms[22m[39m
+ [32m✓[39m src/components/checkout/ticket-tier-card.test.tsx [2m([22m[2m52 tests[22m[2m)[22m[33m 396[2mms[22m[39m
+ [32m✓[39m src/components/checkout/order-summary.test.tsx [2m([22m[2m74 tests[22m[2m)[22m[33m 839[2mms[22m[39m
+[90mstderr[2m | src/components/checkout/order-result-view.test.tsx[2m > [22m[2mOrderResultView — phat hanh ve va loi (AC-14, AC-15)[2m > [22m[2mchua phat hanh (rong): hien trang thai cho, KHONG ve QR nao, thanh cong khi thu lai
+[22m[39mWarning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to TicketQr inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at TicketQr (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\ticket-qr.tsx:8:21)
+    at div
+    at div
+    at div
+    at Card2 (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\ui\card.tsx:7:64)
+    at div
+    at section
+    at div
+    at div
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to TicketQr inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at TicketQr (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\ticket-qr.tsx:8:21)
+    at div
+    at div
+    at div
+    at Card2 (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\ui\card.tsx:7:64)
+    at div
+    at section
+    at div
+    at div
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+
+[90mstderr[2m | src/components/checkout/order-result-view.test.tsx[2m > [22m[2mOrderResultView — phat hanh ve va loi (AC-14, AC-15)[2m > [22m[2mhet luot thu lai van chua co ve: bao loi + nut lay ve lai, van khong co QR, so lan thu co gioi han
+[22m[39mWarning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to ForwardRef(LinkComponent) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at LinkComponent (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\node_modules\next\dist\client\link.js:138:19)
+    at div
+    at div
+    at div
+    at div
+    at Card2 (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\ui\card.tsx:7:64)
+    at div
+    at div
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+
+[90mstderr[2m | src/components/checkout/order-result-view.test.tsx[2m > [22m[2mOrderResultView — phat hanh ve va loi (AC-14, AC-15)[2m > [22m[2mhet luot thu lai van chua co ve: bao loi + nut lay ve lai, van khong co QR, so lan thu co gioi han
+[22m[39mWarning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+
+[90mstderr[2m | src/components/checkout/order-result-view.test.tsx[2m > [22m[2mOrderResultView — phat hanh ve va loi (AC-14, AC-15)[2m > [22m[2mhet luot thu lai van chua co ve: bao loi + nut lay ve lai, van khong co QR, so lan thu co gioi han
+[22m[39mWarning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+
+[90mstderr[2m | src/components/checkout/order-result-view.test.tsx[2m > [22m[2mOrderResultView — phat hanh ve va loi (AC-14, AC-15)[2m > [22m[2mhet luot thu lai van chua co ve: bao loi + nut lay ve lai, van khong co QR, so lan thu co gioi han
+[22m[39mWarning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+
+[90mstderr[2m | src/components/checkout/order-result-view.test.tsx[2m > [22m[2mOrderResultView — phat hanh ve va loi (AC-14, AC-15)[2m > [22m[2mhet luot thu lai van chua co ve: bao loi + nut lay ve lai, van khong co QR, so lan thu co gioi han
+[22m[39mWarning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+
+[90mstderr[2m | src/components/checkout/order-result-view.test.tsx[2m > [22m[2mOrderResultView — phat hanh ve va loi (AC-14, AC-15)[2m > [22m[2mhet luot thu lai van chua co ve: bao loi + nut lay ve lai, van khong co QR, so lan thu co gioi han
+[22m[39mWarning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+Warning: An update to OrderResultView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at OrderResultView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\order-result-view.tsx:19:3)
+
+ [32m✓[39m src/components/checkout/order-result-view.test.tsx [2m([22m[2m12 tests[22m[2m)[22m[33m 856[2mms[22m[39m
+ [31m❯[39m src/components/checkout/checkout-view.debt5.test.tsx [2m([22m[2m21 tests[22m[2m | [22m[31m14 failed[39m[2m)[22m[33m 1196[2mms[22m[39m
+[31m   [31m×[31m AC-11 confirmation dialog[2m > [22mclicking 'Huỷ giữ vé' opens an accessible dialog and sends NO request yet[90m 74[2mms[22m[31m[39m
+[31m     → expected null not to be null[39m
+[31m   [31m×[31m AC-11 confirmation dialog[2m > [22mdismiss button closes it: 0 DELETE, hold and countdown stay[90m 48[2mms[22m[31m[39m
+[31m     → expected null not to be null[39m
+[31m   [31m×[31m AC-11 confirmation dialog[2m > [22mEscape closes it: 0 DELETE, hold stays[90m 49[2mms[22m[31m[39m
+[31m     → expected null not to be null[39m
+[31m   [31m×[31m AC-11 confirmation dialog[2m > [22mconfirm -> exactly 1 DELETE /v1/holds/h1 with an Idempotency-Key and the bearer; hold removed; back to idle; dialog closed[90m 53[2mms[22m[31m[39m
+[31m     → expected null not to be null[39m
+[31m   [31m×[31m AC-11 confirmation dialog[2m > [22mdouble click on confirm while the DELETE is pending -> still 1 DELETE; primary button disabled while cancelling[90m 44[2mms[22m[31m[39m
+[31m     → expected null not to be null[39m
+[31m   [31m×[31m AC-11 outcomes[2m > [22mDELETE 404 is treated as released[90m 42[2mms[22m[31m[39m
+[31m     → expected null not to be null[39m
+[31m   [31m×[31m AC-11 outcomes[2m > [22mDELETE 200 is treated as released[90m 42[2mms[22m[31m[39m
+[31m     → expected null not to be null[39m
+[31m   [31m×[31m AC-11 outcomes[2m > [22mAUTH_REQUIRED (401): existing sign-in alert, hold stays, no 'could not confirm' alert[90m 45[2mms[22m[31m[39m
+[31m     → expected null not to be null[39m
+[31m   [31m×[31m AC-11 outcomes[2m > [22mHTTP 500: hold stays, error alert says release could not be confirmed, no sign-in prompt[90m 36[2mms[22m[31m[39m
+[31m     → expected null not to be null[39m
+[31m   [31m×[31m AC-11 outcomes[2m > [22mHTTP 403: hold stays, error alert says release could not be confirmed, no sign-in prompt[90m 36[2mms[22m[31m[39m
+[31m     → expected null not to be null[39m
+[31m   [31m×[31m AC-11 outcomes[2m > [22mnetwork: hold stays, error alert says release could not be confirmed, no sign-in prompt[90m 36[2mms[22m[31m[39m
+[31m     → expected null not to be null[39m
+[31m   [31m×[31m AC-11 outcomes[2m > [22mfailure then a second attempt: user can confirm again (a new DELETE) and succeed[90m 35[2mms[22m[31m[39m
+[31m     → expected null not to be null[39m
+[31m   [31m×[31m AC-11 expiry[2m > [22mhold expires while the dialog is open -> dialog closes, state expired, 0 DELETE (stepped per second)[90m 33[2mms[22m[31m[39m
+[31m     → expected null not to be null[39m
+[31m   [31m×[31m AC-11 expiry[2m > [22mhold expires while the DELETE is in flight -> ends expired, not idle[90m 34[2mms[22m[31m[39m
+[31m     → expected null not to be null[39m
+[90mstderr[2m | src/hooks/use-hold-timer.test.tsx[2m > [22m[2museHoldTimer (EVF-113, BR-O2, BR-O5)[2m > [22m[2mBấm đặt nhiều lần không tạo hold trùng (BR-O5)
+[22m[39mWarning: An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at TestComponent (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\node_modules\@testing-library\react\dist\pure.js:307:5)
+Warning: An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at TestComponent (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\node_modules\@testing-library\react\dist\pure.js:307:5)
+
+ [32m✓[39m src/hooks/use-hold-timer.test.tsx [2m([22m[2m12 tests[22m[2m)[22m[90m 116[2mms[22m[39m
+ [32m✓[39m src/hooks/use-queue-status.test.tsx [2m([22m[2m10 tests[22m[2m)[22m[90m 128[2mms[22m[39m
+ [32m✓[39m src/lib/debt5/ac2-used-refresh.test.ts [2m([22m[2m21 tests[22m[2m)[22m[33m 438[2mms[22m[39m
+ [32m✓[39m src/components/checkout/checkout-view.test.tsx [2m([22m[2m11 tests[22m[2m)[22m[33m 722[2mms[22m[39m
+ [32m✓[39m src/lib/debt5/ac3-same-user-reuse.test.ts [2m([22m[2m11 tests[22m[2m)[22m[90m 226[2mms[22m[39m
+ [32m✓[39m src/lib/debt/ac4-cross-tab-owner.test.tsx [2m([22m[2m10 tests[22m[2m)[22m[90m 188[2mms[22m[39m
+ [32m✓[39m src/components/checkout/order-result-view.debt5.test.tsx [2m([22m[2m11 tests[22m[2m)[22m[33m 642[2mms[22m[39m
+[90mstderr[2m | src/components/checkout/payment-handoff-view.test.tsx[2m > [22m[2mPaymentHandoffView component (EVF-114, BR-O2, BR-O5)[2m > [22m[2mgọi onPaymentSuccess khi nhập đầy đủ thông tin và submit thành công (BR-O5)
+[22m[39mWarning: An update to PaymentHandoffView inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at PaymentHandoffView (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\src\components\checkout\payment-handoff-view.tsx:21:3)
+
+ [32m✓[39m src/components/checkout/payment-handoff-view.test.tsx [2m([22m[2m8 tests[22m[2m)[22m[33m 766[2mms[22m[39m
+ [32m✓[39m src/lib/debt5/ac6-role-validation.test.ts [2m([22m[2m33 tests[22m[2m)[22m[90m 81[2mms[22m[39m
+ [32m✓[39m src/hooks/use-theme.test.tsx [2m([22m[2m13 tests[22m[2m)[22m[90m 87[2mms[22m[39m
+ [32m✓[39m src/lib/debt/ac1-user-switch.test.ts [2m([22m[2m6 tests[22m[2m)[22m[90m 138[2mms[22m[39m
+[90mstderr[2m | src/hooks/use-organizer-sales.test.tsx[2m > [22m[2museOrganizerSales — Hook doanh số realtime (AC-4)[2m > [22m[2mdùng initialData nếu được truyền vào để tránh loading skeleton
+[22m[39mWarning: An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at TestComponent (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\node_modules\@testing-library\react\dist\pure.js:307:5)
+Warning: An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at TestComponent (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\node_modules\@testing-library\react\dist\pure.js:307:5)
+Warning: An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at TestComponent (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\node_modules\@testing-library\react\dist\pure.js:307:5)
+
+ [32m✓[39m src/hooks/use-organizer-sales.test.tsx [2m([22m[2m6 tests[22m[2m)[22m[90m 82[2mms[22m[39m
+ [32m✓[39m src/hooks/use-assistant.test.tsx [2m([22m[2m7 tests[22m[2m)[22m[90m 77[2mms[22m[39m
+ [32m✓[39m src/components/checkout/cancel-hold-dialog.test.tsx [2m([22m[2m7 tests[22m[2m)[22m[33m 341[2mms[22m[39m
+ [32m✓[39m src/lib/debt/ac3-locks-errors.test.ts [2m([22m[2m11 tests[22m[2m)[22m[90m 211[2mms[22m[39m
+ [32m✓[39m src/components/checkout/order-result-view.fix2.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[33m 397[2mms[22m[39m
+ [32m✓[39m src/lib/debt5/ac4-ac5-no-bearerless-send.test.ts [2m([22m[2m6 tests[22m[2m)[22m[90m 123[2mms[22m[39m
+ [32m✓[39m src/hooks/use-payment-session.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[90m 53[2mms[22m[39m
+ [32m✓[39m src/hooks/use-order-status.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[90m 51[2mms[22m[39m
+ [32m✓[39m src/hooks/use-auth.contract.test.tsx [2m([22m[2m6 tests[22m[2m)[22m[90m 106[2mms[22m[39m
+ [32m✓[39m src/lib/debt5/ac1-refresh-body.test.ts [2m([22m[2m8 tests[22m[2m)[22m[90m 153[2mms[22m[39m
+ [32m✓[39m src/components/checkout/cancel-hold-dialog-fallback.test.tsx [2m([22m[2m7 tests[22m[2m)[22m[33m 348[2mms[22m[39m
+ [32m✓[39m src/components/checkout/payment-page-client.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[90m 256[2mms[22m[39m
+ [32m✓[39m src/components/checkout/checkout-view.wp2.test.tsx [2m([22m[2m5 tests[22m[2m)[22m[33m 431[2mms[22m[39m
+ [32m✓[39m src/hooks/use-order-status.debt5.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[90m 89[2mms[22m[39m
+ [31m❯[39m src/components/checkout/checkout-view.cancel-focus.test.tsx [2m([22m[2m2 tests[22m[2m | [22m[31m2 failed[39m[2m)[22m[33m 655[2mms[22m[39m
+[31m   [31m×[31m AC-11 focus[2m > [22mfocus moves into the dialog, and back to the trigger after 'Giữ lại'[33m 460[2mms[22m[31m[39m
+[31m     → Unable to find an accessible element with the role "alertdialog"
+
+Here are the accessible roles:
+
+  banner:
+
+  Name "":
+  [36m<header[31m
+    [33mclass[31m=[32m"space-y-xs"[31m
+  [36m/>[31m
+
+  --------------------------------------------------
+  heading:
+
+  Name "Chọn vé — F":
+  [36m<h1[31m
+    [33mclass[31m=[32m"text-display-sm text-fg"[31m
+  [36m/>[31m
+
+  Name "Hạng vé sẵn có":
+  [36m<h2[31m
+    [33mclass[31m=[32m"text-headline-sm text-fg"[31m
+  [36m/>[31m
+
+  Name "Vé":
+  [36m<h3[31m
+    [33mclass[31m=[32m"text-headline-sm text-fg"[31m
+  [36m/>[31m
+
+  Name "Tóm tắt đơn hàng":
+  [36m<h2[31m
+    [33mclass[31m=[32m"text-headline-sm text-fg"[31m
+  [36m/>[31m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[31m
+    [33mclass[31m=[32m"text-body-md text-fg-muted"[31m
+  [36m/>[31m
+
+  Name "":
+  [36m<p[31m
+    [33mclass[31m=[32m"text-body-sm text-fg-muted"[31m
+  [36m/>[31m
+
+  Name "":
+  [36m<p[31m
+    [33mclass[31m=[32m"text-numeric-metric tabular-nums text-fg"[31m
+  [36m/>[31m
+
+  --------------------------------------------------
+  region:
+
+  Name "Danh sách hạng vé":
+  [36m<section[31m
+    [33maria-label[31m=[32m"Danh sách hạng vé"[31m
+    [33mclass[31m=[32m"space-y-md lg:col-span-2"[31m
+  [36m/>[31m
+
+  Name "Tóm tắt đơn hàng":
+  [36m<section[31m
+    [33maria-label[31m=[32m"Tóm tắt đơn hàng"[31m
+    [33mclass[31m=[32m"flex flex-col gap-md rounded-card border border-border bg-surface p-md shadow-float md:sticky md:top-md"[31m
+    [33mdata-hold-state[31m=[32m"idle"[31m
+  [36m/>[31m
+
+  --------------------------------------------------
+  button:
+
+  Name "Giảm số lượng Vé":
+  [36m<button[31m
+    [33maria-label[31m=[32m"Giảm số lượng Vé"[31m
+    [33mclass[31m=[32m"ef-focus-ring relative inline-flex items-center justify-center gap-sm rounded-control transition-colors disabled:cursor-not-allowed disabled:opacity-60 border border-border-strong bg-surface text-fg hover:bg-surface-subtle h-9 px-sm text-label-md"[31m
+    [33mtype[31m=[32m"button"[31m
+  [36m/>[31m
+
+  Name "Tăng số lượng Vé":
+  [36m<button[31m
+    [33maria-label[31m=[32m"Tăng số lượng Vé"[31m
+    [33mclass[31m=[32m"ef-focus-ring relative inline-flex items-center justify-center gap-sm rounded-control transition-colors disabled:cursor-not-allowed disabled:opacity-60 border border-border-strong bg-surface text-fg hover:bg-surface-subtle h-9 px-sm text-label-md"[31m
+    [33mtype[31m=[32m"button"[31m
+  [36m/>[31m
+
+  Name "Đã chọn hạng này":
+  [36m<button[31m
+    [33maria-pressed[31m=[32m"true"[31m
+    [33mclass[31m=[32m"ef-focus-ring relative inline-flex items-center justify-center gap-sm rounded-control transition-colors disabled:cursor-not-allowed disabled:opacity-60 border border-transparent bg-primary text-primary-fg hover:bg-primary-hover h-12 px-md text-label-lg md:h-11"[31m
+    [33mtype[31m=[32m"button"[31m
+  [36m/>[31m
+
+  Name "Chi tiết đơn hàng":
+  [36m<button[31m
+    [33maria-controls[31m=[32m":r0:"[31m
+    [33maria-expanded[31m=[32m"false"[31m
+    [33mclass[31m=[32m"ef-focus-ring rounded-control text-left text-label-lg text-primary md:hidden"[31m
+    [33mtype[31m=[32m"button"[31m
+  [36m/>[31m
+
+  Name "Giữ vé và thanh toán":
+  [36m<button[31m
+    [33mclass[31m=[32m"ef-focus-ring relative inline-flex items-center justify-center gap-sm rounded-control transition-colors disabled:cursor-not-allowed disabled:opacity-60 border border-transparent bg-primary text-primary-fg hover:bg-primary-hover h-12 px-md text-label-lg md:h-11"[31m
+    [33mtype[31m=[32m"button"[31m
+  [36m/>[31m
+
+  --------------------------------------------------
+  status:
+
+  Name "Số lượng Vé":
+  [36m<span[31m
+    [33maria-label[31m=[32m"Số lượng Vé"[31m
+    [33maria-live[31m=[32m"polite"[31m
+    [33mclass[31m=[32m"min-w-10 text-center text-numeric-timer tabular-nums text-fg"[31m
+    [33mrole[31m=[32m"status"[31m
+  [36m/>[31m
+
+  --------------------------------------------------
+  complementary:
+
+  Name "":
+  [36m<aside[31m
+    [33mclass[31m=[32m"lg:col-span-1"[31m
+  [36m/>[31m
+
+  --------------------------------------------------
+  list:
+
+  Name "":
+  [36m<ul[31m
+    [33mclass[31m=[32m"flex flex-col gap-sm"[31m
+  [36m/>[31m
+
+  --------------------------------------------------
+  listitem:
+
+  Name "":
+  [36m<li[31m
+    [33mclass[31m=[32m"flex items-start justify-between gap-md"[31m
+  [36m/>[31m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[31m
+  [36m<div>[31m
+    [36m<div[31m
+      [33mclass[31m=[32m"mx-auto max-w-content space-y-lg py-md"[31m
+    [36m>[31m
+      [36m<header[31m
+        [33mclass[31m=[32m"space-y-xs"[31m
+      [36m>[31m
+        [36m<h1[31m
+          [33mclass[31m=[32m"text-display-sm text-fg"[31m
+        [36m>[31m
+          [0mChọn vé — [0m
+          [0mF[0m
+        [36m</h1>[31m
+        [36m<p[31m
+          [33mclass[31m=[32m"text-body-md text-fg-muted"[31m
+        [36m>[31m
+          [0mV[0m
+        [36m</p>[31m
+      [36m</header>[31m
+      [36m<div[31m
+        [33mclass[31m=[32m"grid grid-cols-1 items-start gap-lg lg:grid-cols-3"[31m
+      [36m>[31m
+        [36m<section[31m
+          [33maria-label[31m=[32m"Danh sách hạng vé"[31m
+          [33mclass[31m=[32m"space-y-md lg:col-span-2"[31m
+        [36m>[31m
+          [36m<h2[31m
+            [33mclass[31m=[32m"text-headline-sm text-fg"[31m
+          [36m>[31m
+            [0mHạng vé sẵn có[0m
+          [36m</h2>[31m
+          [36m<p[31m
+            [33mclass[31m=[32m"text-body-sm text-fg-muted"[31m
+          [36m>[31m
+            [0mTình trạng vé chỉ mang tính tham khảo; kết quả giữ vé mới là chính xác.[0m
+          [36m</p>[31m
+          [36m<div[31m
+            [33mclass[31m=[32m"space-y-md"[31m
+          [36m>[31m
+            [36m<div[31m
+              [33mclass[31m=[32m"flex flex-col gap-sm rounded-card border bg-surface p-md shadow-card border-primary"[31m
+              [33mdata-state[31m=[32m"available"[31m
+            [36m>[31m
+              [36m<div[31m
+                [33mclass[31m=[32m"flex flex-wrap items-center justify-between gap-sm"[31m
+              [36m>[31m
+                [36m<h3[31m
+                  [33mclass[31m=[32m"text-headline-sm text-fg"[31m
+                [36m>[31m
+                  [0mVé[0m
+                [36m</h3>[31m
+                [36m<span[31m
+                  [33mclass[31m=[32m"inline-flex items-center gap-xs rounded-full px-sm py-xs text-label-sm uppercase bg-success-soft text-success"[31m
+                [36m>[31m
+                  [0mCòn vé[0m
+                [36m</span>[31m
+              [36m</div>[31m
+              [36m<p[31m
+                [33mclass[31m=[32m"text-numeric-metric tabular-nums text-fg"[31m
+              [36m>[31m
+                [0m100.000 đ[0m
+              [36m</p>[31m
+              [36m<div[31m
+                [33mclass[31m=[32m"flex items-center gap-sm"[31m
+              [36m>[31m
+                [36m<button[31m
+                  [33maria-label[31m=[32m"Giảm số lượng Vé"[31m
+                  [33mclass[31m=[32m"ef-focus-ring relative inline-flex items-center justify-center gap-sm rounded-control transition-colors disabled:cursor-not-allowed disabled:opacity-60 border border-border-strong bg-surface text-fg hover:bg-surface-subtle h-9 px-sm text-label-md"[31m
+                  [33mtype[31m=[32m"button"[31m
+                [36m>[31m
+                  [36m<span>[31m
+                    [0m−[0m
+                  [36m</span>[31m
+                [36m</button>[31m
+                [36m<span[31m
+                  [33maria-label[31m=[32m"Số lượng Vé"[31m
+                  [33maria-live[31m=[32m"polite"[31m
+                  [33mclass[31m=[32m"min-w-10 text-center text-numeric-timer tabular-nums text-fg"[31m
+                  [33mrole[31m=[32m"status"[31m
+                [36m>[31m
+                  [0m1[0m
+                [36m</span>[31m
+                [36m<button[31m
+                  [33maria-label[31m=[32m"Tăng số lượng Vé"[31m
+                  [33mclass[31m=[32m"ef-focus-ring relative inline-flex items-center justify-center gap-sm rounded-control transition-colors disabled:cursor-not-allowed disabled:opacity-60 border border-border-strong bg-surface text-fg hover:bg-surface-subtle h-9 px-sm text-label-md"[31m
+                  [33mtype[31m=[32m"button"[31m
+                [36m>[31m
+                  [36m<span>[31m
+                    [0m+[0m
+                  [36m</span>[31m
+                [36m</button>[31m
+                [36m<span[31m
+                  [33mclass[31m=[32m"text-body-sm text-fg-muted"[31m
+                [36m>[31m
+                  [0mTối đa [0m
+                  [0m4[0m
+                  [0m vé[0m
+                [36m</span>[31m
+              [36m</div>[31m
+              [36m<button[31m
+                [33maria-pressed[31m=[32m"true"[31m
+                [33mclass[31m=[32m"ef-focus-ring relative inline-flex items-center justify-center gap-sm rounded-control transition-colors disabled:cursor-not-allowed disabled:opacity-60 border border-transparent bg-primary text-primary-fg hover:bg-primary-hover h-12 px-md text-label-lg md:h-11"[31m
+                [33mtype[31m=[32m"button"[31m
+              [36m>[31m
+                [36m<span>[31m
+                  [0mĐã chọn hạng này[0m
+                [36m</span>[31m
+              [36m</button>[31m
+            [36m</div>[31m
+          [36m</div>[31m
+        [36m</section>[31m
+        [36m<aside[31m
+          [33mclass[31m=[32m"lg:col-span-1"[31m
+        [36m>[31m
+          [36m<section[31m
+            [33maria-label[31m=[32m"Tóm tắt đơn hàng"[31m
+            [33mclass[31m=[32m"flex flex-col gap-md rounded-card border border-border bg-surface p-md shadow-float md:sticky md:top-md"[31m
+            [33mdata-hold-state[31m=[32m"idle"[31m
+          [36m>[31m
+            [36m<h2[31m
+              [33mclass[31m=[32m"text-headline-sm text-fg"[31m
+            [36m>[31m
+              [0mTóm tắt đơn hàng[0m
+            [36m</h2>[31m
+            [36m<button[31m
+              [33maria-controls[31m=[32m":r0:"[31m
+              [33maria-expanded[31m=[32m"false"[31m
+              [33mclass[31m=[32m"ef-focus-ring rounded-control text-left text-label-lg text-primary md:hidden"[31m
+              [33mtype[31m=[32m"button"[31m
+            [36m>[31m
+              [0mChi tiết đơn hàng[0m
+            [36m</button>[31m
+            [36m<div[31m
+              [33mclass[31m=[32m"flex-col gap-sm hidden md:flex"[31m
+              [33mid[31m=[32m":r0:"[31m
+            [36m>[31m
+              [36m<ul[31m
+                [33mclass[31m=[32m"flex flex-col gap-sm"[31m
+              [36m>[31m
+                [36m<li[31m
+                  [33mclass[31m=[32m"flex items-start justify-between gap-md"[31m
+                [36m>[31m
+                  [36m<span[31m
+                    [33mclass[31m=[32m"text-body-md text-fg"[31m
+                  [36m>[31m
+                    [0mVé[0m
+                    [36m<span[31m
+                      [33mclass[31m=[32m"text-fg-muted"[31m
+                    [36m>[31m
+                      [0m × [0m
+                      [36m<span[31m
+                        [33mclass[31m=[32m"tabular-nums"[31m
+                      [36m>[31m
+                        [0m1[0m
+                      [36m</span>[31m
+                    [36m</span>[31m
+                    [36m<span[31m
+                      [33mclass[31m=[32m"block text-body-sm text-fg-muted"[31m
+                    [36m>[31m
+                      [0mĐơn giá [0m
+                      [0m100.000 đ[0m
+                    [36m</span>[31m
+                  [36m</span>[31m
+                  [36m<span[31m
+                    [33mclass[31m=[32m"tabular-nums text-body-md text-fg"[31m
+                  [36m>[31m
+                    [0m100.000 đ[0m
+                  [36m</span>[31m
+                [36m</li>[31m
+              [36m</ul>[31m
+              [36m<div[31m
+                [33mclass[31m=[32m"flex items-center justify-between gap-md border-t border-border pt-sm"[31m
+              [36m>[31m
+                [36m<span[31m
+                  [33mclass[31m=[32m"text-body-md text-fg-muted"[31m
+                [36m>[31m
+                  [0mTạm tính[0m
+                [36m</span>[31m
+                [36m<span[31m
+                  [33mclass[31m=[32m"tabular-nums text-body-md text-fg"[31m
+                [36m>[31m
+                  [0m100.000 đ[0m
+                [36m</span>[31m
+              [36m</div>[31m
+              [36m<div[31m
+                [33mclass[31m=[32m"flex items-center justify-between gap-md border-t border-border pt-sm"[31m
+              [36m>[31m
+                [36m<span[31m
+                  [33mclass[31m=[32m"text-label-lg text-fg"[31m
+                [36m>[31m
+                  [0mTổng cộng[0m
+                [36m</span>[31m
+                [36m<span[31m
+                  [33mclass[31m=[32m"tabular-nums text-numeric-metric text-fg"[31m
+                [36m>[31m
+                  [0m100.000 đ[0m
+                [36m</span>[31m
+              [36m</div>[31m
+            [36m</div>[31m
+            [36m<button[31m
+              [33mclass[31m=[32m"ef-focus-ring relative inline-flex items-center justify-center gap-sm rounded-control transition-colors disabled:cursor-not-allowed disabled:opacity-60 border border-transparent bg-primary text-primary-fg hover:bg-primary-hover h-12 px-md text-label-lg md:h-11"[31m
+              [33mtype[31m=[32m"button"[31m
+            [36m>[31m
+              [36m<span>[31m
+                [0mGiữ vé và thanh toán[0m
+              [36m</span>[31m
+            [36m</button>[31m
+          [36m</section>[31m
+        [36m</aside>[31m
+      [36m</div>[31m
+    [36m</div>[31m
+  [36m</div>[31m
+[36m</body>[31m[39m
+[31m   [31m×[31m AC-11 focus[2m > [22mafter a confirmed release focus is on the primary button, not body[90m 192[2mms[22m[31m[39m
+[31m     → Unable to find an accessible element with the role "button" and name "Huỷ giữ vé"
+
+Here are the accessible roles:
+
+  banner:
+
+  Name "":
+  [36m<header[31m
+    [33mclass[31m=[32m"space-y-xs"[31m
+  [36m/>[31m
+
+  --------------------------------------------------
+  heading:
+
+  Name "Chọn vé — F":
+  [36m<h1[31m
+    [33mclass[31m=[32m"text-display-sm text-fg"[31m
+  [36m/>[31m
+
+  Name "Hạng vé sẵn có":
+  [36m<h2[31m
+    [33mclass[31m=[32m"text-headline-sm text-fg"[31m
+  [36m/>[31m
+
+  Name "Vé":
+  [36m<h3[31m
+    [33mclass[31m=[32m"text-headline-sm text-fg"[31m
+  [36m/>[31m
+
+  Name "Tóm tắt đơn hàng":
+  [36m<h2[31m
+    [33mclass[31m=[32m"text-headline-sm text-fg"[31m
+  [36m/>[31m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[31m
+    [33mclass[31m=[32m"text-body-md text-fg-muted"[31m
+  [36m/>[31m
+
+  Name "":
+  [36m<p[31m
+    [33mclass[31m=[32m"text-body-sm text-fg-muted"[31m
+  [36m/>[31m
+
+  Name "":
+  [36m<p[31m
+    [33mclass[31m=[32m"text-numeric-metric tabular-nums text-fg"[31m
+  [36m/>[31m
+
+  --------------------------------------------------
+  region:
+
+  Name "Danh sách hạng vé":
+  [36m<section[31m
+    [33maria-label[31m=[32m"Danh sách hạng vé"[31m
+    [33mclass[31m=[32m"space-y-md lg:col-span-2"[31m
+  [36m/>[31m
+
+  Name "Tóm tắt đơn hàng":
+  [36m<section[31m
+    [33maria-label[31m=[32m"Tóm tắt đơn hàng"[31m
+    [33mclass[31m=[32m"flex flex-col gap-md rounded-card border border-border bg-surface p-md shadow-float md:sticky md:top-md"[31m
+    [33mdata-hold-state[31m=[32m"idle"[31m
+  [36m/>[31m
+
+  --------------------------------------------------
+  button:
+
+  Name "Giảm số lượng Vé":
+  [36m<button[31m
+    [33maria-label[31m=[32m"Giảm số lượng Vé"[31m
+    [33mclass[31m=[32m"ef-focus-ring relative inline-flex items-center justify-center gap-sm rounded-control transition-colors disabled:cursor-not-allowed disabled:opacity-60 border border-border-strong bg-surface text-fg hover:bg-surface-subtle h-9 px-sm text-label-md"[31m
+    [33mtype[31m=[32m"button"[31m
+  [36m/>[31m
+
+  Name "Tăng số lượng Vé":
+  [36m<button[31m
+    [33maria-label[31m=[32m"Tăng số lượng Vé"[31m
+    [33mclass[31m=[32m"ef-focus-ring relative inline-flex items-center justify-center gap-sm rounded-control transition-colors disabled:cursor-not-allowed disabled:opacity-60 border border-border-strong bg-surface text-fg hover:bg-surface-subtle h-9 px-sm text-label-md"[31m
+    [33mtype[31m=[32m"button"[31m
+  [36m/>[31m
+
+  Name "Đã chọn hạng này":
+  [36m<button[31m
+    [33maria-pressed[31m=[32m"true"[31m
+    [33mclass[31m=[32m"ef-focus-ring relative inline-flex items-center justify-center gap-sm rounded-control transition-colors disabled:cursor-not-allowed disabled:opacity-60 border border-transparent bg-primary text-primary-fg hover:bg-primary-hover h-12 px-md text-label-lg md:h-11"[31m
+    [33mtype[31m=[32m"button"[31m
+  [36m/>[31m
+
+  Name "Chi tiết đơn hàng":
+  [36m<button[31m
+    [33maria-controls[31m=[32m":r1:"[31m
+    [33maria-expanded[31m=[32m"false"[31m
+    [33mclass[31m=[32m"ef-focus-ring rounded-control text-left text-label-lg text-primary md:hidden"[31m
+    [33mtype[31m=[32m"button"[31m
+  [36m/>[31m
+
+  Name "Giữ vé và thanh toán":
+  [36m<button[31m
+    [33mclass[31m=[32m"ef-focus-ring relative inline-flex items-center justify-center gap-sm rounded-control transition-colors disabled:cursor-not-allowed disabled:opacity-60 border border-transparent bg-primary text-primary-fg hover:bg-primary-hover h-12 px-md text-label-lg md:h-11"[31m
+    [33mtype[31m=[32m"button"[31m
+  [36m/>[31m
+
+  --------------------------------------------------
+  status:
+
+  Name "Số lượng Vé":
+  [36m<span[31m
+    [33maria-label[31m=[32m"Số lượng Vé"[31m
+    [33maria-live[31m=[32m"polite"[31m
+    [33mclass[31m=[32m"min-w-10 text-center text-numeric-timer tabular-nums text-fg"[31m
+    [33mrole[31m=[32m"status"[31m
+  [36m/>[31m
+
+  --------------------------------------------------
+  complementary:
+
+  Name "":
+  [36m<aside[31m
+    [33mclass[31m=[32m"lg:col-span-1"[31m
+  [36m/>[31m
+
+  --------------------------------------------------
+  list:
+
+  Name "":
+  [36m<ul[31m
+    [33mclass[31m=[32m"flex flex-col gap-sm"[31m
+  [36m/>[31m
+
+  --------------------------------------------------
+  listitem:
+
+  Name "":
+  [36m<li[31m
+    [33mclass[31m=[32m"flex items-start justify-between gap-md"[31m
+  [36m/>[31m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[31m
+  [36m<div>[31m
+    [36m<div[31m
+      [33mclass[31m=[32m"mx-auto max-w-content space-y-lg py-md"[31m
+    [36m>[31m
+      [36m<header[31m
+        [33mclass[31m=[32m"space-y-xs"[31m
+      [36m>[31m
+        [36m<h1[31m
+          [33mclass[31m=[32m"text-display-sm text-fg"[31m
+        [36m>[31m
+          [0mChọn vé — [0m
+          [0mF[0m
+        [36m</h1>[31m
+        [36m<p[31m
+          [33mclass[31m=[32m"text-body-md text-fg-muted"[31m
+        [36m>[31m
+          [0mV[0m
+        [36m</p>[31m
+      [36m</header>[31m
+      [36m<div[31m
+        [33mclass[31m=[32m"grid grid-cols-1 items-start gap-lg lg:grid-cols-3"[31m
+      [36m>[31m
+        [36m<section[31m
+          [33maria-label[31m=[32m"Danh sách hạng vé"[31m
+          [33mclass[31m=[32m"space-y-md lg:col-span-2"[31m
+        [36m>[31m
+          [36m<h2[31m
+            [33mclass[31m=[32m"text-headline-sm text-fg"[31m
+          [36m>[31m
+            [0mHạng vé sẵn có[0m
+          [36m</h2>[31m
+          [36m<p[31m
+            [33mclass[31m=[32m"text-body-sm text-fg-muted"[31m
+          [36m>[31m
+            [0mTình trạng vé chỉ mang tính tham khảo; kết quả giữ vé mới là chính xác.[0m
+          [36m</p>[31m
+          [36m<div[31m
+            [33mclass[31m=[32m"space-y-md"[31m
+          [36m>[31m
+            [36m<div[31m
+              [33mclass[31m=[32m"flex flex-col gap-sm rounded-card border bg-surface p-md shadow-card border-primary"[31m
+              [33mdata-state[31m=[32m"available"[31m
+            [36m>[31m
+              [36m<div[31m
+                [33mclass[31m=[32m"flex flex-wrap items-center justify-between gap-sm"[31m
+              [36m>[31m
+                [36m<h3[31m
+                  [33mclass[31m=[32m"text-headline-sm text-fg"[31m
+                [36m>[31m
+                  [0mVé[0m
+                [36m</h3>[31m
+                [36m<span[31m
+                  [33mclass[31m=[32m"inline-flex items-center gap-xs rounded-full px-sm py-xs text-label-sm uppercase bg-success-soft text-success"[31m
+                [36m>[31m
+                  [0mCòn vé[0m
+                [36m</span>[31m
+              [36m</div>[31m
+              [36m<p[31m
+                [33mclass[31m=[32m"text-numeric-metric tabular-nums text-fg"[31m
+              [36m>[31m
+                [0m100.000 đ[0m
+              [36m</p>[31m
+              [36m<div[31m
+                [33mclass[31m=[32m"flex items-center gap-sm"[31m
+              [36m>[31m
+                [36m<button[31m
+                  [33maria-label[31m=[32m"Giảm số lượng Vé"[31m
+                  [33mclass[31m=[32m"ef-focus-ring relative inline-flex items-center justify-center gap-sm rounded-control transition-colors disabled:cursor-not-allowed disabled:opacity-60 border border-border-strong bg-surface text-fg hover:bg-surface-subtle h-9 px-sm text-label-md"[31m
+                  [33mtype[31m=[32m"button"[31m
+                [36m>[31m
+                  [36m<span>[31m
+                    [0m−[0m
+                  [36m</span>[31m
+                [36m</button>[31m
+                [36m<span[31m
+                  [33maria-label[31m=[32m"Số lượng Vé"[31m
+                  [33maria-live[31m=[32m"polite"[31m
+                  [33mclass[31m=[32m"min-w-10 text-center text-numeric-timer tabular-nums text-fg"[31m
+                  [33mrole[31m=[32m"status"[31m
+                [36m>[31m
+                  [0m1[0m
+                [36m</span>[31m
+                [36m<button[31m
+                  [33maria-label[31m=[32m"Tăng số lượng Vé"[31m
+                  [33mclass[31m=[32m"ef-focus-ring relative inline-flex items-center justify-center gap-sm rounded-control transition-colors disabled:cursor-not-allowed disabled:opacity-60 border border-border-strong bg-surface text-fg hover:bg-surface-subtle h-9 px-sm text-label-md"[31m
+                  [33mtype[31m=[32m"button"[31m
+                [36m>[31m
+                  [36m<span>[31m
+                    [0m+[0m
+                  [36m</span>[31m
+                [36m</button>[31m
+                [36m<span[31m
+                  [33mclass[31m=[32m"text-body-sm text-fg-muted"[31m
+                [36m>[31m
+                  [0mTối đa [0m
+                  [0m4[0m
+                  [0m vé[0m
+                [36m</span>[31m
+              [36m</div>[31m
+              [36m<button[31m
+                [33maria-pressed[31m=[32m"true"[31m
+                [33mclass[31m=[32m"ef-focus-ring relative inline-flex items-center justify-center gap-sm rounded-control transition-colors disabled:cursor-not-allowed disabled:opacity-60 border border-transparent bg-primary text-primary-fg hover:bg-primary-hover h-12 px-md text-label-lg md:h-11"[31m
+                [33mtype[31m=[32m"button"[31m
+              [36m>[31m
+                [36m<span>[31m
+                  [0mĐã chọn hạng này[0m
+                [36m</span>[31m
+              [36m</button>[31m
+            [36m</div>[31m
+          [36m</div>[31m
+        [36m</section>[31m
+        [36m<aside[31m
+          [33mclass[31m=[32m"lg:col-span-1"[31m
+        [36m>[31m
+          [36m<section[31m
+            [33maria-label[31m=[32m"Tóm tắt đơn hàng"[31m
+            [33mclass[31m=[32m"flex flex-col gap-md rounded-card border border-border bg-surface p-md shadow-float md:sticky md:top-md"[31m
+            [33mdata-hold-state[31m=[32m"idle"[31m
+          [36m>[31m
+            [36m<h2[31m
+              [33mclass[31m=[32m"text-headline-sm text-fg"[31m
+            [36m>[31m
+              [0mTóm tắt đơn hàng[0m
+            [36m</h2>[31m
+            [36m<button[31m
+              [33maria-controls[31m=[32m":r1:"[31m
+              [33maria-expanded[31m=[32m"false"[31m
+              [33mclass[31m=[32m"ef-focus-ring rounded-control text-left text-label-lg text-primary md:hidden"[31m
+              [33mtype[31m=[32m"button"[31m
+            [36m>[31m
+              [0mChi tiết đơn hàng[0m
+            [36m</button>[31m
+            [36m<div[31m
+              [33mclass[31m=[32m"flex-col gap-sm hidden md:flex"[31m
+              [33mid[31m=[32m":r1:"[31m
+            [36m>[31m
+              [36m<ul[31m
+                [33mclass[31m=[32m"flex flex-col gap-sm"[31m
+              [36m>[31m
+                [36m<li[31m
+                  [33mclass[31m=[32m"flex items-start justify-between gap-md"[31m
+                [36m>[31m
+                  [36m<span[31m
+                    [33mclass[31m=[32m"text-body-md text-fg"[31m
+                  [36m>[31m
+                    [0mVé[0m
+                    [36m<span[31m
+                      [33mclass[31m=[32m"text-fg-muted"[31m
+                    [36m>[31m
+                      [0m × [0m
+                      [36m<span[31m
+                        [33mclass[31m=[32m"tabular-nums"[31m
+                      [36m>[31m
+                        [0m1[0m
+                      [36m</span>[31m
+                    [36m</span>[31m
+                    [36m<span[31m
+                      [33mclass[31m=[32m"block text-body-sm text-fg-muted"[31m
+                    [36m>[31m
+                      [0mĐơn giá [0m
+                      [0m100.000 đ[0m
+                    [36m</span>[31m
+                  [36m</span>[31m
+                  [36m<span[31m
+                    [33mclass[31m=[32m"tabular-nums text-body-md text-fg"[31m
+                  [36m>[31m
+                    [0m100.000 đ[0m
+                  [36m</span>[31m
+                [36m</li>[31m
+              [36m</ul>[31m
+              [36m<div[31m
+                [33mclass[31m=[32m"flex items-center justify-between gap-md border-t border-border pt-sm"[31m
+              [36m>[31m
+                [36m<span[31m
+                  [33mclass[31m=[32m"text-body-md text-fg-muted"[31m
+                [36m>[31m
+                  [0mTạm tính[0m
+                [36m</span>[31m
+                [36m<span[31m
+                  [33mclass[31m=[32m"tabular-nums text-body-md text-fg"[31m
+                [36m>[31m
+                  [0m100.000 đ[0m
+                [36m</span>[31m
+              [36m</div>[31m
+              [36m<div[31m
+                [33mclass[31m=[32m"flex items-center justify-between gap-md border-t border-border pt-sm"[31m
+              [36m>[31m
+                [36m<span[31m
+                  [33mclass[31m=[32m"text-label-lg text-fg"[31m
+                [36m>[31m
+                  [0mTổng cộng[0m
+                [36m</span>[31m
+                [36m<span[31m
+                  [33mclass[31m=[32m"tabular-nums text-numeric-metric text-fg"[31m
+                [36m>[31m
+                  [0m100.000 đ[0m
+                [36m</span>[31m
+              [36m</div>[31m
+            [36m</div>[31m
+            [36m<button[31m
+              [33mclass[31m=[32m"ef-focus-ring relative inline-flex items-center justify-center gap-sm rounded-control transition-colors disabled:cursor-not-allowed disabled:opacity-60 border border-transparent bg-primary text-primary-fg hover:bg-primary-hover h-12 px-md text-label-lg md:h-11"[31m
+              [33mtype[31m=[32m"button"[31m
+            [36m>[31m
+              [36m<span>[31m
+                [0mGiữ vé và thanh toán[0m
+              [36m</span>[31m
+            [36m</button>[31m
+          [36m</section>[31m
+        [36m</aside>[31m
+      [36m</div>[31m
+    [36m</div>[31m
+  [36m</div>[31m
+[36m</body>[31m[39m
+ [32m✓[39m src/lib/fix2/g5-g6-payment-key.test.ts [2m([22m[2m2 tests[22m[2m)[22m[90m 45[2mms[22m[39m
+ [32m✓[39m src/lib/fix2/g7-signin-prefill.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[33m 395[2mms[22m[39m
+   [33m[2m✓[22m[39m G-7[2m > [22mregister -> sign-in link has no identifier in the URL and stores it one-shot in sessionStorage [33m354[2mms[22m[39m
+[90mstderr[2m | src/lib/fix2/g7-signin-prefill.test.tsx[2m > [22m[2mG-7[2m > [22m[2mLoginForm prefills from the one-shot key and removes it
+[22m[39mError: Not implemented: navigation (except hash changes)
+    at module.exports (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\node_modules\jsdom\lib\jsdom\browser\not-implemented.js:9:17)
+    at navigateFetch (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\node_modules\jsdom\lib\jsdom\living\window\navigation.js:77:3)
+    at exports.navigate (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\node_modules\jsdom\lib\jsdom\living\window\navigation.js:55:3)
+    at Timeout._onTimeout (D:\Documents\Nam4-1\Project1\EvenFlow-r5-verify\apps\web\node_modules\jsdom\lib\jsdom\living\nodes\HTMLHyperlinkElementUtils-impl.js:81:7)
+    at listOnTimeout (node:internal/timers:588:17)
+    at processTimers (node:internal/timers:523:7) [90mundefined[39m
+
+ [32m✓[39m src/lib/debt/ac6-payment-forbidden.test.ts [2m([22m[2m10 tests[22m[2m)[22m[90m 44[2mms[22m[39m
+ [32m✓[39m src/lib/debt5/ac10-safe-redirect.test.ts [2m([22m[2m21 tests[22m[2m)[22m[90m 63[2mms[22m[39m
+ [32m✓[39m src/hooks/use-server-time-sync.test.tsx [2m([22m[2m3 tests[22m[2m)[22m[90m 253[2mms[22m[39m
+ [32m✓[39m src/components/checkout/ticket-qr.test.tsx [2m([22m[2m4 tests[22m[2m)[22m[33m 305[2mms[22m[39m
+ [32m✓[39m src/lib/debt/fix1-f5-clear-guards.test.ts [2m([22m[2m2 tests[22m[2m)[22m[90m 68[2mms[22m[39m
+ [32m✓[39m src/components/checkout/order-result-view.debt.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[90m 154[2mms[22m[39m
+ [32m✓[39m src/lib/debt5-fix/r2-used-record-eviction.test.ts [2m([22m[2m3 tests[22m[2m)[22m[90m 52[2mms[22m[39m
+ [32m✓[39m src/components/checkout/payment-handoff-view.debt.test.tsx [2m([22m[2m1 test[22m[2m)[22m[33m 366[2mms[22m[39m
+   [33m[2m✓[22m[39m PaymentHandoffView 403 forbidden (AC-6)[2m > [22mshows checkout.forbidden (not the generic HTTP 403 text) and sends exactly one payment POST [33m363[2mms[22m[39m
+ [32m✓[39m src/components/checkout/order-result-view.fix1.test.tsx [2m([22m[2m1 test[22m[2m)[22m[90m 124[2mms[22m[39m
+ [32m✓[39m src/components/checkout/result-page-client.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[90m 133[2mms[22m[39m
+ [32m✓[39m src/lib/debt5-fix/x2-empty-lock-token.test.ts [2m([22m[2m2 tests[22m[2m)[22m[90m 63[2mms[22m[39m
+ [32m✓[39m src/hooks/use-payment-session.debt.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[90m 44[2mms[22m[39m
+ [32m✓[39m src/lib/debt/fix1-f2-no-refresh-token.test.ts [2m([22m[2m1 test[22m[2m)[22m[90m 45[2mms[22m[39m
+ [32m✓[39m src/components/checkout/checkout-view.fix3.test.tsx [2m([22m[2m1 test[22m[2m)[22m[90m 269[2mms[22m[39m
+ [32m✓[39m src/lib/debt5-fix/x4-throwing-getitem.test.ts [2m([22m[2m3 tests[22m[2m)[22m[90m 47[2mms[22m[39m
+ [32m✓[39m src/lib/debt/fix1-f3-empty-user-id.test.ts [2m([22m[2m1 test[22m[2m)[22m[90m 47[2mms[22m[39m
+ [32m✓[39m src/lib/fix2/g4-involuntary-expiry.test.ts [2m([22m[2m2 tests[22m[2m)[22m[90m 31[2mms[22m[39m
+ [32m✓[39m src/hooks/use-payment-session.fix1.test.tsx [2m([22m[2m1 test[22m[2m)[22m[90m 37[2mms[22m[39m
+ [32m✓[39m src/hooks/use-auth.test.ts [2m([22m[2m2 tests[22m[2m)[22m[90m 6[2mms[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯[1m[7m Failed Tests 16 [27m[22m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[31m[1m[7m FAIL [27m[22m[39m src/components/checkout/checkout-view.cancel-focus.test.tsx[2m > [22mAC-11 focus[2m > [22mfocus moves into the dialog, and back to the trigger after 'Giữ lại'
+[31m[1mTestingLibraryElementError[22m[39m: Unable to find an accessible element with the role "alertdialog"
+
+Here are the accessible roles:
+
+  banner:
+
+  Name "":
+  [36m<header[39m
+    [33mclass[39m=[32m"space-y-xs"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  heading:
+
+  Name "Chọn vé — F":
+  [36m<h1[39m
+    [33mclass[39m=[32m"text-display-sm text-fg"[39m
+  [36m/>[39m
+
+  Name "Hạng vé sẵn có":
+  [36m<h2[39m
+    [33mclass[39m=[32m"text-headline-sm text-fg"[39m
+  [36m/>[39m
+
+  Name "Vé":
+  [36m<h3[39m
+    [33mclass[39m=[32m"text-headline-sm text-fg"[39m
+  [36m/>[39m
+
+  Name "Tóm tắt đơn hàng":
+  [36m<h2[39m
+    [33mclass[39m=[32m"text-headline-sm text-fg"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"text-body-md text-fg-muted"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"text-body-sm text-fg-muted"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"text-numeric-metric tabular-nums text-fg"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  region:
+
+  Name "Danh sách hạng vé":
+  [36m<section[39m
+    [33maria-label[39m=[32m"Danh sách hạng vé"[39m
+    [33mclass[39m=[32m"space-y-md lg:col-span-2"[39m
+  [36m/>[39m
+
+  Name "Tóm tắt đơn hàng":
+  [36m<section[39m
+    [33maria-label[39m=[32m"Tóm tắt đơn hàng"[39m
+    [33mclass[39m=[32m"flex flex-col gap-md rounded-card border border-border bg-surface p-md shadow-float md:sticky md:top-md"[39m
+    [33mdata-hold-state[39m=[32m"idle"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "Giảm số lượng Vé":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Giảm số lượng Vé"[39m
+    [33mclass[39m=[32m"ef-focus-ring relative inline-flex items-center justify-center gap-sm rounded-control transition-colors disabled:cursor-not-allowed disabled:opacity-60 border border-border-strong bg-surface text-fg hover:bg-surface-subtle h-9 px-sm text-label-md"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Tăng số lượng Vé":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Tăng số lượng Vé"[39m
+    [33mclass[39m=[32m"ef-focus-ring relative inline-flex items-center justify-center gap-sm rounded-control transition-colors disabled:cursor-not-allowed disabled:opacity-60 border border-border-strong bg-surface text-fg hover:bg-surface-subtle h-9 px-sm text-label-md"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Đã chọn hạng này":
+  [36m<button[39m
+    [33maria-pressed[39m=[32m"true"[39m
+    [33mclass[39m=[32m"ef-focus-ring relative inline-flex items-center justify-center gap-sm rounded-control transition-colors disabled:cursor-not-allowed disabled:opacity-60 border border-transparent bg-primary text-primary-fg hover:bg-primary-hover h-12 px-md text-label-lg md:h-11"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Chi tiết đơn hàng":
+  [36m<button[39m
+    [33maria-controls[39m=[32m":r0:"[39m
+    [33maria-expanded[39m=[32m"false"[39m
+    [33mclass[39m=[32m"ef-focus-ring rounded-control text-left text-label-lg text-primary md:hidden"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Giữ vé và thanh toán":
+  [36m<button[39m
+    [33mclass[39m=[32m"ef-focus-ring relative inline-flex items-center justify-center gap-sm rounded-control transition-colors disabled:cursor-not-allowed disabled:opacity-60 border border-transparent bg-primary text-primary-fg hover:bg-primary-hover h-12 px-md text-label-lg md:h-11"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  status:
+
+  Name "Số lượng Vé":
+  [36m<span[39m
+    [33maria-label[39m=[32m"Số lượng Vé"[39m
+    [33maria-live[39m=[32m"polite"[39m
+    [33mclass[39m=[32m"min-w-10 text-center text-numeric-timer tabular-nums text-fg"[39m
+    [33mrole[39m=[32m"status"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  complementary:
+
+  Name "":
+  [36m<aside[39m
+    [33mclass[39m=[32m"lg:col-span-1"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  list:
+
+  Name "":
+  [36m<ul[39m
+    [33mclass[39m=[32m"flex flex-col gap-sm"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  listitem:
+
+  Name "":
+  [36m<li[39m
+    [33mclass[39m=[32m"flex items-start justify-between gap-md"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"mx-auto max-w-content space-y-lg py-md"[39m
+    [36m>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"space-y-xs"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mclass[39m=[32m"text-display-sm text-fg"[39m
+        [36m>[39m
+          [0mChọn vé — [0m
+          [0mF[0m
+        [36m</h1>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"text-body-md text-fg-muted"[39m
+        [36m>[39m
+          [0mV[0m
+        [36m</p>[39m
+      [36m</header>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"grid grid-cols-1 items-start gap-lg lg:grid-cols-3"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33maria-label[39m=[32m"Danh sách hạng vé"[39m
+          [33mclass[39m=[32m"space-y-md lg:col-span-2"[39m
+        [36m>[39m
+          [36m<h2[39m
+            [33mclass[39m=[32m"text-headline-sm text-fg"[39m
+          [36m>[39m
+            [0mHạng vé sẵn có[0m
+          [36m</h2>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-body-sm text-fg-muted"[39m
+          [36m>[39m
+            [0mTình trạng vé chỉ mang tính tham khảo; kết quả giữ vé mới là chính xác.[0m
+          [36m</p>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"space-y-md"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex flex-col gap-sm rounded-card border bg-surface p-md shadow-card border-primary"[39m
+              [33mdata-state[39m=[32m"available"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex flex-wrap items-center justify-between gap-sm"[39m
+              [36m>[39m
+                [36m<h3[39m
+                  [33mclass[39m=[32m"text-headline-sm text-fg"[39m
+                [36m>[39m
+                  [0mVé[0m
+                [36m</h3>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"inline-flex items-center gap-xs rounded-full px-sm py-xs text-label-sm uppercase bg-success-soft text-success"[39m
+                [36m>[39m
+                  [0mCòn vé[0m
+                [36m</span>[39m
+              [36m</div>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-numeric-metric tabular-nums text-fg"[39m
+              [36m>[39m
+                [0m100.000 đ[0m
+              [36m</p>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex items-center gap-sm"[39m
+              [36m>[39m
+                [36m<button[39m
+                  [33maria-label[39m=[32m"Giảm số lượng Vé"[39m
+                  [33mclass[39m=[32m"ef-focus-ring relative inline-flex items-center justify-center gap-sm rounded-control transition-colors disabled:cursor-not-allowed disabled:opacity-60 border border-border-strong bg-surface text-fg hover:bg-surface-subtle h-9 px-sm text-label-md"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [36m<span>[39m
+                    [0m−[0m
+                  [36m</span>[39m
+                [36m</button>[39m
+                [36m<span[39m
+                  [33maria-label[39m=[32m"Số lượng Vé"[39m
+                  [33maria-live[39m=[32m"polite"[39m
+                  [33mclass[39m=[32m"min-w-10 text-center text-numeric-timer tabular-nums text-fg"[39m
+                  [33mrole[39m=[32m"status"[39m
+                [36m>[39m
+                  [0m1[0m
+                [36m</span>[39m
+                [36m<button[39m
+                  [33maria-label[39m=[32m"Tăng số lượng Vé"[39m
+                  [33mclass[39m=[32m"ef-focus-ring relative inline-flex items-center justify-center gap-sm rounded-control transition-colors disabled:cursor-not-allowed disabled:opacity-60 border border-border-strong bg-surface text-fg hover:bg-surface-subtle h-9 px-sm text-label-md"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [36m<span>[39m
+                    [0m+[0m
+                  [36m</span>[39m
+                [36m</button>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"text-body-sm text-fg-muted"[39m
+                [36m>[39m
+                  [0mTối đa [0m
+                  [0m4[0m
+                  [0m vé[0m
+                [36m</span>[39m
+              [36m</div>[39m
+              [36m<button[39m
+                [33maria-pressed[39m=[32m"true"[39m
+                [33mclass[39m=[32m"ef-focus-ring relative inline-flex items-center justify-center gap-sm rounded-control transition-colors disabled:cursor-not-allowed disabled:opacity-60 border border-transparent bg-primary text-primary-fg hover:bg-primary-hover h-12 px-md text-label-lg md:h-11"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0mĐã chọn hạng này[0m
+                [36m</span>[39m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</section>[39m
+        [36m<aside[39m
+          [33mclass[39m=[32m"lg:col-span-1"[39m
+        [36m>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"Tóm tắt đơn hàng"[39m
+            [33mclass[39m=[32m"flex flex-col gap-md rounded-card border border-border bg-surface p-md shadow-float md:sticky md:top-md"[39m
+            [33mdata-hold-state[39m=[32m"idle"[39m
+          [36m>[39m
+            [36m<h2[39m
+              [33mclass[39m=[32m"text-headline-sm text-fg"[39m
+            [36m>[39m
+              [0mTóm tắt đơn hàng[0m
+            [36m</h2>[39m
+            [36m<button[39m
+              [33maria-controls[39m=[32m":r0:"[39m
+              [33maria-expanded[39m=[32m"false"[39m
+              [33mclass[39m=[32m"ef-focus-ring rounded-control text-left text-label-lg text-primary md:hidden"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mChi tiết đơn hàng[0m
+            [36m</button>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex-col gap-sm hidden md:flex"[39m
+              [33mid[39m=[32m":r0:"[39m
+            [36m>[39m
+              [36m<ul[39m
+                [33mclass[39m=[32m"flex flex-col gap-sm"[39m
+              [36m>[39m
+                [36m<li[39m
+                  [33mclass[39m=[32m"flex items-start justify-between gap-md"[39m
+                [36m>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"text-body-md text-fg"[39m
+                  [36m>[39m
+                    [0mVé[0m
+                    [36m<span[39m
+                      [33mclass[39m=[32m"text-fg-muted"[39m
+                    [36m>[39m
+                      [0m × [0m
+                      [36m<span[39m
+                        [33mclass[39m=[32m"tabular-nums"[39m
+                      [36m>[39m
+                        [0m1[0m
+                      [36m</span>[39m
+                    [36m</span>[39m
+                    [36m<span[39m
+                      [33mclass[39m=[32m"block text-body-sm text-fg-muted"[39m
+                    [36m>[39m
+                      [0mĐơn giá [0m
+                      [0m100.000 đ[0m
+                    [36m</span>[39m
+                  [36m</span>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"tabular-nums text-body-md text-fg"[39m
+                  [36m>[39m
+                    [0m100.000 đ[0m
+                  [36m</span>[39m
+                [36m</li>[39m
+              [36m</ul>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex items-center justify-between gap-md border-t border-border pt-sm"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"text-body-md text-fg-muted"[39m
+                [36m>[39m
+                  [0mTạm tính[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"tabular-nums text-body-md text-fg"[39m
+                [36m>[39m
+                  [0m100.000 đ[0m
+                [36m</span>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex items-center justify-between gap-md border-t border-border pt-sm"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"text-label-lg text-fg"[39m
+                [36m>[39m
+                  [0mTổng cộng[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"tabular-nums text-numeric-metric text-fg"[39m
+                [36m>[39m
+                  [0m100.000 đ[0m
+                [36m</span>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"ef-focus-ring relative inline-flex items-center justify-center gap-sm rounded-control transition-colors disabled:cursor-not-allowed disabled:opacity-60 border border-transparent bg-primary text-primary-fg hover:bg-primary-hover h-12 px-md text-label-lg md:h-11"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<span>[39m
+                [0mGiữ vé và thanh toán[0m
+              [36m</span>[39m
+            [36m</button>[39m
+          [36m</section>[39m
+        [36m</aside>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+[90m [2m❯[22m Object.getElementError node_modules/@testing-library/dom/dist/config.js:[2m37:19[22m[39m
+[90m [2m❯[22m node_modules/@testing-library/dom/dist/query-helpers.js:[2m76:38[22m[39m
+[90m [2m❯[22m node_modules/@testing-library/dom/dist/query-helpers.js:[2m52:17[22m[39m
+[90m [2m❯[22m node_modules/@testing-library/dom/dist/query-helpers.js:[2m95:19[22m[39m
+[36m [2m❯[22m src/components/checkout/checkout-view.cancel-focus.test.tsx:[2m61:19[22m[39m
+    [90m 59| [39m  [34mit[39m([32m"focus moves into the dialog, and back to the trigger after 'Giữ [39m…
+    [90m 60| [39m    [35mconst[39m trigger [33m=[39m [35mawait[39m [34mopenFromTrigger[39m()[33m;[39m
+    [90m 61| [39m    [34mexpect[39m(screen[33m.[39m[34mgetByRole[39m([32m"alertdialog"[39m)[33m.[39m[34mcontains[39m(document[33m.[39mactiveEle…
+    [90m   | [39m                  [31m^[39m
+    [90m 62| [39m    [35mawait[39m [34mact[39m([35masync[39m () [33m=>[39m {
+    [90m 63| [39m      fireEvent[33m.[39m[34mclick[39m(screen[33m.[39m[34mgetByRole[39m([32m"button"[39m[33m,[39m { name[33m:[39m [32m"Giữ lại"[39m }))[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/16]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m src/components/checkout/checkout-view.cancel-focus.test.tsx[2m > [22mAC-11 focus[2m > [22mafter a confirmed release focus is on the primary button, not body
+[31m[1mTestingLibraryElementError[22m[39m: Unable to find an accessible element with the role "button" and name "Huỷ giữ vé"
+
+Here are the accessible roles:
+
+  banner:
+
+  Name "":
+  [36m<header[39m
+    [33mclass[39m=[32m"space-y-xs"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  heading:
+
+  Name "Chọn vé — F":
+  [36m<h1[39m
+    [33mclass[39m=[32m"text-display-sm text-fg"[39m
+  [36m/>[39m
+
+  Name "Hạng vé sẵn có":
+  [36m<h2[39m
+    [33mclass[39m=[32m"text-headline-sm text-fg"[39m
+  [36m/>[39m
+
+  Name "Vé":
+  [36m<h3[39m
+    [33mclass[39m=[32m"text-headline-sm text-fg"[39m
+  [36m/>[39m
+
+  Name "Tóm tắt đơn hàng":
+  [36m<h2[39m
+    [33mclass[39m=[32m"text-headline-sm text-fg"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  paragraph:
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"text-body-md text-fg-muted"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"text-body-sm text-fg-muted"[39m
+  [36m/>[39m
+
+  Name "":
+  [36m<p[39m
+    [33mclass[39m=[32m"text-numeric-metric tabular-nums text-fg"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  region:
+
+  Name "Danh sách hạng vé":
+  [36m<section[39m
+    [33maria-label[39m=[32m"Danh sách hạng vé"[39m
+    [33mclass[39m=[32m"space-y-md lg:col-span-2"[39m
+  [36m/>[39m
+
+  Name "Tóm tắt đơn hàng":
+  [36m<section[39m
+    [33maria-label[39m=[32m"Tóm tắt đơn hàng"[39m
+    [33mclass[39m=[32m"flex flex-col gap-md rounded-card border border-border bg-surface p-md shadow-float md:sticky md:top-md"[39m
+    [33mdata-hold-state[39m=[32m"idle"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "Giảm số lượng Vé":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Giảm số lượng Vé"[39m
+    [33mclass[39m=[32m"ef-focus-ring relative inline-flex items-center justify-center gap-sm rounded-control transition-colors disabled:cursor-not-allowed disabled:opacity-60 border border-border-strong bg-surface text-fg hover:bg-surface-subtle h-9 px-sm text-label-md"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Tăng số lượng Vé":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Tăng số lượng Vé"[39m
+    [33mclass[39m=[32m"ef-focus-ring relative inline-flex items-center justify-center gap-sm rounded-control transition-colors disabled:cursor-not-allowed disabled:opacity-60 border border-border-strong bg-surface text-fg hover:bg-surface-subtle h-9 px-sm text-label-md"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Đã chọn hạng này":
+  [36m<button[39m
+    [33maria-pressed[39m=[32m"true"[39m
+    [33mclass[39m=[32m"ef-focus-ring relative inline-flex items-center justify-center gap-sm rounded-control transition-colors disabled:cursor-not-allowed disabled:opacity-60 border border-transparent bg-primary text-primary-fg hover:bg-primary-hover h-12 px-md text-label-lg md:h-11"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Chi tiết đơn hàng":
+  [36m<button[39m
+    [33maria-controls[39m=[32m":r1:"[39m
+    [33maria-expanded[39m=[32m"false"[39m
+    [33mclass[39m=[32m"ef-focus-ring rounded-control text-left text-label-lg text-primary md:hidden"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Giữ vé và thanh toán":
+  [36m<button[39m
+    [33mclass[39m=[32m"ef-focus-ring relative inline-flex items-center justify-center gap-sm rounded-control transition-colors disabled:cursor-not-allowed disabled:opacity-60 border border-transparent bg-primary text-primary-fg hover:bg-primary-hover h-12 px-md text-label-lg md:h-11"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  status:
+
+  Name "Số lượng Vé":
+  [36m<span[39m
+    [33maria-label[39m=[32m"Số lượng Vé"[39m
+    [33maria-live[39m=[32m"polite"[39m
+    [33mclass[39m=[32m"min-w-10 text-center text-numeric-timer tabular-nums text-fg"[39m
+    [33mrole[39m=[32m"status"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  complementary:
+
+  Name "":
+  [36m<aside[39m
+    [33mclass[39m=[32m"lg:col-span-1"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  list:
+
+  Name "":
+  [36m<ul[39m
+    [33mclass[39m=[32m"flex flex-col gap-sm"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  listitem:
+
+  Name "":
+  [36m<li[39m
+    [33mclass[39m=[32m"flex items-start justify-between gap-md"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"mx-auto max-w-content space-y-lg py-md"[39m
+    [36m>[39m
+      [36m<header[39m
+        [33mclass[39m=[32m"space-y-xs"[39m
+      [36m>[39m
+        [36m<h1[39m
+          [33mclass[39m=[32m"text-display-sm text-fg"[39m
+        [36m>[39m
+          [0mChọn vé — [0m
+          [0mF[0m
+        [36m</h1>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"text-body-md text-fg-muted"[39m
+        [36m>[39m
+          [0mV[0m
+        [36m</p>[39m
+      [36m</header>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"grid grid-cols-1 items-start gap-lg lg:grid-cols-3"[39m
+      [36m>[39m
+        [36m<section[39m
+          [33maria-label[39m=[32m"Danh sách hạng vé"[39m
+          [33mclass[39m=[32m"space-y-md lg:col-span-2"[39m
+        [36m>[39m
+          [36m<h2[39m
+            [33mclass[39m=[32m"text-headline-sm text-fg"[39m
+          [36m>[39m
+            [0mHạng vé sẵn có[0m
+          [36m</h2>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"text-body-sm text-fg-muted"[39m
+          [36m>[39m
+            [0mTình trạng vé chỉ mang tính tham khảo; kết quả giữ vé mới là chính xác.[0m
+          [36m</p>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"space-y-md"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex flex-col gap-sm rounded-card border bg-surface p-md shadow-card border-primary"[39m
+              [33mdata-state[39m=[32m"available"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex flex-wrap items-center justify-between gap-sm"[39m
+              [36m>[39m
+                [36m<h3[39m
+                  [33mclass[39m=[32m"text-headline-sm text-fg"[39m
+                [36m>[39m
+                  [0mVé[0m
+                [36m</h3>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"inline-flex items-center gap-xs rounded-full px-sm py-xs text-label-sm uppercase bg-success-soft text-success"[39m
+                [36m>[39m
+                  [0mCòn vé[0m
+                [36m</span>[39m
+              [36m</div>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-numeric-metric tabular-nums text-fg"[39m
+              [36m>[39m
+                [0m100.000 đ[0m
+              [36m</p>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex items-center gap-sm"[39m
+              [36m>[39m
+                [36m<button[39m
+                  [33maria-label[39m=[32m"Giảm số lượng Vé"[39m
+                  [33mclass[39m=[32m"ef-focus-ring relative inline-flex items-center justify-center gap-sm rounded-control transition-colors disabled:cursor-not-allowed disabled:opacity-60 border border-border-strong bg-surface text-fg hover:bg-surface-subtle h-9 px-sm text-label-md"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [36m<span>[39m
+                    [0m−[0m
+                  [36m</span>[39m
+                [36m</button>[39m
+                [36m<span[39m
+                  [33maria-label[39m=[32m"Số lượng Vé"[39m
+                  [33maria-live[39m=[32m"polite"[39m
+                  [33mclass[39m=[32m"min-w-10 text-center text-numeric-timer tabular-nums text-fg"[39m
+                  [33mrole[39m=[32m"status"[39m
+                [36m>[39m
+                  [0m1[0m
+                [36m</span>[39m
+                [36m<button[39m
+                  [33maria-label[39m=[32m"Tăng số lượng Vé"[39m
+                  [33mclass[39m=[32m"ef-focus-ring relative inline-flex items-center justify-center gap-sm rounded-control transition-colors disabled:cursor-not-allowed disabled:opacity-60 border border-border-strong bg-surface text-fg hover:bg-surface-subtle h-9 px-sm text-label-md"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [36m<span>[39m
+                    [0m+[0m
+                  [36m</span>[39m
+                [36m</button>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"text-body-sm text-fg-muted"[39m
+                [36m>[39m
+                  [0mTối đa [0m
+                  [0m4[0m
+                  [0m vé[0m
+                [36m</span>[39m
+              [36m</div>[39m
+              [36m<button[39m
+                [33maria-pressed[39m=[32m"true"[39m
+                [33mclass[39m=[32m"ef-focus-ring relative inline-flex items-center justify-center gap-sm rounded-control transition-colors disabled:cursor-not-allowed disabled:opacity-60 border border-transparent bg-primary text-primary-fg hover:bg-primary-hover h-12 px-md text-label-lg md:h-11"[39m
+                [33mtype[39m=[32m"button"[39m
+              [36m>[39m
+                [36m<span>[39m
+                  [0mĐã chọn hạng này[0m
+                [36m</span>[39m
+              [36m</button>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+        [36m</section>[39m
+        [36m<aside[39m
+          [33mclass[39m=[32m"lg:col-span-1"[39m
+        [36m>[39m
+          [36m<section[39m
+            [33maria-label[39m=[32m"Tóm tắt đơn hàng"[39m
+            [33mclass[39m=[32m"flex flex-col gap-md rounded-card border border-border bg-surface p-md shadow-float md:sticky md:top-md"[39m
+            [33mdata-hold-state[39m=[32m"idle"[39m
+          [36m>[39m
+            [36m<h2[39m
+              [33mclass[39m=[32m"text-headline-sm text-fg"[39m
+            [36m>[39m
+              [0mTóm tắt đơn hàng[0m
+            [36m</h2>[39m
+            [36m<button[39m
+              [33maria-controls[39m=[32m":r1:"[39m
+              [33maria-expanded[39m=[32m"false"[39m
+              [33mclass[39m=[32m"ef-focus-ring rounded-control text-left text-label-lg text-primary md:hidden"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mChi tiết đơn hàng[0m
+            [36m</button>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex-col gap-sm hidden md:flex"[39m
+              [33mid[39m=[32m":r1:"[39m
+            [36m>[39m
+              [36m<ul[39m
+                [33mclass[39m=[32m"flex flex-col gap-sm"[39m
+              [36m>[39m
+                [36m<li[39m
+                  [33mclass[39m=[32m"flex items-start justify-between gap-md"[39m
+                [36m>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"text-body-md text-fg"[39m
+                  [36m>[39m
+                    [0mVé[0m
+                    [36m<span[39m
+                      [33mclass[39m=[32m"text-fg-muted"[39m
+                    [36m>[39m
+                      [0m × [0m
+                      [36m<span[39m
+                        [33mclass[39m=[32m"tabular-nums"[39m
+                      [36m>[39m
+                        [0m1[0m
+                      [36m</span>[39m
+                    [36m</span>[39m
+                    [36m<span[39m
+                      [33mclass[39m=[32m"block text-body-sm text-fg-muted"[39m
+                    [36m>[39m
+                      [0mĐơn giá [0m
+                      [0m100.000 đ[0m
+                    [36m</span>[39m
+                  [36m</span>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"tabular-nums text-body-md text-fg"[39m
+                  [36m>[39m
+                    [0m100.000 đ[0m
+                  [36m</span>[39m
+                [36m</li>[39m
+              [36m</ul>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex items-center justify-between gap-md border-t border-border pt-sm"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"text-body-md text-fg-muted"[39m
+                [36m>[39m
+                  [0mTạm tính[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"tabular-nums text-body-md text-fg"[39m
+                [36m>[39m
+                  [0m100.000 đ[0m
+                [36m</span>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex items-center justify-between gap-md border-t border-border pt-sm"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"text-label-lg text-fg"[39m
+                [36m>[39m
+                  [0mTổng cộng[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"tabular-nums text-numeric-metric text-fg"[39m
+                [36m>[39m
+                  [0m100.000 đ[0m
+                [36m</span>[39m
+              [36m</div>[39m
+            [36m</div>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"ef-focus-ring relative inline-flex items-center justify-center gap-sm rounded-control transition-colors disabled:cursor-not-allowed disabled:opacity-60 border border-transparent bg-primary text-primary-fg hover:bg-primary-hover h-12 px-md text-label-lg md:h-11"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [36m<span>[39m
+                [0mGiữ vé và thanh toán[0m
+              [36m</span>[39m
+            [36m</button>[39m
+          [36m</section>[39m
+        [36m</aside>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</div>[39m
+[36m</body>[39m
+[90m [2m❯[22m Object.getElementError node_modules/@testing-library/dom/dist/config.js:[2m37:19[22m[39m
+[90m [2m❯[22m node_modules/@testing-library/dom/dist/query-helpers.js:[2m76:38[22m[39m
+[90m [2m❯[22m node_modules/@testing-library/dom/dist/query-helpers.js:[2m109:15[22m[39m
+[36m [2m❯[22m src/components/checkout/checkout-view.cancel-focus.test.tsx:[2m70:28[22m[39m
+    [90m 68| [39m  [34mit[39m([32m"after a confirmed release focus is on the primary button, not bo[39m…
+    [90m 69| [39m    [35mawait[39m [34mopenFromTrigger[39m()[33m;[39m
+    [90m 70| [39m    [35mconst[39m confirm [33m=[39m screen[33m.[39m[34mgetAllByRole[39m([32m"button"[39m[33m,[39m { name[33m:[39m [32m"Huỷ giữ vé"[39m…
+    [90m   | [39m                           [31m^[39m
+    [90m 71| [39m    [35mawait[39m [34mact[39m([35masync[39m () [33m=>[39m {
+    [90m 72| [39m      fireEvent[33m.[39m[34mclick[39m(confirm [35mas[39m [33mHTMLElement[39m)[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/16]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m src/components/checkout/checkout-view.debt5.test.tsx[2m > [22mAC-11 confirmation dialog[2m > [22mclicking 'Huỷ giữ vé' opens an accessible dialog and sends NO request yet
+[31m[1mAssertionError[22m: expected null not to be null[39m
+[36m [2m❯[22m openDialog src/components/checkout/checkout-view.debt5.test.tsx:[2m63:24[22m[39m
+    [90m 61| [39m    fireEvent[33m.[39m[34mclick[39m(screen[33m.[39m[34mgetByRole[39m([32m"button"[39m[33m,[39m { name[33m:[39m [33mCANCEL[39m }))[33m;[39m
+    [90m 62| [39m  })[33m;[39m
+    [90m 63| [39m  [34mexpect[39m([34mdialog[39m())[33m.[39mnot[33m.[39m[34mtoBeNull[39m()[33m;[39m
+    [90m   | [39m                       [31m^[39m
+    [90m 64| [39m}[33m;[39m
+    [90m 65| [39m[35mconst[39m cancelHoldFailedText [33m=[39m () [33m=>[39m ([33mMESSAGES[39m[33m.[39mvi [35mas[39m [33mRecord[39m[33m<[39mstring[33m,[39m stri…
+[90m [2m❯[22m src/components/checkout/checkout-view.debt5.test.tsx:[2m143:5[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/16]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m src/components/checkout/checkout-view.debt5.test.tsx[2m > [22mAC-11 confirmation dialog[2m > [22mdismiss button closes it: 0 DELETE, hold and countdown stay
+[31m[1mAssertionError[22m: expected null not to be null[39m
+[36m [2m❯[22m openDialog src/components/checkout/checkout-view.debt5.test.tsx:[2m63:24[22m[39m
+    [90m 61| [39m    fireEvent[33m.[39m[34mclick[39m(screen[33m.[39m[34mgetByRole[39m([32m"button"[39m[33m,[39m { name[33m:[39m [33mCANCEL[39m }))[33m;[39m
+    [90m 62| [39m  })[33m;[39m
+    [90m 63| [39m  [34mexpect[39m([34mdialog[39m())[33m.[39mnot[33m.[39m[34mtoBeNull[39m()[33m;[39m
+    [90m   | [39m                       [31m^[39m
+    [90m 64| [39m}[33m;[39m
+    [90m 65| [39m[35mconst[39m cancelHoldFailedText [33m=[39m () [33m=>[39m ([33mMESSAGES[39m[33m.[39mvi [35mas[39m [33mRecord[39m[33m<[39mstring[33m,[39m stri…
+[90m [2m❯[22m src/components/checkout/checkout-view.debt5.test.tsx:[2m152:5[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/16]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m src/components/checkout/checkout-view.debt5.test.tsx[2m > [22mAC-11 confirmation dialog[2m > [22mEscape closes it: 0 DELETE, hold stays
+[31m[1mAssertionError[22m: expected null not to be null[39m
+[36m [2m❯[22m openDialog src/components/checkout/checkout-view.debt5.test.tsx:[2m63:24[22m[39m
+    [90m 61| [39m    fireEvent[33m.[39m[34mclick[39m(screen[33m.[39m[34mgetByRole[39m([32m"button"[39m[33m,[39m { name[33m:[39m [33mCANCEL[39m }))[33m;[39m
+    [90m 62| [39m  })[33m;[39m
+    [90m 63| [39m  [34mexpect[39m([34mdialog[39m())[33m.[39mnot[33m.[39m[34mtoBeNull[39m()[33m;[39m
+    [90m   | [39m                       [31m^[39m
+    [90m 64| [39m}[33m;[39m
+    [90m 65| [39m[35mconst[39m cancelHoldFailedText [33m=[39m () [33m=>[39m ([33mMESSAGES[39m[33m.[39mvi [35mas[39m [33mRecord[39m[33m<[39mstring[33m,[39m stri…
+[90m [2m❯[22m src/components/checkout/checkout-view.debt5.test.tsx:[2m165:5[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/16]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m src/components/checkout/checkout-view.debt5.test.tsx[2m > [22mAC-11 confirmation dialog[2m > [22mconfirm -> exactly 1 DELETE /v1/holds/h1 with an Idempotency-Key and the bearer; hold removed; back to idle; dialog closed
+[31m[1mAssertionError[22m: expected null not to be null[39m
+[36m [2m❯[22m openDialog src/components/checkout/checkout-view.debt5.test.tsx:[2m63:24[22m[39m
+    [90m 61| [39m    fireEvent[33m.[39m[34mclick[39m(screen[33m.[39m[34mgetByRole[39m([32m"button"[39m[33m,[39m { name[33m:[39m [33mCANCEL[39m }))[33m;[39m
+    [90m 62| [39m  })[33m;[39m
+    [90m 63| [39m  [34mexpect[39m([34mdialog[39m())[33m.[39mnot[33m.[39m[34mtoBeNull[39m()[33m;[39m
+    [90m   | [39m                       [31m^[39m
+    [90m 64| [39m}[33m;[39m
+    [90m 65| [39m[35mconst[39m cancelHoldFailedText [33m=[39m () [33m=>[39m ([33mMESSAGES[39m[33m.[39mvi [35mas[39m [33mRecord[39m[33m<[39mstring[33m,[39m stri…
+[90m [2m❯[22m src/components/checkout/checkout-view.debt5.test.tsx:[2m179:5[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/16]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m src/components/checkout/checkout-view.debt5.test.tsx[2m > [22mAC-11 confirmation dialog[2m > [22mdouble click on confirm while the DELETE is pending -> still 1 DELETE; primary button disabled while cancelling
+[31m[1mAssertionError[22m: expected null not to be null[39m
+[36m [2m❯[22m openDialog src/components/checkout/checkout-view.debt5.test.tsx:[2m63:24[22m[39m
+    [90m 61| [39m    fireEvent[33m.[39m[34mclick[39m(screen[33m.[39m[34mgetByRole[39m([32m"button"[39m[33m,[39m { name[33m:[39m [33mCANCEL[39m }))[33m;[39m
+    [90m 62| [39m  })[33m;[39m
+    [90m 63| [39m  [34mexpect[39m([34mdialog[39m())[33m.[39mnot[33m.[39m[34mtoBeNull[39m()[33m;[39m
+    [90m   | [39m                       [31m^[39m
+    [90m 64| [39m}[33m;[39m
+    [90m 65| [39m[35mconst[39m cancelHoldFailedText [33m=[39m () [33m=>[39m ([33mMESSAGES[39m[33m.[39mvi [35mas[39m [33mRecord[39m[33m<[39mstring[33m,[39m stri…
+[90m [2m❯[22m src/components/checkout/checkout-view.debt5.test.tsx:[2m198:5[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/16]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m src/components/checkout/checkout-view.debt5.test.tsx[2m > [22mAC-11 outcomes[2m > [22mDELETE 404 is treated as released
+[31m[1m[7m FAIL [27m[22m[39m src/components/checkout/checkout-view.debt5.test.tsx[2m > [22mAC-11 outcomes[2m > [22mDELETE 200 is treated as released
+[31m[1mAssertionError[22m: expected null not to be null[39m
+[36m [2m❯[22m openDialog src/components/checkout/checkout-view.debt5.test.tsx:[2m63:24[22m[39m
+    [90m 61| [39m    fireEvent[33m.[39m[34mclick[39m(screen[33m.[39m[34mgetByRole[39m([32m"button"[39m[33m,[39m { name[33m:[39m [33mCANCEL[39m }))[33m;[39m
+    [90m 62| [39m  })[33m;[39m
+    [90m 63| [39m  [34mexpect[39m([34mdialog[39m())[33m.[39mnot[33m.[39m[34mtoBeNull[39m()[33m;[39m
+    [90m   | [39m                       [31m^[39m
+    [90m 64| [39m}[33m;[39m
+    [90m 65| [39m[35mconst[39m cancelHoldFailedText [33m=[39m () [33m=>[39m ([33mMESSAGES[39m[33m.[39mvi [35mas[39m [33mRecord[39m[33m<[39mstring[33m,[39m stri…
+[90m [2m❯[22m src/components/checkout/checkout-view.debt5.test.tsx:[2m226:5[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/16]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m src/components/checkout/checkout-view.debt5.test.tsx[2m > [22mAC-11 outcomes[2m > [22mAUTH_REQUIRED (401): existing sign-in alert, hold stays, no 'could not confirm' alert
+[31m[1mAssertionError[22m: expected null not to be null[39m
+[36m [2m❯[22m openDialog src/components/checkout/checkout-view.debt5.test.tsx:[2m63:24[22m[39m
+    [90m 61| [39m    fireEvent[33m.[39m[34mclick[39m(screen[33m.[39m[34mgetByRole[39m([32m"button"[39m[33m,[39m { name[33m:[39m [33mCANCEL[39m }))[33m;[39m
+    [90m 62| [39m  })[33m;[39m
+    [90m 63| [39m  [34mexpect[39m([34mdialog[39m())[33m.[39mnot[33m.[39m[34mtoBeNull[39m()[33m;[39m
+    [90m   | [39m                       [31m^[39m
+    [90m 64| [39m}[33m;[39m
+    [90m 65| [39m[35mconst[39m cancelHoldFailedText [33m=[39m () [33m=>[39m ([33mMESSAGES[39m[33m.[39mvi [35mas[39m [33mRecord[39m[33m<[39mstring[33m,[39m stri…
+[90m [2m❯[22m src/components/checkout/checkout-view.debt5.test.tsx:[2m237:5[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/16]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m src/components/checkout/checkout-view.debt5.test.tsx[2m > [22mAC-11 outcomes[2m > [22mHTTP 500: hold stays, error alert says release could not be confirmed, no sign-in prompt
+[31m[1m[7m FAIL [27m[22m[39m src/components/checkout/checkout-view.debt5.test.tsx[2m > [22mAC-11 outcomes[2m > [22mHTTP 403: hold stays, error alert says release could not be confirmed, no sign-in prompt
+[31m[1m[7m FAIL [27m[22m[39m src/components/checkout/checkout-view.debt5.test.tsx[2m > [22mAC-11 outcomes[2m > [22mnetwork: hold stays, error alert says release could not be confirmed, no sign-in prompt
+[31m[1mAssertionError[22m: expected null not to be null[39m
+[36m [2m❯[22m openDialog src/components/checkout/checkout-view.debt5.test.tsx:[2m63:24[22m[39m
+    [90m 61| [39m    fireEvent[33m.[39m[34mclick[39m(screen[33m.[39m[34mgetByRole[39m([32m"button"[39m[33m,[39m { name[33m:[39m [33mCANCEL[39m }))[33m;[39m
+    [90m 62| [39m  })[33m;[39m
+    [90m 63| [39m  [34mexpect[39m([34mdialog[39m())[33m.[39mnot[33m.[39m[34mtoBeNull[39m()[33m;[39m
+    [90m   | [39m                       [31m^[39m
+    [90m 64| [39m}[33m;[39m
+    [90m 65| [39m[35mconst[39m cancelHoldFailedText [33m=[39m () [33m=>[39m ([33mMESSAGES[39m[33m.[39mvi [35mas[39m [33mRecord[39m[33m<[39mstring[33m,[39m stri…
+[90m [2m❯[22m src/components/checkout/checkout-view.debt5.test.tsx:[2m255:5[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/16]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m src/components/checkout/checkout-view.debt5.test.tsx[2m > [22mAC-11 outcomes[2m > [22mfailure then a second attempt: user can confirm again (a new DELETE) and succeed
+[31m[1mAssertionError[22m: expected null not to be null[39m
+[36m [2m❯[22m openDialog src/components/checkout/checkout-view.debt5.test.tsx:[2m63:24[22m[39m
+    [90m 61| [39m    fireEvent[33m.[39m[34mclick[39m(screen[33m.[39m[34mgetByRole[39m([32m"button"[39m[33m,[39m { name[33m:[39m [33mCANCEL[39m }))[33m;[39m
+    [90m 62| [39m  })[33m;[39m
+    [90m 63| [39m  [34mexpect[39m([34mdialog[39m())[33m.[39mnot[33m.[39m[34mtoBeNull[39m()[33m;[39m
+    [90m   | [39m                       [31m^[39m
+    [90m 64| [39m}[33m;[39m
+    [90m 65| [39m[35mconst[39m cancelHoldFailedText [33m=[39m () [33m=>[39m ([33mMESSAGES[39m[33m.[39mvi [35mas[39m [33mRecord[39m[33m<[39mstring[33m,[39m stri…
+[90m [2m❯[22m src/components/checkout/checkout-view.debt5.test.tsx:[2m269:5[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/16]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m src/components/checkout/checkout-view.debt5.test.tsx[2m > [22mAC-11 expiry[2m > [22mhold expires while the dialog is open -> dialog closes, state expired, 0 DELETE (stepped per second)
+[31m[1mAssertionError[22m: expected null not to be null[39m
+[36m [2m❯[22m openDialog src/components/checkout/checkout-view.debt5.test.tsx:[2m63:24[22m[39m
+    [90m 61| [39m    fireEvent[33m.[39m[34mclick[39m(screen[33m.[39m[34mgetByRole[39m([32m"button"[39m[33m,[39m { name[33m:[39m [33mCANCEL[39m }))[33m;[39m
+    [90m 62| [39m  })[33m;[39m
+    [90m 63| [39m  [34mexpect[39m([34mdialog[39m())[33m.[39mnot[33m.[39m[34mtoBeNull[39m()[33m;[39m
+    [90m   | [39m                       [31m^[39m
+    [90m 64| [39m}[33m;[39m
+    [90m 65| [39m[35mconst[39m cancelHoldFailedText [33m=[39m () [33m=>[39m ([33mMESSAGES[39m[33m.[39mvi [35mas[39m [33mRecord[39m[33m<[39mstring[33m,[39m stri…
+[90m [2m❯[22m src/components/checkout/checkout-view.debt5.test.tsx:[2m287:5[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/16]⎯[22m[39m
+
+[31m[1m[7m FAIL [27m[22m[39m src/components/checkout/checkout-view.debt5.test.tsx[2m > [22mAC-11 expiry[2m > [22mhold expires while the DELETE is in flight -> ends expired, not idle
+[31m[1mAssertionError[22m: expected null not to be null[39m
+[36m [2m❯[22m openDialog src/components/checkout/checkout-view.debt5.test.tsx:[2m63:24[22m[39m
+    [90m 61| [39m    fireEvent[33m.[39m[34mclick[39m(screen[33m.[39m[34mgetByRole[39m([32m"button"[39m[33m,[39m { name[33m:[39m [33mCANCEL[39m }))[33m;[39m
+    [90m 62| [39m  })[33m;[39m
+    [90m 63| [39m  [34mexpect[39m([34mdialog[39m())[33m.[39mnot[33m.[39m[34mtoBeNull[39m()[33m;[39m
+    [90m   | [39m                       [31m^[39m
+    [90m 64| [39m}[33m;[39m
+    [90m 65| [39m[35mconst[39m cancelHoldFailedText [33m=[39m () [33m=>[39m ([33mMESSAGES[39m[33m.[39mvi [35mas[39m [33mRecord[39m[33m<[39mstring[33m,[39m stri…
+[90m [2m❯[22m src/components/checkout/checkout-view.debt5.test.tsx:[2m297:5[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/16]⎯[22m[39m
+
+[2m Test Files [22m [1m[31m2 failed[39m[22m[2m | [22m[1m[32m53 passed[39m[22m[90m (55)[39m
+[2m      Tests [22m [1m[31m16 failed[39m[22m[2m | [22m[1m[32m550 passed[39m[22m[90m (566)[39m
+[2m   Start at [22m 10:52:42
+[2m   Duration [22m 34.76s[2m (transform 2.86s, setup 45.57s, collect 10.60s, tests 14.11s, environment 116.75s, prepare 11.91s)[22m
+

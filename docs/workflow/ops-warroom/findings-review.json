@@ -1,0 +1,98 @@
+[
+  {
+    "id": "R-1",
+    "reviewer": "security",
+    "severity": "minor",
+    "ac": "AC-10, AC-11, D4",
+    "file": "services/waitingroom/internal/app/ops_override.go",
+    "line": 115,
+    "title": "Reason containing NUL (\\u0000) makes the audit_logs insert fail deterministically while the override is applied",
+    "evidence": "NormalizeReason only trims and counts runes (ops_override.go:115-119). encoding/json decodes \"\\u0000\" into a Go string with a 0x00 byte; Auditor.Record (services/waitingroom/internal/adapter/postgres/audit.go:35-38) binds it to a TEXT column and Postgres rejects 0x00 ('invalid byte sequence for encoding UTF8: 0x00'). By D2 the override stays applied and the response is audit:\"failed\". So an ops user can choose to keep any override out of audit_logs. The ERROR log line still carries actor/action/subject/metadata, so the trail is not lost entirely, which is why this is minor. The web client also accepts control characters (apps/web/src/lib/ops-service.ts:350-354).",
+    "repro": "PUT /v1/ops/events/{id}/admit-override with an ops token and body {\"rate_per_sec\":0,\"reason\":\"abc\\u0000\"} -> 200 {paused:true, audit:\"failed\"}, no audit_logs row.",
+    "fix": "Reject reasons that contain control characters (unicode.IsControl, at least NUL) in NormalizeReason (400 /problems/invalid-override, nothing applied) and mirror this in normalizeOverrideReason on the web. Add an AC-9 case."
+  },
+  {
+    "id": "R-2",
+    "reviewer": "correctness",
+    "severity": "minor",
+    "ac": "AC-17",
+    "file": "services/ticketing/internal/adapter/http/ops_handler.go",
+    "line": 229,
+    "title": "Single-flight serialises waiters on DB errors: each waiter then runs its own 2 s query in turn",
+    "evidence": "Each entry's mutex is held for the whole load (ops_handler.go:229-247). Errors other than not-found are not cached (e.fill=false, line 245). When Postgres is slow or down (spec §5 'Postgres overloaded during a sale'), N queued requests for one event run N loads one after another, each up to opsLoadTimeout. The k-th waiter answers after about k×2 s, and the overloaded DB keeps getting a query every 2 s per waiter instead of at most one per TTL. Waiting on e.mu.Lock also ignores the request context. The impact is small because few clients poll one event (ops 2 s, organizer 4 s, gateway 10 rps per user).",
+    "repro": "Stub OpsInventoryReader to sleep 2 s and return an error; fire 5 concurrent GETs: 5 loader calls in sequence, the last response after about 10 s.",
+    "fix": "Briefly cache the error too (for example 1 s, or until the in-flight load finishes, then share its result with the waiters), or use singleflight.Group, which shares one result, error included, with all current waiters. Make the wait context-aware."
+  },
+  {
+    "id": "R-3",
+    "reviewer": "correctness",
+    "severity": "minor",
+    "ac": "AC-20, AC-21",
+    "file": "services/ticketing/internal/adapter/http/ops_handler.go",
+    "line": 117,
+    "title": "generated_at truncated to whole seconds on top of a 2 s cache makes the war room's oldest-source age reach the 5 s stale threshold",
+    "evidence": "Inventory and sales format filledAt with time.RFC3339 (lines 117, 174), which drops up to 999 ms. The web takes the OLDEST generated_at among the sources (apps/web/src/lib/ops-service.ts:287-290) and marks data stale above STALE_AFTER_MS=5000. The worst-case age before the next poll is about cache age (<2 s) + truncation (<1 s) + poll interval (2 s) + RTT, so the stale warning can flicker on healthy data. Waitingroom already uses RFC3339Nano.",
+    "repro": "Poll with the cache filled just after a second boundary; the age right before the next refresh approaches 5 s.",
+    "fix": "Format with time.RFC3339Nano (or millisecond precision) in both ticketing handlers."
+  },
+  {
+    "id": "R-4",
+    "reviewer": "correctness",
+    "severity": "minor",
+    "ac": "AC-25",
+    "file": "apps/web/src/lib/ops-service.ts",
+    "line": 418,
+    "title": "Write result fails open on audit status: a missing or unknown `audit` value is shown as recorded",
+    "evidence": "`audit: w.audit === \"failed\" ? \"failed\" : \"recorded\"`. A malformed or proxied 200 without `audit` hides the 'Đã áp dụng nhưng chưa ghi được nhật ký kiểm toán' warning.",
+    "repro": "Mock PUT 200 with body {override:{active:true,rate_per_sec:0},paused:true}: the UI shows success with no audit warning.",
+    "fix": "Map only the exact value \"recorded\" to recorded, and treat anything else as \"failed\"."
+  },
+  {
+    "id": "R-5",
+    "reviewer": "correctness",
+    "severity": "minor",
+    "ac": "AC-22, AC-25",
+    "file": "apps/web/src/components/ops/ops-controls.tsx",
+    "line": 46,
+    "title": "Expired session during a write shows 'Chưa gửi được lệnh / Thử lại' instead of sending the user to login",
+    "evidence": "sendOverride rethrows ApiError(AUTH_REQUIRED) (ops-service.ts:399). errorCode() returns 'AUTH_REQUIRED', which ErrorOutcome does not handle, so it falls through to the generic retry alert. Also, a 401 response is mapped to FORBIDDEN (ops-service.ts:404) and shows 'Không có quyền' for what is an authentication failure. RoleGuard may redirect once useAuth sees the cleared session, but the control panel itself gives a misleading message and a retry button.",
+    "repro": "Expire the refresh token, then click 'Ghi đè admit rate'.",
+    "fix": "Handle AUTH_REQUIRED and 401 explicitly: show a 'phiên đăng nhập đã hết' message, or trigger the same login redirect as reads (OpsServiceError(401))."
+  },
+  {
+    "id": "R-6",
+    "reviewer": "correctness",
+    "severity": "minor",
+    "ac": "AC-31 (BR-O5 guard)",
+    "file": "services/ticketing/internal/adapter/http/handler.go",
+    "line": 87,
+    "title": "Variadic Routes trades a compile-time guarantee for a runtime fail-closed one, and leaves a contradictory doc comment",
+    "evidence": "The signature changed from Routes(mux, idempotency) to Routes(mux, idempotencyMW ...). A caller that forgets the middleware now compiles, and every write route answers 503 (idempotencyUnavailable, handler.go:216-221). That is safe (fail-closed) and the only production caller passes it (cmd/server/main.go:148), so no write route is left without idempotency. The old comment at line 87-88 ('BAT BUOC ... khong cho phep dang ky route ghi ma khong truyen') still sits above the new one and contradicts it.",
+    "repro": "n/a (code reading).",
+    "fix": "Remove the stale comment. Optionally keep the non-variadic signature and have the read-only ops tests pass a no-op middleware, as check_in_test.go does."
+  },
+  {
+    "id": "R-7",
+    "reviewer": "security",
+    "severity": "minor",
+    "ac": "AC-18",
+    "file": "services/ai-worker/app/main.py",
+    "line": 209,
+    "title": "Role check trusts X-Identity-Role while the ai-worker port is published on all interfaces (pre-existing exposure)",
+    "evidence": "deploy/compose/docker-compose.yml:249 publishes 8090 on 0.0.0.0, unlike waitingroom and ticketing (127.0.0.1). Anyone who reaches :8090 can send X-Identity-Role: ops. There is no new data exposure: the unauthenticated /admin/mode on the same port already returns a superset, and POST /admin/mode/{mode} is worse. Recorded so the header-trust model is not assumed to be safe for future ops write endpoints on ai-worker.",
+    "repro": "curl -H 'X-Identity-Id: x' -H 'X-Identity-Role: ops' http://host:8090/v1/ops/ai/mode -> 200.",
+    "fix": "Out of scope for this PR: bind 8090 to 127.0.0.1 in compose, as the other services do (follow-up debt)."
+  },
+  {
+    "id": "R-8",
+    "reviewer": "correctness",
+    "severity": "minor",
+    "ac": "AC-31 (test change request)",
+    "file": "apps/web/src/app/(organizer)/organizer/events/[eventId]/sales/page.test.tsx",
+    "line": 81,
+    "title": "Applied test change goes beyond the approved TCR row ('metadata text only')",
+    "evidence": "tcr-applied.md says it itself: the file had no metadata assertion. Two sample-label assertions became 'no Dữ liệu mẫu' + badge 'Realtime (≤ 5s)'. The new assertions are not weaker (one negative check, one positive check), but the change was not what the human approved.",
+    "repro": "git diff ca8e756 43eba3f -- that file.",
+    "fix": "Get human confirmation of this TCR deviation in the sign-off record. No code change needed."
+  }
+]

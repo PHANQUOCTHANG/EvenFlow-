@@ -1,0 +1,27 @@
+--- FAIL: TestOpsFix_R3_GeneratedAtKeepsSubSecondPrecision (0.00s)
+--- FAIL: TestOpsInventory_AC14_ShapeAndNoStore (0.00s)
+--- FAIL: TestOpsInventory_AC14_EmptyTiersIsArrayNotNull (0.00s)
+--- FAIL: TestOpsInventory_AC16_ErrorsAndRoles (0.00s)
+--- FAIL: TestOpsCache_AC17_ConcurrentRequestsShareOneQueryRound (0.15s)
+--- FAIL: TestOpsCache_AC17_PerEventKeyAndExpiry (0.00s)
+--- FAIL: TestOpsCache_AC17_ErrorsAreNotCached (0.00s)
+--- FAIL: TestOpsCache_NotFoundIsCachedInsideTTL (0.00s)
+FAIL
+FAIL	github.com/eventflow/eventflow/services/ticketing/internal/adapter/http	1.459s
+FAIL
+---- tail ----
+--- FAIL: TestOpsCache_NotFoundIsCachedInsideTTL (0.00s)
+    ops_mutation_gap_test.go:17: call 0: status 403, want 404
+FAIL
+FAIL	github.com/eventflow/eventflow/services/ticketing/internal/adapter/http	1.459s
+ok  	github.com/eventflow/eventflow/services/ticketing/internal/adapter/metrics	1.915s
+?   	github.com/eventflow/eventflow/services/ticketing/internal/adapter/mq	[no test files]
+ok  	github.com/eventflow/eventflow/services/ticketing/internal/adapter/postgres	0.207s
+ok  	github.com/eventflow/eventflow/services/ticketing/internal/adapter/redis	0.204s
+ok  	github.com/eventflow/eventflow/services/ticketing/internal/app	0.662s
+ok  	github.com/eventflow/eventflow/services/ticketing/internal/domain	0.356s
+?   	github.com/eventflow/eventflow/services/ticketing/internal/port	[no test files]
+ok  	github.com/eventflow/eventflow/services/ticketing/internal/worker	0.507s
+ok  	github.com/eventflow/eventflow/services/ticketing/cmd/server	0.198s
+?   	github.com/eventflow/eventflow/services/ticketing/cmd/worker	[no test files]
+FAIL

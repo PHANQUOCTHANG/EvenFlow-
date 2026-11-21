@@ -1,0 +1,19 @@
+[31m   [31m×[31m setAdmitOverride[2m > [22minvalid input (too big) => INVALID and no request[90m 20[2mms[22m[31m[39m
+[31m   [31m×[31m override control (AC-24, AC-25)[2m > [22minvalid input rate="10001" reason="đủ dài" => no service call[90m 197[2mms[22m[31m[39m
+[31m[1m[7m FAIL [27m[22m[39m src/lib/ops-service.contract.test.ts[2m > [22msetAdmitOverride[2m > [22minvalid input (too big) => INVALID and no request
+[31m[1m[7m FAIL [27m[22m[39m src/components/ops/ops-war-room.real.test.tsx[2m > [22moverride control (AC-24, AC-25)[2m > [22minvalid input rate="10001" reason="đủ dài" => no service call
+---- tail ----
+    [90m   | [39m              [31m^[39m
+    [90m 65| [39m    [35mreturn[39m [32m"Đã bỏ ghi đè: hàng chờ trở lại chế độ tự động. Tự động có [39m…
+    [90m 66| [39m  }
+[90m [2m❯[22m OpsControlsPanel src/components/ops/ops-controls.tsx:[2m289:37[22m[39m
+[90m [2m❯[22m renderWithHooks node_modules/react-dom/cjs/react-dom.development.js:[2m15486:18[22m[39m
+[90m [2m❯[22m updateFunctionComponent node_modules/react-dom/cjs/react-dom.development.js:[2m19617:20[22m[39m
+[90m [2m❯[22m beginWork node_modules/react-dom/cjs/react-dom.development.js:[2m21640:16[22m[39m
+[90m [2m❯[22m beginWork$1 node_modules/react-dom/cjs/react-dom.development.js:[2m27465:14[22m[39m
+[90m [2m❯[22m performUnitOfWork node_modules/react-dom/cjs/react-dom.development.js:[2m26599:12[22m[39m
+[90m [2m❯[22m workLoopSync node_modules/react-dom/cjs/react-dom.development.js:[2m26505:5[22m[39m
+[90m [2m❯[22m renderRootSync node_modules/react-dom/cjs/react-dom.development.js:[2m26473:7[22m[39m
+[90m [2m❯[22m recoverFromConcurrentError node_modules/react-dom/cjs/react-dom.development.js:[2m25889:20[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯[22m[39m

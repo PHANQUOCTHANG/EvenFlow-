@@ -1,0 +1,23 @@
+--- FAIL: TestOpsSales_AC15_ShapeTotalsAndBreakdown (0.00s)
+FAIL
+FAIL	github.com/eventflow/eventflow/services/ticketing/internal/adapter/http	3.679s
+--- FAIL: TestGetOrganizerSales_AC15_UnknownProviderReconcilesTotals (0.00s)
+FAIL
+FAIL	github.com/eventflow/eventflow/services/ticketing/internal/app	1.056s
+FAIL
+---- tail ----
+FAIL	github.com/eventflow/eventflow/services/ticketing/internal/adapter/http	3.679s
+ok  	github.com/eventflow/eventflow/services/ticketing/internal/adapter/metrics	1.910s
+?   	github.com/eventflow/eventflow/services/ticketing/internal/adapter/mq	[no test files]
+ok  	github.com/eventflow/eventflow/services/ticketing/internal/adapter/postgres	0.214s
+ok  	github.com/eventflow/eventflow/services/ticketing/internal/adapter/redis	0.220s
+--- FAIL: TestGetOrganizerSales_AC15_UnknownProviderReconcilesTotals (0.00s)
+    ops_queries_test.go:49: totals: {OrganizerID:org Totals:{GrossRevenueCents:800000 TicketsSold:150 Quota:150 PaidOrders:4 ActiveHolds:7} Tiers:[{TicketTypeID: Name:A PriceCents:0 Quota:100 Sold:6 ActiveHolds:7 RevenueCents:600000} {TicketTypeID: Name:B PriceCents:0 Quota:50 Sold:1 ActiveHolds:0 RevenueCents:200000}] Payments:[{Provider:vnpay Orders:2 AmountCents:500000} {Provider:momo Orders:1 AmountCents:200000} {Provider:unknown Orders:1 AmountCents:100000}]}
+FAIL
+FAIL	github.com/eventflow/eventflow/services/ticketing/internal/app	1.056s
+ok  	github.com/eventflow/eventflow/services/ticketing/internal/domain	0.359s
+?   	github.com/eventflow/eventflow/services/ticketing/internal/port	[no test files]
+ok  	github.com/eventflow/eventflow/services/ticketing/internal/worker	0.505s
+ok  	github.com/eventflow/eventflow/services/ticketing/cmd/server	0.212s
+?   	github.com/eventflow/eventflow/services/ticketing/cmd/worker	[no test files]
+FAIL

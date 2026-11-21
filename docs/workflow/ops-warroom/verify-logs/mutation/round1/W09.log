@@ -1,0 +1,19 @@
+[31m   [31m×[31m plain 401 goes to the auth-required path (R-5, X-7)[2m > [22ma 401 on PUT rejects with ApiError AUTH_REQUIRED, not FORBIDDEN[90m 19[2mms[22m[31m[39m
+[31m   [31m×[31m plain 401 goes to the auth-required path (R-5, X-7)[2m > [22ma 401 on DELETE rejects with ApiError AUTH_REQUIRED[90m 15[2mms[22m[31m[39m
+[31m[1m[7m FAIL [27m[22m[39m src/lib/ops-service.wire.fix.test.ts[2m > [22mplain 401 goes to the auth-required path (R-5, X-7)[2m > [22ma 401 on PUT rejects with ApiError AUTH_REQUIRED, not FORBIDDEN
+[31m[1m[7m FAIL [27m[22m[39m src/lib/ops-service.wire.fix.test.ts[2m > [22mplain 401 goes to the auth-required path (R-5, X-7)[2m > [22ma 401 on DELETE rejects with ApiError AUTH_REQUIRED
+---- tail ----
+[31m[1mAssertionError[22m: expected 'UNAVAILABLE' to be 'AUTH_REQUIRED' // Object.is equality[39m
+
+Expected: [32m"AUTH_REQUIRED"[39m
+Received: [31m"UNAVAILABLE"[39m
+
+[36m [2m❯[22m src/lib/ops-service.wire.fix.test.ts:[2m120:34[22m[39m
+    [90m118| [39m    [34minstallFetch[39m([34movr[39m(() [33m=>[39m [34mproblem[39m([34m401[39m[33m,[39m [32m"/problems/unauthorized"[39m)))[33m;[39m
+    [90m119| [39m    [35mconst[39m e [33m=[39m [35mawait[39m [34mrejection[39m([34mclearAdmitOverride[39m([33mEV[39m[33m,[39m [32m"abc"[39m))[33m;[39m
+    [90m120| [39m    [34mexpect[39m((e [35mas[39m [33mApiError[39m)[33m.[39mcode)[33m.[39m[34mtoBe[39m([32m"AUTH_REQUIRED"[39m)[33m;[39m
+    [90m   | [39m                                 [31m^[39m
+    [90m121| [39m  })[33m;[39m
+    [90m122| [39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯[22m[39m

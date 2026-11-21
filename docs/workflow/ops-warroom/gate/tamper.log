@@ -1,0 +1,5 @@
+approved TCR change: services/ai-worker/tests/test_ops_api.py
+approved TCR change: services/ticketing/internal/adapter/postgres/ops_repository_integration_test.go
+approved TCR change: services/waitingroom/internal/adapter/http/ops_handler_test.go
+tamper ok (16 TCR-logged changes)
+ok

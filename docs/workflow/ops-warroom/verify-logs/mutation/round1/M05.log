@@ -1,0 +1,23 @@
+--- FAIL: TestOpsWrite_AC9_InvalidInputIs400AndNothingApplied (0.00s)
+--- FAIL: TestOpsWriteFix_R1_X4_ReasonControlOrInvisibleIs400 (0.00s)
+--- FAIL: TestOpsRound2Fix_X21_InvisibleBidiOrControlReasonIs400 (0.00s)
+--- FAIL: TestOpsRound2Fix_X21_VietnameseNFCAndNFDAccepted (0.00s)
+FAIL
+FAIL	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/http	3.204s
+FAIL
+---- tail ----
+--- FAIL: TestOpsRound2Fix_X21_InvisibleBidiOrControlReasonIs400 (0.00s)
+    --- FAIL: TestOpsRound2Fix_X21_InvisibleBidiOrControlReasonIs400/two_letters_+_fillers (0.00s)
+        ops_round2_fix_test.go:48: PUT "ab\\u3164\\u2800": 200 {"event_id":"11111111-1111-4111-8111-111111111111","override":{"active":true,"rate_per_sec":0},"paused":true,"applied_at":"2026-11-21T07:07:42Z","audit":"recorded"}
+--- FAIL: TestOpsRound2Fix_X21_VietnameseNFCAndNFDAccepted (0.00s)
+    ops_round2_fix_test.go:86: 2 base letters + marks must fail with ErrReasonLength, got <nil>
+FAIL
+FAIL	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/http	3.204s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/metrics	1.908s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/postgres	0.124s
+?   	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/redis	[no test files]
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/signal	0.361s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/app	0.965s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/config	0.352s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/domain	0.390s
+FAIL

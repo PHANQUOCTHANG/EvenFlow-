@@ -13,14 +13,16 @@ from __future__ import annotations
 
 import contextlib
 import logging
+import re
 from collections.abc import AsyncIterator
+from datetime import UTC, datetime
 from typing import Any
 
 import aio_pika
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 from redis.asyncio import Redis
-from starlette.responses import Response
+from starlette.responses import JSONResponse, Response
 
 from app import logx
 from app.api.assistant import AssistantDeps
@@ -166,12 +168,11 @@ async def metrics() -> Response:
     return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
 
-@app.get("/admin/mode")
-async def get_mode() -> dict[str, Any]:
-    """Nac suy bien hien tai va cac tin hieu dan toi no."""
+def _mode_view() -> tuple[degradation.Mode, dict[str, Any]]:
+    """Mode + tin hieu dung chung cho /admin/mode va /v1/ops/ai/mode, de hai noi khong lech nhau."""
     signals = _signals_now()
     mode = degradation.decide(signals)
-    return {
+    return mode, {
         "mode": str(mode),
         "manual_override": str(_state["manual_override"]) if _state["manual_override"] else None,
         "signals": {
@@ -179,8 +180,43 @@ async def get_mode() -> dict[str, Any]:
             "budget_used_ratio": signals.budget_used_ratio,
             "gemini_circuit_open": signals.gemini_circuit_open,
         },
-        "policy": degradation.policy_for(mode).__dict__,
     }
+
+
+@app.get("/admin/mode")
+async def get_mode() -> dict[str, Any]:
+    """Nac suy bien hien tai va cac tin hieu dan toi no."""
+    mode, view = _mode_view()
+    return {**view, "policy": degradation.policy_for(mode).__dict__}
+
+
+def _problem(status: int, type_: str, title: str, detail: str) -> JSONResponse:
+    return JSONResponse(
+        {"type": type_, "title": title, "status": status, "detail": detail},
+        status_code=status,
+        media_type="application/problem+json",
+        headers={"Cache-Control": "no-store"},
+    )
+
+
+_UUID_RE = re.compile(r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}")
+
+
+@app.get("/v1/ops/ai/mode")
+async def get_ops_mode(request: Request) -> Response:
+    """Ban doc cho war room Ops (contracts 5.1): giong /admin/mode, bo `policy`, kiem tra role.
+
+    Gateway da chan role khac `ops`; kiem lai o day (phong thu hai lop) vi header do gateway tiem vao.
+    """
+    # Giong authx.PrincipalFromHeaders cua cac service Go (X-9): id phai la UUID, role so khop chinh xac
+    # (khong strip).
+    if not _UUID_RE.fullmatch(request.headers.get("x-identity-id", "")):
+        return _problem(401, "/problems/unauthorized", "Unauthorized", "thieu danh tinh nguoi goi")
+    if request.headers.get("x-identity-role", "") != "ops":
+        return _problem(403, "/problems/forbidden", "Forbidden", "chi role ops duoc xem che do AI")
+    _, view = _mode_view()
+    view["generated_at"] = datetime.now(UTC).isoformat()
+    return JSONResponse(view, headers={"Cache-Control": "no-store"})
 
 
 @app.post("/admin/mode/{mode}")

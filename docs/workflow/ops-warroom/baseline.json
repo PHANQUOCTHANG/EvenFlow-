@@ -1,0 +1,40 @@
+{
+ "commit": "81d742c (code identical to develop c5fb598)",
+ "vitest": {
+  "files": 167,
+  "passed": 2419,
+  "failed": 0,
+  "command": "npx vitest run --exclude **/*.real.test.* --exclude **/ops-service.contract.test.ts --exclude **/ops-service.auth.contract.test.ts --exclude **/organizer-service.sales.contract.test.ts --exclude **/ops-warroom.no-sample.contract.test.ts"
+ },
+ "pytest": {"passed": 203, "failed": 0, "command": "cd services/ai-worker && .venv/Scripts/python -m pytest tests --ignore=tests/test_ops_api.py"},
+ "go": {
+  "gateway": {"existing_passing_tests": 31, "note": "existing proxy tests green; only the new TestOpsRoutes_* are red"},
+  "waitingroom": {"existing_passing_tests_excluding_http_pkg": 108, "note": "internal/adapter/http does not compile until the new symbols exist; its 6 existing tests are green on develop"},
+  "ticketing": {"existing_passing_tests_excluding_http_pkg": 188, "note": "internal/adapter/http does not compile until the new symbols exist; its 24 existing tests are green on develop"}
+ },
+ "new_tests": {
+  "go_gateway": {"total": 5, "red": 3, "green_guard": 2},
+  "go_waitingroom_http": {"total": 22, "red": 22, "green_guard": 0, "note": "red = build failure (undefined app.OpsState, NewOpsHandler, ...)"},
+  "go_ticketing_http": {"total": 11, "red": 11, "green_guard": 0, "note": "red = build failure (undefined port.TierInventoryRow, WithOps, ...)"},
+  "go_ticketing_postgres_integration": {"total": 4, "red": 4, "green_guard": 0, "note": "build tag integration; Docker unavailable locally; go vet -tags integration reports undefined repo.TierInventory"},
+  "pytest": {"total": 5, "red": 4, "green_guard": 1},
+  "vitest": {"total": 107, "red": 96, "green_guard": 11}
+ },
+ "red_check": [
+  {"test": "gateway TestOpsRoutes_AC19_RoleMatrixAndUpstream / NoTokenIs401 / SpoofedRoleHeaderIgnored", "status": "red", "reason": "routes absent: 404 instead of 403/401/200"},
+  {"test": "gateway TestOpsRoutes_AC19_OtherMethodsNotForwarded, AdminModeStillBlockedForOps", "status": "green_guard", "reason": "already 404 today; must stay so"},
+  {"test": "ai-worker test_ops_api.py (shape, same values, 403, 401)", "status": "red", "reason": "404 on /v1/ops/ai/mode"},
+  {"test": "ai-worker test_admin_mode_unchanged", "status": "green_guard", "reason": "/admin/mode unchanged"},
+  {"test": "waitingroom and ticketing HTTP tests", "status": "red", "reason": "compile errors: plan WP1/WP2 symbols not defined yet; existing tests in those two packages also fail to build until implementation lands"},
+  {"test": "vitest ops-service.contract (49 of 50)", "status": "red", "reason": "sample list throws OpsServiceError(404); setAdmitOverride is not a function; isSample true"},
+  {"test": "vitest ops-service.contract: event 404 => OpsServiceError(404)", "status": "green_guard", "reason": "sample path already throws 404 for unknown id"},
+  {"test": "vitest organizer-service.sales.contract (3 of 6)", "status": "red", "reason": "sample snapshot, no HTTP call"},
+  {"test": "vitest organizer-service.sales.contract: 401/403/503 reject", "status": "green_guard", "reason": "sample path rejects when the event lookup fails"},
+  {"test": "vitest ops-war-room.real (23 of 29)", "status": "red", "reason": "controls are disabled stubs: no spinbutton or pause button, no admission states"},
+  {"test": "vitest ops-war-room.real: sample label, MANUAL rate, no pause banner, leader ok, not-ok source, clear not offered in AUTO", "status": "green_guard", "reason": "already true; must stay"},
+  {"test": "vitest ops-pages.real (11 of 12)", "status": "red", "reason": "no RoleGuard, server-side page, no client list states"},
+  {"test": "vitest ops-pages.real: ops sees content", "status": "green_guard", "reason": "passes today without a guard"},
+  {"test": "vitest sales-dashboard.real (6 of 6)", "status": "red", "reason": "sample badge/alert present, autoRefresh off by default"},
+  {"test": "vitest ops-service.auth.contract, ops-warroom.no-sample.contract", "status": "red", "reason": "sample service and sample-data file exist"}
+ ]
+}

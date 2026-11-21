@@ -4,8 +4,8 @@
  *
  * Dữ liệu tiêm qua props `initialSnapshot` / `initialError`; polling đi qua getOpsWarRoom
  * thật của hook nên ở đây mock riêng hàm đó (giữ nguyên các hàm thuần + OpsServiceError).
- * Lỗi OpsServiceError lấy từ service thật (__setOpsSampleOverride) vì hợp đồng không chốt
- * chữ ký constructor.
+ * Lỗi OpsServiceError dựng bằng constructor của service thật (ops-warroom: dữ liệu mẫu và
+ * __setOpsSampleOverride đã bị gỡ). Snapshot mặc định là dữ liệu thật (isSample = false).
  *
  * Bộ số liệu cố ý khác nhau từng ô để biết ô nào đang hiện:
  *   waitingroom: lobby 911, queued 4.210, admitted 733, rate 37, queueDepth 3.890
@@ -51,14 +51,24 @@ function makeSnapshot(overrides: Partial<OpsWarRoomSnapshot> = {}): OpsWarRoomSn
     saleState: "ON_SALE",
     generatedAt: new Date(Date.now()).toISOString(),
     funnel: { lobby: 911, queued: 4210, admitted: 733, holding: 644, paid: 555, issued: 466 },
-    admission: { ratePerSec: 37, mode: "AUTO", queueDepth: 3890 },
+    admission: {
+      ratePerSec: 37,
+      mode: "AUTO",
+      queueDepth: 3890,
+      overrideRatePerSec: null,
+      paused: false,
+      soldOut: false,
+      stockZero: false,
+      leaderPresent: true,
+    },
+    checkout: { p99Ms: 420, errorRate: 0.004, dbPoolUsage: 0.61, pods: 3 },
     inventory: [
       { tierId: "a", name: "Hạng A", quota: 1000, held: 21, paid: 102, issued: 93, available: 784 },
       { tierId: "b", name: "Hạng B", quota: 150, held: 13, paid: 47, issued: 38, available: 52 },
     ],
     ai: { mode: "NORMAL", manualOverride: false, chatQueueLagSeconds: 17, budgetUsedRatio: 0.63 },
     sources: { waitingroom: "ok", ticketing: "ok", ai: "ok" },
-    isSample: true,
+    isSample: false,
     ...overrides,
   };
 }
@@ -67,25 +77,10 @@ function withSources(partial: Partial<Record<keyof OpsWarRoomSnapshot["sources"]
   return makeSnapshot({ sources: { waitingroom: "ok", ticketing: "ok", ai: "ok", ...partial } });
 }
 
-/** Lỗi OpsServiceError thật với status mong muốn. */
+/** Lỗi OpsServiceError thật với status mong muốn (constructor của service thật, không qua mock). */
 async function realOpsError(status: number): Promise<Error> {
   const actual = await vi.importActual<typeof import("@/lib/ops-service")>("@/lib/ops-service");
-  if (status === 404) {
-    try {
-      await actual.getOpsWarRoom("evt-khong-ton-tai-ev187");
-    } catch (err) {
-      return err as Error;
-    }
-  }
-  actual.__setOpsSampleOverride(EVENT_ID, { error: status });
-  try {
-    await actual.getOpsWarRoom(EVENT_ID);
-  } catch (err) {
-    return err as Error;
-  } finally {
-    actual.__setOpsSampleOverride(EVENT_ID, null);
-  }
-  throw new Error(`Ky vong loi ${status}`);
+  return new actual.OpsServiceError(status);
 }
 
 function escapeRe(s: string) {
@@ -235,7 +230,7 @@ describe("OpsWarRoom — AC-1 một màn hình đủ số liệu", () => {
 
   it("chế độ MANUAL được hiện khi admission.mode = MANUAL", () => {
     renderWarRoom({
-      initialSnapshot: makeSnapshot({ admission: { ratePerSec: 37, mode: "MANUAL", queueDepth: 3890 } }),
+      initialSnapshot: makeSnapshot({ admission: { ...makeSnapshot().admission, ratePerSec: 37, mode: "MANUAL", queueDepth: 3890 } }),
     });
     expect(screen.getAllByText(/\bMANUAL\b/).length).toBeGreaterThan(0);
   });
@@ -349,7 +344,7 @@ describe("OpsWarRoom — AC-2 độ tươi ≤ 5s", () => {
 
 describe("OpsWarRoom — AC-3 không tô xanh giả", () => {
   it("isSample = true: nhãn 'Dữ liệu mẫu' role status, nằm trước các khối số liệu", () => {
-    renderWarRoom({ initialSnapshot: makeSnapshot() });
+    renderWarRoom({ initialSnapshot: makeSnapshot({ isSample: true }) });
     const label = liveRegions("status").find((el) => /Dữ liệu mẫu/i.test(el.textContent ?? ""));
     expect(label).toBeDefined();
     expect(
@@ -517,14 +512,15 @@ describe("OpsWarRoom — AC-6 điều khiển tách khỏi giám sát", () => {
     expect(screen.getAllByRole("heading", { name: /điều khiển/i }).length).toBeGreaterThan(0);
   });
 
-  it("nút ghi đè admit rate / tạm dừng bị vô hiệu, kèm giải thích EVF-60", () => {
+  // ops-warroom TCR: EVF-60 đã có API, nút không còn là stub vô hiệu (chi tiết hành vi: ops-war-room.real.test.tsx).
+  it("nút ghi đè admit rate / tạm dừng khẩn cấp hoạt động, không còn ghi chú 'chưa có API' (EVF-60)", () => {
     renderWarRoom({ initialSnapshot: makeSnapshot() });
     const buttons = controlButtons();
     expect(buttons.length).toBeGreaterThan(0);
     for (const b of buttons) {
-      expect(b).toBeDisabled();
+      expect(b).toBeEnabled();
     }
-    expect(document.body.textContent).toContain("Chưa có API ghi đè (EVF-60)");
+    expect(document.body.textContent).not.toContain("Chưa có API ghi đè (EVF-60)");
   });
 
   it("bấm nút điều khiển không gửi request nào", async () => {
@@ -700,7 +696,7 @@ describe("OpsWarRoom — bổ sung sau code review (plan §7)", () => {
   it("ratePerSec và chatQueueLagSeconds hiển thị bằng formatDecimal (12.7 → '12,7') (M-1)", () => {
     renderWarRoom({
       initialSnapshot: makeSnapshot({
-        admission: { ratePerSec: 12.7, mode: "AUTO", queueDepth: 3890 },
+        admission: { ...makeSnapshot().admission, ratePerSec: 12.7, mode: "AUTO", queueDepth: 3890 },
         ai: { mode: "NORMAL", manualOverride: false, chatQueueLagSeconds: 4.5, budgetUsedRatio: 0.63 },
       }),
     });
@@ -712,7 +708,7 @@ describe("OpsWarRoom — bổ sung sau code review (plan §7)", () => {
 
   it("ratePerSec nguyên vẫn có một chữ số thập phân (50 → '50,0')", () => {
     renderWarRoom({
-      initialSnapshot: makeSnapshot({ admission: { ratePerSec: 50, mode: "AUTO", queueDepth: 3890 } }),
+      initialSnapshot: makeSnapshot({ admission: { ...makeSnapshot().admission, ratePerSec: 50, mode: "AUTO", queueDepth: 3890 } }),
     });
     expect(anyOwnText(/(^|[^\d.,])50,0(?![\d])/)).toBe(true);
   });
@@ -753,25 +749,27 @@ describe("OpsWarRoom — bổ sung sau code review (plan §7)", () => {
   });
 
   it("'cập nhật lúc …' nằm cùng khối với nhãn 'Dữ liệu mẫu' (m-5)", () => {
-    renderWarRoom({ initialSnapshot: makeSnapshot() });
+    renderWarRoom({ initialSnapshot: makeSnapshot({ isSample: true }) });
     const label = liveRegions("status").find((el) => /Dữ liệu mẫu/i.test(el.textContent ?? ""));
     expect(label).toBeDefined();
     const container = label!.parentElement!;
     expect(container.textContent ?? "").toMatch(/cập nhật lúc:?\s*10:00:00/i);
   });
 
-  it("nút điều khiển vô hiệu có aria-describedby trỏ tới đoạn chứa 'EVF-60' (m-9)", () => {
-    renderWarRoom({ initialSnapshot: makeSnapshot() });
+  // ops-warroom TCR: nút chỉ vô hiệu khi nguồn phòng chờ không khả dụng; aria-describedby trỏ tới lý do hiển thị (m-9).
+  it("nút điều khiển vô hiệu có aria-describedby trỏ tới đoạn giải thích lý do khóa (m-9)", () => {
+    renderWarRoom({ initialSnapshot: withSources({ waitingroom: "unavailable" }) });
     for (const b of controlButtons()) {
+      expect(b).toBeDisabled();
       const ids = (b.getAttribute("aria-describedby") ?? "").split(/\s+/).filter(Boolean);
       expect(ids.length, b.textContent ?? "").toBeGreaterThan(0);
       const described = ids.map((id) => document.getElementById(id)?.textContent ?? "").join(" ");
-      expect(described).toContain("EVF-60");
+      expect(described).toMatch(/phòng chờ không khả dụng/i);
     }
   });
 
   it("HTML server (renderToString) với generatedAt cũ: không có tuổi dữ liệu, không banner 'Dữ liệu cũ' (t-2)", () => {
-    const old = makeSnapshot({ generatedAt: new Date(BASE_MS - 10 * 60_000).toISOString() });
+    const old = makeSnapshot({ generatedAt: new Date(BASE_MS - 10 * 60_000).toISOString(), isSample: true });
 
     vi.setSystemTime(BASE_MS);
     const htmlA = renderToString(<OpsWarRoom eventId={EVENT_ID} initialSnapshot={old} />);

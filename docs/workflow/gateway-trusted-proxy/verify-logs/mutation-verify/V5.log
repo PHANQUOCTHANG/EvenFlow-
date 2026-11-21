@@ -1,0 +1,23 @@
+# V5: IPv6 prefix floor /7 -> /6
+diff --git a/services/gateway/internal/clientip/clientip.go b/services/gateway/internal/clientip/clientip.go
+index e4eb6cc..850e085 100644
+--- a/services/gateway/internal/clientip/clientip.go
++++ b/services/gateway/internal/clientip/clientip.go
+@@ -27,7 +27,7 @@ func New(trusted []netip.Prefix) *Resolver {
+ // da phu ca Internet. IPv6 /7 de fc00::/7 van hop le.
+ const (
+ 	minBitsIPv4 = 8
+-	minBitsIPv6 = 7
++	minBitsIPv6 = 6
+ )
+ 
+ // ParseTrusted doc danh sach CIDR hoac IP ngan cach boi dau phay. Khoang trang (ca CR/LF) quanh
+?   	github.com/eventflow/eventflow/services/gateway/cmd/server	[no test files]
+--- FAIL: TestParseTrusted_Round1_WidePrefixRejected (0.00s)
+    clientip_round1_test.go:24: ParseTrusted("fc00::/6") = [fc00::/6], want error
+FAIL
+FAIL	github.com/eventflow/eventflow/services/gateway/internal/clientip	0.957s
+ok  	github.com/eventflow/eventflow/services/gateway/internal/config	0.587s
+ok  	github.com/eventflow/eventflow/services/gateway/internal/proxy	0.666s
+ok  	github.com/eventflow/eventflow/services/gateway/internal/ratelimit	0.383s
+FAIL

@@ -1,0 +1,29 @@
+{
+  "task": "ops-warroom",
+  "jira": ["EV-187 (EVF-117) War room Ops", "EV-147 (EVF-60) Ops API admit_rate override", "EV-186 (EVF-116) organizer realtime sales"],
+  "owner": "TranDinhVo",
+  "branch": "feature/ops-warroom",
+  "base_commit": "c5fb598",
+  "tier": "high-risk",
+  "rule_hits": [
+    "permissions: new role-restricted gateway routes (ops, organizer) in services/gateway/internal/proxy/routes.go",
+    "permissions: service-side role checks (ops) in waitingroom, ticketing, ai-worker and an organizer ownership check in ticketing",
+    "control plane: new write API that changes the admit rate of a live sale (emergency pause) in services/waitingroom",
+    "audit: new writer of audit_logs (waitingroom gains a Postgres connection)",
+    "new dependency edge: services/waitingroom/go.mod adds github.com/jackc/pgx/v5 (already used by other modules, same version v5.9.2)",
+    "deploy config: deploy/compose/docker-compose.yml waitingroom gets DATABASE_URL",
+    "money read path: organizer revenue figures computed from orders/payments"
+  ],
+  "llm_assessment": "high-risk (agrees with rules; cannot lower)",
+  "user_override": null,
+  "consequences": [
+    "human approves spec.md (incl. decisions D1-D4) before implementation",
+    "plan review mandatory",
+    "3 parallel reviewers; challenge uses a different model than the implementer",
+    "mutation test on new handlers, queries and client logic (threshold in plan.md section 6) + rollback check",
+    "human sign-off before merge to develop"
+  ],
+  "no_migrations": true,
+  "no_new_dependencies": false,
+  "dependency_note": "Only pgx/v5 added to the waitingroom module (decision D1); no new npm or Python packages."
+}

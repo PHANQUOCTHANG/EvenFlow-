@@ -1,0 +1,20 @@
+--- FAIL: TestOpsRound2Fix_X21_InvisibleBidiOrControlReasonIs400 (0.00s)
+FAIL
+FAIL	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/http	3.272s
+FAIL
+---- tail ----
+        ops_round2_fix_test.go:48: PUT "\\u200fabc": 200 {"event_id":"11111111-1111-4111-8111-111111111111","override":{"active":true,"rate_per_sec":0},"paused":true,"applied_at":"2026-11-21T07:07:54Z","audit":"recorded"}
+    --- FAIL: TestOpsRound2Fix_X21_InvisibleBidiOrControlReasonIs400/ALM (0.00s)
+        ops_round2_fix_test.go:48: PUT "ab\\u061cc": 200 {"event_id":"11111111-1111-4111-8111-111111111111","override":{"active":true,"rate_per_sec":0},"paused":true,"applied_at":"2026-11-21T07:07:54Z","audit":"recorded"}
+    --- FAIL: TestOpsRound2Fix_X21_InvisibleBidiOrControlReasonIs400/bidi_spoof (0.00s)
+        ops_round2_fix_test.go:48: PUT "resume \\u202eesuap\\u202c ok": 200 {"event_id":"11111111-1111-4111-8111-111111111111","override":{"active":true,"rate_per_sec":0},"paused":true,"applied_at":"2026-11-21T07:07:54Z","audit":"recorded"}
+FAIL
+FAIL	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/http	3.272s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/metrics	1.922s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/postgres	0.133s
+?   	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/redis	[no test files]
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/signal	0.473s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/app	1.027s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/config	0.432s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/domain	0.478s
+FAIL

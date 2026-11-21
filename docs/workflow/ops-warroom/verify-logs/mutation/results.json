@@ -1,0 +1,366 @@
+{
+ "M01": {
+  "desc": "ValidRate upper bound 10000 -> 10001",
+  "file": "services/waitingroom/internal/app/ops_override.go",
+  "suite": "wr",
+  "status": "KILLED",
+  "exit": 1
+ },
+ "M02": {
+  "desc": "ValidRate lower bound 0 -> -1",
+  "file": "services/waitingroom/internal/app/ops_override.go",
+  "suite": "wr",
+  "status": "SURVIVED",
+  "exit": 0
+ },
+ "M03": {
+  "desc": "ValidRate accepts fractional rates",
+  "file": "services/waitingroom/internal/app/ops_override.go",
+  "suite": "wr",
+  "status": "SURVIVED",
+  "exit": 0
+ },
+ "M04": {
+  "desc": "parseRate literal digit check disabled (-0 accepted)",
+  "file": "services/waitingroom/internal/adapter/http/ops_handler.go",
+  "suite": "wr",
+  "status": "KILLED",
+  "exit": 1
+ },
+ "M05": {
+  "desc": "reason visible-char minimum 3 -> 2",
+  "file": "services/waitingroom/internal/app/ops_override.go",
+  "suite": "wr",
+  "status": "KILLED",
+  "exit": 1
+ },
+ "M06": {
+  "desc": "Cf chars counted as visible",
+  "file": "services/waitingroom/internal/app/ops_override.go",
+  "suite": "wr",
+  "status": "KILLED",
+  "exit": 1
+ },
+ "M07": {
+  "desc": "bidi controls no longer rejected",
+  "file": "services/waitingroom/internal/app/ops_override.go",
+  "suite": "wr",
+  "status": "KILLED",
+  "exit": 1
+ },
+ "M08": {
+  "desc": "reason max 200 -> 201",
+  "file": "services/waitingroom/internal/app/ops_override.go",
+  "suite": "wr",
+  "status": "KILLED",
+  "exit": 1
+ },
+ "M09": {
+  "desc": "control chars no longer rejected",
+  "file": "services/waitingroom/internal/app/ops_override.go",
+  "suite": "wr",
+  "status": "KILLED",
+  "exit": 1
+ },
+ "M10": {
+  "desc": "audit records read-back rate instead of commanded rate",
+  "file": "services/waitingroom/internal/app/ops_override.go",
+  "suite": "wr",
+  "status": "KILLED",
+  "exit": 1
+ },
+ "M11": {
+  "desc": "rate 0 audited as SET instead of PAUSED",
+  "file": "services/waitingroom/internal/app/ops_override.go",
+  "suite": "wr",
+  "status": "KILLED",
+  "exit": 1
+ },
+ "M12": {
+  "desc": "Set audits even when the Redis apply failed (audit before successful apply)",
+  "file": "services/waitingroom/internal/app/ops_override.go",
+  "suite": "wr",
+  "status": "KILLED",
+  "exit": 1
+ },
+ "M13": {
+  "desc": "Clear audits before apply (order swapped)",
+  "file": "services/waitingroom/internal/app/ops_override.go",
+  "suite": "wr",
+  "status": "KILLED",
+  "exit": 1
+ },
+ "M14": {
+  "desc": "auditor panic reported as recorded",
+  "file": "services/waitingroom/internal/app/ops_override.go",
+  "suite": "wr",
+  "status": "KILLED",
+  "exit": 1
+ },
+ "M15": {
+  "desc": "audit DB error reported as recorded",
+  "file": "services/waitingroom/internal/app/ops_override.go",
+  "suite": "wr",
+  "status": "KILLED",
+  "exit": 1
+ },
+ "M16": {
+  "desc": "no audit store no longer fails closed (503)",
+  "file": "services/waitingroom/internal/app/ops_override.go",
+  "suite": "wr",
+  "status": "KILLED",
+  "exit": 1
+ },
+ "M17": {
+  "desc": "Set apply/audit bound to request context",
+  "file": "services/waitingroom/internal/app/ops_override.go",
+  "suite": "wr",
+  "status": "KILLED",
+  "exit": 1
+ },
+ "M18": {
+  "desc": "waitingroom handler role check removed",
+  "file": "services/waitingroom/internal/adapter/http/ops_handler.go",
+  "suite": "wr",
+  "status": "KILLED",
+  "exit": 1
+ },
+ "M19": {
+  "desc": "decodeStrict accepts duplicate keys",
+  "file": "services/waitingroom/internal/adapter/http/ops_handler.go",
+  "suite": "wr",
+  "status": "KILLED",
+  "exit": 1
+ },
+ "M20": {
+  "desc": "decodeStrict exact-key check removed (case mismatch + dup)",
+  "file": "services/waitingroom/internal/adapter/http/ops_handler.go",
+  "suite": "wr",
+  "status": "KILLED",
+  "exit": 1
+ },
+ "M21": {
+  "desc": "trailing data after JSON accepted",
+  "file": "services/waitingroom/internal/adapter/http/ops_handler.go",
+  "suite": "wr",
+  "status": "KILLED",
+  "exit": 1
+ },
+ "M22": {
+  "desc": "parseRate accepts quoted string \"12\"",
+  "file": "services/waitingroom/internal/adapter/http/ops_handler.go",
+  "suite": "wr",
+  "status": "KILLED",
+  "exit": 1
+ },
+ "T01": {
+  "desc": "sales owner check removed",
+  "file": "services/ticketing/internal/adapter/http/ops_handler.go",
+  "suite": "tk",
+  "status": "KILLED",
+  "exit": 1
+ },
+ "T02": {
+  "desc": "owner compare case-sensitive",
+  "file": "services/ticketing/internal/adapter/http/ops_handler.go",
+  "suite": "tk",
+  "status": "KILLED",
+  "exit": 1
+ },
+ "T03": {
+  "desc": "2s cache disabled",
+  "file": "services/ticketing/internal/adapter/http/ops_handler.go",
+  "suite": "tk",
+  "status": "KILLED",
+  "exit": 1
+ },
+ "T04": {
+  "desc": "not-found no longer cached",
+  "file": "services/ticketing/internal/adapter/http/ops_handler.go",
+  "suite": "tk",
+  "status": "KILLED",
+  "exit": 1
+ },
+ "T05": {
+  "desc": "inventory role ops -> organizer",
+  "file": "services/ticketing/internal/adapter/http/ops_handler.go",
+  "suite": "tk",
+  "status": "KILLED",
+  "exit": 1
+ },
+ "T06": {
+  "desc": "cache TTL 2s -> 20s (staleness bound)",
+  "file": "services/ticketing/internal/adapter/http/ops_handler.go",
+  "suite": "tk",
+  "status": "KILLED",
+  "exit": 1
+ },
+ "T07": {
+  "desc": "totals not derived from same-snapshot tier rows",
+  "file": "services/ticketing/internal/app/ops_queries.go",
+  "suite": "tk",
+  "status": "KILLED",
+  "exit": 1
+ },
+ "T08": {
+  "desc": "unknown-provider reconciliation condition",
+  "file": "services/ticketing/internal/app/ops_queries.go",
+  "suite": "tk",
+  "status": "KILLED",
+  "exit": 1
+ },
+ "T09": {
+  "desc": "sales snapshot tx REPEATABLE READ removed (integration-only)",
+  "file": "services/ticketing/internal/adapter/postgres/ops_repository.go",
+  "suite": "tk",
+  "status": "SURVIVED",
+  "exit": 0
+ },
+ "G01": {
+  "desc": "PUT override also allowed for organizer",
+  "file": "services/gateway/internal/proxy/routes.go",
+  "suite": "gw",
+  "status": "KILLED",
+  "exit": 1
+ },
+ "G02": {
+  "desc": "sales route also allowed for buyer",
+  "file": "services/gateway/internal/proxy/routes.go",
+  "suite": "gw",
+  "status": "KILLED",
+  "exit": 1
+ },
+ "G03": {
+  "desc": "ai mode routed to wrong upstream",
+  "file": "services/gateway/internal/proxy/routes.go",
+  "suite": "gw",
+  "status": "KILLED",
+  "exit": 1
+ },
+ "G04": {
+  "desc": "inventory route forwards any method",
+  "file": "services/gateway/internal/proxy/routes.go",
+  "suite": "gw",
+  "status": "KILLED",
+  "exit": 1
+ },
+ "P01": {
+  "desc": "ai mode allows organizer",
+  "file": "services/ai-worker/app/main.py",
+  "suite": "py",
+  "status": "KILLED",
+  "exit": 1
+ },
+ "P02": {
+  "desc": "ai mode identity (401) check removed",
+  "file": "services/ai-worker/app/main.py",
+  "suite": "py",
+  "status": "KILLED",
+  "exit": 1
+ },
+ "P03": {
+  "desc": "ops ai mode leaks policy field",
+  "file": "services/ai-worker/app/main.py",
+  "suite": "py",
+  "status": "KILLED",
+  "exit": 1
+ },
+ "W01": {
+  "desc": "401 from any source (not only core) -> sign-in",
+  "file": "apps/web/src/lib/ops-service.ts",
+  "suite": "web",
+  "status": "KILLED",
+  "exit": 1
+ },
+ "W02": {
+  "desc": "event 404 not mapped to not-found",
+  "file": "apps/web/src/lib/ops-service.ts",
+  "suite": "web",
+  "status": "KILLED",
+  "exit": 1
+ },
+ "W03": {
+  "desc": "source 403 not surfaced as forbidden",
+  "file": "apps/web/src/lib/ops-service.ts",
+  "suite": "web",
+  "status": "KILLED",
+  "exit": 1
+ },
+ "W04": {
+  "desc": "all three sources down not 503",
+  "file": "apps/web/src/lib/ops-service.ts",
+  "suite": "web",
+  "status": "KILLED",
+  "exit": 1
+ },
+ "W05": {
+  "desc": "client rate max 10000 -> 10001",
+  "file": "apps/web/src/lib/ops-service.ts",
+  "suite": "web",
+  "status": "KILLED",
+  "exit": 1
+ },
+ "W06": {
+  "desc": "client accepts fractional rate",
+  "file": "apps/web/src/lib/ops-service.ts",
+  "suite": "web",
+  "status": "KILLED",
+  "exit": 1
+ },
+ "W07": {
+  "desc": "client bidi reject removed",
+  "file": "apps/web/src/lib/ops-service.ts",
+  "suite": "web",
+  "status": "KILLED",
+  "exit": 1
+ },
+ "W08": {
+  "desc": "client visible count includes invisible chars",
+  "file": "apps/web/src/lib/ops-service.ts",
+  "suite": "web",
+  "status": "KILLED",
+  "exit": 1
+ },
+ "W09": {
+  "desc": "write 401 not treated as session lost",
+  "file": "apps/web/src/lib/ops-service.ts",
+  "suite": "web",
+  "status": "KILLED",
+  "exit": 1
+ },
+ "W10": {
+  "desc": "war room snapshot labelled sample",
+  "file": "apps/web/src/lib/ops-service.ts",
+  "suite": "web",
+  "status": "KILLED",
+  "exit": 1
+ },
+ "W11": {
+  "desc": "sales auto-refresh off by default",
+  "file": "apps/web/src/hooks/use-organizer-sales.ts",
+  "suite": "web",
+  "status": "SURVIVED",
+  "exit": 0
+ },
+ "W12": {
+  "desc": "sales polling cap 5s removed",
+  "file": "apps/web/src/hooks/use-organizer-sales.ts",
+  "suite": "web",
+  "status": "SURVIVED",
+  "exit": 0
+ },
+ "W13": {
+  "desc": "dashboard auto-refresh off by default",
+  "file": "apps/web/src/components/organizer/sales-dashboard.tsx",
+  "suite": "web",
+  "status": "KILLED",
+  "exit": 1
+ },
+ "W14": {
+  "desc": "default polling 4s -> 4.9s",
+  "file": "apps/web/src/hooks/use-organizer-sales.ts",
+  "suite": "web",
+  "status": "KILLED",
+  "exit": 1
+ }
+}

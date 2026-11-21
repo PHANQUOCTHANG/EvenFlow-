@@ -15,9 +15,12 @@ import (
 
 	"github.com/eventflow/eventflow/libs/go/authx"
 	"github.com/eventflow/eventflow/libs/go/httpx"
+	"github.com/eventflow/eventflow/libs/go/loadsignal"
 	"github.com/eventflow/eventflow/libs/go/otelx"
 	httpadapter "github.com/eventflow/eventflow/services/waitingroom/internal/adapter/http"
+	postgresadapter "github.com/eventflow/eventflow/services/waitingroom/internal/adapter/postgres"
 	redisadapter "github.com/eventflow/eventflow/services/waitingroom/internal/adapter/redis"
+	"github.com/eventflow/eventflow/services/waitingroom/internal/app"
 	"github.com/eventflow/eventflow/services/waitingroom/internal/domain"
 )
 
@@ -83,8 +86,16 @@ func run(log *slog.Logger) error {
 
 	h := httpadapter.New(store{queue}, nil, log).WithQueueTokens(queueSecret, requireDevice)
 
+	// Ops API (EVF-60, EVF-117). Postgres chi de ghi audit: thieu / hong DATABASE_URL thi lenh ghi de
+	// fail-closed, con doc trang thai, duong mua ve va readiness van chay (AC-12).
+	auditor, closeAudit := postgresadapter.NewAuditorFromEnv(ctx, os.Getenv, log)
+	defer closeAudit()
+	checkout := redisadapter.NewLoadSignalCheckout(loadsignal.NewReader(rdb, loadsignal.DefaultKey, 3*time.Second))
+	ops := httpadapter.NewOpsHandler(redisadapter.NewOpsReader(rdb, checkout), app.NewOpsOverride(queue, auditor, log), log)
+
 	mux := http.NewServeMux()
 	h.Routes(mux)
+	ops.Routes(mux)
 	// Cong khai tren cong dich vu: gateway KHONG duoc route /metrics ra ngoai.
 	mux.Handle("GET /metrics", otelx.MetricsHandler())
 	// Readiness tach rieng khoi liveness: pod mat Redis thi phai bi rut khoi load

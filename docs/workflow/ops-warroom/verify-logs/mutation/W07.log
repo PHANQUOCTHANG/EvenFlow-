@@ -1,0 +1,29 @@
+[31m   [31m×[31m reason rules match the server (R2-1, X2-1, X2-5)[2m > [22mbidi "‮‮‮" is BIDI[90m 23[2mms[22m[31m[39m
+[31m   [31m×[31m reason rules match the server (R2-1, X2-1, X2-5)[2m > [22mbidi "⁦⁧⁨⁩" is BIDI[90m 2[2mms[22m[31m[39m
+[31m   [31m×[31m reason rules match the server (R2-1, X2-1, X2-5)[2m > [22mbidi "abc‎" is BIDI[90m 3[2mms[22m[31m[39m
+[31m   [31m×[31m reason rules match the server (R2-1, X2-1, X2-5)[2m > [22mbidi "‏abc" is BIDI[90m 2[2mms[22m[31m[39m
+[31m   [31m×[31m reason rules match the server (R2-1, X2-1, X2-5)[2m > [22mbidi "ab؜c" is BIDI[90m 2[2mms[22m[31m[39m
+[31m   [31m×[31m reason rules match the server (R2-1, X2-1, X2-5)[2m > [22mbidi "resume ‮esuap‬ ok" is BIDI[90m 2[2mms[22m[31m[39m
+[31m   [31m×[31m reason error names the cause (X2-5)[2m > [22mbidi[90m 206[2mms[22m[31m[39m
+[31m[1m[7m FAIL [27m[22m[39m src/lib/ops-service.round2.fix.test.ts[2m > [22mreason rules match the server (R2-1, X2-1, X2-5)[2m > [22mbidi "‮‮‮" is BIDI
+[31m[1m[7m FAIL [27m[22m[39m src/lib/ops-service.round2.fix.test.ts[2m > [22mreason rules match the server (R2-1, X2-1, X2-5)[2m > [22mbidi "⁦⁧⁨⁩" is BIDI
+[31m[1m[7m FAIL [27m[22m[39m src/lib/ops-service.round2.fix.test.ts[2m > [22mreason rules match the server (R2-1, X2-1, X2-5)[2m > [22mbidi "abc‎" is BIDI
+[31m[1m[7m FAIL [27m[22m[39m src/lib/ops-service.round2.fix.test.ts[2m > [22mreason rules match the server (R2-1, X2-1, X2-5)[2m > [22mbidi "‏abc" is BIDI
+[31m[1m[7m FAIL [27m[22m[39m src/lib/ops-service.round2.fix.test.ts[2m > [22mreason rules match the server (R2-1, X2-1, X2-5)[2m > [22mbidi "ab؜c" is BIDI
+[31m[1m[7m FAIL [27m[22m[39m src/lib/ops-service.round2.fix.test.ts[2m > [22mreason rules match the server (R2-1, X2-1, X2-5)[2m > [22mbidi "resume ‮esuap‬ ok" is BIDI
+[31m[1m[7m FAIL [27m[22m[39m src/components/ops/ops-controls.round2.fix.test.tsx[2m > [22mreason error names the cause (X2-5)[2m > [22mbidi
+---- tail ----
+[90m [2m❯[22m OpsControlsPanel src/components/ops/ops-controls.tsx:[2m289:37[22m[39m
+[90m [2m❯[22m renderWithHooks node_modules/react-dom/cjs/react-dom.development.js:[2m15486:18[22m[39m
+[90m [2m❯[22m updateFunctionComponent node_modules/react-dom/cjs/react-dom.development.js:[2m19617:20[22m[39m
+[90m [2m❯[22m beginWork node_modules/react-dom/cjs/react-dom.development.js:[2m21640:16[22m[39m
+[90m [2m❯[22m beginWork$1 node_modules/react-dom/cjs/react-dom.development.js:[2m27465:14[22m[39m
+[90m [2m❯[22m performUnitOfWork node_modules/react-dom/cjs/react-dom.development.js:[2m26599:12[22m[39m
+[90m [2m❯[22m workLoopSync node_modules/react-dom/cjs/react-dom.development.js:[2m26505:5[22m[39m
+[90m [2m❯[22m renderRootSync node_modules/react-dom/cjs/react-dom.development.js:[2m26473:7[22m[39m
+[90m [2m❯[22m recoverFromConcurrentError node_modules/react-dom/cjs/react-dom.development.js:[2m25889:20[22m[39m
+
+[31mThis error originated in "[1msrc/components/ops/ops-controls.round2.fix.test.tsx[22m" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.[39m
+[31mThe latest test that might've caused the error is "[1mbidi[22m". It might mean one of the following:
+- The error was thrown, while Vitest was running this test.
+- If the error occurred after the test had been completed, this was the last documented test before it was thrown.[39m

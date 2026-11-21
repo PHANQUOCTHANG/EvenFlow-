@@ -1,0 +1,21 @@
+[31m   [31m×[31m a 401 outside the core source degrades only that tile (X2-3)[2m > [22mqueue 200 + inventory 200 + ai 401 -> snapshot with ai unavailable[90m 57[2mms[22m[31m[39m
+[31m   [31m×[31m a 401 outside the core source degrades only that tile (X2-3)[2m > [22minventory 401 -> snapshot with ticketing unavailable[90m 11[2mms[22m[31m[39m
+[31m   [31m×[31m a 401 outside the core source degrades only that tile (X2-3)[2m > [22mpublic event detail 401 is not session loss (503, retry keeps the last snapshot)[90m 18[2mms[22m[31m[39m
+[31m[1m[7m FAIL [27m[22m[39m src/lib/ops-service.round2.fix.test.ts[2m > [22ma 401 outside the core source degrades only that tile (X2-3)[2m > [22mqueue 200 + inventory 200 + ai 401 -> snapshot with ai unavailable
+[31m[1m[7m FAIL [27m[22m[39m src/lib/ops-service.round2.fix.test.ts[2m > [22ma 401 outside the core source degrades only that tile (X2-3)[2m > [22minventory 401 -> snapshot with ticketing unavailable
+[31m[1m[7m FAIL [27m[22m[39m src/lib/ops-service.round2.fix.test.ts[2m > [22ma 401 outside the core source degrades only that tile (X2-3)[2m > [22mpublic event detail 401 is not session loss (503, retry keeps the last snapshot)
+---- tail ----
+[31m+ Received[39m
+
+[32m- 503[39m
+[31m+ 401[39m
+
+[36m [2m❯[22m src/lib/ops-service.round2.fix.test.ts:[2m135:43[22m[39m
+    [90m133| [39m    [35mconst[39m e [33m=[39m [35mawait[39m [34mrejection[39m([34mgetOpsWarRoom[39m([33mEV[39m))[33m;[39m
+    [90m134| [39m    [34mexpect[39m(e)[33m.[39m[34mtoBeInstanceOf[39m([33mOpsServiceError[39m)[33m;[39m
+    [90m135| [39m    [34mexpect[39m((e [35mas[39m [33mOpsServiceError[39m)[33m.[39mstatus)[33m.[39m[34mtoBe[39m([34m503[39m)[33m;[39m
+    [90m   | [39m                                          [31m^[39m
+    [90m136| [39m  })[33m;[39m
+    [90m137| [39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯[22m[39m

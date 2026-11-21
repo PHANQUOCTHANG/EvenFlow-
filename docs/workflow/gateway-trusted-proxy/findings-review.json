@@ -1,0 +1,32 @@
+[
+  {
+    "id": "R-1",
+    "reviewer": "security",
+    "severity": "minor",
+    "file": "services/gateway/internal/clientip/clientip.go",
+    "line": 65,
+    "title": "Only /0 is rejected; a set of very wide prefixes can still trust the whole world",
+    "evidence": "parseTrustedElement rejects p.Bits()==0 but accepts e.g. TRUSTED_PROXY_CIDRS=0.0.0.0/1,128.0.0.0/1 (plus ::/1,8000::/1), which together cover every address and make XFF fully spoofable. Spec 3.1 only mandates the /0 check, so this is spec-conformant; it is an operator footgun, not a code bug.",
+    "fix": "Optional: log a startup warning (or reject) for IPv4 prefixes shorter than /8 and IPv6 shorter than /16; or add it to the k8s-all policy test listed in spec 6 (never 0.0.0.0/0 or equivalent wide sets)."
+  },
+  {
+    "id": "R-2",
+    "reviewer": "correctness",
+    "severity": "minor",
+    "file": "services/gateway/internal/clientip/clientip.go",
+    "line": 150,
+    "title": "parseAddr is more lenient than spec 3.2: bracketed IPv4 and unvalidated ports are accepted",
+    "evidence": "'[1.2.3.4]' and '[1.2.3.4]:80' are accepted as 1.2.3.4; net.SplitHostPort does not validate the port, so '1.2.3.4:abc' and '1.2.3.4:' are accepted as 1.2.3.4 instead of malformed. Not exploitable: only a trusted proxy controls the elements that are actually read (walk stops at the first untrusted), the key is the canonical Addr.String(), and the fuzz invariant still holds.",
+    "fix": "Optional: require the bracket form only for IPv6 (a.Is6() after unbracketing) and require the port to be 1-5 decimal digits; add the cases to TestResolve. Acceptable to leave as is and record."
+  },
+  {
+    "id": "R-3",
+    "reviewer": "security",
+    "severity": "minor",
+    "file": "services/gateway/internal/proxy/gateway.go",
+    "line": 199,
+    "title": "IPv6 clients are keyed per /128, so an attacker with a /64 can rotate addresses around the auth limit",
+    "evidence": "rateKey uses ip:<resolved> with the full IPv6 address. Once XFF is honoured behind the ingress, a client holding a /64 (common for residential IPv6) gets 2^64 independent auth buckets. Pre-existing on develop for direct peers and explicitly out of scope of this spec (key classes unchanged), so not a regression.",
+    "fix": "Follow-up task: key IPv6 auth/anonymous buckets by /64 (netip.PrefixFrom(a,64).Masked()); keep this change out of the current PR."
+  }
+]

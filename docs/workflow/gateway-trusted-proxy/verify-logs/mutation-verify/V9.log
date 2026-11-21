@@ -1,0 +1,23 @@
+# V9: accept bracketed IPv4 ([1.2.3.4]) in XFF
+diff --git a/services/gateway/internal/clientip/clientip.go b/services/gateway/internal/clientip/clientip.go
+index e4eb6cc..c2cf68e 100644
+--- a/services/gateway/internal/clientip/clientip.go
++++ b/services/gateway/internal/clientip/clientip.go
+@@ -176,7 +176,7 @@ func parseAddr(e string) (netip.Addr, bool) {
+ 		bracketed = e[0] == '['
+ 	}
+ 	a, err := netip.ParseAddr(host)
+-	if err != nil || a.Zone() != "" || (bracketed && !a.Is6()) {
++	if err != nil || a.Zone() != "" || (bracketed && false) {
+ 		return netip.Addr{}, false
+ 	}
+ 	return a.Unmap(), true
+?   	github.com/eventflow/eventflow/services/gateway/cmd/server	[no test files]
+--- FAIL: TestResolve_Round1_StrictElementForms (0.00s)
+    clientip_round1_test.go:94: Resolve("[1.2.3.4]") = ("1.2.3.4", true), want (10.1.2.3, false)
+FAIL
+FAIL	github.com/eventflow/eventflow/services/gateway/internal/clientip	0.960s
+ok  	github.com/eventflow/eventflow/services/gateway/internal/config	0.437s
+ok  	github.com/eventflow/eventflow/services/gateway/internal/proxy	0.625s
+ok  	github.com/eventflow/eventflow/services/gateway/internal/ratelimit	0.362s
+FAIL

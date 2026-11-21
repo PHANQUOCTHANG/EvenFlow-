@@ -11,7 +11,10 @@ import { apiBase } from "@/lib/api-base";
 import { getDeviceFingerprint } from "@/lib/device";
 import {
   clearSession,
+  clearSessionHoldingRefresh,
   getSession,
+  isRefreshUsed,
+  markRefreshUsed,
   peekSession,
   getSessionEpoch,
   getSessionPersist,
@@ -127,8 +130,37 @@ async function doRefresh(usedRefresh: string | null, sentUserId: string | null):
     clearSession();
     throw new ApiError("AUTH_REQUIRED", 401, {}, "Phien dang nhap da het han");
   }
+  // AC-2: token nay da POST tu tab nay va co cau tra loi -> khong POST lai; xoa kho con giu no (chi kho do).
+  // Dat TRUOC nhanh "cap khac -> dung luon" de ban sao cu tu sessionStorage khong duoc tra ve nhu token song.
+  if (isRefreshUsed(cur.refreshToken)) {
+    clearSessionHoldingRefresh(cur.refreshToken);
+    throw new ApiError("AUTH_REQUIRED", 401, {}, "Phien dang nhap da het han");
+  }
   if (usedRefresh && cur.refreshToken !== usedRefresh) return cur.accessToken;
   return refreshCore(cur, cur.refreshToken);
+}
+
+/** POST refresh ket thuc that bai chot (400/401/403, huy 120 s, body hong - AC-1):
+ *  (1) van la phien da POST -> xoa, AUTH_REQUIRED;
+ *  (2) AC-3: CUNG user, cung epoch, da co refresh token KHAC chua dung (dang nhap lai o tab khac) -> tra access token do
+ *      (cung quy tac voi nhanh thanh cong); (3) con lai -> AUTH_REQUIRED, khong cham phien dang luu. */
+function failedRefresh(epoch: number, cur: Session, problem: Partial<Problem> = {}): string {
+  if (isSamePostedSession(epoch, cur)) {
+    clearSession();
+    throw new ApiError("AUTH_REQUIRED", 401, problem, "Phien dang nhap da het han");
+  }
+  const stored = peekSession();
+  if (
+    stored &&
+    epoch === getSessionEpoch() &&
+    stored.user.id === cur.user.id &&
+    stored.refreshToken &&
+    stored.refreshToken !== cur.refreshToken &&
+    !isRefreshUsed(stored.refreshToken)
+  ) {
+    return stored.accessToken;
+  }
+  throw new ApiError("AUTH_REQUIRED", 401, problem, "Phien dang nhap da het han");
 }
 
 /** Chi xoa phien khi no van la phien da POST: cung epoch, cung refresh token VA cung user id. */
@@ -146,8 +178,8 @@ async function refreshCore(cur: Session, refreshToken: string): Promise<string> 
   } catch (err) {
     if (controller.signal.aborted) {
       // Server co the da xoay token roi: khong bao gio POST lai. Chi xoa neu phien van la phien da POST.
-      if (isSamePostedSession(epoch, cur)) clearSession();
-      throw new ApiError("AUTH_REQUIRED", 401, {}, "Phien dang nhap da het han");
+      markRefreshUsed(refreshToken);
+      return failedRefresh(epoch, cur);
     }
     if (err instanceof ApiError) throw err;
     throw networkError();
@@ -169,15 +201,26 @@ async function refreshPost(cur: Session, refreshToken: string, epoch: number, co
     // Mat mang: giu phien, de lan sau thu lai.
     throw networkError();
   }
+  // AC-2: co cau tra loi chot (2xx/400/401/403) -> danh dau NGAY (dong bo, truoc moi await doc body). 5xx/429/4xx khac thi khong.
+  if (res.ok || res.status === 400 || res.status === 401 || res.status === 403) markRefreshUsed(refreshToken);
   if (!res.ok) {
     if (res.status === 400 || res.status === 401 || res.status === 403) {
-      // Dang xuat/xoay trong luc cho: khong xoa phien cua nguoi khac.
-      if (isSamePostedSession(epoch, cur)) clearSession();
-      throw new ApiError("AUTH_REQUIRED", 401, await readProblem(res), "Phien dang nhap da het han");
+      // Dang xuat/xoay trong luc cho: khong xoa phien cua nguoi khac; cung user dang nhap lai -> dung cap moi (AC-3).
+      return failedRefresh(epoch, cur, await readProblem(res));
     }
     throw await toApiError(res);
   }
-  const body = (await res.json()) as IdentityTokens;
+  // AC-1: 2xx nhung body khong doc duoc / khong phai object -> AUTH_REQUIRED (khong phai NETWORK_ERROR). Huy 120 s trong luc
+  // doc body -> nem lai de refreshCore giu ket qua huy.
+  let raw: unknown;
+  try {
+    raw = await res.json();
+  } catch (err) {
+    if (controller.signal.aborted) throw err;
+    return failedRefresh(epoch, cur);
+  }
+  if (raw === null || typeof raw !== "object" || Array.isArray(raw)) return failedRefresh(epoch, cur);
+  const body = raw as IdentityTokens;
   // F-12: dang xuat (cung tab hoac tab khac) trong luc refresh dang bay -> bo ket qua, khong hoi sinh phien.
   const after = peekSession();
   if (epoch !== getSessionEpoch() || !after) {
@@ -247,7 +290,10 @@ async function withRefreshLock(usedRefresh: string | null, sentUserId: string | 
   locked.catch(() => undefined);
 
   try {
-    return await Promise.race([locked, deadline]);
+    const token: unknown = await Promise.race([locked, deadline]);
+    // AC-5: LockManager tra ve ma khong chay callback (khong co token, hoac chuoi rong) -> loi tam thoi, giu phien, khong retry khong bearer.
+    if (typeof token !== "string" || !token) throw networkError();
+    return token;
   } finally {
     clearTimeout(deadlineTimer);
   }
@@ -327,6 +373,8 @@ export async function apiFetch(path: string, init: ApiFetchInit = {}): Promise<R
       if (err instanceof ApiError && err.code === "AUTH_REQUIRED") throw err;
     }
     session = peekSession();
+    // AC-4: request bat dau co phien, phien mat trong luc refresh (tab khac dang xuat) -> khong gui khong kem bearer.
+    if (!session && startUserId !== null) throw new ApiError("AUTH_REQUIRED", 401, {}, "Phien dang nhap da ket thuc");
     // Doi user trong luc refresh (ke ca khi loi tam thoi bi nuot): khong gui request cua A bang token cua B.
     if (session && session.user.id !== startUserId) throw userChanged();
   }

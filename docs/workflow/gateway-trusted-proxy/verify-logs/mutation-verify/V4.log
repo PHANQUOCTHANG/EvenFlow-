@@ -1,0 +1,21 @@
+# V4: port range upper bound 65535 -> 65536
+diff --git a/services/gateway/internal/clientip/clientip.go b/services/gateway/internal/clientip/clientip.go
+index e4eb6cc..890b364 100644
+--- a/services/gateway/internal/clientip/clientip.go
++++ b/services/gateway/internal/clientip/clientip.go
+@@ -194,5 +194,5 @@ func validPort(p string) bool {
+ 		}
+ 		n = n*10 + int(p[i]-'0')
+ 	}
+-	return n <= 65535
++	return n <= 65536
+ }
+?   	github.com/eventflow/eventflow/services/gateway/cmd/server	[no test files]
+--- FAIL: TestResolve_Round1_StrictElementForms (0.00s)
+    clientip_round1_test.go:94: Resolve("1.2.3.4:65536") = ("1.2.3.4", true), want (10.1.2.3, false)
+FAIL
+FAIL	github.com/eventflow/eventflow/services/gateway/internal/clientip	0.957s
+ok  	github.com/eventflow/eventflow/services/gateway/internal/config	0.599s
+ok  	github.com/eventflow/eventflow/services/gateway/internal/proxy	0.651s
+ok  	github.com/eventflow/eventflow/services/gateway/internal/ratelimit	0.374s
+FAIL

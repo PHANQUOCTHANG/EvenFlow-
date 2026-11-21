@@ -1,0 +1,19 @@
+[31m   [31m×[31m SalesDashboard real data (AC-30)[2m > [22mauto-refresh is on by default and polls within 5 s (4 s)[90m 205[2mms[22m[31m[39m
+[31m   [31m×[31m SalesDashboard real data (AC-30)[2m > [22merror keeps the last data and shows an error alert[90m 84[2mms[22m[31m[39m
+[31m[1m[7m FAIL [27m[22m[39m src/components/organizer/sales-dashboard.real.test.tsx[2m > [22mSalesDashboard real data (AC-30)[2m > [22mauto-refresh is on by default and polls within 5 s (4 s)
+[31m[1m[7m FAIL [27m[22m[39m src/components/organizer/sales-dashboard.real.test.tsx[2m > [22mSalesDashboard real data (AC-30)[2m > [22merror keeps the last data and shows an error alert
+---- tail ----
+[36m</body>[39m
+[90m [2m❯[22m Object.getElementError node_modules/@testing-library/dom/dist/config.js:[2m37:19[22m[39m
+[90m [2m❯[22m node_modules/@testing-library/dom/dist/query-helpers.js:[2m76:38[22m[39m
+[90m [2m❯[22m node_modules/@testing-library/dom/dist/query-helpers.js:[2m52:17[22m[39m
+[90m [2m❯[22m node_modules/@testing-library/dom/dist/query-helpers.js:[2m95:19[22m[39m
+[36m [2m❯[22m src/components/organizer/sales-dashboard.real.test.tsx:[2m126:19[22m[39m
+    [90m124| [39m      [35mawait[39m vi[33m.[39m[34madvanceTimersByTimeAsync[39m([34m4100[39m)[33m;[39m
+    [90m125| [39m    })[33m;[39m
+    [90m126| [39m    [34mexpect[39m(screen[33m.[39m[34mgetByText[39m([32m"Lỗi cập nhật doanh số"[39m))[33m.[39m[34mtoBeInTheDocumen[39m…
+    [90m   | [39m                  [31m^[39m
+    [90m127| [39m    [34mexpect[39m(screen[33m.[39m[34mgetByText[39m([32m"Hệ thống đang bận"[39m))[33m.[39m[34mtoBeInTheDocument[39m()[33m;[39m
+    [90m128| [39m    [34mexpect[39m(screen[33m.[39m[34mgetByText[39m([32m"Standard Pass"[39m))[33m.[39m[34mtoBeInTheDocument[39m()[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯[22m[39m

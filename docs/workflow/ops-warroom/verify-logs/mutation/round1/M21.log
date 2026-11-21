@@ -1,0 +1,10 @@
+
+---- tail ----
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/http	3.241s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/metrics	1.792s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/postgres	0.129s
+?   	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/redis	[no test files]
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/signal	0.402s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/app	0.831s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/config	0.375s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/domain	0.381s
