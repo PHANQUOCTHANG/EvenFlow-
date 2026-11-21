@@ -119,7 +119,31 @@ All are behaviour-neutral (the generator output and every assertion stay the sam
 - Approved by TranDinhVo in the Claude Code session on 2026-11-22; applied by the coordinator session.
 - `gofmt -w` on `services/waitingroom/internal/adapter/redis/lane_integration_test.go` (one-line `afterT0`/`beforeT0`) and `services/waitingroom/test/antibot/antibot_bot_test.go` (one-line `store.Revoke`). Line breaks only; no assertion changed.
 
-## TCR-6 (open): spec Amendment 2 defaults conflict with frozen tests, and miss the corpus gate
+## TCR-6 (approved, R4D = 0.60 variant): Amendment 2 defaults R5 = 0.85 and the weak HTTP-library UA list
+
+- Approved by TranDinhVo on 2026-11-22 (spec.md "Amendment 2, revision"): X-6 withdrawn (R4D stays 0.60); X-4
+  (R5 = 0.85) and X-5 (`okhttp`, `Go-http-client`, `axios/`, `node-fetch` move from the R5 deny list to the R5W weak
+  list) become built-in defaults, conditional on the corpus gate. Approved for exactly the frozen assertions below.
+- Corpus with exactly that configuration (before any frozen edit): **bots caught 95.80% (958/1000), humans demoted
+  0.10% (5/5000)** — gate holds. Per family: raw_http 200/200, headless 200/200, stealth_rhythm 200/200,
+  account_farm 188/200, replay_proxy_pool 170/200 (replay_residential 0/50, not gated). Identical to revision 3.
+
+Frozen assertions that encode the old R5 weight or deny list (all in `libs/go/antibot`, nothing else changes):
+
+| Test (frozen) | Case | Before | After |
+|---|---|---|---|
+| `score_test.go` `TestScore_AC8_DefaultOutcomesTable` | missing payload, browser UA | R3,R5 0.88 SLOW_LANE CAPPED | 0.91, same tier/tags |
+| same | missing payload, identity holds a slot | 0.88 | 0.91 |
+| same | raw HTTP python-requests | 0.88 BLOCK | 0.91 BLOCK |
+| same | headless default | R2,R5 0.88 BLOCK | 0.91 BLOCK |
+| `rules_test.go` `TestRule_AC4_R5Strong` | deny entries `Go-http-client/1.1`, `okhttp/4.12`, `node-fetch/1.0`, `axios/1.7.2` | R5 fires | R5 does not fire (weak list; one weak sign alone fires nothing) |
+
+No other frozen assertion changes (R4D stays 0.60; `BlockEligibilityCap` asserts action + ids only; the
+`guard_test.go` "0.80" is a comment). The earlier R4D = 0.55 variant (91.0% bots caught) is withdrawn.
+
+<details><summary>Superseded text (TCR-6 open, R4D = 0.55 variant)</summary>
+
+### TCR-6 (open, superseded): spec Amendment 2 defaults conflict with frozen tests, and miss the corpus gate
 
 Amendment 2 (approved) sets `R5=0.85`, `R4D=0.55` and moves `okhttp`, `Go-http-client`, `axios/`, `node-fetch`
 from the R5 deny list to a weak list. The frozen tests assert the revision-3 values, so the implementer did **not**
@@ -163,3 +187,5 @@ Frozen assertions that change once the defaults change (proposed new expectation
 | `corpus_test.go` `TestCorpus_AC18_DefaultConfig` | gate | >= 95% | fails at 91.0% (see above) |
 
 Also `contracts.md` §3.1 (revision 4) records the Amendment 2 table as approved but not yet the default.
+
+</details>
