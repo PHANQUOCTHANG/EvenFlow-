@@ -1,0 +1,97 @@
+{
+  "round": 2,
+  "date": "2026-11-21",
+  "scope": "incremental re-review of fix round 1 (git diff e999f3d..8486f82, testdata yaml excluded), correctness + security",
+  "verification": {
+    "validate_sh": "bash deploy/k8s/validate.sh -> RESULT pass=225 fail=0 skip=0, selftest 194/194, validate: OK (rc 0)",
+    "test_policy_sh": "bash deploy/k8s/policy/test_policy.sh -> RESULT pass=242 fail=0 skip=0, selftest 194/194 (rc 0)",
+    "real_renders": "local 77 objects OK, staging 57 objects OK (no false positive from the rev 3 checks)",
+    "fixtures": "git diff e999f3d HEAD --name-status -- deploy/k8s/policy/testdata: only A (added) files plus gen_fixtures.py (M, additions only)",
+    "challenger_driver": "mut.py rerun: M1, M2a-c, M3, M3l, M4, M5a-d, M6, M20, M22 now fail as intended; M10, M14, M15, M17, M21 still pass and are the deferred X-6/X-9/X-12 items",
+    "new_variants": {
+      "V1 same env name in init and main container": "OK, no false positive (separate containers, legal)",
+      "V2 redis://user:@cache (empty password)": "OK, not flagged (no secret present)",
+      "V3 args [--password, hunter2]": "NOT caught -> R2-1",
+      "V4 sh -c 'PGPASSWORD=hunter2 psql'": "NOT caught -> R2-1",
+      "V4b sh -c 'mysql --password=hunter2'": "caught (DSN pattern)",
+      "V5 CronJob with privileged root initContainer": "caught (privileged, rootUid, dropAll, ...)",
+      "V6 duplicate env via second valueFrom entry": "caught (AC-22 duplicate)",
+      "V7 envFrom.secretRef in staging": "caught (AC-18)",
+      "V8 dev-infra label only on pod template": "not an escape: object stays an app workload, app rules apply"
+    }
+  },
+  "findings": [
+    {
+      "id": "R2-1",
+      "severity": "minor",
+      "file": "deploy/k8s/policy/check_policy.py",
+      "line": 124,
+      "title": "AC-17 command/args scan misses a split flag (--password VALUE) and env-style assignments inside a shell string (PGPASSWORD=...)",
+      "evidence": "Staging render + gateway args [\"--password\", \"hunter2-real\"] -> policy: OK. Gateway command [\"sh\",\"-c\",\"PGPASSWORD=hunter2 psql -h db\"] -> policy: OK. ARG_SECRET_RE needs '=' in the same item and is anchored at ^; DSN_PASSWORD_RE uses \\bpassword= so PGPASSWORD= (no word boundary before 'password') does not match. The rev 3 contract line 32 says command/args are checked for credentials; these two common shapes pass.",
+      "fix": "In the command/args loop, also fail an item matching ^--?[a-z0-9_.-]*(password|passphrase|passwd|secret|token|api[_-]?key)[a-z0-9_.-]*$ when a next item exists (split flag), and drop the leading \\b from DSN_PASSWORD_RE (or use (?i)(password|passwd|pwd)=[^\\s&]) so FOOPASSWORD= inside shell strings matches. Add two bad fixtures via a TCR."
+    },
+    {
+      "id": "R2-2",
+      "severity": "minor",
+      "file": "deploy/k8s/policy/check_policy.py",
+      "line": 737,
+      "title": "AC-13 rejects USER 0 / 0:0 but accepts a root primary group (USER 1000:0)",
+      "evidence": "Only int(user.split(':')[0]) == 0 is tested. Rev 3 (X-7) treats root group as root at pod level (runAsGroup/fsGroup/supplementalGroups 0), so the image-level rule is inconsistent: a Dockerfile with USER 10001:0 passes.",
+      "fix": "Also fail when the gid part is present and equals 0 (or document gid 0 as allowed with a reason, e.g. OpenShift-style group-writable dirs)."
+    },
+    {
+      "id": "R2-3",
+      "severity": "minor",
+      "file": "docs/workflow/k8s-all/deferred.md",
+      "line": 1,
+      "title": "R-14 (and R-10 confirmation) are neither fixed nor listed as deferred",
+      "evidence": "deferred.md lists R-1, R-4, R-5, R-8, R-9, R-11, X-6, X-9, X-12, X-13; R-10 is recorded in tcr-applied.md as pending confirmation. R-14 (explicit human sign-off for NOT VERIFIED AC-30/AC-31 before merge) has no record anywhere in docs/workflow/k8s-all. R-13 is not reproducible: secrets.dev.env has a single DEV ONLY line and lines 1-4 / 6-9 differ (no action needed, but say so).",
+      "fix": "Add R-14 (and R-10) to the merge checklist / deferred.md as open merge preconditions so the sign-off is not lost; note R-13 as not reproducible."
+    },
+    {
+      "id": "R2-4",
+      "severity": "nit",
+      "file": ".github/scripts/gates.sh",
+      "line": 237,
+      "title": "C4.4 context guard is name-based and not pinned on later kubectl calls",
+      "evidence": "The guard reads current-context once; every later kubectl call (get/create namespace, delete job, apply --dry-run) re-resolves the current context, so a context switch mid-run (another terminal) would act on the new one. A context named kind-* that points at a remote cluster is trusted by name. When cluster-info succeeds but current-context is empty (in-cluster config), the else branch prints 'khong co cluster', which is safe but misleading.",
+      "fix": "Pass --context \"$K8S_CTX\" to every kubectl call in the C4.4 block (a small kc() wrapper); optionally also require the cluster server URL to be loopback/host.docker.internal for kind-*. Adjust the skip message for the empty-context case."
+    }
+  ],
+  "original_findings_status": {
+    "X-1": "fixed (AC-22 rejects duplicate env names per container; M2a-c and V6 fail)",
+    "R-2": "fixed (same as X-1)",
+    "X-2": "fixed (AC-32 rejects envFrom.configMapRef in staging; M22 fails; envFrom.secretRef still caught by AC-18)",
+    "X-3": "fixed (Pod, DaemonSet, ReplicaSet, ReplicationController, CronJob jobTemplate, init + ephemeral containers are workloads; M1 and V5 fail; AC-4/AC-6 skip CronJob like Job)",
+    "X-4": "fixed (AC-21 rejects any tier=dev-infra object or NetworkPolicy podSelector in staging; M6 fails)",
+    "R-6": "fixed (same as X-4)",
+    "X-5": "fixed with residual gap R2-1 (empty-user URL, DSN password=, binaryData, widened names, flag=value args covered)",
+    "R-7": "fixed with residual gap R2-1",
+    "X-7": "fixed (container-level runAsNonRoot/seccomp overrides, procMount, hostPort, shareProcessNamespace, root groups; M3, M3l, M20 fail)",
+    "X-8": "fixed (endPort rejected; M4 fails)",
+    "X-10": "fixed with residual gap R2-2 (any Dockerfile-like name, uid 0 rejected)",
+    "X-11": "fixed (C4.4 skips any context not docker-desktop/kind-*, before namespace create or job delete); hardening nit R2-4",
+    "R-3": "fixed (same as X-11)",
+    "R-12": "fixed (C4.4 renders with the pinned kustomize from validate.sh cache when present, falls back to kubectl -k with a logged notice; pipefail is set so a kustomize build failure fails the gate)",
+    "R-1": "deferred (separate gateway task; runbook section 9 + spec section 9 state staging must not take real users) - reasonable",
+    "R-4": "deferred - reasonable (matches approved matrix)",
+    "R-5": "deferred - reasonable (CI scope)",
+    "R-8": "deferred - reasonable (staging-apply precondition)",
+    "R-9": "deferred - reasonable (optional mode)",
+    "R-10": "open: tcr-applied.md records approval of TCR-WP5 as pending confirmation",
+    "R-11": "deferred - reasonable (local-only images)",
+    "R-13": "not reproducible (single DEV ONLY header; lines 1-4 and 6-9 differ) - close as no-op, record it",
+    "R-14": "open, not tracked (R2-3); merge precondition",
+    "X-6": "deferred - reasonable (needs new sub-rules; M14/M15 still pass)",
+    "X-9": "deferred - reasonable (no overlay uses those fields; M10/M17 still pass)",
+    "X-12": "deferred - reasonable (design work; M21 still passes)",
+    "X-13": "deferred - reasonable (web image change outside slice)"
+  },
+  "summary": {
+    "blocker": 0,
+    "major": 0,
+    "minor": 3,
+    "nit": 1,
+    "verdict": "All claimed round-1 fixes are real and not over-broad (no false positive on the local/staging renders; fixtures additions only). No blocker or major. Remaining minors are residual AC-17/AC-13 gaps and tracking of R-13/R-14/R-10."
+  }
+}
