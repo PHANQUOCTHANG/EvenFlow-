@@ -168,3 +168,65 @@ scoring of status/stream polls or hold/checkout requests, IP reputation/ASN feed
   - Q-3: R6 ships defined and tested but dormant; payment wiring later.
   - Q-4: CHALLENGE falls back to `pass` (configurable to `slow_lane`).
   - Q-5: tier boundaries are lower-inclusive (score ≥ 0.85 is BLOCK).
+
+## Amendment 1 (draft, needs human approval)
+
+Source: `plan-review.md` round 1 (FAIL). Sections 1-7 above stay as approved; where this section differs, it wins.
+
+New and changed decisions:
+- **D11 BLOCK needs a positive sign.** BLOCK is only reachable when at least one fired rule is a positive sign:
+  R1, R2, R4D, R6, R7, or R5 from a non-missing strong sign (UA deny, empty UA, `wd`). Otherwise the tier is capped
+  at SLOW_LANE (tag `CAPPED`). So missing signals alone (old cached bundle, direct link) cost a demotion, never a
+  ban (P-1).
+- **D12 Slot-aware decisions.** `observe.lua` also reads `HEXISTS wr:{ev}:tok identity`. If the identity already
+  holds a slot, only a block-eligible BLOCK (D11) changes it; anything else returns the existing slot unchanged
+  (BR-Q3) and the row gets tag `REJOIN`. R1-server records only joins made without a slot (P-1).
+- **D13 R4 split** into `R4D` (same device fp, weight 0.60) and `R4N` (same network prefix, weight 0.25: a
+  contributor, never a tier on its own). R4N is not evaluated for a prefix holding > 5% of the event's joins in the
+  window (one LB/NAT IP in front of everyone); that is counted in `antibot_net_suppressed_total` (P-6).
+- **D14 Discrete events only for rhythm and replay.** `iv` and `sq` use only pointerdown, keydown, touchstart and
+  the first scroll of a burst (sampled pointermove/scroll only feed the counts). `sq` needs >= 12 events and >= 4
+  distinct buckets and includes the `rt` bucket. R7 weight 0.50, so R7 alone is CHALLENGE (P-2).
+- **D15 Lenient decoding.** Each signal field is decoded on its own; a wrong type makes only that field absent;
+  finite numbers are rounded to the nearest integer. "Missing" means only: over-cap body, bad JSON, `signals` not an
+  object, or bad/absent `v` (P-8).
+- **D7 (reworded)** Config is validated at startup (AC-16); a runtime panic → PASS. Redis is a dedicated client
+  without retries; after 20 degraded calls in 1 s a breaker skips Redis for 3 s (reason `breaker_open`) (P-9, P-11).
+- **D6 (changed)** `revoke.lua` sets the 24 h block flag itself, in the same script; `join.lua` on the antibot
+  path refuses a new slot while the flag exists. The flag is ignored in `off`/`shadow` (P-12).
+- **D16 No auto-join without a snapshot.** If the waiting room has neither a queue token nor a signal snapshot
+  (new tab, direct link, restarted browser), it shows a "Join queue" button and collects signals on that page
+  instead of joining on mount. The 401 re-join keeps the stored snapshot (P-1).
+
+Changed acceptance criteria:
+- **AC-1** Snapshot is kept for re-joins (cleared only on leaving the event or checkout); without token and snapshot
+  the waiting room shows a join button (D16). Reason: P-1.
+- **AC-2** `iv`/`sq` from discrete events only, entropy floor for `sq` (D14). Reason: P-2.
+- **AC-3** Per-field lenient decoding; numbers rounded; shared web/Go fixture decodes identically (D15). Reason: P-8.
+- **AC-4** Rules are R1, R2, R3, R4D, R4N, R5, R5W, R6, R7. R4N prefix suppression (D13); `fc` is not evaluated
+  for a mobile UA (Android/iOS); only valid time zones are cached. Reason: P-6, P-18, P-21.
+- **AC-5** Adds a concurrent p99 (64 goroutines) < 5 ms and a load gate: `tests/load/opening-spike.js` against
+  develop vs this branch in `shadow`: join p99 +<= 5 ms, Redis CPU on the event shard +<= 50%. Reason: P-9.
+- **AC-7** Adds the breaker (D7). Reason: P-9.
+- **AC-8** Tier is computed from the rounded score; BLOCK eligibility cap (D11). Reason: P-1, P-21.
+- **AC-11** Shuffle places the slow lobby also when the main lobby is empty; post-T0 slow score
+  `1e12 + seq + P + m` (m = slow lobby size, stored at shuffle), so every pre-T0 slow member stays ahead of every
+  post-T0 slow joiner. Reason: P-5, P-13.
+- **AC-12** BLOCK is atomic with revoke + flag (D6); with an existing slot, missing signals alone never revoke
+  (D11, D12). Reason: P-1, P-12.
+- **AC-14** Non-UUID event or identity ids are stored as NULL; STICKY rows store score 1.000; tags add `REJOIN`,
+  `CAPPED`. Reason: P-14.
+- **AC-16** Adds k8s: `ANTIBOT_HASH_KEY` from Secret `eventflow-auth`, `ANTIBOT_MODE=shadow` in app config, both
+  overlays build and pass `deploy/k8s/policy`. Reason: P-3.
+- **AC-18 / AC-19** The synthetic corpus is a **regression check**, not proof of a low FP rate. Generator
+  parameters are fixed independently of the thresholds (sourced in `testdata/corpus/README.md`), humans sit on both
+  sides of every threshold, a separate set of 50-100 sessions recorded by the team with the real collector must
+  stay < 1% demoted, and a ±20% threshold sensitivity table is printed. The real FP gate is the shadow demotion
+  rate on real traffic (D8), required before enforce. Reason: P-7.
+- **AC-20 (new)** Enforce go/no-go: `ANTIBOT_HASH_KEY` exists in the Secret before apply; waitingroom and
+  waitingroom-controller run the same image (new Lua scripts); shadow demotion rate < 1% over a rehearsal on-sale.
+  Revoked slots are not restored by `off` or a revert (the buyer re-joins at the tail). Reason: P-3, P-5, P-19.
+
+Not adopted: **P-17** (key R4D on the session device id). `devices.id` is unique per (identity, fingerprint)
+(migrations/0001_core.sql:17-24), so two identities never share it and R4D could never fire. The body `fp` stays;
+a bot that rotates it is still seen by R4N and R1. A signed fp hash from identity is a follow-up.

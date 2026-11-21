@@ -1,112 +1,151 @@
-# Plan: antibot-phase1 (draft, step 2b)
+# Plan: antibot-phase1 (draft round 2, step 2b)
 
-Inputs: `spec.md` (D1-D10, AC-1..AC-19; draft, awaiting human approval; plan assumes the Q-1..Q-5 defaults),
-`contracts.md`. Base develop @ 918667c. No migration, no new module dependency. Tests are written first and must
-fail (red check) before any production code.
+Inputs: `spec.md` (D1-D10 and AC-1..AC-19 approved 2026-11-22; **Amendment 1** D11-D16, changed ACs and AC-20 await
+human approval), `contracts.md` revision 2, `plan-review.md` round 1. Base develop @ 918667c. No migration, no new
+module dependency. Tests are written first and must fail (red check) before production code. Section 8 maps every
+review finding to its resolution.
 
 ## 1. Work packages and order
 
 | WP | Scope | Depends on | Parallel |
 |---|---|---|---|
-| WP1 | `libs/go/antibot`: config, signal decoder, rules, score, `Evaluate` (pure) | — | with WP3 |
-| WP2 | `libs/go/antibot/redisstate` (`observe.lua`, `MarkBlocked`), `Guard.Decide` (budget, degraded, panic, metrics), decision sink | WP1 | — |
-| WP3 | Web collector + wiring (`apps/web`) | contracts 1 only | with WP1 |
-| WP4 | Waitingroom: Lua lane/revoke, handler mapping, main wiring, bot_decisions writer | WP2 | — |
-| WP5 | Corpus + bot script + benchmarks + alerts + docs note | WP1 (corpus), WP4 (integration) | — |
+| WP1 | `libs/go/antibot`: config, lenient decoder, rules, score, cap, `Evaluate` (pure), corpus package | — | with WP3 |
+| WP2 | `libs/go/antibot/redisstate` (`observe.lua`), `Guard.Decide` (decode under recover, budget, breaker, metrics), decision sink | WP1 | — |
+| WP3 | Web collector + wiring + waiting-room join button + golden signal fixtures | contracts 1 | with WP1 |
+| WP4 | Waitingroom: Lua (join/shuffle/status/revoke), `JoinLane`/`Revoke`, handler, `buildGuard`, writer, controller penalty | WP2 | — |
+| WP5 | Deploy (k8s + compose + policy), alerts, corpus tests, bot script, perf + load gate, docs note | WP1, WP4 | — |
 
 ## 2. Files
 
 | File | Change | AC |
 |---|---|---|
-| `libs/go/antibot/config.go` (new) | `Config`, `LoadConfig(getenv func(string) string) (Config, error)`; parses contracts 3; errors name the variable; dev hash key + `DevKey bool` | 16 |
-| `libs/go/antibot/signals.go` (new) | `Signals` (present flags), `DecodeSignals(raw json.RawMessage)`; strict types via `json.Decoder` on the `signals` value, per-field range checks, `InvalidReason` | 3 |
-| `libs/go/antibot/rules.go` (new) | rule table `[]rule{id, eval func(Config, Input, State) bool}` for R1, R2, R3, R4, R5/R5W, R6, R7; UA deny matcher (lower-cased once); tz check with `time.LoadLocation` cached in a bounded `sync.Map` (<= 600 zones) + `import _ "time/tzdata"` | 4 |
-| `libs/go/antibot/score.go` (new) | noisy-OR, 3-decimal rounding, tier from cut-offs (lower bound inclusive), `Applied` from mode + fallback | 8, 10, 13 |
-| `libs/go/antibot/privacy.go` (new) | `FPHash` = hex(HMAC-SHA256(key, fp))[:32]; `NetPrefix(addr)` = /24 or /64 after `Unmap()` | 15 |
-| `libs/go/antibot/guard.go` (new) | `Guard.Decide`: decode already done by caller; `context.WithTimeout(ANTIBOT_REDIS_TIMEOUT_MS)` around `Observe`; error → `State{Known:false}` + `DEGRADED` tag; `recover()` → PASS + panic metric; `MarkBlocked` only when applied BLOCK and not sticky; hands the decision to `Sink` (non-blocking) | 5, 7, 12, 14 |
-| `libs/go/antibot/metrics.go` (new) | Prometheus collectors of contracts 6, registered on a given `Registerer` | 17 |
-| `libs/go/antibot/redisstate/store.go` + `observe.lua` (new) | one `EVALSHA` per decision (contracts 4); keys built with `{ev}` hash tag | 6 |
-| `services/waitingroom/internal/adapter/redis/script/join.lua` | lane + penalty args; idempotency also checks `lobby_slow` | 9, 11 |
-| `services/waitingroom/internal/adapter/redis/script/shuffle.lua` | slow-lobby shuffle after the main lottery | 11 |
-| `services/waitingroom/internal/adapter/redis/script/status.lua` | `lobby_slow` → `LOBBY` | 11 |
-| `services/waitingroom/internal/adapter/redis/script/revoke.lua` (new) + `queue.go` | `Queue.Join(..., lane Lane)`, `Queue.Revoke(ctx, ev, identity) (bool, error)`; keys list gains `lobby_slow` | 11, 12 |
-| `services/waitingroom/internal/adapter/http/handler.go` | `BotGuard` → `Decide`; `MaxBytesReader` 4 KiB on join body; decode `signals` once; build `antibot.Input` (UA, XFF first element, principal); map `Applied` per contracts 2; `ProblemRequestDenied`; `QueueStore.Join` gains `lane` | 3, 9-13 |
-| `services/waitingroom/internal/adapter/postgres/bot_decisions.go` (new) | `DecisionWriter` (channel 10 000, flush 200 ms / 500 rows, `CopyFrom`, shutdown flush 2 s, drop counter) using the pool from `NewAuditorFromEnv`'s `DATABASE_URL` | 14 |
-| `services/waitingroom/cmd/server/main.go` | `antibot.LoadConfig(os.Getenv)`; mode `off` → guard `nil`; else dedicated redis client (contracts 4) + store + writer + guard; startup log `antibot_mode` | 13, 16 |
-| `apps/web/src/lib/antibot-signals.ts` (new) | `startSignalCollector(eventId)` (passive listeners, sampling, caps, ring buffer, FNV-1a), `snapshotSignals(eventId)` (records the click first, probes WebGL/fonts once, writes `ef:ab:{eventId}`), `readSignals(eventId)` (returns `{v:1}` when absent/corrupt), `clearSignals` | 1, 2 |
-| `apps/web/src/components/event/event-action-panel.tsx` | start collector on mount; `snapshotSignals` at the top of `handleAction` (before jitter) | 1 |
-| `apps/web/src/components/queue/waiting-room.tsx` | `joinQueue(eventId, readSignals(eventId), ...)`; `clearSignals` beside `clearQueueToken` | 1 |
-| `deploy/observability/alerts.yml`, `alerts_test.yml` | 3 alerts (contracts 6) | 17 |
-| `deploy/compose/docker-compose.yml` | waitingroom env `ANTIBOT_MODE: shadow` (comment: enforce only after shadow review) | 13 |
-| `docs/02-kien-truc.md` | one line under the service table: antibot runs in-process in waitingroom (D1) | — |
+| `libs/go/antibot/config.go` | `LoadConfig(getenv)`; partial `ANTIBOT_WEIGHTS`/`ANTIBOT_RULES` merge with defaults; integer checks for counts; errors name the variable | 16 |
+| `libs/go/antibot/signals.go` | `DecodeSignals(json.RawMessage)`: `map[string]json.RawMessage` over known keys, per-field decode, number rounding, `InvalidReason` only for the four whole-payload cases | 3 |
+| `libs/go/antibot/rules.go` | rule table R1, R2, R3, R4D, R4N (skipped when `NetSuppressed`), R5/R5W (strong kinds tagged missing vs real; `fc` skipped for mobile UA), R6, R7; tz cache stores valid zones only | 4 |
+| `libs/go/antibot/score.go` | noisy-OR; round to 3 decimals; tier from rounded score; D11 cap (`CAPPED`); D12 (`REJOIN`); sticky; mode + fallback → `Applied` | 8, 10, 12, 13 |
+| `libs/go/antibot/privacy.go` | `FPHash`, `NetPrefix` | 15 |
+| `libs/go/antibot/guard.go` | `Decide`: one `recover()` around decode + observe + evaluate; `context.WithTimeout`; breaker (N degraded in window → skip `Observe`, reason `breaker_open`); non-blocking sink with sampling (seedable RNG) | 5, 7, 14 |
+| `libs/go/antibot/metrics.go` | collectors of contracts 6 | 17 |
+| `libs/go/antibot/redisstate/{store.go,observe.lua}` | one `EVALSHA`; client options of contracts 4 (`NewClient(addr, cfg)`) | 6 |
+| `libs/go/antibot/corpus/` (new, **not internal**, P-20) | deterministic generator + jsonl loader; `go run ./antibot/corpus/cmd/gen` writes `testdata/corpus/*.jsonl` | 18 |
+| `services/waitingroom/internal/adapter/redis/script/{join,shuffle,status}.lua`, new `revoke.lua` | contracts 4 (optional lane args, `BLOCKED`, slow lobby in both shuffle branches, `slow_lottery_size`, revoke sets flag) | 11, 12 |
+| `services/waitingroom/internal/adapter/redis/queue.go` | `Join` unchanged; new `JoinLane`, `Revoke`; `FencedQueue.Shuffle` passes penalty | 11, 12 |
+| `services/waitingroom/internal/adapter/http/handler.go` | `BotGuard.Decide`; `MaxBytesReader` 4 KiB; raw `signals` + `BodyErr` into `Input`; `LaneStore` by type assertion; mapping of contracts 2; `ProblemRequestDenied` | 3, 9-13 |
+| `services/waitingroom/internal/adapter/postgres/{pool.go,bot_decisions.go}` (new) | `NewPoolFromEnv`; writer of contracts 5 (simple protocol, multi-row INSERT, NULL for non-UUID, panic recovery) | 14 |
+| `services/waitingroom/cmd/server/{main.go,guard.go}` | `buildGuard(cfg, rdbAddr, pool, log) (httpadapter.BotGuard, func())`, untyped nil for `off`; `main.go`'s `store` adapter gains `JoinLane`/`Revoke` | 13, 16 |
+| `services/waitingroom/cmd/controller/main.go` | read `ANTIBOT_SLOW_LANE_PENALTY` for `shuffle.lua` | 11 |
+| `apps/web/src/lib/antibot-signals.ts` (new) | collector: discrete-event `iv`/`sq` (D14), sampled counts, caps, FNV-1a with `rtb`, entropy floor, `Math.round` on all numbers; `snapshotSignals`, `readSignals` (`null` when absent), `clearSignals` | 1, 2 |
+| `apps/web/src/components/event/event-action-panel.tsx` | start collector; snapshot at the top of `handleAction` | 1 |
+| `apps/web/src/components/queue/waiting-room.tsx` | with token: as today. Without token **and** with snapshot: auto-join with it. Without both: render a join button (collector on this page), join on click. The 401 re-join keeps the snapshot. `clearSignals` only on leave/checkout/sold-out | 1 |
+| deploy files of contracts 7 | k8s base + overlays + policy + compose | 16, 20 |
+| `deploy/observability/alerts.yml`; `alerts_test.yml` (append only) | 4 alerts | 17 |
+| `docs/02-kien-truc.md` | one line: antibot runs in-process in waitingroom (D1) | — |
 
-Frozen (byte-identical): existing waitingroom tests (`handler_test.go`, Lua/queue tests, ops tests), existing web
-tests for `queue-client`, `waiting-room`, `event-action-panel`, `device`. If an existing test constructs
-`httpadapter.New(store, nil, log)` or calls `QueueStore.Join` with the old signature, the adapter keeps a
-compatibility wrapper rather than editing the frozen test (to be confirmed at red check; otherwise a test change
-request).
+Frozen (byte-identical): every existing waitingroom test (`handler_test.go`, `test/queuetoken`, `test/soldout`,
+`test/opsapi`, ops and Lua tests), `audit.go`'s `NewAuditorFromEnv` and `audit_test.go`, existing web tests for
+`queue-client`, `waiting-room`, `event-action-panel`, `device`, and existing `alerts_test.yml` cases. They compile
+unchanged because the 4-argument `Join` and `New(store, nil, log)` stay. If an existing `waiting-room` test asserts
+the auto-join on mount with no snapshot, D16 needs a test change request (checked at red check; listed in
+`red-check.md`).
 
 ## 3. Tests (written first)
 
 | File | Kind | Covers |
 |---|---|---|
-| `libs/go/antibot/config_test.go` | table: defaults, each invalid env value names its variable, prod without key fails, dev key warning flag | 16 |
-| `libs/go/antibot/signals_test.go` | table: valid payload, each field at/over range, wrong types, unknown fields, `v` != 1, `{}`, `{"v":1}`, 4 KiB + 1; `FuzzDecodeSignals` (no panic, invalid ⇒ missing) | 3 |
-| `libs/go/antibot/rules_test.go` | per rule: at threshold, just below, just above, input absent; R5 strong vs 2-weak vs 1-weak; R6 with `CardIdentities=-1` never fires | 4 |
-| `libs/go/antibot/score_test.go` | noisy-OR values incl. the contracts 3 expected outcomes, boundary 0.30/0.60/0.85 inclusive, mode × fallback matrix for `Applied` | 8, 10, 13 |
-| `libs/go/antibot/privacy_test.go` | HMAC length/stability, different key ⇒ different hash, /24 and /64 prefixes, mapped IPv6 | 15 |
-| `libs/go/antibot/guard_test.go` | fake store: timeout ⇒ DEGRADED + stateless rules only; error ⇒ same; store panics ⇒ PASS + panic metric; sticky ⇒ BLOCK `{STICKY}` without rule eval; shadow never calls `MarkBlocked`; sink full ⇒ dropped counter, `Decide` does not block | 7, 12, 13, 14 |
-| `libs/go/antibot/engine_bench_test.go` | `BenchmarkEvaluate` + `TestEvaluateP99` (10 000 runs, sorted durations, p99 < 0.2 ms; skipped under `-race`) | 5 |
-| `libs/go/antibot/redisstate/store_integration_test.go` | testcontainers Redis (`libs/go/testx`): counts distinct identities, window expiry, caps (64 members, 9 gaps), TTLs set, one round trip (`MONITOR`-free: wrap client with a hook counting commands = 1), `TestDecideP99` 10 000 `Decide` calls p99 < 5 ms | 5, 6 |
-| `libs/go/antibot/corpus_test.go` + `testdata/corpus/{bots,humans}.jsonl` | replay corpus through `Evaluate` with an in-memory `State` emulator that mirrors `observe.lua` (same windows and caps); asserts AC-18 thresholds; prints confusion table per family and per rule | 18 |
-| `libs/go/antibot/internal/corpusgen` (new, `go run`) | deterministic generator (fixed seed) that writes the two jsonl files; committed output; test fails if regenerated output differs | 18 |
-| `services/waitingroom/internal/adapter/redis/lane_integration_test.go` | slow lane after T0 = +P; before T0 `LOBBY`, post-shuffle behind lottery and first P; idempotent re-join per lane; chi-square fairness within each lane (1 000 runs, p > 0.01); `lottery_size` unchanged; revoke removes from every set ⇒ status `UNKNOWN`; revoke of absent identity = 0 | 11, 12 |
-| `services/waitingroom/internal/adapter/http/antibot_handler_test.go` | fake guard per `Applied`: PASS byte-identical to develop response; SLOW_LANE same field set and state; BLOCK 403 type + revoke called + no token; body > 4 KiB still joins (signals missing); guard nil (`off`) = develop | 3, 9-13 |
-| `services/waitingroom/internal/adapter/postgres/bot_decisions_integration_test.go` | testcontainers Postgres with `migrations/`: row columns per contracts 5, prefix INET, `ALLOW` mapping, no raw fp/IP in any column, batch flush, shutdown flush | 14, 15 |
-| `services/waitingroom/test/antibot_bot_test.go` | AC-19: handler + real Redis + real guard in `enforce`; runs the bot script families (below) and the human replay through HTTP; asserts >= 95% / < 1% | 19 |
-| `apps/web/src/lib/antibot-signals.test.ts` | vitest + jsdom: counts, sampling, caps (32 intervals, 10 000), `sq` only with >= 6 events, click recorded first, snapshot <= 2 KiB, no key values stored, corrupt storage ⇒ `{v:1}`, passive listeners, removal on unmount | 1, 2 |
-| `apps/web/src/components/queue/waiting-room.antibot.test.tsx`, `event-action-panel.antibot.test.tsx` | join sends stored signals (also on re-join); click writes the snapshot before jitter | 1 |
-| `deploy/observability/alerts_test.yml` | promtool unit tests for the 3 alerts | 17 |
+| `antibot/config_test.go` | defaults; partial merge; each invalid value names its variable; float in a count key rejected; prod without key fails | 16 |
+| `antibot/signals_test.go` | per-field leniency (wrong type → only that field absent; `123.4` → 123); the four missing reasons; `{"v":1}` = empty not missing; decodes every `testdata/signals/*.json` golden file to its expected struct; `FuzzDecodeSignals` | 3 |
+| `antibot/rules_test.go` | each rule at / below / above threshold / absent; R4N suppressed; R5 missing vs real strong; `fc` skipped for Android/iOS UA; invalid tz not cached; R6 dormant | 4 |
+| `antibot/score_test.go` | every row of contracts 3 "Default outcomes"; boundaries on the rounded score; D11 cap; D12 `REJOIN`; sticky score 1.000; mode × fallback | 8, 10, 12, 13 |
+| `antibot/privacy_test.go` | HMAC length/stability, prefixes, mapped IPv6 | 15 |
+| `antibot/guard_test.go` | fake store: timeout / error → DEGRADED; breaker opens after N, closes after open window; decode panic and store panic → PASS + `panic`; shadow never revokes; sink full → dropped, no block; sample rate with seeded RNG; every BLOCK has rules or `STICKY`; slog output of a decision has no raw fp/UA/IP | 7, 14, 15 |
+| `antibot/metrics_test.go` | all metric names present in `prometheus.DefaultGatherer` after one decision | 17 |
+| `antibot/engine_bench_test.go` | `TestEvaluateP99` (10 000 runs, p99 < 0.2 ms, skipped under `-race`) | 5 |
+| `antibot/redisstate/store_integration_test.go` | testcontainers Redis: counts, windows, caps, TTLs, `hasSlot`, sticky early return, share/suppression, command count = 1 (go-redis hook), keys contain no raw fp or full IP; `TestDecideP99` sequential and with 64 goroutines (p99 < 5 ms each); delay injection via an in-test TCP proxy (`net.Listen` + delayed `io.Copy`, no new dependency): 20 ms delay → DEGRADED within 6 ms, no reconnect storm (dial count bounded by pool size) | 5, 6, 7, 15 |
+| `antibot/corpus_test.go` + `testdata/corpus/` | see 3.1; prints per-family, per-rule and ±20% sensitivity tables | 18 |
+| `waitingroom/.../redis/lane_integration_test.go` | +P after T0; pre-T0 `LOBBY`; slow lobby placed with **empty** main lobby; every pre-T0 slow member ahead of every post-T0 slow joiner (`+m`); idempotent re-join and token equality per lane across T0; chi-square fairness per lane; `lottery_size` unchanged; 4-arg `Join` ignores the flag; `JoinLane` refuses while flag set; revoke removes all sets + sets flag TTL 86400 ⇒ status `UNKNOWN` | 11, 12 |
+| `waitingroom/.../http/antibot_handler_test.go` | PASS byte-identical; SLOW_LANE same shape; BLOCK 403 + revoke; `BLOCKED` from `JoinLane` → 403; store without `LaneStore` falls back; body > 4 KiB still joins; **existing slot + `{v:1}` → 200 same token (REJOIN), no revoke**; **401 re-join path with kept snapshot** | 1, 3, 9-12 |
+| `waitingroom/cmd/server/guard_test.go` | `buildGuard` for `off` returns an interface equal to nil | 13 |
+| `waitingroom/.../postgres/bot_decisions_integration_test.go` | columns, INET prefix, `ALLOW`, non-UUID → NULL, simple-protocol path, batch + shutdown flush, failed batch counted, panic recovered | 14, 15 |
+| `waitingroom/test/antibot_bot_test.go` + `test/botsim` | AC-19: handler + real Redis + real guard in `enforce`; bot families and recorded human sessions over HTTP; botsim reads `libs/go/antibot/testdata/corpus/*.jsonl` by relative path | 19 |
+| `apps/web/src/lib/antibot-signals.test.ts` | 3 s steady mousemove (`iv` has no pointermove, `sq` not emitted or high-entropy), mobile tap sequence, counts/caps, entropy floor, click recorded first, all numbers integers, <= 2 KiB, no key values; writes the golden files | 1, 2 |
+| `waiting-room.antibot.test.tsx`, `event-action-panel.antibot.test.tsx` | snapshot used on join and on the 401 re-join; no snapshot + no token → join button, no request on mount; click snapshot before jitter | 1 |
+| `deploy/k8s` checks | `deploy/k8s/validate.sh`, `policy/test_policy.sh`, and `kustomize build overlays/{local,staging} \| grep -c ANTIBOT_HASH_KEY` >= 1 | 16, 20 |
+| `alerts_test.yml` (appended cases) | promtool tests for the 4 alerts | 17 |
 
-### Corpus and bot script (AC-18, AC-19)
+### 3.1 Corpus (AC-18, P-7): a regression check, not FP evidence
 
-Bot families (>= 200 sessions each): **B1** raw HTTP, no signals, `python-requests` UA; **B2** headless default
-(`wd` true, `HeadlessChrome` UA, `rt` 20-80 ms, no pointer moves, only the click); **B3** stealth with forged
-human-looking counts but fixed rhythm (`iv` CV < 0.03, `rt` constant 60-100 ms); **B4** account farm: 40 identities
-over 8 fp values and one /24, random human-looking signals; **B5** replay: one recorded human sequence replayed on
-50 identities (same `sq`). Humans (>= 5 000): log-normal `rt` (median 1.8 s, p0.1 >= 150 ms), jittered intervals,
-pointer/touch/keyboard-only users, 3% privacy browsers (`gl` false, `fc` 1-2), 2% travellers (`tz`/`tzo` mismatch
-alone), campus groups of 25 identities on one /24, households of 2-3 identities sharing an fp, 1% fast clickers
-(`rt` 80-119 ms). The bot script is `services/waitingroom/test/botsim` (Go helper used by the test, no network
-outside the test), so CI needs no browser. Limits stated in the report: synthetic humans, non-adversarial bots.
+`testdata/corpus/README.md` fixes the human parameters **before** looking at thresholds, each with a source
+(published UX timing studies for click/reaction latency, Vietnamese mobile-share and CGNAT practice, browser
+defaults). Populations sit on **both** sides of each threshold: `rt` including 50-200 ms tails, steady mouse,
+mobile taps, keyboard-only, privacy browsers (`gl` false, few fonts), Android low font count, travellers, CGNAT
+groups of 200-2000 identities per /24, a single-LB-IP scenario (everyone on one IP), households of 2-5 sharing an
+fp, multi-tab and other-device re-joins (existing slot + no snapshot). Bots: B1 raw HTTP, B2 headless default, B3
+fixed-rhythm stealth, B4 account farm, B5 replay (small proxy pool and distinct networks, reported separately).
+`humans_recorded.jsonl`: 50-100 sessions recorded by the team with the real collector (dev build, several
+browsers/phones), own assertion < 1% demoted. The report states the limits; the real FP gate is the shadow
+demotion rate on real traffic (AC-20).
 
 ## 4. Gates
 
-- Go: `go vet`, `gofmt -l` empty, `go test -race ./...` in `libs/go` and `services/waitingroom`; integration tests
-  (testcontainers) as in earlier tasks; `go test -run=^$ -fuzz=FuzzDecodeSignals -fuzztime=30s ./antibot`;
-  `go mod tidy` diff empty in both modules (no new dependency).
-- Perf: `TestEvaluateP99`, `TestDecideP99` run without `-race` in a dedicated step.
-- Web: `npm run lint`, `npm run typecheck`, `npx vitest run`.
+- Go: `go vet`, `gofmt -l` empty, `go test -race ./...` in `libs/go` and `services/waitingroom`; integration tests;
+  `-fuzz=FuzzDecodeSignals -fuzztime=30s`; `go mod tidy` diff empty in both modules.
+- Perf: `TestEvaluateP99`, `TestDecideP99` (sequential + concurrent) without `-race`.
+- **Load (P-9)**: `tests/load/opening-spike.js` against a compose stack on develop and on this branch with
+  `ANTIBOT_MODE=shadow` (same machine, same seed): join p99 delta <= +5 ms; Redis CPU (`INFO cpu` delta) <= +50%;
+  recorded in `evidence.md`.
+- Web: lint, typecheck, `npx vitest run`.
+- Deploy: `deploy/k8s/validate.sh`, `policy/test_policy.sh`, the `kustomize build | grep ANTIBOT_HASH_KEY` check.
 - Observability: `promtool check rules` + `promtool test rules`.
-- Repo gate script `docs/workflow/antibot-phase1/full-gate.sh` modelled on `gateway-trusted-proxy/full-gate.sh`.
+- `docs/workflow/antibot-phase1/full-gate.sh` runs all of the above except the load gate.
 
-## 5. Mutation test (threshold 10/10)
+## 5. Mutation test (threshold 13/13)
 
-(1) noisy-OR → sum. (2) tier cut-off `>=` → `>`. (3) R2 `<` → `<=` threshold. (4) R5 weak count `>= 2` → `>= 1`.
-(5) R4 counts the caller twice / skips it. (6) shadow applies the tier. (7) degraded path refuses the join.
-(8) `join.lua` drops the penalty. (9) `revoke.lua` skips `admitted`. (10) `FPHash` returns the raw fp. Each must fail
-at least one test.
+(1) noisy-OR → sum. (2) tier `>=` → `>`. (3) R2 `<` → `<=`. (4) R5W `>= 2` → `>= 1`. (5) R4D counts the caller
+twice. (6) shadow applies the tier. (7) degraded refuses the join. (8) `join.lua` drops the penalty. (9) `revoke.lua`
+skips `admitted`. (10) `FPHash` returns the raw fp. (11) **missing signals on re-join revokes** (drop D12).
+(12) drop the D11 cap. (13) `shuffle.lua` returns before the slow lobby when n == 0.
 
 ## 6. Risks
 
-See spec 6. Plan-specific: go-redis ignores context deadlines unless `ContextTimeoutEnabled` (hence a dedicated
-client, asserted by `TestDecideP99` with an injected 20 ms Redis delay ⇒ DEGRADED within 6 ms); `time/tzdata` adds
-~450 KB to the binary (accepted); jsdom cannot measure fonts/WebGL, so the web tests stub the probes.
+See spec 6. Plan-specific: go-redis needs `ContextTimeoutEnabled` and `MaxRetries: -1` (asserted by the proxy
+delay test); `time/tzdata` adds ~450 KB; jsdom cannot measure fonts/WebGL (probes stubbed); observe.lua adds
+~12-16 commands on the event's shard (load gate).
 
-## 7. Rollback
+## 7. Rollout and rollback
 
-Runtime: `ANTIBOT_MODE=off` (guard not wired; join path identical to develop; the slow-lane Lua paths are inert
-because lane is always `n` and `lobby_slow` stays empty). `shadow` is the default, so a merge alone never denies a
-buyer. Code: one PR, merge commit, `git revert -m 1 <merge>`; no schema change; leftover `ab:*` keys expire within
-24 h, `wr:{ev}:lobby_slow` expires with the session TTL. Check after revert: waitingroom `go test -race ./...` green,
-web vitest green, `bot_decisions` rows remain (harmless, append-only).
+Rollout (AC-20): (1) create `ANTIBOT_HASH_KEY` in Secret `eventflow-auth` (staging) **before** applying; (2) deploy
+web + waitingroom + waitingroom-controller from one image tag, mode `shadow`; (3) one rehearsal on-sale in shadow,
+review `antibot_decisions_total`, `capped`, `net_suppressed` and `bot_decisions`; (4) enforce only if the shadow
+demotion rate < 1% and both deployments run the new scripts (a controller on old `shuffle.lua` would strand the slow
+lobby).
+
+Rollback: `ANTIBOT_MODE=off` (guard not wired; 4-arg `Join` ignores the flag; lane always `n`). Code: one PR, merge
+commit, `git revert -m 1 <merge>`; no schema change; `ab:*` keys expire within 24 h. **Limit (P-19):** slots revoked
+under enforce are not restored by `off` or a revert; such a buyer re-joins at the tail. This goes into the enforce
+go/no-go note. Check after revert: waitingroom `go test -race ./...` and web vitest green.
+
+## 8. Round 2 changes (plan-review.md round 1: FAIL, 3 blockers, 6 majors, 12 minors)
+
+| Finding | Resolution |
+|---|---|
+| P-1 blocker: re-join without snapshot → BLOCK + revoke + sticky | D11 (BLOCK needs a positive sign; missing-only capped at SLOW_LANE), D12 (`observe.lua` returns `hasSlot`; existing slot + non-BLOCK → existing slot, `REJOIN`), D16 (snapshot kept on re-join; no auto-join without snapshot → join button); R1-server ignores slot-holding joins; handler + web tests; mutation 11, 12 |
+| P-2 blocker: sampled pointermove → R1 + R7 = BLOCK | D14: `iv`/`sq` from discrete events only; `sq` needs >= 12 events and >= 4 buckets and includes `rtb`; R7 weight 0.50; R1+R7 now 0.75 (SLOW_LANE, and rare); web tests for steady mouse and mobile tap; corpus populations |
+| P-3 blocker: staging crash loop without `ANTIBOT_HASH_KEY` | contracts 7: Secret key in `eventflow-auth` (base deployment, local secrets + replacement, staging header), `ANTIBOT_MODE=shadow` app config, policy update; gate `kustomize build \| grep`; rollout step 1 |
+| P-4 major: signature changes break frozen tests | 4-arg `Join` kept; `JoinLane`/`Revoke` via optional `LaneStore`; `join.lua` lane args optional |
+| P-5 major: empty main lobby strands slow lobby | `shuffle.lua` handles `lobby_slow` in both branches; test with empty main lobby; mutation 13; rollout requires controller on new scripts |
+| P-6 major: R4-network alone → SLOW_LANE under CGNAT | D13: `R4D` 0.60 / `R4N` 0.25; R4N suppressed for a prefix > 5% of joins (min 1000 joins); metric + alert; CGNAT and single-LB corpus scenarios |
+| P-7 major: corpus self-fulfilling | 3.1: parameters sourced independently, both sides of thresholds, recorded human sessions with own assertion, ±20% sensitivity, AC-18 restated as regression check; real gate = shadow on real traffic (AC-20) |
+| P-8 major: one wrong type invalidates the payload | D15 per-field lenient decode, rounding; missing only for the 4 whole-payload cases; golden fixtures shared web ↔ Go; web rounds all numbers |
+| P-9 major: no system perf gate, reconnect storm | client `MaxRetries -1`, `PoolSize 128`, `MinIdleConns 32`, `DialTimeout 50ms`; breaker; concurrent p99; TCP-proxy delay test; opening-spike shadow vs develop load gate |
+| P-10 minor: decode outside recover, signature mismatch | `Input.RawSignals`; decode inside `Decide` under the same `recover()`; one signature in both docs |
+| P-11 minor: D7 vs AC-16 | D7 reworded in Amendment 1 |
+| P-12 minor: BLOCK/sticky not atomic | `revoke.lua` sets the flag; `join.lua` (lane path) refuses while set; `MarkBlocked` removed |
+| P-13 minor: slow lane interleave | post-T0 slow score `+ m` (`slow_lottery_size`); test. Edge accepted: between T0 and the shuffle m = 0 (seconds) |
+| P-14 minor: writer details | non-UUID → NULL + counter; simple protocol multi-row INSERT for PgBouncer; `NewPoolFromEnv` (audit untouched, own 2 conns); panic recovery; STICKY score 1.000 |
+| P-15 minor: typed nil | `buildGuard` + test |
+| P-16 minor: test gaps | sticky via real `observe.lua`; sample rate; BLOCK rows non-empty; Redis keys and slog privacy; metrics gathered; TCP-proxy delay; per-lane token equality across T0; `alerts_test.yml` append only |
+| P-17 minor: key R4D on session device id | **Not adopted**: `devices.id` is unique per (identity, fingerprint) (0001_core.sql:17-24), so it never repeats across identities and R4D could not fire. Body `fp` stays; rotation is still seen by R4N/R1; signed fp hash from identity is a follow-up |
+| P-18 minor: Android fonts | `fc` not evaluated for mobile UAs; Android profile in corpus |
+| P-19 minor: rollback limits | stated in 7 and AC-20 |
+| P-20 minor: `internal/corpusgen` not importable | non-internal `libs/go/antibot/corpus`; botsim reads jsonl by path |
+| P-21 minor: config/scoring edges | tier from rounded score; partial lists merge; only valid tz cached; integer validation |
