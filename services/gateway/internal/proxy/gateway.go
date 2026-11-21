@@ -214,6 +214,9 @@ type forwardedClientKey struct{}
 // newReverseProxy chuyen tiep toi target. Rewrite (khac Director) tu xoa X-Forwarded-* do
 // client gui truoc khi gan lai, nen client khong gia duoc IP qua header. Khi IP client lay tu
 // X-Forwarded-For cua proxy tin cay, upstream nhan dung mot phan tu la IP do.
+// clientIPHeaders la cac header mang IP client ma gateway khong dat; client gui thi bi xoa.
+var clientIPHeaders = []string{"Forwarded", "X-Real-IP", "True-Client-IP", "X-Original-Forwarded-For", "CF-Connecting-IP"}
+
 func newReverseProxy(target *url.URL, log *slog.Logger) *httputil.ReverseProxy {
 	transport := http.DefaultTransport.(*http.Transport).Clone()
 	transport.MaxIdleConnsPerHost = 256
@@ -222,6 +225,11 @@ func newReverseProxy(target *url.URL, log *slog.Logger) *httputil.ReverseProxy {
 	return &httputil.ReverseProxy{
 		Rewrite: func(pr *httputil.ProxyRequest) {
 			pr.SetURL(target)
+			// Rewrite da bo Forwarded/X-Forwarded-*; cac header IP client khac cung do client gui,
+			// xoa de upstream khong bao gio doc phai IP gia mao (chi tin X-Forwarded-For).
+			for _, h := range clientIPHeaders {
+				pr.Out.Header.Del(h)
+			}
 			pr.SetXForwarded()
 			if ip, ok := pr.In.Context().Value(forwardedClientKey{}).(string); ok {
 				pr.Out.Header.Set("X-Forwarded-For", ip)
