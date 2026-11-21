@@ -1,0 +1,50 @@
+?   	github.com/eventflow/eventflow/services/gateway/cmd/server	[no test files]
+=== RUN   TestResolve_Round1_StrictElementForms
+--- PASS: TestResolve_Round1_StrictElementForms (0.00s)
+=== RUN   TestResolve_Round1_LeadingTab
+--- PASS: TestResolve_Round1_LeadingTab (0.00s)
+=== RUN   TestResolve
+=== RUN   TestResolve/AC1_trust_off_ipv4_peer
+=== RUN   TestResolve/AC1_trust_off_peer_would_be_trusted
+=== RUN   TestResolve/AC1_trust_off_mapped_peer
+=== RUN   TestResolve/AC1_trust_off_zoned_peer
+=== RUN   TestResolve/AC1_trust_off_garbage_peer
+=== RUN   TestResolve/AC1_trust_off_empty_RemoteAddr
+=== RUN   TestResolve/AC1_trust_empty_slice
+--- PASS: TestResolve (0.00s)
+    --- PASS: TestResolve/AC1_trust_off_ipv4_peer (0.00s)
+    --- PASS: TestResolve/AC1_trust_off_peer_would_be_trusted (0.00s)
+    --- PASS: TestResolve/AC1_trust_off_mapped_peer (0.00s)
+    --- PASS: TestResolve/AC1_trust_off_zoned_peer (0.00s)
+    --- PASS: TestResolve/AC1_trust_off_garbage_peer (0.00s)
+    --- PASS: TestResolve/AC1_trust_off_empty_RemoteAddr (0.00s)
+    --- PASS: TestResolve/AC1_trust_empty_slice (0.00s)
+=== RUN   TestResolve_ForgedPrefixNeverChangesResult
+--- PASS: TestResolve_ForgedPrefixNeverChangesResult (0.00s)
+=== RUN   TestPeerKeyMatchesDevelop
+--- PASS: TestPeerKeyMatchesDevelop (0.00s)
+PASS
+ok  	github.com/eventflow/eventflow/services/gateway/internal/clientip	0.975s
+testing: warning: no tests to run
+PASS
+ok  	github.com/eventflow/eventflow/services/gateway/internal/config	0.604s [no tests to run]
+=== RUN   TestGateway_XoaDanhTinhGiaMaoTrenMoiRoute
+--- PASS: TestGateway_XoaDanhTinhGiaMaoTrenMoiRoute (0.02s)
+=== RUN   TestTrustedProxy_AC1_TrustOffIgnoresForwardingHeaders
+=== RUN   TestTrustedProxy_AC1_TrustOffIgnoresForwardingHeaders/203.0.113.9:4000
+=== RUN   TestTrustedProxy_AC1_TrustOffIgnoresForwardingHeaders/10.1.2.3:4000
+=== RUN   TestTrustedProxy_AC1_TrustOffIgnoresForwardingHeaders/[::ffff:10.1.2.3]:4000
+=== RUN   TestTrustedProxy_AC1_TrustOffIgnoresForwardingHeaders/[fe80::1%eth0]:51234
+=== RUN   TestTrustedProxy_AC1_TrustOffIgnoresForwardingHeaders/garbage
+--- PASS: TestTrustedProxy_AC1_TrustOffIgnoresForwardingHeaders (0.09s)
+    --- PASS: TestTrustedProxy_AC1_TrustOffIgnoresForwardingHeaders/203.0.113.9:4000 (0.02s)
+    --- PASS: TestTrustedProxy_AC1_TrustOffIgnoresForwardingHeaders/10.1.2.3:4000 (0.02s)
+    --- PASS: TestTrustedProxy_AC1_TrustOffIgnoresForwardingHeaders/[::ffff:10.1.2.3]:4000 (0.02s)
+    --- PASS: TestTrustedProxy_AC1_TrustOffIgnoresForwardingHeaders/[fe80::1%eth0]:51234 (0.02s)
+    --- PASS: TestTrustedProxy_AC1_TrustOffIgnoresForwardingHeaders/garbage (0.02s)
+PASS
+ok  	github.com/eventflow/eventflow/services/gateway/internal/proxy	0.408s
+testing: warning: no tests to run
+PASS
+ok  	github.com/eventflow/eventflow/services/gateway/internal/ratelimit	0.372s [no tests to run]
+ac1exit=0

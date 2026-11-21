@@ -1,0 +1,7 @@
+c5fb598 Merge pull request #96 from PHANQUOCTHANG/feature/frontend-debt-r4
+build=ok
+?   	github.com/eventflow/eventflow/services/gateway/cmd/server	[no test files]
+ok  	github.com/eventflow/eventflow/services/gateway/internal/config	1.857s
+ok  	github.com/eventflow/eventflow/services/gateway/internal/proxy	1.481s
+ok  	github.com/eventflow/eventflow/services/gateway/internal/ratelimit	1.435s
+testexit=0
