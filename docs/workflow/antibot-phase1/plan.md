@@ -1,7 +1,7 @@
-# Plan: antibot-phase1 (draft round 2, step 2b)
+# Plan: antibot-phase1 (draft round 3, step 2b)
 
-Inputs: `spec.md` (D1-D10 and AC-1..AC-19 approved 2026-11-22; **Amendment 1** D11-D16, changed ACs and AC-20 await
-human approval), `contracts.md` revision 2, `plan-review.md` round 1. Base develop @ 918667c. No migration, no new
+Inputs: `spec.md` (D1-D10 and AC-1..AC-19 approved 2026-11-22; **Amendment 1** D11-D15, changed ACs and AC-20 approved
+2026-11-22; D16 join button withdrawn by the human), `contracts.md` revision 3, `plan-review.md` rounds 1-2. Base develop @ 918667c. No migration, no new
 module dependency. Tests are written first and must fail (red check) before production code. Section 8 maps every
 review finding to its resolution.
 
@@ -11,7 +11,7 @@ review finding to its resolution.
 |---|---|---|---|
 | WP1 | `libs/go/antibot`: config, lenient decoder, rules, score, cap, `Evaluate` (pure), corpus package | — | with WP3 |
 | WP2 | `libs/go/antibot/redisstate` (`observe.lua`), `Guard.Decide` (decode under recover, budget, breaker, metrics), decision sink | WP1 | — |
-| WP3 | Web collector + wiring + waiting-room join button + golden signal fixtures | contracts 1 | with WP1 |
+| WP3 | Web collector + wiring + golden signal fixtures (no join button, R3) | contracts 1 | with WP1 |
 | WP4 | Waitingroom: Lua (join/shuffle/status/revoke), `JoinLane`/`Revoke`, handler, `buildGuard`, writer, controller penalty | WP2 | — |
 | WP5 | Deploy (k8s + compose + policy), alerts, corpus tests, bot script, perf + load gate, docs note | WP1, WP4 | — |
 
@@ -36,7 +36,7 @@ review finding to its resolution.
 | `services/waitingroom/cmd/controller/main.go` | read `ANTIBOT_SLOW_LANE_PENALTY` for `shuffle.lua` | 11 |
 | `apps/web/src/lib/antibot-signals.ts` (new) | collector: discrete-event `iv`/`sq` (D14), sampled counts, caps, FNV-1a with `rtb`, entropy floor, `Math.round` on all numbers; `snapshotSignals`, `readSignals` (`null` when absent), `clearSignals` | 1, 2 |
 | `apps/web/src/components/event/event-action-panel.tsx` | start collector; snapshot at the top of `handleAction` | 1 |
-| `apps/web/src/components/queue/waiting-room.tsx` | with token: as today. Without token **and** with snapshot: auto-join with it. Without both: render a join button (collector on this page), join on click. The 401 re-join keeps the snapshot. `clearSignals` only on leave/checkout/sold-out | 1 |
+| `apps/web/src/components/queue/waiting-room.tsx` | **(R3)** auto-join on mount as today; `joinQueue(eventId, readSignals(eventId) ?? {v: 1}, ...)`; the 401 re-join keeps the snapshot; `clearSignals` only on leave/checkout/sold-out. No button | 1 |
 | deploy files of contracts 7 | k8s base + overlays + policy + compose | 16, 20 |
 | `deploy/observability/alerts.yml`; `alerts_test.yml` (append only) | 4 alerts | 17 |
 | `docs/02-kien-truc.md` | one line: antibot runs in-process in waitingroom (D1) | — |
@@ -45,8 +45,9 @@ Frozen (byte-identical): every existing waitingroom test (`handler_test.go`, `te
 `test/opsapi`, ops and Lua tests), `audit.go`'s `NewAuditorFromEnv` and `audit_test.go`, existing web tests for
 `queue-client`, `waiting-room`, `event-action-panel`, `device`, and existing `alerts_test.yml` cases. They compile
 unchanged because the 4-argument `Join` and `New(store, nil, log)` stay. If an existing `waiting-room` test asserts
-the auto-join on mount with no snapshot, D16 needs a test change request (checked at red check; listed in
-`red-check.md`).
+the auto-join on mount with no snapshot ... **(R3)** moot: D16 is withdrawn, auto-join stays, so the 5 frozen tests
+(`waiting-room.test.tsx:44`, `:189`, `waiting-room.wp2.test.tsx:47`, `:58`, `:65`) stay unchanged and need no web
+test change request. The only TCR is the approved k8s one (contracts 7, N-5).
 
 ## 3. Tests (written first)
 
@@ -60,7 +61,7 @@ the auto-join on mount with no snapshot, D16 needs a test change request (checke
 | `antibot/guard_test.go` | fake store: timeout / error → DEGRADED; breaker opens after N, closes after open window; decode panic and store panic → PASS + `panic`; shadow never revokes; sink full → dropped, no block; sample rate with seeded RNG; every BLOCK has rules or `STICKY`; slog output of a decision has no raw fp/UA/IP | 7, 14, 15 |
 | `antibot/metrics_test.go` | all metric names present in `prometheus.DefaultGatherer` after one decision | 17 |
 | `antibot/engine_bench_test.go` | `TestEvaluateP99` (10 000 runs, p99 < 0.2 ms, skipped under `-race`) | 5 |
-| `antibot/redisstate/store_integration_test.go` | testcontainers Redis: counts, windows, caps, TTLs, `hasSlot`, sticky early return, share/suppression, command count = 1 (go-redis hook), keys contain no raw fp or full IP; `TestDecideP99` sequential and with 64 goroutines (p99 < 5 ms each); delay injection via an in-test TCP proxy (`net.Listen` + delayed `io.Copy`, no new dependency): 20 ms delay → DEGRADED within 6 ms, no reconnect storm (dial count bounded by pool size) | 5, 6, 7, 15 |
+| `antibot/redisstate/store_integration_test.go` | testcontainers Redis: counts, windows, caps, TTLs, `hasSlot`, sticky early return, **(R3, N-2)** `TestNetShareSuppression`: 20 000 joins in the window, 2000 from one /24 (10%) → `NetSuppressed`; 500 from one /24 (2.5%) → not suppressed; < 1000 event joins → never suppressed (batch-loaded via a pipeline of `observe.lua` calls), command count = 1 (go-redis hook), keys contain no raw fp or full IP; `TestDecideP99` sequential and with 64 goroutines (p99 < 5 ms each); delay injection via an in-test TCP proxy (`net.Listen` + delayed `io.Copy`, no new dependency): 20 ms delay → DEGRADED within 6 ms, no reconnect storm (dial count bounded by pool size) | 5, 6, 7, 15 |
 | `antibot/corpus_test.go` + `testdata/corpus/` | see 3.1; prints per-family, per-rule and ±20% sensitivity tables | 18 |
 | `waitingroom/.../redis/lane_integration_test.go` | +P after T0; pre-T0 `LOBBY`; slow lobby placed with **empty** main lobby; every pre-T0 slow member ahead of every post-T0 slow joiner (`+m`); idempotent re-join and token equality per lane across T0; chi-square fairness per lane; `lottery_size` unchanged; 4-arg `Join` ignores the flag; `JoinLane` refuses while flag set; revoke removes all sets + sets flag TTL 86400 ⇒ status `UNKNOWN` | 11, 12 |
 | `waitingroom/.../http/antibot_handler_test.go` | PASS byte-identical; SLOW_LANE same shape; BLOCK 403 + revoke; `BLOCKED` from `JoinLane` → 403; store without `LaneStore` falls back; body > 4 KiB still joins; **existing slot + `{v:1}` → 200 same token (REJOIN), no revoke**; **401 re-join path with kept snapshot** | 1, 3, 9-12 |
@@ -68,7 +69,7 @@ the auto-join on mount with no snapshot, D16 needs a test change request (checke
 | `waitingroom/.../postgres/bot_decisions_integration_test.go` | columns, INET prefix, `ALLOW`, non-UUID → NULL, simple-protocol path, batch + shutdown flush, failed batch counted, panic recovered | 14, 15 |
 | `waitingroom/test/antibot_bot_test.go` + `test/botsim` | AC-19: handler + real Redis + real guard in `enforce`; bot families and recorded human sessions over HTTP; botsim reads `libs/go/antibot/testdata/corpus/*.jsonl` by relative path | 19 |
 | `apps/web/src/lib/antibot-signals.test.ts` | 3 s steady mousemove (`iv` has no pointermove, `sq` not emitted or high-entropy), mobile tap sequence, counts/caps, entropy floor, click recorded first, all numbers integers, <= 2 KiB, no key values; writes the golden files | 1, 2 |
-| `waiting-room.antibot.test.tsx`, `event-action-panel.antibot.test.tsx` | snapshot used on join and on the 401 re-join; no snapshot + no token → join button, no request on mount; click snapshot before jitter | 1 |
+| `waiting-room.antibot.test.tsx`, `event-action-panel.antibot.test.tsx` | snapshot used on join and on the 401 re-join; **(R3)** no snapshot → auto-join on mount with `signals: {v: 1}`; click snapshot before jitter | 1 |
 | `deploy/k8s` checks | `deploy/k8s/validate.sh`, `policy/test_policy.sh`, and `kustomize build overlays/{local,staging} \| grep -c ANTIBOT_HASH_KEY` >= 1 | 16, 20 |
 | `alerts_test.yml` (appended cases) | promtool tests for the 4 alerts | 17 |
 
@@ -77,7 +78,7 @@ the auto-join on mount with no snapshot, D16 needs a test change request (checke
 `testdata/corpus/README.md` fixes the human parameters **before** looking at thresholds, each with a source
 (published UX timing studies for click/reaction latency, Vietnamese mobile-share and CGNAT practice, browser
 defaults). Populations sit on **both** sides of each threshold: `rt` including 50-200 ms tails, steady mouse,
-mobile taps, keyboard-only, privacy browsers (`gl` false, few fonts), Android low font count, travellers, CGNAT
+mobile taps, keyboard-only, privacy browsers (`gl` false, few fonts), Android low font count, held-key auto-repeat, travellers, CGNAT
 groups of 200-2000 identities per /24, a single-LB-IP scenario (everyone on one IP), households of 2-5 sharing an
 fp, multi-tab and other-device re-joins (existing slot + no snapshot). Bots: B1 raw HTTP, B2 headless default, B3
 fixed-rhythm stealth, B4 account farm, B5 replay (small proxy pool and distinct networks, reported separately).
@@ -93,8 +94,11 @@ demotion rate on real traffic (AC-20).
 - **Load (P-9)**: `tests/load/opening-spike.js` against a compose stack on develop and on this branch with
   `ANTIBOT_MODE=shadow` (same machine, same seed): join p99 delta <= +5 ms; Redis CPU (`INFO cpu` delta) <= +50%;
   recorded in `evidence.md`.
+  **(R3, N-7)** This is a worst case: k6 sends `{"signals":{}}`, so every join is missing (0.88, CAPPED) and is
+  persisted (100% of joins in `bot_decisions` vs ~1-5% for real traffic). Noted as such in `evidence.md`.
 - Web: lint, typecheck, `npx vitest run`.
-- Deploy: `deploy/k8s/validate.sh`, `policy/test_policy.sh`, the `kustomize build | grep ANTIBOT_HASH_KEY` check.
+- Deploy: `deploy/k8s/validate.sh`, `policy/test_policy.sh`, `policy/testdata/gen_fixtures.py --check`, the
+  `kustomize build | grep ANTIBOT_HASH_KEY` check.
 - Observability: `promtool check rules` + `promtool test rules`.
 - `docs/workflow/antibot-phase1/full-gate.sh` runs all of the above except the load gate.
 
@@ -116,7 +120,8 @@ delay test); `time/tzdata` adds ~450 KB; jsdom cannot measure fonts/WebGL (probe
 Rollout (AC-20): (1) create `ANTIBOT_HASH_KEY` in Secret `eventflow-auth` (staging) **before** applying; (2) deploy
 web + waitingroom + waitingroom-controller from one image tag, mode `shadow`; (3) one rehearsal on-sale in shadow,
 review `antibot_decisions_total`, `capped`, `net_suppressed` and `bot_decisions`; (4) enforce only if the shadow
-demotion rate < 1% and both deployments run the new scripts (a controller on old `shuffle.lua` would strand the slow
+demotion rate < 1% **(R3, N-4) measured over joins whose signals decode valid** (missing-payload joins, i.e. k6,
+`demo.sh` and old bundles, are excluded and their share reported separately; load-test windows are excluded) and both deployments run the new scripts (a controller on old `shuffle.lua` would strand the slow
 lobby).
 
 Rollback: `ANTIBOT_MODE=off` (guard not wired; 4-arg `Join` ignores the flag; lane always `n`). Code: one PR, merge
@@ -149,3 +154,16 @@ go/no-go note. Check after revert: waitingroom `go test -race ./...` and web vit
 | P-19 minor: rollback limits | stated in 7 and AC-20 |
 | P-20 minor: `internal/corpusgen` not importable | non-internal `libs/go/antibot/corpus`; botsim reads jsonl by path |
 | P-21 minor: config/scoring edges | tier from rounded score; partial lists merge; only valid tz cached; integer validation |
+
+## 9. Round 3 changes (plan-review.md round 2: FAIL, N-2 major + N-1, N-3..N-7 minor; human revision of Amendment 1)
+
+| Finding | Resolution |
+|---|---|
+| N-2 major: R4N suppression can never trigger (64-member ZSET vs joins) | contracts 4: per-prefix join buckets `ab:{ev}:nj:{prefix}:{minute}` (`INCR`, TTL 360 s, same slot); share = prefix joins / event joins over the same 5 buckets (same unit); `net` ZSET only for the distinct count. `TestNetShareSuppression`: 2000/20 000 suppressed, 500/20 000 not, < 1000 joins never. Self-suppression of a > 5% farm accepted (contracts 4) |
+| N-1 minor: D16 button breaks 5 frozen web tests | Human withdrew D16: no button, auto-join kept, `{v:1}` sent without a snapshot. Button work removed from WP3, files and tests; the 5 tests stay frozen; no web TCR |
+| N-3 minor: `{v:1}` now passes | Trade-off recorded in contracts 1 (and by the human in spec); worked examples added to contracts 3 (0.40 CHALLENGE → pass; `REJOIN` with a slot) |
+| N-4 minor: AC-20 polluted by synthetic traffic | Rollout step 4: demotion rate over valid-decode joins only, load windows excluded, missing share reported separately |
+| N-5 minor: frozen k8s policy contract and generated fixtures | contracts 7 lists policy-contract §8 row (TCR approved), `check_policy.py` lines 86 and 116, `rules.md`, `gen_fixtures.py` + regenerated good fixtures with every bad fixture still tripping its own rule; gate adds `gen_fixtures.py --check` |
+| N-6 minor: R3 absent counts vs spec 3 | contracts 1: R3 fires when `pe`, `se`, `ke` are each absent or 0 (the missing-input exception); all other rules with absent input are not evaluated; `score_test` asserts it |
+| N-7 minor: load gate is a worst case | Noted in gate 4 and to be stated in `evidence.md` |
+| P-2 residual: keydown auto-repeat fires R1 (0.50 alone) | Accepted (CHALLENGE → pass); held-key population added to the corpus (3.1) |

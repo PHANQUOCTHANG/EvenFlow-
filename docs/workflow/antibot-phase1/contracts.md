@@ -1,6 +1,7 @@
 # Contracts (frozen once spec.md is approved) — antibot-phase1
 
-Source: develop @ 918667c. Revision 2 follows plan-review round 1 and spec Amendment 1 (marked **(R2)**). Any
+Source: develop @ 918667c. Revision 2 follows plan-review round 1 and spec Amendment 1 (marked **(R2)**); revision 3
+follows plan-review round 2 and the human's revision of Amendment 1 (marked **(R3)**). Any
 change after approval goes through a change request in this folder.
 
 ## 1. Signal payload v1 (client → `POST /v1/events/{id}/queue/join`, body `{"signals": {...}}`)
@@ -13,12 +14,14 @@ each field is decoded on its own. A wrong type or out-of-range value makes **onl
 any finite JSON number is rounded to the nearest integer before the range check (`123.4` → 123). Unknown keys are
 ignored. The payload is **missing** only when: body over cap (`too_large`), invalid JSON (`bad_json`), `signals`
 absent or not an object (`missing`), `v` absent or != 1 (`bad_version`). Missing fires R3 and R5 (missing kind).
-`{"v":1}` with nothing else is valid but empty: R3 fires (no counts), R5 does not (no strong sign).
+`{"v":1}` with nothing else is valid but empty: R3 fires, R5 does not (no strong sign). **(R3, N-6)** R3 is the one
+rule where absent inputs count: it fires when `pe`, `se` and `ke` are each absent or 0 (this is the "missing input"
+exception of spec 3). Every other rule with an absent input is not evaluated.
 
 | Field | Type | Range / cap | Meaning |
 |---|---|---|---|
 | `v` | int | `1` | schema version |
-| `rt` | int | 0..600000 | ms from first render of the page that holds the join button to the join click |
+| `rt` | int | 0..600000 | ms from first render of the event page to the join click |
 | `pe` | int | 0..10000 | pointer events: pointerdown, touchstart, pointermove sampled <= 1 per 100 ms; includes the join click |
 | `se` | int | 0..10000 | scroll events (sampled <= 1 per 100 ms) |
 | `ke` | int | 0..10000 | keydown count (no key values) |
@@ -33,10 +36,12 @@ absent or not an object (`missing`), `v` absent or != 1 (`bad_version`). Missing
 | `tz` | string | `^[A-Za-z_+\-/0-9]{1,64}$` | IANA zone from `Intl` |
 | `tzo` | int | -840..840 | `-new Date().getTimezoneOffset()` |
 
-Web storage **(R2, D16)**: sessionStorage `ef:ab:{eventId}`, written at the join click (event page, or the
-waiting-room join button), read for join **and every re-join**, removed only when the buyer leaves the event
-(checkout success, sold-out screen, explicit leave). The waiting room never auto-joins without a snapshot: it shows
-a join button and runs the collector on its own page. Shared fixtures: `libs/go/antibot/testdata/signals/*.json`
+Web storage **(R3: D16 withdrawn)**: sessionStorage `ef:ab:{eventId}`, written at the join click on the event page,
+read for join **and every re-join**, removed only when the buyer leaves the event (checkout success, sold-out
+screen, explicit leave). The waiting room keeps auto-joining on mount (develop behaviour); when `readSignals`
+returns `null` it sends `{"signals":{"v":1}}` (valid but empty: R3 only, 0.40, CHALLENGE → pass; or `REJOIN` when a
+slot exists). **Trade-off (N-3):** any client that sends `{"v":1}` with a browser UA passes, and adding `"pe":1`
+scores 0; forged signals are out of scope (Q-1), server-side R1, R4D, R4N, R5-UA, R7 and sticky remain. Shared fixtures: `libs/go/antibot/testdata/signals/*.json`
 are golden files produced by the web collector test and decoded by the Go test.
 
 Server-side inputs: `identity_id`, `device_id` (principal), `User-Agent` (first 512 bytes), client IP = first
@@ -64,7 +69,7 @@ type State struct {
     JoinGapsMs     []int64 // R1-server (only joins made without a slot)
     FPIdentities   int     // R4D, includes caller
     NetIdentities  int     // R4N
-    NetSuppressed  bool    // R2: prefix > R4N_SHARE of the event's joins in the window
+    NetSuppressed  bool    // R3: prefix joins / event joins over the last 5 minute buckets > R4N_SHARE
     SeqIdentities  int     // R7
     CardIdentities int     // R6, -1 = unknown (always in phase 1)
     HasSlot        bool    // R2: HEXISTS wr:{ev}:tok identity
@@ -143,6 +148,8 @@ Default outcomes **(R2, re-checked; each row asserted in `score_test.go`)**:
 | Raw HTTP, `python-requests` UA | R3, R5 | 0.880 | BLOCK |
 | Headless default (automation click, `wd` true, `rt` < 120) | R2, R5 | 0.880 | BLOCK |
 | Stealth, fixed rhythm | R1, R2 | 0.700 | SLOW_LANE |
+| `{"v":1}`, browser UA, new join (no snapshot) **(R3)** | R3 | 0.400 | CHALLENGE → pass |
+| `{"v":1}`, identity already holds a slot **(R3)** | R3 | 0.400 | CHALLENGE; applied PASS `REJOIN` |
 | Account farm (shared fp + shared /24) | R4D, R4N | 0.700 | SLOW_LANE |
 | Shared fp only | R4D | 0.600 | SLOW_LANE |
 | Replay from a small proxy pool | R7, R4N | 0.625 | SLOW_LANE |
@@ -168,13 +175,20 @@ Antibot client **(R2, P-9)**: own `redis.Client`, same `REDIS_ADDR`; `ReadTimeou
 | `ab:{ev}:jt:{identity}` | LIST join ms | `LPUSH` + `LTRIM 0 8`, only when no slot | 9 items, TTL 300 s |
 | `ab:{ev}:fp:{fphash}` | ZSET identity → ms | `ZADD`, `ZREMRANGEBYSCORE`; `ZREMRANGEBYRANK` only when `ZCARD` > 64 | TTL 2 × R4 window |
 | `ab:{ev}:net:{prefix}` | ZSET identity → ms | same | same |
-| `ab:{ev}:jc:{minute}` **(R2)** | STRING join count | `INCR`; share = netCount / sum of the last 5 buckets | TTL 360 s |
+| `ab:{ev}:jc:{minute}` **(R2)** | STRING event join count | `INCR` per join | TTL 360 s |
+| `ab:{ev}:nj:{prefix}:{minute}` **(R3, N-2)** | STRING prefix join count | `INCR` per join with a known IP | TTL 360 s |
 | `ab:{ev}:sq:{sq}` | ZSET identity → ms | same as fp | TTL 2 × R7 window |
 | `ab:{ev}:blk:{identity}` | STRING `1` | **(R2)** set only by `revoke.lua` | `EX 86400` |
 
+Share **(R3, N-2)**: `share = Σ nj(prefix, last 5 minutes) / Σ jc(last 5 minutes)`, both in joins (same unit);
+`NetSuppressed` when `Σ jc >= R4N_SHARE_MIN_JOINS` and `share > R4N_SHARE`. The `net` ZSET is used only for the
+distinct-identity count (R4N_MAX), so its 64-member cap no longer bounds the share. A farm holding > 5% of an
+event's joins from one /24 also suppresses R4N for itself; accepted (R4D, R1 remain; R4N is 0.25).
+
 `observe.lua` (R2): reads `HEXISTS wr:{ev}:tok identity` and `EXISTS ab:{ev}:blk:{identity}` (returns early when
 sticky); skips absent inputs; returns `{hasSlot, sticky, fpCount, netCount, netShareMilli, seqCount, gaps...}`.
-About 12-16 commands per call.
+About 15-19 commands per call (R3 adds one `INCR` on the prefix bucket and two `MGET`s over the 5 prefix and 5 event
+buckets).
 
 Waitingroom scripts:
 
@@ -229,7 +243,10 @@ No `event`/`identity` labels. Alerts (new cases only appended to the existing `a
 | `deploy/k8s/overlays/{local,staging}/app-config.env` | `ANTIBOT_MODE=shadow`, `ANTIBOT_SLOW_LANE_PENALTY=100000` |
 | `deploy/k8s/overlays/local/secrets.dev.env` + `kustomization.yaml` | `ANTIBOT_HASH_KEY` dev value (base64 of 32 bytes containing "dev") + a replacement into `eventflow-auth` |
 | `deploy/k8s/overlays/staging/kustomization.yaml` | header comment: `eventflow-auth JWT_SECRET, QUEUE_TOKEN_SECRET, ANTIBOT_HASH_KEY` |
-| `deploy/k8s/policy/check_policy.py` (+ testdata if needed) | waitingroom expects `ANTIBOT_HASH_KEY` from `eventflow-auth`; the `eventflow-auth` key set gains it |
+| `docs/workflow/k8s-all/policy-contract.md` §8 **(R3, N-5, TCR approved)** | waitingroom row gains `ANTIBOT_HASH_KEY` (`eventflow-auth`); `eventflow-auth` key set gains it. Additions only |
+| `deploy/k8s/policy/check_policy.py` **(R3)** | line 86 `waitingroom` map gains `"ANTIBOT_HASH_KEY": ("eventflow-auth", "ANTIBOT_HASH_KEY")`; line 116 `eventflow-auth` set gains `ANTIBOT_HASH_KEY`. Existing checks unchanged |
+| `deploy/k8s/policy/rules.md` **(R3)** | same additions in the secret table |
+| `deploy/k8s/policy/testdata/gen_fixtures.py` + regenerated `good-local.yaml`, `good-staging.yaml` **(R3)** | regenerate; `gen_fixtures.py --check` clean; every `bad/*.yaml` still trips exactly its own rule. No `ANTIBOT_*` key is on the AC-32 forbidden list |
 | `deploy/compose/docker-compose.yml` | waitingroom `ANTIBOT_MODE: shadow`; waitingroom + controller `ANTIBOT_SLOW_LANE_PENALTY` |
 
 ## 8. Test-facing names and semantics (R2, answers to the test designer)
@@ -258,4 +275,4 @@ No `event`/`identity` labels. Alerts (new cases only appended to the existing `a
 | `(*Queue).JoinLane` | `(ctx, eventID, identityID, newToken string, lane domain.Lane, penalty int64) (JoinResult, error)` |
 | `(*Queue).Revoke` | `(ctx, eventID, identityID string) (bool, error)` |
 | `httpadapter.LaneStore` | optional interface with `JoinLane` (returning `httpadapter.JoinResult`) and `Revoke` |
-| web `src/lib/antibot-signals.ts` | `startSignalCollector(eventId): () => void` (cleanup), `snapshotSignals(eventId)`, `readSignals(eventId)` (`null` when absent or corrupt), `clearSignals(eventId)`; key `ef:ab:{eventId}` |
+| web `src/lib/antibot-signals.ts` | `startSignalCollector(eventId): () => void` (cleanup), `snapshotSignals(eventId)`, `readSignals(eventId)` (`null` when absent or corrupt; the waiting room then sends `{v:1}`), `clearSignals(eventId)`; key `ef:ab:{eventId}` |
