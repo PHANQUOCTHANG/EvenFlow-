@@ -33,3 +33,31 @@ Proposed change (keeps the intent: a/b/c expired, z inside, y new): observe `y` 
 
 The implementation follows the contract (900 s window, entries older than `now - window` removed) and is not
 changed to fit the test.
+
+## TCR-2: `TestAC19_BotScriptAndHumanReplay` sends non-UUID identity / device ids, so every join is 401
+
+File: `services/waitingroom/test/antibot/antibot_bot_test.go` (frozen at 36aab08), `(*env).join`, with ids from
+`libs/go/antibot/corpus/corpus.go` (`g.id`: `hum-000001`, `bdev-000002`, ...).
+
+`authx.PrincipalFromHeaders` rejects an `X-Identity-Id` or `X-Device-Id` that is not a UUID (`uuidRe`), and the join
+handler then answers 401 before antibot runs. The test's first join fails with
+`join status 401: {"detail":"can dang nhap truoc khi xep hang",...}`. `TestAC12_StickyEndToEnd` and
+`TestAC3_InvalidSignalsCountedEndToEnd` already use UUIDs and pass.
+
+Evidence: run against an in-memory Redis with Lua (miniredis, scratch copy of the module, not committed). With
+one change in the scratch copy only (the header values mapped to a deterministic UUID per corpus id), the test
+passes: bots caught 958/1000 (95.8%), humans demoted 5/5000 (0.10%), the same as the pure-engine corpus test.
+
+Proposed change (test side, corpus untouched):
+
+```diff
+-	req.Header.Set(authx.HeaderIdentityID, s.IdentityID)
++	req.Header.Set(authx.HeaderIdentityID, asUUID(s.IdentityID))
+ 	...
+-	req.Header.Set(authx.HeaderDeviceID, s.DeviceID)
++	req.Header.Set(authx.HeaderDeviceID, asUUID(s.DeviceID))
+```
+
+with a helper that maps each corpus id to a distinct, stable UUID (for example the hex of its bytes, left-padded to
+32 digits and formatted 8-4-4-4-12 with version 4 / variant 8), returning ids that already are UUIDs unchanged.
+Alternative: make `corpus.(*gen).id` emit UUID-shaped ids (changes `corpus.go`, also frozen).
