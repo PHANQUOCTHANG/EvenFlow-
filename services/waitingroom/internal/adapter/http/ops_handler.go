@@ -7,8 +7,10 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"reflect"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/eventflow/eventflow/libs/go/authx"
@@ -174,9 +176,14 @@ type clearBody struct {
 	Reason *string `json:"reason"`
 }
 
-// decodeStrict doc JSON <= 4 KiB, cam truong la va du lieu thua phia sau.
+// decodeStrict doc JSON <= 4 KiB, cam truong la, du lieu thua phia sau, khoa trung lap va khoa sai hoa/thuong
+// (encoding/json mac dinh lay khoa cuoi va so khop khong phan biet hoa thuong, X2-4).
 func decodeStrict(w http.ResponseWriter, r *http.Request, dst any) bool {
-	dec := json.NewDecoder(http.MaxBytesReader(w, r.Body, maxOverrideBody))
+	raw, err := io.ReadAll(http.MaxBytesReader(w, r.Body, maxOverrideBody))
+	if err != nil || !exactKeys(raw, jsonFieldNames(dst)) {
+		return false
+	}
+	dec := json.NewDecoder(bytes.NewReader(raw))
 	dec.DisallowUnknownFields()
 	if err := dec.Decode(dst); err != nil {
 		return false
@@ -185,6 +192,44 @@ func decodeStrict(w http.ResponseWriter, r *http.Request, dst any) bool {
 		return false
 	}
 	return true
+}
+
+// jsonFieldNames: ten khoa json cua struct ma dst tro toi.
+func jsonFieldNames(dst any) map[string]bool {
+	t := reflect.TypeOf(dst)
+	for t.Kind() == reflect.Pointer {
+		t = t.Elem()
+	}
+	names := map[string]bool{}
+	for i := 0; i < t.NumField(); i++ {
+		if name, _, _ := strings.Cut(t.Field(i).Tag.Get("json"), ","); name != "" && name != "-" {
+			names[name] = true
+		}
+	}
+	return names
+}
+
+// exactKeys: body la mot object, moi khoa cap tren cung xuat hien mot lan va trung dung ten trong allowed.
+func exactKeys(raw []byte, allowed map[string]bool) bool {
+	dec := json.NewDecoder(bytes.NewReader(raw))
+	if tok, err := dec.Token(); err != nil || tok != json.Delim('{') {
+		return false
+	}
+	seen := map[string]bool{}
+	for dec.More() {
+		tok, err := dec.Token()
+		key, isKey := tok.(string)
+		if err != nil || !isKey || !allowed[key] || seen[key] {
+			return false
+		}
+		seen[key] = true
+		var skip json.RawMessage
+		if err := dec.Decode(&skip); err != nil {
+			return false
+		}
+	}
+	tok, err := dec.Token()
+	return err == nil && tok == json.Delim('}')
 }
 
 // parseRate chi nhan literal so nguyen JSON dang thuan: chi chu so, khong dau, khong dau thap phan, khong mu
@@ -255,10 +300,21 @@ func writeInvalidOverride(w http.ResponseWriter) {
 		"rate_per_sec phai la so nguyen 0..10000 va reason dai 3..200 ky tu")
 }
 
+// writeInvalidReason neu ro nguyen nhan reason bi tu choi (ky tu dieu khien, bidi, do dai), X2-5.
+func writeInvalidReason(w http.ResponseWriter, err error) {
+	for _, cause := range []error{app.ErrReasonControl, app.ErrReasonBidi, app.ErrReasonLength} {
+		if errors.Is(err, cause) {
+			httpx.WriteProblemType(w, http.StatusBadRequest, ProblemInvalidOverride, cause.Error())
+			return
+		}
+	}
+	writeInvalidOverride(w)
+}
+
 func (h *OpsHandler) writeResult(w http.ResponseWriter, eventID string, res app.OverrideResult, err error) {
 	switch {
 	case errors.Is(err, app.ErrInvalidOverride):
-		writeInvalidOverride(w)
+		writeInvalidReason(w, err)
 	case errors.Is(err, app.ErrAuditUnavailable):
 		httpx.WriteProblemType(w, http.StatusServiceUnavailable, ProblemAuditUnavailable,
 			"chua cau hinh kho nhat ky kiem toan, khong the ghi de")
