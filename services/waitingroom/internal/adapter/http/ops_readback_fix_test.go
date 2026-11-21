@@ -18,7 +18,7 @@ type raceStore struct{ fakeOverrideStore }
 
 func (r *raceStore) SetRateOverride(ctx context.Context, ev string, rate float64) error {
 	_ = r.fakeOverrideStore.SetRateOverride(ctx, ev, rate)
-	return r.fakeOverrideStore.ClearRateOverride(ctx, ev)
+	return r.ClearRateOverride(ctx, ev)
 }
 
 // X-3: the PUT response reports the stored state read back, even when it was cleared concurrently.
