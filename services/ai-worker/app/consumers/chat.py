@@ -7,7 +7,7 @@ loi tron ven ma khong can lop sau.
   L2 FAQ          -> 0 token, ~40% cau hoi
   L3 cache        -> 0 token, ~45% phan con lai
   L4 singleflight -> gop cac cau y het dang cho
-  L6 limiter      -> xin phep truoc khi cham Gemini
+  L6 limiter      -> xin phep truoc khi cham LLM
   L7 suy bien     -> luon con duong lui, khach khong bao gio thay loi
 """
 
@@ -73,7 +73,7 @@ class ChatConsumer:
     async def handle(self, raw: bytes) -> str | None:
         """Xu ly mot job. Tra ve "expired" khi bo job qua han, None khi da tra loi.
 
-        Nem Retry khi can thu lai (limiter chua cho phep, Gemini 429), PermanentError
+        Nem Retry khi can thu lai (limiter chua cho phep, LLM 429), PermanentError
         khi body hong -- thu lai bao nhieu lan cung khong doc duoc.
         """
         try:
@@ -110,7 +110,7 @@ class ChatConsumer:
 
         # ---- L4: singleflight ----
         # 1.000 nguoi hoi cung mot cau trong cung mot giay chi tao ra DUNG MOT
-        # lan goi Gemini. Nhung nguoi con lai doi ket qua cua lan goi do.
+        # lan goi LLM. Nhung nguoi con lai doi ket qua cua lan goi do.
         key = self._cache.key(job.event_id, job.question)
         leader = await self._flight.acquire(key)
         # `and` doan mach: chi doi khi KHONG phai nguoi dan dau.
@@ -124,8 +124,8 @@ class ChatConsumer:
         except Retry:
             raise
         except Exception:
-            # Gemini hong -> van tra loi duoc bang FAQ. Khach khong bao gio thay
-            # loi ky thuat (BR-A1).
+            # LLM hong (loi, timeout, tra loi khong tron ven) -> van tra loi duoc bang FAQ.
+            # Khach khong bao gio thay loi ky thuat (BR-A1), phan do dang khong bi cache.
             log.exception("goi llm that bai")
             await self._emit(job, self._faq.fallback(None), source="fallback", mode=mode)
             return None

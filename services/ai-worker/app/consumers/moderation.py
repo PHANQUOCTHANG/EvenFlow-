@@ -1,10 +1,10 @@
 """Consumer cho hang doi ai.moderation.q -- kiem duyet noi dung su kien (EV-120).
 
 Consumer nay nhan cac job kiem duyet su kien khi Organizer nop su kien (POST /submit),
-tien hanh quet 4 truc rui ro (BR-E4) bang Gemini, va goi callback ve event service
+tien hanh quet 4 truc rui ro (BR-E4) bang LLM (Anthropic), va goi callback ve event service
 qua endpoint noi bo PATCH /internal/v1/events/{id}/ai-verdict.
 
-Moi lan goi Gemini that deu qua limiter (app.llm.guarded): kiem duyet dung chung han
+Moi lan goi LLM that deu qua limiter (app.llm.guarded): kiem duyet dung chung han
 muc voi tro ly cua khach dang cho, nen khong duoc goi "chen ngang".
 """
 
@@ -105,9 +105,9 @@ class ModerationConsumer:
 def make_handler(consumer: ModerationConsumer):
     """Noi ModerationConsumer vao runtime.
 
-    Body khong doc duoc la loi vinh vien (DLQ ngay). Limiter chua cho phep / Gemini 429 /
+    Body khong doc duoc la loi vinh vien (DLQ ngay). Limiter chua cho phep / LLM 429 /
     callback event service loi la loi tam (thu lai qua ai.moderation.retry, 30s). Lan cuoi
-    van khong goi duoc Gemini thi chuyen nguoi duyet thay vi de su kien ket.
+    van khong goi duoc LLM thi chuyen nguoi duyet thay vi de su kien ket.
     """
 
     async def handler(delivery: Delivery) -> str | None:
