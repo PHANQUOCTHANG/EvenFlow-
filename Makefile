@@ -84,10 +84,33 @@ test-oversell-expiry: ## EVF-39 -- sweeper tra kho song song voi viec mua (20 la
 
 ## ---------- Chiu tai ----------
 
+# Bo k6 (EV-194): tests/load/main.js + tests/load/README.md. Moi bien duoi day duoc chuyen sang k6 bang -e neu co dat,
+# vd: make load PROFILE=spike JOIN_TARGET=5000. K6 doi duoc thanh image Docker (xem README).
+K6 ?= k6
+PROFILE ?= smoke
+LOAD_VARS := PROFILE BASE EVENT TICKET_TYPE JWT_SECRET ALLOW_REMOTE RUN_ID USERS QUOTA SLO_SCALE SIGNALS   JOIN_TARGET JOIN_RAMP JOIN_MAX_VUS JITTER_MS WAIT_VUS WAIT_DURATION CHECKOUT_RATE CHECKOUT_DURATION   WEBHOOK_RATE REPLAY_RATIO
+LOAD_ENV = $(foreach v,$(LOAD_VARS),$(if $($(v)),-e $(v)=$($(v))))
+
 .PHONY: load
-load: ## Mo phong gio mo ban (can k6)
+load: ## Bo k6 qua gateway: PROFILE=smoke|spike|wait|checkout|full (can k6, ANTIBOT_MODE=shadow)
 	@mkdir -p tests/load/results
-	k6 run -e BASE=http://localhost:8080 -e EVENT=$(EVENT) tests/load/opening-spike.js
+	$(K6) run $(LOAD_ENV) tests/load/main.js
+
+.PHONY: load-seed
+load-seed: ## Tao su kien tai + USERS danh tinh tai (idempotent)
+	bash tests/load/seed-load.sh seed
+
+.PHONY: load-verify
+load-verify: ## Kiem oversell trong Postgres: issued + open holds <= quota
+	bash tests/load/seed-load.sh verify
+
+.PHONY: load-smoke
+load-smoke: load-seed ## Seed + PROFILE=smoke (< 2 phut tren compose)
+	@$(MAKE) --no-print-directory load PROFILE=smoke
+
+.PHONY: test-load-lib
+test-load-lib: ## Unit test helper k6 (node --test, khong can Docker/k6)
+	node --test tests/load/lib/*.test.mjs
 
 .PHONY: smoke
 smoke: ## Chay tron mot luong mua ve (xep hang -> admit -> giu ghe -> tra kho)

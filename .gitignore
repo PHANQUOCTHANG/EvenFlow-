@@ -20,3 +20,6 @@ next-env.d.ts
 
 # Worktree tam cua agent, khong thuoc ma nguon
 .claude/worktrees/
+
+# Ket qua chay k6 (tests/load/main.js handleSummary)
+tests/load/results/
