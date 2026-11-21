@@ -80,3 +80,23 @@ Scope: `deploy/k8s/policy/test_policy.sh` and `deploy/k8s/policy/testdata/**` on
 - Added tests only: 2 mutants in `gen_fixtures.py` (`AC-18--waitingroom-uses-direct-db` local,
   `AC-18--staging-waitingroom-uses-direct-db` staging). No existing fixture or assertion changed (regenerating wrote only
   the two new files; `gen_fixtures.py --check` clean); `test_policy.sh` unchanged. Now 186 bad fixtures.
+
+## antibot-phase1 TCR N-5: `ANTIBOT_HASH_KEY` for waitingroom, approved by TranDinhVo 2026-11-22
+
+Source: `docs/workflow/antibot-phase1/contracts.md` §7 (rev 3) and `plan-review.md` round 2 N-5; human approval in
+`docs/workflow/antibot-phase1/spec.md` ("Amendment 1, revision after plan review round 2"). Additions only.
+
+- Contract §8: the waitingroom row gains `ANTIBOT_HASH_KEY ← eventflow-auth/ANTIBOT_HASH_KEY` (both overlays), so the
+  `eventflow-auth` key set gains it too.
+- `check_policy.py`: `SECRET_ENV_BOTH["waitingroom"]` gains `ANTIBOT_HASH_KEY`; `EXTERNAL_SECRET_KEYS["eventflow-auth"]`
+  gains `ANTIBOT_HASH_KEY`. No rule removed, no check changed.
+- `rules.md`: a short "antibot-phase1 addition" note (rules.md has no per-process secret table; it defers to §8).
+- `testdata/gen_fixtures.py`: the waitingroom env and the local `eventflow-auth` Secret gain the key (value contains
+  `dev`). Regenerated: `good-local.yaml`, `good-staging.yaml` and every `bad/*.yaml` (each changes only in the rendered
+  waitingroom env / auth Secret line); no fixture added or removed; `gen_fixtures.py --check` clean; `test_policy.sh`
+  unchanged. No `ANTIBOT_*` key is on the AC-32 forbidden list.
+- Manifests (contracts §7): waitingroom env `ANTIBOT_HASH_KEY` (secretKeyRef, not optional), `ANTIBOT_MODE` and
+  `ANTIBOT_SLOW_LANE_PENALTY` (configMapKeyRef `eventflow-app-config`); waitingroom-controller
+  `ANTIBOT_SLOW_LANE_PENALTY`; both overlays' `app-config.env` set `ANTIBOT_MODE=shadow`,
+  `ANTIBOT_SLOW_LANE_PENALTY=100000`; local `secrets.dev.env` + a replacement into `eventflow-auth`; staging
+  kustomization header lists the key. Staging rollout: create the key in Secret `eventflow-auth` before applying (AC-20).

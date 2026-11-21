@@ -83,7 +83,8 @@ SECRET_ENV_BOTH = {
                  "PII_ENC_KEY": ("eventflow-identity", "PII_ENC_KEY"),
                  "PII_HASH_KEY": ("eventflow-identity", "PII_HASH_KEY")},
     "event": {"DATABASE_URL": _DB_DIRECT, "RABBITMQ_URL": _AMQP},
-    "waitingroom": {"QUEUE_TOKEN_SECRET": ("eventflow-auth", "QUEUE_TOKEN_SECRET")},
+    "waitingroom": {"QUEUE_TOKEN_SECRET": ("eventflow-auth", "QUEUE_TOKEN_SECRET"),
+                    "ANTIBOT_HASH_KEY": ("eventflow-auth", "ANTIBOT_HASH_KEY")},
     "waitingroom-controller": {},
     "ticketing": {"DATABASE_URL": _DB_POOLED, "QUEUE_TOKEN_SECRET": ("eventflow-auth", "QUEUE_TOKEN_SECRET"),
                   "HMAC_QR_SECRET": ("eventflow-qr", "HMAC_QR_SECRET")},
@@ -113,7 +114,7 @@ LOCAL_SECRETS = {"eventflow-db", "eventflow-mq", "eventflow-auth", "eventflow-qr
 EXTERNAL_SECRET_KEYS = {
     "eventflow-db": {"DATABASE_URL_DIRECT", "DATABASE_URL_POOLED"},
     "eventflow-mq": {"AMQP_URL"},
-    "eventflow-auth": {"JWT_SECRET", "QUEUE_TOKEN_SECRET"},
+    "eventflow-auth": {"JWT_SECRET", "QUEUE_TOKEN_SECRET", "ANTIBOT_HASH_KEY"},
     "eventflow-qr": {"HMAC_QR_SECRET"},
     "eventflow-identity": {"PII_ENC_KEY", "PII_HASH_KEY", "SMTP_USER", "SMTP_PASS"},
     "eventflow-payment": set(_VNPAY_MOMO + _STRIPE),

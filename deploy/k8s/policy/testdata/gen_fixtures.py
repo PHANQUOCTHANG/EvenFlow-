@@ -98,6 +98,7 @@ def env_for(p, overlay="local"):
         f("REDIS_ADDR", CMAP("REDIS_ADDR"))
     if p == "waitingroom":
         f("QUEUE_TOKEN_SECRET", SECRET("eventflow-auth", "QUEUE_TOKEN_SECRET"))
+        f("ANTIBOT_HASH_KEY", SECRET("eventflow-auth", "ANTIBOT_HASH_KEY"))
     if p == "ticketing":
         f("DATABASE_URL", SECRET("eventflow-db", "DATABASE_URL_POOLED"))
         f("QUEUE_TOKEN_SECRET", SECRET("eventflow-auth", "QUEUE_TOKEN_SECRET"))
@@ -288,7 +289,8 @@ SECRETS = {
     "eventflow-db": {"DATABASE_URL_DIRECT": "postgres://eventflow:dev-pw@eventflow-postgres:5432/eventflow",
                      "DATABASE_URL_POOLED": "postgres://eventflow:dev-pw@eventflow-pgbouncer:5432/eventflow"},
     "eventflow-mq": {"AMQP_URL": "amqp://eventflow:dev-pw@eventflow-rabbitmq:5672/"},
-    "eventflow-auth": {"JWT_SECRET": "dev-jwt-secret-change-me-0123456789", "QUEUE_TOKEN_SECRET": "dev-queue-token-secret-0123456789"},
+    "eventflow-auth": {"JWT_SECRET": "dev-jwt-secret-change-me-0123456789", "QUEUE_TOKEN_SECRET": "dev-queue-token-secret-0123456789",
+                       "ANTIBOT_HASH_KEY": "dev-antibot-hash-key-0123456789ab"},
     "eventflow-qr": {"HMAC_QR_SECRET": "dev-hmac-qr-secret-0123456789"},
     "eventflow-identity": {"PII_ENC_KEY": "dev-pii-enc-key-0123456789", "PII_HASH_KEY": "dev-pii-hash-key-0123456789"},
     "eventflow-payment": {"VNPAY_TMN_CODE": "dev-vnpay-tmn", "VNPAY_HASH_SECRET": "dev-vnpay-hash", "MOMO_PARTNER_CODE": "dev-momo-partner",

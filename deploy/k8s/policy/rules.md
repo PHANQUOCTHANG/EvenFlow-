@@ -73,6 +73,13 @@ Fix round 2 (2026-11-21, findings-round2.json): AC-17 also fails a secret-named 
 whole `$(VAR)`), and matches `password=`/`passwd=`/`pwd=` without a leading word boundary, so `PGPASSWORD=...` and
 `MYSQL_PWD=...` inside shell strings are caught. AC-13 rejects a root primary group (`USER <uid>:0`).
 
+### antibot-phase1 addition (2026-11-22, TCR N-5, human-approved)
+
+Contract §8 gains one secret key, no new rule and no changed check: waitingroom reads
+`ANTIBOT_HASH_KEY ← eventflow-auth/ANTIBOT_HASH_KEY` in both overlays (AC-18 expected set), and the external
+`eventflow-auth` Secret's key set (AC-22, staging) gains `ANTIBOT_HASH_KEY`. `ANTIBOT_MODE` and
+`ANTIBOT_SLOW_LANE_PENALTY` are plain `eventflow-app-config` keys; no `ANTIBOT_*` key is on the AC-32 forbidden list.
+
 ## Mutation check (AC-25)
 
 Each rule was disabled one at a time (function body replaced by `return`; AC-13 by redirecting its output) and the
