@@ -1,0 +1,31 @@
+{
+  "task": "antibot-phase1",
+  "commit_sha": "f3ce1a6012a7b5fb8e0efb5137ddcd87c105b5cb",
+  "base": "918667c",
+  "tests_frozen": "36aab08",
+  "tcr_commit": "f3ce1a6",
+  "go": "go1.27.0 windows/amd64",
+  "node": "v22.21.0",
+  "generated_at": "2026-11-21T19:30:09Z",
+  "note": "exit 77 = NOT RUN (tool missing, Docker down or port busy), never a pass",
+  "results": {
+    "go-libs": {"exit": 0, "status": "PASS", "log": "gate/go-libs.log"},
+    "go-waitingroom": {"exit": 1, "status": "FAIL", "log": "gate/go-waitingroom.log"},
+    "integration": {"exit": 77, "status": "NOT_RUN", "log": "gate/integration.log"},
+    "web-npm-ci": {"exit": 0, "status": "PASS", "log": "gate/web-npm-ci.log"},
+    "web-lint": {"exit": 0, "status": "PASS", "log": "gate/web-lint.log"},
+    "web-typecheck": {"exit": 0, "status": "PASS", "log": "gate/web-typecheck.log"},
+    "web-test-coverage": {"exit": 0, "status": "PASS", "log": "gate/web-test-coverage.log"},
+    "web-build": {"exit": 0, "status": "PASS", "log": "gate/web-build.log"},
+    "web-audit": {"exit": 0, "status": "PASS", "log": "gate/web-audit.log"},
+    "e2e": {"exit": 0, "status": "PASS", "log": "gate/e2e.log"},
+    "k8s": {"exit": 0, "status": "PASS", "log": "gate/k8s.log"},
+    "promtool": {"exit": 77, "status": "NOT_RUN", "log": "gate/promtool.log"},
+    "corpus": {"exit": 0, "status": "PASS", "log": "gate/corpus.log"},
+    "fuzz": {"exit": 0, "status": "PASS", "log": "gate/fuzz.log"},
+    "tamper": {"exit": 0, "status": "PASS", "log": "gate/tamper.log"},
+    "secrets": {"exit": 0, "status": "PASS", "log": "gate/secrets.log"},
+    "deps": {"exit": 0, "status": "PASS", "log": "gate/deps.log"},
+    "govulncheck": {"exit": 0, "status": "PASS", "log": "gate/govulncheck.log"}
+  }
+}

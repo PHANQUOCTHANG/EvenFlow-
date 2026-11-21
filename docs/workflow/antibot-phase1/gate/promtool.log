@@ -1,0 +1,1 @@
+NOT RUN: docker info failed (promtool runs from prom/prometheus:v3.5.0)
