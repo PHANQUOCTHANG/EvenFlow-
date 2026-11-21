@@ -230,3 +230,7 @@ Changed acceptance criteria:
 Not adopted: **P-17** (key R4D on the session device id). `devices.id` is unique per (identity, fingerprint)
 (migrations/0001_core.sql:17-24), so two identities never share it and R4D could never fire. The body `fp` stays;
 a bot that rotates it is still seen by R4N and R1. A signed fp hash from identity is a follow-up.
+
+### Amendment 1 approval
+
+- Approved by TranDinhVo in the Claude Code session on 2026-11-22, all items as written (including the "Join queue" button when no snapshot exists and the K8s `ANTIBOT_HASH_KEY` changes).
