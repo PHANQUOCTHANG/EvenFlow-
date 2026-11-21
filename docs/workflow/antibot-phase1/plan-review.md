@@ -319,3 +319,126 @@ generator to a non-internal `antibot/corpus` package.
 Resolve P-1, P-2, P-3 (blockers) and P-4 to P-9 (majors) in spec, contracts and plan. Put the P-1 decision and the
 missing-signals cap, and the P-6 weight split, in spec section 2 as decisions for human approval, since they change
 default outcomes in contracts 3. Minors can be folded in or explicitly deferred with a reason.
+
+---
+
+## Round 2
+
+Inputs: spec.md Amendment 1 (approved in 46bb054, including the D16 join button and the k8s changes), contracts.md
+revision 2 and plan.md round 2 (9eb3bd9). I re-checked them against the same code, plus `waiting-room.test.tsx`,
+`waiting-room.wp2.test.tsx`, `deploy/k8s/policy/` and `migrations/0001_core.sql:17-24`.
+
+### Verdict: **FAIL** (round 2): 0 blockers, 1 new major (N-2), 6 new minors
+
+All 3 round-1 blockers and all 6 round-1 majors are resolved. The verdict is FAIL because of one new major
+introduced by the revision: the R4N suppression it adds cannot trigger at on-sale volume (N-2). The fix is local to
+`observe.lua` and its test, so round 3 only needs to re-check N-2.
+
+### Round-1 findings re-checked
+
+| Finding | Status | Notes |
+|---|---|---|
+| P-1 blocker | **resolved** | D11 caps missing-only at SLOW_LANE (`CAPPED`). D12 returns the existing slot for any non-BLOCK decision when `hasSlot`. D16 keeps the snapshot on the 401 re-join. `revoke.lua` sets the flag, and `join.lua` (lane path) enforces it even when antibot is degraded. With the breaker open, `hasSlot` is unknown, but a missing-only SLOW_LANE goes to `JoinLane(s)` and `join.lua` still returns the existing slot first, so that case is safe. A slot is revoked only by a positive-sign BLOCK. |
+| P-2 blocker | **resolved** | `iv` and `sq` use only discrete events; the `sq` entropy floor (12 events, 4 buckets) means most humans send no `sq`; R7 is now 0.50 and R1+R7 is 0.75. Residual: keydown auto-repeat (a held key, about 30 ms) gives a regular `iv` and fires R1 (0.50 alone, CHALLENGE). That is acceptable; add it to the corpus. |
+| P-3 blocker | **resolved**, see N-5 | Secret key, app config, rollout step 1 and the `kustomize build` grep are all in. |
+| P-4 major | **resolved** | 4-argument `Join` and `New(store, nil, log)` are kept; `LaneStore` is found by type assertion; the Lua args are optional. The `store` in `test/queuetoken` has no `LaneStore` and takes the tested fallback path. |
+| P-5 major | **resolved** | Both shuffle branches place the slow lobby; mutation 13 covers it; the controller reads the penalty; AC-20 requires the same image for both deployments. |
+| P-6 major | **weights resolved**; the new suppression is broken (N-2) | R4N at 0.25 cannot set a tier on its own. |
+| P-7 major | **resolved** | AC-18 is restated as a regression check, with sourced parameters, populations on both sides of every threshold, recorded sessions with their own assertion, and a ±20% sensitivity table. The real gate is shadow on real traffic (AC-20, see N-4). |
+| P-8 major | **resolved** | Per-field decoding, rounding, the four whole-payload reasons, and shared golden fixtures. |
+| P-9 major | **resolved** | Client options are explicit (`MaxRetries -1`, pool 128, `DialTimeout` 50 ms, `PoolTimeout` = budget). There is a TCP-proxy delay test with a bounded dial count, a concurrent p99, and a load gate. Breaker semantics are sound: open time counts as degraded (so `AntibotDegraded` fires); the sticky flag is still enforced by `join.lua` while it is open; it is per pod with no half-open state, which is fine for 3 s. |
+| P-10 … P-16, P-18 … P-21 | resolved | Checked briefly; each has a test or a mutation. |
+| P-17 | **rejection accepted** | `devices.id` is a row id per `(identity_id, fingerprint)` (`UNIQUE` at 0001:24), so it never repeats across identities, and R4D keyed on it could never fire. Keeping the body `fp` is correct; the identity-signed fp hash stays a follow-up. |
+
+**Contracts §3 table.** I recomputed all rows (0.88, 0.70, 0.60, 0.625, 0.50, 0.25, 0.55, 0.5875→0.588, 0.7525,
+0.67, 0.75). They are correct, and every tier follows from the rounded score. For 0.588, either rounding direction
+stays CHALLENGE.
+
+**`CAPPED` / `REJOIN` order.** The order is sticky → evaluate → D11 cap → D12 (`hasSlot` && not BLOCK → PASS
+`REJOIN`) → mode and fallback. It is consistent, and the mutations cover both new steps. R1-server ignores joins
+made while the identity holds a slot, as intended.
+
+### New findings
+
+#### N-2 (major): R4N's "> 5% of joins" suppression can never trigger at on-sale volume
+
+`netCount` comes from `ab:{ev}:net:{prefix}`, a ZSET trimmed to 64 members. The denominator is the event's join
+count over 5 min, with `R4N_SHARE_MIN_JOINS=1000`. So the share is at most 64/1000 = 6.4%, and it is below 5% as soon
+as the window holds more than 1280 joins. A real on-sale has around 10^5 joins.
+
+The case the mechanism exists for (one LB or NAT IP in front of every buyer) is therefore never suppressed, and
+`AntibotNetSuppressed` never fires. Every buyer carries R4N: one more weak sign gives CHALLENGE, two give
+SLOW_LANE. The numerator (distinct identities) and the denominator (joins) are also in different units. A store test
+with fewer than 64 identities would pass while production stays broken.
+
+Fix:
+
+1. Add per-prefix join buckets `ab:{ev}:nj:{prefix}:{minute}` (`INCR`, TTL 360 s, same slot) and compute
+   share = prefix joins / event joins over the same 5 buckets. Keep the ZSET only for the distinct-identity count.
+2. Add an integration test: 2000 joins from one prefix out of 20 000 must be suppressed; 500 out of 20 000 must not.
+3. In spec §6, state that a farm holding more than 5% of joins from one /24 also suppresses R4N for itself. This is
+   acceptable: R4D and R1 remain, and R4N is only 0.25.
+
+#### N-1 (minor, process): the approved D16 button breaks 5 frozen web tests; file the test change request now
+
+These frozen tests render `WaitingRoom` with sessionStorage cleared (no token, no snapshot) and expect an automatic
+join on mount:
+
+- `waiting-room.test.tsx:44`;
+- `waiting-room.test.tsx:189`;
+- `waiting-room.wp2.test.tsx:47`, `:58` and `:65`.
+
+Under D16 all five fail, so the plan's conditional ("if an existing test asserts...") is certain.
+
+D16 is human-approved, so the button stays. But the test change request must list these 5 tests, with the
+replacement assertion (button shown, no request on mount, then the same assertions after a click), and get human
+sign-off before the red check.
+
+Note for the human: after D11 and D12 the button is no longer needed for safety. Auto-joining with `{"v":1}` scores
+0.40 (pass), or `REJOIN` when a slot exists. Keeping auto-join would leave these tests untouched and save a click at
+T0. Re-confirm this choice when signing the test change request.
+
+#### N-3 (minor): `{"v":1}` is now valid-but-empty, which weakens the no-signals case
+
+In round 1, `{"v":1}` counted as missing (0.88). Now a client sending `{"v":1}` with a browser UA scores 0.40
+(pass), and adding `"pe":1` scores 0. This is within the stated limit (forged signals are out of scope, Q-1). Record
+it in spec §6 as an explicit trade-off.
+
+#### N-4 (minor): AC-20's shadow demotion rate is polluted by synthetic traffic
+
+k6 and `demo.sh` send `{"signals":{}}`, which counts as missing and is CAPPED to SLOW_LANE. One load run makes the
+rehearsal's demotion rate meaningless.
+
+Fix: measure AC-20 over joins whose signals decode as valid (or exclude the load windows), and report the
+missing-payload share separately.
+
+#### N-5 (minor): the k8s policy contract is frozen and the policy fixtures are generated
+
+`check_policy.py` AC-18 requires each process's secret env set to equal `docs/workflow/k8s-all/policy-contract.md`
+§8, which is frozen. `testdata/gen_fixtures.py --check` also fails on drift.
+
+Plan 2 must list:
+
+1. a change request against the k8s-all policy contract §8 (waitingroom row and the `eventflow-auth` key set);
+2. `check_policy.py`: the `waitingroom` map at line 86 and `EXTERNAL_SECRET_KEYS["eventflow-auth"]` at line 116;
+3. `rules.md`;
+4. `gen_fixtures.py`, plus regenerated `good-local.yaml`/`good-staging.yaml`, with every `bad/*.yaml` still tripping
+   exactly its own rule.
+
+No `ANTIBOT_*` key collides with the AC-32 forbidden list.
+
+#### N-6 (minor): R3 for absent counts contradicts spec §3
+
+Contracts 1 says `{"v":1}` fires R3. Spec §3 says an absent input is "not evaluated" except for the missing case.
+State in spec §3 that R3 fires when `pe`, `se` and `ke` are all absent or 0; `score_test` depends on it.
+
+#### N-7 (minor): the load gate is a worst case
+
+Under k6 every join is missing (0.88) and is persisted, so `bot_decisions` gets 100% of joins instead of about
+1-5%. That is acceptable as a conservative gate; note it in `evidence.md`.
+
+### Required for round 3
+
+Fix N-2 in contracts 4, plan 2/3 and the store integration test. Add the N-1 test change request to plan 8 and
+`red-check.md`. Fold in or defer the other minors with a reason. Round 3 re-checks N-2 and the N-1 test change
+request only.
