@@ -28,21 +28,34 @@ const joinTimeWindowMs = 300_000
 // NewClient returns the dedicated antibot client of contracts 4: no retries, a large warm pool, a short dial
 // and every timeout equal to the Redis budget, honoured through the request context.
 func NewClient(addr string, cfg antibot.Config) *redis.Client {
+	return redis.NewClient(ClientOptions(addr, cfg))
+}
+
+// ClientOptions are the options NewClient uses. PoolTimeout is half the budget (R2-1): go-redis v9 waits for a
+// free connection until the earlier of the context deadline and PoolTimeout, so with both equal to the budget the
+// context always won and pool exhaustion surfaced as a plain deadline. With half the budget an empty pool is
+// reported as "connection pool timeout" (classified as antibot.ErrPoolExhausted, which never opens the breaker)
+// and the other half is left for the command itself.
+func ClientOptions(addr string, cfg antibot.Config) *redis.Options {
 	timeout := cfg.RedisTimeout
 	if timeout <= 0 {
 		timeout = 4 * time.Millisecond
 	}
-	return redis.NewClient(&redis.Options{
+	poolWait := timeout / 2
+	if poolWait < 500*time.Microsecond {
+		poolWait = 500 * time.Microsecond
+	}
+	return &redis.Options{
 		Addr:                  addr,
 		ReadTimeout:           timeout,
 		WriteTimeout:          timeout,
-		PoolTimeout:           timeout,
+		PoolTimeout:           poolWait,
 		ContextTimeoutEnabled: true,
 		MaxRetries:            -1,
 		PoolSize:              128,
 		MinIdleConns:          32,
 		DialTimeout:           50 * time.Millisecond,
-	})
+	}
 }
 
 // Store implements antibot.StateStore.
@@ -163,8 +176,9 @@ func (s *Store) Observe(ctx context.Context, in antibot.Input, fpHash string, ne
 	return st, nil
 }
 
-// isPoolTimeout matches go-redis' internal pool.ErrPoolTimeout (not exported by the redis package in v9.7).
-func isPoolTimeout(err error) bool { return err.Error() == "redis: connection pool timeout" }
+// isPoolTimeout matches go-redis' internal pool.ErrPoolTimeout ("redis: connection pool timeout"), which the
+// redis package does not export in v9.7.
+func isPoolTimeout(err error) bool { return strings.Contains(err.Error(), "connection pool timeout") }
 
 func isNoScript(err error) bool { return strings.HasPrefix(err.Error(), "NOSCRIPT") }
 
