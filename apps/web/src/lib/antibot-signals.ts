@@ -130,8 +130,11 @@ function onPointerMove() {
   state.pe = inc(state.pe);
 }
 
-function onKeyDown() {
+function onKeyDown(e?: Event) {
   state.ke = inc(state.ke);
+  // X-8 / R-7: OS auto-repeat of a held key fires at a fixed ~30 ms rhythm; it is not a discrete human action
+  // and would fill iv with machine-regular intervals (R1). Count it, but keep it out of iv / sq.
+  if (e && (e as KeyboardEvent).repeat === true) return;
   recordDiscrete("k", now());
 }
 
@@ -145,7 +148,7 @@ function onScroll() {
   state.se = inc(state.se);
 }
 
-const LISTENERS: Array<[string, () => void]> = [
+const LISTENERS: Array<[string, (e?: Event) => void]> = [
   ["pointerdown", onPointerDown],
   ["touchstart", onTouchStart],
   ["pointermove", onPointerMove],

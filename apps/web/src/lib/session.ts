@@ -298,8 +298,9 @@ export function getStoredRefreshToken(): string | null {
   return null;
 }
 
-/** Tien to khoa sessionStorage cua luong mua ve; xoa khi dang xuat de nguoi dung sau khong doc duoc (F-17). */
-const BUY_FLOW_PREFIXES = ["ef:queue:token:", "evenflow_hold_", "evenflow_order_", "ef:issue:", "ef:pay:", "ef:hold:"];
+/** Tien to khoa sessionStorage cua luong mua ve; xoa khi dang xuat / doi tai khoan de nguoi dung sau khong doc
+ *  duoc (F-17). `ef:ab:` la snapshot anti-bot (X-6): tai khoan B khong duoc gui lai snapshot (fp, sq) cua A. */
+const BUY_FLOW_PREFIXES = ["ef:queue:token:", "evenflow_hold_", "evenflow_order_", "ef:issue:", "ef:pay:", "ef:hold:", "ef:ab:"];
 
 export function clearBuyFlowStorage(): void {
   try {
