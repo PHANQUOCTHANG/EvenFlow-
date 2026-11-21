@@ -19,23 +19,23 @@ import (
 // control characters (incl. U+0085) are 400 with a detail naming the cause; nothing applied or audited.
 func TestOpsRound2Fix_X21_InvisibleBidiOrControlReasonIs400(t *testing.T) {
 	cases := []struct{ name, reason, want string }{
-		{"RLO x3", `‮‮‮`, "bidi"},
-		{"isolates", `⁦⁧⁨⁩`, "bidi"},
-		{"LRM", `abc‎`, "bidi"},
-		{"RLM", `‏abc`, "bidi"},
-		{"ALM", `ab؜c`, "bidi"},
-		{"bidi spoof", `resume ‮esuap‬ ok`, "bidi"},
-		{"word joiner x3", `⁠⁠⁠`, "3..200"},
-		{"soft hyphen x3", `­­­`, "3..200"},
-		{"combining acute x3", `́́́`, "3..200"},
-		{"enclosing mark x3", `⃝⃝⃝`, "3..200"},
-		{"hangul fillers", `ㅤᅟᅠﾠ`, "3..200"},
-		{"braille blank x3", `⠀⠀⠀`, "3..200"},
-		{"variation selector x3", `️️️`, "3..200"},
-		{"tag chars x3", `󠀠󠀠󠀠`, "3..200"},
-		{"mongolian VS x3", `᠎᠎᠎`, "3..200"},
-		{"invisible operators", `⁡⁢⁣⁤`, "3..200"},
-		{"two letters + fillers", `abㅤ⠀`, "3..200"},
+		{"RLO x3", `\u202e\u202e\u202e`, "bidi"},
+		{"isolates", `\u2066\u2067\u2068\u2069`, "bidi"},
+		{"LRM", `abc\u200e`, "bidi"},
+		{"RLM", `\u200fabc`, "bidi"},
+		{"ALM", `ab\u061cc`, "bidi"},
+		{"bidi spoof", `resume \u202eesuap\u202c ok`, "bidi"},
+		{"word joiner x3", `\u2060\u2060\u2060`, "3..200"},
+		{"soft hyphen x3", `\u00ad\u00ad\u00ad`, "3..200"},
+		{"combining acute x3", `\u0301\u0301\u0301`, "3..200"},
+		{"enclosing mark x3", `\u20dd\u20dd\u20dd`, "3..200"},
+		{"hangul fillers", `\u3164\u115f\u1160\uffa0`, "3..200"},
+		{"braille blank x3", `\u2800\u2800\u2800`, "3..200"},
+		{"variation selector x3", `\ufe0f\ufe0f\ufe0f`, "3..200"},
+		{"tag chars x3", `\udb40\udc20\udb40\udc20\udb40\udc20`, "3..200"},
+		{"mongolian VS x3", `\u180e\u180e\u180e`, "3..200"},
+		{"invisible operators", `\u2061\u2062\u2063\u2064`, "3..200"},
+		{"two letters + fillers", `ab\u3164\u2800`, "3..200"},
 		{"NEL edges", `\u0085abc\u0085`, "dieu khien"},
 		{"NEL inside", `ab\u0085c`, "dieu khien"},
 		{"interior tab", `ab\tcd`, "dieu khien"},
@@ -64,11 +64,11 @@ func TestOpsRound2Fix_X21_InvisibleBidiOrControlReasonIs400(t *testing.T) {
 // R2-1: Vietnamese in NFC and NFD (combining marks) stays valid; marks are kept, non-bidi Cf at the edges trimmed.
 func TestOpsRound2Fix_X21_VietnameseNFCAndNFDAccepted(t *testing.T) {
 	for _, c := range []struct{ in, want string }{
-		{"Khẩn cấp", "Khẩn cấp"},         // NFC
-		{"Khẩn cấp", "Khẩn cấp"}, // NFD
-		{"Khẩn", "Khẩn"},             // NFD, 4 visible + 2 marks
-		{"⁠ abc ­", "abc"},
-		{"a‍b‌c", "a‍b‌c"},
+		{"Kh\u1ea9n c\u1ea5p", "Kh\u1ea9n c\u1ea5p"},                             // NFC
+		{"Kha\u0302\u0309n ca\u0302\u0301p", "Kha\u0302\u0309n ca\u0302\u0301p"}, // NFD
+		{"Kha\u0302\u0309n", "Kha\u0302\u0309n"},                                 // NFD, 4 visible + 2 marks
+		{"\u2060 abc \u00ad", "abc"},
+		{"a\u200db\u200cc", "a\u200db\u200cc"},
 	} {
 		got, err := app.ValidateReason(c.in)
 		if err != nil || got != c.want {
@@ -76,13 +76,13 @@ func TestOpsRound2Fix_X21_VietnameseNFCAndNFDAccepted(t *testing.T) {
 		}
 	}
 	r := newOpsRig(true)
-	if rec := put(r, `{"rate_per_sec":5,"reason":"Khẩn cấp"}`); rec.Code != 200 {
+	if rec := put(r, `{"rate_per_sec":5,"reason":"Kha\u0302\u0309n ca\u0302\u0301p"}`); rec.Code != 200 {
 		t.Fatalf("NFD reason must pass: %d %s", rec.Code, rec.Body)
 	}
-	if len(r.aud.entries) != 1 || r.aud.entries[0].Reason != "Khẩn cấp" {
+	if len(r.aud.entries) != 1 || r.aud.entries[0].Reason != "Kha\u0302\u0309n ca\u0302\u0301p" {
 		t.Fatalf("audit reason must keep the combining marks: %+v", r.aud.entries)
 	}
-	if _, err := app.ValidateReason("ab́́"); !errors.Is(err, app.ErrReasonLength) {
+	if _, err := app.ValidateReason("ab\u0301\u0301"); !errors.Is(err, app.ErrReasonLength) {
 		t.Fatalf("2 base letters + marks must fail with ErrReasonLength, got %v", err)
 	}
 }
