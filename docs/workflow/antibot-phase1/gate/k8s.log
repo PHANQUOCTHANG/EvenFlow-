@@ -6,8 +6,8 @@ kustomize: v5.7.1
 kubeconform: development
 yq: yq (https://github.com/mikefarah/yq/) version v4.44.3
 == render
-rendered overlays/local -> /tmp/tmp.81tKlNhdZz/render/local.yaml (77 objects)
-rendered overlays/staging -> /tmp/tmp.81tKlNhdZz/render/staging.yaml (57 objects)
+rendered overlays/local -> /tmp/tmp.NwQJ0A2fFu/render/local.yaml (77 objects)
+rendered overlays/staging -> /tmp/tmp.NwQJ0A2fFu/render/staging.yaml (57 objects)
 == kubeconform -strict (k8s 1.32.0)
 kubeconform local: Summary: 77 resources found in 1 file - Valid: 77, Invalid: 0, Errors: 0, Skipped: 0
 kubeconform staging: Summary: 57 resources found in 1 file - Valid: 57, Invalid: 0, Errors: 0, Skipped: 0

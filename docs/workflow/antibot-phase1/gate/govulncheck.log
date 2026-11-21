@@ -512,8 +512,8 @@ Vulnerability #15: GO-2026-6253
     Fixed in: github.com/moby/go-archive@v0.3.0
     Example traces found:
       #1: testx/redis.go:23:23: testx.startRedis calls redis.Run, which eventually calls archive.TarWithOptions
-      #2: testx/testx.go:26:2: testx.init calls testcontainers.init, which calls archive.init
-      #3: testx/testx.go:89:15: testx.Shutdown calls fmt.Fprintf, which eventually calls archive.init
+      #2: testx/testx.go:89:15: testx.Shutdown calls fmt.Fprintf, which eventually calls archive.init
+      #3: testx/testx.go:26:2: testx.init calls testcontainers.init, which calls archive.init
       #4: testx/redis.go:23:23: testx.startRedis calls redis.Run, which eventually calls compression.CompressStream
       #5: testx/testx.go:89:15: testx.Shutdown calls fmt.Fprintf, which eventually calls compression.init
       #6: testx/testx.go:26:2: testx.init calls testcontainers.init, which eventually calls compression.init
@@ -912,8 +912,8 @@ Vulnerability #8: GO-2026-6608
     mime/multipart
   More info: https://pkg.go.dev/vuln/GO-2026-6608
   Standard library
-    Found in: mime/multipart@go1.27
-    Fixed in: mime/multipart@go1.27.2
+    Found in: net/textproto@go1.27
+    Fixed in: net/textproto@go1.27.2
     Example traces found:
       #1: cmd/server/main.go:128:18: server.run calls httpx.Run, which eventually calls multipart.Reader.ReadForm
       #2: internal/adapter/postgres/bot_decisions.go:137:14: postgres.DecisionWriter.Close calls sync.Once.Do, which eventually calls textproto.Reader.ReadMIMEHeader

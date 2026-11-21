@@ -12,7 +12,7 @@
    ▲ Next.js 15.5.28
 
    Creating an optimized production build ...
- ✓ Compiled successfully in 10.7s
+ ✓ Compiled successfully in 10.2s
    Linting and checking validity of types ...
 
 ./src/components/auth/ForgotPasswordForm.tsx

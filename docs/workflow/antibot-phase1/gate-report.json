@@ -1,12 +1,12 @@
 {
   "task": "antibot-phase1",
-  "commit_sha": "c536a6f30efc83e84e9c2463719d5e5d66ce4fff",
+  "commit_sha": "2b27aa5f3cddc96c890ca2c9e40836ff224e77b6",
   "base": "918667c",
   "tests_frozen": "36aab08",
   "tcr_commit": "f3ce1a6",
   "go": "go1.27.0 windows/amd64",
   "node": "v22.21.0",
-  "generated_at": "2026-11-21T22:04:02Z",
+  "generated_at": "2026-11-21T22:34:07Z",
   "note": "exit 77 = NOT RUN (tool missing, Docker down or port busy), never a pass",
   "results": {
     "go-libs": {"exit": 0, "status": "PASS", "log": "gate/go-libs.log"},

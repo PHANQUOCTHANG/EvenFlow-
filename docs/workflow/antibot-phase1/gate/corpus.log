@@ -1,7 +1,7 @@
 === RUN   TestCorpus_AC18_DefaultConfig
     corpus_test.go:324: 
         family                      n   PASS   SLOW  BLOCK  demoted
-        raw_http                  200      0      0    200   100.0%
+        raw_http                  200      0     99    101   100.0%
         headless                  200      0      0    200   100.0%
         stealth_rhythm            200      0    200      0   100.0%
         account_farm              200     12    188      0    94.0%
@@ -22,7 +22,7 @@
         R2          400        3
         R3          200        0
         R4D         188        5
-        R4N         390       20
+        R4N         377       20
         R5          400        0
         R5W           5       39
         R6            0        0
@@ -56,16 +56,16 @@
         R7_MIN_IDS        1.0        3     95.80%        0.10%
         R7_MIN_IDS        1.2        4     95.80%        0.10%
         
---- PASS: TestCorpus_AC18_SensitivityTable (3.83s)
+--- PASS: TestCorpus_AC18_SensitivityTable (3.95s)
 === RUN   TestCorpus_GeneratorDeterministic
---- PASS: TestCorpus_GeneratorDeterministic (0.18s)
+--- PASS: TestCorpus_GeneratorDeterministic (0.17s)
 === RUN   TestCorpus_AC18_RecordedSessions
     corpus_test.go:482: PENDING (AC-18): no recorded sessions in testdata/corpus/recorded yet; the team records 50-100 with the real collector
 --- SKIP: TestCorpus_AC18_RecordedSessions (0.00s)
 === RUN   TestEvaluate_AC5_P99
-    engine_bench_test.go:69: pure engine (batch 50) p50=20.122µs p99=50.136µs max=50.316µs
---- PASS: TestEvaluate_AC5_P99 (0.23s)
+    engine_bench_test.go:69: pure engine (batch 50) p50=20.002µs p99=70.082µs max=80.31µs
+--- PASS: TestEvaluate_AC5_P99 (0.22s)
 PASS
-ok  	github.com/eventflow/eventflow/libs/go/antibot	6.320s
+ok  	github.com/eventflow/eventflow/libs/go/antibot	6.268s
 corpus: bots caught 95.80% (958/1000), humans demoted 0.10% (5/5000)
 ok: bots caught 95.80% >= 95%, humans demoted 0.10% < 1%
