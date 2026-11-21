@@ -1,0 +1,15 @@
+{
+  "task": "gateway-trusted-proxy",
+  "commit": "b946bf8",
+  "command": "cd services/gateway && go vet ./... && go test -count=1 -v ./...",
+  "go": "go1.27.0 windows/amd64",
+  "vet": "clean",
+  "result": "PASS",
+  "packages": {
+    "internal/config": {"tests": 4, "subtests": 4, "failed": 0},
+    "internal/proxy": {"tests": 23, "subtests": 6, "failed": 0},
+    "internal/ratelimit": {"tests": 4, "subtests": 0, "failed": 0},
+    "cmd/server": {"tests": 0, "note": "no test files"}
+  },
+  "total": {"tests": 31, "subtests": 10, "passed": 41, "failed": 0}
+}

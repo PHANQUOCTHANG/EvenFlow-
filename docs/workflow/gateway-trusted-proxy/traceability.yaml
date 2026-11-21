@@ -1,0 +1,77 @@
+task: gateway-trusted-proxy
+base: b946bf8
+frozen_test_files:  # must not change in step 3
+  - services/gateway/internal/clientip/clientip_test.go
+  - services/gateway/internal/config/config_trusted_test.go
+  - services/gateway/internal/proxy/trusted_proxy_test.go
+unchanged_existing:
+  - services/gateway/internal/proxy/gateway_test.go
+  - services/gateway/internal/config/config_test.go
+acceptance:
+  AC-1:
+    - clientip.TestResolve/AC1_*  # trust nil and empty slice; ipv4, mapped, zoned, garbage, empty peers
+    - clientip.TestPeerKeyMatchesDevelop
+    - proxy_test.TestTrustedProxy_AC1_TrustOffIgnoresForwardingHeaders  # forged XFF + X-Real-IP + Forwarded
+    - proxy_test.TestGateway_XoaDanhTinhGiaMaoTrenMoiRoute  # existing, unmodified
+  AC-2:
+    - clientip.TestResolve/AC2_*
+    - proxy_test.TestTrustedProxy_AC2_UntrustedPeerCannotSpoof
+  AC-3:
+    - clientip.TestResolve/AC3_*
+    - proxy_test.TestTrustedProxy_AC3_ClientsBehindTrustedProxyHaveOwnBucket
+  AC-4:
+    - clientip.TestResolve/AC4_*
+    - clientip.TestResolve_ForgedPrefixNeverChangesResult
+    - proxy_test.TestTrustedProxy_AC4_ForgedLeftmostSharesBucket
+  AC-5:
+    - clientip.TestResolve/AC5_*
+    - proxy_test.TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC5_*
+  AC-6:
+    - clientip.TestResolve/AC6_*
+    - proxy_test.TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC6_*
+  AC-7:
+    - clientip.TestResolve/AC7_*  # malformed x6, malformed left ignored, empty, all trusted, 16/17 hops, zoned/unparsable peer
+    - proxy_test.TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC7_*
+  AC-8:
+    - clientip.TestParseTrusted
+    - config_test.TestLoad_TrustedProxyCIDRsHopLe
+    - config_test.TestLoad_TrustedProxyCIDRsHongThiLoi
+    - inspection: cmd/server/main.go returns on config.Load error (proxy.New not reached)
+  AC-9:
+    - proxy_test.TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly  # R2-1: unparsable RemoteAddr row asserts no XFF
+    - proxy_test.TestTrustedProxy_AC2_UntrustedPeerCannotSpoof
+    - proxy_test.TestTrustedProxy_AC3_ClientsBehindTrustedProxyHaveOwnBucket
+    - proxy_test.TestGateway_XoaDanhTinhGiaMaoTrenMoiRoute  # existing, unmodified
+    - inspection: r.RemoteAddr not rewritten
+  AC-10:
+    - proxy_test.TestTrustedProxy_AC10_KeyClasses
+    - proxy_test.TestGateway_GioiHanTocDo  # existing, unmodified
+  AC-11:
+    - clientip.FuzzResolve  # gate: go test ./internal/clientip -run=^$ -fuzz=FuzzResolve -fuzztime=30s (no -race)
+  spec-3.3-linear-cost:
+    - clientip.BenchmarkResolve  # sanity, not a gate
+mutations:  # plan section 4, threshold 8/8
+  - id: M1
+    change: walk left to right (take first element)
+    killed_by: [clientip.TestResolve/AC4_forged_leftmost, proxy_test.TestTrustedProxy_AC4_ForgedLeftmostSharesBucket]
+  - id: M2
+    change: skip the peer-trusted check (always read XFF)
+    killed_by: [clientip.TestResolve/AC2_untrusted_peer, clientip.FuzzResolve, proxy_test.TestTrustedProxy_AC2_UntrustedPeerCannotSpoof]
+  - id: M3
+    change: on a malformed element continue instead of returning the peer
+    killed_by: [clientip.TestResolve/AC7_rightmost_unknown, proxy_test.TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC7_malformed_rightmost]
+  - id: M4
+    change: drop Unmap()
+    killed_by: [clientip.TestResolve/AC6_mapped_element_unmapped, clientip.TestResolve/AC6_mapped_peer_matches_ipv4_cidr]
+  - id: M5
+    change: accept /0 in ParseTrusted
+    killed_by: [clientip.TestParseTrusted, config_test.TestLoad_TrustedProxyCIDRsHongThiLoi]
+  - id: M6
+    change: remove the X-Forwarded-For override in Rewrite
+    killed_by: [proxy_test.TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly, proxy_test.TestTrustedProxy_AC3_ClientsBehindTrustedProxyHaveOwnBucket]
+  - id: M7
+    change: remove the 16-hop cap
+    killed_by: [clientip.TestResolve/AC7_17_trusted_hops, proxy_test.TestTrustedProxy_AC9_UpstreamGetsResolvedIPOnly/AC7_17_trusted_hops]
+  - id: M8
+    change: drop the host-bits check (p != p.Masked())
+    killed_by: [clientip.TestParseTrusted, config_test.TestLoad_TrustedProxyCIDRsHongThiLoi]
