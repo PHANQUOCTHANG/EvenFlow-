@@ -68,3 +68,15 @@ Scope: `deploy/k8s/policy/test_policy.sh` and `deploy/k8s/policy/testdata/**` on
   clean; `test_policy.sh` unchanged. Now 184 bad fixtures and 8 bad Dockerfile cases (selftest 202).
 - New `.github/scripts/tests/test-gates-context-guard.sh` (11 cases, stub kubectl), run by CI `lint-ci` and by
   `full-gate.sh` step `gates-context-guard`.
+
+## TCR-3 addition: waitingroom audit DB (develop integration, PR #99), 2026-11-21, under the TCR-2/TCR-3 approval
+
+- develop PR #99 gives waitingroom `DATABASE_URL` (via PgBouncer) for the ops audit log. The manifest now maps it to
+  `eventflow-db/DATABASE_URL_POOLED`, which `check_policy.py` AC-18 reported as an unexpected secret env.
+- `check_policy.py`: minimal change, no rule removed. New table `EXTRA_SECRET_ENV_BOTH` (waitingroom may hold
+  `DATABASE_URL <- eventflow-db/DATABASE_URL_POOLED`; allowed, not required, since the app only fails the ops override
+  closed without it) merged into AC-18's existing `extra_ok`. Any other source is still `unexpected secret env`.
+  Contract §8 row for waitingroom updated to match.
+- Added tests only: 2 mutants in `gen_fixtures.py` (`AC-18--waitingroom-uses-direct-db` local,
+  `AC-18--staging-waitingroom-uses-direct-db` staging). No existing fixture or assertion changed (regenerating wrote only
+  the two new files; `gen_fixtures.py --check` clean); `test_policy.sh` unchanged. Now 186 bad fixtures.

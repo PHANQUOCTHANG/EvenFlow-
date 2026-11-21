@@ -275,6 +275,43 @@ done     # expect no output
 for d in $(kubectl -n eventflow get deploy -o name); do kubectl -n eventflow rollout status "$d" --timeout=5m; done
 ```
 
+### 4.5 Gateway trusted proxies (`TRUSTED_PROXY_CIDRS`)
+
+**What it does.** The gateway rate-limits and logs by client IP (PR #100). It reads `X-Forwarded-For` **only** when
+the TCP peer of the request is inside one of the CIDRs in `TRUSTED_PROXY_CIDRS`; from any other peer it uses the peer
+address and ignores the header. Empty = never trust the header (compose sets it empty: there the gateway is the
+outermost hop). The gateway refuses to start on a malformed list or a prefix wider than `/8` (IPv4) or `/7` (IPv6).
+
+**Value in this repo** (human decision Q-1, 2026-11-21): both overlays set `TRUSTED_PROXY_CIDRS=10.0.0.0/8` in
+`eventflow-app-config`, i.e. "trust the pod CIDR". On Kubernetes the gateway's peer is the ingress controller pod, so
+without this every request would be limited as one client. `10.0.0.0/8` covers Docker Desktop (`10.1.0.0/16`) and kind
+(`10.244.0.0/16`) and is the widest value the gateway accepts.
+
+**Set the real pod CIDR per cluster** (narrower is better; staging should not keep `/8`):
+
+```bash
+kubectl get nodes -o jsonpath='{range .items[*]}{.spec.podCIDRs}{"\n"}{end}'   # per-node ranges
+kubectl cluster-info dump | grep -m1 -o -- '--cluster-cidr=[^"]*'               # whole cluster range, if exposed
+```
+
+Put the result (comma-separated if several) in `TRUSTED_PROXY_CIDRS` of the overlay's `app-config.env`, or of the
+temporary overlay (section 2) with a `configMapGenerator` entry `behavior: merge`, then apply. Where the ingress
+controller runs with `hostNetwork` or behind a cloud load balancer that does not preserve the client IP, trust the
+addresses the gateway actually sees (node IPs / LB range) instead, and make sure the controller itself overwrites
+or sanitises `X-Forwarded-For` from the internet.
+
+**Risk.** Any pod inside a trusted range can send a forged `X-Forwarded-For`. A compromised pod that can reach the
+gateway can therefore (a) dodge the per-IP limit by rotating fake addresses, or (b) lock out a chosen real IP by
+burning its budget. Mitigation is the NetworkPolicy, not the CIDR: only pods that are allowed to connect can forge.
+
+**Precondition: gateway NetworkPolicy.** `base/networkpolicy/allow-gateway.yaml` (with the namespace default deny)
+allows port 8080 only from namespace `ingress-nginx`, plus the in-namespace `eventflow-web` (SSR) and
+`eventflow-ai-worker` (`INTERNAL_API_BASE`) pods; metrics port 9094 only from monitoring namespaces. So the forging
+surface is the ingress controller and those two EventFlow pods. Keep it that way: never add a broader `from` to the
+gateway policy, and if your ingress controller is in another namespace, change the `ingress-nginx` selector to that
+namespace rather than opening the port. NetworkPolicy is enforced only with a CNI that supports it (Docker Desktop does not, section 3.1;
+on kind it depends on the CNI/version), so on such clusters this protection is absent.
+
 ## 5. Logs and day-2
 
 ```bash
