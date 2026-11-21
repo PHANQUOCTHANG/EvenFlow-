@@ -40,6 +40,9 @@ identity-svc   event-svc    waitingroom-svc   ticketing-svc   payment-svc     an
 | `notification` | Go | Email/SMS/push, fan-out SSE | RabbitMQ |
 | `ai-worker` | Python/FastAPI | Consumer Gemini: chat, moderation, anomaly, report | RabbitMQ + Redis |
 
+> **Anti-bot phase 1 (antibot-phase1, D1):** rule engine chạy **in-process** trong `waitingroom` (thư viện
+> `libs/go/antibot`, state Redis dưới key `ab:{ev}:`), không qua network hop; `services/antibot` để dành cho appeal (EV-177) và đề xuất luật (EV-178).
+
 > **Vì sao Go cho lõi, Python cho AI:** đường đi nóng (join queue, hold vé) cần
 > p99 ổn định ở hàng trăm nghìn kết nối đồng thời — goroutine + GC thấp của Go
 > hợp hơn hẳn. Còn AI worker bị chặn bởi rate-limit của Gemini chứ không phải CPU,
