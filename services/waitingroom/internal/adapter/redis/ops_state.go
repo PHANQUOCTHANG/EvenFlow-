@@ -50,6 +50,7 @@ func NewOpsReader(rdb redis.Cmdable, checkout app.CheckoutReader) *OpsReader {
 func (o *OpsReader) QueueOpsState(ctx context.Context, eventID string, now time.Time) (app.OpsState, error) {
 	pipe := o.rdb.Pipeline()
 	lobby := pipe.SCard(ctx, k(eventID, "lobby"))
+	lobbySlow := pipe.SCard(ctx, k(eventID, "lobby_slow"))
 	queued := pipe.ZCard(ctx, k(eventID, "queue"))
 	// Chi dem nguoi con trong cua so mua: score = expire_at_ms; nguoi het han duoc status.lua don tre.
 	admitted := pipe.ZCount(ctx, k(eventID, "admitted"), "("+strconv.FormatInt(now.UnixMilli(), 10), "+inf")
@@ -77,6 +78,7 @@ func (o *OpsReader) QueueOpsState(ctx context.Context, eventID string, now time.
 
 	st := app.OpsState{
 		Lobby:           lobby.Val(),
+		LobbySlow:       lobbySlow.Val(),
 		Queued:          queued.Val(),
 		AdmittedActive:  admitted.Val(),
 		AdmitRatePerSec: float64(toInt64(m[0])) / 1000.0,
@@ -88,7 +90,7 @@ func (o *OpsReader) QueueOpsState(ctx context.Context, eventID string, now time.
 		r := float64(toInt64(m[2])) / 1000.0
 		st.Override = app.OverrideState{Active: true, RatePerSec: &r}
 	}
-	for _, c := range []interface{ Err() error }{lobby, queued, admitted, leaderKey} {
+	for _, c := range []interface{ Err() error }{lobby, lobbySlow, queued, admitted, leaderKey} {
 		if err := c.Err(); err != nil {
 			return app.OpsState{}, fmt.Errorf("doc trang thai ops: %w", err)
 		}

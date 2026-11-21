@@ -28,5 +28,6 @@ if token then
   removed = 1
 end
 
-redis.call('SET', KEYS[7], '1', 'EX', ttl)
+-- NX (R-2): the 24 h window starts at the first BLOCK; a STICKY retry never extends it.
+redis.call('SET', KEYS[7], '1', 'EX', ttl, 'NX')
 return removed

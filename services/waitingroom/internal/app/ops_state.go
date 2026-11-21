@@ -46,6 +46,7 @@ type CheckoutState struct {
 // OpsState la anh chup phong cho cho war room Ops (contracts 3.1).
 type OpsState struct {
 	Lobby           int64
+	LobbySlow       int64 // anti-bot slow-lane lobby before T0 (wr:{ev}:lobby_slow, R-8); not part of Lobby
 	Queued          int64
 	AdmittedActive  int64
 	AdmitRatePerSec float64

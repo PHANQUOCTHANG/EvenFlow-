@@ -88,9 +88,18 @@ else
   local seq = redis.call('INCR', KEYS[4])
   local score = 1000000000000 + seq
   if lane == 's' then
-    -- Slow lane sau T0: 1e12 + seq + P + m, m = so nguoi slow lobby da xep o shuffle (0 truoc shuffle),
-    -- de moi nguoi slow lobby truoc T0 luon dung truoc nguoi slow vao sau T0 (P-13).
-    score = score + penalty + tonumber(redis.call('HGET', KEYS[5], 'slow_lottery_size') or '0')
+    -- Slow lane sau T0: 1e12 + seq + P + m, de moi nguoi slow lobby truoc T0 luon dung truoc nguoi slow vao
+    -- sau T0 (P-13). m = slow_lottery_size sau shuffle; GIUA T0 va shuffle (R-3 / X-7) m = SCARD lobby_slow,
+    -- vi lobby nay da chot (khong con ai vao truoc T0) va shuffle se xep no o 1e12 + P + 1..m.
+    local m
+    if shuffled == '1' then
+      m = tonumber(redis.call('HGET', KEYS[5], 'slow_lottery_size') or '0')
+    elseif slowKey then
+      m = redis.call('SCARD', slowKey)
+    else
+      m = 0
+    end
+    score = score + penalty + m
   end
   redis.call('ZADD', KEYS[3], score, newtok)
   redis.call('EXPIRE', KEYS[3], ttl)

@@ -51,7 +51,9 @@ func (h *Handler) joinWithAntibot(w http.ResponseWriter, r *http.Request, eventI
 		// Chi ma luat va tag; khong fp / IP / UA tho (AC-15).
 		h.log.Info("antibot chan lan join", "event", eventID, "action", d.Action, "score", d.Score,
 			"rules", ruleList(d), "tags", strings.Join(d.Tags, ","))
-		if !hasLanes {
+		// STICKY: the first BLOCK already removed the slot and set the flag; revoking again would only cost a
+		// script call (and, before R-2, extended the 24 h window).
+		if !hasLanes || hasTag(d, antibot.TagSticky) {
 			return deny()
 		}
 		revoked, err := lanes.Revoke(r.Context(), eventID, identityID)
