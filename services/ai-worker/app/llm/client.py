@@ -149,8 +149,11 @@ def _unit_number(value: Any) -> float | None:
     """So thuc that (khong bool, khong chuoi), huu han, trong [0, 1]; khong thi None."""
     if isinstance(value, bool) or not isinstance(value, (int, float)):
         return None
-    f = float(value)
-    return f if math.isfinite(f) and 0.0 <= f <= 1.0 else None
+    try:
+        f = float(value)
+    except OverflowError:  # so nguyen qua lon (vd 400 chu so) -> khong hop le, khong nem ra ngoai
+        return None
+    return f + 0.0 if math.isfinite(f) and 0.0 <= f <= 1.0 else None  # +0.0: bo dau cua -0.0
 
 
 def parse_moderation(text: str) -> ModerationResult | None:
@@ -163,7 +166,7 @@ def parse_moderation(text: str) -> ModerationResult | None:
     """
     try:
         data = json.loads(_strip_fence(text))
-    except ValueError:
+    except (ValueError, RecursionError):  # JSON long qua sau cung phai chuyen nguoi duyet
         return None
     if not isinstance(data, dict) or "score" not in data:
         return None
