@@ -1,0 +1,14 @@
+('M06 chat caches on LLM failure', 'app/consumers/chat.py', 'KILLED', 'FAILED tests/llm/test_consumers_anthropic.py::test_AC8_Chat_Timeout_TraLoiDuPhong_KhongCache[APITimeoutError] (11s)')
+('M09 429 refund-all removed', 'app/llm/guarded.py', 'KILLED', 'FAILED tests/llm/test_client_anthropic.py::test_AC7_Guarded_429_HoanToanBo - ... (12s)')
+('M10 429 metric not incremented', 'app/llm/client.py', 'KILLED', 'FAILED tests/llm/test_client_anthropic.py::test_AC7_RateLimitError_ThanhRateLimited_DemVaLogMotLan (12s)')
+('M11 429 not mapped to RateLimited', 'app/llm/client.py', 'KILLED', 'FAILED tests/llm/test_client_anthropic.py::test_AC7_RateLimitError_ThanhRateLimited_DemVaLogMotLan (29s)')
+('M20 error_fields logs str(exc)', 'app/logx.py', 'KILLED', 'FAILED tests/llm/test_fix_secret_logging.py::test_X1_Chat_LoiCoChuoiChuaKey_LogChiTenLoi (14s)')
+('M22 embedder None still embeds (get)', 'app/pipeline/semantic_cache.py', 'KILLED', 'FAILED tests/llm/test_embeddings.py::test_AC13_CacheKhongEmbedder_L1VanChay_KhongLog (12s)')
+
+KILLED 6/6
+M06 chat caches on LLM failure | app/consumers/chat.py | KILLED | FAILED tests/llm/test_consumers_anthropic.py::test_AC8_Chat_Timeout_TraLoiDuPhong_KhongCache[APITimeoutError] (11s)
+M09 429 refund-all removed | app/llm/guarded.py | KILLED | FAILED tests/llm/test_client_anthropic.py::test_AC7_Guarded_429_HoanToanBo - ... (12s)
+M10 429 metric not incremented | app/llm/client.py | KILLED | FAILED tests/llm/test_client_anthropic.py::test_AC7_RateLimitError_ThanhRateLimited_DemVaLogMotLan (12s)
+M11 429 not mapped to RateLimited | app/llm/client.py | KILLED | FAILED tests/llm/test_client_anthropic.py::test_AC7_RateLimitError_ThanhRateLimited_DemVaLogMotLan (29s)
+M20 error_fields logs str(exc) | app/logx.py | KILLED | FAILED tests/llm/test_fix_secret_logging.py::test_X1_Chat_LoiCoChuoiChuaKey_LogChiTenLoi (14s)
+M22 embedder None still embeds (get) | app/pipeline/semantic_cache.py | KILLED | FAILED tests/llm/test_embeddings.py::test_AC13_CacheKhongEmbedder_L1VanChay_KhongLog (12s)

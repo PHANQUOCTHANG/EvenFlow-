@@ -1,0 +1,6 @@
+Resolved 72 packages in 1ms
+Using CPython 3.13.14
+Resolved 65 packages in 1ms
+advisories HEAD: [('certifi', '2026.7.22', 'PYSEC-2026-4320'), ('opentelemetry-api', '1.45.1', 'CVE-2026-126360'), ('pyasn1', '0.6.4', 'CVE-2026-119194'), ('pyasn1', '0.6.4', 'CVE-2026-119195'), ('pyasn1', '0.6.4', 'CVE-2026-119196'), ('pyasn1', '0.6.4', 'CVE-2026-119197')]
+advisories BASE: [('certifi', '2026.7.22', 'PYSEC-2026-4320'), ('opentelemetry-api', '1.45.1', 'CVE-2026-126360'), ('pyasn1', '0.6.4', 'CVE-2026-119194'), ('pyasn1', '0.6.4', 'CVE-2026-119195'), ('pyasn1', '0.6.4', 'CVE-2026-119196'), ('pyasn1', '0.6.4', 'CVE-2026-119197')]
+new vs base: none

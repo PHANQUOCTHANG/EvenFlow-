@@ -24,8 +24,14 @@ import json
 import logging
 import re
 import unicodedata
+from typing import TYPE_CHECKING
 
 from redis.asyncio import Redis
+
+from app.logx import error_fields
+
+if TYPE_CHECKING:
+    from app.llm.embedder import Embedder
 
 log = logging.getLogger(__name__)
 
@@ -51,7 +57,7 @@ class SemanticCache:
     def __init__(
         self,
         redis: Redis,
-        embedder,
+        embedder: Embedder | None,
         similarity_threshold: float = SIMILARITY_THRESHOLD,
     ) -> None:
         self._redis = redis
@@ -72,12 +78,18 @@ class SemanticCache:
         if (hit := await self._redis.get(self.key(event_id, question))) is not None:
             return hit.decode() if isinstance(hit, bytes) else hit
 
+        # L3 tat (che do that, khong GEMINI_API_KEY): chi con exact hash, im lang --
+        # da log mot lan luc khoi dong (app.llm.wiring), khong log moi request.
+        if self._embedder is None:
+            return None
+
         # Tang 2: lang gieng gan nhat theo embedding.
         try:
             vec = await self._embedder.embed(question)
-        except Exception:
-            # Embedder hong khong duoc lam chet ca luong -- chi mat cache.
-            log.exception("embed that bai, bo qua cache ngu nghia")
+        except Exception as exc:  # noqa: BLE001 - embed hong chi mat cache; log khong traceback (X-1)
+            # Embedder hong khong duoc lam chet ca luong -- chi mat cache. Khong traceback:
+            # chuoi loi cua SDK goi mang co the chua GEMINI_API_KEY (findings X-1).
+            log.error("embed that bai, bo qua cache ngu nghia", extra=error_fields(exc))
             return None
 
         neighbor = await self._nearest(event_id, vec)
@@ -92,13 +104,15 @@ class SemanticCache:
 
     async def put(self, event_id: str, question: str, answer: str) -> None:
         await self._redis.setex(self.key(event_id, question), TTL_SECONDS, answer)
+        if self._embedder is None:
+            return
         try:
             vec = await self._embedder.embed(question)
-        except Exception:
+        except Exception as exc:  # noqa: BLE001 - embed hong chi mat cache; log khong traceback (X-1)
             # Embed hong thi bo qua lop cache ngu nghia (cau tra loi van da nam o cache khoa
             # chinh xac phia tren) -- nhung KHONG duoc nuot loi im lang: truoc day loi
             # embedder bien mat hoan toan, khong ai biet cache ngu nghia da ngung hoat dong.
-            log.warning("embed that bai, bo qua ghi vector", exc_info=True)
+            log.warning("embed that bai, bo qua ghi vector", extra=error_fields(exc))
             return
         async with self._redis.pipeline() as pipe:
             pipe.hset(

@@ -16,7 +16,7 @@ Phòng chờ ảo không phải là tính năng UX — nó là **bộ điều ti
 | CDN / Edge | 300k rps | Tĩnh 100%, không chạm backend |
 | Waiting Room (Redis) | 300k rps | O(1), chỉ `INCR` + `ZADD`, shard theo event |
 | Ticketing / Postgres | **~200 rps cố định** | Bị ghim bởi `admit_rate` — **không phụ thuộc** số người xếp hàng |
-| AI (Gemini) | ~60 rpm | Limiter toàn cục + cache ngữ nghĩa hấp thụ 85% câu hỏi |
+| AI (Anthropic Claude) | ~60 rpm (`AI_RPM`, chỉnh theo hạn mức tài khoản) | Limiter toàn cục + cache ngữ nghĩa hấp thụ 85% câu hỏi |
 
 Dù 300k hay 3 triệu người vào, Postgres vẫn chỉ thấy ngần ấy request.
 
@@ -40,7 +40,10 @@ make demo        # ~2 phut: dang ky -> organizer tao su kien -> mua ve -> ve + e
 | Jaeger | http://localhost:16686 |
 | Grafana | http://localhost:3001 |
 
-Dev không cần API key Gemini: `GEMINI_MOCK=1` (mặc định) dùng client giả lập.
+Dev không cần API key: `AI_MOCK=1` (mặc định) dùng client giả lập. Chạy thật: `AI_MOCK=0` + `ANTHROPIC_API_KEY`
+(model `ANTHROPIC_MODEL_CHAT` / `ANTHROPIC_MODEL_MODERATION`, mặc định `claude-haiku-5-5`); `GEMINI_API_KEY`
+chỉ dùng cho embedding của cache ngữ nghĩa và có thể để trống (khi đó tắt tầng L3). Tên cũ `GEMINI_MOCK`,
+`GEMINI_RPM`, `GEMINI_TPM`, `GEMINI_TIMEOUT_SECONDS` vẫn được đọc trong một bản phát hành (có cảnh báo).
 
 ### Tài khoản demo
 
@@ -79,7 +82,7 @@ apps/web/            Next.js 15 (buyer + organizer + ops)
 services/
   waitingroom/       Go -- lottery, rank, admit controller   [nong nhat]
   ticketing/         Go -- ton kho, hold, chong oversell     [rui ro nhat]
-  ai-worker/         Python -- consumer Gemini qua RabbitMQ
+  ai-worker/         Python -- consumer AI (Anthropic) qua RabbitMQ
   gateway/ identity/ event/ payment/ antibot/ notification/
 libs/go/             thu vien Go dung chung
 migrations/          schema PostgreSQL (goose)
@@ -96,7 +99,7 @@ tests/load/          k6
    — AIMD controller. Đây là chỗ spike biến thành dòng chảy hằng số.
 3. [`ai-worker/app/scripts/limiter.lua`](services/ai-worker/app/scripts/limiter.lua)
    — token bucket toàn cục RPM+TPM. Hệ thống **không bao giờ chủ động** chạm trần
-   Gemini, thay vì đợi bị 429 rồi mới lùi.
+   nhà cung cấp LLM, thay vì đợi bị 429 rồi mới lùi.
 
 ## Bất biến không được phép vi phạm
 
@@ -128,9 +131,9 @@ Redis lệch số **không thể** gây oversell — chỉ có thể gây "báo 
 | 4 Lua script phòng chờ + 2 script ticketing | `apps/web` mới có khung |
 | Admit controller AIMD, chạy được (`cmd/controller`) | Helper testcontainers cho EVF-39 |
 | Postgres repo (hold + release idempotent) | K8s manifest cho service ngoài `web` |
-| Hold sweeper + seeder nạp tồn kho Redis (`cmd/worker`) | Gemini client thật, FAQ matcher, semantic cache |
+| Hold sweeper + seeder nạp tồn kho Redis (`cmd/worker`) | LLM client thật (Anthropic), FAQ matcher, semantic cache |
 | Luồng xếp hàng → admit → giữ ghế → trả kho chạy qua `make smoke` | Outbox relay, đối soát tồn kho, bầu leader cho controller |
-| Limiter Gemini + suy biến 4 nấc | |
+| Limiter LLM + suy biến 4 nấc | |
 | Compose, Dockerfile, RabbitMQ topology, k6, alert | |
 
 Chạy không cần `make` (Windows): `bash deploy/scripts/seed.sh` rồi `bash deploy/scripts/smoke.sh`.

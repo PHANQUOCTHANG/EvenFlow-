@@ -1,7 +1,7 @@
 """Singleflight -- gop cac cau hoi trung nhau dang cho (L4).
 
 Tinh huong that: dung giay 20:00:05, mot nghin nguoi cung go "con bao lau nua".
-Neu moi nguoi mot lan goi Gemini, ta dot sach quota trong 1 giay va 940 nguoi
+Neu moi nguoi mot lan goi LLM, ta dot sach quota trong 1 giay va 940 nguoi
 nhan cau tra loi giong het nhau.
 
 Voi singleflight: mot nguoi di goi, 999 nguoi con lai doi va dung chung ket qua.
@@ -24,7 +24,7 @@ from redis.asyncio import Redis
 
 log = logging.getLogger(__name__)
 
-LEADER_TTL_SECONDS = 30  # phai dai hon timeout goi Gemini, nhung du ngan de mot
+LEADER_TTL_SECONDS = 30  # phai dai hon timeout goi LLM, nhung du ngan de mot
                          # worker chet khong khoa cau hoi do qua lau
 
 

@@ -1,0 +1,27 @@
+{
+  "task": "ai-anthropic",
+  "branch": "feature/ai-anthropic",
+  "base_commit": "c5fb598",
+  "tier": "high",
+  "reasons": [
+    "dependency change: adds the `anthropic` SDK to services/ai-worker (pyproject.toml + uv.lock); google-genai stays for embeddings only",
+    "external provider swap for every real LLM call (chat answers + event moderation verdicts that gate publishing, BR-E4)",
+    "secrets/config: new ANTHROPIC_API_KEY, renamed env vars (AI_MOCK, AI_RPM, AI_TPM) with deprecated aliases; fail-fast startup validation changes",
+    "cost/quota path: token accounting fed to the global Redis limiter (L6) changes source (input+output tokens incl. thinking)",
+    "prompt-injection boundary (BR-A7): system prompt moves to `system=`, untrusted content must stay wrapped in the user turn",
+    "observability contract: metric ai_gemini_429_total and alert GeminiRateLimited are renamed"
+  ],
+  "rule_hits": ["new dependency", "secrets/env config", "external API integration", "moderation verdict path"],
+  "llm_assessment": "high (agrees with rules; cannot lower)",
+  "user_override": null,
+  "consequences": [
+    "human approves spec.md before implementation",
+    "plan review mandatory",
+    "correctness + security review and a challenge on a different model",
+    "mutation test on the new client error/stop-reason mapping + rollback check",
+    "human sign-off before merge to develop"
+  ],
+  "no_migrations": true,
+  "no_new_dependencies": false,
+  "no_backend_changes": false
+}

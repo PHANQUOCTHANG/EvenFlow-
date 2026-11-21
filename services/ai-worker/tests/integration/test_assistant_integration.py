@@ -14,8 +14,8 @@ from fastapi import FastAPI
 from app.api.assistant import AssistantDeps, router
 from app.api.quota import AssistantQuota
 from app.consumers import chat
-from app.gemini.client import GeminiClient
-from app.gemini.limiter import GlobalRateLimiter
+from app.llm.client import LlmClient
+from app.llm.limiter import GlobalRateLimiter
 from app.mq.publisher import JobPublisher
 from app.mq.runtime import ConsumerRuntime, PoolSpec
 from app.pipeline import degradation
@@ -41,10 +41,10 @@ def _app(redis, publisher, *, stream_timeout_s: float = 10.0) -> FastAPI:
 
 
 def _chat_runtime(connection, redis) -> ConsumerRuntime:
-    gemini = GeminiClient(mock=True)
+    gemini = LlmClient(mock=True)
     consumer = chat.ChatConsumer(
         limiter=GlobalRateLimiter(redis), cache=SemanticCache(redis, gemini), faq=FaqMatcher(),
-        flight=SingleFlight(redis), gemini=gemini, tools=None,
+        flight=SingleFlight(redis), llm=gemini, tools=None,
         signals=lambda: degradation.Signals(0.0, 0.0, False),
         publish_result=RedisResultSink(redis).publish,
     )

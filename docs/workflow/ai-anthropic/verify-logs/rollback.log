@@ -1,0 +1,46 @@
+# rollback check 2026-11-21T07:33:16Z NEW=/d/Documents/Nam4-1/Project1/EvenFlow-ai-anthropic
+Preparing worktree (detached HEAD c5fb598)
+Updating files:  68% (870/1265)Updating files:  69% (873/1265)Updating files:  70% (886/1265)Updating files:  71% (899/1265)Updating files:  72% (911/1265)Updating files:  73% (924/1265)Updating files:  74% (937/1265)Updating files:  75% (949/1265)Updating files:  76% (962/1265)Updating files:  77% (975/1265)Updating files:  78% (987/1265)Updating files:  79% (1000/1265)Updating files:  80% (1012/1265)Updating files:  81% (1025/1265)Updating files:  82% (1038/1265)Updating files:  83% (1050/1265)Updating files:  84% (1063/1265)Updating files:  85% (1076/1265)Updating files:  86% (1088/1265)Updating files:  87% (1101/1265)Updating files:  88% (1114/1265)Updating files:  89% (1126/1265)Updating files:  90% (1139/1265)Updating files:  91% (1152/1265)Updating files:  92% (1164/1265)Updating files:  93% (1177/1265)Updating files:  94% (1190/1265)Updating files:  95% (1202/1265)Updating files:  96% (1215/1265)Updating files:  97% (1228/1265)Updating files:  98% (1240/1265)Updating files:  99% (1253/1265)Updating files: 100% (1265/1265)Updating files: 100% (1265/1265), done.
+HEAD is now at c5fb598 Merge pull request #96 from PHANQUOCTHANG/feature/frontend-debt-r4
++ docker compose config
+compose-ok
++ python check
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+    from app.config import Settings; from app.gemini.client import GeminiClient; s=Settings(_env_file=None); c=GeminiClient(); print(s.gemini_mock, c.mock)
+                                                                                                                                                    ^^^^^^
+AttributeError: 'GeminiClient' object has no attribute 'mock'
+python rc=1
+worktree-removed
+D:/Documents/Nam4-1/Project1/EvenFlow-                  c5fb598 [develop]
+D:/Documents/Nam4-1/Project1/EvenFlow-ai-anthropic      5e01d0c [feature/ai-anthropic]
+D:/Documents/Nam4-1/Project1/EvenFlow-ci                9550a06 [fix/ci-cd-review]
+D:/Documents/Nam4-1/Project1/EvenFlow-debt              98f5e8d [feature/frontend-debt-r4]
+D:/Documents/Nam4-1/Project1/EvenFlow-fe                df26c82 [feature/frontend-real-api]
+D:/Documents/Nam4-1/Project1/EvenFlow-fe-fixflow        204b6fb [wp/fe-fix-flow]
+D:/Documents/Nam4-1/Project1/EvenFlow-fe-fixorg         bc9201a [wp/fe-fix-org]
+D:/Documents/Nam4-1/Project1/EvenFlow-fe-qr             6e09c11 [wp/fe-qr]
+D:/Documents/Nam4-1/Project1/EvenFlow-fe-wp2            ee65ab0 [wp/fe-wp2]
+D:/Documents/Nam4-1/Project1/EvenFlow-fe-wp3            cf49111 [wp/fe-wp3]
+D:/Documents/Nam4-1/Project1/EvenFlow-fe-wp4            db15816 [wp/fe-wp4]
+D:/Documents/Nam4-1/Project1/EvenFlow-fe-wp5            610dfb1 [wp/fe-wp5-backend]
+D:/Documents/Nam4-1/Project1/EvenFlow-frontend-debt-r5  aac8363 [feature/frontend-debt-r5]
+D:/Documents/Nam4-1/Project1/EvenFlow-gateway-proxy     c403b64 [feature/gateway-trusted-proxy]
+D:/Documents/Nam4-1/Project1/EvenFlow-k8s-all           f746bcd [feature/k8s-all]
+D:/Documents/Nam4-1/Project1/EvenFlow-k8s-wp1           32d1d22 [wp/k8s-wp1]
+D:/Documents/Nam4-1/Project1/EvenFlow-k8s-wp2           1bacb54 [wp/k8s-wp2]
+D:/Documents/Nam4-1/Project1/EvenFlow-k8s-wp3           fd8fced [wp/k8s-wp3]
+D:/Documents/Nam4-1/Project1/EvenFlow-k8s-wp4           22ac998 [wp/k8s-wp4]
+D:/Documents/Nam4-1/Project1/EvenFlow-k8s-wp5           ec48d63 [wp/k8s-wp5]
+D:/Documents/Nam4-1/Project1/EvenFlow-next-patch        fa8ef29 [fix/next-15-5-28]
+D:/Documents/Nam4-1/Project1/EvenFlow-ops-warroom       7a0f27f [feature/ops-warroom]
+D:/Documents/Nam4-1/Project1/EvenFlow-outbox            623e818 [feature/EVF-36-outbox-relay]
+D:/Documents/Nam4-1/Project1/EvenFlow-p6                1d3bf81 [fix/deploy-p6-findings]
+D:/Documents/Nam4-1/Project1/EvenFlow-wpc               b931c27 [wp/ticketing-tests]
+D:/Documents/Nam4-1/Project1/EvenFlow-wpd               b931c27 [wp/waitingroom-tests]
+
+# supplementary run: plan one-liner used c.mock, which old GeminiClient lacks; same check with c._mock
+True True
+python rc=0
+worktree-removed
+0

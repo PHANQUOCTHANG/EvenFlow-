@@ -13,8 +13,8 @@ import pytest
 from prometheus_client import REGISTRY
 
 from app.consumers import chat
-from app.gemini.client import GeminiClient
-from app.gemini.limiter import GlobalRateLimiter
+from app.llm.client import LlmClient
+from app.llm.limiter import GlobalRateLimiter
 from app.mq.protocol import ATTEMPT_HEADER, ERROR_HEADER, PermanentError
 from app.mq.runtime import ConsumerRuntime, Delivery, PoolSpec
 from app.mq.topology import Queue, Topology, declare
@@ -309,13 +309,13 @@ async def test_TatEm_QuaHanThiHuyVaMessageQuayLai(connection) -> None:
 
 
 async def test_Chat_DauCuoi_KetQuaVaoRedis(connection, redis) -> None:
-    gemini = GeminiClient(mock=True)
+    gemini = LlmClient(mock=True)
     consumer = chat.ChatConsumer(
         limiter=GlobalRateLimiter(redis),
         cache=SemanticCache(redis, gemini),
         faq=FaqMatcher(),
         flight=SingleFlight(redis),
-        gemini=gemini,
+        llm=gemini,
         tools=None,  # cau hoi FAQ tinh, khong can so lieu song
         signals=lambda: degradation.Signals(0.0, 0.0, False),
         publish_result=RedisResultSink(redis).publish,
@@ -400,7 +400,7 @@ async def test_KiemDuyet_Callback404_VaoDLQNgayVaDoSauDLQ(connection) -> None:
         return httpx.Response(404, json={"title": "event not found"})
 
     client = httpx.AsyncClient(transport=httpx.MockTransport(event_service))
-    consumer = moderation.ModerationConsumer(GeminiClient(mock=True), "http://event", client=client)
+    consumer = moderation.ModerationConsumer(LlmClient(mock=True), "http://event", client=client)
     rt = ConsumerRuntime(connection, [PoolSpec("moderation", 1, moderation.make_handler(consumer))], grace_seconds=5)
     await rt.start()
     try:

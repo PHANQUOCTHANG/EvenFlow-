@@ -1,7 +1,7 @@
-"""Bo dieu tiet toan cuc cho Gemini API.
+"""Bo dieu tiet toan cuc cho LLM API (Anthropic; truoc day Gemini).
 
 Bai toan: 30.000 nguoi trong phong cho, ~5.000 cau hoi moi phut, trong khi
-Gemini chi cho 60 request va 1 trieu token moi phut. Chenh lech ~80 lan.
+LLM chi cho ~60 request va 1 trieu token moi phut. Chenh lech ~80 lan.
 
 Cach lam SAI pho bien: goi that, gap 429, roi retry. Duoi tai cao cach nay sup
 do -- moi worker deu retry cung luc, tao ra dung cai dinh vua bi tu choi.
@@ -24,8 +24,12 @@ import logging
 import time
 from dataclasses import dataclass
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from redis.asyncio import Redis
+
+if TYPE_CHECKING:
+    from app.llm.client import Prompt
 
 log = logging.getLogger(__name__)
 
@@ -34,7 +38,7 @@ _SCRIPT_PATH = Path(__file__).parent.parent / "scripts" / "limiter.lua"
 
 @dataclass(frozen=True)
 class LimiterConfig:
-    """Han muc cua Gemini. Dat THAP hon han muc that khoang 10-15%.
+    """Han muc cua nha cung cap LLM. Dat THAP hon han muc that khoang 10-15%.
 
     Bien an toan nay bu cho: dong ho cac may lech nhau, uoc luong token sai so,
     va cac loi goi khong di qua limiter (retry o tang thap, health check...).
@@ -73,7 +77,7 @@ class GlobalRateLimiter:
         return self._sha
 
     async def acquire(self, est_tokens: int) -> Permit:
-        """Xin phep goi Gemini.
+        """Xin phep goi LLM.
 
         Tra ve Permit(granted=False, wait_ms=N) khi chua du han muc. Goi y cho
         worker: KHONG sleep trong worker -- hay nack message ve queue voi do tre
@@ -96,7 +100,9 @@ class GlobalRateLimiter:
         Vi luon uoc luong thua, buoc nay lay lai duoc dang ke thong luong --
         thuong 20-40% quota TPM trong thuc te.
         """
-        delta = reserved - actual
+        # Hoan toi da dung phan da dat cho: actual am (usage hong) tung cong ca mot xo TPM
+        # vao han muc (findings X-6).
+        delta = min(reserved - actual, reserved)
         if delta <= 0:
             return
         sha = await self._script()
@@ -106,7 +112,7 @@ class GlobalRateLimiter:
         )
 
 
-def estimate_tokens(prompt: str, max_output_tokens: int) -> int:
+def estimate_tokens(prompt: str | Prompt, max_output_tokens: int) -> int:
     """Uoc luong token, co chu y uoc THUA.
 
     ~4 ky tu mot token voi tieng Anh; tieng Viet co dau ton hon nen dung he so

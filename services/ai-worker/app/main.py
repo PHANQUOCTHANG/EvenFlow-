@@ -26,10 +26,10 @@ from app import logx
 from app.api.assistant import AssistantDeps
 from app.api.assistant import router as assistant_router
 from app.api.quota import AssistantQuota
-from app.config import Settings, settings
+from app.config import Settings, deprecated_aliases_used, settings
 from app.consumers import chat, moderation, unsupported
-from app.gemini.client import GeminiClient
-from app.gemini.limiter import GlobalRateLimiter, LimiterConfig
+from app.llm.limiter import GlobalRateLimiter, LimiterConfig
+from app.llm.wiring import build_llm, log_startup
 from app.mq.publisher import JobPublisher
 from app.mq.runtime import ConsumerRuntime, Handler, PoolSpec
 from app.mq.topology import declare, load_ai_topology
@@ -68,7 +68,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         redis = Redis.from_url(settings.redis_url)
         stack.push_async_callback(redis.aclose)
         await redis.ping()
-        limiter = GlobalRateLimiter(redis, LimiterConfig(rpm=settings.gemini_rpm, tpm=settings.gemini_tpm))
+        limiter = GlobalRateLimiter(redis, LimiterConfig(rpm=settings.ai_rpm, tpm=settings.ai_tpm))
         signal_reader = degradation.SignalReader(redis)
         signal_cache = degradation.SignalCache(signal_reader)
         await signal_cache.refresh(default_override=_state.get("manual_override"))
@@ -85,22 +85,17 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             await declare(ch, load_ai_topology(settings.ai_topology_file))
         _state["connection"] = connection
 
-        gemini = GeminiClient(
-            api_key=settings.gemini_api_key,
-            model=settings.gemini_model_fast,
-            mock=settings.gemini_mock,
-            timeout_seconds=settings.gemini_timeout_seconds,
-            embed_model=settings.gemini_embed_model,
-        )
+        llm, embedder = build_llm(settings)
+        log_startup(settings, embedder, deprecated=deprecated_aliases_used())
         tools = SystemTools(settings.internal_api_base)
-        mod_consumer = moderation.ModerationConsumer(gemini, settings.moderation_base, limiter=limiter)
+        mod_consumer = moderation.ModerationConsumer(llm, settings.moderation_base, limiter=limiter)
         stack.push_async_callback(mod_consumer.aclose)
         chat_consumer = chat.ChatConsumer(
             limiter=limiter,
-            cache=SemanticCache(redis, gemini),
+            cache=SemanticCache(redis, embedder),
             faq=FaqMatcher(),
             flight=SingleFlight(redis),
-            gemini=gemini,
+            llm=llm,
             tools=tools,
             signals=_signals_now,
             publish_result=RedisResultSink(redis).publish,
@@ -120,7 +115,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         await runtime.start()
         _state["runtime"] = runtime
 
-        # EV-171: API tro ly phia khach -- chi nhan va xep hang, khong goi Gemini.
+        # EV-171: API tro ly phia khach -- chi nhan va xep hang, khong goi LLM.
         publisher = JobPublisher(connection)
         stack.push_async_callback(publisher.close)
         app.state.assistant = AssistantDeps(
@@ -129,7 +124,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             redis=redis,
             mode=lambda: degradation.decide(_signals_now()),
         )
-        log.info("ai-worker san sang", extra={"gemini_mock": settings.gemini_mock, "pools": runtime.keys})
+        log.info("ai-worker san sang", extra={"ai_mock": settings.ai_mock, "pools": runtime.keys})
 
         try:
             yield

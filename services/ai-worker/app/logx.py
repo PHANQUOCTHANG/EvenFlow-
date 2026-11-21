@@ -33,6 +33,16 @@ _STANDARD = frozenset(vars(logging.LogRecord("", 0, "", 0, "", None, None))) | {
 _FORBIDDEN = frozenset({"question", "answer", "prompt", "body", "event_description"})
 
 
+def error_fields(exc: BaseException) -> dict[str, Any]:
+    """Mo ta loi an toan de log: chi ten lop va ma HTTP (neu co).
+
+    KHONG dung str(exc) hay exc_info cho loi tu SDK goi mang: chuoi traceback (__cause__)
+    cua httpx co the in lai header Authorization / x-api-key (findings X-1).
+    """
+    status = getattr(exc, "status_code", None)
+    return {"error_type": type(exc).__name__, "status_code": status if isinstance(status, int) else None}
+
+
 def trace_id_from(headers: Mapping[str, Any] | None) -> str | None:
     if not headers:
         return None

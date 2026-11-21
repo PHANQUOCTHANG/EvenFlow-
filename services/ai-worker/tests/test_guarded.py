@@ -9,9 +9,9 @@ import pytest
 
 from app.consumers.moderation import ModerationConsumer, make_handler
 from app.domain.moderation import AiVerdict
-from app.gemini.client import GeminiClient, Generation, RateLimited
-from app.gemini.guarded import PermitDenied, guarded_generate
-from app.gemini.limiter import Permit
+from app.llm.client import Generation, LlmClient, RateLimited
+from app.llm.guarded import PermitDenied, guarded_generate
+from app.llm.limiter import Permit
 from app.mq.protocol import MAX_ATTEMPTS
 from app.mq.runtime import Delivery
 
@@ -40,6 +40,9 @@ class FakeGen:
         if self._exc is not None:
             raise self._exc
         return Generation(text=self._text, total_tokens=self._total, model="fake")
+
+    def sent_max_tokens(self, budget):
+        return budget
 
 
 # ---------------------------------------------------------------- guarded_generate
@@ -88,19 +91,23 @@ async def test_KhongBietTokenThat_KhongHoan() -> None:
 # ---------------------------------------------------------------- kiem duyet qua limiter
 
 
-class FakeModels:
+class FakeMessages:
     def __init__(self, text: str) -> None:
         self.calls = 0
         self._text = text
 
-    async def generate_content(self, *, model, contents, config):
+    async def create(self, **kw):
         self.calls += 1
-        return SimpleNamespace(text=self._text, usage_metadata=SimpleNamespace(total_token_count=77))
+        return SimpleNamespace(
+            content=[SimpleNamespace(type="text", text=self._text)],
+            usage=SimpleNamespace(input_tokens=70, output_tokens=7),
+            stop_reason="end_turn",
+        )
 
 
 def _real_gemini(text: str = '{"score": 0.1, "axes": {}, "reasons": ["ok"]}'):
-    models = FakeModels(text)
-    client = GeminiClient(api_key="k", mock=False, sdk=SimpleNamespace(aio=SimpleNamespace(models=models)))
+    models = FakeMessages(text)
+    client = LlmClient("k", mock=False, sdk=SimpleNamespace(messages=models))
     return client, models
 
 
@@ -169,7 +176,7 @@ async def test_KiemDuyet_LanCuoiVanKhongGoiDuoc_ChuyenNguoiDuyet() -> None:
 
 
 async def test_KiemDuyet_LanCuoi429_CungChuyenNguoiDuyet() -> None:
-    gemini = GeminiClient(api_key="k", mock=False, sdk=SimpleNamespace(aio=SimpleNamespace(models=None)))
+    gemini = LlmClient(api_key="k", mock=False, sdk=SimpleNamespace(aio=SimpleNamespace(models=None)))
     verdicts: list = []
 
     async def cb(event_id, result):
@@ -195,6 +202,6 @@ async def test_KiemDuyetMock_VanChayKhongCanLimiter() -> None:
     async def cb(event_id, result):
         verdicts.append(result)
 
-    consumer = ModerationConsumer(GeminiClient(mock=True), "http://x", callback_fn=cb)
+    consumer = ModerationConsumer(LlmClient(mock=True), "http://x", callback_fn=cb)
     await consumer.handle_message(_job_bytes())
     assert verdicts[0].verdict == AiVerdict.AUTO_APPROVED

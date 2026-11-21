@@ -1,0 +1,95 @@
+# AC -> tests (services/ai-worker) or gate check. Test counts include parametrised cases.
+task: ai-anthropic
+base_commit: 169035e
+test_root: services/ai-worker/tests
+
+# Interface the frozen tests impose (plan/implementation must match these names exactly).
+test_imposed_interface:
+  modules: [app.llm.client, app.llm.guarded, app.llm.limiter, app.llm.embedder, app.llm.wiring]
+  app.llm.client:
+    names: [LlmClient, Generation, RateLimited, LlmIncomplete, mock_embedding, wrap_untrusted]
+    LlmClient: >-
+      LlmClient(api_key=None (first positional), *, mock=None, sdk=None, chat_model, moderation_model,
+      timeout_seconds, thinking_headroom_tokens, gemini_api_key, embed_model, embed_sdk).
+      LlmClient() with no args must work in mock mode (reads AI_MOCK, alias GEMINI_MOCK; AI_MOCK wins).
+      Env AI_MOCK=0 without key: LlmClient() raises RuntimeError or ValueError whose message contains ANTHROPIC_API_KEY.
+    methods:
+      - "await build_prompt(job, tools) -> opaque prompt, passed unchanged to generate / guarded_generate"
+      - "await generate(prompt, *, max_output_tokens) -> Generation; sends max_tokens = sent_max_tokens(max_output_tokens)"
+      - "sent_max_tokens(budget) -> budget + thinking_headroom_tokens"
+      - "await scan_moderation(job, *, generate=None) -> ModerationResult; generate may be functools.partial(guarded_generate, limiter, client); moderation model must be used on both paths"
+      - "await embed(text) -> list[float] (mock: mock_embedding; real: embed_sdk.aio.models.embed_content(model=embed_model, contents=text) under timeout_seconds)"
+    LlmIncomplete: "exception with attribute .reason in {refusal, max_tokens, empty}"
+    sdk_shape: "sdk.messages.create(**kwargs) async; resp.content = blocks with .type/.text; resp.usage.input_tokens/.output_tokens; resp.stop_reason"
+    messages_create_kwargs: "model, max_tokens, system (str or text blocks), messages=[one user turn], output_config={'effort': 'low'}; every kwarg must exist in anthropic AsyncMessages.create signature"
+    lazy_sdk: "anthropic.AsyncAnthropic(api_key=, timeout=, max_retries=0) built once on first generate when sdk=None (patched on anthropic module and on app.llm.client.AsyncAnthropic if present)"
+  app.llm.guarded: "guarded_generate(limiter, client, prompt, *, max_output_tokens) signature unchanged; permit = estimate_tokens(prompt text, client.sent_max_tokens(max_output_tokens))"
+  app.llm.limiter: [estimate_tokens, Permit]
+  app.llm.wiring:
+    - "build_llm(settings) -> (llm, embedder); embedder is None when real mode and GEMINI_API_KEY empty; mock -> embedder not None; no SDK client constructed at build time in mock / no-Gemini-key mode"
+    - "log_startup(settings, embedder, deprecated=[old env names used]) -> 'semantic cache L3 disabled (GEMINI_API_KEY empty)' logged exactly once (INFO or WARNING) when embedder is None; ready log text contains ai_mock, anthropic, both model ids, semantic_l3; exactly one WARNING per deprecated name, naming the new variable; no key text"
+  app.config.Settings:
+    fields: [ai_mock, anthropic_api_key (SecretStr), anthropic_model_chat, anthropic_model_moderation, ai_timeout_seconds, ai_rpm, ai_tpm, ai_thinking_headroom_tokens, gemini_api_key (SecretStr), gemini_embed_model]
+    construction: "tests set env vars and call Settings(_env_file=None); mock off + no key -> pydantic ValidationError matching ANTHROPIC_API_KEY"
+  app.pipeline.semantic_cache: "SemanticCache(redis, None) = L3 disabled: L1 exact hash only, no embed call, no log line"
+  consumers: "ChatConsumer(limiter, cache, faq, flight, llm, tools, signals, publish) passed positionally; ModerationConsumer(llm, api_base, callback_fn=..., limiter=...)"
+  moderation_incomplete_reason: "AI không đưa ra kết luận, chuyển người duyệt"
+  metrics: ["ai_llm_429_total", "ai_llm_incomplete_total{reason}"]
+
+acceptance_criteria:
+  AC-1: {tests: 11, ids: ["tests/llm/test_client_mock.py::*", "tests/test_wiring.py::test_AC1_Mock_CoEmbedderMock_KhongTaoSdk"]}
+  AC-2: {tests: 8, ids: ["tests/llm/test_client_anthropic.py::test_AC2_*", "tests/test_llm_sdk_contract.py::*", "tests/llm/test_consumers_anthropic.py::test_AC2_AC3_*"]}
+  AC-3:
+    tests: 11
+    ids: ["tests/llm/test_client_anthropic.py::test_AC3_*", "tests/llm/test_consumers_anthropic.py::test_AC3_*", "tests/llm/test_consumers_anthropic.py::test_AC2_AC3_*"]
+    note: "estimate equality: test_AC3_GiayPhepGuarded_BangDungEstimateTrenSentMaxTokens. SAVING budget 192 checked via sent_max_tokens/guarded only: SAVING never calls the LLM for open questions (allow_open_questions=False)"
+  AC-4: {tests: 3, ids: ["tests/llm/test_client_anthropic.py::test_AC4_*"]}
+  AC-5: {tests: 2, ids: ["tests/llm/test_client_anthropic.py::test_AC5_*"]}
+  AC-6: {tests: 8, ids: ["tests/llm/test_client_anthropic.py::test_AC6_*"]}
+  AC-7: {tests: 4, ids: ["tests/llm/test_client_anthropic.py::test_AC7_*", "tests/llm/test_consumers_anthropic.py::test_AC7_*"]}
+  AC-8: {tests: 5, ids: ["tests/llm/test_client_anthropic.py::test_AC8_*", "tests/llm/test_consumers_anthropic.py::test_AC8_*"]}
+  AC-9:
+    tests: 16
+    ids: ["tests/llm/test_classify_anthropic_errors.py::*", "tests/llm/test_client_anthropic.py::test_AC9_*"]
+    note: "spec names test_classify_real_errors.py; the real-SDK cases live in tests/llm/test_classify_anthropic_errors.py (existing file only gets the mechanical rename)"
+  AC-10: {tests: 12, ids: ["tests/llm/test_client_anthropic.py::test_AC10_*", "tests/llm/test_consumers_anthropic.py::test_AC10_*"]}
+  AC-11: {tests: 13, ids: ["tests/llm/test_moderation_json.py::*"]}
+  AC-12: {tests: 5, ids: ["tests/llm/test_embeddings.py::test_AC12_*", "tests/test_wiring.py::test_AC12_*"]}
+  AC-13:
+    tests: 5
+    ids: ["tests/llm/test_embeddings.py::test_AC13_*", "tests/test_wiring.py::test_AC13_*"]
+    note: "100x SemanticCache(redis, None) zero-log case: test_AC13_CacheKhongEmbedder_L1VanChay_KhongLog"
+  AC-14: {tests: 21, ids: ["tests/llm/test_settings_anthropic.py::test_AC14_*", "tests/test_wiring.py::test_AC14_*"]}
+  AC-15:
+    tests: 3
+    ids: ["tests/llm/test_settings_anthropic.py::test_AC15_*", "tests/test_wiring.py::test_AC15_*"]
+    also: "no key / no prompt text in logs asserted inside test_AC7_RateLimitError_*, test_AC8_APITimeoutError_*, test_AC10_KhongTronVen_*, test_AC13_LogL3TatDungMotLan_*"
+  AC-16: {gate: ["uv lock; CI uv sync --all-extras --locked", "Trivy (CI)", "git diff pyproject.toml: only anthropic>=<locked version> added, google-genai kept", "evidence records locked anthropic version"]}
+  AC-17: {gate: ["docker compose -f deploy/compose/docker-compose.yml config", "review ai-worker env: ANTHROPIC_API_KEY, AI_MOCK default 1, ANTHROPIC_MODEL_CHAT/MODERATION, GEMINI_API_KEY, AI_RPM, AI_TPM; .env.example sections; no GEMINI_MODEL_*"]}
+  AC-18:
+    tests: 1
+    ids: ["deploy/observability/alerts_test.yml (LlmRateLimited case: silent at 2m, fires at 4m, silent at 11m)"]
+    gate: ["promtool check rules alerts.yml", "promtool test rules alerts_test.yml", "git diff alerts.yml: only the rename"]
+  AC-19: {gate: ["review README diff", "git diff --stat docs/0*.md is empty"]}
+  AC-20:
+    tests: "root autouse fixture tests/conftest.py::_clear_ai_env (prefix scan AI_/GEMINI_/ANTHROPIC_)"
+    gate: ["uv run pytest -q: baseline 203 passed + 127 new", "pytest -m integration (mock mode)", "ruff check .", "CI needs no ANTHROPIC_API_KEY secret"]
+
+# Existing tests the implementer updates mechanically (AC-20). Assertion intent must not change.
+mechanical_renames:
+  - file: tests/test_gemini_client.py
+    change: "rename to tests/test_llm_client.py; app.gemini -> app.llm; GeminiClient -> LlmClient; fake genai models -> fake messages.create shape; genai ClientError 429/400 -> anthropic.RateLimitError/BadRequestError; ai_gemini_429_total -> ai_llm_429_total; embed tests via embed_sdk; GEMINI_API_KEY error -> ANTHROPIC_API_KEY; GEMINI_MOCK env -> AI_MOCK"
+  - file: tests/test_guarded.py
+    change: "imports app.gemini.* -> app.llm.*; GeminiClient -> LlmClient"
+  - file: tests/test_chat_handler.py
+    change: "imports app.gemini.* -> app.llm.*"
+  - file: tests/test_moderation_consumer.py
+    change: "GeminiClient -> LlmClient from app.llm.client (keyword gemini= follows the consumer's parameter name)"
+  - file: tests/test_classify_real_errors.py
+    change: "imports app.gemini.* -> app.llm.*; genai cases may stay (google-genai remains installed)"
+  - file: tests/test_config.py
+    change: "gemini_timeout_seconds/gemini_rpm/gemini_tpm -> ai_*; gemini_mock=False + empty key -> ai_mock=False, message ANTHROPIC_API_KEY"
+  - file: tests/integration/test_assistant_integration.py
+    change: "app.gemini.* -> app.llm.*; GeminiClient(mock=True) -> LlmClient(mock=True)"
+  - file: tests/integration/test_consumers_integration.py
+    change: "app.gemini.* -> app.llm.*; GeminiClient(mock=True) -> LlmClient(mock=True)"

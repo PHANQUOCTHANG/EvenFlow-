@@ -82,7 +82,7 @@ def _status_of(err: BaseException) -> int | None:
 def is_permanent(err: BaseException) -> bool:
     """Loi nay co THE tu het khi thu lai khong (EV-159).
 
-    Thu lai loi khong the tu het chiem 3 luot va -- voi Gemini -- dat cho token 3 lan cho mot
+    Thu lai loi khong the tu het chiem 3 luot va -- voi LLM -- dat cho token 3 lan cho mot
     request chac chan hong. Vinh vien: PermanentError, body khong giai ma duoc, HTTP 4xx tru
     408/425/429. Con lai (5xx, timeout, mat ket noi, limiter...) la tam thoi. Xet ca chuoi
     `raise ... from exc` vi handler hay boc loi thu vien.

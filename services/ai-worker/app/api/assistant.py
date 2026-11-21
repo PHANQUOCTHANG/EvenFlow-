@@ -1,6 +1,6 @@
 """API tro ly phia khach (EV-171).
 
-API chi NHAN va XEP HANG (BR-A1): khong bao gio goi Gemini trong request. Cau tra loi toi
+API chi NHAN va XEP HANG (BR-A1): khong bao gio goi LLM trong request. Cau tra loi toi
 sau qua SSE hoac polling, doc tu hop dong ket qua cua consumer chat (EV-157):
 `ai:job:{job_id}:result` + `PUBLISH ai:job:{job_id}`.
 

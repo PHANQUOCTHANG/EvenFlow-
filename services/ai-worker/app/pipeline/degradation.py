@@ -30,7 +30,7 @@ KEY_MANUAL_OVERRIDE = "ai:signals:manual_override"
 class Mode(enum.StrEnum):
     NORMAL = "NORMAL"       # day du LLM
     SAVING = "SAVING"       # chi FAQ + cache, rut ngan dau ra
-    FAQ_ONLY = "FAQ_ONLY"   # 100% template, khong goi Gemini
+    FAQ_ONLY = "FAQ_ONLY"   # 100% template, khong goi LLM
     OFF = "OFF"             # an tro ly, hien kenh CSKH
 
 
