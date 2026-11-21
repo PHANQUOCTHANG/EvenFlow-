@@ -1,0 +1,1 @@
+NOT RUN: needs Docker + compose up + migrate + k6 (AC-1, AC-6 replay, AC-10 verify); Docker is not running

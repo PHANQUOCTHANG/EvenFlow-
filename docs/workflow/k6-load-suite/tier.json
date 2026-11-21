@@ -1,0 +1,30 @@
+{
+  "task": "k6-load-suite",
+  "jira": ["EV-194 (EVF-124) Bo k6: 100k VU join trong 5s, 30 phut cho, dot checkout"],
+  "owner": "TranDinhVo",
+  "branch": "feature/k6-load-suite",
+  "base_commit": "918667c",
+  "tier": "medium",
+  "rule_hits": [
+    "test tooling only: tests/load/** (k6 scripts, pure JS helpers + node unit tests, seed SQL/shell for load identities)",
+    "build tooling: Makefile targets load / load-smoke, .gitignore for tests/load/results/",
+    "test helper mints HS256 access tokens from JWT_SECRET (dev default only; refuses non-local targets without explicit opt-in) - no change to authx or the gateway"
+  ],
+  "rules_not_hit": [
+    "no production code under services/, libs/, apps/",
+    "no migrations, no deploy/compose or deploy/k8s change",
+    "no .github/workflows change (CI smoke job is decision D3, deferred; adding it raises a CI rule hit and needs re-triage)",
+    "no new npm/go dependencies (k6 is an external binary or the grafana/k6 Docker image)"
+  ],
+  "llm_assessment": "medium (agrees with rules)",
+  "user_override": null,
+  "consequences": [
+    "spec + plan reviewed by human before implementation (decisions D1-D7 in spec.md)",
+    "plan review",
+    "parallel review (correctness + challenge on a different model, Sonnet)",
+    "node unit tests for pure helpers red before implementation; k6 run evidence recorded when Docker is available"
+  ],
+  "no_migrations": true,
+  "no_new_dependencies": true,
+  "no_backend_changes": true
+}
