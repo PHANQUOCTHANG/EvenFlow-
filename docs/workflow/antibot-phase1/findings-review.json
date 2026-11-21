@@ -1,0 +1,92 @@
+[
+  {
+    "id": "R-1",
+    "reviewer": "correctness",
+    "severity": "minor",
+    "file": "libs/go/antibot/guard.go",
+    "line": 115,
+    "title": "Client-cancelled requests count as Redis failures and trip the breaker",
+    "evidence": "observe() treats any Observe error as a failure: reason redis_error (or redis_timeout) is counted and g.br.fail() is called. When the request context is cancelled (the buyer reloads or closes the tab, common at T0), go-redis returns context.Canceled, which is not isTimeout, so it is counted as redis_error and feeds the 20-per-1s breaker. At on-sale rates 20 cancels per second is easy to reach, so the breaker can open for 3 s while Redis is healthy. That turns off R1-server, R4D, R4N and R7 during the spike and makes AntibotDegraded fire wrongly. No join is refused (the cancelled join fails anyway), so this only weakens detection and pollutes alerts.",
+    "fix": "If errors.Is(err, context.Canceled) or the parent ctx.Err() != nil, return the unknown state without calling br.fail() and without counting redis_error (or count it under its own bounded reason). Add a guard test with a cancelled parent context."
+  },
+  {
+    "id": "R-2",
+    "reviewer": "correctness",
+    "severity": "minor",
+    "file": "services/waitingroom/internal/adapter/redis/script/revoke.lua",
+    "line": 136,
+    "title": "Each STICKY retry resets the 24 h block flag, so the block never expires while the user keeps retrying",
+    "evidence": "A STICKY decision is Applied=BLOCK, so joinWithAntibot (antibot.go:57) calls Revoke again, and revoke.lua runs SET blk 1 EX 86400 every time. A buyer blocked by mistake who retries even once a day stays blocked for good. AC-12 says later joins within 24 h are STICKY, which is a fixed window from the first block.",
+    "fix": "Use SET ... EX ttl NX in revoke.lua, or skip Revoke in the handler when the decision carries TagSticky (the slot was already removed by the first BLOCK). Add an integration test that checks the TTL is not extended by a second BLOCK."
+  },
+  {
+    "id": "R-3",
+    "reviewer": "correctness",
+    "severity": "minor",
+    "file": "services/waitingroom/internal/adapter/redis/script/join.lua",
+    "line": 90,
+    "title": "A slow-lane join between T0 and the shuffle can rank ahead of the pre-T0 slow lobby (breaks the AC-11 amendment invariant)",
+    "evidence": "After T0 but before the controller has run shuffle.lua (shuffled ~= '1'; waitForSaleStart latency or a leader failover can make this window seconds long), a slow join takes the post-T0 branch with m = HGET slow_lottery_size = 0, so its score is 1e12 + seq + P. The shuffle then places the pre-T0 slow lobby at 1e12 + P + i for i = 1..m. Every one of these joiners with seq < i ranks ahead of pre-T0 slow members. That contradicts amended AC-11: every pre-T0 slow member stays ahead of every post-T0 slow joiner.",
+    "fix": "In the slow branch, when shuffled ~= '1', use m = SCARD lobby_slow, which is already final because no more pre-T0 slow joins can arrive. Otherwise use HGET slow_lottery_size. Add a lane integration test that does a post-T0 slow join before Shuffle and then checks the order."
+  },
+  {
+    "id": "R-4",
+    "reviewer": "security",
+    "severity": "minor",
+    "file": "libs/go/antibot/redisstate/observe.lua",
+    "line": 242,
+    "title": "Re-joins inflate the prefix share, so one slot holder can suppress R4N for its own /24",
+    "evidence": "jc and nj are incremented on every join, including REJOINs (hasSlot == 1), which return the existing slot at no cost. One identity that already holds a slot can call join in a loop from a farm /24 and push nj/jc above R4N_SHARE once jc >= 1000 in 5 minutes. That sets NetSuppressed, and R4N is not evaluated for every identity on that prefix. Contracts 4 accepts that a farm holding over 5% of real joins suppresses itself. Counting re-joins makes this much cheaper than the contract assumed: it needs one identity rather than 5% of the event's identities. Impact is bounded (R4N weight 0.25, R4D and R1 remain, AntibotNetSuppressed fires).",
+    "fix": "Increment jc and nj only when hasSlot == 0 (first joins), matching the R1-server rule for jt. This needs a contracts.md note, because contracts 4 says 'INCR per join'."
+  },
+  {
+    "id": "R-5",
+    "reviewer": "security",
+    "severity": "minor",
+    "file": "libs/go/antibot/config.go",
+    "line": 159,
+    "title": "Production accepts the committed dev hash key",
+    "evidence": "loadKey enforces presence and >= 32 bytes when APP_ENV=production. It does not reject the public dev values: devHashKey, and 'devAntibotHashKeyLocalClusterOnlyNeverProdA=' committed in docker-compose.yml and secrets.dev.env. Staging runs with APP_ENV=production, so copying the local secret into eventflow-auth would pass validation silently. With a public HMAC key the stored device_fp hashes can be recomputed from known fingerprints, which defeats D10/AC-15 pseudonymisation.",
+    "fix": "When production is true, reject a key equal to devHashKey or to the committed dev value, and fail on a decoded key that contains the substring 'dev' (the comments already rely on that marker). Add a config_test case."
+  },
+  {
+    "id": "R-6",
+    "reviewer": "correctness",
+    "severity": "minor",
+    "file": "deploy/k8s/base/waitingroom/deployment.yaml",
+    "line": 108,
+    "title": "Missing ANTIBOT_HASH_KEY in the Secret stops the whole waiting room, even with ANTIBOT_MODE=off",
+    "evidence": "The secretKeyRef eventflow-auth/ANTIBOT_HASH_KEY is not optional. If the operator has not added the key to the external eventflow-auth Secret (staging), new waitingroom pods stay in CreateContainerConfigError and the join path is down. Setting ANTIBOT_MODE=off does not help, because the pod never starts. AC-20 lists the key as a go/no-go precondition, but this still makes an antibot config gap take down queue joins. That conflicts with the D7 principle and removes 'off' as a rollback.",
+    "fix": "Add optional: true to the secretKeyRef. LoadConfig already fails startup when APP_ENV=production and mode != off with the key absent (AC-16), so enforcement stays, and off/shadow-in-dev keep working. Check that deploy/k8s/policy AC-18 accepts optional refs, or extend it."
+  },
+  {
+    "id": "R-7",
+    "reviewer": "correctness",
+    "severity": "minor",
+    "file": "apps/web/src/lib/antibot-signals.ts",
+    "line": 133,
+    "title": "Key auto-repeat feeds iv/sq with machine-regular intervals",
+    "evidence": "onKeyDown records every keydown as a discrete event, including OS auto-repeat (KeyboardEvent.repeat === true), which fires at a fixed ~30-35 ms rate while a buyer holds an arrow key or Space to scroll the event page. A long repeat run fills the last <= 32 iv items with near-identical values, so R1-client (CV < 0.10, block-eligible, 0.50) can fire for a human, and sq buckets get skewed. One fast follow-up sign (R2 or R5W) then moves a human to SLOW_LANE. D14 intends discrete human actions only.",
+    "fix": "Take the event in onKeyDown and skip recordDiscrete (still count ke) when e.repeat is true. Add a collector test that holds a key for 40 repeats and expects iv to have no repeat intervals."
+  },
+  {
+    "id": "R-8",
+    "reviewer": "correctness",
+    "severity": "minor",
+    "file": "services/waitingroom/internal/adapter/redis/ops_state.go",
+    "line": 52,
+    "title": "Ops lobby count ignores lobby_slow",
+    "evidence": "OpsState reports Lobby = SCARD wr:{ev}:lobby only. In enforce, pre-T0 slow-lane members sit in wr:{ev}:lobby_slow and do not appear in the war-room lobby figure, so operators undercount who is waiting before T0.",
+    "fix": "Add SCARD lobby_slow, either to Lobby or as a separate LobbySlow field. A separate field is better, because it also shows the slow-lane volume in shadow-to-enforce rehearsals."
+  },
+  {
+    "id": "R-9",
+    "reviewer": "correctness",
+    "severity": "minor",
+    "file": ".github/workflows/ci.yml",
+    "line": 346,
+    "title": "Alert tests went to a new file instead of being appended to alerts_test.yml (contracts 6 drift)",
+    "evidence": "Contracts 6 says the new alert cases are only appended to the existing alerts_test.yml. The branch adds deploy/observability/alerts_antibot_test.yml and changes ci.yml to pass both files to promtool test rules. The CI change is minimal and safe (same image, read-only mount, the existing step stays in place), but it differs from the frozen contract.",
+    "fix": "Either move the cases into alerts_test.yml and revert ci.yml, or record the deviation in contracts.md or a change note so the traceability stays accurate."
+  }
+]
