@@ -1,11 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect } from "react";
 
 import { Alert, Badge, Button, Card, Spinner } from "@/components/ui";
 import { TicketQr } from "@/components/checkout/ticket-qr";
 import { useT } from "@/components/i18n/locale-provider";
 import { useIssuedTickets, useOrderStatus } from "@/hooks/use-order-status";
+import { clearSignals } from "@/lib/antibot-signals";
 import { cn } from "@/lib/cn";
 import { formatMoney } from "@/lib/money";
 import type { OrderDetails } from "@/lib/payment-client";
@@ -31,6 +33,11 @@ export function OrderResultView({
   });
   // PAID -> lay ve kem QR that (AC-15). Chua phat hanh thi pending + thu lai co gioi han; khong bao gio QR demo.
   const issued = useIssuedTickets(orderId, status === "PAID" && order !== null, { onRetry: refresh });
+
+  // Checkout xong = khach roi su kien: bo snapshot anti-bot (EV-173).
+  useEffect(() => {
+    if (status === "PAID") clearSignals(eventId);
+  }, [status, eventId]);
 
   // Khong bia gia tri: thieu du lieu thi de trong, khong dien ten/so luong mac dinh.
   const eventTitle = order?.eventTitle ?? "";
