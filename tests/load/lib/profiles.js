@@ -1,17 +1,20 @@
 // Profiles -> k6 options (AC-2, AC-3, AC-8, AC-9). Pure: no k6 import, every error is thrown at init.
-import { guardTarget } from "./flow.js";
+import { guardTarget, confirmRemote } from "./flow.js";
 import { SIGNAL_MODES } from "./signals.js";
 
 export const PROFILES = ["smoke", "spike", "wait", "checkout", "full"];
 
 export const DEFAULT_BASE = "http://localhost:8080";
 export const DEFAULT_EVENT = "22222222-2222-4222-8222-000000000194"; // seed-load.sh LOAD_EVENT
+// Single source for the defaults that tests/load/seed-load.sh also uses (it reads these two lines, R-3):
+export const DEFAULT_QUOTA = 200;
+export const DEFAULT_HOLD_TTL_S = 600;
 export const DEV_JWT_SECRET = "dev-jwt-secret-change-me-0123456789"; // compose DEV default, never a real secret
 
 // Defaults of plan.md section 3. Every value can be overridden by env.
 const BASE_DEFAULTS = {
   users: 0, // 0 = exactly what the profile needs
-  quota: 10000,
+  quota: DEFAULT_QUOTA,
   sloScale: 1,
   joinTarget: 100000,
   joinRamp: "5s",
@@ -20,12 +23,12 @@ const BASE_DEFAULTS = {
   waitDuration: "30m",
   checkoutRate: 200,
   checkoutDuration: "5m",
-  webhookRate: 8,
+  webhookRate: 8, // smoke / spike / wait; checkout and full default to CHECKOUT_RATE (R-1)
   replayRatio: 0.1,
   signals: "realistic",
 };
 const PROFILE_DEFAULTS = {
-  smoke: { joinTarget: 20, users: 50, quota: 200, sloScale: 4, jitterMs: 1000, waitDuration: "60s" },
+  smoke: { joinTarget: 20, users: 50, sloScale: 4, jitterMs: 1000, waitDuration: "60s" },
   spike: {},
   wait: {},
   checkout: {},
@@ -86,7 +89,8 @@ export function resolveConfig(env = {}) {
   const d = { ...BASE_DEFAULTS, ...PROFILE_DEFAULTS[profile] };
 
   const base = String(pick(env, "BASE", DEFAULT_BASE));
-  guardTarget(base, env);
+  const host = guardTarget(base, env);
+  confirmRemote(host, env);
   const event = String(pick(env, "EVENT", DEFAULT_EVENT));
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(event)) {
     throw new Error(`EVENT is not a UUID: "${event}"`);
@@ -118,12 +122,23 @@ export function resolveConfig(env = {}) {
     waitDurationS: parseDurationS(pick(env, "WAIT_DURATION", d.waitDuration), "WAIT_DURATION"),
     checkoutRate: posInt(pick(env, "CHECKOUT_RATE", d.checkoutRate), "CHECKOUT_RATE"),
     checkoutDurationS: parseDurationS(pick(env, "CHECKOUT_DURATION", d.checkoutDuration), "CHECKOUT_DURATION"),
-    webhookRate: posInt(pick(env, "WEBHOOK_RATE", d.webhookRate), "WEBHOOK_RATE"),
+    holdTtlS: posInt(pick(env, "HOLD_TTL", DEFAULT_HOLD_TTL_S), "HOLD_TTL"),
     replayRatio: ratio(pick(env, "REPLAY_RATIO", d.replayRatio), "REPLAY_RATIO"),
     // statuses that are a valid outcome of a step (304 not modified, 409 sold out / limit); used by checks.
     // http_req_failed itself counts only 5xx and network errors (AC-3), see main.js.
     expectedStatuses: [200, 201, 204, 304, 409],
   };
+  // Webhook pacing (D4, R-1): a checkout wave pays CHECKOUT_RATE orders per second, so the paced webhook must keep up,
+  // otherwise identity k waits k/WEBHOOK_RATE - k/CHECKOUT_RATE seconds and its hold expires before the payment lands.
+  const hasWave = profile === "checkout" || profile === "full";
+  cfg.webhookRate = posInt(pick(env, "WEBHOOK_RATE", hasWave ? cfg.checkoutRate : d.webhookRate), "WEBHOOK_RATE");
+  if (hasWave && cfg.webhookRate < cfg.checkoutRate) {
+    throw new Error(
+      `WEBHOOK_RATE=${cfg.webhookRate} is below CHECKOUT_RATE=${cfg.checkoutRate}: webhooks would fall behind and holds ` +
+        `expire (HOLD_TTL=${cfg.holdTtlS}s); raise WEBHOOK_RATE (and RATE_DEFAULT on the target, spec D4) or lower CHECKOUT_RATE`,
+    );
+  }
+  cfg.remote = host !== "localhost" && host !== "127.0.0.1" && host !== "[::1]";
   cfg.joinMaxVus = posInt(pick(env, "JOIN_MAX_VUS", cfg.joinTarget), "JOIN_MAX_VUS");
   const usersEnv = pick(env, "USERS", null) === null ? null : posInt(env.USERS, "USERS");
 
@@ -228,6 +243,12 @@ function thresholds(cfg) {
     checkout_holds_ok: [{ threshold: `count<=${cfg.quota}`, abortOnFail: true }],
     idem_mismatch: [{ threshold: "count==0", abortOnFail: true }],
   };
+  if (cfg.profile !== "spike") {
+    // a run that buys nothing must fail (R-4): every admitted buyer reaches ISSUED, every checkout step succeeds
+    t.checkout_issued = ["count>=1"];
+    t.checkout_issue_timeout = ["count==0"];
+    t.checkout_step_ok = ["rate>0.99"];
+  }
   if (cfg.profile === "smoke") {
     t.wr_admitted = ["count>=1"];
     t.checkout_issued = ["count>=1"];

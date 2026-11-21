@@ -72,6 +72,24 @@ export function guardTarget(base, env) {
   throw new Error(`BASE ${base} is not local; set ALLOW_REMOTE=1 to load a remote target on purpose`);
 }
 
+// A remote target also needs REMOTE_CONFIRM=<host of BASE> (R-8): k6 copies the shell environment into __ENV, so a
+// leftover `export ALLOW_REMOTE=1` alone must not arm a run against whatever BASE happens to be set.
+export function confirmRemote(host, env) {
+  if (LOCAL_HOSTS.includes(host)) return;
+  const want = String((env && env.REMOTE_CONFIRM) || "").toLowerCase();
+  if (want !== host) {
+    throw new Error(`remote target ${host}: also set REMOTE_CONFIRM=${host} (ALLOW_REMOTE=1 alone may be a leftover export)`);
+  }
+}
+
+// Webhook slot of the k-th buyer of a paced checkout wave (D4, R-1): start + k / rate. Returns the sleep in ms, or -1
+// when that sleep would end within 60 s of the hold expiry (the caller records webhook_delayed instead of sleeping).
+export function webhookDelayMs({ k, startMs, nowMs, rate, holdStartMs, holdTtlS }) {
+  const d = Math.max(0, Math.ceil(startMs + (k * 1000) / rate - nowMs));
+  const latest = holdStartMs + holdTtlS * 1000 - 60000;
+  return nowMs + d > latest ? -1 : d;
+}
+
 export function shouldReplay(rng, ratio) {
   if (ratio <= 0) return false;
   if (ratio >= 1) return true;
