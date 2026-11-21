@@ -250,3 +250,67 @@ in the worktree first.
 ### Required for round 3
 Plan edits for Q-1..Q-3 (rows 4, 5, 10 and the section 2 table). The test designer must align or add the test
 files before the freeze. Q-4 and Q-5 can go in the same edit.
+
+## Round 3
+
+Reviewer: plan reviewer (clean context). Inputs: `plan.md` @ 5db4b44 (section 7), `test-change-request.md`
+(TCR-1), and the tests frozen at 0763f2a (`tests/conftest.py`, `tests/llm/*`, `tests/test_llm_sdk_contract.py`,
+`tests/test_wiring.py`). I also read the pre-existing tests that TCR-1 changes.
+
+Human decision recorded: `origin/bugfix/EV-120-ai-verdict-callback` is abandoned, so **P-13 is closed**.
+
+### Verdict: **PASS (round 3)**: 0 blockers, 0 majors, 2 minors
+
+### Round-2 findings
+
+| Finding | Status | Evidence |
+|---|---|---|
+| Q-1 (blocker) | resolved | Row 4 keeps `embed()`, which delegates to `llm.embedder` (row 5, built in `__init__` by `make_embedder`). `build_llm` returns `(llm, llm.embedder)`, and main wires `SemanticCache(redis, embedder)`, so production never hands `llm` to the cache. The "no embed attribute" test is gone. This matches spec AC-1/AC-12 and `tests/llm/test_embeddings.py` / `test_client_mock.py`. |
+| Q-2 (major) | resolved | The row 4 constructor matches `conftest.make_client` and `test_AC2_TaoAsyncAnthropicLuoi_*`. `RuntimeError` with `ANTHROPIC_API_KEY` is raised in `__init__`, and the SDK stays lazy. `scan_moderation(job, *, generate=None)` passes `model=` on both paths. Row 7 forwards `model` only when it is not `None`, so the old fakes keep working. |
+| Q-3 (major) | resolved | Section 2.1 maps every frozen file to its ACs. 2.2 limits mechanical renames to names, imports and metric names, with no assertions, values or fake shapes. 2.3 sends the rest to TCR-1, and the gate stays red until TCR-1 is approved. `git diff -M 0763f2a` is the check. |
+| Q-4 | resolved | The root `_clear_ai_env` deletes by prefix (`AI_`, `GEMINI_`, `ANTHROPIC_`) for every test. |
+| Q-5 | resolved | The rollback is a bash block: `uv sync --locked`, `set -a; . .env.example; set +a`, then the one-liner. |
+
+### TCR-1 opinion: approve as written (11 items, minimal, no assertion weakened)
+
+- **Items 1 to 5 and 7 are needed.** Generation moves off `google.genai` (spec D1), so the fake shape
+  (`messages.create`, content blocks, `usage.input/output_tokens`) and the provider error classes have to change.
+  The expected values are kept on purpose:
+  - total 321 from 300+21, and 77 from 70+7;
+  - `max_tokens == 192` with `thinking_headroom_tokens=0`;
+  - `RateLimited`, `TimeoutError` and `None` tokens are unchanged;
+  - "a non-429 4xx propagates" is kept, with `BadRequestError` in place of `ClientError`.
+
+  The only literal changes are the model id (`gemini-test` -> `claude-test`) and the key name in the error
+  message (`GEMINI_API_KEY` -> `ANTHROPIC_API_KEY`, spec D4/AC-14). Both are identifiers, not looser checks.
+- **Item 6 is needed.** AC-12 moves embedding injection to `embed_sdk=`, and the vector and recorded-call
+  assertions are kept.
+- **Items 8 and 10 are needed** because of P-3 (no `getattr` default). `sent_max_tokens = budget` leaves every
+  reservation and refund identical. This is the smallest fake change that can work.
+- **Item 9 is needed.** Only `refunds[0][1] == 77`, `len(acquired)`, `models.calls` and the verdicts are
+  asserted, never the reserved value, so the 1024 default headroom of the real client changes no expectation.
+- **Item 11 is needed.** The field was renamed and the message is now spec-mandated.
+- **Nothing is deleted.** The 4 untouched tests in `test_llm_client.py` keep the `GEMINI_MOCK=1` alias path,
+  which is still valid under spec C1.
+- **The mechanical classification is right.** `test_classify_real_errors.py` genai cases need no TCR, because
+  `is_permanent` (`app/mq/protocol.py`) stays untouched and genai remains installed. Renaming the
+  `test_config.py` kwargs from `gemini_rpm` to `ai_rpm` is a parameter rename with the same values (2.2). I accept
+  both.
+
+### New findings
+
+**R-1 (minor): the alias scan and the mock-flag helper have no frozen test.** Round 2 planned tests in
+`test_config.py` for `deprecated_aliases_used` (`os.environ`, a tmp `.env`, case-insensitive, `env_file=None`,
+new name set) and for `resolve_mock_flag`. The frozen set covers only `log_startup(deprecated=[...])`, not the
+detection itself, and section 2 still lists ".env alias scan" as a mutation target.
+**Fix:** before writing row 3, the implementer adds a new test file (for example
+`tests/test_alias_scan.py`) with those cases and runs it in the gate. Otherwise, drop the mutation target and
+record AC-15 detection as covered only by the smoke. This is not blocking, because new tests may be added after
+the freeze and AC-1 already exercises `LlmClient()` alias resolution.
+
+**R-2 (minor): `Prompt` is missing from the row 4 export list.** TCR-1 item 1 builds
+`Prompt(system="s", user="prompt")`.
+**Fix:** add `Prompt` to "Exported names" (from `app.llm.client`).
+
+### Required before implementation
+Human approval of TCR-1. R-1 and R-2 can be handled by the implementer without another plan round.
