@@ -248,3 +248,11 @@ a bot that rotates it is still seen by R4N and R1. A signed fp hash from identit
 - X-5: generic HTTP-library user agents (okhttp, Go-http-client, axios, node-fetch) move from the R5 deny list to the weak list (R5W); they alone never block.
 - X-6: R4D weight 0.55, so a shared device alone is CHALLENGE (pass); it demotes only with another sign.
 - X-3: accepted limitation — a bot can forge `fp`/`sq` to evade R4D/R7; there is no stronger server-side device signal yet. Addressed by Turnstile (EV-176) in phase 2.
+
+### Amendment 2, revision (approved 2026-11-22)
+
+- Approved by TranDinhVo in the Claude Code session on 2026-11-22.
+- X-6 is WITHDRAWN: R4D stays 0.60 (the 0.55 variant dropped bots caught to 91.0%, below the 95% gate).
+- X-4 (R5 strong = 0.85) and X-5 (generic HTTP-library UAs → R5W) stay, conditional on the corpus still reaching ≥95% bots caught and <1% humans demoted; if not, stop and report.
+- TCR-6 approved for exactly the frozen assertions that encode the old R5 weight and deny list (score_test.go / rules_test.go), as listed in test-change-request.md, updated for R4D = 0.60.
+- R-6 accepted: one AC-18 policy exception (`OPTIONAL_SECRET_OK`) for the optional `ANTIBOT_HASH_KEY` ref; every other secret ref stays non-optional.
