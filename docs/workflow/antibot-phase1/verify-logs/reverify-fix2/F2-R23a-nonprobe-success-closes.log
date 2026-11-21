@@ -1,0 +1,7 @@
+--- FAIL: TestFix2_R23_NonProbeResultIgnoredWhileHalfOpen (0.17s)
+    fixround2_test.go:108: a late non-probe success closed the breaker: calls 3->4 tags []
+FAIL
+FAIL	github.com/eventflow/eventflow/libs/go/antibot	9.789s
+?   	github.com/eventflow/eventflow/libs/go/antibot/corpus	[no test files]
+ok  	github.com/eventflow/eventflow/libs/go/antibot/redisstate	2.210s
+FAIL

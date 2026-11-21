@@ -1,0 +1,8 @@
+--- FAIL: TestAntibotJoin_AC3_BadBodiesStillJoin (0.00s)
+    --- FAIL: TestAntibotJoin_AC3_BadBodiesStillJoin/over_4_KiB (0.00s)
+        antibot_handler_test.go:425: status 413, want 200 (body never rejected for its signals)
+FAIL
+FAIL	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/http	3.822s
+ok  	github.com/eventflow/eventflow/services/waitingroom/cmd/server	0.247s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/postgres	0.192s
+FAIL

@@ -1,0 +1,9 @@
+--- FAIL: TestFix1_R5_ProductionRefusesDevKeys (0.00s)
+    fixround1_test.go:242: production accepted dev key "MDEyMzQ1Njc4OS1ERVYtQU5USUJPVC0wMTIzNDU2Nzg5" (err <nil>)
+--- FAIL: TestFix2_R22_RandomKeyWithDevIsAccepted (0.00s)
+    fixround2_test.go:159: production refused a random key "t4vuGLVLjD/6A5eKOCmdevz/ojZAvw2wlKEjLWmz6Jg=" containing dev: ANTIBOT_HASH_KEY: a committed dev key is not allowed when APP_ENV=production
+FAIL
+FAIL	github.com/eventflow/eventflow/libs/go/antibot	9.556s
+?   	github.com/eventflow/eventflow/libs/go/antibot/corpus	[no test files]
+ok  	github.com/eventflow/eventflow/libs/go/antibot/redisstate	2.159s
+FAIL

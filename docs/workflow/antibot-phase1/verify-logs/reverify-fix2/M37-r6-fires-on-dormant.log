@@ -1,0 +1,187 @@
+--- FAIL: TestCorpus_AC18_DefaultConfig (0.27s)
+    corpus_test.go:324: 
+        family                      n   PASS   SLOW  BLOCK  demoted
+        raw_http                  200      0      0    200   100.0%
+        headless                  200      0      0    200   100.0%
+        stealth_rhythm            200      0      0    200   100.0%
+        account_farm              200      0     60    140   100.0%
+        replay_proxy_pool         200      0     30    170   100.0%
+        replay_residential         50      0     50      0   100.0%
+        human/autorepeat           12      0     12      0   100.0%
+        human/cgnat                78      0     78      0   100.0%
+        human/desktop            1657      0   1657      0   100.0%
+        human/fast                 36      0     36      0   100.0%
+        human/household           149      0    149      0   100.0%
+        human/keyboard             35      0     35      0   100.0%
+        human/mobile             2788      0   2788      0   100.0%
+        human/privacy             223      0    223      0   100.0%
+        human/tzspoof              22      0     22      0   100.0%
+        
+        rule       bots   humans   (sessions whose deciding decision fired the rule)
+        R1          200        1
+        R2          400        3
+        R3          200        0
+        R4D         188        5
+        R4N         390       20
+        R5          400        0
+        R5W           5       39
+        R6         1050     5000
+        R7          246        0
+        
+    corpus_test.go:327: bots caught 100.00% (1000/1000), humans demoted 100.00% (5000/5000)
+    corpus_test.go:332: humans demoted 100.00%, want < 1%
+--- FAIL: TestFix1_Amendment2_WorkedExamples (0.00s)
+    --- FAIL: TestFix1_Amendment2_WorkedExamples/X-4_python-requests_+_forged_pe:1 (0.00s)
+        fixround1_test.go:307: fired R5,R6 score 0.94 action BLOCK tags [], want R5 0.85 BLOCK capped=false
+    --- FAIL: TestFix1_Amendment2_WorkedExamples/X-4_wd_true_alone (0.00s)
+        fixround1_test.go:307: fired R5,R6 score 0.94 action BLOCK tags [], want R5 0.85 BLOCK capped=false
+    --- FAIL: TestFix1_Amendment2_WorkedExamples/missing_payload,_browser (0.00s)
+        fixround1_test.go:307: fired R3,R5,R6 score 0.964 action BLOCK tags [], want R3,R5 0.91 SLOW_LANE capped=true
+    --- FAIL: TestFix1_Amendment2_WorkedExamples/raw_HTTP_python-requests (0.00s)
+        fixround1_test.go:307: fired R3,R5,R6 score 0.964 action BLOCK tags [], want R3,R5 0.91 BLOCK capped=false
+    --- FAIL: TestFix1_Amendment2_WorkedExamples/X-5_okhttp,_no_signals (0.00s)
+        fixround1_test.go:307: fired R3,R5,R6 score 0.964 action BLOCK tags [], want R3,R5 0.91 SLOW_LANE capped=true
+    --- FAIL: TestFix1_Amendment2_WorkedExamples/X-5_okhttp,_valid_signals (0.00s)
+        fixround1_test.go:307: fired R6 score 0.6 action SLOW_LANE tags [], want  0 PASS capped=false
+    --- FAIL: TestFix1_Amendment2_WorkedExamples/X-5_okhttp_+_privacy_browser_sign (0.00s)
+        fixround1_test.go:307: fired R5W,R6 score 0.78 action SLOW_LANE tags [], want R5W 0.45 CHALLENGE capped=false
+    --- FAIL: TestFix1_Amendment2_WorkedExamples/headless_default (0.00s)
+        fixround1_test.go:307: fired R2,R5,R6 score 0.964 action BLOCK tags [], want R2,R5 0.91 BLOCK capped=false
+    --- FAIL: TestFix1_Amendment2_WorkedExamples/shared_fp_only_(X-6_withdrawn,_R4D_0.60) (0.00s)
+        fixround1_test.go:307: fired R4D,R6 score 0.84 action SLOW_LANE tags [], want R4D 0.6 SLOW_LANE capped=false
+    --- FAIL: TestFix1_Amendment2_WorkedExamples/account_farm (0.00s)
+        fixround1_test.go:307: fired R4D,R4N,R6 score 0.88 action BLOCK tags [], want R4D,R4N 0.7 SLOW_LANE capped=false
+    --- FAIL: TestFix1_Amendment2_WorkedExamples/shared_fp_+_privacy_browser (0.00s)
+        fixround1_test.go:307: fired R4D,R5W,R6 score 0.912 action BLOCK tags [], want R4D,R5W 0.78 SLOW_LANE capped=false
+--- FAIL: TestFix1_Amendment2_Corpus (0.26s)
+    fixround1_test.go:332: Amendment 2:
+        raw_http               200/200 demoted
+        headless               200/200 demoted
+        stealth_rhythm         200/200 demoted
+        account_farm           200/200 demoted
+        replay_proxy_pool      200/200 demoted
+        replay_residential     50/50 demoted
+        bots caught 100.00% (1000/1000), humans demoted 100.00% (5000/5000)
+    fixround1_test.go:335: Amendment 2 misses the AC-18 gate: bots 100.00% humans 100.00%
+--- FAIL: TestGolden_AC3_WebSnapshotsDecode (0.00s)
+    --- FAIL: TestGolden_AC3_WebSnapshotsDecode/click_only.json (0.00s)
+        golden_test.go:36: human golden snapshot fired R6
+    --- FAIL: TestGolden_AC3_WebSnapshotsDecode/mobile_touch.json (0.00s)
+        golden_test.go:36: human golden snapshot fired R6
+    --- FAIL: TestGolden_AC3_WebSnapshotsDecode/scripted_keyboard.json (0.00s)
+        golden_test.go:36: human golden snapshot fired R6
+--- FAIL: TestGuard_AC17_DecisionMetrics (0.00s)
+    guard_test.go:206: antibot_decisions_total{CHALLENGE,PASS,shadow} = 0
+    guard_test.go:215: antibot_capped_total = 0
+--- FAIL: TestGuard_AC14_SinkSelection (0.00s)
+    guard_test.go:226: PASS rows offered with sample 0: 50
+--- FAIL: TestEvaluate_AC4_BaselineFiresNothing (0.00s)
+    rules_test.go:15: baseline: fired=R6 score=0.6 action=SLOW_LANE
+--- FAIL: TestRule_AC4_VersionOnlyScoresR3Only (0.00s)
+    rules_test.go:108: {"v":1}: fired=R3,R6 score=0.76 action=SLOW_LANE applied=SLOW_LANE, want R3 0.40 CHALLENGE/PASS
+--- FAIL: TestRule_AC4_R6 (0.00s)
+    --- FAIL: TestRule_AC4_R6/unknown_(-1,_phase_1) (0.00s)
+        rules_test.go:43: R6 fired=true, want false (fired R6)
+--- FAIL: TestScore_AC8_DefaultOutcomesTable (0.00s)
+    --- FAIL: TestScore_AC8_DefaultOutcomesTable/missing_payload,_browser_UA (0.00s)
+        score_test.go:86: fired = R3,R5,R6, want R3,R5
+        score_test.go:89: score = 0.964, want 0.91
+        score_test.go:92: action/applied = BLOCK/BLOCK, want SLOW_LANE/SLOW_LANE
+        score_test.go:96: tags [] lack CAPPED
+    --- FAIL: TestScore_AC8_DefaultOutcomesTable/missing_payload,_identity_holds_a_slot (0.00s)
+        score_test.go:86: fired = R3,R5,R6, want R3,R5
+        score_test.go:89: score = 0.964, want 0.91
+        score_test.go:92: action/applied = BLOCK/BLOCK, want SLOW_LANE/PASS
+        score_test.go:96: tags [] lack CAPPED
+        score_test.go:96: tags [] lack REJOIN
+    --- FAIL: TestScore_AC8_DefaultOutcomesTable/raw_HTTP_python-requests (0.00s)
+        score_test.go:86: fired = R3,R5,R6, want R3,R5
+        score_test.go:89: score = 0.964, want 0.91
+    --- FAIL: TestScore_AC8_DefaultOutcomesTable/headless_default (0.00s)
+        score_test.go:86: fired = R2,R5,R6, want R2,R5
+        score_test.go:89: score = 0.964, want 0.91
+    --- FAIL: TestScore_AC8_DefaultOutcomesTable/stealth_fixed_rhythm (0.00s)
+        score_test.go:86: fired = R1,R2,R6, want R1,R2
+        score_test.go:89: score = 0.88, want 0.7
+        score_test.go:92: action/applied = BLOCK/BLOCK, want SLOW_LANE/SLOW_LANE
+    --- FAIL: TestScore_AC8_DefaultOutcomesTable/account_farm (0.00s)
+        score_test.go:86: fired = R4D,R4N,R6, want R4D,R4N
+        score_test.go:89: score = 0.88, want 0.7
+        score_test.go:92: action/applied = BLOCK/BLOCK, want SLOW_LANE/SLOW_LANE
+    --- FAIL: TestScore_AC8_DefaultOutcomesTable/shared_fp_only (0.00s)
+        score_test.go:86: fired = R4D,R6, want R4D
+        score_test.go:89: score = 0.84, want 0.6
+    --- FAIL: TestScore_AC8_DefaultOutcomesTable/replay_small_proxy_pool (0.00s)
+        score_test.go:86: fired = R4N,R6,R7, want R4N,R7
+        score_test.go:89: score = 0.85, want 0.625
+        score_test.go:92: action/applied = BLOCK/BLOCK, want SLOW_LANE/SLOW_LANE
+    --- FAIL: TestScore_AC8_DefaultOutcomesTable/replay_distinct_networks (0.00s)
+        score_test.go:86: fired = R6,R7, want R7
+        score_test.go:89: score = 0.8, want 0.5
+        score_test.go:92: action/applied = SLOW_LANE/SLOW_LANE, want CHALLENGE/PASS
+    --- FAIL: TestScore_AC8_DefaultOutcomesTable/human_on_CGNAT_/24 (0.00s)
+        score_test.go:86: fired = R4N,R6, want R4N
+        score_test.go:89: score = 0.7, want 0.25
+        score_test.go:92: action/applied = SLOW_LANE/SLOW_LANE, want PASS/PASS
+    --- FAIL: TestScore_AC8_DefaultOutcomesTable/cluster_+_fast_click (0.00s)
+        score_test.go:86: fired = R2,R4N,R6, want R2,R4N
+        score_test.go:89: score = 0.82, want 0.55
+        score_test.go:92: action/applied = SLOW_LANE/SLOW_LANE, want CHALLENGE/PASS
+    --- FAIL: TestScore_AC8_DefaultOutcomesTable/cluster_+_privacy_browser (0.00s)
+        score_test.go:86: fired = R4N,R5W,R6, want R4N,R5W
+        score_test.go:89: score = 0.835, want 0.588
+        score_test.go:92: action/applied = SLOW_LANE/SLOW_LANE, want CHALLENGE/PASS
+    --- FAIL: TestScore_AC8_DefaultOutcomesTable/cluster_+_fast_+_privacy (0.00s)
+        score_test.go:86: fired = R2,R4N,R5W,R6, want R2,R4N,R5W
+        score_test.go:89: score = 0.901, want 0.7525
+        score_test.go:92: action/applied = BLOCK/BLOCK, want SLOW_LANE/SLOW_LANE
+    --- FAIL: TestScore_AC8_DefaultOutcomesTable/one_weak:_R2 (0.00s)
+        score_test.go:86: fired = R2,R6, want R2
+        score_test.go:89: score = 0.76, want 0.4
+        score_test.go:92: action/applied = SLOW_LANE/SLOW_LANE, want CHALLENGE/PASS
+    --- FAIL: TestScore_AC8_DefaultOutcomesTable/one_weak:_R5W (0.00s)
+        score_test.go:86: fired = R5W,R6, want R5W
+        score_test.go:89: score = 0.78, want 0.45
+        score_test.go:92: action/applied = SLOW_LANE/SLOW_LANE, want CHALLENGE/PASS
+    --- FAIL: TestScore_AC8_DefaultOutcomesTable/one_weak:_R1 (0.00s)
+        score_test.go:86: fired = R1,R6, want R1
+        score_test.go:89: score = 0.8, want 0.5
+        score_test.go:92: action/applied = SLOW_LANE/SLOW_LANE, want CHALLENGE/PASS
+    --- FAIL: TestScore_AC8_DefaultOutcomesTable/fast_click_+_privacy_browser (0.00s)
+        score_test.go:86: fired = R2,R5W,R6, want R2,R5W
+        score_test.go:89: score = 0.868, want 0.67
+        score_test.go:92: action/applied = BLOCK/BLOCK, want SLOW_LANE/SLOW_LANE
+    --- FAIL: TestScore_AC8_DefaultOutcomesTable/R1_+_R7 (0.00s)
+        score_test.go:86: fired = R1,R6,R7, want R1,R7
+        score_test.go:89: score = 0.9, want 0.75
+        score_test.go:92: action/applied = BLOCK/BLOCK, want SLOW_LANE/SLOW_LANE
+--- FAIL: TestScore_AC8_NoisyOrRounded (0.00s)
+    score_test.go:124: weights R2=0.1234 fired R2,R6: score 0.649, want 0.123
+    score_test.go:124: weights R2=0.1236 fired R2,R6: score 0.649, want 0.124
+    score_test.go:124: weights R2=0.1,R5W=0.2 fired R2,R5W,R6: score 0.712, want 0.28
+    score_test.go:124: weights R2=0.5,R5W=0.5 fired R2,R5W,R6: score 0.9, want 0.75
+    score_test.go:124: weights R2=0 fired R2,R6: score 0.6, want 0
+    score_test.go:132: no rule: score 0.6 action SLOW_LANE fired R6
+--- FAIL: TestScore_AC8_TierBoundariesLowerInclusive (0.00s)
+    score_test.go:149: R2=0.299: score 0.72 tier SLOW_LANE, want PASS
+    score_test.go:149: R2=0.2996: score 0.72 tier SLOW_LANE, want CHALLENGE
+    score_test.go:149: R2=0.30: score 0.72 tier SLOW_LANE, want CHALLENGE
+    score_test.go:149: R2=0.301: score 0.72 tier SLOW_LANE, want CHALLENGE
+    score_test.go:149: R2=0.599: score 0.84 tier SLOW_LANE, want CHALLENGE
+    score_test.go:149: R2=0.849: score 0.94 tier BLOCK, want SLOW_LANE
+--- FAIL: TestScore_AC8_BlockEligibilityCap (0.00s)
+    score_test.go:166: missing + R4N: action BLOCK tags [], want SLOW_LANE CAPPED
+--- FAIL: TestScore_AC11_RejoinKeepsSlotUnlessBlock (0.00s)
+    score_test.go:220: slow lane with slot: applied BLOCK tags [], want PASS REJOIN
+    score_test.go:220: capped with slot: applied BLOCK tags [], want PASS REJOIN
+--- FAIL: TestScore_AC10_AC13_AppliedMatrix (0.00s)
+    score_test.go:271: enforce/pass tier PASS: got SLOW_LANE/SLOW_LANE, want applied PASS
+    score_test.go:271: enforce/pass tier CHALLENGE: got SLOW_LANE/SLOW_LANE, want applied PASS
+    score_test.go:271: enforce/slow_lane tier CHALLENGE: got SLOW_LANE/SLOW_LANE, want applied SLOW_LANE
+    score_test.go:271: shadow/pass tier PASS: got SLOW_LANE/PASS, want applied PASS
+    score_test.go:271: shadow/slow_lane tier CHALLENGE: got SLOW_LANE/PASS, want applied PASS
+FAIL
+FAIL	github.com/eventflow/eventflow/libs/go/antibot	9.218s
+?   	github.com/eventflow/eventflow/libs/go/antibot/corpus	[no test files]
+ok  	github.com/eventflow/eventflow/libs/go/antibot/redisstate	2.251s
+FAIL

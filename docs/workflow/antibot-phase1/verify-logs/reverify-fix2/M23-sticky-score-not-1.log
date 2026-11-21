@@ -1,0 +1,9 @@
+--- FAIL: TestGuard_AC12_StickyBlocks (0.00s)
+    guard_test.go:256: sticky: {Action:BLOCK Applied:BLOCK Score:0.99 Fired:[] Tags:[STICKY] FPHash:6be96bfc92bf67f1afd377073cfb1d8d NetPrefix:198.51.100.0/24}
+--- FAIL: TestScore_AC12_Sticky (0.00s)
+    score_test.go:235: sticky: {Action:BLOCK Applied:BLOCK Score:0.99 Fired:[] Tags:[STICKY] FPHash:6be96bfc92bf67f1afd377073cfb1d8d NetPrefix:198.51.100.0/24}
+FAIL
+FAIL	github.com/eventflow/eventflow/libs/go/antibot	9.620s
+?   	github.com/eventflow/eventflow/libs/go/antibot/corpus	[no test files]
+ok  	github.com/eventflow/eventflow/libs/go/antibot/redisstate	2.161s
+FAIL

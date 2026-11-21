@@ -1,0 +1,7 @@
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/http	3.981s
+ok  	github.com/eventflow/eventflow/services/waitingroom/cmd/server	0.300s
+--- FAIL: TestDecisionWriter_AC14_NoPoolDropsAndCounts (0.00s)
+    bot_decisions_test.go:48: antibot_decisions_dropped_total = 0, want 1000
+FAIL
+FAIL	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/postgres	0.210s
+FAIL

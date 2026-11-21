@@ -1,0 +1,506 @@
+[
+{
+"id": "M01-cap-dropped",
+"suite": "G",
+"file": "libs/go/antibot/score.go",
+"old": "if d.Action == ActionBlock && !rs.blockEligible {",
+"new": "if false && d.Action == ActionBlock && !rs.blockEligible {"
+},
+{
+"id": "M02-capped-tag-missing",
+"suite": "G",
+"file": "libs/go/antibot/score.go",
+"old": "d.Tags = append(d.Tags, TagCapped)",
+"new": "_ = TagCapped"
+},
+{
+"id": "M03-rejoin-removed",
+"suite": "G",
+"file": "libs/go/antibot/score.go",
+"old": "rejoin := st.HasSlot && d.Action != ActionBlock",
+"new": "rejoin := false && st.HasSlot && d.Action != ActionBlock"
+},
+{
+"id": "M04-rejoin-shields-block",
+"suite": "G",
+"file": "libs/go/antibot/score.go",
+"old": "rejoin := st.HasSlot && d.Action != ActionBlock",
+"new": "rejoin := st.HasSlot"
+},
+{
+"id": "M05-block-without-positive-sign",
+"suite": "G",
+"file": "libs/go/antibot/rules.go",
+"old": "\tcase missing:\n\t\trs.fire(R5)\n",
+"new": "\tcase missing:\n\t\trs.fire(R5)\n\t\trs.blockEligible = true\n"
+},
+{
+"id": "M06-tier-block-gt",
+"suite": "G",
+"file": "libs/go/antibot/score.go",
+"old": "case score >= c.Tiers[2]:",
+"new": "case score > c.Tiers[2]:"
+},
+{
+"id": "M07-tier-challenge-gt",
+"suite": "G",
+"file": "libs/go/antibot/score.go",
+"old": "case score >= c.Tiers[0]:",
+"new": "case score > c.Tiers[0]:"
+},
+{
+"id": "M08-tier-from-unrounded",
+"suite": "G",
+"file": "libs/go/antibot/score.go",
+"old": "d.Action = cfg.tier(d.Score)",
+"new": "d.Action = cfg.tier(1 - prod)"
+},
+{
+"id": "M09-r4n-suppression-off",
+"suite": "G",
+"file": "libs/go/antibot/rules.go",
+"old": "if st.Known && !st.NetSuppressed && st.NetIdentities > p.R4NMax {",
+"new": "if st.Known && st.NetIdentities > p.R4NMax {"
+},
+{
+"id": "M10-r7-floors-dropped",
+"suite": "G",
+"file": "libs/go/antibot/rules.go",
+"old": "sig.SN.OK && sig.SN.V >= p.R7MinEvents && sig.SB.OK && sig.SB.V >= p.R7MinBuckets &&",
+"new": ""
+},
+{
+"id": "M11-r7-minids-gt",
+"suite": "G",
+"file": "libs/go/antibot/rules.go",
+"old": "st.SeqIdentities >= p.R7MinIDs",
+"new": "st.SeqIdentities > p.R7MinIDs"
+},
+{
+"id": "M12-decoder-cap-4097",
+"suite": "G",
+"file": "libs/go/antibot/signals.go",
+"old": "if len(raw) > MaxSignalBytes {",
+"new": "if len(raw) > MaxSignalBytes+1 {"
+},
+{
+"id": "M13-per-field-strict",
+"suite": "G",
+"file": "libs/go/antibot/signals.go",
+"old": "\ts.RT = optInt(m[\"rt\"], 0, 600000)\n",
+"new": "\ts.RT = optInt(m[\"rt\"], 0, 600000)\n\tif m[\"rt\"] != nil && !s.RT.OK {\n\t\treturn missingSignals(ReasonBadJSON), ReasonBadJSON\n\t}\n"
+},
+{
+"id": "M14-recover-removed",
+"suite": "G",
+"file": "libs/go/antibot/guard.go",
+"old": "if r := recover(); r != nil {",
+"new": "if r := any(nil); r != nil {"
+},
+{
+"id": "M15-breaker-counts-cancellation",
+"suite": "G",
+"file": "libs/go/antibot/guard.go",
+"old": "if ctx.Err() != nil { // the parent was cancelled while waiting",
+"new": "if false && ctx.Err() != nil { // the parent was cancelled while waiting"
+},
+{
+"id": "M16-halfopen-many-probes",
+"suite": "G",
+"file": "libs/go/antibot/guard.go",
+"old": "\t\tif b.probing {\n\t\t\treturn false, false\n\t\t}\n",
+"new": ""
+},
+{
+"id": "M17-breaker-never-opens",
+"suite": "G",
+"file": "libs/go/antibot/guard.go",
+"old": "if b.failures >= b.n && (",
+"new": "if b.failures >= b.n*1000 && ("
+},
+{
+"id": "M18-no-observe-timeout",
+"suite": "G",
+"file": "libs/go/antibot/guard.go",
+"old": "cctx, cancel := context.WithTimeout(ctx, timeout)",
+"new": "cctx, cancel := context.WithCancel(ctx)\n\t_ = timeout"
+},
+{
+"id": "M19-invalid-metric-missing",
+"suite": "G",
+"file": "libs/go/antibot/guard.go",
+"old": "g.m.SignalsInvalid.WithLabelValues(string(reason)).Inc()",
+"new": "_ = reason"
+},
+{
+"id": "M20-bodyerr-ignored",
+"suite": "G",
+"file": "libs/go/antibot/guard.go",
+"old": "if in.BodyErr != \"\" {",
+"new": "if false && in.BodyErr != \"\" {"
+},
+{
+"id": "M21-sink-every-pass",
+"suite": "G",
+"file": "libs/go/antibot/guard.go",
+"old": "(d.Action != ActionPass || (g.cfg.PassSample > 0 && rand.Float64() < g.cfg.PassSample))",
+"new": "(true || rand.Float64() < 0)"
+},
+{
+"id": "M22-shadow-enforces",
+"suite": "G",
+"file": "libs/go/antibot/score.go",
+"old": "\tif shadow {\n\t\td.Applied = ActionPass\n\t}\n",
+"new": ""
+},
+{
+"id": "M23-sticky-score-not-1",
+"suite": "G",
+"file": "libs/go/antibot/score.go",
+"old": "d.Action, d.Score = ActionBlock, 1",
+"new": "d.Action, d.Score = ActionBlock, 0.99"
+},
+{
+"id": "M24-fallback-ignored",
+"suite": "G",
+"file": "libs/go/antibot/score.go",
+"old": "d.Applied = cfg.Fallback",
+"new": "d.Applied = ActionPass"
+},
+{
+"id": "M25-privacy-full-ipv4",
+"suite": "G",
+"file": "libs/go/antibot/privacy.go",
+"old": "bits = 24",
+"new": "bits = 32"
+},
+{
+"id": "M26-privacy-ipv6-full",
+"suite": "G",
+"file": "libs/go/antibot/privacy.go",
+"old": "bits := 64",
+"new": "bits := 128"
+},
+{
+"id": "M27-fphash-key-unused",
+"suite": "G",
+"file": "libs/go/antibot/privacy.go",
+"old": "hmac.New(sha256.New, key)",
+"new": "hmac.New(sha256.New, nil)"
+},
+{
+"id": "M28-fphash-length-40",
+"suite": "G",
+"file": "libs/go/antibot/privacy.go",
+"old": "m.Sum(sum[:0]))[:32]",
+"new": "m.Sum(sum[:0]))[:40]"
+},
+{
+"id": "M29-prod-accepts-dev-key",
+"suite": "G",
+"file": "libs/go/antibot/config.go",
+"old": "if production && (bytes.Equal(key, devHashKey)",
+"new": "if false && production && (bytes.Equal(key, devHashKey)"
+},
+{
+"id": "M30-prod-missing-key-ok",
+"suite": "G",
+"file": "libs/go/antibot/config.go",
+"old": "\t\tif production {\n\t\t\treturn fmt.Errorf(\"ANTIBOT_HASH_KEY: required",
+"new": "\t\tif false && production {\n\t\t\treturn fmt.Errorf(\"ANTIBOT_HASH_KEY: required"
+},
+{
+"id": "M31-off-validates",
+"suite": "G",
+"file": "libs/go/antibot/config.go",
+"old": "\tif c.Mode == ModeOff {\n\t\treturn c, nil\n\t}\n",
+"new": ""
+},
+{
+"id": "M32-error-without-var-name",
+"suite": "G",
+"file": "libs/go/antibot/config.go",
+"old": "fmt.Errorf(\"%s: %w\", s.name, err)",
+"new": "fmt.Errorf(\"invalid value: %w\", err)"
+},
+{
+"id": "M33-ua-not-lowercased",
+"suite": "G",
+"file": "libs/go/antibot/rules.go",
+"old": "lower := strings.ToLower(ua)",
+"new": "lower := ua"
+},
+{
+"id": "M34-empty-ua-not-strong",
+"suite": "G",
+"file": "libs/go/antibot/rules.go",
+"old": "realStrong := in.UserAgent == \"\" || ",
+"new": "realStrong := "
+},
+{
+"id": "M35-mobile-fc-exemption-dropped",
+"suite": "G",
+"file": "libs/go/antibot/rules.go",
+"old": " && !mobileUA(in.UserAgent) {",
+"new": " {"
+},
+{
+"id": "M36-r5w-one-weak",
+"suite": "G",
+"file": "libs/go/antibot/rules.go",
+"old": "if weak >= 2 {",
+"new": "if weak >= 1 {"
+},
+{
+"id": "M37-r6-fires-on-dormant",
+"suite": "G",
+"file": "libs/go/antibot/rules.go",
+"old": "st.CardIdentities > p.R6Max",
+"new": "(st.CardIdentities > p.R6Max || st.CardIdentities == -1)"
+},
+{
+"id": "M38-r1-client-le",
+"suite": "G",
+"file": "libs/go/antibot/rules.go",
+"old": "cv < p.R1ClientCV",
+"new": "cv <= p.R1ClientCV"
+},
+{
+"id": "M39-r2-le",
+"suite": "G",
+"file": "libs/go/antibot/rules.go",
+"old": "sig.RT.V < p.R2Ms",
+"new": "sig.RT.V <= p.R2Ms"
+},
+{
+"id": "M40-r4d-ge",
+"suite": "G",
+"file": "libs/go/antibot/rules.go",
+"old": "st.FPIdentities > p.R4DMax",
+"new": "st.FPIdentities >= p.R4DMax"
+},
+{
+"id": "M41-score-not-rounded",
+"suite": "G",
+"file": "libs/go/antibot/score.go",
+"old": "return math.Round(s*1000) / 1000",
+"new": "return s"
+},
+{
+"id": "M42-invalid-zone-disagrees",
+"suite": "G",
+"file": "libs/go/antibot/rules.go",
+"old": "\tloc, ok := loadZone(name)\n\tif !ok {\n\t\treturn false\n\t}",
+"new": "\tloc, ok := loadZone(name)\n\tif !ok {\n\t\treturn true\n\t}"
+},
+{
+"id": "M43-ua-cut-none",
+"suite": "W",
+"file": "services/waitingroom/internal/adapter/http/antibot.go",
+"old": "if len(ua) > maxUAForAntibot {",
+"new": "if false && len(ua) > maxUAForAntibot {"
+},
+{
+"id": "M44-block-without-revoke",
+"suite": "W",
+"file": "services/waitingroom/internal/adapter/http/antibot.go",
+"old": "revoked, err := lanes.Revoke(r.Context(), eventID, identityID)",
+"new": "revoked, err := false, error(nil)"
+},
+{
+"id": "M45-slow-uses-normal-lane",
+"suite": "W",
+"file": "services/waitingroom/internal/adapter/http/antibot.go",
+"old": "return joinLane(domain.LaneSlow)",
+"new": "return joinLane(domain.LaneNormal)"
+},
+{
+"id": "M46-pass-uses-slow-lane",
+"suite": "W",
+"file": "services/waitingroom/internal/adapter/http/antibot.go",
+"old": "return joinLane(domain.LaneNormal)",
+"new": "return joinLane(domain.LaneSlow)"
+},
+{
+"id": "M47-shadow-pass-via-lane-path",
+"suite": "W",
+"file": "services/waitingroom/internal/adapter/http/antibot.go",
+"old": "if !hasLanes || hasTag(d, antibot.TagModeShadow) {",
+"new": "if !hasLanes {"
+},
+{
+"id": "M48-xff-wrong-element",
+"suite": "W",
+"file": "services/waitingroom/internal/adapter/http/antibot.go",
+"old": "first, _, _ := strings.Cut(xff, \",\")",
+"new": "first := xff\n\tif i := strings.LastIndex(xff, \",\"); i >= 0 {\n\t\tfirst = xff[i+1:]\n\t}"
+},
+{
+"id": "M49-blocked-state-200",
+"suite": "W",
+"file": "services/waitingroom/internal/adapter/http/antibot.go",
+"old": "if err == nil && res.State == domain.StateBlocked {",
+"new": "if false && err == nil && res.State == domain.StateBlocked {"
+},
+{
+"id": "M50-sticky-revokes-again",
+"suite": "W",
+"file": "services/waitingroom/internal/adapter/http/antibot.go",
+"old": "if !hasLanes || hasTag(d, antibot.TagSticky) {",
+"new": "if !hasLanes {"
+},
+{
+"id": "M51-oversize-body-rejected",
+"suite": "W",
+"file": "services/waitingroom/internal/adapter/http/handler.go",
+"old": "\t\tvar denied bool\n\t\tres, denied, err = h.joinWithAntibot(w, r, eventID, p)\n",
+"new": "\t\tif r.ContentLength > 4096 {\n\t\t\thttpx.WriteProblem(w, http.StatusRequestEntityTooLarge, \"too large\")\n\t\t\treturn\n\t\t}\n\t\tvar denied bool\n\t\tres, denied, err = h.joinWithAntibot(w, r, eventID, p)\n"
+},
+{
+"id": "M52-off-typed-nil",
+"suite": "W",
+"file": "services/waitingroom/cmd/server/guard.go",
+"old": "\t\treturn nil, nil, noop\n\t}\n\tif cfg.DevKey {",
+"new": "\t\tvar g *antibot.Guard\n\t\treturn g, nil, noop\n\t}\n\tif cfg.DevKey {"
+},
+{
+"id": "M53-pass-stored-as-PASS",
+"suite": "W",
+"file": "services/waitingroom/internal/adapter/postgres/bot_decisions.go",
+"old": "\t\treturn \"ALLOW\"",
+"new": "\t\treturn string(a)"
+},
+{
+"id": "M54-nil-pool-not-counted",
+"suite": "W",
+"file": "services/waitingroom/internal/adapter/postgres/bot_decisions.go",
+"old": "\tif w.pool == nil || w.closed.Load() {\n\t\tw.m.Dropped.Inc()\n\t\treturn\n\t}",
+"new": "\tif w.pool == nil || w.closed.Load() {\n\t\treturn\n\t}"
+},
+{
+"id": "M55-web-key-repeat-counted",
+"suite": "WEB",
+"file": "apps/web/src/lib/antibot-signals.ts",
+"old": "  if (e && (e as KeyboardEvent).repeat === true) return;\n",
+"new": ""
+},
+{
+"id": "M56-web-listeners-not-passive",
+"suite": "WEB",
+"file": "apps/web/src/lib/antibot-signals.ts",
+"old": "{ passive: true, capture: true }",
+"new": "{ passive: false, capture: true }"
+},
+{
+"id": "M57-web-pointermove-in-iv",
+"suite": "WEB",
+"file": "apps/web/src/lib/antibot-signals.ts",
+"old": "  state.lastMoveSampleAt = t;\n  state.pe = inc(state.pe);\n",
+"new": "  state.lastMoveSampleAt = t;\n  state.pe = inc(state.pe);\n  recordDiscrete(\"p\", t);\n"
+},
+{
+"id": "M58-web-count-cap-raised",
+"suite": "WEB",
+"file": "apps/web/src/lib/antibot-signals.ts",
+"old": "const MAX_COUNT = 10000;",
+"new": "const MAX_COUNT = 100000;"
+},
+{
+"id": "M59-web-snapshot-kept-on-logout",
+"suite": "WEB",
+"file": "apps/web/src/lib/session.ts",
+"old": ", \"ef:ab:\"]",
+"new": "]"
+},
+{
+"id": "M60-web-empty-object-not-v1",
+"suite": "WEB",
+"file": "apps/web/src/components/queue/waiting-room.tsx",
+"old": "readSignals(eventId) ?? { v: 1 }",
+"new": "readSignals(eventId) ?? {}"
+},
+{
+"id": "M61-web-soldout-not-cleared",
+"suite": "WEB",
+"file": "apps/web/src/components/queue/waiting-room.tsx",
+"old": "    if (state === \"SOLD_OUT\") clearSignals(eventId);\n",
+"new": ""
+},
+{
+"id": "F2dup-M16-halfopen-many-probes",
+"suite": "G",
+"file": "libs/go/antibot/guard.go",
+"old": "\t\tif b.probing {\n\t\t\treturn false, false\n\t\t}\n",
+"new": ""
+},
+{
+"id": "F2dup-M47-shadow-pass-via-lane-path",
+"suite": "W",
+"file": "services/waitingroom/internal/adapter/http/antibot.go",
+"old": "if !hasLanes || hasTag(d, antibot.TagModeShadow) {",
+"new": "if !hasLanes {"
+},
+{
+"id": "F2dup-M53-pass-stored-as-PASS",
+"suite": "W",
+"file": "services/waitingroom/internal/adapter/postgres/bot_decisions.go",
+"old": "\t\treturn \"ALLOW\"",
+"new": "\t\treturn string(a)"
+},
+{
+"id": "F2dup-M61-web-soldout-not-cleared",
+"suite": "WEB",
+"file": "apps/web/src/components/queue/waiting-room.tsx",
+"old": "    if (state === \"SOLD_OUT\") clearSignals(eventId);\n",
+"new": ""
+},
+{
+"id": "F2-R21a-pooltimeout-equals-budget",
+"suite": "G",
+"file": "libs/go/antibot/redisstate/store.go",
+"old": "\tpoolWait := timeout / 2\n",
+"new": "\tpoolWait := timeout\n"
+},
+{
+"id": "F2-R21b-pool-timeout-not-detected",
+"suite": "G",
+"file": "libs/go/antibot/redisstate/store.go",
+"old": "return strings.Contains(err.Error(), \"connection pool timeout\")",
+"new": "return false && strings.Contains(err.Error(), \"connection pool timeout\")"
+},
+{
+"id": "F2-R22a-marker-case-sensitive",
+"suite": "G",
+"file": "libs/go/antibot/config.go",
+"old": "\tl := strings.ToLower(s)\n",
+"new": "\tl := s\n"
+},
+{
+"id": "F2-R22b-plain-dev-substring",
+"suite": "G",
+"file": "libs/go/antibot/config.go",
+"old": "bytes.Equal(key, devHashKey) || hasDevMarker(v) || hasDevMarker(string(key))",
+"new": "bytes.Equal(key, devHashKey) || strings.Contains(v, \"dev\") || bytes.Contains(key, []byte(\"dev\"))"
+},
+{
+"id": "F2-R23a-nonprobe-success-closes",
+"suite": "G",
+"file": "libs/go/antibot/guard.go",
+"old": "\tif probe {\n\t\tb.state, b.probing, b.openFor = brClosed, false, 0",
+"new": "\tif probe || b.state == brHalfOpen {\n\t\tb.state, b.probing, b.openFor = brClosed, false, 0"
+},
+{
+"id": "F2-R23b-nonprobe-failure-retrips",
+"suite": "G",
+"file": "libs/go/antibot/guard.go",
+"old": "\tif probe {\n\t\tif kind == failPool {",
+"new": "\tif probe || b.state == brHalfOpen {\n\t\tif kind == failPool {"
+},
+{
+"id": "F2-R25-reset-not-called",
+"suite": "WEB",
+"file": "apps/web/src/lib/session.ts",
+"old": "  resetSignalCollector(); // R2-5: the in-memory anti-bot counters belong to the previous account too\n",
+"new": "  void resetSignalCollector;\n"
+}
+]

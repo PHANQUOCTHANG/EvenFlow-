@@ -1,0 +1,15 @@
+--- FAIL: TestFix1_X2_LastingSlownessOpensBreaker (0.30s)
+    fixround1_test.go:159: breaker did not open after lasting slowness: calls 21->22 tags [DEGRADED]
+--- FAIL: TestFix1_X2_HalfOpenProbe (0.29s)
+    fixround1_test.go:211: half-open let 6 calls through, want exactly one probe
+--- FAIL: TestFix2_M16_OneProbeDuringRealHalfOpen (0.16s)
+    fixround2_test.go:75: 10 calls reached Redis during one half-open probe, want 2 (trip + probe)
+--- FAIL: TestFix2_R23_NonProbeResultIgnoredWhileHalfOpen (0.17s)
+    fixround2_test.go:108: a late non-probe success closed the breaker: calls 3->4 tags []
+--- FAIL: TestGuard_AC7_BreakerOpensAndCloses (0.00s)
+    guard_test.go:163: store called 15 times while breaker open, want 5
+FAIL
+FAIL	github.com/eventflow/eventflow/libs/go/antibot	8.870s
+?   	github.com/eventflow/eventflow/libs/go/antibot/corpus	[no test files]
+ok  	github.com/eventflow/eventflow/libs/go/antibot/redisstate	2.179s
+FAIL

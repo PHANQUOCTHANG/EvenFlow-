@@ -247,3 +247,97 @@ Each item needs a TCR, because the test files are frozen.
   demotion < 1% over a rehearsal on-sale.
 - Note the documentation drift: traceability AC-17 says the alert cases are appended to `alerts_test.yml`, but
   they are in `alerts_antibot_test.yml`.
+
+## Re-verification after fix round 2 (HEAD `68559af`, 2026-11-22)
+
+### Verdict: PASS for the runnable scope
+
+- All 72 mutant runs were killed: 68 unique mutants, since the 4 survivor re-runs in `muts-fix2.json` repeat M16/M47/M53/M61.
+- The baseline suites pass.
+- The integration-only scope below is still NOT VERIFIED.
+
+Logs are in `verify-logs/reverify-fix2/`: `baseline-*.log`, `run.txt`, one log per mutant, and `results-muts-all.json`.
+
+### 1. Commits and frozen tests
+
+| Check | Result |
+|---|---|
+| Gate report `commit_sha` | `9291299` |
+| Last commit touching `libs services apps deploy` | `43973ec` fix(web): reset the anti-bot collector on logout and test sold-out by polling |
+| `git diff --stat 43973ec HEAD -- . ':!docs'` | empty: `56062e9`, `9291299` and `68559af` are docs-only. The gate tree equals the last code tree |
+| Frozen tests (files present at `36aab08`) | last changed by `8fc8ede` (TCR-6). Fix round 2 changed none of them |
+
+The fix round 2 test changes are all new files, plus one non-frozen file:
+- New files: `fixround2_test.go`, `redisstate/pool_test.go`, `antibot_fixround2_test.go`,
+  `bot_decisions_internal_test.go`, `antibot-signals.fixround2.test.ts`, `waiting-room.fixround2.test.tsx`.
+- Non-frozen file `fixround1_test.go`: only the bytes-dev key fixture changed, to an upper-case `DEV` marker.
+  That makes the test stricter, not weaker.
+
+### 2. Baseline (all green)
+
+- `libs/go/antibot/...`: exit 0.
+- `services/waitingroom/...`: exit 0.
+- Web: 7 files / 47 tests pass. The two fixround2 files were added to the WEB suite.
+- The only SKIP is `TestCorpus_AC18_RecordedSessions` (pending input).
+
+### 3. Mutation (same harness, suites G / W / WEB)
+
+| Set | Runs | Killed | Notes |
+|---|---|---|---|
+| Original 61 (`muts.json`) | 61 | 61 | All original mutant strings still applied. M18 was killed by the hang/timeout (rc 124), as before |
+| Former survivors | 4 | 4 | M16 by `TestFix2_M16_OneProbeDuringRealHalfOpen`; M47 by `TestFix2_M47_ShadowUsesDevelopJoin`; M53 by the unit test `TestFix2_M53_DBActionMapping`; M61 by the waiting-room fixround2 poll → SOLD_OUT test |
+| Fix round 2 (`muts-fix2.json`, 11 entries) | 11 | 11 | 4 are the survivor re-runs (F2dup-*, killed). New: R21a PoolTimeout == budget, R21b pool timeout not classified (both `TestFix2_R21_PoolExhaustionIsClassified`); R22a case-sensitive marker, R22b plain "dev" substring (`TestFix1_R5_ProductionRefusesDevKeys`, fixround2); R23a non-probe success closes, R23b non-probe failure re-trips (`TestFix2_R23_*`); R25 collector reset not called on logout (web fixround2) |
+| **Total** | **72** | **72** | 68 unique mutants. No survivors and no equivalents claimed |
+
+The Redis Lua mutants are still not runnable (no Docker). They are unchanged from section 3 above.
+
+### 4. Pool-exhaustion test uses the real client and no Docker
+
+`libs/go/antibot/redisstate/pool_test.go` has no build tag and is in the default `go test` run (it passed in the baseline).
+
+How it is built:
+- It starts a local `net.Listen("tcp", "127.0.0.1:0")` server that accepts connections and never answers.
+- It builds a real `github.com/redis/go-redis/v9` client from the production `redisstate.ClientOptions`.
+- It first asserts `PoolTimeout < RedisTimeout`. It then sets pool size 1, RESP2 and no identity, so that dial
+  needs no reply.
+- It holds the only connection with a `BLPOP` and calls `Store.Observe` under the budget.
+
+What it asserts:
+- `errors.Is(err, antibot.ErrPoolExhausted)`, mapped from go-redis' own "connection pool timeout".
+- Through the Guard, with breaker threshold 1, three exhausted calls count `redis_timeout = 3` and
+  `breaker_open = 0`.
+
+It uses no testx/testcontainers. Both R21 mutants are killed by it.
+
+### 5. NOT VERIFIED (unchanged)
+
+- All `-tags integration` suites (Docker down; also NOT_RUN at the gate). That includes:
+  - lane, shuffle, fairness and P-13
+  - revoke + NX 24 h flag
+  - observe.lua one call / caps / TTLs
+  - writer RowShape / NULL / bounded buffer
+  - AC-19
+  - all Redis Lua mutants
+- promtool for `alerts_antibot_test.yml`.
+- AC-5: Decide p99 on real Redis (sequential and 64 goroutines). The only figure is a miniredis concurrent
+  5.68 ms note, which is above the 5 ms target. The opening-spike load gate was also not run.
+- AC-18: recorded sessions (SKIP).
+- AC-20: shadow demotion on real traffic.
+- E2E and full-gate.sh were not re-run by the verifier. Gate PASS at `9291299`, same code tree.
+
+### 6. Open human items: pre-enforce checklist
+
+Shadow is safe to merge. Before switching to `enforce`:
+1. Run the integration suites and promtool on a Docker machine, or in CI, against this tree.
+2. Run the AC-5 load gate (develop vs branch in shadow: join p99 +<= 5 ms, Redis CPU +<= 50%) and get the
+   real-Redis Decide p99.
+3. Record 50-100 real collector sessions into `testdata/corpus/recorded/`. They must stay < 1% demoted.
+4. AC-20 go/no-go:
+   - `ANTIBOT_HASH_KEY` is present in `eventflow-auth` before apply.
+   - waitingroom and the controller run the same image.
+   - Shadow demotion is < 1% over a rehearsal on-sale.
+5. Accepted limitations stay on record:
+   - X-3: a bot can forge fp/sq; Turnstile in phase 2.
+   - R-6: optional key ref.
+   - Revoked slots are not restored by `off` or a revert.
+   - Revert after enforce only after the shuffle, or use `off`.

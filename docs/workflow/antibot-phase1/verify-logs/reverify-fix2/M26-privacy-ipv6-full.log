@@ -1,0 +1,9 @@
+--- FAIL: TestNetPrefix_AC15 (0.00s)
+    privacy_test.go:55: NetPrefix(2001:db8:1:2:3:4:5:6) = 2001:db8:1:2:3:4:5:6/128, want 2001:db8:1:2::/64
+    privacy_test.go:58: NetPrefix(2001:db8:1:2:3:4:5:6) kept the full address
+    privacy_test.go:55: NetPrefix(2001:db8:1:2::) = 2001:db8:1:2::/128, want 2001:db8:1:2::/64
+FAIL
+FAIL	github.com/eventflow/eventflow/libs/go/antibot	9.655s
+?   	github.com/eventflow/eventflow/libs/go/antibot/corpus	[no test files]
+ok  	github.com/eventflow/eventflow/libs/go/antibot/redisstate	2.247s
+FAIL

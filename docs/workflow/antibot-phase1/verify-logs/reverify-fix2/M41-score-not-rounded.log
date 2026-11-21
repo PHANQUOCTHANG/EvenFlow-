@@ -1,0 +1,14 @@
+--- FAIL: TestScore_AC8_NoisyOrRounded (0.00s)
+    score_test.go:124: weights R2=0.1234 fired R2: score 0.12339999999999995, want 0.123
+    score_test.go:127: score 0.12339999999999995 not rounded to 3 decimals
+    score_test.go:124: weights R2=0.1236 fired R2: score 0.12360000000000004, want 0.124
+    score_test.go:127: score 0.12360000000000004 not rounded to 3 decimals
+    score_test.go:127: score 0.2799999999999999 not rounded to 3 decimals
+--- FAIL: TestScore_AC8_TierBoundariesLowerInclusive (0.00s)
+    score_test.go:149: R2=0.2996: score 0.2996 tier PASS, want CHALLENGE
+    score_test.go:149: R2=0.8496: score 0.8496 tier SLOW_LANE, want BLOCK
+FAIL
+FAIL	github.com/eventflow/eventflow/libs/go/antibot	9.565s
+?   	github.com/eventflow/eventflow/libs/go/antibot/corpus	[no test files]
+ok  	github.com/eventflow/eventflow/libs/go/antibot/redisstate	2.101s
+FAIL

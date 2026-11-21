@@ -1,0 +1,8 @@
+--- FAIL: TestGuard_AC3_InvalidSignalsMetric (0.00s)
+    guard_test.go:191: antibot_signals_invalid_total{missing} = 2, want 1
+    guard_test.go:191: antibot_signals_invalid_total{too_large} = 0, want 1
+FAIL
+FAIL	github.com/eventflow/eventflow/libs/go/antibot	9.816s
+?   	github.com/eventflow/eventflow/libs/go/antibot/corpus	[no test files]
+ok  	github.com/eventflow/eventflow/libs/go/antibot/redisstate	2.373s
+FAIL

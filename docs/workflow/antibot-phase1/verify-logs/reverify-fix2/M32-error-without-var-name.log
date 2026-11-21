@@ -1,0 +1,74 @@
+--- FAIL: TestLoadConfig_AC16_InvalidValueNamesVariable (0.00s)
+    --- FAIL: TestLoadConfig_AC16_InvalidValueNamesVariable/weight_not_number (0.00s)
+        config_test.go:102: error "invalid value: R2: \"abc\" is not a number" does not name ANTIBOT_WEIGHTS
+    --- FAIL: TestLoadConfig_AC16_InvalidValueNamesVariable/weight_one (0.00s)
+        config_test.go:102: error "invalid value: R2=1.0 outside [0,1)" does not name ANTIBOT_WEIGHTS
+    --- FAIL: TestLoadConfig_AC16_InvalidValueNamesVariable/weight_negative (0.00s)
+        config_test.go:102: error "invalid value: R2=-0.1 outside [0,1)" does not name ANTIBOT_WEIGHTS
+    --- FAIL: TestLoadConfig_AC16_InvalidValueNamesVariable/weight_unknown_rule (0.00s)
+        config_test.go:102: error "invalid value: unknown rule \"R99\"" does not name ANTIBOT_WEIGHTS
+    --- FAIL: TestLoadConfig_AC16_InvalidValueNamesVariable/weight_malformed (0.00s)
+        config_test.go:102: error "invalid value: \"R2\" is not KEY=VALUE" does not name ANTIBOT_WEIGHTS
+    --- FAIL: TestLoadConfig_AC16_InvalidValueNamesVariable/weight_legacy_R4_(split_into_R4D/R4N) (0.00s)
+        config_test.go:102: error "invalid value: unknown rule \"R4\"" does not name ANTIBOT_WEIGHTS
+    --- FAIL: TestLoadConfig_AC16_InvalidValueNamesVariable/breaker_garbage (0.00s)
+        config_test.go:102: error "invalid value: \"lots\" is not N/window,open=duration" does not name ANTIBOT_BREAKER
+    --- FAIL: TestLoadConfig_AC16_InvalidValueNamesVariable/breaker_zero_calls (0.00s)
+        config_test.go:102: error "invalid value: calls \"0\" not in 1..10000" does not name ANTIBOT_BREAKER
+    --- FAIL: TestLoadConfig_AC16_InvalidValueNamesVariable/breaker_too_many_calls (0.00s)
+        config_test.go:102: error "invalid value: calls \"10001\" not in 1..10000" does not name ANTIBOT_BREAKER
+    --- FAIL: TestLoadConfig_AC16_InvalidValueNamesVariable/breaker_window_too_short (0.00s)
+        config_test.go:102: error "invalid value: duration \"50ms\" not in 100ms..60s" does not name ANTIBOT_BREAKER
+    --- FAIL: TestLoadConfig_AC16_InvalidValueNamesVariable/breaker_open_too_long (0.00s)
+        config_test.go:102: error "invalid value: duration \"61s\" not in 100ms..60s" does not name ANTIBOT_BREAKER
+    --- FAIL: TestLoadConfig_AC16_InvalidValueNamesVariable/rules_legacy_R4_FP_MAX (0.00s)
+        config_test.go:102: error "invalid value: unknown key \"R4_FP_MAX\"" does not name ANTIBOT_RULES
+    --- FAIL: TestLoadConfig_AC16_InvalidValueNamesVariable/rules_share_out_of_range (0.00s)
+        config_test.go:102: error "invalid value: R4N_SHARE=1.5 outside (0,1)" does not name ANTIBOT_RULES
+    --- FAIL: TestLoadConfig_AC16_InvalidValueNamesVariable/rules_CV_zero (0.00s)
+        config_test.go:102: error "invalid value: R1_CLIENT_CV=0 outside (0,1)" does not name ANTIBOT_RULES
+    --- FAIL: TestLoadConfig_AC16_InvalidValueNamesVariable/rules_count_fractional (0.00s)
+        config_test.go:102: error "invalid value: R4D_MAX=2.5 is not a positive integer" does not name ANTIBOT_RULES
+    --- FAIL: TestLoadConfig_AC16_InvalidValueNamesVariable/tiers_not_increasing (0.00s)
+        config_test.go:102: error "invalid value: \"0.60,0.30,0.85\" is not strictly increasing" does not name ANTIBOT_TIERS
+    --- FAIL: TestLoadConfig_AC16_InvalidValueNamesVariable/tiers_equal (0.00s)
+        config_test.go:102: error "invalid value: \"0.30,0.30,0.85\" is not strictly increasing" does not name ANTIBOT_TIERS
+    --- FAIL: TestLoadConfig_AC16_InvalidValueNamesVariable/tiers_zero (0.00s)
+        config_test.go:102: error "invalid value: 0 outside (0,1)" does not name ANTIBOT_TIERS
+    --- FAIL: TestLoadConfig_AC16_InvalidValueNamesVariable/tiers_one (0.00s)
+        config_test.go:102: error "invalid value: 1 outside (0,1)" does not name ANTIBOT_TIERS
+    --- FAIL: TestLoadConfig_AC16_InvalidValueNamesVariable/tiers_count (0.00s)
+        config_test.go:102: error "invalid value: \"0.30,0.60\": want three cut-offs" does not name ANTIBOT_TIERS
+    --- FAIL: TestLoadConfig_AC16_InvalidValueNamesVariable/tiers_text (0.00s)
+        config_test.go:102: error "invalid value: \"low\" is not a number" does not name ANTIBOT_TIERS
+    --- FAIL: TestLoadConfig_AC16_InvalidValueNamesVariable/fallback (0.00s)
+        config_test.go:102: error "invalid value: \"block\" is not pass or slow_lane" does not name ANTIBOT_CHALLENGE_FALLBACK
+    --- FAIL: TestLoadConfig_AC16_InvalidValueNamesVariable/penalty_zero (0.00s)
+        config_test.go:102: error "invalid value: \"0\" is not an integer in 1..1000000000" does not name ANTIBOT_SLOW_LANE_PENALTY
+    --- FAIL: TestLoadConfig_AC16_InvalidValueNamesVariable/penalty_huge (0.00s)
+        config_test.go:102: error "invalid value: \"1000000001\" is not an integer in 1..1000000000" does not name ANTIBOT_SLOW_LANE_PENALTY
+    --- FAIL: TestLoadConfig_AC16_InvalidValueNamesVariable/penalty_text (0.00s)
+        config_test.go:102: error "invalid value: \"many\" is not an integer in 1..1000000000" does not name ANTIBOT_SLOW_LANE_PENALTY
+    --- FAIL: TestLoadConfig_AC16_InvalidValueNamesVariable/rules_unknown_key (0.00s)
+        config_test.go:102: error "invalid value: unknown key \"NOPE\"" does not name ANTIBOT_RULES
+    --- FAIL: TestLoadConfig_AC16_InvalidValueNamesVariable/rules_not_number (0.00s)
+        config_test.go:102: error "invalid value: R2_MS=fast is not a positive integer" does not name ANTIBOT_RULES
+    --- FAIL: TestLoadConfig_AC16_InvalidValueNamesVariable/rules_negative (0.00s)
+        config_test.go:102: error "invalid value: R2_MS=-5 is not a positive integer" does not name ANTIBOT_RULES
+    --- FAIL: TestLoadConfig_AC16_InvalidValueNamesVariable/rules_zero (0.00s)
+        config_test.go:102: error "invalid value: R4_WINDOW_S=0 is not a positive integer" does not name ANTIBOT_RULES
+    --- FAIL: TestLoadConfig_AC16_InvalidValueNamesVariable/timeout_zero (0.00s)
+        config_test.go:102: error "invalid value: \"0\" is not an integer in 1..50" does not name ANTIBOT_REDIS_TIMEOUT_MS
+    --- FAIL: TestLoadConfig_AC16_InvalidValueNamesVariable/timeout_over (0.00s)
+        config_test.go:102: error "invalid value: \"51\" is not an integer in 1..50" does not name ANTIBOT_REDIS_TIMEOUT_MS
+    --- FAIL: TestLoadConfig_AC16_InvalidValueNamesVariable/sample_over (0.00s)
+        config_test.go:102: error "invalid value: \"1.5\" not in [0,1]" does not name ANTIBOT_PASS_SAMPLE
+    --- FAIL: TestLoadConfig_AC16_InvalidValueNamesVariable/sample_negative (0.00s)
+        config_test.go:102: error "invalid value: \"-0.01\" not in [0,1]" does not name ANTIBOT_PASS_SAMPLE
+--- FAIL: TestLoadConfig_AC16_ShadowAlsoValidates (0.00s)
+    config_test.go:112: shadow with bad tiers: err = invalid value: "0.9,0.5,0.1" is not strictly increasing
+FAIL
+FAIL	github.com/eventflow/eventflow/libs/go/antibot	9.665s
+?   	github.com/eventflow/eventflow/libs/go/antibot/corpus	[no test files]
+ok  	github.com/eventflow/eventflow/libs/go/antibot/redisstate	2.215s
+FAIL
