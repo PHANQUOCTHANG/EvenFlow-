@@ -184,13 +184,28 @@ func (c *Config) loadKey(v string, production bool) error {
 	if len(key) < 32 {
 		return fmt.Errorf("ANTIBOT_HASH_KEY: %d bytes, want at least 32", len(key))
 	}
-	// R-5: a public dev key would let anyone recompute the stored device_fp hashes (D10). Every committed dev
-	// value carries the marker "dev" (in the text or in the decoded bytes), so production refuses it.
-	if production && (bytes.Equal(key, devHashKey) || strings.Contains(v, "dev") || bytes.Contains(key, []byte("dev"))) {
-		return fmt.Errorf("ANTIBOT_HASH_KEY: a dev key (contains \"dev\") is not allowed when APP_ENV=production")
+	// R-5 / R2-2: a public dev key would let anyone recompute the stored device_fp hashes (D10). Production refuses
+	// the built-in dev key and any key carrying a committed dev marker (case-insensitive, in the text or the decoded
+	// bytes). A plain "dev" substring is not enough: random real keys contain it by chance.
+	if production && (bytes.Equal(key, devHashKey) || hasDevMarker(v) || hasDevMarker(string(key))) {
+		return fmt.Errorf("ANTIBOT_HASH_KEY: a committed dev key is not allowed when APP_ENV=production")
 	}
 	c.HashKey, c.DevKey = key, false
 	return nil
+}
+
+// devKeyMarkers appear in every committed dev hash key (docker-compose.yml, overlays/local/secrets.dev.env, the
+// built-in dev key).
+var devKeyMarkers = []string{"devantibot", "dev-antibot", "neverprod", "antibot-dev"}
+
+func hasDevMarker(s string) bool {
+	l := strings.ToLower(s)
+	for _, m := range devKeyMarkers {
+		if strings.Contains(l, m) {
+			return true
+		}
+	}
+	return false
 }
 
 // pairs splits "K=V,K=V" (empty entries ignored).

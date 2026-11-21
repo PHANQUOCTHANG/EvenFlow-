@@ -235,7 +235,7 @@ func TestFix1_X2_HalfOpenProbe(t *testing.T) {
 func TestFix1_R5_ProductionRefusesDevKeys(t *testing.T) {
 	committed := "devAntibotHashKeyLocalClusterOnlyNeverProdA=" // deploy/compose, overlays/local/secrets.dev.env
 	builtin := base64.StdEncoding.EncodeToString([]byte("eventflow-antibot-dev-key-000000"))
-	bytesDev := base64.StdEncoding.EncodeToString([]byte("0123456789-dev-0123456789abcdefg"))
+	bytesDev := base64.StdEncoding.EncodeToString([]byte("0123456789-DEV-ANTIBOT-0123456789")) // marker in the decoded bytes, any case
 	for _, k := range []string{committed, builtin, bytesDev} {
 		_, err := antibot.LoadConfig(env(map[string]string{"APP_ENV": "production", "ANTIBOT_HASH_KEY": k}))
 		if err == nil || !strings.Contains(err.Error(), "ANTIBOT_HASH_KEY") {

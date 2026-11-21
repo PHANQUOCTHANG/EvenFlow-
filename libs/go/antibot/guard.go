@@ -235,7 +235,9 @@ func (b *breaker) success(probe bool) {
 	}
 	b.mu.Lock()
 	defer b.mu.Unlock()
-	if probe || b.state == brHalfOpen {
+	// R2-3: only the probe's own result moves a half-open breaker; a call admitted earlier (while closed) that
+	// finishes now says nothing about Redis after the trip.
+	if probe {
 		b.state, b.probing, b.openFor = brClosed, false, 0
 		b.windowStart, b.failures, b.hard = time.Time{}, 0, false
 	}
@@ -257,7 +259,7 @@ func (b *breaker) fail(now time.Time, kind failKind, probe bool) {
 	}
 	b.mu.Lock()
 	defer b.mu.Unlock()
-	if probe || b.state == brHalfOpen {
+	if probe {
 		if kind == failPool {
 			b.probing = false
 			return
