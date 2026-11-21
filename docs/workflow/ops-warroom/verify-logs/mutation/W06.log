@@ -1,4 +1,4 @@
-[31m   [31m×[31m setAdmitOverride[2m > [22minvalid input (fraction) => INVALID and no request[90m 50[2mms[22m[31m[39m
+[31m   [31m×[31m setAdmitOverride[2m > [22minvalid input (fraction) => INVALID and no request[90m 19[2mms[22m[31m[39m
 [31m[1m[7m FAIL [27m[22m[39m src/lib/ops-service.contract.test.ts[2m > [22msetAdmitOverride[2m > [22minvalid input (fraction) => INVALID and no request
 ---- tail ----
 "INVALID"

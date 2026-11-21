@@ -1,4 +1,4 @@
-[31m   [31m×[31m getOpsWarRoom - errors (AC-22)[2m > [22mevent 404 => OpsServiceError(404)[90m 54[2mms[22m[31m[39m
+[31m   [31m×[31m getOpsWarRoom - errors (AC-22)[2m > [22mevent 404 => OpsServiceError(404)[90m 27[2mms[22m[31m[39m
 [31m[1m[7m FAIL [27m[22m[39m src/lib/ops-service.contract.test.ts[2m > [22mgetOpsWarRoom - errors (AC-22)[2m > [22mevent 404 => OpsServiceError(404)
 ---- tail ----
 [31m+ Received[39m

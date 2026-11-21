@@ -1,11 +1,11 @@
-[31m   [31m×[31m reason rules match the server (R2-1, X2-1, X2-5)[2m > [22minvisible "́́́" is LENGTH[90m 9[2mms[22m[31m[39m
-[31m   [31m×[31m reason rules match the server (R2-1, X2-1, X2-5)[2m > [22minvisible "⃝⃝⃝" is LENGTH[90m 2[2mms[22m[31m[39m
-[31m   [31m×[31m reason rules match the server (R2-1, X2-1, X2-5)[2m > [22minvisible "ㅤᅟᅠﾠ" is LENGTH[90m 1[2mms[22m[31m[39m
+[31m   [31m×[31m reason rules match the server (R2-1, X2-1, X2-5)[2m > [22minvisible "́́́" is LENGTH[90m 18[2mms[22m[31m[39m
+[31m   [31m×[31m reason rules match the server (R2-1, X2-1, X2-5)[2m > [22minvisible "⃝⃝⃝" is LENGTH[90m 11[2mms[22m[31m[39m
+[31m   [31m×[31m reason rules match the server (R2-1, X2-1, X2-5)[2m > [22minvisible "ㅤᅟᅠﾠ" is LENGTH[90m 4[2mms[22m[31m[39m
 [31m   [31m×[31m reason rules match the server (R2-1, X2-1, X2-5)[2m > [22minvisible "⠀⠀⠀" is LENGTH[90m 1[2mms[22m[31m[39m
-[31m   [31m×[31m reason rules match the server (R2-1, X2-1, X2-5)[2m > [22minvisible "️️️" is LENGTH[90m 1[2mms[22m[31m[39m
+[31m   [31m×[31m reason rules match the server (R2-1, X2-1, X2-5)[2m > [22minvisible "️️️" is LENGTH[90m 2[2mms[22m[31m[39m
 [31m   [31m×[31m reason rules match the server (R2-1, X2-1, X2-5)[2m > [22minvisible "abㅤ⠀" is LENGTH[90m 1[2mms[22m[31m[39m
 [31m   [31m×[31m reason rules match the server (R2-1, X2-1, X2-5)[2m > [22minvisible "ab́́" is LENGTH[90m 1[2mms[22m[31m[39m
-[31m   [31m×[31m reason with control or invisible characters (R-1, X-4)[2m > [22mrejects "a​​b" on the client without a fetch[90m 14[2mms[22m[31m[39m
+[31m   [31m×[31m reason with control or invisible characters (R-1, X-4)[2m > [22mrejects "a​​b" on the client without a fetch[90m 12[2mms[22m[31m[39m
 [31m[1m[7m FAIL [27m[22m[39m src/lib/ops-service.reason.fix.test.ts[2m > [22mreason with control or invisible characters (R-1, X-4)[2m > [22mrejects "a​​b" on the client without a fetch
 [31m[1m[7m FAIL [27m[22m[39m src/lib/ops-service.round2.fix.test.ts[2m > [22mreason rules match the server (R2-1, X2-1, X2-5)[2m > [22minvisible "́́́" is LENGTH
 [31m[1m[7m FAIL [27m[22m[39m src/lib/ops-service.round2.fix.test.ts[2m > [22mreason rules match the server (R2-1, X2-1, X2-5)[2m > [22minvisible "⃝⃝⃝" is LENGTH

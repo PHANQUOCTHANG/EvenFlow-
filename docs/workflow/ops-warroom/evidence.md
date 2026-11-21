@@ -208,3 +208,50 @@ exit 0 for both. The suites compile, but they were not executed.
 | event-detail 401 -> 503 | A 401 on the public event detail is shown as a source error (503, the previous snapshot is kept) rather than sign-in (X2-3) | Confirm the choice. It is pinned by `ops-service.round2.fix.test.ts` ("public event detail 401 is not session loss"), and mutant W01 (401 from any source) was killed. |
 | R2-5 | Integration suites are not executed in the gate | Still open. Not executed here either (section 6). |
 | Mutation survivors | M12, M17, T08 (contract), M21, T04 (hardening), T09 (integration-only); M02, M03, W11, W12 (equivalent) | Decide: add tests (recommended, about 5 small cases) or accept as known gaps. |
+
+## 8. Re-verification after 7a0f27f (2026-11-21)
+
+Trigger: commit `7a0f27f` (`test(ops): cover surviving ops war room mutants`) targets M12, M17, M21, T04 and T08.
+
+**Test-only check: PASS.** `git show --name-only 7a0f27f` lists 3 new test files and nothing else:
+- `services/waitingroom/internal/adapter/http/ops_mutation_gap_test.go`
+- `services/ticketing/internal/adapter/http/ops_mutation_gap_test.go`
+- `services/ticketing/internal/app/ops_sales_invariant_test.go`
+
+No production file changed after the gated commit `cfc630e`.
+
+**Suites at 7a0f27f** (logs in `verify-logs/reverify/`):
+- waitingroom `go test ./... -race -count=1`: exit 0
+- ticketing `go test ./... -race -count=1`: exit 0
+
+Gateway, ai-worker and web are unchanged since section 2, so they were not re-run.
+
+**Full mutation re-run:** all 52 mutants, same `run_mutants.py`. The round-1 results moved to `verify-logs/mutation/round1/`. The new `results.json`, `run.out` and `<ID>.log` files are in `verify-logs/mutation/`.
+
+**Result: 47 killed / 5 survived of 52.**
+- Equivalent survivors, unchanged: M02, M03, W11, W12 (reasons in section 4).
+- Behaviour-changing mutants: **47 / 48 killed**.
+- The remaining survivor is **T09** (sales transaction without REPEATABLE READ READ ONLY). Only the integration suite against real Postgres can see it, and Docker is still not running. **NOT VERIFIED.**
+
+| Former survivor | Now | Killing test |
+|---|---|---|
+| M12 audit row on failed apply | KILLED | waitingroom `TestOpsPut_ApplyFailureIsNotAudited` |
+| M17 request context instead of detached | KILLED | waitingroom `TestOpsPut_RequestCancelledMidApplyStillAppliesAndAudits` |
+| M21 trailing bytes accepted | KILLED | waitingroom `TestOpsPut_TrailingBytesAfterJSONIs400` |
+| T04 not-found not cached | KILLED | ticketing `TestOpsCache_NotFoundIsCachedInsideTTL` |
+| T08 unknown-provider reconcile | KILLED | ticketing `TestGetOrganizerSales_Contract42_BreakdownSumsToTotals/remaining_orders_with_zero_amount_…` |
+
+### Re-verification verdict: PASS (conditional)
+
+Every behaviour-changing mutant that unit tests can reach is killed. These items are still NOT VERIFIED because the Docker engine is not running:
+- T09 (snapshot isolation)
+- R2-5: the integration suites (`go test -tags integration ./... -count=1` in waitingroom and ticketing). Under this suite, AC-2, AC-7, the Redis side of AC-1, the real-Postgres side of AC-10/11/12 and the SQL of AC-14/15/16 are covered only here.
+
+E2E and `full-gate.sh` were not re-run, as instructed. The human accepts these at sign-off or runs the integration commands with Docker up.
+
+Open human items, unchanged from section 7:
+- R-8: `sales/page.test.tsx` change beyond its TCR row
+- R3-1: edge-control whitespace check stricter on web than on the server
+- R2-6: tamper threshold 4 -> 5
+- Event-detail 401 shown as 503 (X2-3)
+- R2-5: integration suites not run in the gate

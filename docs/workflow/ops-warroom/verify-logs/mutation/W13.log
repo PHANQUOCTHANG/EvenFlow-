@@ -1,6 +1,6 @@
-[31m   [31m×[31m SalesDashboard component (EV-186, EVF-116, AC-4, AC-5, Stitch 10.14)[2m > [22mcho phép bật/tắt tự động cập nhật (mặc định bật, EVF-116 AC-2)[33m 454[2mms[22m[31m[39m
-[31m   [31m×[31m SalesDashboard real data (AC-30)[2m > [22mauto-refresh is on by default and polls within 5 s (4 s)[33m 596[2mms[22m[31m[39m
-[31m   [31m×[31m SalesDashboard real data (AC-30)[2m > [22merror keeps the last data and shows an error alert[90m 41[2mms[22m[31m[39m
+[31m   [31m×[31m SalesDashboard component (EV-186, EVF-116, AC-4, AC-5, Stitch 10.14)[2m > [22mcho phép bật/tắt tự động cập nhật (mặc định bật, EVF-116 AC-2)[33m 696[2mms[22m[31m[39m
+[31m   [31m×[31m SalesDashboard real data (AC-30)[2m > [22mauto-refresh is on by default and polls within 5 s (4 s)[33m 773[2mms[22m[31m[39m
+[31m   [31m×[31m SalesDashboard real data (AC-30)[2m > [22merror keeps the last data and shows an error alert[90m 34[2mms[22m[31m[39m
 [31m[1m[7m FAIL [27m[22m[39m src/components/organizer/sales-dashboard.real.test.tsx[2m > [22mSalesDashboard real data (AC-30)[2m > [22mauto-refresh is on by default and polls within 5 s (4 s)
 [31m[1m[7m FAIL [27m[22m[39m src/components/organizer/sales-dashboard.real.test.tsx[2m > [22mSalesDashboard real data (AC-30)[2m > [22merror keeps the last data and shows an error alert
 [31m[1m[7m FAIL [27m[22m[39m src/components/organizer/sales-dashboard.test.tsx[2m > [22mSalesDashboard component (EV-186, EVF-116, AC-4, AC-5, Stitch 10.14)[2m > [22mcho phép bật/tắt tự động cập nhật (mặc định bật, EVF-116 AC-2)

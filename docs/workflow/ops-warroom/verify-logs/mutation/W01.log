@@ -1,6 +1,6 @@
-[31m   [31m×[31m a 401 outside the core source degrades only that tile (X2-3)[2m > [22mqueue 200 + inventory 200 + ai 401 -> snapshot with ai unavailable[90m 47[2mms[22m[31m[39m
+[31m   [31m×[31m a 401 outside the core source degrades only that tile (X2-3)[2m > [22mqueue 200 + inventory 200 + ai 401 -> snapshot with ai unavailable[90m 57[2mms[22m[31m[39m
 [31m   [31m×[31m a 401 outside the core source degrades only that tile (X2-3)[2m > [22minventory 401 -> snapshot with ticketing unavailable[90m 11[2mms[22m[31m[39m
-[31m   [31m×[31m a 401 outside the core source degrades only that tile (X2-3)[2m > [22mpublic event detail 401 is not session loss (503, retry keeps the last snapshot)[90m 13[2mms[22m[31m[39m
+[31m   [31m×[31m a 401 outside the core source degrades only that tile (X2-3)[2m > [22mpublic event detail 401 is not session loss (503, retry keeps the last snapshot)[90m 18[2mms[22m[31m[39m
 [31m[1m[7m FAIL [27m[22m[39m src/lib/ops-service.round2.fix.test.ts[2m > [22ma 401 outside the core source degrades only that tile (X2-3)[2m > [22mqueue 200 + inventory 200 + ai 401 -> snapshot with ai unavailable
 [31m[1m[7m FAIL [27m[22m[39m src/lib/ops-service.round2.fix.test.ts[2m > [22ma 401 outside the core source degrades only that tile (X2-3)[2m > [22minventory 401 -> snapshot with ticketing unavailable
 [31m[1m[7m FAIL [27m[22m[39m src/lib/ops-service.round2.fix.test.ts[2m > [22ma 401 outside the core source degrades only that tile (X2-3)[2m > [22mpublic event detail 401 is not session loss (503, retry keeps the last snapshot)

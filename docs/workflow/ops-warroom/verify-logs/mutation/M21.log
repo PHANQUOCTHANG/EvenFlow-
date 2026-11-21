@@ -1,10 +1,17 @@
-
+--- FAIL: TestOpsPut_TrailingBytesAfterJSONIs400 (0.00s)
+FAIL
+FAIL	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/http	3.241s
+FAIL
 ---- tail ----
-ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/http	3.241s
-ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/metrics	1.792s
-ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/postgres	0.129s
+--- FAIL: TestOpsPut_TrailingBytesAfterJSONIs400 (0.00s)
+    ops_mutation_gap_test.go:145: body "{\"rate_per_sec\":1,\"reason\":\"abc\"} x": status 200, want 400
+FAIL
+FAIL	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/http	3.241s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/metrics	2.035s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/postgres	0.132s
 ?   	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/redis	[no test files]
-ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/signal	0.402s
-ok  	github.com/eventflow/eventflow/services/waitingroom/internal/app	0.831s
-ok  	github.com/eventflow/eventflow/services/waitingroom/internal/config	0.375s
-ok  	github.com/eventflow/eventflow/services/waitingroom/internal/domain	0.381s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/signal	0.385s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/app	0.838s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/config	0.350s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/domain	0.404s
+FAIL

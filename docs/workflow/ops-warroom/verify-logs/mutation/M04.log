@@ -1,17 +1,17 @@
 --- FAIL: TestOpsPutFix_X1_RateMustBeIntegerLiteral (0.00s)
 FAIL
-FAIL	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/http	3.584s
+FAIL	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/http	3.222s
 FAIL
 ---- tail ----
 --- FAIL: TestOpsPutFix_X1_RateMustBeIntegerLiteral (0.00s)
-    ops_rate_literal_fix_test.go:15: rate=-0: status 200 writes=1 {"event_id":"11111111-1111-4111-8111-111111111111","override":{"active":true,"rate_per_sec":0},"paused":true,"applied_at":"2026-11-21T07:07:37Z","audit":"recorded"}
+    ops_rate_literal_fix_test.go:15: rate=-0: status 200 writes=1 {"event_id":"11111111-1111-4111-8111-111111111111","override":{"active":true,"rate_per_sec":0},"paused":true,"applied_at":"2026-11-21T07:28:06Z","audit":"recorded"}
 FAIL
-FAIL	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/http	3.584s
-ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/metrics	2.113s
-ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/postgres	0.141s
+FAIL	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/http	3.222s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/metrics	1.899s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/postgres	0.133s
 ?   	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/redis	[no test files]
-ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/signal	0.476s
-ok  	github.com/eventflow/eventflow/services/waitingroom/internal/app	1.025s
-ok  	github.com/eventflow/eventflow/services/waitingroom/internal/config	0.417s
-ok  	github.com/eventflow/eventflow/services/waitingroom/internal/domain	0.512s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/signal	0.413s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/app	0.887s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/config	0.352s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/domain	0.403s
 FAIL

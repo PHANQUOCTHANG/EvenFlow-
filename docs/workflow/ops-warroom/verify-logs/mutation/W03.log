@@ -1,6 +1,6 @@
-[31m   [31m×[31m getOpsWarRoom - errors (AC-22)[2m > [22ma 403 from the queue source => OpsServiceError(403), not 'unavailable'[90m 19[2mms[22m[31m[39m
+[31m   [31m×[31m getOpsWarRoom - errors (AC-22)[2m > [22ma 403 from the queue source => OpsServiceError(403), not 'unavailable'[90m 21[2mms[22m[31m[39m
 [31m   [31m×[31m getOpsWarRoom - errors (AC-22)[2m > [22ma 403 from the inv source => OpsServiceError(403), not 'unavailable'[90m 5[2mms[22m[31m[39m
-[31m   [31m×[31m getOpsWarRoom - errors (AC-22)[2m > [22ma 403 from the ai source => OpsServiceError(403), not 'unavailable'[90m 6[2mms[22m[31m[39m
+[31m   [31m×[31m getOpsWarRoom - errors (AC-22)[2m > [22ma 403 from the ai source => OpsServiceError(403), not 'unavailable'[90m 5[2mms[22m[31m[39m
 [31m[1m[7m FAIL [27m[22m[39m src/lib/ops-service.contract.test.ts[2m > [22mgetOpsWarRoom - errors (AC-22)[2m > [22ma 403 from the queue source => OpsServiceError(403), not 'unavailable'
 [31m[1m[7m FAIL [27m[22m[39m src/lib/ops-service.contract.test.ts[2m > [22mgetOpsWarRoom - errors (AC-22)[2m > [22ma 403 from the inv source => OpsServiceError(403), not 'unavailable'
 [31m[1m[7m FAIL [27m[22m[39m src/lib/ops-service.contract.test.ts[2m > [22mgetOpsWarRoom - errors (AC-22)[2m > [22ma 403 from the ai source => OpsServiceError(403), not 'unavailable'

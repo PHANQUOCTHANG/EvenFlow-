@@ -1,5 +1,5 @@
-[31m   [31m×[31m SalesDashboard real data (AC-30)[2m > [22mauto-refresh is on by default and polls within 5 s (4 s)[90m 205[2mms[22m[31m[39m
-[31m   [31m×[31m SalesDashboard real data (AC-30)[2m > [22merror keeps the last data and shows an error alert[90m 84[2mms[22m[31m[39m
+[31m   [31m×[31m SalesDashboard real data (AC-30)[2m > [22mauto-refresh is on by default and polls within 5 s (4 s)[90m 278[2mms[22m[31m[39m
+[31m   [31m×[31m SalesDashboard real data (AC-30)[2m > [22merror keeps the last data and shows an error alert[90m 75[2mms[22m[31m[39m
 [31m[1m[7m FAIL [27m[22m[39m src/components/organizer/sales-dashboard.real.test.tsx[2m > [22mSalesDashboard real data (AC-30)[2m > [22mauto-refresh is on by default and polls within 5 s (4 s)
 [31m[1m[7m FAIL [27m[22m[39m src/components/organizer/sales-dashboard.real.test.tsx[2m > [22mSalesDashboard real data (AC-30)[2m > [22merror keeps the last data and shows an error alert
 ---- tail ----

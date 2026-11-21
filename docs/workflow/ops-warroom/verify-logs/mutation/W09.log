@@ -1,5 +1,5 @@
-[31m   [31m×[31m plain 401 goes to the auth-required path (R-5, X-7)[2m > [22ma 401 on PUT rejects with ApiError AUTH_REQUIRED, not FORBIDDEN[90m 19[2mms[22m[31m[39m
-[31m   [31m×[31m plain 401 goes to the auth-required path (R-5, X-7)[2m > [22ma 401 on DELETE rejects with ApiError AUTH_REQUIRED[90m 15[2mms[22m[31m[39m
+[31m   [31m×[31m plain 401 goes to the auth-required path (R-5, X-7)[2m > [22ma 401 on PUT rejects with ApiError AUTH_REQUIRED, not FORBIDDEN[90m 25[2mms[22m[31m[39m
+[31m   [31m×[31m plain 401 goes to the auth-required path (R-5, X-7)[2m > [22ma 401 on DELETE rejects with ApiError AUTH_REQUIRED[90m 18[2mms[22m[31m[39m
 [31m[1m[7m FAIL [27m[22m[39m src/lib/ops-service.wire.fix.test.ts[2m > [22mplain 401 goes to the auth-required path (R-5, X-7)[2m > [22ma 401 on PUT rejects with ApiError AUTH_REQUIRED, not FORBIDDEN
 [31m[1m[7m FAIL [27m[22m[39m src/lib/ops-service.wire.fix.test.ts[2m > [22mplain 401 goes to the auth-required path (R-5, X-7)[2m > [22ma 401 on DELETE rejects with ApiError AUTH_REQUIRED
 ---- tail ----

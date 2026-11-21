@@ -1,7 +1,7 @@
-[31m   [31m×[31m getOpsWarRoom - mapping (AC-20)[2m > [22mmaps the real sources and is not a sample[90m 32[2mms[22m[31m[39m
+[31m   [31m×[31m getOpsWarRoom - mapping (AC-20)[2m > [22mmaps the real sources and is not a sample[90m 26[2mms[22m[31m[39m
 [31m   [31m×[31m getOpsWarRoom - source health (AC-21)[2m > [22mqueue source failing (network error) => waitingroom unavailable, the rest stays ok[90m 6[2mms[22m[31m[39m
-[31m   [31m×[31m getOpsWarRoom - source health (AC-21)[2m > [22mqueue source failing (5xx) => waitingroom unavailable, the rest stays ok[90m 6[2mms[22m[31m[39m
-[31m   [31m×[31m getOpsWarRoom - source health (AC-21)[2m > [22mqueue source failing (503) => waitingroom unavailable, the rest stays ok[90m 8[2mms[22m[31m[39m
+[31m   [31m×[31m getOpsWarRoom - source health (AC-21)[2m > [22mqueue source failing (5xx) => waitingroom unavailable, the rest stays ok[90m 4[2mms[22m[31m[39m
+[31m   [31m×[31m getOpsWarRoom - source health (AC-21)[2m > [22mqueue source failing (503) => waitingroom unavailable, the rest stays ok[90m 4[2mms[22m[31m[39m
 [31m[1m[7m FAIL [27m[22m[39m src/lib/ops-service.contract.test.ts[2m > [22mgetOpsWarRoom - mapping (AC-20)[2m > [22mmaps the real sources and is not a sample
 [31m[1m[7m FAIL [27m[22m[39m src/lib/ops-service.contract.test.ts[2m > [22mgetOpsWarRoom - source health (AC-21)[2m > [22mqueue source failing (network error) => waitingroom unavailable, the rest stays ok
 [31m[1m[7m FAIL [27m[22m[39m src/lib/ops-service.contract.test.ts[2m > [22mgetOpsWarRoom - source health (AC-21)[2m > [22mqueue source failing (5xx) => waitingroom unavailable, the rest stays ok

@@ -1,13 +1,20 @@
-
+--- FAIL: TestOpsCache_NotFoundIsCachedInsideTTL (0.00s)
+FAIL
+FAIL	github.com/eventflow/eventflow/services/ticketing/internal/adapter/http	3.626s
+FAIL
 ---- tail ----
-ok  	github.com/eventflow/eventflow/services/ticketing/internal/adapter/http	3.692s
-ok  	github.com/eventflow/eventflow/services/ticketing/internal/adapter/metrics	1.462s
+--- FAIL: TestOpsCache_NotFoundIsCachedInsideTTL (0.00s)
+    ops_mutation_gap_test.go:21: store calls for unknown event inside TTL = 3, want 1 (not-found must be cached)
+FAIL
+FAIL	github.com/eventflow/eventflow/services/ticketing/internal/adapter/http	3.626s
+ok  	github.com/eventflow/eventflow/services/ticketing/internal/adapter/metrics	2.031s
 ?   	github.com/eventflow/eventflow/services/ticketing/internal/adapter/mq	[no test files]
-ok  	github.com/eventflow/eventflow/services/ticketing/internal/adapter/postgres	0.226s
-ok  	github.com/eventflow/eventflow/services/ticketing/internal/adapter/redis	0.225s
-ok  	github.com/eventflow/eventflow/services/ticketing/internal/app	0.578s
-ok  	github.com/eventflow/eventflow/services/ticketing/internal/domain	0.380s
+ok  	github.com/eventflow/eventflow/services/ticketing/internal/adapter/postgres	0.204s
+ok  	github.com/eventflow/eventflow/services/ticketing/internal/adapter/redis	0.207s
+ok  	github.com/eventflow/eventflow/services/ticketing/internal/app	0.862s
+ok  	github.com/eventflow/eventflow/services/ticketing/internal/domain	0.355s
 ?   	github.com/eventflow/eventflow/services/ticketing/internal/port	[no test files]
-ok  	github.com/eventflow/eventflow/services/ticketing/internal/worker	0.529s
-ok  	github.com/eventflow/eventflow/services/ticketing/cmd/server	0.226s
+ok  	github.com/eventflow/eventflow/services/ticketing/internal/worker	0.540s
+ok  	github.com/eventflow/eventflow/services/ticketing/cmd/server	0.200s
 ?   	github.com/eventflow/eventflow/services/ticketing/cmd/worker	[no test files]
+FAIL

@@ -1,0 +1,20 @@
+--- FAIL: TestOpsWrite_AC9_InvalidInputIs400AndNothingApplied (0.00s)
+FAIL
+FAIL	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/http	3.249s
+FAIL
+---- tail ----
+--- FAIL: TestOpsWrite_AC9_InvalidInputIs400AndNothingApplied (0.00s)
+    ops_handler_test.go:421: PUT long reason: 200 
+    ops_handler_test.go:424: PUT long reason: state changed or audited
+    ops_handler_test.go:431: DELETE "{\"reason\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"}": 200 
+    ops_handler_test.go:434: DELETE "{\"reason\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"}": state changed or audited
+FAIL
+FAIL	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/http	3.249s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/metrics	1.873s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/postgres	0.123s
+?   	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/redis	[no test files]
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/signal	0.389s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/app	0.952s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/config	0.354s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/domain	0.402s
+FAIL

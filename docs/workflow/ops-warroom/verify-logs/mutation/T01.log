@@ -3,14 +3,14 @@ FAIL	github.com/eventflow/eventflow/services/ticketing/cmd/server [build failed]
 FAIL
 ---- tail ----
 FAIL	github.com/eventflow/eventflow/services/ticketing/internal/adapter/http [build failed]
-ok  	github.com/eventflow/eventflow/services/ticketing/internal/adapter/metrics	2.085s
+ok  	github.com/eventflow/eventflow/services/ticketing/internal/adapter/metrics	2.038s
 ?   	github.com/eventflow/eventflow/services/ticketing/internal/adapter/mq	[no test files]
-ok  	github.com/eventflow/eventflow/services/ticketing/internal/adapter/postgres	0.236s
-ok  	github.com/eventflow/eventflow/services/ticketing/internal/adapter/redis	0.232s
-ok  	github.com/eventflow/eventflow/services/ticketing/internal/app	0.909s
-ok  	github.com/eventflow/eventflow/services/ticketing/internal/domain	0.376s
+ok  	github.com/eventflow/eventflow/services/ticketing/internal/adapter/postgres	0.216s
+ok  	github.com/eventflow/eventflow/services/ticketing/internal/adapter/redis	0.200s
+ok  	github.com/eventflow/eventflow/services/ticketing/internal/app	0.886s
+ok  	github.com/eventflow/eventflow/services/ticketing/internal/domain	0.355s
 ?   	github.com/eventflow/eventflow/services/ticketing/internal/port	[no test files]
-ok  	github.com/eventflow/eventflow/services/ticketing/internal/worker	0.605s
+ok  	github.com/eventflow/eventflow/services/ticketing/internal/worker	0.571s
 FAIL	github.com/eventflow/eventflow/services/ticketing/cmd/server [build failed]
 ?   	github.com/eventflow/eventflow/services/ticketing/cmd/worker	[no test files]
 FAIL

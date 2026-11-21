@@ -2,21 +2,21 @@
 --- FAIL: TestOpsWrite_AC11_AuditErrorKeepsOverrideAndLogsError (0.00s)
 --- FAIL: TestOpsWrite_AC11_AuditHangIsBoundedBy2s (2.00s)
 FAIL
-FAIL	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/http	2.594s
+FAIL	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/http	3.291s
 FAIL
 ---- tail ----
-    ops_audit_panic_fix_test.go:47: want audit failed: {"event_id":"11111111-1111-4111-8111-111111111111","override":{"active":true,"rate_per_sec":0},"paused":true,"applied_at":"2026-11-21T07:08:38Z","audit":"recorded"}
+    ops_audit_panic_fix_test.go:47: want audit failed: {"event_id":"11111111-1111-4111-8111-111111111111","override":{"active":true,"rate_per_sec":0},"paused":true,"applied_at":"2026-11-21T07:29:08Z","audit":"recorded"}
 --- FAIL: TestOpsWrite_AC11_AuditErrorKeepsOverrideAndLogsError (0.00s)
-    ops_handler_test.go:536: response: map[applied_at:2026-11-21T07:08:38Z audit:recorded event_id:11111111-1111-4111-8111-111111111111 override:map[active:true rate_per_sec:0] paused:true]
+    ops_handler_test.go:536: response: map[applied_at:2026-11-21T07:29:08Z audit:recorded event_id:11111111-1111-4111-8111-111111111111 override:map[active:true rate_per_sec:0] paused:true]
 --- FAIL: TestOpsWrite_AC11_AuditHangIsBoundedBy2s (2.00s)
-    ops_handler_test.go:564: 200 {"event_id":"11111111-1111-4111-8111-111111111111","override":{"active":false,"rate_per_sec":null},"paused":false,"applied_at":"2026-11-21T07:08:38Z","audit":"recorded"}
+    ops_handler_test.go:564: 200 {"event_id":"11111111-1111-4111-8111-111111111111","override":{"active":false,"rate_per_sec":null},"paused":false,"applied_at":"2026-11-21T07:29:08Z","audit":"recorded"}
 FAIL
-FAIL	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/http	2.594s
-ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/metrics	0.870s
-ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/postgres	0.070s
+FAIL	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/http	3.291s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/metrics	2.067s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/postgres	0.163s
 ?   	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/redis	[no test files]
-ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/signal	0.211s
-ok  	github.com/eventflow/eventflow/services/waitingroom/internal/app	0.651s
-ok  	github.com/eventflow/eventflow/services/waitingroom/internal/config	0.176s
-ok  	github.com/eventflow/eventflow/services/waitingroom/internal/domain	0.211s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/signal	0.442s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/app	0.893s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/config	0.394s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/domain	0.464s
 FAIL

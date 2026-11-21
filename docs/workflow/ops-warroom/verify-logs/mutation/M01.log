@@ -1,18 +1,18 @@
 --- FAIL: TestOpsWrite_AC9_InvalidInputIs400AndNothingApplied (0.00s)
 FAIL
-FAIL	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/http	3.522s
+FAIL	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/http	3.346s
 FAIL
 ---- tail ----
 --- FAIL: TestOpsWrite_AC9_InvalidInputIs400AndNothingApplied (0.00s)
     ops_handler_test.go:421: PUT too big: 200 
     ops_handler_test.go:424: PUT too big: state changed or audited
 FAIL
-FAIL	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/http	3.522s
-ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/metrics	1.671s
-ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/postgres	0.213s
+FAIL	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/http	3.346s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/metrics	1.946s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/postgres	0.134s
 ?   	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/redis	[no test files]
-ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/signal	0.607s
-ok  	github.com/eventflow/eventflow/services/waitingroom/internal/app	1.078s
-ok  	github.com/eventflow/eventflow/services/waitingroom/internal/config	0.571s
-ok  	github.com/eventflow/eventflow/services/waitingroom/internal/domain	0.601s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/signal	0.445s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/app	0.890s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/config	0.385s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/domain	0.452s
 FAIL

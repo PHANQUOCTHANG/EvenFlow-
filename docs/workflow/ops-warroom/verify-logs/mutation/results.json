@@ -80,8 +80,8 @@
   "desc": "Set audits even when the Redis apply failed (audit before successful apply)",
   "file": "services/waitingroom/internal/app/ops_override.go",
   "suite": "wr",
-  "status": "SURVIVED",
-  "exit": 0
+  "status": "KILLED",
+  "exit": 1
  },
  "M13": {
   "desc": "Clear audits before apply (order swapped)",
@@ -115,8 +115,8 @@
   "desc": "Set apply/audit bound to request context",
   "file": "services/waitingroom/internal/app/ops_override.go",
   "suite": "wr",
-  "status": "SURVIVED",
-  "exit": 0
+  "status": "KILLED",
+  "exit": 1
  },
  "M18": {
   "desc": "waitingroom handler role check removed",
@@ -143,8 +143,8 @@
   "desc": "trailing data after JSON accepted",
   "file": "services/waitingroom/internal/adapter/http/ops_handler.go",
   "suite": "wr",
-  "status": "SURVIVED",
-  "exit": 0
+  "status": "KILLED",
+  "exit": 1
  },
  "M22": {
   "desc": "parseRate accepts quoted string \"12\"",
@@ -178,8 +178,8 @@
   "desc": "not-found no longer cached",
   "file": "services/ticketing/internal/adapter/http/ops_handler.go",
   "suite": "tk",
-  "status": "SURVIVED",
-  "exit": 0
+  "status": "KILLED",
+  "exit": 1
  },
  "T05": {
   "desc": "inventory role ops -> organizer",
@@ -206,8 +206,8 @@
   "desc": "unknown-provider reconciliation condition",
   "file": "services/ticketing/internal/app/ops_queries.go",
   "suite": "tk",
-  "status": "SURVIVED",
-  "exit": 0
+  "status": "KILLED",
+  "exit": 1
  },
  "T09": {
   "desc": "sales snapshot tx REPEATABLE READ removed (integration-only)",

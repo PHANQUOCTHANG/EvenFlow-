@@ -1,0 +1,13 @@
+--- FAIL: TestOpsRoutes_AC19_RoleMatrixAndUpstream (0.02s)
+FAIL
+FAIL	github.com/eventflow/eventflow/services/gateway/internal/proxy	0.477s
+FAIL
+---- tail ----
+?   	github.com/eventflow/eventflow/services/gateway/cmd/server	[no test files]
+ok  	github.com/eventflow/eventflow/services/gateway/internal/config	0.689s
+--- FAIL: TestOpsRoutes_AC19_RoleMatrixAndUpstream (0.02s)
+    ops_routes_test.go:53: GET /v1/ops/ai/mode: upstream "ticketing", want "assistant"
+FAIL
+FAIL	github.com/eventflow/eventflow/services/gateway/internal/proxy	0.477s
+ok  	github.com/eventflow/eventflow/services/gateway/internal/ratelimit	0.348s
+FAIL

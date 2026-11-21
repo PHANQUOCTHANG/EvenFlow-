@@ -1,5 +1,5 @@
-[31m   [31m×[31m setAdmitOverride[2m > [22minvalid input (too big) => INVALID and no request[90m 14[2mms[22m[31m[39m
-[31m   [31m×[31m override control (AC-24, AC-25)[2m > [22minvalid input rate="10001" reason="đủ dài" => no service call[90m 240[2mms[22m[31m[39m
+[31m   [31m×[31m setAdmitOverride[2m > [22minvalid input (too big) => INVALID and no request[90m 20[2mms[22m[31m[39m
+[31m   [31m×[31m override control (AC-24, AC-25)[2m > [22minvalid input rate="10001" reason="đủ dài" => no service call[90m 197[2mms[22m[31m[39m
 [31m[1m[7m FAIL [27m[22m[39m src/lib/ops-service.contract.test.ts[2m > [22msetAdmitOverride[2m > [22minvalid input (too big) => INVALID and no request
 [31m[1m[7m FAIL [27m[22m[39m src/components/ops/ops-war-room.real.test.tsx[2m > [22moverride control (AC-24, AC-25)[2m > [22minvalid input rate="10001" reason="đủ dài" => no service call
 ---- tail ----

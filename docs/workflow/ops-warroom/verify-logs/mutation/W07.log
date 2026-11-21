@@ -1,10 +1,10 @@
 [31m   [31m×[31m reason rules match the server (R2-1, X2-1, X2-5)[2m > [22mbidi "‮‮‮" is BIDI[90m 23[2mms[22m[31m[39m
-[31m   [31m×[31m reason rules match the server (R2-1, X2-1, X2-5)[2m > [22mbidi "⁦⁧⁨⁩" is BIDI[90m 3[2mms[22m[31m[39m
-[31m   [31m×[31m reason rules match the server (R2-1, X2-1, X2-5)[2m > [22mbidi "abc‎" is BIDI[90m 4[2mms[22m[31m[39m
+[31m   [31m×[31m reason rules match the server (R2-1, X2-1, X2-5)[2m > [22mbidi "⁦⁧⁨⁩" is BIDI[90m 2[2mms[22m[31m[39m
+[31m   [31m×[31m reason rules match the server (R2-1, X2-1, X2-5)[2m > [22mbidi "abc‎" is BIDI[90m 3[2mms[22m[31m[39m
 [31m   [31m×[31m reason rules match the server (R2-1, X2-1, X2-5)[2m > [22mbidi "‏abc" is BIDI[90m 2[2mms[22m[31m[39m
 [31m   [31m×[31m reason rules match the server (R2-1, X2-1, X2-5)[2m > [22mbidi "ab؜c" is BIDI[90m 2[2mms[22m[31m[39m
-[31m   [31m×[31m reason rules match the server (R2-1, X2-1, X2-5)[2m > [22mbidi "resume ‮esuap‬ ok" is BIDI[90m 1[2mms[22m[31m[39m
-[31m   [31m×[31m reason error names the cause (X2-5)[2m > [22mbidi[33m 398[2mms[22m[31m[39m
+[31m   [31m×[31m reason rules match the server (R2-1, X2-1, X2-5)[2m > [22mbidi "resume ‮esuap‬ ok" is BIDI[90m 2[2mms[22m[31m[39m
+[31m   [31m×[31m reason error names the cause (X2-5)[2m > [22mbidi[90m 206[2mms[22m[31m[39m
 [31m[1m[7m FAIL [27m[22m[39m src/lib/ops-service.round2.fix.test.ts[2m > [22mreason rules match the server (R2-1, X2-1, X2-5)[2m > [22mbidi "‮‮‮" is BIDI
 [31m[1m[7m FAIL [27m[22m[39m src/lib/ops-service.round2.fix.test.ts[2m > [22mreason rules match the server (R2-1, X2-1, X2-5)[2m > [22mbidi "⁦⁧⁨⁩" is BIDI
 [31m[1m[7m FAIL [27m[22m[39m src/lib/ops-service.round2.fix.test.ts[2m > [22mreason rules match the server (R2-1, X2-1, X2-5)[2m > [22mbidi "abc‎" is BIDI
