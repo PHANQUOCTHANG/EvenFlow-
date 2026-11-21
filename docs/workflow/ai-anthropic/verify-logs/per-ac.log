@@ -1,0 +1,18 @@
+AC1: 10 passed in 7.43s ; wiring AC1_: 1 passed, 7 deselected in 7.41s
+AC2: 8 passed, 466 deselected in 9.14s
+AC3: 11 passed, 463 deselected in 8.23s
+AC4: 3 passed, 471 deselected in 8.68s
+AC5: 2 passed, 472 deselected in 9.52s
+AC6: 8 passed, 466 deselected in 9.34s
+AC7: 4 passed, 470 deselected in 9.07s
+AC8: 5 passed, 469 deselected in 8.91s
+AC9: 22 passed in 7.32s ; client AC9_: 5 passed, 37 deselected in 6.70s
+AC10: 12 passed, 462 deselected in 9.40s
+AC11: 51 passed in 6.85s
+AC12: 5 passed, 469 deselected in 8.32s
+AC13: 5 passed, 469 deselected in 8.49s
+AC14: 21 passed, 453 deselected in 8.36s
+AC15: 3 passed, 471 deselected in 8.76s
+AC20 full: 452 passed, 22 deselected in 22.80s
+All checks passed!
+19 passed in 6.72s
