@@ -333,7 +333,8 @@ bot_decisions        -- diem rui ro + rule kich hoat (giai thich duoc, BR-B1)
 | `ticketing_inventory_drift{ticket_type}` | ≠ 0 kéo dài > 30s (tổng \|lệch\| theo bucket, đã trừ hold đang bay) |
 | `ticketing_inventory_drift_corrected_total{direction}` | tăng liên tục → Redis hay mất kho, tìm nguyên nhân (không phải bình thường) |
 | `ai_queue_lag_seconds{queue}` | > 30s |
-| `ai_gemini_429_total` | > 0 (chứng tỏ limiter sai) |
+| `ai_llm_429_total` | > 0 (chứng tỏ limiter sai; alert `LlmRateLimited`) |
+| `ai_llm_incomplete_total{reason}` | tăng đều → model trả lời không trọn vẹn (refusal / max_tokens / empty / other), xem lại `AI_THINKING_HEADROOM_TOKENS` |
 | `ai_semantic_cache_hit_ratio` | < 70% |
 | `payment_webhook_lag_seconds` | p99 > 30s |
 

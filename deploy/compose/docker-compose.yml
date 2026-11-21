@@ -233,9 +233,13 @@ services:
       ANTHROPIC_MODEL_MODERATION: "${ANTHROPIC_MODEL_MODERATION:-claude-haiku-5-5}"
       # Tuy chon: chi cho embedding cua cache ngu nghia (L3). Rong -> L3 tat, worker van chay.
       GEMINI_API_KEY: "${GEMINI_API_KEY:-}"
+      GEMINI_EMBED_MODEL: "${GEMINI_EMBED_MODEL:-text-embedding-004}"
+      # Timeout cung moi lan goi LLM (ngan hon TTL singleflight 30s) va phan du max_tokens cho suy nghi.
+      AI_TIMEOUT_SECONDS: "${AI_TIMEOUT_SECONDS:-${GEMINI_TIMEOUT_SECONDS:-10}}"
+      AI_THINKING_HEADROOM_TOKENS: "${AI_THINKING_HEADROOM_TOKENS:-1024}"
       # Dat thap hon han muc that de chua bien an toan (xem limiter.py).
-      AI_RPM: "${AI_RPM:-55}"
-      AI_TPM: "${AI_TPM:-900000}"
+      AI_RPM: "${AI_RPM:-${GEMINI_RPM:-55}}"
+      AI_TPM: "${AI_TPM:-${GEMINI_TPM:-900000}}"
       # So consumer moi hang doi (BR-A3). Anomaly/report chua co handler (EV-167, EV-168):
       # message vao ai.dlq de replay sau.
       CHAT_CONSUMERS: "20"
