@@ -12,7 +12,7 @@
    ▲ Next.js 15.5.28
 
    Creating an optimized production build ...
- ✓ Compiled successfully in 10.5s
+ ✓ Compiled successfully in 10.7s
    Linting and checking validity of types ...
 
 ./src/components/auth/ForgotPasswordForm.tsx
@@ -66,7 +66,7 @@ Route (app)                                       Size  First Load JS  Revalidat
 ├ ƒ /checkout/[eventId]/payment                7.37 kB         128 kB
 ├ ƒ /checkout/[eventId]/result                 17.7 kB         139 kB
 ├ ○ /events                                    3.73 kB         119 kB          1m      1y
-├ ● /events/[slug]                             8.02 kB         119 kB
+├ ● /events/[slug]                             8.04 kB         119 kB
 ├ ƒ /ops/events                                  971 B         116 kB
 ├ ƒ /ops/events/[eventId]                        135 B         126 kB
 ├ ○ /organizer                                   140 B         103 kB
@@ -77,7 +77,7 @@ Route (app)                                       Size  First Load JS  Revalidat
 ├ ○ /organizer/events/new                        478 B         122 kB
 ├ ○ /showcase                                  10.1 kB         129 kB
 ├ ○ /unauthorized                              2.42 kB         113 kB
-└ ƒ /waiting/[eventId]                         8.76 kB         138 kB
+└ ƒ /waiting/[eventId]                         8.78 kB         138 kB
 + First Load JS shared by all                   103 kB
   ├ chunks/1255-dc3ddf72a1dc71a7.js            46.6 kB
   ├ chunks/4bd1b696-f785427dddbba9fb.js        54.2 kB

@@ -74,7 +74,7 @@ Vulnerability #2: GO-2026-6859
       #54: redisx/scripts.go:48:36: redisx.ScriptSet.LoadFS calls redis.NewScript, which eventually calls http.response.WriteString
       #55: httpx/middleware.go:91:34: httpx.StatusWriter.Write calls http.timeoutWriter.Write
       #56: httpx/middleware.go:84:30: httpx.StatusWriter.WriteHeader calls http.timeoutWriter.WriteHeader
-      #57: antibot/redisstate/store.go:163:69: redisstate.isNoScript calls http.transportReadFromServerError.Error
+      #57: antibot/redisstate/store.go:169:69: redisstate.isNoScript calls http.transportReadFromServerError.Error
 
 Vulnerability #3: GO-2026-6809
     Distrust compromised intermediate certificates in crypto/x509
@@ -92,7 +92,7 @@ Vulnerability #4: GO-2026-6617
     Found in: golang.org/x/net@v0.58.0
     Fixed in: golang.org/x/net@v0.60.0
     Example traces found:
-      #1: antibot/redisstate/store.go:163:69: redisstate.isNoScript calls http2.ConnectionError.Error
+      #1: antibot/redisstate/store.go:169:69: redisstate.isNoScript calls http2.ConnectionError.Error
       #2: pii/redact.go:107:44: pii.redactAttr calls http2.ErrCode.String
       #3: pii/redact.go:107:44: pii.redactAttr calls http2.FrameHeader.String
       #4: pii/redact.go:107:44: pii.redactAttr calls http2.FrameType.String
@@ -109,13 +109,13 @@ Vulnerability #4: GO-2026-6617
       #15: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http2.Framer.WriteWindowUpdate
       #16: pii/redact.go:107:44: pii.redactAttr calls http2.SettingID.String
       #17: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http2.SettingsFrame.ForeachSetting
-      #18: antibot/redisstate/store.go:163:69: redisstate.isNoScript calls http2.StreamError.Error
+      #18: antibot/redisstate/store.go:169:69: redisstate.isNoScript calls http2.StreamError.Error
       #19: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls http2.Transport.RoundTrip
-      #20: antibot/redisstate/store.go:163:69: redisstate.isNoScript calls http2.connError.Error
-      #21: antibot/redisstate/store.go:163:69: redisstate.isNoScript calls http2.duplicatePseudoHeaderError.Error
-      #22: antibot/redisstate/store.go:163:69: redisstate.isNoScript calls http2.headerFieldNameError.Error
-      #23: antibot/redisstate/store.go:163:69: redisstate.isNoScript calls http2.headerFieldValueError.Error
-      #24: antibot/redisstate/store.go:163:69: redisstate.isNoScript calls http2.pseudoHeaderError.Error
+      #20: antibot/redisstate/store.go:169:69: redisstate.isNoScript calls http2.connError.Error
+      #21: antibot/redisstate/store.go:169:69: redisstate.isNoScript calls http2.duplicatePseudoHeaderError.Error
+      #22: antibot/redisstate/store.go:169:69: redisstate.isNoScript calls http2.headerFieldNameError.Error
+      #23: antibot/redisstate/store.go:169:69: redisstate.isNoScript calls http2.headerFieldValueError.Error
+      #24: antibot/redisstate/store.go:169:69: redisstate.isNoScript calls http2.pseudoHeaderError.Error
 
   Standard library
     Found in: net/http/internal/http2@go1.27
@@ -226,7 +226,7 @@ Vulnerability #5: GO-2026-6613
       #54: redisx/scripts.go:48:36: redisx.ScriptSet.LoadFS calls redis.NewScript, which eventually calls http.response.WriteString
       #55: httpx/middleware.go:91:34: httpx.StatusWriter.Write calls http.timeoutWriter.Write
       #56: httpx/middleware.go:84:30: httpx.StatusWriter.WriteHeader calls http.timeoutWriter.WriteHeader
-      #57: antibot/redisstate/store.go:163:69: redisstate.isNoScript calls http.transportReadFromServerError.Error
+      #57: antibot/redisstate/store.go:169:69: redisstate.isNoScript calls http.transportReadFromServerError.Error
 
 Vulnerability #6: GO-2026-6612
     Double flow control refund on HTTP/2 server streams in net/http
@@ -235,7 +235,7 @@ Vulnerability #6: GO-2026-6612
     Found in: golang.org/x/net@v0.58.0
     Fixed in: golang.org/x/net@v0.60.0
     Example traces found:
-      #1: antibot/redisstate/store.go:163:69: redisstate.isNoScript calls http2.ConnectionError.Error
+      #1: antibot/redisstate/store.go:169:69: redisstate.isNoScript calls http2.ConnectionError.Error
       #2: pii/redact.go:107:44: pii.redactAttr calls http2.ErrCode.String
       #3: pii/redact.go:107:44: pii.redactAttr calls http2.FrameHeader.String
       #4: pii/redact.go:107:44: pii.redactAttr calls http2.FrameType.String
@@ -252,13 +252,13 @@ Vulnerability #6: GO-2026-6612
       #15: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http2.Framer.WriteWindowUpdate
       #16: pii/redact.go:107:44: pii.redactAttr calls http2.SettingID.String
       #17: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http2.SettingsFrame.ForeachSetting
-      #18: antibot/redisstate/store.go:163:69: redisstate.isNoScript calls http2.StreamError.Error
+      #18: antibot/redisstate/store.go:169:69: redisstate.isNoScript calls http2.StreamError.Error
       #19: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls http2.Transport.RoundTrip
-      #20: antibot/redisstate/store.go:163:69: redisstate.isNoScript calls http2.connError.Error
-      #21: antibot/redisstate/store.go:163:69: redisstate.isNoScript calls http2.duplicatePseudoHeaderError.Error
-      #22: antibot/redisstate/store.go:163:69: redisstate.isNoScript calls http2.headerFieldNameError.Error
-      #23: antibot/redisstate/store.go:163:69: redisstate.isNoScript calls http2.headerFieldValueError.Error
-      #24: antibot/redisstate/store.go:163:69: redisstate.isNoScript calls http2.pseudoHeaderError.Error
+      #20: antibot/redisstate/store.go:169:69: redisstate.isNoScript calls http2.connError.Error
+      #21: antibot/redisstate/store.go:169:69: redisstate.isNoScript calls http2.duplicatePseudoHeaderError.Error
+      #22: antibot/redisstate/store.go:169:69: redisstate.isNoScript calls http2.headerFieldNameError.Error
+      #23: antibot/redisstate/store.go:169:69: redisstate.isNoScript calls http2.headerFieldValueError.Error
+      #24: antibot/redisstate/store.go:169:69: redisstate.isNoScript calls http2.pseudoHeaderError.Error
 
   Standard library
     Found in: net/http/internal/http2@go1.27
@@ -278,7 +278,7 @@ Vulnerability #7: GO-2026-6611
     Found in: golang.org/x/net@v0.58.0
     Fixed in: golang.org/x/net@v0.60.0
     Example traces found:
-      #1: antibot/redisstate/store.go:163:69: redisstate.isNoScript calls http2.ConnectionError.Error
+      #1: antibot/redisstate/store.go:169:69: redisstate.isNoScript calls http2.ConnectionError.Error
       #2: pii/redact.go:107:44: pii.redactAttr calls http2.ErrCode.String
       #3: pii/redact.go:107:44: pii.redactAttr calls http2.FrameHeader.String
       #4: pii/redact.go:107:44: pii.redactAttr calls http2.FrameType.String
@@ -295,13 +295,13 @@ Vulnerability #7: GO-2026-6611
       #15: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http2.Framer.WriteWindowUpdate
       #16: pii/redact.go:107:44: pii.redactAttr calls http2.SettingID.String
       #17: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http2.SettingsFrame.ForeachSetting
-      #18: antibot/redisstate/store.go:163:69: redisstate.isNoScript calls http2.StreamError.Error
+      #18: antibot/redisstate/store.go:169:69: redisstate.isNoScript calls http2.StreamError.Error
       #19: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls http2.Transport.RoundTrip
-      #20: antibot/redisstate/store.go:163:69: redisstate.isNoScript calls http2.connError.Error
-      #21: antibot/redisstate/store.go:163:69: redisstate.isNoScript calls http2.duplicatePseudoHeaderError.Error
-      #22: antibot/redisstate/store.go:163:69: redisstate.isNoScript calls http2.headerFieldNameError.Error
-      #23: antibot/redisstate/store.go:163:69: redisstate.isNoScript calls http2.headerFieldValueError.Error
-      #24: antibot/redisstate/store.go:163:69: redisstate.isNoScript calls http2.pseudoHeaderError.Error
+      #20: antibot/redisstate/store.go:169:69: redisstate.isNoScript calls http2.connError.Error
+      #21: antibot/redisstate/store.go:169:69: redisstate.isNoScript calls http2.duplicatePseudoHeaderError.Error
+      #22: antibot/redisstate/store.go:169:69: redisstate.isNoScript calls http2.headerFieldNameError.Error
+      #23: antibot/redisstate/store.go:169:69: redisstate.isNoScript calls http2.headerFieldValueError.Error
+      #24: antibot/redisstate/store.go:169:69: redisstate.isNoScript calls http2.pseudoHeaderError.Error
 
   Standard library
     Found in: net/http/internal/http2@go1.27
@@ -413,7 +413,7 @@ Vulnerability #12: GO-2026-6603
     Found in: golang.org/x/net@v0.58.0
     Fixed in: golang.org/x/net@v0.60.0
     Example traces found:
-      #1: antibot/redisstate/store.go:163:69: redisstate.isNoScript calls http2.ConnectionError.Error
+      #1: antibot/redisstate/store.go:169:69: redisstate.isNoScript calls http2.ConnectionError.Error
       #2: pii/redact.go:107:44: pii.redactAttr calls http2.ErrCode.String
       #3: pii/redact.go:107:44: pii.redactAttr calls http2.FrameHeader.String
       #4: pii/redact.go:107:44: pii.redactAttr calls http2.FrameType.String
@@ -430,13 +430,13 @@ Vulnerability #12: GO-2026-6603
       #15: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http2.Framer.WriteWindowUpdate
       #16: pii/redact.go:107:44: pii.redactAttr calls http2.SettingID.String
       #17: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http2.SettingsFrame.ForeachSetting
-      #18: antibot/redisstate/store.go:163:69: redisstate.isNoScript calls http2.StreamError.Error
+      #18: antibot/redisstate/store.go:169:69: redisstate.isNoScript calls http2.StreamError.Error
       #19: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls http2.Transport.RoundTrip
-      #20: antibot/redisstate/store.go:163:69: redisstate.isNoScript calls http2.connError.Error
-      #21: antibot/redisstate/store.go:163:69: redisstate.isNoScript calls http2.duplicatePseudoHeaderError.Error
-      #22: antibot/redisstate/store.go:163:69: redisstate.isNoScript calls http2.headerFieldNameError.Error
-      #23: antibot/redisstate/store.go:163:69: redisstate.isNoScript calls http2.headerFieldValueError.Error
-      #24: antibot/redisstate/store.go:163:69: redisstate.isNoScript calls http2.pseudoHeaderError.Error
+      #20: antibot/redisstate/store.go:169:69: redisstate.isNoScript calls http2.connError.Error
+      #21: antibot/redisstate/store.go:169:69: redisstate.isNoScript calls http2.duplicatePseudoHeaderError.Error
+      #22: antibot/redisstate/store.go:169:69: redisstate.isNoScript calls http2.headerFieldNameError.Error
+      #23: antibot/redisstate/store.go:169:69: redisstate.isNoScript calls http2.headerFieldValueError.Error
+      #24: antibot/redisstate/store.go:169:69: redisstate.isNoScript calls http2.pseudoHeaderError.Error
 
   Standard library
     Found in: net/http/internal/http2@go1.27
@@ -512,11 +512,11 @@ Vulnerability #15: GO-2026-6253
     Fixed in: github.com/moby/go-archive@v0.3.0
     Example traces found:
       #1: testx/redis.go:23:23: testx.startRedis calls redis.Run, which eventually calls archive.TarWithOptions
-      #2: testx/testx.go:89:15: testx.Shutdown calls fmt.Fprintf, which eventually calls archive.init
-      #3: testx/testx.go:26:2: testx.init calls testcontainers.init, which calls archive.init
+      #2: testx/testx.go:26:2: testx.init calls testcontainers.init, which calls archive.init
+      #3: testx/testx.go:89:15: testx.Shutdown calls fmt.Fprintf, which eventually calls archive.init
       #4: testx/redis.go:23:23: testx.startRedis calls redis.Run, which eventually calls compression.CompressStream
-      #5: testx/testx.go:26:2: testx.init calls testcontainers.init, which eventually calls compression.init
-      #6: testx/testx.go:89:15: testx.Shutdown calls fmt.Fprintf, which eventually calls compression.init
+      #5: testx/testx.go:89:15: testx.Shutdown calls fmt.Fprintf, which eventually calls compression.init
+      #6: testx/testx.go:26:2: testx.init calls testcontainers.init, which eventually calls compression.init
       #7: testx/redis.go:23:23: testx.startRedis calls redis.Run, which eventually calls compression.nopWriteCloser.Close
       #8: testx/redis.go:23:23: testx.startRedis calls redis.Run, which eventually calls tarheader.FileInfoHeaderNoLookups
       #9: testx/testx.go:26:2: testx.init calls testcontainers.init, which eventually calls tarheader.init
@@ -595,7 +595,7 @@ Vulnerability #1: GO-2026-6859
       #16: cmd/server/main.go:128:18: server.run calls httpx.Run, which eventually calls http.Server.Shutdown
       #17: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http.Transport.Clone
       #18: cmd/controller/main.go:250:18: controller.instanceID calls rand.Read, which eventually calls http.body.Close
-      #19: internal/adapter/redis/ops_state.go:114:22: redis.LoadSignalCheckout.Checkout calls loadsignal.Reader.Read, which eventually calls http.body.Read
+      #19: internal/adapter/redis/ops_state.go:116:22: redis.LoadSignalCheckout.Checkout calls loadsignal.Reader.Read, which eventually calls http.body.Read
       #20: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http.bodyEOFSignal.Close
       #21: cmd/controller/main.go:250:18: controller.instanceID calls rand.Read, which eventually calls http.bodyEOFSignal.Read
       #22: cmd/controller/main.go:250:18: controller.instanceID calls rand.Read, which eventually calls http.bodyLocked.Read
@@ -606,7 +606,7 @@ Vulnerability #1: GO-2026-6859
       #27: internal/adapter/redis/queue.go:41:21: redis.NewQueue calls redisx.ScriptSet.LoadFS, which eventually calls http.chunkWriter.Write
       #28: cmd/controller/main.go:250:18: controller.instanceID calls rand.Read, which eventually calls http.connReader.Read
       #29: cmd/controller/main.go:250:18: controller.instanceID calls rand.Read, which eventually calls http.expectContinueReader.Close
-      #30: internal/adapter/redis/ops_state.go:114:22: redis.LoadSignalCheckout.Checkout calls loadsignal.Reader.Read, which eventually calls http.expectContinueReader.Read
+      #30: internal/adapter/redis/ops_state.go:116:22: redis.LoadSignalCheckout.Checkout calls loadsignal.Reader.Read, which eventually calls http.expectContinueReader.Read
       #31: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http.gzipReader.Close
       #32: cmd/controller/main.go:250:18: controller.instanceID calls rand.Read, which eventually calls http.gzipReader.Read
       #33: cmd/controller/main.go:250:18: controller.instanceID calls rand.Read, which eventually calls http.loggingConn.Read
@@ -617,7 +617,7 @@ Vulnerability #1: GO-2026-6859
       #38: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http.persistConnWriter.ReadFrom
       #39: internal/adapter/redis/queue.go:41:21: redis.NewQueue calls redisx.ScriptSet.LoadFS, which eventually calls http.persistConnWriter.Write
       #40: cmd/controller/main.go:250:18: controller.instanceID calls rand.Read, which eventually calls http.readTrackingBody.Close
-      #41: internal/adapter/redis/ops_state.go:114:22: redis.LoadSignalCheckout.Checkout calls loadsignal.Reader.Read, which eventually calls http.readTrackingBody.Read
+      #41: internal/adapter/redis/ops_state.go:116:22: redis.LoadSignalCheckout.Checkout calls loadsignal.Reader.Read, which eventually calls http.readTrackingBody.Read
       #42: cmd/controller/main.go:250:18: controller.instanceID calls rand.Read, which eventually calls http.readWriteCloserBody.Read
       #43: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http.response.ReadFrom
       #44: internal/adapter/redis/queue.go:41:21: redis.NewQueue calls redisx.ScriptSet.LoadFS, which eventually calls http.response.Write
@@ -737,7 +737,7 @@ Vulnerability #4: GO-2026-6613
       #16: cmd/server/main.go:128:18: server.run calls httpx.Run, which eventually calls http.Server.Shutdown
       #17: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http.Transport.Clone
       #18: cmd/controller/main.go:250:18: controller.instanceID calls rand.Read, which eventually calls http.body.Close
-      #19: internal/adapter/redis/ops_state.go:114:22: redis.LoadSignalCheckout.Checkout calls loadsignal.Reader.Read, which eventually calls http.body.Read
+      #19: internal/adapter/redis/ops_state.go:116:22: redis.LoadSignalCheckout.Checkout calls loadsignal.Reader.Read, which eventually calls http.body.Read
       #20: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http.bodyEOFSignal.Close
       #21: cmd/controller/main.go:250:18: controller.instanceID calls rand.Read, which eventually calls http.bodyEOFSignal.Read
       #22: cmd/controller/main.go:250:18: controller.instanceID calls rand.Read, which eventually calls http.bodyLocked.Read
@@ -748,7 +748,7 @@ Vulnerability #4: GO-2026-6613
       #27: internal/adapter/redis/queue.go:41:21: redis.NewQueue calls redisx.ScriptSet.LoadFS, which eventually calls http.chunkWriter.Write
       #28: cmd/controller/main.go:250:18: controller.instanceID calls rand.Read, which eventually calls http.connReader.Read
       #29: cmd/controller/main.go:250:18: controller.instanceID calls rand.Read, which eventually calls http.expectContinueReader.Close
-      #30: internal/adapter/redis/ops_state.go:114:22: redis.LoadSignalCheckout.Checkout calls loadsignal.Reader.Read, which eventually calls http.expectContinueReader.Read
+      #30: internal/adapter/redis/ops_state.go:116:22: redis.LoadSignalCheckout.Checkout calls loadsignal.Reader.Read, which eventually calls http.expectContinueReader.Read
       #31: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http.gzipReader.Close
       #32: cmd/controller/main.go:250:18: controller.instanceID calls rand.Read, which eventually calls http.gzipReader.Read
       #33: cmd/controller/main.go:250:18: controller.instanceID calls rand.Read, which eventually calls http.loggingConn.Read
@@ -759,7 +759,7 @@ Vulnerability #4: GO-2026-6613
       #38: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http.persistConnWriter.ReadFrom
       #39: internal/adapter/redis/queue.go:41:21: redis.NewQueue calls redisx.ScriptSet.LoadFS, which eventually calls http.persistConnWriter.Write
       #40: cmd/controller/main.go:250:18: controller.instanceID calls rand.Read, which eventually calls http.readTrackingBody.Close
-      #41: internal/adapter/redis/ops_state.go:114:22: redis.LoadSignalCheckout.Checkout calls loadsignal.Reader.Read, which eventually calls http.readTrackingBody.Read
+      #41: internal/adapter/redis/ops_state.go:116:22: redis.LoadSignalCheckout.Checkout calls loadsignal.Reader.Read, which eventually calls http.readTrackingBody.Read
       #42: cmd/controller/main.go:250:18: controller.instanceID calls rand.Read, which eventually calls http.readWriteCloserBody.Read
       #43: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http.response.ReadFrom
       #44: internal/adapter/redis/queue.go:41:21: redis.NewQueue calls redisx.ScriptSet.LoadFS, which eventually calls http.response.Write
@@ -809,8 +809,8 @@ Vulnerability #5: GO-2026-6612
       #2: cmd/server/main.go:128:18: server.run calls httpx.Run, which eventually calls http2.Server.ServeConn
       #3: cmd/controller/main.go:250:18: controller.instanceID calls rand.Read, which eventually calls http2.requestBody.Close
       #4: cmd/controller/main.go:250:18: controller.instanceID calls rand.Read, which eventually calls http2.requestBody.Close
-      #5: internal/adapter/redis/ops_state.go:114:22: redis.LoadSignalCheckout.Checkout calls loadsignal.Reader.Read, which eventually calls http2.requestBody.Read
-      #6: internal/adapter/redis/ops_state.go:114:22: redis.LoadSignalCheckout.Checkout calls loadsignal.Reader.Read, which eventually calls http2.requestBody.Read
+      #5: internal/adapter/redis/ops_state.go:116:22: redis.LoadSignalCheckout.Checkout calls loadsignal.Reader.Read, which eventually calls http2.requestBody.Read
+      #6: internal/adapter/redis/ops_state.go:116:22: redis.LoadSignalCheckout.Checkout calls loadsignal.Reader.Read, which eventually calls http2.requestBody.Read
 
 Vulnerability #6: GO-2026-6611
     Excessive CPU consumption from repeated initial window changes in net/http
@@ -912,8 +912,8 @@ Vulnerability #8: GO-2026-6608
     mime/multipart
   More info: https://pkg.go.dev/vuln/GO-2026-6608
   Standard library
-    Found in: net/textproto@go1.27
-    Fixed in: net/textproto@go1.27.2
+    Found in: mime/multipart@go1.27
+    Fixed in: mime/multipart@go1.27.2
     Example traces found:
       #1: cmd/server/main.go:128:18: server.run calls httpx.Run, which eventually calls multipart.Reader.ReadForm
       #2: internal/adapter/postgres/bot_decisions.go:137:14: postgres.DecisionWriter.Close calls sync.Once.Do, which eventually calls textproto.Reader.ReadMIMEHeader
@@ -1061,7 +1061,7 @@ Vulnerability #7: GO-2026-6610
     Found in: golang.org/x/net@v0.58.0
     Found in: net/http/internal/http2@go1.27
 Vulnerability #8: GO-2026-6608
-    Found in: mime/multipart@go1.27
+    Found in: net/textproto@go1.27
 Vulnerability #9: GO-2026-6607
     Found in: crypto/tls@go1.27
 Vulnerability #10: GO-2026-6605

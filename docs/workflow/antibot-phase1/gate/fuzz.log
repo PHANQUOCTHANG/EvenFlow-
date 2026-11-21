@@ -1,32 +1,32 @@
 == FuzzDecodeSignals
-fuzz: elapsed: 0s, gathering baseline coverage: 0/510 completed
-fuzz: elapsed: 2s, gathering baseline coverage: 510/510 completed, now fuzzing with 32 workers
-fuzz: elapsed: 3s, execs: 89624 (29865/sec), new interesting: 1 (total: 511)
-fuzz: elapsed: 6s, execs: 490012 (133415/sec), new interesting: 5 (total: 515)
-fuzz: elapsed: 9s, execs: 890458 (133497/sec), new interesting: 13 (total: 523)
-fuzz: elapsed: 12s, execs: 1280971 (130088/sec), new interesting: 18 (total: 528)
-fuzz: elapsed: 15s, execs: 1676304 (131869/sec), new interesting: 22 (total: 532)
-fuzz: elapsed: 18s, execs: 2074279 (132708/sec), new interesting: 24 (total: 534)
-fuzz: elapsed: 21s, execs: 2498032 (141133/sec), new interesting: 26 (total: 536)
-fuzz: elapsed: 24s, execs: 2909438 (137166/sec), new interesting: 28 (total: 538)
-fuzz: elapsed: 27s, execs: 3339063 (143286/sec), new interesting: 30 (total: 540)
-fuzz: elapsed: 30s, execs: 3750214 (136945/sec), new interesting: 33 (total: 543)
-fuzz: elapsed: 31s, execs: 3750214 (0/sec), new interesting: 33 (total: 543)
+fuzz: elapsed: 0s, gathering baseline coverage: 0/543 completed
+fuzz: elapsed: 2s, gathering baseline coverage: 543/543 completed, now fuzzing with 32 workers
+fuzz: elapsed: 3s, execs: 73235 (24409/sec), new interesting: 0 (total: 543)
+fuzz: elapsed: 6s, execs: 432606 (119680/sec), new interesting: 5 (total: 548)
+fuzz: elapsed: 9s, execs: 872109 (146329/sec), new interesting: 6 (total: 549)
+fuzz: elapsed: 12s, execs: 1244095 (124258/sec), new interesting: 8 (total: 551)
+fuzz: elapsed: 15s, execs: 1666658 (140630/sec), new interesting: 10 (total: 553)
+fuzz: elapsed: 18s, execs: 2012811 (115547/sec), new interesting: 11 (total: 554)
+fuzz: elapsed: 21s, execs: 2405525 (130748/sec), new interesting: 12 (total: 555)
+fuzz: elapsed: 24s, execs: 2781551 (125460/sec), new interesting: 14 (total: 557)
+fuzz: elapsed: 27s, execs: 3183044 (133863/sec), new interesting: 15 (total: 558)
+fuzz: elapsed: 30s, execs: 3565760 (127546/sec), new interesting: 15 (total: 558)
+fuzz: elapsed: 31s, execs: 3565760 (0/sec), new interesting: 15 (total: 558)
 PASS
-ok  	github.com/eventflow/eventflow/libs/go/antibot	31.149s
+ok  	github.com/eventflow/eventflow/libs/go/antibot	31.696s
 == FuzzEvaluate
-fuzz: elapsed: 0s, gathering baseline coverage: 0/588 completed
-fuzz: elapsed: 3s, gathering baseline coverage: 588/588 completed, now fuzzing with 32 workers
-fuzz: elapsed: 3s, execs: 44237 (14742/sec), new interesting: 1 (total: 589)
-fuzz: elapsed: 6s, execs: 361534 (105763/sec), new interesting: 9 (total: 597)
-fuzz: elapsed: 9s, execs: 725419 (121324/sec), new interesting: 17 (total: 605)
-fuzz: elapsed: 12s, execs: 1122817 (132444/sec), new interesting: 26 (total: 614)
-fuzz: elapsed: 15s, execs: 1510993 (129380/sec), new interesting: 40 (total: 628)
-fuzz: elapsed: 18s, execs: 1930280 (139644/sec), new interesting: 48 (total: 636)
-fuzz: elapsed: 21s, execs: 2348475 (139529/sec), new interesting: 57 (total: 645)
-fuzz: elapsed: 24s, execs: 2775654 (142337/sec), new interesting: 68 (total: 656)
-fuzz: elapsed: 27s, execs: 3151156 (125125/sec), new interesting: 75 (total: 663)
-fuzz: elapsed: 30s, execs: 3548192 (132453/sec), new interesting: 84 (total: 672)
-fuzz: elapsed: 31s, execs: 3548192 (0/sec), new interesting: 84 (total: 672)
+fuzz: elapsed: 0s, gathering baseline coverage: 0/672 completed
+fuzz: elapsed: 3s, gathering baseline coverage: 672/672 completed, now fuzzing with 32 workers
+fuzz: elapsed: 3s, execs: 22925 (7634/sec), new interesting: 0 (total: 672)
+fuzz: elapsed: 6s, execs: 352946 (110102/sec), new interesting: 4 (total: 676)
+fuzz: elapsed: 9s, execs: 700734 (115929/sec), new interesting: 9 (total: 681)
+fuzz: elapsed: 12s, execs: 1069589 (122968/sec), new interesting: 11 (total: 683)
+fuzz: elapsed: 15s, execs: 1409336 (113239/sec), new interesting: 14 (total: 686)
+fuzz: elapsed: 18s, execs: 1733461 (107959/sec), new interesting: 23 (total: 695)
+fuzz: elapsed: 21s, execs: 2056513 (107722/sec), new interesting: 25 (total: 697)
+fuzz: elapsed: 24s, execs: 2406832 (116697/sec), new interesting: 28 (total: 700)
+fuzz: elapsed: 27s, execs: 2734224 (109144/sec), new interesting: 29 (total: 701)
+fuzz: elapsed: 30s, execs: 3084169 (116741/sec), new interesting: 31 (total: 703)
+fuzz: elapsed: 31s, execs: 3084169 (0/sec), new interesting: 31 (total: 703)
 PASS
-ok  	github.com/eventflow/eventflow/libs/go/antibot	31.439s
+ok  	github.com/eventflow/eventflow/libs/go/antibot	31.529s

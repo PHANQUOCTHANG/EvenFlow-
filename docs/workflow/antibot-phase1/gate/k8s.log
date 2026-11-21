@@ -6,8 +6,8 @@ kustomize: v5.7.1
 kubeconform: development
 yq: yq (https://github.com/mikefarah/yq/) version v4.44.3
 == render
-rendered overlays/local -> /tmp/tmp.xCzdHuO3F3/render/local.yaml (77 objects)
-rendered overlays/staging -> /tmp/tmp.xCzdHuO3F3/render/staging.yaml (57 objects)
+rendered overlays/local -> /tmp/tmp.81tKlNhdZz/render/local.yaml (77 objects)
+rendered overlays/staging -> /tmp/tmp.81tKlNhdZz/render/staging.yaml (57 objects)
 == kubeconform -strict (k8s 1.32.0)
 kubeconform local: Summary: 77 resources found in 1 file - Valid: 77, Invalid: 0, Errors: 0, Skipped: 0
 kubeconform staging: Summary: 57 resources found in 1 file - Valid: 57, Invalid: 0, Errors: 0, Skipped: 0
@@ -17,11 +17,11 @@ policy: OK (57 objects, overlay=staging)
 == AC-13 Dockerfiles
 policy: OK (6 objects, overlay=dockerfiles)
 == policy self-test (test_policy.sh --fixtures-only)
-selftest: 204/204
-RESULT pass=235 fail=0 skip=0
+selftest: 206/206
+RESULT pass=237 fail=0 skip=0
 validate: OK
 PASS [A-GEN-SYNC] committed fixtures match testdata/gen_fixtures.py
-PASS [A-COUNT] 186 bad fixtures
+PASS [A-COUNT] 188 bad fixtures
 PASS [A-COVER-AC-1] has bad fixture(s)
 PASS [A-COVER-AC-3] has bad fixture(s)
 PASS [A-COVER-AC-4] has bad fixture(s)
@@ -128,9 +128,11 @@ PASS [C-AC-18--notification-gets-jwt] rejected with AC-18 only
 PASS [C-AC-18--staging-identity-smtp-missing] rejected with AC-18 only
 PASS [C-AC-18--staging-optional-secret-ref] rejected with AC-18 only
 PASS [C-AC-18--staging-stripe-key-extra] rejected with AC-18 only
+PASS [C-AC-18--staging-waitingroom-queue-token-optional] rejected with AC-18 only
 PASS [C-AC-18--staging-waitingroom-uses-direct-db] rejected with AC-18 only
 PASS [C-AC-18--ticketing-gets-amqp] rejected with AC-18 only
 PASS [C-AC-18--ticketing-uses-direct-db] rejected with AC-18 only
+PASS [C-AC-18--waitingroom-queue-token-optional] rejected with AC-18 only
 PASS [C-AC-18--waitingroom-uses-direct-db] rejected with AC-18 only
 PASS [C-AC-18--web-envfrom-secret] rejected with AC-18 only
 PASS [C-AC-19--local-app-env-production] rejected with AC-19 only
@@ -272,8 +274,8 @@ PASS [E-AC24-POLICY-local] policy: OK (77 objects, overlay=local)
 PASS [E-AC2-KUBECONFORM-staging] Summary: 57 resources found parsing stdin - Valid: 57, Invalid: 0, Errors: 0, Skipped: 0
 PASS [E-AC24-POLICY-staging] policy: OK (57 objects, overlay=staging)
 PASS [E-AC27-COMPOSE] docker compose config -q
-selftest: 204/204
-RESULT pass=252 fail=0 skip=0
+selftest: 206/206
+RESULT pass=254 fail=0 skip=0
 ok: gen_fixtures.py --check
 ok: kustomize build overlays/local has ANTIBOT_HASH_KEY (3 refs)
   local: 20:  ANTIBOT_MODE: shadow
@@ -281,20 +283,20 @@ ok: kustomize build overlays/local has ANTIBOT_HASH_KEY (3 refs)
   local: 72:  ANTIBOT_HASH_KEY: ZGV2QW50aWJvdEhhc2hLZXlMb2NhbENsdXN0ZXJPbmx5TmV2ZXJQcm9kQT0=
   local: 1955:        - name: ANTIBOT_HASH_KEY
   local: 1958:              key: ANTIBOT_HASH_KEY
-  local: 1960:        - name: ANTIBOT_MODE
-  local: 1963:              key: ANTIBOT_MODE
-  local: 1965:        - name: ANTIBOT_SLOW_LANE_PENALTY
-  local: 1968:              key: ANTIBOT_SLOW_LANE_PENALTY
-  local: 2088:        - name: ANTIBOT_SLOW_LANE_PENALTY
-  local: 2091:              key: ANTIBOT_SLOW_LANE_PENALTY
+  local: 1961:        - name: ANTIBOT_MODE
+  local: 1964:              key: ANTIBOT_MODE
+  local: 1966:        - name: ANTIBOT_SLOW_LANE_PENALTY
+  local: 1969:              key: ANTIBOT_SLOW_LANE_PENALTY
+  local: 2089:        - name: ANTIBOT_SLOW_LANE_PENALTY
+  local: 2092:              key: ANTIBOT_SLOW_LANE_PENALTY
 ok: kustomize build overlays/staging has ANTIBOT_HASH_KEY (2 refs)
   staging: 12:  ANTIBOT_MODE: shadow
   staging: 13:  ANTIBOT_SLOW_LANE_PENALTY: "100000"
   staging: 1450:        - name: ANTIBOT_HASH_KEY
   staging: 1453:              key: ANTIBOT_HASH_KEY
-  staging: 1455:        - name: ANTIBOT_MODE
-  staging: 1458:              key: ANTIBOT_MODE
-  staging: 1460:        - name: ANTIBOT_SLOW_LANE_PENALTY
-  staging: 1463:              key: ANTIBOT_SLOW_LANE_PENALTY
-  staging: 1583:        - name: ANTIBOT_SLOW_LANE_PENALTY
-  staging: 1586:              key: ANTIBOT_SLOW_LANE_PENALTY
+  staging: 1456:        - name: ANTIBOT_MODE
+  staging: 1459:              key: ANTIBOT_MODE
+  staging: 1461:        - name: ANTIBOT_SLOW_LANE_PENALTY
+  staging: 1464:              key: ANTIBOT_SLOW_LANE_PENALTY
+  staging: 1584:        - name: ANTIBOT_SLOW_LANE_PENALTY
+  staging: 1587:              key: ANTIBOT_SLOW_LANE_PENALTY

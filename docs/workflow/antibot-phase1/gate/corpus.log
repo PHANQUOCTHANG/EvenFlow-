@@ -29,7 +29,7 @@
         R7          246        0
         
     corpus_test.go:327: bots caught 95.80% (958/1000), humans demoted 0.10% (5/5000)
---- PASS: TestCorpus_AC18_DefaultConfig (0.29s)
+--- PASS: TestCorpus_AC18_DefaultConfig (0.28s)
 === RUN   TestCorpus_AC18_HumansOnBothSidesOfThresholds
     corpus_test.go:405: rt<120:3 rt 120-400:54 | ivCV<0.10:1 >=:2331 | fc<3:70 >=3:1850 | gl off:111 | fp shared >3:5 2-3:62 | /24 >30 ids:2
     corpus_test.go:413: not reachable by humans by construction: R1-server (needs >= 4 joins without a slot), R6 (dormant), R7 (needs a shared digest)
@@ -56,16 +56,16 @@
         R7_MIN_IDS        1.0        3     95.80%        0.10%
         R7_MIN_IDS        1.2        4     95.80%        0.10%
         
---- PASS: TestCorpus_AC18_SensitivityTable (3.98s)
+--- PASS: TestCorpus_AC18_SensitivityTable (3.83s)
 === RUN   TestCorpus_GeneratorDeterministic
---- PASS: TestCorpus_GeneratorDeterministic (0.17s)
+--- PASS: TestCorpus_GeneratorDeterministic (0.18s)
 === RUN   TestCorpus_AC18_RecordedSessions
     corpus_test.go:482: PENDING (AC-18): no recorded sessions in testdata/corpus/recorded yet; the team records 50-100 with the real collector
 --- SKIP: TestCorpus_AC18_RecordedSessions (0.00s)
 === RUN   TestEvaluate_AC5_P99
-    engine_bench_test.go:69: pure engine (batch 50) p50=20.022µs p99=50.492µs max=50.518µs
---- PASS: TestEvaluate_AC5_P99 (0.22s)
+    engine_bench_test.go:69: pure engine (batch 50) p50=20.122µs p99=50.136µs max=50.316µs
+--- PASS: TestEvaluate_AC5_P99 (0.23s)
 PASS
-ok  	github.com/eventflow/eventflow/libs/go/antibot	6.743s
+ok  	github.com/eventflow/eventflow/libs/go/antibot	6.320s
 corpus: bots caught 95.80% (958/1000), humans demoted 0.10% (5/5000)
 ok: bots caught 95.80% >= 95%, humans demoted 0.10% < 1%

@@ -3,6 +3,7 @@ gofmt ok: libs/go/antibot/config_test.go
 gofmt ok: libs/go/antibot/corpus/corpus.go
 gofmt ok: libs/go/antibot/corpus_test.go
 gofmt ok: libs/go/antibot/engine_bench_test.go
+gofmt ok: libs/go/antibot/fixround1_test.go
 gofmt ok: libs/go/antibot/golden_test.go
 gofmt ok: libs/go/antibot/guard.go
 gofmt ok: libs/go/antibot/guard_test.go
@@ -12,6 +13,7 @@ gofmt ok: libs/go/antibot/privacy.go
 gofmt ok: libs/go/antibot/privacy_test.go
 gofmt ok: libs/go/antibot/race_off_test.go
 gofmt ok: libs/go/antibot/race_on_test.go
+gofmt ok: libs/go/antibot/redisstate/fixround1_integration_test.go
 gofmt ok: libs/go/antibot/redisstate/store.go
 gofmt ok: libs/go/antibot/redisstate/store_integration_test.go
 gofmt ok: libs/go/antibot/redisstate/store_test.go
@@ -29,7 +31,7 @@ golangci-lint v2.12.2: clean
 === RUN   TestUnion_BoTrungBoRongSapXep
 --- PASS: TestUnion_BoTrungBoRongSapXep (0.00s)
 PASS
-ok  	github.com/eventflow/eventflow/libs/go/activeevents	1.965s
+ok  	github.com/eventflow/eventflow/libs/go/activeevents	1.962s
 === RUN   TestLoadConfig_AC16_DefaultsInDev
 --- PASS: TestLoadConfig_AC16_DefaultsInDev (0.00s)
 === RUN   TestLoadConfig_AC16_ProductionWithKey
@@ -72,7 +74,7 @@ ok  	github.com/eventflow/eventflow/libs/go/activeevents	1.965s
 === RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/key_missing_in_production
 === RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/key_short_in_production
 === RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/key_not_base64_in_production
---- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable (0.00s)
+--- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable (0.01s)
     --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/mode (0.00s)
     --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/weight_not_number (0.00s)
     --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/weight_one (0.00s)
@@ -149,7 +151,7 @@ ok  	github.com/eventflow/eventflow/libs/go/activeevents	1.965s
         R7          246        0
         
     corpus_test.go:327: bots caught 95.80% (958/1000), humans demoted 0.10% (5/5000)
---- PASS: TestCorpus_AC18_DefaultConfig (3.58s)
+--- PASS: TestCorpus_AC18_DefaultConfig (3.51s)
 === RUN   TestCorpus_AC18_HumansOnBothSidesOfThresholds
     corpus_test.go:405: rt<120:3 rt 120-400:54 | ivCV<0.10:1 >=:2331 | fc<3:70 >=3:1850 | gl off:111 | fp shared >3:5 2-3:62 | /24 >30 ids:2
     corpus_test.go:413: not reachable by humans by construction: R1-server (needs >= 4 joins without a slot), R6 (dormant), R7 (needs a shared digest)
@@ -176,15 +178,64 @@ ok  	github.com/eventflow/eventflow/libs/go/activeevents	1.965s
         R7_MIN_IDS        1.0        3     95.80%        0.10%
         R7_MIN_IDS        1.2        4     95.80%        0.10%
         
---- PASS: TestCorpus_AC18_SensitivityTable (52.14s)
+--- PASS: TestCorpus_AC18_SensitivityTable (51.72s)
 === RUN   TestCorpus_GeneratorDeterministic
---- PASS: TestCorpus_GeneratorDeterministic (2.17s)
+--- PASS: TestCorpus_GeneratorDeterministic (2.14s)
 === RUN   TestCorpus_AC18_RecordedSessions
     corpus_test.go:482: PENDING (AC-18): no recorded sessions in testdata/corpus/recorded yet; the team records 50-100 with the real collector
 --- SKIP: TestCorpus_AC18_RecordedSessions (0.00s)
 === RUN   TestEvaluate_AC5_P99
     engine_bench_test.go:40: latency assertion skipped under -race / -short
 --- SKIP: TestEvaluate_AC5_P99 (0.00s)
+=== RUN   TestFix1_X1_CancelledParentIsNotARedisFailure
+--- PASS: TestFix1_X1_CancelledParentIsNotARedisFailure (0.01s)
+=== RUN   TestFix1_X1_CancelDuringObserveIsNotCounted
+--- PASS: TestFix1_X1_CancelDuringObserveIsNotCounted (0.01s)
+=== RUN   TestFix1_X2_ShortStallDoesNotOpenBreaker
+--- PASS: TestFix1_X2_ShortStallDoesNotOpenBreaker (0.02s)
+=== RUN   TestFix1_X2_LastingSlownessOpensBreaker
+--- PASS: TestFix1_X2_LastingSlownessOpensBreaker (0.31s)
+=== RUN   TestFix1_X2_PoolExhaustionNeverOpensBreaker
+--- PASS: TestFix1_X2_PoolExhaustionNeverOpensBreaker (0.34s)
+=== RUN   TestFix1_X2_HalfOpenProbe
+--- PASS: TestFix1_X2_HalfOpenProbe (0.78s)
+=== RUN   TestFix1_R5_ProductionRefusesDevKeys
+--- PASS: TestFix1_R5_ProductionRefusesDevKeys (0.00s)
+=== RUN   TestFix1_Amendment2_WorkedExamples
+=== RUN   TestFix1_Amendment2_WorkedExamples/X-4_python-requests_+_forged_pe:1
+=== RUN   TestFix1_Amendment2_WorkedExamples/X-4_wd_true_alone
+=== RUN   TestFix1_Amendment2_WorkedExamples/missing_payload,_browser
+=== RUN   TestFix1_Amendment2_WorkedExamples/raw_HTTP_python-requests
+=== RUN   TestFix1_Amendment2_WorkedExamples/X-5_okhttp,_no_signals
+=== RUN   TestFix1_Amendment2_WorkedExamples/X-5_okhttp,_valid_signals
+=== RUN   TestFix1_Amendment2_WorkedExamples/X-5_okhttp_+_privacy_browser_sign
+=== RUN   TestFix1_Amendment2_WorkedExamples/headless_default
+=== RUN   TestFix1_Amendment2_WorkedExamples/X-6_shared_fp_only
+=== RUN   TestFix1_Amendment2_WorkedExamples/account_farm
+=== RUN   TestFix1_Amendment2_WorkedExamples/shared_fp_+_privacy_browser
+--- PASS: TestFix1_Amendment2_WorkedExamples (0.01s)
+    --- PASS: TestFix1_Amendment2_WorkedExamples/X-4_python-requests_+_forged_pe:1 (0.00s)
+    --- PASS: TestFix1_Amendment2_WorkedExamples/X-4_wd_true_alone (0.00s)
+    --- PASS: TestFix1_Amendment2_WorkedExamples/missing_payload,_browser (0.00s)
+    --- PASS: TestFix1_Amendment2_WorkedExamples/raw_HTTP_python-requests (0.00s)
+    --- PASS: TestFix1_Amendment2_WorkedExamples/X-5_okhttp,_no_signals (0.00s)
+    --- PASS: TestFix1_Amendment2_WorkedExamples/X-5_okhttp,_valid_signals (0.00s)
+    --- PASS: TestFix1_Amendment2_WorkedExamples/X-5_okhttp_+_privacy_browser_sign (0.00s)
+    --- PASS: TestFix1_Amendment2_WorkedExamples/headless_default (0.00s)
+    --- PASS: TestFix1_Amendment2_WorkedExamples/X-6_shared_fp_only (0.00s)
+    --- PASS: TestFix1_Amendment2_WorkedExamples/account_farm (0.00s)
+    --- PASS: TestFix1_Amendment2_WorkedExamples/shared_fp_+_privacy_browser (0.00s)
+=== RUN   TestFix1_Amendment2_Corpus
+    fixround1_test.go:328: Amendment 2:
+        raw_http               200/200 demoted
+        headless               200/200 demoted
+        stealth_rhythm         200/200 demoted
+        account_farm           140/200 demoted
+        replay_proxy_pool      170/200 demoted
+        replay_residential     0/50 demoted
+        bots caught 91.00% (910/1000), humans demoted 0.00% (0/5000)
+    fixround1_test.go:333: NOTE: Amendment 2 misses the AC-18 gate: bots 91.00% humans 0.00% (TCR-6, open)
+--- PASS: TestFix1_Amendment2_Corpus (3.54s)
 === RUN   TestGolden_AC3_WebSnapshotsDecode
 === RUN   TestGolden_AC3_WebSnapshotsDecode/click_only.json
 === RUN   TestGolden_AC3_WebSnapshotsDecode/mobile_touch.json
@@ -196,7 +247,7 @@ ok  	github.com/eventflow/eventflow/libs/go/activeevents	1.965s
 === RUN   TestGuard_AC6_ObserveGetsHashPrefixAndSq
 --- PASS: TestGuard_AC6_ObserveGetsHashPrefixAndSq (0.00s)
 === RUN   TestGuard_AC7_TimeoutDegrades
---- PASS: TestGuard_AC7_TimeoutDegrades (0.00s)
+--- PASS: TestGuard_AC7_TimeoutDegrades (0.01s)
 === RUN   TestGuard_AC7_ErrorDegrades
 --- PASS: TestGuard_AC7_ErrorDegrades (0.00s)
 === RUN   TestGuard_AC7_PanicPasses
@@ -208,7 +259,7 @@ ok  	github.com/eventflow/eventflow/libs/go/activeevents	1.965s
 === RUN   TestGuard_AC17_DecisionMetrics
 --- PASS: TestGuard_AC17_DecisionMetrics (0.00s)
 === RUN   TestGuard_AC14_SinkSelection
---- PASS: TestGuard_AC14_SinkSelection (7.13s)
+--- PASS: TestGuard_AC14_SinkSelection (6.98s)
 === RUN   TestGuard_AC12_StickyBlocks
 --- PASS: TestGuard_AC12_StickyBlocks (0.00s)
 === RUN   TestGuard_AC13_ShadowAlwaysPasses
@@ -216,7 +267,7 @@ ok  	github.com/eventflow/eventflow/libs/go/activeevents	1.965s
 === RUN   TestGuard_AC15_NoRawValuesInDecision
 --- PASS: TestGuard_AC15_NoRawValuesInDecision (0.00s)
 === RUN   TestGuard_AC7_ConcurrentDecide
---- PASS: TestGuard_AC7_ConcurrentDecide (0.76s)
+--- PASS: TestGuard_AC7_ConcurrentDecide (0.74s)
 === RUN   TestFPHash_AC15_IsTruncatedHMAC
 --- PASS: TestFPHash_AC15_IsTruncatedHMAC (0.00s)
 === RUN   TestNetPrefix_AC15
@@ -534,57 +585,57 @@ ok  	github.com/eventflow/eventflow/libs/go/activeevents	1.965s
 === RUN   TestDecodeSignals_AC3_SizeCapBoundary
 --- PASS: TestDecodeSignals_AC3_SizeCapBoundary (0.00s)
 === RUN   TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload
-=== RUN   TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/pe_over
-=== RUN   TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/sq_upper
+=== RUN   TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/fp_short
+=== RUN   TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/fp_chars
 === RUN   TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/sn_under
 === RUN   TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/sn_over
-=== RUN   TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/iv_length
-=== RUN   TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/sq_short
-=== RUN   TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/fp_chars
-=== RUN   TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/tz_chars
-=== RUN   TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/rt_over
 === RUN   TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/fc_over
-=== RUN   TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/tzo_over
-=== RUN   TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/fp_short
+=== RUN   TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/tz_chars
 === RUN   TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/sb_under
 === RUN   TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/sb_over
-=== RUN   TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/iv_item
+=== RUN   TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/rt_over
 === RUN   TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/rt_neg
+=== RUN   TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/pe_over
+=== RUN   TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/sq_upper
+=== RUN   TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/iv_item
+=== RUN   TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/tzo_over
+=== RUN   TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/sq_short
+=== RUN   TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/iv_length
 --- PASS: TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload (0.01s)
-    --- PASS: TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/pe_over (0.00s)
-    --- PASS: TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/sq_upper (0.00s)
+    --- PASS: TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/fp_short (0.00s)
+    --- PASS: TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/fp_chars (0.00s)
     --- PASS: TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/sn_under (0.00s)
     --- PASS: TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/sn_over (0.00s)
-    --- PASS: TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/iv_length (0.00s)
-    --- PASS: TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/sq_short (0.00s)
-    --- PASS: TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/fp_chars (0.00s)
-    --- PASS: TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/tz_chars (0.00s)
-    --- PASS: TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/rt_over (0.00s)
     --- PASS: TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/fc_over (0.00s)
-    --- PASS: TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/tzo_over (0.00s)
-    --- PASS: TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/fp_short (0.00s)
+    --- PASS: TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/tz_chars (0.00s)
     --- PASS: TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/sb_under (0.00s)
     --- PASS: TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/sb_over (0.00s)
-    --- PASS: TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/iv_item (0.00s)
+    --- PASS: TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/rt_over (0.00s)
     --- PASS: TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/rt_neg (0.00s)
+    --- PASS: TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/pe_over (0.00s)
+    --- PASS: TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/sq_upper (0.00s)
+    --- PASS: TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/iv_item (0.00s)
+    --- PASS: TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/tzo_over (0.00s)
+    --- PASS: TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/sq_short (0.00s)
+    --- PASS: TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/iv_length (0.00s)
 === RUN   TestDecodeSignals_AC3_WrongTypeDropsOnlyThatField
 === RUN   TestDecodeSignals_AC3_WrongTypeDropsOnlyThatField/wd_string
 === RUN   TestDecodeSignals_AC3_WrongTypeDropsOnlyThatField/gl_number
 === RUN   TestDecodeSignals_AC3_WrongTypeDropsOnlyThatField/tz_number
+=== RUN   TestDecodeSignals_AC3_WrongTypeDropsOnlyThatField/fp_array
 === RUN   TestDecodeSignals_AC3_WrongTypeDropsOnlyThatField/sq_null
 === RUN   TestDecodeSignals_AC3_WrongTypeDropsOnlyThatField/rt_string
 === RUN   TestDecodeSignals_AC3_WrongTypeDropsOnlyThatField/pe_bool
-=== RUN   TestDecodeSignals_AC3_WrongTypeDropsOnlyThatField/fp_array
 === RUN   TestDecodeSignals_AC3_WrongTypeDropsOnlyThatField/iv_object
 === RUN   TestDecodeSignals_AC3_WrongTypeDropsOnlyThatField/iv_strs
 --- PASS: TestDecodeSignals_AC3_WrongTypeDropsOnlyThatField (0.00s)
     --- PASS: TestDecodeSignals_AC3_WrongTypeDropsOnlyThatField/wd_string (0.00s)
     --- PASS: TestDecodeSignals_AC3_WrongTypeDropsOnlyThatField/gl_number (0.00s)
     --- PASS: TestDecodeSignals_AC3_WrongTypeDropsOnlyThatField/tz_number (0.00s)
+    --- PASS: TestDecodeSignals_AC3_WrongTypeDropsOnlyThatField/fp_array (0.00s)
     --- PASS: TestDecodeSignals_AC3_WrongTypeDropsOnlyThatField/sq_null (0.00s)
     --- PASS: TestDecodeSignals_AC3_WrongTypeDropsOnlyThatField/rt_string (0.00s)
     --- PASS: TestDecodeSignals_AC3_WrongTypeDropsOnlyThatField/pe_bool (0.00s)
-    --- PASS: TestDecodeSignals_AC3_WrongTypeDropsOnlyThatField/fp_array (0.00s)
     --- PASS: TestDecodeSignals_AC3_WrongTypeDropsOnlyThatField/iv_object (0.00s)
     --- PASS: TestDecodeSignals_AC3_WrongTypeDropsOnlyThatField/iv_strs (0.00s)
 === RUN   TestDecodeSignals_AC3_WrongTypeFieldIsAbsentForRules
@@ -632,12 +683,12 @@ ok  	github.com/eventflow/eventflow/libs/go/activeevents	1.965s
     --- PASS: FuzzDecodeSignals/seed#12 (0.00s)
     --- PASS: FuzzDecodeSignals/seed#13 (0.00s)
 PASS
-ok  	github.com/eventflow/eventflow/libs/go/antibot	70.453s
+ok  	github.com/eventflow/eventflow/libs/go/antibot	74.811s
 ?   	github.com/eventflow/eventflow/libs/go/antibot/corpus	[no test files]
 === RUN   TestKeys_R31_AllKeysDeclaredUnderOneTag
 --- PASS: TestKeys_R31_AllKeysDeclaredUnderOneTag (0.00s)
 PASS
-ok  	github.com/eventflow/eventflow/libs/go/antibot/redisstate	2.461s
+ok  	github.com/eventflow/eventflow/libs/go/antibot/redisstate	2.434s
 === RUN   TestAccessToken_KyRoiXacMinhDuocDungClaims
 --- PASS: TestAccessToken_KyRoiXacMinhDuocDungClaims (0.00s)
 === RUN   TestAccessToken_CoXacThucOTPDiTheoToken
@@ -647,23 +698,23 @@ ok  	github.com/eventflow/eventflow/libs/go/antibot/redisstate	2.461s
 === RUN   TestAccessToken_HetHanTraLoiRieng
 --- PASS: TestAccessToken_HetHanTraLoiRieng (0.00s)
 === RUN   TestAccessToken_TuChoiTokenGiaMao
+=== RUN   TestAccessToken_TuChoiTokenGiaMao/rong
+=== RUN   TestAccessToken_TuChoiTokenGiaMao/khac_secret
 === RUN   TestAccessToken_TuChoiTokenGiaMao/jwt_cu_khong_iss
 === RUN   TestAccessToken_TuChoiTokenGiaMao/alg_none
 === RUN   TestAccessToken_TuChoiTokenGiaMao/alg_HS512
 === RUN   TestAccessToken_TuChoiTokenGiaMao/typ_khac_access
 === RUN   TestAccessToken_TuChoiTokenGiaMao/sua_payload
 === RUN   TestAccessToken_TuChoiTokenGiaMao/chuoi_rac
-=== RUN   TestAccessToken_TuChoiTokenGiaMao/rong
-=== RUN   TestAccessToken_TuChoiTokenGiaMao/khac_secret
 --- PASS: TestAccessToken_TuChoiTokenGiaMao (0.00s)
+    --- PASS: TestAccessToken_TuChoiTokenGiaMao/rong (0.00s)
+    --- PASS: TestAccessToken_TuChoiTokenGiaMao/khac_secret (0.00s)
     --- PASS: TestAccessToken_TuChoiTokenGiaMao/jwt_cu_khong_iss (0.00s)
     --- PASS: TestAccessToken_TuChoiTokenGiaMao/alg_none (0.00s)
     --- PASS: TestAccessToken_TuChoiTokenGiaMao/alg_HS512 (0.00s)
     --- PASS: TestAccessToken_TuChoiTokenGiaMao/typ_khac_access (0.00s)
     --- PASS: TestAccessToken_TuChoiTokenGiaMao/sua_payload (0.00s)
     --- PASS: TestAccessToken_TuChoiTokenGiaMao/chuoi_rac (0.00s)
-    --- PASS: TestAccessToken_TuChoiTokenGiaMao/rong (0.00s)
-    --- PASS: TestAccessToken_TuChoiTokenGiaMao/khac_secret (0.00s)
 === RUN   TestAccessToken_SecretNganBiTuChoi
 --- PASS: TestAccessToken_SecretNganBiTuChoi (0.00s)
 === RUN   TestAccessToken_ThieuClaimBatBuocKhongKy
@@ -716,23 +767,23 @@ ok  	github.com/eventflow/eventflow/libs/go/antibot/redisstate	2.461s
 --- PASS: TestQueueToken_HetHanTraLoiRieng (0.00s)
 === RUN   TestQueueToken_TuChoiTokenGiaMao
 === RUN   TestQueueToken_TuChoiTokenGiaMao/hex_cu_(truoc_EV-137)
-=== RUN   TestQueueToken_TuChoiTokenGiaMao/doi_payload
-=== RUN   TestQueueToken_TuChoiTokenGiaMao/sua_chu_ky
+=== RUN   TestQueueToken_TuChoiTokenGiaMao/rong
 === RUN   TestQueueToken_TuChoiTokenGiaMao/thua_phan
 === RUN   TestQueueToken_TuChoiTokenGiaMao/payload_rac
-=== RUN   TestQueueToken_TuChoiTokenGiaMao/rong
 === RUN   TestQueueToken_TuChoiTokenGiaMao/khong_phai_base64
 === RUN   TestQueueToken_TuChoiTokenGiaMao/khac_secret
+=== RUN   TestQueueToken_TuChoiTokenGiaMao/doi_payload
+=== RUN   TestQueueToken_TuChoiTokenGiaMao/sua_chu_ky
 === RUN   TestQueueToken_TuChoiTokenGiaMao/thieu_chu_ky
 --- PASS: TestQueueToken_TuChoiTokenGiaMao (0.00s)
     --- PASS: TestQueueToken_TuChoiTokenGiaMao/hex_cu_(truoc_EV-137) (0.00s)
-    --- PASS: TestQueueToken_TuChoiTokenGiaMao/doi_payload (0.00s)
-    --- PASS: TestQueueToken_TuChoiTokenGiaMao/sua_chu_ky (0.00s)
+    --- PASS: TestQueueToken_TuChoiTokenGiaMao/rong (0.00s)
     --- PASS: TestQueueToken_TuChoiTokenGiaMao/thua_phan (0.00s)
     --- PASS: TestQueueToken_TuChoiTokenGiaMao/payload_rac (0.00s)
-    --- PASS: TestQueueToken_TuChoiTokenGiaMao/rong (0.00s)
     --- PASS: TestQueueToken_TuChoiTokenGiaMao/khong_phai_base64 (0.00s)
     --- PASS: TestQueueToken_TuChoiTokenGiaMao/khac_secret (0.00s)
+    --- PASS: TestQueueToken_TuChoiTokenGiaMao/doi_payload (0.00s)
+    --- PASS: TestQueueToken_TuChoiTokenGiaMao/sua_chu_ky (0.00s)
     --- PASS: TestQueueToken_TuChoiTokenGiaMao/thieu_chu_ky (0.00s)
 === RUN   TestQueueToken_KhongLanVoiLoaiTokenKhac
 --- PASS: TestQueueToken_KhongLanVoiLoaiTokenKhac (0.00s)
@@ -741,7 +792,7 @@ ok  	github.com/eventflow/eventflow/libs/go/antibot/redisstate	2.461s
 === RUN   TestQueueToken_KyTuChoiThieuClaim
 --- PASS: TestQueueToken_KyTuChoiThieuClaim (0.00s)
 PASS
-ok  	github.com/eventflow/eventflow/libs/go/authx	1.804s
+ok  	github.com/eventflow/eventflow/libs/go/authx	1.729s
 === RUN   TestWriteProblem_DungDinhDangRFC7807
 --- PASS: TestWriteProblem_DungDinhDangRFC7807 (0.00s)
 === RUN   TestWriteProblemType_GhiDungType
@@ -785,25 +836,25 @@ ok  	github.com/eventflow/eventflow/libs/go/authx	1.804s
     --- PASS: TestHealth/readyz_503_khi_co_phu_thuoc_hong,_healthz_van_200 (0.00s)
     --- PASS: TestHealth/check_nhan_context_co_han (0.00s)
 === RUN   TestServe_TatEm_ChoRequestDangChayXong
---- PASS: TestServe_TatEm_ChoRequestDangChayXong (0.28s)
+--- PASS: TestServe_TatEm_ChoRequestDangChayXong (0.27s)
 === RUN   TestServe_LoiListener_DuocTraVe
 --- PASS: TestServe_LoiListener_DuocTraVe (0.00s)
 === RUN   TestRun_DiaChiDangDung_TraLoi
 --- PASS: TestRun_DiaChiDangDung_TraLoi (0.00s)
 PASS
-ok  	github.com/eventflow/eventflow/libs/go/httpx	3.485s
+ok  	github.com/eventflow/eventflow/libs/go/httpx	3.473s
 === RUN   TestThieuHoacSaiKhoa_Tra400VaKhongChayHandler
+=== RUN   TestThieuHoacSaiKhoa_Tra400VaKhongChayHandler/thieu
+=== RUN   TestThieuHoacSaiKhoa_Tra400VaKhongChayHandler/co_khoang
 === RUN   TestThieuHoacSaiKhoa_Tra400VaKhongChayHandler/dieu_khien
 === RUN   TestThieuHoacSaiKhoa_Tra400VaKhongChayHandler/tieng_viet
 === RUN   TestThieuHoacSaiKhoa_Tra400VaKhongChayHandler/qua_dai
-=== RUN   TestThieuHoacSaiKhoa_Tra400VaKhongChayHandler/thieu
-=== RUN   TestThieuHoacSaiKhoa_Tra400VaKhongChayHandler/co_khoang
 --- PASS: TestThieuHoacSaiKhoa_Tra400VaKhongChayHandler (0.00s)
+    --- PASS: TestThieuHoacSaiKhoa_Tra400VaKhongChayHandler/thieu (0.00s)
+    --- PASS: TestThieuHoacSaiKhoa_Tra400VaKhongChayHandler/co_khoang (0.00s)
     --- PASS: TestThieuHoacSaiKhoa_Tra400VaKhongChayHandler/dieu_khien (0.00s)
     --- PASS: TestThieuHoacSaiKhoa_Tra400VaKhongChayHandler/tieng_viet (0.00s)
     --- PASS: TestThieuHoacSaiKhoa_Tra400VaKhongChayHandler/qua_dai (0.00s)
-    --- PASS: TestThieuHoacSaiKhoa_Tra400VaKhongChayHandler/thieu (0.00s)
-    --- PASS: TestThieuHoacSaiKhoa_Tra400VaKhongChayHandler/co_khoang (0.00s)
 === RUN   TestKhoaDoi_Tra400
 --- PASS: TestKhoaDoi_Tra400 (0.00s)
 === RUN   TestGoiLai_TraDungResponseCuVaKhongChayLai
@@ -827,19 +878,19 @@ ok  	github.com/eventflow/eventflow/libs/go/httpx	3.485s
 === RUN   TestHetTTL_KhoaDuocDungLaiNhuMoi
 --- PASS: TestHetTTL_KhoaDuocDungLaiNhuMoi (0.00s)
 === RUN   TestQuaLease_RequestSauTiepQuanVaChuCuKhongGhiDe
-2026/11/22 02:14:25 ERROR idempotency: khong luu duoc response err="idem: khoa da bi tiep quan" endpoint="POST /v1/events/e1/holds"
+2026/11/22 04:48:14 ERROR idempotency: khong luu duoc response err="idem: khoa da bi tiep quan" endpoint="POST /v1/events/e1/holds"
 --- PASS: TestQuaLease_RequestSauTiepQuanVaChuCuKhongGhiDe (0.00s)
 === RUN   TestClientNgatGiuaChung_VanLuuResponse
 --- PASS: TestClientNgatGiuaChung_VanLuuResponse (0.00s)
 === RUN   TestStoreLoi_Tra503VaKhongChayHandler
-2026/11/22 02:14:25 ERROR idempotency: khong giu duoc khoa err="postgres chet" endpoint="POST /v1/events/e1/holds"
+2026/11/22 04:48:14 ERROR idempotency: khong giu duoc khoa err="postgres chet" endpoint="POST /v1/events/e1/holds"
 --- PASS: TestStoreLoi_Tra503VaKhongChayHandler (0.00s)
 === RUN   TestHandlerNhanDuocBodyNguyenVen
 --- PASS: TestHandlerNhanDuocBodyNguyenVen (0.00s)
 === RUN   TestBodyQuaLon_Tra413
 --- PASS: TestBodyQuaLon_Tra413 (0.00s)
 PASS
-ok  	github.com/eventflow/eventflow/libs/go/idem	1.885s
+ok  	github.com/eventflow/eventflow/libs/go/idem	1.754s
 === RUN   TestConfigValidate
 === RUN   TestConfigValidate/thieu_khoa
 === RUN   TestConfigValidate/thieu_epoch_key
@@ -861,13 +912,13 @@ ok  	github.com/eventflow/eventflow/libs/go/idem	1.885s
 === RUN   TestRun_MatKhoaThiHuyViecVaKhongNhaKhoaCuaNguoiKhac
 --- PASS: TestRun_MatKhoaThiHuyViecVaKhongNhaKhoaCuaNguoiKhac (0.05s)
 === RUN   TestRun_LoiGiaHan_ThoangQuaThiGiu_KeoDaiThiThoaiVi
---- PASS: TestRun_LoiGiaHan_ThoangQuaThiGiu_KeoDaiThiThoaiVi (0.30s)
+--- PASS: TestRun_LoiGiaHan_ThoangQuaThiGiu_KeoDaiThiThoaiVi (0.32s)
 === RUN   TestRun_TatEm_NhaKhoaDeFailoverNgay
 --- PASS: TestRun_TatEm_NhaKhoaDeFailoverNgay (0.00s)
 === RUN   TestIsFenced
 --- PASS: TestIsFenced (0.00s)
 PASS
-ok  	github.com/eventflow/eventflow/libs/go/leader	2.194s
+ok  	github.com/eventflow/eventflow/libs/go/leader	2.176s
 === RUN   TestRecorder_P99VaTyLeLoi
 --- PASS: TestRecorder_P99VaTyLeLoi (0.00s)
 === RUN   TestRecorder_CuaSoTruot_MauCuBiLoai
@@ -875,9 +926,9 @@ ok  	github.com/eventflow/eventflow/libs/go/leader	2.194s
 === RUN   TestRecorder_KhongCoYeuCau
 --- PASS: TestRecorder_KhongCoYeuCau (0.00s)
 === RUN   TestRecorder_ReservoirGioiHanBoNhoVaGiuP99
---- PASS: TestRecorder_ReservoirGioiHanBoNhoVaGiuP99 (0.04s)
+--- PASS: TestRecorder_ReservoirGioiHanBoNhoVaGiuP99 (0.03s)
 PASS
-ok  	github.com/eventflow/eventflow/libs/go/loadsignal	1.586s
+ok  	github.com/eventflow/eventflow/libs/go/loadsignal	1.510s
 === RUN   TestAttemptHeader_TenHeader
 --- PASS: TestAttemptHeader_TenHeader (0.00s)
 === RUN   TestDecide_BangQuyetDinh
@@ -1109,11 +1160,11 @@ ok  	github.com/eventflow/eventflow/libs/go/loadsignal	1.586s
 === RUN   TestTrace_GiuTraceQuaBaLanRetry
 --- PASS: TestTrace_GiuTraceQuaBaLanRetry (0.00s)
 PASS
-ok  	github.com/eventflow/eventflow/libs/go/mq	3.075s
+ok  	github.com/eventflow/eventflow/libs/go/mq	3.054s
 === RUN   TestHTTP_SpanVaMetricTheoMauRoute
 --- PASS: TestHTTP_SpanVaMetricTheoMauRoute (0.00s)
 === RUN   TestHTTP_TrongChuoiMiddlewareThat_VanThayMauRoute
---- PASS: TestHTTP_TrongChuoiMiddlewareThat_VanThayMauRoute (0.01s)
+--- PASS: TestHTTP_TrongChuoiMiddlewareThat_VanThayMauRoute (0.00s)
 === RUN   TestHTTP_5xxDanhDauSpanLoi
 --- PASS: TestHTTP_5xxDanhDauSpanLoi (0.00s)
 === RUN   TestHTTP_NoiTraceTuHeaderTraceparent
@@ -1139,7 +1190,7 @@ ok  	github.com/eventflow/eventflow/libs/go/mq	3.075s
 === RUN   TestTraceparent_LuuRoiKhoiPhuc
 --- PASS: TestTraceparent_LuuRoiKhoiPhuc (0.00s)
 PASS
-ok  	github.com/eventflow/eventflow/libs/go/otelx	1.175s
+ok  	github.com/eventflow/eventflow/libs/go/otelx	1.148s
 === RUN   TestProtector_MaHoaGiaiMaDungAAD
 --- PASS: TestProtector_MaHoaGiaiMaDungAAD (0.00s)
 === RUN   TestProtector_TuChoiBanMaSaiNguCanh
@@ -1157,7 +1208,7 @@ ok  	github.com/eventflow/eventflow/libs/go/otelx	1.175s
 === RUN   TestMask
 --- PASS: TestMask (0.00s)
 PASS
-ok  	github.com/eventflow/eventflow/libs/go/pii	1.641s
+ok  	github.com/eventflow/eventflow/libs/go/pii	1.510s
 ?   	github.com/eventflow/eventflow/libs/go/redisx	[no test files]
 === RUN   TestGooseUp_CatPhanUp
 --- PASS: TestGooseUp_CatPhanUp (0.00s)
@@ -1178,10 +1229,10 @@ ok  	github.com/eventflow/eventflow/libs/go/pii	1.641s
 === RUN   TestMigrationFiles_ThuMucRongLaLoi
 --- PASS: TestMigrationFiles_ThuMucRongLaLoi (0.00s)
 === RUN   TestWriteUpScripts_MigrationThatCuaRepo
---- PASS: TestWriteUpScripts_MigrationThatCuaRepo (0.05s)
+--- PASS: TestWriteUpScripts_MigrationThatCuaRepo (0.04s)
 PASS
-ok  	github.com/eventflow/eventflow/libs/go/testx	2.367s
-PASS lines (tests+subtests): 534, baseline before task: 262
+ok  	github.com/eventflow/eventflow/libs/go/testx	1.991s
+PASS lines (tests+subtests): 554, baseline before task: 262
 skips (info):
 --- SKIP: TestCorpus_AC18_RecordedSessions (0.00s)
 --- SKIP: TestEvaluate_AC5_P99 (0.00s)
