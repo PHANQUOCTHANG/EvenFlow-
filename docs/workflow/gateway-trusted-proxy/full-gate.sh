@@ -12,11 +12,13 @@ BASE=c5fb598            # develop at task start
 TESTS_FROZEN=142ab18    # red tests frozen (step 2a)
 GWD=services/gateway
 FROZEN="$GWD/internal/clientip/clientip_test.go $GWD/internal/config/config_trusted_test.go $GWD/internal/proxy/trusted_proxy_test.go"
+# fix round 1: new tests only in new files (frozen files stay byte-identical)
+ROUND1="$GWD/internal/clientip/clientip_round1_test.go $GWD/internal/config/config_trusted_round1_test.go $GWD/internal/proxy/trusted_proxy_round1_test.go"
 mkdir -p "$OUT"
 SHA=$(git rev-parse HEAD)
 STEPS="go-gateway go-others fuzz deps tamper secrets govulncheck gosec mutation"
 TMP=$(mktemp -d)
-export ROOT TMP BASE TESTS_FROZEN GWD FROZEN WF
+export ROOT TMP BASE TESTS_FROZEN GWD FROZEN ROUND1 WF
 declare -A R
 
 run() { # run <name> <cmd...>
@@ -97,8 +99,8 @@ for f in $pre; do
   if git cat-file -e HEAD:"$f" 2>/dev/null && git diff --quiet $BASE HEAD -- "$f"; then echo "ok: unchanged vs $BASE: $f"; else echo "FAIL: pre-existing test changed/removed: $f"; rc=1; fi
 done
 new=$(git diff --name-only --diff-filter=A $BASE HEAD -- "$GWD/*_test.go" | sort)
-want=$(for f in $FROZEN; do echo $f; done | sort)
-[ "$new" = "$want" ] && echo "ok: only new test files are the frozen ones" || { echo "FAIL: unexpected new test files:"; echo "$new"; rc=1; }
+want=$(for f in $FROZEN $ROUND1; do echo $f; done | sort)
+[ "$new" = "$want" ] && echo "ok: only new test files are the frozen ones + round-1 files" || { echo "FAIL: unexpected new test files:"; echo "$new"; rc=1; }
 add=$(git diff $BASE HEAD -- $GWD | grep -E "^\+.*(t\.Skip|SkipNow|testing\.Short\(\))" || true)
 [ -z "$add" ] && echo "ok: no new skips" || { echo "FAIL: new skip: $add"; rc=1; }
 exit $rc'

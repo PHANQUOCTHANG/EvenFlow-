@@ -152,3 +152,35 @@ browser IP (see question Q-2), and any edit to the `feature/k8s-all` branch.
 - Q-1: trust the pod CIDR in K8s; record the compromised-pod risk in the k8s-all runbook.
 - Q-2: accept that web SSR traffic shares one bucket for now; open a follow-up for forwarding the browser IP.
 - Q-3: when every entry is trusted, use the leftmost entry.
+
+## Amendment 1 (2026-11-21)
+
+Fix round 1 after review (`findings-review.json`) and challenge (`findings-challenge.json`). Frozen tests are
+unchanged; new tests live in `*_round1_test.go`.
+
+**Human decision (TranDinhVo, 2026-11-21, via the coordinator) for C-1 / R-1.** `ParseTrusted` rejects any prefix
+wider than a floor: IPv4 `Bits() < 8`, IPv6 `Bits() < 7` (so `fc00::/7` and `fd00::/8` still load). The error names
+the element, as for every other rejection, so `config.Load` fails fast. Bare IPs (`/32`, `/128`) are unaffected. The
+floor subsumes the `/0` check of 3.1 (`0.0.0.0/0`, `::/0` are still rejected). Reason: `0.0.0.0/1,128.0.0.0/1` (or
+`::/1,8000::/1`, `2000::/3`) covered the whole internet while passing the `/0` check.
+
+**AC-8 (amended).** `10.244.0.0/16, fd00::/8`, `10.0.0.1`, ` 10.0.0.0/8 ,, `, `10.0.0.0/8`, `fc00::/7`, and values
+with surrounding CR/LF (`10.244.0.0/16\n`, `10.244.0.0/16\r\n`) load; each of `10.0.0.1/8`, `0.0.0.0/0`, `::/0`,
+`10.0.0.0/33`, `abc`, `fe80::1%eth0`, `::ffff:10.0.0.0/104`, `::ffff:10.0.0.1`, `0.0.0.0/1`,
+`0.0.0.0/1,128.0.0.0/1`, `8.0.0.0/7`, `::/1`, `::/1,8000::/1`, `2000::/3`, `fc00::/6` makes `config.Load` fail with
+the (first) offending element in the message, and `proxy.New` is never reached.
+
+**Clarifications (coordinator-directed, no behaviour change for valid input):**
+
+- 3.1 trimming (C-7): the whole value and each element are trimmed with `strings.TrimSpace` (spaces, tabs, CR, LF),
+  so a ConfigMap written as a YAML block scalar loads. Whitespace inside an element is still an error.
+- 3.2 element forms (C-5 / R-2): brackets are accepted only around IPv6 (`[1.2.3.4]`, `[1.2.3.4]:80` = malformed;
+  `[::ffff:1.2.3.4]` is IPv6 and unmaps to `1.2.3.4`). A port must be 1-5 decimal digits with value <= 65535;
+  empty, signed, non-numeric or out-of-range ports (`1.2.3.4:`, `1.2.3.4:abc`, `1.2.3.4:65536`) = malformed.
+  The peer (`RemoteAddr`) path is unchanged (`peerKey` stays byte-identical to develop; `RemoteAddr` is set by
+  net/http).
+- 3.4 other headers (C-3): before forwarding, `Rewrite` deletes client-sent `Forwarded`, `X-Real-IP`,
+  `True-Client-IP`, `X-Original-Forwarded-For` and `CF-Connecting-IP`, with trust on or off. Upstreams receive only
+  the gateway-set `X-Forwarded-For` as a client-IP source. They are still never read by the gateway.
+
+Deferred (see `deferred.md`): R-3 / C-2 IPv6 `/64` rate keying; C-4 k8s runbook wording (k8s-all).

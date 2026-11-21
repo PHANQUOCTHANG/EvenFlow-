@@ -4,6 +4,7 @@
 # to build (go vet), run `go test ./... -count=1` in services/gateway, expect FAIL, then revert
 # with `git checkout -- services/gateway` (autocrlf off so files stay LF). A mutant that does not apply or does not build is
 # INVALID (never counted as killed).
+# Round 1: M5 disables the prefix-width floor (Amendment 1), which subsumes the old /0 check.
 # Run from repo root: bash docs/workflow/gateway-trusted-proxy/verify-logs/mutation/mutate.sh
 # Logs -> verify-logs/mutation/M*.log, summary -> verify-logs/mutation/summary.txt. Exit 0 iff 8/8 killed.
 set -u
@@ -21,7 +22,7 @@ MUTANTS=(
 'M2|'$CIP'|s/ \|\| !r\.isTrusted\(peer\.Unmap\(\)\) \{/ {/'
 'M3|'$CIP'|s/(if !ok \{\r?\n\t+)return key, false/${1}continue/'
 'M4|'$CIP'|s/return a\.Unmap\(\), true/return a, true/; s/!r\.isTrusted\(peer\.Unmap\(\)\)/!r.isTrusted(peer)/'
-'M5|'$CIP'|s/\tif p\.Bits\(\) == 0 \{\r?\n[^\n]*\n\t\}\r?\n//'
+'M5|'$CIP'|s/if p\.Bits\(\) < floor \{/if false \&\& p.Bits() < floor {/'
 'M6|'$GW'|s/pr\.Out\.Header\.Set\("X-Forwarded-For", ip\)/_ = ip/'
 'M7|'$CIP'|s/if hops > maxTrustedHops \{/if false \&\& hops > maxTrustedHops {/'
 'M8|'$CIP'|s/if p != p\.Masked\(\) \{/if false \&\& p != p.Masked() {/'
