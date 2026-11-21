@@ -56,7 +56,7 @@ type Config struct {
 
 // DefaultWeights (contracts 3).
 func DefaultWeights() map[RuleID]float64 {
-	return map[RuleID]float64{R1: 0.50, R2: 0.40, R3: 0.40, R4D: 0.60, R4N: 0.25, R5: 0.80, R5W: 0.45, R6: 0.60, R7: 0.50}
+	return map[RuleID]float64{R1: 0.50, R2: 0.40, R3: 0.40, R4D: 0.60, R4N: 0.25, R5: 0.85, R5W: 0.45, R6: 0.60, R7: 0.50}
 }
 
 // DefaultRules (contracts 3).
@@ -68,12 +68,11 @@ func DefaultRules() RuleParams {
 
 // DefaultUADeny is the built-in User-Agent deny list (case-insensitive substrings).
 var DefaultUADeny = []string{"HeadlessChrome", "PhantomJS", "python-requests", "python-httpx", "aiohttp", "curl/",
-	"Wget", "Go-http-client", "okhttp", "node-fetch", "axios/", "Scrapy", "Puppeteer", "Playwright", "Selenium"}
+	"Wget", "Scrapy", "Puppeteer", "Playwright", "Selenium"}
 
 // DefaultUAWeak is the built-in weak User-Agent list: generic HTTP libraries that legitimate first-party or test
-// clients also use (Amendment 2, X-5), so a match alone never blocks. Empty until TCR-6 moves the four
-// libraries out of DefaultUADeny (the frozen rule tests still expect them there).
-var DefaultUAWeak = []string{}
+// clients also use (Amendment 2, X-5), so a match is one R5W weak sign and alone never blocks.
+var DefaultUAWeak = []string{"okhttp", "Go-http-client", "axios/", "node-fetch"}
 
 // DefaultSlowLanePenalty is ANTIBOT_SLOW_LANE_PENALTY's default (also shuffle.lua's default).
 const DefaultSlowLanePenalty int64 = 100000
