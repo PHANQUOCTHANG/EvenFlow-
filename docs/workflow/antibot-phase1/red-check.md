@@ -1,7 +1,7 @@
 # Red check — antibot-phase1 (v3 step 2a)
 
 Tests written against spec.md + Amendment 1 (+ revision after plan review round 2) and contracts.md revision 2
-(9eb3bd9, 9bc1e92). plan.md was read only for file and package names. No production code was written.
+(9eb3bd9, 9bc1e92; re-checked against revision 3 in 0bb1706: no test change needed). plan.md was read only for file and package names. No production code was written.
 Baseline counts: `baseline.json`. AC → test map and mutation targets: `traceability.yaml`.
 
 ## Files
@@ -60,11 +60,8 @@ NewGuard, Guard.Decide, FPHash, NetPrefix, LoadConfig, Config.Mode, Config.DevKe
 
 1. `DecodeSignals`: `nil`, empty, `null` or a non-object give `missing`. `{}` or absent/non-1 `v` (including `"1"`)
    gives `bad_version`. More than 4096 bytes passed to `DecodeSignals` gives `too_large`.
-2. `{"v":1}` → R3 fires (counts absent = 0), R5 does not → 0.40 CHALLENGE → pass. This follows contracts 1 and the
-   human's revision note ("scores 0.40"). **Open conflict:** the coordinator's note says "N-6: R3 must NOT fire on
-   absent counts". That cannot hold together with the 0.40 the human approved. The tests follow the approved
-   documents. If N-6 is meant literally, contracts 1 needs a change and `TestRule_AC4_VersionOnlyScoresR3Only` /
-   `TestRule_AC4_R3` change with it.
+2. `{"v":1}` → R3 fires (counts absent = 0), R5 does not → 0.40 CHALLENGE → pass; with a slot → applied PASS
+   `REJOIN`. Matches contracts revision 3 (N-6: R3 is the one rule where absent inputs count).
 3. R4N ignores `ClientIP` itself and trusts `State.NetIdentities` (the store skips absent inputs).
 4. Sticky in shadow: `Applied` is PASS (shadow never applies anything else; FuzzEvaluate asserts it).
 5. Revoke of an identity without a slot returns false **and still sets the flag**.
