@@ -240,3 +240,11 @@ a bot that rotates it is still seen by R4N and R1. A signed fp hash from identit
 - Approved by TranDinhVo in the Claude Code session on 2026-11-22.
 - Item 3 is WITHDRAWN: no "Join queue" button. The waiting room keeps auto-joining; with no stored snapshot the client sends `{"v":1}`, which decodes as valid-but-empty and scores 0.40 (challenge → pass), or returns the existing slot (REJOIN). The 5 frozen web waiting-room tests stay unchanged. Trade-off recorded (N-3): a client sending `{"v":1}` with a browser UA passes.
 - K8s TCR approved (N-5): add `ANTIBOT_HASH_KEY` for waitingroom to the policy contract §8 secret table, `check_policy.py`, `rules.md` and the regenerated fixtures; additions only, existing checks unchanged.
+
+## Amendment 2 (approved after review and challenge, 2026-11-22)
+
+- Approved by TranDinhVo in the Claude Code session on 2026-11-22.
+- X-4: a strong automation sign (R5: webdriver, headless, scripted UA such as curl or python-requests) weighs 0.85, so it alone reaches BLOCK.
+- X-5: generic HTTP-library user agents (okhttp, Go-http-client, axios, node-fetch) move from the R5 deny list to the weak list (R5W); they alone never block.
+- X-6: R4D weight 0.55, so a shared device alone is CHALLENGE (pass); it demotes only with another sign.
+- X-3: accepted limitation — a bot can forge `fp`/`sq` to evade R4D/R7; there is no stronger server-side device signal yet. Addressed by Turnstile (EV-176) in phase 2.

@@ -57,7 +57,9 @@ func (s store) JoinLane(ctx context.Context, ev, id, tok string, lane domain.Lan
 	r, err := s.q.JoinLane(ctx, ev, id, tok, lane, p)
 	return conv(r), err
 }
-func (s store) Revoke(ctx context.Context, ev, id string) (bool, error) { return s.q.Revoke(ctx, ev, id) }
+func (s store) Revoke(ctx context.Context, ev, id string) (bool, error) {
+	return s.q.Revoke(ctx, ev, id)
+}
 func (s store) Status(ctx context.Context, ev, tok string) (domain.Position, error) {
 	return s.q.Status(ctx, ev, tok)
 }

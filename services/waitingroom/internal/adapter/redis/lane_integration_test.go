@@ -52,8 +52,10 @@ func setup(t *testing.T) *env {
 
 func (e *env) k(s string) string { return "wr:{" + e.ev + "}:" + s }
 
-func (e *env) afterT0()  { e.rdb.HSet(e.ctx, e.k("meta"), "sale_start_ms", "1") }
-func (e *env) beforeT0() { e.rdb.HSet(e.ctx, e.k("meta"), "sale_start_ms", time.Now().Add(time.Hour).UnixMilli()) }
+func (e *env) afterT0() { e.rdb.HSet(e.ctx, e.k("meta"), "sale_start_ms", "1") }
+func (e *env) beforeT0() {
+	e.rdb.HSet(e.ctx, e.k("meta"), "sale_start_ms", time.Now().Add(time.Hour).UnixMilli())
+}
 
 func (e *env) join(t *testing.T, id string, lane domain.Lane) redisadapter.JoinResult {
 	t.Helper()

@@ -113,3 +113,8 @@ until these lines change:
 | `libs/go/antibot/corpus_test.go` | 471 | staticcheck S1009 | `j.Signals != nil && len(j.Signals) > 2048` | drop the nil check |
 
 All are behaviour-neutral (the generator output and every assertion stay the same). Not changed by the implementer.
+
+## TCR-5 (approved, formatting only)
+
+- Approved by TranDinhVo in the Claude Code session on 2026-11-22; applied by the coordinator session.
+- `gofmt -w` on `services/waitingroom/internal/adapter/redis/lane_integration_test.go` (one-line `afterT0`/`beforeT0`) and `services/waitingroom/test/antibot/antibot_bot_test.go` (one-line `store.Revoke`). Line breaks only; no assertion changed.
