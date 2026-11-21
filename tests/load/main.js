@@ -16,7 +16,7 @@ import http from "k6/http";
 import { makeApi, view, json, header } from "./lib/api.js";
 import { m, primeCounters } from "./lib/metrics.js";
 import { buildOptions, resolveConfig } from "./lib/profiles.js";
-import { identityFor, deviceFor, idemKey, nextPollDelayMs, shouldReplay } from "./lib/flow.js";
+import { identityFor, deviceFor, idemKey, nextPollDelayMs, shouldReplay, webhookDelayMs } from "./lib/flow.js";
 import { accessClaims, encodeJwt, accessTokenExpS } from "./lib/jwt.js";
 import { signalsFor } from "./lib/signals.js";
 import { mulberry32, randInt } from "./lib/rng.js";
@@ -31,12 +31,20 @@ export const options = buildOptions(__ENV);
 http.setResponseCallback(http.expectedStatuses({ min: 200, max: 499 }));
 
 const api = makeApi(cfg.base, cfg.event);
+// Captured at init (R-7): result files never fall back to a shared name, even if handleSummary gets no setup_data.
+const INIT_RUN_ID = cfg.runId || `r${Date.now().toString(36)}`;
+const SELLABLE = { AVAILABLE: true, FEW_LEFT: true }; // R-6
 const POLL_JITTER_MS = 250;
 const ISSUE_WAIT_S = 20;
 const QUEUE_DEADLINE_S = 60; // smoke / checkout wave: give up waiting for ADMITTED after this
 const TERMINAL = { ADMITTED: true, EXPIRED: true, SOLD_OUT: true };
 
 export function setup() {
+  if (cfg.remote) {
+    console.warn(`
+[load] ******** REMOTE TARGET ${cfg.base} (ALLOW_REMOTE=1, REMOTE_CONFIRM set) ********
+`);
+  }
   const h = api.healthz();
   if (h.status !== 200) throw new Error(`gateway ${cfg.base}/healthz returned ${h.status}`);
   // ticketing-worker loads Redis stock every 5 s; before that availability says SOLD_OUT on purpose.
@@ -47,18 +55,21 @@ export function setup() {
     const tiers = body.tiers || [];
     const tier = ticketType ? tiers.find((t) => t.ticket_type_id === ticketType) : tiers[0];
     state = tier ? tier.availability : "no tier";
-    if (tier && state === "AVAILABLE") {
+    if (tier && SELLABLE[state]) {
       ticketType = tier.ticket_type_id;
       break;
     }
     sleep(1);
   }
-  if (state !== "AVAILABLE") {
-    throw new Error(`event ${cfg.event} not AVAILABLE after 30 s (${state}): run tests/load/seed-load.sh first`);
+  if (!SELLABLE[state]) {
+    throw new Error(`event ${cfg.event} not sellable after 30 s (${state}): run tests/load/seed-load.sh first`);
   }
   primeCounters();
-  const runId = cfg.runId || `r${Date.now().toString(36)}`;
-  console.log(`[load] profile=${cfg.profile} run=${runId} event=${cfg.event} ticket_type=${ticketType} users=${cfg.users}`);
+  const runId = INIT_RUN_ID;
+  console.log(
+    `[load] profile=${cfg.profile} run=${runId} event=${cfg.event} ticket_type=${ticketType} users=${cfg.users} ` +
+      `quota=${cfg.quota} (must equal the seeded QUOTA) hold_ttl=${cfg.holdTtlS}s webhook_rate=${cfg.webhookRate}/s`,
+  );
   return { runId, ticketType, startMs: Date.now() };
 }
 
@@ -128,11 +139,21 @@ function poll(who, token, q, deadlineMs) {
   return state;
 }
 
-// Webhook pacing (D4): identity k of the scenario gets a slot at start + k / WEBHOOK_RATE seconds.
-function waitWebhookSlot(who, range, startMs) {
-  const slot = startMs + ((who.n - range.start) * 1000) / cfg.webhookRate;
-  const d = slot - Date.now();
+// Webhook pacing (D4, R-1): in a paced wave (checkout scenario) the k-th buyer posts at start + k / WEBHOOK_RATE,
+// and WEBHOOK_RATE >= CHECKOUT_RATE is enforced at init, so the delay stays near 0. Buyers of the wait/smoke flows
+// are admitted by the server at its own rate: no slot, 429 is retried with Retry-After. Never sleep past the hold.
+function webhookWait(who, range, data, holdStartMs, paced) {
+  const nowMs = Date.now();
+  const d = webhookDelayMs({
+    k: paced ? who.n - range.start : 0,
+    startMs: paced ? data.startMs : nowMs,
+    nowMs,
+    rate: cfg.webhookRate,
+    holdStartMs,
+    holdTtlS: cfg.holdTtlS,
+  });
   if (d > 0) sleep(d / 1000);
+  return d >= 0;
 }
 
 function postWebhook(q) {
@@ -145,7 +166,8 @@ function postWebhook(q) {
 }
 
 // hold -> order -> payment -> sandbox webhook -> ISSUED, with idempotent replays (AC-6).
-function checkout(who, token, q, data, range) {
+function checkout(who, token, q, data, range, paced) {
+  const holdStartMs = Date.now();
   const holdKey = idemKey(data.runId, who.id, "hold");
   let res = api.hold(token, q.queueToken, holdKey, data.ticketType);
   m.holdLatency.add(res.timings.duration);
@@ -154,7 +176,7 @@ function checkout(who, token, q, data, range) {
     return;
   }
   const hold = json(res) || {};
-  if (!check(res, { "hold 200": (r) => r.status === 200 && !!hold.hold_id })) return;
+  if (!step(check(res, { "hold 200": (r) => r.status === 200 && !!hold.hold_id }))) return;
   m.holdsOk.add(1);
   const replay = shouldReplay(who.rng, cfg.replayRatio);
   if (replay) {
@@ -164,7 +186,7 @@ function checkout(who, token, q, data, range) {
 
   const order = json(api.getOrder(token, hold.order_id)) || {};
   const item = (order.items || [])[0];
-  if (!check(order, { "order has an item": () => !!item })) return;
+  if (!step(check(order, { "order has an item": () => !!item }))) return;
   const amount = item.unit_cents * item.quantity;
   const payKey = idemKey(data.runId, who.id, "pay");
   const payBody = {
@@ -179,15 +201,19 @@ function checkout(who, token, q, data, range) {
   res = api.pay(token, payKey, payBody);
   m.paymentLatency.add(res.timings.duration);
   const pay = json(res) || {};
-  if (!check(res, { "payment 200": (r) => r.status === 200 && !!pay.payment_id })) return;
+  if (!step(check(res, { "payment 200": (r) => r.status === 200 && !!pay.payment_id }))) return;
   if (replay) {
     const again = json(api.pay(token, payKey, payBody)) || {};
     if (again.payment_id !== pay.payment_id) m.idemMismatch.add(1);
   }
 
-  waitWebhookSlot(who, range, data.startMs);
+  if (!webhookWait(who, range, data, holdStartMs, paced)) {
+    m.webhookDelayed.add(1);
+    step(false);
+    return;
+  }
   const wh = postWebhook({ txn: pay.provider_txn_id, orderId: hold.order_id, paymentId: pay.payment_id, amount });
-  if (!check(wh, { "webhook 200": (r) => !!r && r.status === 200 })) return;
+  if (!step(check(wh, { "webhook 200": (r) => !!r && r.status === 200 }))) return;
 
   const t0 = Date.now();
   for (let i = 0; i < ISSUE_WAIT_S; i++) {
@@ -195,11 +221,19 @@ function checkout(who, token, q, data, range) {
     if (o.order_status === "ISSUED") {
       m.issued.add(1);
       m.issueWait.add(Date.now() - t0);
+      step(true);
       return;
     }
     sleep(1);
   }
   m.issueTimeout.add(1);
+  step(false);
+}
+
+// Every checkout step after a successful hold (order, payment, webhook, ISSUED) is one sample of checkout_step_ok (R-4).
+function step(ok) {
+  m.checkoutStepOk.add(!!ok);
+  return ok;
 }
 
 function jitter(rng, maxMs) {
@@ -217,7 +251,7 @@ export function smokeFlow(data) {
   const q = join(who, token);
   if (!q) return;
   if (poll(who, token, q, data.startMs + QUEUE_DEADLINE_S * 1000) === "ADMITTED") {
-    checkout(who, token, q, data, cfg.ranges.join);
+    checkout(who, token, q, data, cfg.ranges.join, false);
   }
 }
 
@@ -237,7 +271,7 @@ export function waitAndPoll(data) {
     jitter(who.rng, Math.min(cfg.jitterMs, 5000));
     const token = mint(who);
     const q = join(who, token);
-    if (q && poll(who, token, q, endMs) === "ADMITTED") checkout(who, token, q, data, cfg.ranges.wait);
+    if (q && poll(who, token, q, endMs) === "ADMITTED") checkout(who, token, q, data, cfg.ranges.wait, false);
   }
   // one identity per VU: idle until the scenario ends instead of taking a new identity
   const rest = endMs - Date.now();
@@ -252,14 +286,14 @@ export function checkoutWave(data) {
   const q = join(who, token);
   if (!q) return;
   if (poll(who, token, q, Date.now() + QUEUE_DEADLINE_S * 1000) === "ADMITTED") {
-    checkout(who, token, q, data, cfg.ranges.checkout);
+    checkout(who, token, q, data, cfg.ranges.checkout, true);
   }
 }
 
 export default smokeFlow;
 
 export function handleSummary(data) {
-  const runId = (data.setup_data && data.setup_data.runId) || cfg.runId || "norun";
+  const runId = (data.setup_data && data.setup_data.runId) || INIT_RUN_ID;
   const requestedJoinRate = cfg.profile === "spike" || cfg.profile === "full" ? Math.ceil(cfg.joinTarget / cfg.joinRampS) : 0;
   const text = renderSummary(data, { profile: cfg.profile, quota: cfg.quota, runId, requestedJoinRate });
   return {

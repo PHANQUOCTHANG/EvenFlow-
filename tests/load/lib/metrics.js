@@ -11,6 +11,7 @@ export const m = {
   joinSuccess: new Rate("wr_join_success"),
   status304: new Rate("wr_status_304_ratio"),
   status429: new Rate("wr_status_429"),
+  checkoutStepOk: new Rate("checkout_step_ok"),
 
   joinArrivals: new Counter("wr_join_arrivals"),
   admitted: new Counter("wr_admitted"),
@@ -22,12 +23,13 @@ export const m = {
   issueTimeout: new Counter("checkout_issue_timeout"),
   idemMismatch: new Counter("idem_mismatch"),
   identityExhausted: new Counter("identity_exhausted"),
+  webhookDelayed: new Counter("webhook_delayed"),
 };
 
 // A counter threshold is only evaluated once the metric has a sample: add 0 in setup() so that
 // "count>=1" fails (instead of being skipped) when nothing happened.
 export function primeCounters() {
   const counters = ["joinArrivals", "admitted", "expired", "soldOut", "holdsOk", "checkoutSoldOut", "issued",
-    "issueTimeout", "idemMismatch", "identityExhausted"];
+    "issueTimeout", "idemMismatch", "identityExhausted", "webhookDelayed"];
   for (const k of counters) m[k].add(0);
 }

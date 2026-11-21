@@ -53,7 +53,8 @@ export function renderSummary(data, { profile, quota, runId, requestedJoinRate =
     row("oversell_suspected", oversell, `must be 0 (QUOTA=${quota})`, oversell === 0 ? "PASS" : "FAIL"),
     row("wr_join_arrivals", arrivals, "join attempts", ""),
     row("join arrival rate (/s)", durS > 0 ? (arrivals / durS).toFixed(1) : "n/a", "achieved, whole run", ""),
-    row("join arrival rate requested (/s)", requestedJoinRate || "n/a", "JOIN_TARGET / JOIN_RAMP", ""),
+    row("join arrival rate requested (/s)", requestedJoinRate || "n/a", "ramp only: JOIN_TARGET / JOIN_RAMP", ""),
+    row("", "", "spike arrivals = JOIN_TARGET + late tail (2% rate, 25 s)", ""),
     row("dropped_iterations", count(data, "dropped_iterations"), "arrivals k6 could not start", ""),
   ];
   const ok = rows.every((r) => r.ok) && oversell === 0;
