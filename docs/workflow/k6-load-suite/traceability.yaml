@@ -1,5 +1,6 @@
 # AC -> tests / evidence (k6-load-suite). Offline = node --test tests/load/lib/*.test.mjs (red at the red-check commit).
 AC-1:
+  - tests/load/lib/main-wiring.test.mjs # smoke iteration end to end on a fake gateway (k6 stubs), added after red check
   - tests/load/lib/profiles.test.mjs   # smoke shape + AC-1 count thresholds (wr_admitted, checkout_issued, 304 ratio)
   - evidence.md                        # make load-smoke run (needs Docker + k6) - NOT RUN offline
 AC-2:
@@ -7,12 +8,14 @@ AC-2:
 AC-3:
   - tests/load/lib/profiles.test.mjs   # SLO thresholds, SLO_SCALE latency only, abortOnFail on count invariants
 AC-4:
+  - tests/load/lib/main-wiring.test.mjs # zero /api/v1/auth/* calls, no X-Identity-*, minted Bearer on every call, init guard
   - tests/load/lib/jwt.test.mjs        # byte-identical to authx.SignAccessToken fixture; iss/aud/typ/ver/did; exp >= run end + 5 min
   - tests/load/lib/flow.test.mjs       # identity range 9000, device id, guardTarget local/remote/ALLOW_REMOTE
   - tests/load/seed-load.sh            # idempotent seed (ON CONFLICT) - run evidence needs Docker
 AC-5:
   - tests/load/lib/flow.test.mjs       # nextPollDelayMs: 200 body, 304 header, 429 Retry-After, floor, jitter >= 0
 AC-6:
+  - tests/load/lib/main-wiring.test.mjs # replay with the same key; other hold_id -> idem_mismatch; 409 -> checkout_sold_out
   - tests/load/lib/flow.test.mjs       # idemKey format + validation, shouldReplay sampling
   - evidence.md                        # replay same hold_id/payment_id (needs compose) - NOT RUN offline
 AC-7:
