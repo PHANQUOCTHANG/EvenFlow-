@@ -61,3 +61,39 @@ Proposed change (test side, corpus untouched):
 with a helper that maps each corpus id to a distinct, stable UUID (for example the hex of its bytes, left-padded to
 32 digits and formatted 8-4-4-4-12 with version 4 / variant 8), returning ids that already are UUIDs unchanged.
 Alternative: make `corpus.(*gen).id` emit UUID-shaped ids (changes `corpus.go`, also frozen).
+
+## TCR-3: `antibot-signals.test.ts` cannot load the golden fixture path under Vite
+
+File: `apps/web/src/lib/antibot-signals.test.ts` (frozen at 36aab08), lines 13-15.
+
+```ts
+const GOLDEN = fileURLToPath(
+  new URL("../../../../libs/go/antibot/testdata/signals/scripted_keyboard.json", import.meta.url),
+);
+```
+
+Vite rewrites the `new URL("<relative>", import.meta.url)` asset pattern, so in vitest (jsdom) the URL becomes
+`http://localhost:3000/@fs/D:/.../scripted_keyboard.json` and `fileURLToPath` throws
+`TypeError: The URL must be of scheme file` while the module loads. The whole file then reports "0 test" and fails.
+The red check did not reach this line (the import of `./antibot-signals` failed first). The rewrite is done by
+Vite's asset plugin, not by the OS, so CI fails the same way.
+
+Evidence: `import.meta.url` itself is `file:///…/antibot-signals.test.ts`; only the `new URL(…, import.meta.url)`
+form is rewritten (checked with a throwaway test, deleted). A temporary copy of the frozen file with only this
+constant changed (not committed) passes all 17 tests against the implementation.
+
+Proposed change (resolve the path without the Vite-rewritten pattern):
+
+```diff
+-import { fileURLToPath } from "node:url";
++import { dirname, resolve } from "node:path";
++import { fileURLToPath } from "node:url";
+ ...
+-const GOLDEN = fileURLToPath(
+-  new URL("../../../../libs/go/antibot/testdata/signals/scripted_keyboard.json", import.meta.url),
+-);
++const GOLDEN = resolve(
++  dirname(fileURLToPath(import.meta.url)),
++  "../../../../libs/go/antibot/testdata/signals/scripted_keyboard.json",
++);
+```
