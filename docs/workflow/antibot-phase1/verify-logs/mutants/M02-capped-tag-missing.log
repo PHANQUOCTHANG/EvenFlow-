@@ -1,0 +1,19 @@
+--- FAIL: TestFix1_Amendment2_WorkedExamples (0.00s)
+    --- FAIL: TestFix1_Amendment2_WorkedExamples/missing_payload,_browser (0.00s)
+        fixround1_test.go:307: fired R3,R5 score 0.91 action SLOW_LANE tags [], want R3,R5 0.91 SLOW_LANE capped=true
+    --- FAIL: TestFix1_Amendment2_WorkedExamples/X-5_okhttp,_no_signals (0.00s)
+        fixround1_test.go:307: fired R3,R5 score 0.91 action SLOW_LANE tags [], want R3,R5 0.91 SLOW_LANE capped=true
+--- FAIL: TestGuard_AC17_DecisionMetrics (0.00s)
+    guard_test.go:215: antibot_capped_total = 0
+--- FAIL: TestScore_AC8_DefaultOutcomesTable (0.00s)
+    --- FAIL: TestScore_AC8_DefaultOutcomesTable/missing_payload,_browser_UA (0.00s)
+        score_test.go:96: tags [] lack CAPPED
+    --- FAIL: TestScore_AC8_DefaultOutcomesTable/missing_payload,_identity_holds_a_slot (0.00s)
+        score_test.go:96: tags [REJOIN] lack CAPPED
+--- FAIL: TestScore_AC8_BlockEligibilityCap (0.00s)
+    score_test.go:166: missing + R4N: action SLOW_LANE tags [], want SLOW_LANE CAPPED
+FAIL
+FAIL	github.com/eventflow/eventflow/libs/go/antibot	9.291s
+?   	github.com/eventflow/eventflow/libs/go/antibot/corpus	[no test files]
+ok  	github.com/eventflow/eventflow/libs/go/antibot/redisstate	1.975s
+FAIL

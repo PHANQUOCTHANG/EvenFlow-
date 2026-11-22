@@ -1,0 +1,7 @@
+--- FAIL: TestScore_AC10_AC13_AppliedMatrix (0.00s)
+    score_test.go:271: enforce/slow_lane tier CHALLENGE: got CHALLENGE/PASS, want applied SLOW_LANE
+FAIL
+FAIL	github.com/eventflow/eventflow/libs/go/antibot	8.738s
+?   	github.com/eventflow/eventflow/libs/go/antibot/corpus	[no test files]
+ok  	github.com/eventflow/eventflow/libs/go/antibot/redisstate	1.796s
+FAIL

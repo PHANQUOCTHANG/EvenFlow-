@@ -1,0 +1,8 @@
+--- FAIL: TestLoadConfig_AC16_InvalidValueNamesVariable (0.00s)
+    --- FAIL: TestLoadConfig_AC16_InvalidValueNamesVariable/key_missing_in_production (0.00s)
+        config_test.go:99: ANTIBOT_HASH_KEY="" accepted
+FAIL
+FAIL	github.com/eventflow/eventflow/libs/go/antibot	8.775s
+?   	github.com/eventflow/eventflow/libs/go/antibot/corpus	[no test files]
+ok  	github.com/eventflow/eventflow/libs/go/antibot/redisstate	1.858s
+FAIL

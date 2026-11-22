@@ -27,6 +27,13 @@ type Queue struct {
 	rdb     *redis.Client
 	scripts *redisx.ScriptSet
 	ttl     time.Duration
+	penalty int64 // ANTIBOT_SLOW_LANE_PENALTY cho shuffle.lua; 0 = mac dinh cua script (100000)
+}
+
+// WithSlowLanePenalty dat P ma shuffle.lua dung khi xep slow lobby (controller doc ANTIBOT_SLOW_LANE_PENALTY).
+func (q *Queue) WithSlowLanePenalty(p int64) *Queue {
+	q.penalty = p
+	return q
 }
 
 func NewQueue(ctx context.Context, rdb *redis.Client, sessionTTL time.Duration) (*Queue, error) {
@@ -44,10 +51,16 @@ func NewQueue(ctx context.Context, rdb *redis.Client, sessionTTL time.Duration) 
 // Lua chay duoc tren Redis Cluster va mot su kien lon khong lam phien su kien khac.
 func k(eventID, suffix string) string { return fmt.Sprintf("wr:{%s}:%s", eventID, suffix) }
 
-func (q *Queue) keys(eventID string) []string {
+// blockKey la co chan 24 h cua anti-bot (D6); cung hash tag {ev} nen cung shard voi wr:{ev}:.
+func blockKey(eventID, identityID string) string {
+	return fmt.Sprintf("ab:{%s}:blk:%s", eventID, identityID)
+}
+
+func (q *Queue) keys(eventID, identityID string) []string {
 	return []string{
 		k(eventID, "tok"), k(eventID, "lobby"), k(eventID, "queue"),
 		k(eventID, "seq"), k(eventID, "meta"), k(eventID, "sess"),
+		k(eventID, "lobby_slow"), blockKey(eventID, identityID),
 	}
 }
 
@@ -60,10 +73,28 @@ type JoinResult struct {
 }
 
 // Join ghi danh mot identity vao phong cho. Idempotent theo BR-Q3.
+// Duong develop: lane binh thuong, khong kiem tra co chan cua anti-bot.
 func (q *Queue) Join(ctx context.Context, eventID, identityID, newToken string) (JoinResult, error) {
-	res, err := q.scripts.Run(ctx, "join", q.keys(eventID),
-		identityID, newToken, time.Now().UnixMilli(), int(q.ttl.Seconds()),
-	).Slice()
+	return q.join(ctx, eventID, identityID,
+		identityID, newToken, time.Now().UnixMilli(), int(q.ttl.Seconds()))
+}
+
+// JoinLane ghi danh vao mot lane cua anti-bot (contracts 2, 4). Cho da co duoc tra lai nguyen trang (BR-Q3, D12);
+// chua co cho ma co chan 24 h ton tai thi tra State BLOCKED, khong cap token (D6). Slow lane: truoc T0 vao
+// lobby_slow (LOBBY), sau T0 score 1e12 + seq + penalty + m.
+func (q *Queue) JoinLane(ctx context.Context, eventID, identityID, newToken string, lane domain.Lane, penalty int64) (JoinResult, error) {
+	if lane != domain.LaneSlow {
+		lane = domain.LaneNormal
+	}
+	if penalty <= 0 {
+		penalty = 100000
+	}
+	return q.join(ctx, eventID, identityID,
+		identityID, newToken, time.Now().UnixMilli(), int(q.ttl.Seconds()), string(lane), penalty)
+}
+
+func (q *Queue) join(ctx context.Context, eventID, identityID string, args ...any) (JoinResult, error) {
+	res, err := q.scripts.Run(ctx, "join", q.keys(eventID, identityID), args...).Slice()
 	if err != nil {
 		return JoinResult{}, fmt.Errorf("join queue: %w", err)
 	}
@@ -78,11 +109,25 @@ func (q *Queue) Join(ctx context.Context, eventID, identityID, newToken string) 
 	}, nil
 }
 
+// Revoke go bo cho cua identity khoi lobby, lobby_slow, queue, admitted, tok va sess, va dat co chan 24 h, trong
+// mot script (D6). true neu da go mot cho; co van duoc dat ca khi identity chua co cho.
+func (q *Queue) Revoke(ctx context.Context, eventID, identityID string) (bool, error) {
+	keys := []string{
+		k(eventID, "tok"), k(eventID, "lobby"), k(eventID, "lobby_slow"), k(eventID, "queue"),
+		k(eventID, "admitted"), k(eventID, "sess"), blockKey(eventID, identityID),
+	}
+	n, err := q.scripts.Run(ctx, "revoke", keys, identityID, 86400).Int64()
+	if err != nil {
+		return false, fmt.Errorf("revoke slot: %w", err)
+	}
+	return n == 1, nil
+}
+
 // Status doc trang thai trong mot round-trip duy nhat.
 func (q *Queue) Status(ctx context.Context, eventID, token string) (domain.Position, error) {
 	keys := []string{
 		k(eventID, "tok"), k(eventID, "queue"), k(eventID, "admitted"),
-		k(eventID, "lobby"), k(eventID, "meta"),
+		k(eventID, "lobby"), k(eventID, "meta"), k(eventID, "lobby_slow"),
 	}
 	res, err := q.scripts.Run(ctx, "status", keys, token, time.Now().UnixMilli()).Slice()
 	if err != nil {
@@ -137,8 +182,12 @@ func (f *FencedQueue) Admit(ctx context.Context, eventID string, batch int, ttl 
 
 // Shuffle chay lottery tai T0. An toan khi goi lai (lan sau la no-op) va khi doi leader.
 func (f *FencedQueue) Shuffle(ctx context.Context, eventID string, seed int64) (int64, error) {
-	keys := []string{k(eventID, "lobby"), k(eventID, "queue"), k(eventID, "meta"), epochKey(eventID)}
-	n, err := f.q.scripts.Run(ctx, "shuffle", keys, seed, f.epoch).Int64()
+	keys := []string{k(eventID, "lobby"), k(eventID, "queue"), k(eventID, "meta"), epochKey(eventID), k(eventID, "lobby_slow")}
+	args := []any{seed, f.epoch}
+	if f.q.penalty > 0 {
+		args = append(args, f.q.penalty)
+	}
+	n, err := f.q.scripts.Run(ctx, "shuffle", keys, args...).Int64()
 	if err != nil {
 		return 0, fenceErr("shuffle lobby", err)
 	}

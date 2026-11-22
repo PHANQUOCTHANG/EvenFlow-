@@ -1,0 +1,6 @@
+ok: tidied libs/go/go.mod identical at base and HEAD
+ok: tidied libs/go/go.sum identical at base and HEAD
+ok: libs/go go.mod/go.sum unchanged vs 918667c
+ok: tidied services/waitingroom/go.mod identical at base and HEAD
+ok: tidied services/waitingroom/go.sum identical at base and HEAD
+ok: services/waitingroom go.mod/go.sum unchanged vs 918667c

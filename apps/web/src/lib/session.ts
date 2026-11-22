@@ -4,6 +4,8 @@
  * Mac dinh ghi localStorage; "ghi nho toi" tat -> sessionStorage (cung khoa, doc local truoc).
  * Token van o web storage (nguoi dung da duyet cho task nay); an toan XSS la no ky thuat da ghi nhan. */
 
+import { resetSignalCollector } from "./antibot-signals";
+
 export type Role = "buyer" | "organizer" | "moderator" | "ops";
 
 export interface SessionUser {
@@ -298,10 +300,12 @@ export function getStoredRefreshToken(): string | null {
   return null;
 }
 
-/** Tien to khoa sessionStorage cua luong mua ve; xoa khi dang xuat de nguoi dung sau khong doc duoc (F-17). */
-const BUY_FLOW_PREFIXES = ["ef:queue:token:", "evenflow_hold_", "evenflow_order_", "ef:issue:", "ef:pay:", "ef:hold:"];
+/** Tien to khoa sessionStorage cua luong mua ve; xoa khi dang xuat / doi tai khoan de nguoi dung sau khong doc
+ *  duoc (F-17). `ef:ab:` la snapshot anti-bot (X-6): tai khoan B khong duoc gui lai snapshot (fp, sq) cua A. */
+const BUY_FLOW_PREFIXES = ["ef:queue:token:", "evenflow_hold_", "evenflow_order_", "ef:issue:", "ef:pay:", "ef:hold:", "ef:ab:"];
 
 export function clearBuyFlowStorage(): void {
+  resetSignalCollector(); // R2-5: the in-memory anti-bot counters belong to the previous account too
   try {
     if (typeof window === "undefined") return;
     const ss = window.sessionStorage;

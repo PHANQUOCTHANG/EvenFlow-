@@ -1,0 +1,522 @@
+?   	github.com/eventflow/eventflow/services/waitingroom/cmd/controller	[no test files]
+=== RUN   TestBuildGuard_AC13_OffIsUntypedNil
+--- PASS: TestBuildGuard_AC13_OffIsUntypedNil (0.00s)
+=== RUN   TestBuildGuard_D7_RedisDownStillBuilds
+--- PASS: TestBuildGuard_D7_RedisDownStillBuilds (0.01s)
+PASS
+ok  	github.com/eventflow/eventflow/services/waitingroom/cmd/server	0.357s
+=== RUN   TestFix1_R2_StickyDoesNotRevokeAgain
+--- PASS: TestFix1_R2_StickyDoesNotRevokeAgain (0.00s)
+=== RUN   TestFix2_M47_ShadowUsesDevelopJoin
+--- PASS: TestFix2_M47_ShadowUsesDevelopJoin (0.00s)
+=== RUN   TestAntibotJoin_AC13_OffIsDevelop
+--- PASS: TestAntibotJoin_AC13_OffIsDevelop (0.00s)
+=== RUN   TestAntibotJoin_AC9_PassIsDevelop
+--- PASS: TestAntibotJoin_AC9_PassIsDevelop (0.00s)
+=== RUN   TestAntibotJoin_AC13_ShadowProceeds
+--- PASS: TestAntibotJoin_AC13_ShadowProceeds (0.00s)
+=== RUN   TestAntibotJoin_AC11_SlowLaneSameResponse
+--- PASS: TestAntibotJoin_AC11_SlowLaneSameResponse (0.00s)
+=== RUN   TestAntibotJoin_P4_SlowLaneFallbackWithoutLaneStore
+--- PASS: TestAntibotJoin_P4_SlowLaneFallbackWithoutLaneStore (0.00s)
+=== RUN   TestAntibotJoin_AC12_BlockDeniesAndRevokes
+--- PASS: TestAntibotJoin_AC12_BlockDeniesAndRevokes (0.00s)
+=== RUN   TestAntibotJoin_P4_BlockWithoutLaneStore
+--- PASS: TestAntibotJoin_P4_BlockWithoutLaneStore (0.00s)
+=== RUN   TestAntibotJoin_D6_JoinLaneBlocked
+--- PASS: TestAntibotJoin_D6_JoinLaneBlocked (0.00s)
+=== RUN   TestAntibotJoin_Contracts_InputBuiltFromRequest
+--- PASS: TestAntibotJoin_Contracts_InputBuiltFromRequest (0.00s)
+=== RUN   TestAntibotJoin_Contracts_ClientIP
+--- PASS: TestAntibotJoin_Contracts_ClientIP (0.00s)
+=== RUN   TestAntibotJoin_AC3_BadBodiesStillJoin
+=== RUN   TestAntibotJoin_AC3_BadBodiesStillJoin/over_4_KiB
+=== RUN   TestAntibotJoin_AC3_BadBodiesStillJoin/bad_json
+=== RUN   TestAntibotJoin_AC3_BadBodiesStillJoin/no_signals_field
+=== RUN   TestAntibotJoin_AC3_BadBodiesStillJoin/empty_body
+=== RUN   TestAntibotJoin_AC3_BadBodiesStillJoin/signals_{}_(demo.sh_/_k6)
+--- PASS: TestAntibotJoin_AC3_BadBodiesStillJoin (0.00s)
+    --- PASS: TestAntibotJoin_AC3_BadBodiesStillJoin/over_4_KiB (0.00s)
+    --- PASS: TestAntibotJoin_AC3_BadBodiesStillJoin/bad_json (0.00s)
+    --- PASS: TestAntibotJoin_AC3_BadBodiesStillJoin/no_signals_field (0.00s)
+    --- PASS: TestAntibotJoin_AC3_BadBodiesStillJoin/empty_body (0.00s)
+    --- PASS: TestAntibotJoin_AC3_BadBodiesStillJoin/signals_{}_(demo.sh_/_k6) (0.00s)
+=== RUN   TestAntibotJoin_AC15_LogsHaveNoRawValues
+--- PASS: TestAntibotJoin_AC15_LogsHaveNoRawValues (0.00s)
+=== RUN   TestLane_Contracts_Values
+--- PASS: TestLane_Contracts_Values (0.00s)
+=== RUN   TestJoin_ChiChoIdentityDaXacThucOTP
+=== RUN   TestJoin_ChiChoIdentityDaXacThucOTP/khong_danh_tinh
+=== RUN   TestJoin_ChiChoIdentityDaXacThucOTP/thieu_role_(header_tu_che)
+=== RUN   TestJoin_ChiChoIdentityDaXacThucOTP/chua_xac_thuc_OTP
+=== RUN   TestJoin_ChiChoIdentityDaXacThucOTP/thieu_co_verified
+=== RUN   TestJoin_ChiChoIdentityDaXacThucOTP/da_xac_thuc
+--- PASS: TestJoin_ChiChoIdentityDaXacThucOTP (0.00s)
+    --- PASS: TestJoin_ChiChoIdentityDaXacThucOTP/khong_danh_tinh (0.00s)
+    --- PASS: TestJoin_ChiChoIdentityDaXacThucOTP/thieu_role_(header_tu_che) (0.00s)
+    --- PASS: TestJoin_ChiChoIdentityDaXacThucOTP/chua_xac_thuc_OTP (0.00s)
+    --- PASS: TestJoin_ChiChoIdentityDaXacThucOTP/thieu_co_verified (0.00s)
+    --- PASS: TestJoin_ChiChoIdentityDaXacThucOTP/da_xac_thuc (0.00s)
+=== RUN   TestJoin_CapQueueTokenKy
+--- PASS: TestJoin_CapQueueTokenKy (0.00s)
+=== RUN   TestJoin_HetVeHanKhongCapToken
+--- PASS: TestJoin_HetVeHanKhongCapToken (0.00s)
+=== RUN   TestJoin_CanThietBiNeuBatBuoc
+--- PASS: TestJoin_CanThietBiNeuBatBuoc (0.00s)
+=== RUN   TestJoin_ThieuSecretThiTuChoi
+--- PASS: TestJoin_ThieuSecretThiTuChoi (0.00s)
+=== RUN   TestStatusVaStream_XacMinhQueueToken
+=== RUN   TestStatusVaStream_XacMinhQueueToken/status/hop_le
+=== RUN   TestStatusVaStream_XacMinhQueueToken/status/thieu_token
+=== RUN   TestStatusVaStream_XacMinhQueueToken/stream/thieu_token
+=== RUN   TestStatusVaStream_XacMinhQueueToken/status/token_hex_cu
+=== RUN   TestStatusVaStream_XacMinhQueueToken/stream/token_hex_cu
+=== RUN   TestStatusVaStream_XacMinhQueueToken/status/het_han
+=== RUN   TestStatusVaStream_XacMinhQueueToken/stream/het_han
+=== RUN   TestStatusVaStream_XacMinhQueueToken/status/token_cua_nguoi_khac
+=== RUN   TestStatusVaStream_XacMinhQueueToken/stream/token_cua_nguoi_khac
+=== RUN   TestStatusVaStream_XacMinhQueueToken/status/sang_thiet_bi_khac
+=== RUN   TestStatusVaStream_XacMinhQueueToken/stream/sang_thiet_bi_khac
+=== RUN   TestStatusVaStream_XacMinhQueueToken/status/token_cua_su_kien_khac
+=== RUN   TestStatusVaStream_XacMinhQueueToken/stream/token_cua_su_kien_khac
+=== RUN   TestStatusVaStream_XacMinhQueueToken/status/khong_danh_tinh
+=== RUN   TestStatusVaStream_XacMinhQueueToken/stream/khong_danh_tinh
+--- PASS: TestStatusVaStream_XacMinhQueueToken (0.00s)
+    --- PASS: TestStatusVaStream_XacMinhQueueToken/status/hop_le (0.00s)
+    --- PASS: TestStatusVaStream_XacMinhQueueToken/status/thieu_token (0.00s)
+    --- PASS: TestStatusVaStream_XacMinhQueueToken/stream/thieu_token (0.00s)
+    --- PASS: TestStatusVaStream_XacMinhQueueToken/status/token_hex_cu (0.00s)
+    --- PASS: TestStatusVaStream_XacMinhQueueToken/stream/token_hex_cu (0.00s)
+    --- PASS: TestStatusVaStream_XacMinhQueueToken/status/het_han (0.00s)
+    --- PASS: TestStatusVaStream_XacMinhQueueToken/stream/het_han (0.00s)
+    --- PASS: TestStatusVaStream_XacMinhQueueToken/status/token_cua_nguoi_khac (0.00s)
+    --- PASS: TestStatusVaStream_XacMinhQueueToken/stream/token_cua_nguoi_khac (0.00s)
+    --- PASS: TestStatusVaStream_XacMinhQueueToken/status/sang_thiet_bi_khac (0.00s)
+    --- PASS: TestStatusVaStream_XacMinhQueueToken/stream/sang_thiet_bi_khac (0.00s)
+    --- PASS: TestStatusVaStream_XacMinhQueueToken/status/token_cua_su_kien_khac (0.00s)
+    --- PASS: TestStatusVaStream_XacMinhQueueToken/stream/token_cua_su_kien_khac (0.00s)
+    --- PASS: TestStatusVaStream_XacMinhQueueToken/status/khong_danh_tinh (0.00s)
+    --- PASS: TestStatusVaStream_XacMinhQueueToken/stream/khong_danh_tinh (0.00s)
+=== RUN   TestOpsWriteFix_X2_AuditorPanicIsRecoveredAsFailed
+--- PASS: TestOpsWriteFix_X2_AuditorPanicIsRecoveredAsFailed (0.00s)
+=== RUN   TestOpsQueue_AC1_ShapeAndNoStore
+--- PASS: TestOpsQueue_AC1_ShapeAndNoStore (0.00s)
+=== RUN   TestOpsQueue_AC1_NoOverrideAndPausedOnlyWhenRateZero
+--- PASS: TestOpsQueue_AC1_NoOverrideAndPausedOnlyWhenRateZero (0.00s)
+=== RUN   TestOpsQueue_AC3_NoSignalAndErrorStill200WithNulls
+--- PASS: TestOpsQueue_AC3_NoSignalAndErrorStill200WithNulls (0.00s)
+=== RUN   TestOpsQueue_AC4_Errors
+--- PASS: TestOpsQueue_AC4_Errors (0.00s)
+=== RUN   TestOpsQueue_AC5_RoleAndPrincipal
+--- PASS: TestOpsQueue_AC5_RoleAndPrincipal (0.00s)
+=== RUN   TestOpsPut_AC6_AC10_AppliesAndAudits
+--- PASS: TestOpsPut_AC6_AC10_AppliesAndAudits (0.00s)
+=== RUN   TestOpsPut_AC10_PreviousReflectsExistingOverride
+--- PASS: TestOpsPut_AC10_PreviousReflectsExistingOverride (0.00s)
+=== RUN   TestOpsPut_AC10_ZeroIsPausedAction
+--- PASS: TestOpsPut_AC10_ZeroIsPausedAction (0.00s)
+=== RUN   TestOpsPut_AC6_BoundariesAccepted
+--- PASS: TestOpsPut_AC6_BoundariesAccepted (0.00s)
+=== RUN   TestOpsWrite_AC9_InvalidInputIs400AndNothingApplied
+--- PASS: TestOpsWrite_AC9_InvalidInputIs400AndNothingApplied (0.00s)
+=== RUN   TestOpsWrite_AC9_ReasonLengthBoundariesAccepted
+--- PASS: TestOpsWrite_AC9_ReasonLengthBoundariesAccepted (0.00s)
+=== RUN   TestOpsDelete_AC8_AC10_ClearsIdempotentlyAndAudits
+--- PASS: TestOpsDelete_AC8_AC10_ClearsIdempotentlyAndAudits (0.00s)
+=== RUN   TestOpsWrite_AC4_RoomNotConfigured404_AndNonUUID400_AndRedisError503
+--- PASS: TestOpsWrite_AC4_RoomNotConfigured404_AndNonUUID400_AndRedisError503 (0.00s)
+=== RUN   TestOpsWrite_AC13_NonOpsForbiddenNothingAppliedOrAudited
+--- PASS: TestOpsWrite_AC13_NonOpsForbiddenNothingAppliedOrAudited (0.00s)
+=== RUN   TestOpsWrite_AC11_AuditErrorKeepsOverrideAndLogsError
+--- PASS: TestOpsWrite_AC11_AuditErrorKeepsOverrideAndLogsError (0.00s)
+=== RUN   TestOpsWrite_AC11_AuditHangIsBoundedBy2s
+--- PASS: TestOpsWrite_AC11_AuditHangIsBoundedBy2s (2.00s)
+=== RUN   TestOpsWrite_AC12_NoAuditStoreFailsClosedButReadWorks
+--- PASS: TestOpsWrite_AC12_NoAuditStoreFailsClosedButReadWorks (0.00s)
+=== RUN   TestOpsWrite_ConcurrentWritersAreAllAudited
+--- PASS: TestOpsWrite_ConcurrentWritersAreAllAudited (0.00s)
+=== RUN   TestOpsPut_ApplyFailureIsNotAudited
+--- PASS: TestOpsPut_ApplyFailureIsNotAudited (0.00s)
+=== RUN   TestOpsPut_RequestCancelledMidApplyStillAppliesAndAudits
+--- PASS: TestOpsPut_RequestCancelledMidApplyStillAppliesAndAudits (0.00s)
+=== RUN   TestOpsPut_TrailingBytesAfterJSONIs400
+--- PASS: TestOpsPut_TrailingBytesAfterJSONIs400 (0.00s)
+=== RUN   TestOpsPutFix_X1_RateMustBeIntegerLiteral
+--- PASS: TestOpsPutFix_X1_RateMustBeIntegerLiteral (0.00s)
+=== RUN   TestOpsPutFix_X3_ResponseReflectsStoredStateAfterConcurrentClear
+--- PASS: TestOpsPutFix_X3_ResponseReflectsStoredStateAfterConcurrentClear (0.00s)
+=== RUN   TestOpsWriteFix_R1_X4_ReasonControlOrInvisibleIs400
+=== RUN   TestOpsWriteFix_R1_X4_ReasonControlOrInvisibleIs400/abc\u0000
+=== RUN   TestOpsWriteFix_R1_X4_ReasonControlOrInvisibleIs400/ab\u0007c
+=== RUN   TestOpsWriteFix_R1_X4_ReasonControlOrInvisibleIs400/ab\nc
+=== RUN   TestOpsWriteFix_R1_X4_ReasonControlOrInvisibleIs400/\u200b\u200b\u200b
+=== RUN   TestOpsWriteFix_R1_X4_ReasonControlOrInvisibleIs400/\u200c\u200d\ufeff
+=== RUN   TestOpsWriteFix_R1_X4_ReasonControlOrInvisibleIs400/\u00a0\u3000\u2003\u200b
+=== RUN   TestOpsWriteFix_R1_X4_ReasonControlOrInvisibleIs400/a\u200b\u200bb
+--- PASS: TestOpsWriteFix_R1_X4_ReasonControlOrInvisibleIs400 (0.00s)
+    --- PASS: TestOpsWriteFix_R1_X4_ReasonControlOrInvisibleIs400/abc\u0000 (0.00s)
+    --- PASS: TestOpsWriteFix_R1_X4_ReasonControlOrInvisibleIs400/ab\u0007c (0.00s)
+    --- PASS: TestOpsWriteFix_R1_X4_ReasonControlOrInvisibleIs400/ab\nc (0.00s)
+    --- PASS: TestOpsWriteFix_R1_X4_ReasonControlOrInvisibleIs400/\u200b\u200b\u200b (0.00s)
+    --- PASS: TestOpsWriteFix_R1_X4_ReasonControlOrInvisibleIs400/\u200c\u200d\ufeff (0.00s)
+    --- PASS: TestOpsWriteFix_R1_X4_ReasonControlOrInvisibleIs400/\u00a0\u3000\u2003\u200b (0.00s)
+    --- PASS: TestOpsWriteFix_R1_X4_ReasonControlOrInvisibleIs400/a\u200b\u200bb (0.00s)
+=== RUN   TestOpsRound2Fix_X21_InvisibleBidiOrControlReasonIs400
+=== RUN   TestOpsRound2Fix_X21_InvisibleBidiOrControlReasonIs400/RLO_x3
+=== RUN   TestOpsRound2Fix_X21_InvisibleBidiOrControlReasonIs400/isolates
+=== RUN   TestOpsRound2Fix_X21_InvisibleBidiOrControlReasonIs400/LRM
+=== RUN   TestOpsRound2Fix_X21_InvisibleBidiOrControlReasonIs400/RLM
+=== RUN   TestOpsRound2Fix_X21_InvisibleBidiOrControlReasonIs400/ALM
+=== RUN   TestOpsRound2Fix_X21_InvisibleBidiOrControlReasonIs400/bidi_spoof
+=== RUN   TestOpsRound2Fix_X21_InvisibleBidiOrControlReasonIs400/word_joiner_x3
+=== RUN   TestOpsRound2Fix_X21_InvisibleBidiOrControlReasonIs400/soft_hyphen_x3
+=== RUN   TestOpsRound2Fix_X21_InvisibleBidiOrControlReasonIs400/combining_acute_x3
+=== RUN   TestOpsRound2Fix_X21_InvisibleBidiOrControlReasonIs400/enclosing_mark_x3
+=== RUN   TestOpsRound2Fix_X21_InvisibleBidiOrControlReasonIs400/hangul_fillers
+=== RUN   TestOpsRound2Fix_X21_InvisibleBidiOrControlReasonIs400/braille_blank_x3
+=== RUN   TestOpsRound2Fix_X21_InvisibleBidiOrControlReasonIs400/variation_selector_x3
+=== RUN   TestOpsRound2Fix_X21_InvisibleBidiOrControlReasonIs400/tag_chars_x3
+=== RUN   TestOpsRound2Fix_X21_InvisibleBidiOrControlReasonIs400/mongolian_VS_x3
+=== RUN   TestOpsRound2Fix_X21_InvisibleBidiOrControlReasonIs400/invisible_operators
+=== RUN   TestOpsRound2Fix_X21_InvisibleBidiOrControlReasonIs400/two_letters_+_fillers
+=== RUN   TestOpsRound2Fix_X21_InvisibleBidiOrControlReasonIs400/NEL_edges
+=== RUN   TestOpsRound2Fix_X21_InvisibleBidiOrControlReasonIs400/NEL_inside
+=== RUN   TestOpsRound2Fix_X21_InvisibleBidiOrControlReasonIs400/interior_tab
+--- PASS: TestOpsRound2Fix_X21_InvisibleBidiOrControlReasonIs400 (0.00s)
+    --- PASS: TestOpsRound2Fix_X21_InvisibleBidiOrControlReasonIs400/RLO_x3 (0.00s)
+    --- PASS: TestOpsRound2Fix_X21_InvisibleBidiOrControlReasonIs400/isolates (0.00s)
+    --- PASS: TestOpsRound2Fix_X21_InvisibleBidiOrControlReasonIs400/LRM (0.00s)
+    --- PASS: TestOpsRound2Fix_X21_InvisibleBidiOrControlReasonIs400/RLM (0.00s)
+    --- PASS: TestOpsRound2Fix_X21_InvisibleBidiOrControlReasonIs400/ALM (0.00s)
+    --- PASS: TestOpsRound2Fix_X21_InvisibleBidiOrControlReasonIs400/bidi_spoof (0.00s)
+    --- PASS: TestOpsRound2Fix_X21_InvisibleBidiOrControlReasonIs400/word_joiner_x3 (0.00s)
+    --- PASS: TestOpsRound2Fix_X21_InvisibleBidiOrControlReasonIs400/soft_hyphen_x3 (0.00s)
+    --- PASS: TestOpsRound2Fix_X21_InvisibleBidiOrControlReasonIs400/combining_acute_x3 (0.00s)
+    --- PASS: TestOpsRound2Fix_X21_InvisibleBidiOrControlReasonIs400/enclosing_mark_x3 (0.00s)
+    --- PASS: TestOpsRound2Fix_X21_InvisibleBidiOrControlReasonIs400/hangul_fillers (0.00s)
+    --- PASS: TestOpsRound2Fix_X21_InvisibleBidiOrControlReasonIs400/braille_blank_x3 (0.00s)
+    --- PASS: TestOpsRound2Fix_X21_InvisibleBidiOrControlReasonIs400/variation_selector_x3 (0.00s)
+    --- PASS: TestOpsRound2Fix_X21_InvisibleBidiOrControlReasonIs400/tag_chars_x3 (0.00s)
+    --- PASS: TestOpsRound2Fix_X21_InvisibleBidiOrControlReasonIs400/mongolian_VS_x3 (0.00s)
+    --- PASS: TestOpsRound2Fix_X21_InvisibleBidiOrControlReasonIs400/invisible_operators (0.00s)
+    --- PASS: TestOpsRound2Fix_X21_InvisibleBidiOrControlReasonIs400/two_letters_+_fillers (0.00s)
+    --- PASS: TestOpsRound2Fix_X21_InvisibleBidiOrControlReasonIs400/NEL_edges (0.00s)
+    --- PASS: TestOpsRound2Fix_X21_InvisibleBidiOrControlReasonIs400/NEL_inside (0.00s)
+    --- PASS: TestOpsRound2Fix_X21_InvisibleBidiOrControlReasonIs400/interior_tab (0.00s)
+=== RUN   TestOpsRound2Fix_X21_VietnameseNFCAndNFDAccepted
+--- PASS: TestOpsRound2Fix_X21_VietnameseNFCAndNFDAccepted (0.00s)
+=== RUN   TestOpsRound2Fix_X22_AuditRecordsCommandNotReadBack
+--- PASS: TestOpsRound2Fix_X22_AuditRecordsCommandNotReadBack (0.00s)
+=== RUN   TestOpsRound2Fix_R23_ReadBackFailureFallsBackToCommandWithWarn
+--- PASS: TestOpsRound2Fix_R23_ReadBackFailureFallsBackToCommandWithWarn (0.00s)
+=== RUN   TestOpsRound2Fix_X24_DuplicateOrCaseMismatchedKeysAre400
+--- PASS: TestOpsRound2Fix_X24_DuplicateOrCaseMismatchedKeysAre400 (0.00s)
+PASS
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/http	4.356s
+=== RUN   TestProm_AdmitState_TheoTungSuKien
+--- PASS: TestProm_AdmitState_TheoTungSuKien (0.00s)
+=== RUN   TestProm_LeaderVaAdjust
+--- PASS: TestProm_LeaderVaAdjust (0.00s)
+PASS
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/metrics	2.107s
+=== RUN   TestFix2_M53_DBActionMapping
+--- PASS: TestFix2_M53_DBActionMapping (0.00s)
+=== RUN   TestNewAuditorFromEnv_AC12_UnsetEmptyOrUnparsableIsPlainNil
+--- PASS: TestNewAuditorFromEnv_AC12_UnsetEmptyOrUnparsableIsPlainNil (0.01s)
+=== RUN   TestNewAuditorFromEnv_AC12_UnreachableKeepsAuditor
+--- PASS: TestNewAuditorFromEnv_AC12_UnreachableKeepsAuditor (0.01s)
+=== RUN   TestDecisionWriter_AC14_NoPoolDropsAndCounts
+--- PASS: TestDecisionWriter_AC14_NoPoolDropsAndCounts (0.00s)
+PASS
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/postgres	0.218s
+?   	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/redis	[no test files]
+=== RUN   TestProbe_DichDungTinHieu
+--- PASS: TestProbe_DichDungTinHieu (0.00s)
+=== RUN   TestProbe_KhongCoTinHieu_LaLoiChuKhongPhaiKhoe
+--- PASS: TestProbe_KhongCoTinHieu_LaLoiChuKhongPhaiKhoe (0.00s)
+=== RUN   TestProbe_PodBaoCaoKhongYeuCau_LaKhoe
+--- PASS: TestProbe_PodBaoCaoKhongYeuCau_LaKhoe (0.00s)
+PASS
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/signal	0.377s
+=== RUN   TestRun_BiFencingKhiAdmit_ThoatNgayVaKhongThaThem
+--- PASS: TestRun_BiFencingKhiAdmit_ThoatNgayVaKhongThaThem (0.05s)
+=== RUN   TestRun_BiFencingKhiGhiNhip_CungThoaiVi
+--- PASS: TestRun_BiFencingKhiGhiNhip_CungThoaiVi (0.01s)
+=== RUN   TestRun_BiFencingKhiShuffle_KhongTiepTucVaoVongAdmit
+--- PASS: TestRun_BiFencingKhiShuffle_KhongTiepTucVaoVongAdmit (0.00s)
+=== RUN   TestRun_LoiThuong_VanChayTiep
+--- PASS: TestRun_LoiThuong_VanChayTiep (0.15s)
+=== RUN   TestRestore_TiepTucNhipCuCuaLeaderTruoc
+=== RUN   TestRestore_TiepTucNhipCuCuaLeaderTruoc/tiep_tuc_nhip_da_luu
+=== RUN   TestRestore_TiepTucNhipCuCuaLeaderTruoc/nhip_luu_vuot_tran_bi_keo_ve_tran
+=== RUN   TestRestore_TiepTucNhipCuCuaLeaderTruoc/chua_tung_ghi_thi_bat_dau_tu_san
+=== RUN   TestRestore_TiepTucNhipCuCuaLeaderTruoc/nhip_luu_0_(rac)_thi_bat_dau_tu_san
+=== RUN   TestRestore_TiepTucNhipCuCuaLeaderTruoc/khong_doc_duoc_thi_bat_dau_tu_san
+--- PASS: TestRestore_TiepTucNhipCuCuaLeaderTruoc (0.00s)
+    --- PASS: TestRestore_TiepTucNhipCuCuaLeaderTruoc/tiep_tuc_nhip_da_luu (0.00s)
+    --- PASS: TestRestore_TiepTucNhipCuCuaLeaderTruoc/nhip_luu_vuot_tran_bi_keo_ve_tran (0.00s)
+    --- PASS: TestRestore_TiepTucNhipCuCuaLeaderTruoc/chua_tung_ghi_thi_bat_dau_tu_san (0.00s)
+    --- PASS: TestRestore_TiepTucNhipCuCuaLeaderTruoc/nhip_luu_0_(rac)_thi_bat_dau_tu_san (0.00s)
+    --- PASS: TestRestore_TiepTucNhipCuCuaLeaderTruoc/khong_doc_duoc_thi_bat_dau_tu_san (0.00s)
+=== RUN   TestSyncOverride_TamDungKhanCapSongSotQuaLeaderMoi
+--- PASS: TestSyncOverride_TamDungKhanCapSongSotQuaLeaderMoi (0.00s)
+=== RUN   TestSyncOverride_GiaTriGhiDeBiChanTaiTran
+--- PASS: TestSyncOverride_GiaTriGhiDeBiChanTaiTran (0.00s)
+=== RUN   TestSyncOverride_OpsBoGhiDe_TraQuyenChoAIMD
+--- PASS: TestSyncOverride_OpsBoGhiDe_TraQuyenChoAIMD (0.00s)
+=== RUN   TestSyncOverride_StoreKhongGoGhiDeTrongRAM
+--- PASS: TestSyncOverride_StoreKhongGoGhiDeTrongRAM (0.00s)
+=== RUN   TestSyncOverride_LoiDoc_GiuNguyenTrangThai
+--- PASS: TestSyncOverride_LoiDoc_GiuNguyenTrangThai (0.00s)
+=== RUN   TestAdjust_SauMoiLanGiamThiGiuMotCuaSo
+--- PASS: TestAdjust_SauMoiLanGiamThiGiuMotCuaSo (0.00s)
+=== RUN   TestAdjust_ODuoiSan_KhongBatCuaSo
+--- PASS: TestAdjust_ODuoiSan_KhongBatCuaSo (0.00s)
+=== RUN   TestAdjust_TieuChiNghiemThu_GiamTrong10sPhucHoiTrong60s
+--- PASS: TestAdjust_TieuChiNghiemThu_GiamTrong10sPhucHoiTrong60s (0.00s)
+=== RUN   TestAdjust_KhongDaoDongKhiSucEpKhongDoi
+--- PASS: TestAdjust_KhongDaoDongKhiSucEpKhongDoi (0.00s)
+=== RUN   TestAdjust_XuatLyDoMoiTick
+--- PASS: TestAdjust_XuatLyDoMoiTick (0.00s)
+=== RUN   TestTick_XuatRateVaDoSauHangCho
+--- PASS: TestTick_XuatRateVaDoSauHangCho (0.00s)
+=== RUN   TestTick_OpsTamDung_MetricBaoRateBang0
+--- PASS: TestTick_OpsTamDung_MetricBaoRateBang0 (0.00s)
+=== RUN   TestTick_LoiDocDoSau_KhongLamHongVongAdmit
+--- PASS: TestTick_LoiDocDoSau_KhongLamHongVongAdmit (0.00s)
+=== RUN   TestTick_KhongGanMetrics_KhongDocThemTuQueue
+--- PASS: TestTick_KhongGanMetrics_KhongDocThemTuQueue (0.00s)
+=== RUN   TestSetRateOverride_IsRespectedOnNextTicks
+--- PASS: TestSetRateOverride_IsRespectedOnNextTicks (0.00s)
+=== RUN   TestSetRateOverride_ZeroPausesAdmissionOnNextTicks
+--- PASS: TestSetRateOverride_ZeroPausesAdmissionOnNextTicks (0.00s)
+=== RUN   TestClearRateOverride_HandsControlBackToAIMD
+=== RUN   TestClearRateOverride_HandsControlBackToAIMD/khoe:_rate_tang_lai_tu_gia_tri_ghi_de
+=== RUN   TestClearRateOverride_HandsControlBackToAIMD/sau_khi_tam_dung_0/s:_bat_dau_lai_tu_san_MinRate,_khong_dung_im_o_0
+--- PASS: TestClearRateOverride_HandsControlBackToAIMD (0.00s)
+    --- PASS: TestClearRateOverride_HandsControlBackToAIMD/khoe:_rate_tang_lai_tu_gia_tri_ghi_de (0.00s)
+    --- PASS: TestClearRateOverride_HandsControlBackToAIMD/sau_khi_tam_dung_0/s:_bat_dau_lai_tu_san_MinRate,_khong_dung_im_o_0 (0.00s)
+=== RUN   TestDefaultAdmitConfig_AdmitTTLIs15Minutes
+--- PASS: TestDefaultAdmitConfig_AdmitTTLIs15Minutes (0.00s)
+=== RUN   TestDefaultAdmitConfig_CarriesEventAndSaleStart
+--- PASS: TestDefaultAdmitConfig_CarriesEventAndSaleStart (0.00s)
+=== RUN   TestDefaultAdmitConfig_RateBoundsAreSane
+--- PASS: TestDefaultAdmitConfig_RateBoundsAreSane (0.00s)
+=== RUN   TestController_StartsConservativelyAtFloor
+--- PASS: TestController_StartsConservativelyAtFloor (0.00s)
+=== RUN   TestTick_HealthySystemIncreasesRate
+--- PASS: TestTick_HealthySystemIncreasesRate (0.00s)
+=== RUN   TestTick_SustainedHealthReachesButNeverExceedsMax
+--- PASS: TestTick_SustainedHealthReachesButNeverExceedsMax (0.00s)
+=== RUN   TestTick_BackpressureDecreasesRate
+=== RUN   TestTick_BackpressureDecreasesRate/p99_vuot_ngan_sach
+=== RUN   TestTick_BackpressureDecreasesRate/ty_le_loi_cao
+=== RUN   TestTick_BackpressureDecreasesRate/pool_DB_gan_can_kiet
+--- PASS: TestTick_BackpressureDecreasesRate (0.00s)
+    --- PASS: TestTick_BackpressureDecreasesRate/p99_vuot_ngan_sach (0.00s)
+    --- PASS: TestTick_BackpressureDecreasesRate/ty_le_loi_cao (0.00s)
+    --- PASS: TestTick_BackpressureDecreasesRate/pool_DB_gan_can_kiet (0.00s)
+=== RUN   TestTick_SustainedBackpressureFloorsAtMinRateAndKeepsTrickling
+--- PASS: TestTick_SustainedBackpressureFloorsAtMinRateAndKeepsTrickling (0.00s)
+=== RUN   TestTick_UnknownHealthIsTreatedAsBackpressure
+--- PASS: TestTick_UnknownHealthIsTreatedAsBackpressure (0.00s)
+=== RUN   TestTick_RecoversAfterBackpressureClears
+--- PASS: TestTick_RecoversAfterBackpressureClears (0.00s)
+=== RUN   TestTick_RateAlwaysWithinBoundsUnderMixedSignals
+--- PASS: TestTick_RateAlwaysWithinBoundsUnderMixedSignals (0.00s)
+=== RUN   TestTick_PublishesRateAndAdmitsThatManyPerSecondWith15mTTL
+--- PASS: TestTick_PublishesRateAndAdmitsThatManyPerSecondWith15mTTL (0.00s)
+=== RUN   TestTick_ReportsQueueFailures
+=== RUN   TestTick_ReportsQueueFailures/cong_bo_rate_loi
+=== RUN   TestTick_ReportsQueueFailures/admit_loi
+--- PASS: TestTick_ReportsQueueFailures (0.00s)
+    --- PASS: TestTick_ReportsQueueFailures/cong_bo_rate_loi (0.00s)
+    --- PASS: TestTick_ReportsQueueFailures/admit_loi (0.00s)
+=== RUN   TestTick_ZeroRateAdmitsNobody
+--- PASS: TestTick_ZeroRateAdmitsNobody (0.00s)
+=== RUN   TestSetRateOverride_TakesEffectImmediately
+--- PASS: TestSetRateOverride_TakesEffectImmediately (0.00s)
+=== RUN   TestSetRateOverride_ZeroPausesAdmission
+--- PASS: TestSetRateOverride_ZeroPausesAdmission (0.00s)
+=== RUN   TestSetRateOverride_NeverNegativeNorAboveCeiling
+--- PASS: TestSetRateOverride_NeverNegativeNorAboveCeiling (0.00s)
+=== RUN   TestSetRateOverride_IsSafeConcurrentlyWithTicks
+--- PASS: TestSetRateOverride_IsSafeConcurrentlyWithTicks (0.00s)
+=== RUN   TestRun_NobodyAdmittedBeforeSaleStart
+--- PASS: TestRun_NobodyAdmittedBeforeSaleStart (0.05s)
+=== RUN   TestRun_LotteryAtT0ThenAdmitsOnlyAfterSaleStart
+--- PASS: TestRun_LotteryAtT0ThenAdmitsOnlyAfterSaleStart (0.06s)
+=== RUN   TestRun_LotterySeedIsNotPredictable
+--- PASS: TestRun_LotterySeedIsNotPredictable (0.00s)
+=== RUN   TestRun_LotteryFailureStopsBeforeAnyAdmission
+--- PASS: TestRun_LotteryFailureStopsBeforeAnyAdmission (0.00s)
+=== RUN   TestRun_StopsWhenContextCancelled
+--- PASS: TestRun_StopsWhenContextCancelled (0.03s)
+=== RUN   TestRun_TransientTickFailureDoesNotStopTheQueue
+--- PASS: TestRun_TransientTickFailureDoesNotStopTheQueue (0.03s)
+=== RUN   TestRun_OverrideFromOpsWhileRunningIsRaceFree
+--- PASS: TestRun_OverrideFromOpsWhileRunningIsRaceFree (0.01s)
+=== RUN   TestSupervisor_ThemVaBotSuKienTheoDanhSach
+--- PASS: TestSupervisor_ThemVaBotSuKienTheoDanhSach (0.01s)
+=== RUN   TestSupervisor_DocDanhSachLoiGiuNguyen
+--- PASS: TestSupervisor_DocDanhSachLoiGiuNguyen (0.02s)
+=== RUN   TestSupervisor_GoroutineThoatThiChayLai
+--- PASS: TestSupervisor_GoroutineThoatThiChayLai (0.00s)
+=== RUN   TestSupervisor_RunDungThiDungHet
+--- PASS: TestSupervisor_RunDungThiDungHet (0.00s)
+=== RUN   TestValidRate_Bounds
+--- PASS: TestValidRate_Bounds (0.00s)
+=== RUN   TestValidateReason_AllCauses
+=== RUN   TestValidateReason_AllCauses/ok
+=== RUN   TestValidateReason_AllCauses/trim_edge_spaces_and_Cf
+=== RUN   TestValidateReason_AllCauses/invalid_utf8
+=== RUN   TestValidateReason_AllCauses/control_inside
+=== RUN   TestValidateReason_AllCauses/NEL_is_control_not_space
+=== RUN   TestValidateReason_AllCauses/bidi_inside
+=== RUN   TestValidateReason_AllCauses/bidi_at_edge_not_trimmed
+=== RUN   TestValidateReason_AllCauses/too_short
+=== RUN   TestValidateReason_AllCauses/empty
+=== RUN   TestValidateReason_AllCauses/combining_marks_not_visible
+=== RUN   TestValidateReason_AllCauses/hangul_filler_not_visible
+=== RUN   TestValidateReason_AllCauses/zwsp_inside_not_visible
+=== RUN   TestValidateReason_AllCauses/exactly_max
+=== RUN   TestValidateReason_AllCauses/too_long
+=== RUN   TestValidateReason_AllCauses/vietnamese_NFD_ok
+--- PASS: TestValidateReason_AllCauses (0.00s)
+    --- PASS: TestValidateReason_AllCauses/ok (0.00s)
+    --- PASS: TestValidateReason_AllCauses/trim_edge_spaces_and_Cf (0.00s)
+    --- PASS: TestValidateReason_AllCauses/invalid_utf8 (0.00s)
+    --- PASS: TestValidateReason_AllCauses/control_inside (0.00s)
+    --- PASS: TestValidateReason_AllCauses/NEL_is_control_not_space (0.00s)
+    --- PASS: TestValidateReason_AllCauses/bidi_inside (0.00s)
+    --- PASS: TestValidateReason_AllCauses/bidi_at_edge_not_trimmed (0.00s)
+    --- PASS: TestValidateReason_AllCauses/too_short (0.00s)
+    --- PASS: TestValidateReason_AllCauses/empty (0.00s)
+    --- PASS: TestValidateReason_AllCauses/combining_marks_not_visible (0.00s)
+    --- PASS: TestValidateReason_AllCauses/hangul_filler_not_visible (0.00s)
+    --- PASS: TestValidateReason_AllCauses/zwsp_inside_not_visible (0.00s)
+    --- PASS: TestValidateReason_AllCauses/exactly_max (0.00s)
+    --- PASS: TestValidateReason_AllCauses/too_long (0.00s)
+    --- PASS: TestValidateReason_AllCauses/vietnamese_NFD_ok (0.00s)
+=== RUN   TestOverrideStatePaused
+--- PASS: TestOverrideStatePaused (0.00s)
+=== RUN   TestNewOpsOverride_NilLoggerUsesDefault
+--- PASS: TestNewOpsOverride_NilLoggerUsesDefault (0.00s)
+=== RUN   TestSet_RejectsInvalidInputBeforeTouchingStore
+--- PASS: TestSet_RejectsInvalidInputBeforeTouchingStore (0.00s)
+=== RUN   TestSet_AppliesThenAudits
+--- PASS: TestSet_AppliesThenAudits (0.00s)
+=== RUN   TestSet_ZeroIsPause
+--- PASS: TestSet_ZeroIsPause (0.00s)
+=== RUN   TestSet_ReadBackReportsStoredState
+--- PASS: TestSet_ReadBackReportsStoredState (0.00s)
+=== RUN   TestSet_ReadBackErrorFallsBackToSentRate
+--- PASS: TestSet_ReadBackErrorFallsBackToSentRate (0.00s)
+=== RUN   TestSet_PrecheckFailures
+=== RUN   TestSet_PrecheckFailures/no_auditor
+=== RUN   TestSet_PrecheckFailures/configured_error
+=== RUN   TestSet_PrecheckFailures/not_configured
+=== RUN   TestSet_PrecheckFailures/read_current_error
+--- PASS: TestSet_PrecheckFailures (0.00s)
+    --- PASS: TestSet_PrecheckFailures/no_auditor (0.00s)
+    --- PASS: TestSet_PrecheckFailures/configured_error (0.00s)
+    --- PASS: TestSet_PrecheckFailures/not_configured (0.00s)
+    --- PASS: TestSet_PrecheckFailures/read_current_error (0.00s)
+=== RUN   TestSet_ApplyErrorSkipsAudit
+--- PASS: TestSet_ApplyErrorSkipsAudit (0.00s)
+=== RUN   TestSet_ApplyUsesDetachedContext
+--- PASS: TestSet_ApplyUsesDetachedContext (0.00s)
+=== RUN   TestAudit_FailureReturnsFailedAndLogsError
+--- PASS: TestAudit_FailureReturnsFailedAndLogsError (0.00s)
+=== RUN   TestAudit_PanicIsRecovered
+--- PASS: TestAudit_PanicIsRecovered (0.00s)
+=== RUN   TestClear_AppliesThenAudits
+--- PASS: TestClear_AppliesThenAudits (0.00s)
+=== RUN   TestClear_Errors
+--- PASS: TestClear_Errors (0.00s)
+PASS
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/app	0.893s
+=== RUN   TestAdmitConfig_KhongCoEnv_DungMacDinh
+--- PASS: TestAdmitConfig_KhongCoEnv_DungMacDinh (0.00s)
+=== RUN   TestAdmitConfig_EnvGhiDeMacDinh
+--- PASS: TestAdmitConfig_EnvGhiDeMacDinh (0.00s)
+=== RUN   TestAdmitConfig_DecreaseCooldown
+--- PASS: TestAdmitConfig_DecreaseCooldown (0.00s)
+=== RUN   TestLeaderConfig
+=== RUN   TestLeaderConfig/khong_phai_so
+=== RUN   TestLeaderConfig/ttl_=_0
+=== RUN   TestLeaderConfig/gia_han_am
+=== RUN   TestLeaderConfig/gia_han_qua_thua_(>_ttl_/_2)
+--- PASS: TestLeaderConfig (0.00s)
+    --- PASS: TestLeaderConfig/khong_phai_so (0.00s)
+    --- PASS: TestLeaderConfig/ttl_=_0 (0.00s)
+    --- PASS: TestLeaderConfig/gia_han_am (0.00s)
+    --- PASS: TestLeaderConfig/gia_han_qua_thua_(>_ttl_/_2) (0.00s)
+=== RUN   TestHealthConfig
+=== RUN   TestHealthConfig/tuoi_khong_so
+=== RUN   TestHealthConfig/tuoi_=_0
+=== RUN   TestHealthConfig/che_do_la
+--- PASS: TestHealthConfig (0.00s)
+    --- PASS: TestHealthConfig/tuoi_khong_so (0.00s)
+    --- PASS: TestHealthConfig/tuoi_=_0 (0.00s)
+    --- PASS: TestHealthConfig/che_do_la (0.00s)
+=== RUN   TestAdmitConfig_GiaTriSai_PhaiTuChoiLucKhoiDong
+=== RUN   TestAdmitConfig_GiaTriSai_PhaiTuChoiLucKhoiDong/khong_phai_so
+=== RUN   TestAdmitConfig_GiaTriSai_PhaiTuChoiLucKhoiDong/max_nho_hon_min
+=== RUN   TestAdmitConfig_GiaTriSai_PhaiTuChoiLucKhoiDong/step_up_am
+=== RUN   TestAdmitConfig_GiaTriSai_PhaiTuChoiLucKhoiDong/backoff_lon_hon_1
+=== RUN   TestAdmitConfig_GiaTriSai_PhaiTuChoiLucKhoiDong/backoff_=_0
+=== RUN   TestAdmitConfig_GiaTriSai_PhaiTuChoiLucKhoiDong/ttl_khong_phai_so
+=== RUN   TestAdmitConfig_GiaTriSai_PhaiTuChoiLucKhoiDong/min_=_0
+=== RUN   TestAdmitConfig_GiaTriSai_PhaiTuChoiLucKhoiDong/backoff_=_1
+=== RUN   TestAdmitConfig_GiaTriSai_PhaiTuChoiLucKhoiDong/ttl_am
+--- PASS: TestAdmitConfig_GiaTriSai_PhaiTuChoiLucKhoiDong (0.00s)
+    --- PASS: TestAdmitConfig_GiaTriSai_PhaiTuChoiLucKhoiDong/khong_phai_so (0.00s)
+    --- PASS: TestAdmitConfig_GiaTriSai_PhaiTuChoiLucKhoiDong/max_nho_hon_min (0.00s)
+    --- PASS: TestAdmitConfig_GiaTriSai_PhaiTuChoiLucKhoiDong/step_up_am (0.00s)
+    --- PASS: TestAdmitConfig_GiaTriSai_PhaiTuChoiLucKhoiDong/backoff_lon_hon_1 (0.00s)
+    --- PASS: TestAdmitConfig_GiaTriSai_PhaiTuChoiLucKhoiDong/backoff_=_0 (0.00s)
+    --- PASS: TestAdmitConfig_GiaTriSai_PhaiTuChoiLucKhoiDong/ttl_khong_phai_so (0.00s)
+    --- PASS: TestAdmitConfig_GiaTriSai_PhaiTuChoiLucKhoiDong/min_=_0 (0.00s)
+    --- PASS: TestAdmitConfig_GiaTriSai_PhaiTuChoiLucKhoiDong/backoff_=_1 (0.00s)
+    --- PASS: TestAdmitConfig_GiaTriSai_PhaiTuChoiLucKhoiDong/ttl_am (0.00s)
+=== RUN   TestAdmitConfig_LoiNoiRoTenBien
+--- PASS: TestAdmitConfig_LoiNoiRoTenBien (0.00s)
+=== RUN   TestSplitCSV
+--- PASS: TestSplitCSV (0.00s)
+PASS
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/config	0.376s
+=== RUN   TestPollInterval_QueuedNearTurnPollsEvery3s
+--- PASS: TestPollInterval_QueuedNearTurnPollsEvery3s (0.00s)
+=== RUN   TestPollInterval_SoldOutIsAFinalStateWithSlowCadence
+--- PASS: TestPollInterval_SoldOutIsAFinalStateWithSlowCadence (0.00s)
+=== RUN   TestPollInterval_QueuedFarRankPollsEvery30s
+--- PASS: TestPollInterval_QueuedFarRankPollsEvery30s (0.00s)
+=== RUN   TestPollInterval_QueuedIsMonotonicNonDecreasingInRank
+--- PASS: TestPollInterval_QueuedIsMonotonicNonDecreasingInRank (0.00s)
+=== RUN   TestPollInterval_AlwaysBoundedByServerCadence
+--- PASS: TestPollInterval_AlwaysBoundedByServerCadence (0.00s)
+=== RUN   TestPollInterval_LobbyDoesNotDependOnRankAndIsNotFastLane
+--- PASS: TestPollInterval_LobbyDoesNotDependOnRankAndIsNotFastLane (0.00s)
+=== RUN   TestEstimateETA_ZeroOrNegativeAdmitRateDoesNotPanic
+--- PASS: TestEstimateETA_ZeroOrNegativeAdmitRateDoesNotPanic (0.00s)
+=== RUN   TestEstimateETA_NoRankMeansNoETA
+--- PASS: TestEstimateETA_NoRankMeansNoETA (0.00s)
+=== RUN   TestEstimateETA_NeverNegativeExceptSentinel
+--- PASS: TestEstimateETA_NeverNegativeExceptSentinel (0.00s)
+=== RUN   TestEstimateETA_CloseToRankOverRate
+--- PASS: TestEstimateETA_CloseToRankOverRate (0.00s)
+=== RUN   TestEstimateETA_MonotonicInRankAndRate
+--- PASS: TestEstimateETA_MonotonicInRankAndRate (0.00s)
+=== RUN   TestBuild_QueuedFarCustomer
+--- PASS: TestBuild_QueuedFarCustomer (0.00s)
+=== RUN   TestBuild_QueuedNearTurnPolls3s
+--- PASS: TestBuild_QueuedNearTurnPolls3s (0.00s)
+=== RUN   TestBuild_LobbyHasNoRankAndNoETA
+--- PASS: TestBuild_LobbyHasNoRankAndNoETA (0.00s)
+=== RUN   TestBuild_AdmittedKeepsExpiry
+--- PASS: TestBuild_AdmittedKeepsExpiry (0.00s)
+=== RUN   TestPosition_JSONContractForClient
+--- PASS: TestPosition_JSONContractForClient (0.00s)
+PASS
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/domain	0.434s

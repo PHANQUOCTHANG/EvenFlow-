@@ -1,0 +1,64 @@
+--- FAIL: TestCorpus_AC18_DefaultConfig (0.26s)
+    corpus_test.go:324: 
+        family                      n   PASS   SLOW  BLOCK  demoted
+        raw_http                  200      0     99    101   100.0%
+        headless                  200      0      0    200   100.0%
+        stealth_rhythm            200      0    200      0   100.0%
+        account_farm              200     12    188      0    94.0%
+        replay_proxy_pool         200    200      0      0     0.0%
+        replay_residential         50     50      0      0     0.0%
+        human/autorepeat           12     12      0      0     0.0%
+        human/cgnat                78     78      0      0     0.0%
+        human/desktop            1657   1657      0      0     0.0%
+        human/fast                 36     36      0      0     0.0%
+        human/household           149    144      5      0     3.4%
+        human/keyboard             35     35      0      0     0.0%
+        human/mobile             2788   2788      0      0     0.0%
+        human/privacy             223    223      0      0     0.0%
+        human/tzspoof              22     22      0      0     0.0%
+        
+        rule       bots   humans   (sessions whose deciding decision fired the rule)
+        R1          200        1
+        R2          400        3
+        R3          200        0
+        R4D         188        5
+        R4N           0        0
+        R5          400        0
+        R5W           5       39
+        R6            0        0
+        R7          246        0
+        
+    corpus_test.go:327: bots caught 78.80% (788/1000), humans demoted 0.10% (5/5000)
+    corpus_test.go:329: bots caught 78.80%, want >= 95%
+--- FAIL: TestCorpus_AC18_HumansOnBothSidesOfThresholds (0.08s)
+    corpus_test.go:405: rt<120:3 rt 120-400:54 | ivCV<0.10:1 >=:2331 | fc<3:70 >=3:1850 | gl off:111 | fp shared >3:5 2-3:62 | /24 >30 ids:0
+    corpus_test.go:410: no human population for "/24 with >30"
+    corpus_test.go:413: not reachable by humans by construction: R1-server (needs >= 4 joins without a slot), R6 (dormant), R7 (needs a shared digest)
+--- FAIL: TestFix1_Amendment2_Corpus (0.26s)
+    fixround1_test.go:332: Amendment 2:
+        raw_http               200/200 demoted
+        headless               200/200 demoted
+        stealth_rhythm         200/200 demoted
+        account_farm           188/200 demoted
+        replay_proxy_pool      0/200 demoted
+        replay_residential     0/50 demoted
+        bots caught 78.80% (788/1000), humans demoted 0.10% (5/5000)
+    fixround1_test.go:335: Amendment 2 misses the AC-18 gate: bots 78.80% humans 0.10%
+--- FAIL: TestGuard_AC6_ObserveGetsHashPrefixAndSq (0.00s)
+    guard_test.go:89: prefix passed to store = 198.51.100.23/32
+--- FAIL: TestGuard_AC15_NoRawValuesInDecision (0.00s)
+    guard_test.go:279: decision contains "198.51.100.23"
+--- FAIL: TestNetPrefix_AC15 (0.00s)
+    privacy_test.go:55: NetPrefix(203.0.113.77) = 203.0.113.77/32, want 203.0.113.0/24
+    privacy_test.go:58: NetPrefix(203.0.113.77) kept the full address
+    privacy_test.go:55: NetPrefix(203.0.113.0) = 203.0.113.0/32, want 203.0.113.0/24
+    privacy_test.go:55: NetPrefix(10.1.2.255) = 10.1.2.255/32, want 10.1.2.0/24
+    privacy_test.go:58: NetPrefix(10.1.2.255) kept the full address
+    privacy_test.go:55: NetPrefix(::ffff:203.0.113.77) = 203.0.113.77/32, want 203.0.113.0/24
+--- FAIL: TestEvaluate_AC15_DecisionHasNoRawValues (0.00s)
+    score_test.go:299: NetPrefix 203.0.113.77/32
+FAIL
+FAIL	github.com/eventflow/eventflow/libs/go/antibot	9.402s
+?   	github.com/eventflow/eventflow/libs/go/antibot/corpus	[no test files]
+ok  	github.com/eventflow/eventflow/libs/go/antibot/redisstate	1.996s
+FAIL

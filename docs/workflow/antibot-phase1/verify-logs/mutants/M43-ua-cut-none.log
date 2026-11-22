@@ -1,0 +1,7 @@
+--- FAIL: TestAntibotJoin_Contracts_InputBuiltFromRequest (0.00s)
+    antibot_handler_test.go:354: UserAgent length 700, want first 512 bytes
+FAIL
+FAIL	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/http	4.124s
+ok  	github.com/eventflow/eventflow/services/waitingroom/cmd/server	0.230s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/postgres	0.226s
+FAIL

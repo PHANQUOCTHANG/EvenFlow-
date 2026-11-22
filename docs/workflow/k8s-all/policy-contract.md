@@ -225,14 +225,17 @@ K8S_SCHEMA_VERSION=1.32.0
 
 ## 8. Secret keys per process and overlay (AC-18; replaces the spec E3 table)
 
-Format: env name ← `<Secret base name>/<key>`. No ref is optional, in either overlay.
+Format: env name ← `<Secret base name>/<key>`. No ref is optional, in either overlay, with one exception
+(antibot-phase1 fix round 1, R-6, under TCR N-5): waitingroom `ANTIBOT_HASH_KEY` is `optional: true`, so a missing
+anti-bot key never stops the waiting room; the app refuses to start without it when `APP_ENV=production` and
+`ANTIBOT_MODE` is not off (AC-16).
 
 | Process | Both overlays | local only | staging only |
 |---|---|---|---|
 | gateway | `JWT_SECRET ← eventflow-auth/JWT_SECRET` | — | — |
 | identity | `DATABASE_URL ← eventflow-db/DATABASE_URL_DIRECT`, `JWT_SECRET ← eventflow-auth/JWT_SECRET`, `PII_ENC_KEY`, `PII_HASH_KEY ← eventflow-identity/<same>` | — | `SMTP_USER`, `SMTP_PASS ← eventflow-identity/<same>` |
 | event | `DATABASE_URL ← eventflow-db/DATABASE_URL_DIRECT`, `RABBITMQ_URL ← eventflow-mq/AMQP_URL` | — | — |
-| waitingroom | `QUEUE_TOKEN_SECRET ← eventflow-auth/QUEUE_TOKEN_SECRET`; allowed, not required: `DATABASE_URL ← eventflow-db/DATABASE_URL_POOLED` (ops audit log, addendum 2026-11-21) | — | — |
+| waitingroom | `QUEUE_TOKEN_SECRET ← eventflow-auth/QUEUE_TOKEN_SECRET`, `ANTIBOT_HASH_KEY ← eventflow-auth/ANTIBOT_HASH_KEY` (anti-bot fp HMAC key, antibot-phase1 TCR N-5, 2026-11-22); allowed, not required: `DATABASE_URL ← eventflow-db/DATABASE_URL_POOLED` (ops audit log, addendum 2026-11-21) | — | — |
 | waitingroom-controller | — | — | — |
 | ticketing | `DATABASE_URL ← eventflow-db/DATABASE_URL_POOLED`, `QUEUE_TOKEN_SECRET ← eventflow-auth/QUEUE_TOKEN_SECRET`, `HMAC_QR_SECRET ← eventflow-qr/HMAC_QR_SECRET` | — | — |
 | ticketing-worker | `DATABASE_URL ← eventflow-db/DATABASE_URL_POOLED`, `RABBITMQ_URL ← eventflow-mq/AMQP_URL`, `HMAC_QR_SECRET ← eventflow-qr/HMAC_QR_SECRET` | — | — |

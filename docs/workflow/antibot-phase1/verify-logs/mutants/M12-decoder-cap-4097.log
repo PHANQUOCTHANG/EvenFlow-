@@ -1,0 +1,8 @@
+--- FAIL: TestDecodeSignals_AC3_InvalidPayloadReasons (0.00s)
+    --- FAIL: TestDecodeSignals_AC3_InvalidPayloadReasons/over_4_KiB (0.00s)
+        signals_test.go:75: reason = "", want "too_large"
+FAIL
+FAIL	github.com/eventflow/eventflow/libs/go/antibot	8.817s
+?   	github.com/eventflow/eventflow/libs/go/antibot/corpus	[no test files]
+ok  	github.com/eventflow/eventflow/libs/go/antibot/redisstate	1.883s
+FAIL

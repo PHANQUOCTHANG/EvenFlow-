@@ -98,6 +98,7 @@ def env_for(p, overlay="local"):
         f("REDIS_ADDR", CMAP("REDIS_ADDR"))
     if p == "waitingroom":
         f("QUEUE_TOKEN_SECRET", SECRET("eventflow-auth", "QUEUE_TOKEN_SECRET"))
+        f("ANTIBOT_HASH_KEY", SECRET("eventflow-auth", "ANTIBOT_HASH_KEY", opt=True))  # R-6: the one allowed optional ref
     if p == "ticketing":
         f("DATABASE_URL", SECRET("eventflow-db", "DATABASE_URL_POOLED"))
         f("QUEUE_TOKEN_SECRET", SECRET("eventflow-auth", "QUEUE_TOKEN_SECRET"))
@@ -288,7 +289,8 @@ SECRETS = {
     "eventflow-db": {"DATABASE_URL_DIRECT": "postgres://eventflow:dev-pw@eventflow-postgres:5432/eventflow",
                      "DATABASE_URL_POOLED": "postgres://eventflow:dev-pw@eventflow-pgbouncer:5432/eventflow"},
     "eventflow-mq": {"AMQP_URL": "amqp://eventflow:dev-pw@eventflow-rabbitmq:5672/"},
-    "eventflow-auth": {"JWT_SECRET": "dev-jwt-secret-change-me-0123456789", "QUEUE_TOKEN_SECRET": "dev-queue-token-secret-0123456789"},
+    "eventflow-auth": {"JWT_SECRET": "dev-jwt-secret-change-me-0123456789", "QUEUE_TOKEN_SECRET": "dev-queue-token-secret-0123456789",
+                       "ANTIBOT_HASH_KEY": "dev-antibot-hash-key-0123456789ab"},
     "eventflow-qr": {"HMAC_QR_SECRET": "dev-hmac-qr-secret-0123456789"},
     "eventflow-identity": {"PII_ENC_KEY": "dev-pii-enc-key-0123456789", "PII_HASH_KEY": "dev-pii-hash-key-0123456789"},
     "eventflow-payment": {"VNPAY_TMN_CODE": "dev-vnpay-tmn", "VNPAY_HASH_SECRET": "dev-vnpay-hash", "MOMO_PARTNER_CODE": "dev-momo-partner",
@@ -800,6 +802,9 @@ mut("AC-18", "staging-stripe-key-extra", lambda o: ctr(o, "payment")["env"].appe
 mut("AC-18", "staging-identity-smtp-missing", lambda o: rm_env(o, "identity", "SMTP_PASS"), overlay="staging")
 # k8s-all integration (develop PR #99): waitingroom may hold DATABASE_URL only from the POOLED key
 mut("AC-18", "waitingroom-uses-direct-db", lambda o: ctr(o, "waitingroom")["env"].append({"name": "DATABASE_URL", "valueFrom": SX(o, "eventflow-db", "DATABASE_URL_DIRECT")}))
+# antibot-phase1 R-6: only waitingroom ANTIBOT_HASH_KEY may be optional; its other secret refs may not.
+mut("AC-18", "waitingroom-queue-token-optional", lambda o: optional_secret(o, "waitingroom", "QUEUE_TOKEN_SECRET"))
+mut("AC-18", "staging-waitingroom-queue-token-optional", lambda o: optional_secret(o, "waitingroom", "QUEUE_TOKEN_SECRET"), overlay="staging")
 mut("AC-18", "staging-waitingroom-uses-direct-db", lambda o: ctr(o, "waitingroom")["env"].append({"name": "DATABASE_URL", "valueFrom": SECRET("eventflow-db", "DATABASE_URL_DIRECT")}), overlay="staging")
 mut("AC-22", "ref-uses-base-name-local", lambda o: setenv(o, "event", "RABBITMQ_URL", valueFrom=SECRET("eventflow-mq", "AMQP_URL")))
 mut("AC-32", "gemini-mock-absent", gemini_absent, overlay="staging", extra=("ai-worker",))

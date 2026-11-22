@@ -1,0 +1,7 @@
+--- FAIL: TestGuard_AC7_PanicPasses (0.00s)
+    guard_test.go:133: panic escaped Decide: store exploded
+FAIL
+FAIL	github.com/eventflow/eventflow/libs/go/antibot	9.680s
+?   	github.com/eventflow/eventflow/libs/go/antibot/corpus	[no test files]
+ok  	github.com/eventflow/eventflow/libs/go/antibot/redisstate	2.263s
+FAIL

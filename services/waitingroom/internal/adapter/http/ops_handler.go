@@ -77,6 +77,7 @@ type queueStateJSON struct {
 	EventID         string         `json:"event_id"`
 	GeneratedAt     string         `json:"generated_at"`
 	Lobby           int64          `json:"lobby"`
+	LobbySlow       int64          `json:"lobby_slow"`
 	Queued          int64          `json:"queued"`
 	AdmittedActive  int64          `json:"admitted_active"`
 	AdmitRatePerSec float64        `json:"admit_rate_per_sec"`
@@ -136,6 +137,7 @@ func (h *OpsHandler) queue(w http.ResponseWriter, r *http.Request) {
 		EventID:         eventID,
 		GeneratedAt:     now.UTC().Format(time.RFC3339Nano),
 		Lobby:           st.Lobby,
+		LobbySlow:       st.LobbySlow,
 		Queued:          st.Queued,
 		AdmittedActive:  st.AdmittedActive,
 		AdmitRatePerSec: st.AdmitRatePerSec,

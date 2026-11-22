@@ -1,0 +1,42 @@
+{
+  "task": "antibot-phase1",
+  "jira": [
+    "EV-173 (EVF-100) client signals: timing / interaction / fingerprint sent with the join request",
+    "EV-174 (EVF-101) rule engine R1-R7 in-path, p99 < 5 ms",
+    "EV-175 (EVF-102) risk score + 4 action tiers (pass / challenge / slow lane / block)"
+  ],
+  "owner": "TranDinhVo",
+  "branch": "feature/antibot-phase1",
+  "base_commit": "918667c",
+  "tier": "high-risk",
+  "rule_hits": [
+    "hot path: new in-path decision on POST /v1/events/{id}/queue/join (services/waitingroom/internal/adapter/http/handler.go) that can deny or demote real buyers during an on-sale",
+    "security: untrusted client-supplied signal payload parsed on the hot path (size caps, validation)",
+    "fairness: waitingroom Lua scripts change (join.lua, shuffle.lua, status.lua) for the slow lane; BR-Q1 lottery and BR-Q3 idempotency must hold",
+    "token invalidation: new revoke script removes an identity's queue slot on BLOCK",
+    "persistence: first writer of the existing bot_decisions table (migrations/0001_core.sql:211); no new migration",
+    "privacy: device fingerprint and client IP handled; only HMAC / network prefix may be stored",
+    "config: new env ANTIBOT_* (mode flag, hash key, weights, tiers); invalid values fail startup",
+    "cross-module: libs/go (new package), services/waitingroom, apps/web, deploy/observability"
+  ],
+  "llm_assessment": "high-risk (agrees with rules; cannot lower)",
+  "user_override": null,
+  "human_decision": "2026-11-21 TranDinhVo: scope = EV-173, EV-174, EV-175. Out of scope: EV-176 Turnstile, EV-177 appeal UI, EV-178 AI-proposed rules (must plug in later).",
+  "consequences": [
+    "human approves spec.md (decisions D1-D8, questions Q-1..Q-5) before any test or code",
+    "plan review mandatory",
+    "correctness + security + performance review in parallel; challenge on a different model (Sonnet)",
+    "benchmark gate p99 < 5 ms, offline corpus gate (bots caught >= 95%, humans demoted < 1%), mutation test, rollback check",
+    "human sign-off before merge to develop"
+  ],
+  "no_migrations": true,
+  "no_new_dependencies": true,
+  "dependency_note": "Go: redis/go-redis v9, pgx v5, prometheus already in libs/go and waitingroom; time/tzdata is stdlib. Web: no new npm package.",
+  "out_of_scope": [
+    "EV-176 Turnstile (CHALLENGE tier uses a configured fallback in phase 1)",
+    "EV-177 bot_decisions appeal / unblock UI",
+    "EV-178 AI-proposed rules and their approval flow",
+    "R6 data source (payment card fingerprint writer in payment-svc): rule defined and tested, dormant at join",
+    "services/antibot standalone HTTP API (stays a stub; see spec D1)"
+  ]
+}

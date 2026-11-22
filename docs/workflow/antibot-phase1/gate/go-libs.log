@@ -1,0 +1,1250 @@
+gofmt ok: libs/go/antibot/config.go
+gofmt ok: libs/go/antibot/config_test.go
+gofmt ok: libs/go/antibot/corpus/corpus.go
+gofmt ok: libs/go/antibot/corpus_test.go
+gofmt ok: libs/go/antibot/engine_bench_test.go
+gofmt ok: libs/go/antibot/fixround1_test.go
+gofmt ok: libs/go/antibot/fixround2_test.go
+gofmt ok: libs/go/antibot/golden_test.go
+gofmt ok: libs/go/antibot/guard.go
+gofmt ok: libs/go/antibot/guard_test.go
+gofmt ok: libs/go/antibot/helpers_test.go
+gofmt ok: libs/go/antibot/metrics.go
+gofmt ok: libs/go/antibot/privacy.go
+gofmt ok: libs/go/antibot/privacy_test.go
+gofmt ok: libs/go/antibot/race_off_test.go
+gofmt ok: libs/go/antibot/race_on_test.go
+gofmt ok: libs/go/antibot/redisstate/fixround1_integration_test.go
+gofmt ok: libs/go/antibot/redisstate/pool_test.go
+gofmt ok: libs/go/antibot/redisstate/store.go
+gofmt ok: libs/go/antibot/redisstate/store_integration_test.go
+gofmt ok: libs/go/antibot/redisstate/store_test.go
+gofmt ok: libs/go/antibot/rules.go
+gofmt ok: libs/go/antibot/rules_test.go
+gofmt ok: libs/go/antibot/score.go
+gofmt ok: libs/go/antibot/score_test.go
+gofmt ok: libs/go/antibot/signals.go
+gofmt ok: libs/go/antibot/signals_test.go
+gofmt ok: libs/go/antibot/types.go
+go vet: clean
+go vet -tags integration: clean
+0 issues.
+golangci-lint v2.12.2: clean
+=== RUN   TestUnion_BoTrungBoRongSapXep
+--- PASS: TestUnion_BoTrungBoRongSapXep (0.00s)
+PASS
+ok  	github.com/eventflow/eventflow/libs/go/activeevents	2.027s
+=== RUN   TestLoadConfig_AC16_DefaultsInDev
+--- PASS: TestLoadConfig_AC16_DefaultsInDev (0.00s)
+=== RUN   TestLoadConfig_AC16_ProductionWithKey
+--- PASS: TestLoadConfig_AC16_ProductionWithKey (0.00s)
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/mode
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/weight_not_number
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/weight_one
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/weight_negative
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/weight_unknown_rule
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/weight_malformed
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/weight_legacy_R4_(split_into_R4D/R4N)
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/breaker_garbage
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/breaker_zero_calls
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/breaker_too_many_calls
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/breaker_window_too_short
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/breaker_open_too_long
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/rules_legacy_R4_FP_MAX
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/rules_share_out_of_range
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/rules_CV_zero
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/rules_count_fractional
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/tiers_not_increasing
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/tiers_equal
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/tiers_zero
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/tiers_one
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/tiers_count
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/tiers_text
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/fallback
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/penalty_zero
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/penalty_huge
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/penalty_text
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/rules_unknown_key
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/rules_not_number
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/rules_negative
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/rules_zero
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/timeout_zero
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/timeout_over
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/sample_over
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/sample_negative
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/key_missing_in_production
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/key_short_in_production
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/key_not_base64_in_production
+--- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable (0.00s)
+    --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/mode (0.00s)
+    --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/weight_not_number (0.00s)
+    --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/weight_one (0.00s)
+    --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/weight_negative (0.00s)
+    --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/weight_unknown_rule (0.00s)
+    --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/weight_malformed (0.00s)
+    --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/weight_legacy_R4_(split_into_R4D/R4N) (0.00s)
+    --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/breaker_garbage (0.00s)
+    --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/breaker_zero_calls (0.00s)
+    --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/breaker_too_many_calls (0.00s)
+    --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/breaker_window_too_short (0.00s)
+    --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/breaker_open_too_long (0.00s)
+    --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/rules_legacy_R4_FP_MAX (0.00s)
+    --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/rules_share_out_of_range (0.00s)
+    --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/rules_CV_zero (0.00s)
+    --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/rules_count_fractional (0.00s)
+    --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/tiers_not_increasing (0.00s)
+    --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/tiers_equal (0.00s)
+    --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/tiers_zero (0.00s)
+    --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/tiers_one (0.00s)
+    --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/tiers_count (0.00s)
+    --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/tiers_text (0.00s)
+    --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/fallback (0.00s)
+    --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/penalty_zero (0.00s)
+    --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/penalty_huge (0.00s)
+    --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/penalty_text (0.00s)
+    --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/rules_unknown_key (0.00s)
+    --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/rules_not_number (0.00s)
+    --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/rules_negative (0.00s)
+    --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/rules_zero (0.00s)
+    --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/timeout_zero (0.00s)
+    --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/timeout_over (0.00s)
+    --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/sample_over (0.00s)
+    --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/sample_negative (0.00s)
+    --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/key_missing_in_production (0.00s)
+    --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/key_short_in_production (0.00s)
+    --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/key_not_base64_in_production (0.00s)
+=== RUN   TestLoadConfig_AC16_ShadowAlsoValidates
+--- PASS: TestLoadConfig_AC16_ShadowAlsoValidates (0.00s)
+=== RUN   TestLoadConfig_AC16_OffSkipsValidation
+--- PASS: TestLoadConfig_AC16_OffSkipsValidation (0.00s)
+=== RUN   TestLoadConfig_AC16_ModesAccepted
+--- PASS: TestLoadConfig_AC16_ModesAccepted (0.00s)
+=== RUN   TestLoadConfig_AC16_PartialListsMergeAndValidValuesLoad
+--- PASS: TestLoadConfig_AC16_PartialListsMergeAndValidValuesLoad (0.00s)
+=== RUN   TestCorpus_AC18_DefaultConfig
+    corpus_test.go:324: 
+        family                      n   PASS   SLOW  BLOCK  demoted
+        raw_http                  200      0     99    101   100.0%
+        headless                  200      0      0    200   100.0%
+        stealth_rhythm            200      0    200      0   100.0%
+        account_farm              200     12    188      0    94.0%
+        replay_proxy_pool         200     30    170      0    85.0%
+        replay_residential         50     50      0      0     0.0%
+        human/autorepeat           12     12      0      0     0.0%
+        human/cgnat                78     78      0      0     0.0%
+        human/desktop            1657   1657      0      0     0.0%
+        human/fast                 36     36      0      0     0.0%
+        human/household           149    144      5      0     3.4%
+        human/keyboard             35     35      0      0     0.0%
+        human/mobile             2788   2788      0      0     0.0%
+        human/privacy             223    223      0      0     0.0%
+        human/tzspoof              22     22      0      0     0.0%
+        
+        rule       bots   humans   (sessions whose deciding decision fired the rule)
+        R1          200        1
+        R2          400        3
+        R3          200        0
+        R4D         188        5
+        R4N         377       20
+        R5          400        0
+        R5W           5       39
+        R6            0        0
+        R7          246        0
+        
+    corpus_test.go:327: bots caught 95.80% (958/1000), humans demoted 0.10% (5/5000)
+--- PASS: TestCorpus_AC18_DefaultConfig (3.52s)
+=== RUN   TestCorpus_AC18_HumansOnBothSidesOfThresholds
+    corpus_test.go:405: rt<120:3 rt 120-400:54 | ivCV<0.10:1 >=:2331 | fc<3:70 >=3:1850 | gl off:111 | fp shared >3:5 2-3:62 | /24 >30 ids:2
+    corpus_test.go:413: not reachable by humans by construction: R1-server (needs >= 4 joins without a slot), R6 (dormant), R7 (needs a shared digest)
+--- PASS: TestCorpus_AC18_HumansOnBothSidesOfThresholds (1.12s)
+=== RUN   TestCorpus_AC18_SensitivityTable
+    corpus_test.go:457: 
+        threshold       scale    value     bots %     humans %
+        R1_CLIENT_CV      0.8    0.080     95.80%        0.10%
+        R1_CLIENT_CV      1.0    0.100     95.80%        0.10%
+        R1_CLIENT_CV      1.2    0.120     95.80%        0.10%
+        R2_MS             0.8       96     89.70%        0.10%
+        R2_MS             1.0      120     95.80%        0.10%
+        R2_MS             1.2      144     95.80%        0.10%
+        R4D_MAX           0.8        2     96.20%        0.34%
+        R4D_MAX           1.0        3     95.80%        0.10%
+        R4D_MAX           1.2        4     95.40%        0.00%
+        R4N_MAX           0.8       24     96.40%        0.10%
+        R4N_MAX           1.0       30     95.80%        0.10%
+        R4N_MAX           1.2       36     95.20%        0.10%
+        R5_FONTS_MIN      0.8        2     95.80%        0.10%
+        R5_FONTS_MIN      1.0        3     95.80%        0.10%
+        R5_FONTS_MIN      1.2        4     95.80%        0.10%
+        R7_MIN_IDS        0.8        2     95.80%        0.10%
+        R7_MIN_IDS        1.0        3     95.80%        0.10%
+        R7_MIN_IDS        1.2        4     95.80%        0.10%
+        
+--- PASS: TestCorpus_AC18_SensitivityTable (52.04s)
+=== RUN   TestCorpus_GeneratorDeterministic
+--- PASS: TestCorpus_GeneratorDeterministic (2.17s)
+=== RUN   TestCorpus_AC18_RecordedSessions
+    corpus_test.go:482: PENDING (AC-18): no recorded sessions in testdata/corpus/recorded yet; the team records 50-100 with the real collector
+--- SKIP: TestCorpus_AC18_RecordedSessions (0.00s)
+=== RUN   TestEvaluate_AC5_P99
+    engine_bench_test.go:40: latency assertion skipped under -race / -short
+--- SKIP: TestEvaluate_AC5_P99 (0.00s)
+=== RUN   TestFix1_X1_CancelledParentIsNotARedisFailure
+--- PASS: TestFix1_X1_CancelledParentIsNotARedisFailure (0.01s)
+=== RUN   TestFix1_X1_CancelDuringObserveIsNotCounted
+--- PASS: TestFix1_X1_CancelDuringObserveIsNotCounted (0.01s)
+=== RUN   TestFix1_X2_ShortStallDoesNotOpenBreaker
+--- PASS: TestFix1_X2_ShortStallDoesNotOpenBreaker (0.02s)
+=== RUN   TestFix1_X2_LastingSlownessOpensBreaker
+--- PASS: TestFix1_X2_LastingSlownessOpensBreaker (0.31s)
+=== RUN   TestFix1_X2_PoolExhaustionNeverOpensBreaker
+--- PASS: TestFix1_X2_PoolExhaustionNeverOpensBreaker (0.34s)
+=== RUN   TestFix1_X2_HalfOpenProbe
+--- PASS: TestFix1_X2_HalfOpenProbe (0.78s)
+=== RUN   TestFix1_R5_ProductionRefusesDevKeys
+--- PASS: TestFix1_R5_ProductionRefusesDevKeys (0.00s)
+=== RUN   TestFix1_Amendment2_WorkedExamples
+=== RUN   TestFix1_Amendment2_WorkedExamples/X-4_python-requests_+_forged_pe:1
+=== RUN   TestFix1_Amendment2_WorkedExamples/X-4_wd_true_alone
+=== RUN   TestFix1_Amendment2_WorkedExamples/missing_payload,_browser
+=== RUN   TestFix1_Amendment2_WorkedExamples/raw_HTTP_python-requests
+=== RUN   TestFix1_Amendment2_WorkedExamples/X-5_okhttp,_no_signals
+=== RUN   TestFix1_Amendment2_WorkedExamples/X-5_okhttp,_valid_signals
+=== RUN   TestFix1_Amendment2_WorkedExamples/X-5_okhttp_+_privacy_browser_sign
+=== RUN   TestFix1_Amendment2_WorkedExamples/headless_default
+=== RUN   TestFix1_Amendment2_WorkedExamples/shared_fp_only_(X-6_withdrawn,_R4D_0.60)
+=== RUN   TestFix1_Amendment2_WorkedExamples/account_farm
+=== RUN   TestFix1_Amendment2_WorkedExamples/shared_fp_+_privacy_browser
+--- PASS: TestFix1_Amendment2_WorkedExamples (0.01s)
+    --- PASS: TestFix1_Amendment2_WorkedExamples/X-4_python-requests_+_forged_pe:1 (0.00s)
+    --- PASS: TestFix1_Amendment2_WorkedExamples/X-4_wd_true_alone (0.00s)
+    --- PASS: TestFix1_Amendment2_WorkedExamples/missing_payload,_browser (0.00s)
+    --- PASS: TestFix1_Amendment2_WorkedExamples/raw_HTTP_python-requests (0.00s)
+    --- PASS: TestFix1_Amendment2_WorkedExamples/X-5_okhttp,_no_signals (0.00s)
+    --- PASS: TestFix1_Amendment2_WorkedExamples/X-5_okhttp,_valid_signals (0.00s)
+    --- PASS: TestFix1_Amendment2_WorkedExamples/X-5_okhttp_+_privacy_browser_sign (0.00s)
+    --- PASS: TestFix1_Amendment2_WorkedExamples/headless_default (0.00s)
+    --- PASS: TestFix1_Amendment2_WorkedExamples/shared_fp_only_(X-6_withdrawn,_R4D_0.60) (0.00s)
+    --- PASS: TestFix1_Amendment2_WorkedExamples/account_farm (0.00s)
+    --- PASS: TestFix1_Amendment2_WorkedExamples/shared_fp_+_privacy_browser (0.00s)
+=== RUN   TestFix1_Amendment2_Corpus
+    fixround1_test.go:332: Amendment 2:
+        raw_http               200/200 demoted
+        headless               200/200 demoted
+        stealth_rhythm         200/200 demoted
+        account_farm           188/200 demoted
+        replay_proxy_pool      170/200 demoted
+        replay_residential     0/50 demoted
+        bots caught 95.80% (958/1000), humans demoted 0.10% (5/5000)
+--- PASS: TestFix1_Amendment2_Corpus (3.60s)
+=== RUN   TestFix2_M16_OneProbeDuringRealHalfOpen
+--- PASS: TestFix2_M16_OneProbeDuringRealHalfOpen (0.16s)
+=== RUN   TestFix2_R23_NonProbeResultIgnoredWhileHalfOpen
+--- PASS: TestFix2_R23_NonProbeResultIgnoredWhileHalfOpen (0.17s)
+=== RUN   TestFix2_R23_NonProbeFailureIgnoredWhileHalfOpen
+--- PASS: TestFix2_R23_NonProbeFailureIgnoredWhileHalfOpen (0.43s)
+=== RUN   TestFix2_R22_RandomKeyWithDevIsAccepted
+--- PASS: TestFix2_R22_RandomKeyWithDevIsAccepted (0.01s)
+=== RUN   TestGolden_AC3_WebSnapshotsDecode
+=== RUN   TestGolden_AC3_WebSnapshotsDecode/click_only.json
+=== RUN   TestGolden_AC3_WebSnapshotsDecode/mobile_touch.json
+=== RUN   TestGolden_AC3_WebSnapshotsDecode/scripted_keyboard.json
+--- PASS: TestGolden_AC3_WebSnapshotsDecode (0.00s)
+    --- PASS: TestGolden_AC3_WebSnapshotsDecode/click_only.json (0.00s)
+    --- PASS: TestGolden_AC3_WebSnapshotsDecode/mobile_touch.json (0.00s)
+    --- PASS: TestGolden_AC3_WebSnapshotsDecode/scripted_keyboard.json (0.00s)
+=== RUN   TestGuard_AC6_ObserveGetsHashPrefixAndSq
+--- PASS: TestGuard_AC6_ObserveGetsHashPrefixAndSq (0.00s)
+=== RUN   TestGuard_AC7_TimeoutDegrades
+--- PASS: TestGuard_AC7_TimeoutDegrades (0.01s)
+=== RUN   TestGuard_AC7_ErrorDegrades
+--- PASS: TestGuard_AC7_ErrorDegrades (0.00s)
+=== RUN   TestGuard_AC7_PanicPasses
+--- PASS: TestGuard_AC7_PanicPasses (0.00s)
+=== RUN   TestGuard_AC7_BreakerOpensAndCloses
+--- PASS: TestGuard_AC7_BreakerOpensAndCloses (0.31s)
+=== RUN   TestGuard_AC3_InvalidSignalsMetric
+--- PASS: TestGuard_AC3_InvalidSignalsMetric (0.00s)
+=== RUN   TestGuard_AC17_DecisionMetrics
+--- PASS: TestGuard_AC17_DecisionMetrics (0.00s)
+=== RUN   TestGuard_AC14_SinkSelection
+--- PASS: TestGuard_AC14_SinkSelection (7.00s)
+=== RUN   TestGuard_AC12_StickyBlocks
+--- PASS: TestGuard_AC12_StickyBlocks (0.00s)
+=== RUN   TestGuard_AC13_ShadowAlwaysPasses
+--- PASS: TestGuard_AC13_ShadowAlwaysPasses (0.00s)
+=== RUN   TestGuard_AC15_NoRawValuesInDecision
+--- PASS: TestGuard_AC15_NoRawValuesInDecision (0.00s)
+=== RUN   TestGuard_AC7_ConcurrentDecide
+--- PASS: TestGuard_AC7_ConcurrentDecide (0.74s)
+=== RUN   TestFPHash_AC15_IsTruncatedHMAC
+--- PASS: TestFPHash_AC15_IsTruncatedHMAC (0.00s)
+=== RUN   TestNetPrefix_AC15
+--- PASS: TestNetPrefix_AC15 (0.00s)
+=== RUN   TestEvaluate_AC4_BaselineFiresNothing
+--- PASS: TestEvaluate_AC4_BaselineFiresNothing (0.00s)
+=== RUN   TestRule_AC4_R1Client
+=== RUN   TestRule_AC4_R1Client/8_intervals_CV_0.09
+=== RUN   TestRule_AC4_R1Client/8_intervals_CV_0_(fixed_rhythm)
+=== RUN   TestRule_AC4_R1Client/7_intervals_CV_0_(below_min_samples)
+=== RUN   TestRule_AC4_R1Client/8_intervals_CV_exactly_0.10
+=== RUN   TestRule_AC4_R1Client/8_intervals_CV_0.12
+=== RUN   TestRule_AC4_R1Client/32_intervals_CV_0
+=== RUN   TestRule_AC4_R1Client/iv_absent
+=== RUN   TestRule_AC4_R1Client/config_min_10:_9_samples
+=== RUN   TestRule_AC4_R1Client/config_CV_0.15:_CV_0.12
+--- PASS: TestRule_AC4_R1Client (0.01s)
+    --- PASS: TestRule_AC4_R1Client/8_intervals_CV_0.09 (0.00s)
+    --- PASS: TestRule_AC4_R1Client/8_intervals_CV_0_(fixed_rhythm) (0.00s)
+    --- PASS: TestRule_AC4_R1Client/7_intervals_CV_0_(below_min_samples) (0.00s)
+    --- PASS: TestRule_AC4_R1Client/8_intervals_CV_exactly_0.10 (0.00s)
+    --- PASS: TestRule_AC4_R1Client/8_intervals_CV_0.12 (0.00s)
+    --- PASS: TestRule_AC4_R1Client/32_intervals_CV_0 (0.00s)
+    --- PASS: TestRule_AC4_R1Client/iv_absent (0.00s)
+    --- PASS: TestRule_AC4_R1Client/config_min_10:_9_samples (0.00s)
+    --- PASS: TestRule_AC4_R1Client/config_CV_0.15:_CV_0.12 (0.00s)
+=== RUN   TestRule_AC4_R1Server
+=== RUN   TestRule_AC4_R1Server/4_equal_gaps
+=== RUN   TestRule_AC4_R1Server/4_gaps_CV_0.04
+=== RUN   TestRule_AC4_R1Server/3_equal_gaps
+=== RUN   TestRule_AC4_R1Server/4_gaps_CV_exactly_0.05
+=== RUN   TestRule_AC4_R1Server/4_gaps_CV_0.06
+=== RUN   TestRule_AC4_R1Server/8_equal_gaps
+=== RUN   TestRule_AC4_R1Server/unknown_state
+--- PASS: TestRule_AC4_R1Server (0.01s)
+    --- PASS: TestRule_AC4_R1Server/4_equal_gaps (0.00s)
+    --- PASS: TestRule_AC4_R1Server/4_gaps_CV_0.04 (0.00s)
+    --- PASS: TestRule_AC4_R1Server/3_equal_gaps (0.00s)
+    --- PASS: TestRule_AC4_R1Server/4_gaps_CV_exactly_0.05 (0.00s)
+    --- PASS: TestRule_AC4_R1Server/4_gaps_CV_0.06 (0.00s)
+    --- PASS: TestRule_AC4_R1Server/8_equal_gaps (0.00s)
+    --- PASS: TestRule_AC4_R1Server/unknown_state (0.00s)
+=== RUN   TestRule_AC4_R2
+=== RUN   TestRule_AC4_R2/rt_119
+=== RUN   TestRule_AC4_R2/rt_120
+=== RUN   TestRule_AC4_R2/rt_121
+=== RUN   TestRule_AC4_R2/rt_0
+=== RUN   TestRule_AC4_R2/rt_absent
+=== RUN   TestRule_AC4_R2/rt_out_of_range
+=== RUN   TestRule_AC4_R2/config_200:_rt_150
+--- PASS: TestRule_AC4_R2 (0.01s)
+    --- PASS: TestRule_AC4_R2/rt_119 (0.00s)
+    --- PASS: TestRule_AC4_R2/rt_120 (0.00s)
+    --- PASS: TestRule_AC4_R2/rt_121 (0.00s)
+    --- PASS: TestRule_AC4_R2/rt_0 (0.00s)
+    --- PASS: TestRule_AC4_R2/rt_absent (0.00s)
+    --- PASS: TestRule_AC4_R2/rt_out_of_range (0.00s)
+    --- PASS: TestRule_AC4_R2/config_200:_rt_150 (0.00s)
+=== RUN   TestRule_AC4_R3
+=== RUN   TestRule_AC4_R3/all_zero
+=== RUN   TestRule_AC4_R3/one_pointer_event_(the_click)
+=== RUN   TestRule_AC4_R3/keyboard_only_(Enter)
+=== RUN   TestRule_AC4_R3/scroll_only
+=== RUN   TestRule_AC4_R3/missing_payload
+=== RUN   TestRule_AC4_R3/bad_json
+--- PASS: TestRule_AC4_R3 (0.00s)
+    --- PASS: TestRule_AC4_R3/all_zero (0.00s)
+    --- PASS: TestRule_AC4_R3/one_pointer_event_(the_click) (0.00s)
+    --- PASS: TestRule_AC4_R3/keyboard_only_(Enter) (0.00s)
+    --- PASS: TestRule_AC4_R3/scroll_only (0.00s)
+    --- PASS: TestRule_AC4_R3/missing_payload (0.00s)
+    --- PASS: TestRule_AC4_R3/bad_json (0.00s)
+=== RUN   TestRule_AC4_VersionOnlyScoresR3Only
+--- PASS: TestRule_AC4_VersionOnlyScoresR3Only (0.00s)
+=== RUN   TestRule_AC4_R4D
+=== RUN   TestRule_AC4_R4D/4_identities
+=== RUN   TestRule_AC4_R4D/3_identities
+=== RUN   TestRule_AC4_R4D/2_identities
+=== RUN   TestRule_AC4_R4D/64_identities_(cap)
+=== RUN   TestRule_AC4_R4D/no_fp_in_payload
+=== RUN   TestRule_AC4_R4D/unknown_state
+=== RUN   TestRule_AC4_R4D/config_max_5:_5_identities
+--- PASS: TestRule_AC4_R4D (0.01s)
+    --- PASS: TestRule_AC4_R4D/4_identities (0.00s)
+    --- PASS: TestRule_AC4_R4D/3_identities (0.00s)
+    --- PASS: TestRule_AC4_R4D/2_identities (0.00s)
+    --- PASS: TestRule_AC4_R4D/64_identities_(cap) (0.00s)
+    --- PASS: TestRule_AC4_R4D/no_fp_in_payload (0.00s)
+    --- PASS: TestRule_AC4_R4D/unknown_state (0.00s)
+    --- PASS: TestRule_AC4_R4D/config_max_5:_5_identities (0.00s)
+=== RUN   TestRule_AC4_R4N
+=== RUN   TestRule_AC4_R4N/31_identities
+=== RUN   TestRule_AC4_R4N/30_identities
+=== RUN   TestRule_AC4_R4N/29_identities
+=== RUN   TestRule_AC4_R4N/suppressed_prefix
+=== RUN   TestRule_AC4_R4N/unknown_state
+--- PASS: TestRule_AC4_R4N (0.00s)
+    --- PASS: TestRule_AC4_R4N/31_identities (0.00s)
+    --- PASS: TestRule_AC4_R4N/30_identities (0.00s)
+    --- PASS: TestRule_AC4_R4N/29_identities (0.00s)
+    --- PASS: TestRule_AC4_R4N/suppressed_prefix (0.00s)
+    --- PASS: TestRule_AC4_R4N/unknown_state (0.00s)
+=== RUN   TestRule_AC4_R5Strong
+=== RUN   TestRule_AC4_R5Strong/empty_UA
+=== RUN   TestRule_AC4_R5Strong/wd_true
+=== RUN   TestRule_AC4_R5Strong/wd_false
+=== RUN   TestRule_AC4_R5Strong/missing_payload
+=== RUN   TestRule_AC4_R5Strong/browser_UA
+=== RUN   TestRule_AC4_R5Strong/case-insensitive
+=== RUN   TestRule_AC4_R5Strong/custom_list_replaces_built-in_(built-in_entry_no_longer_matches)
+=== RUN   TestRule_AC4_R5Strong/custom_list_entry
+=== RUN   TestRule_AC4_R5Strong/deny_HeadlessChrome/131.0
+=== RUN   TestRule_AC4_R5Strong/deny_PhantomJS/2.1
+=== RUN   TestRule_AC4_R5Strong/deny_python-requests/2.31
+=== RUN   TestRule_AC4_R5Strong/deny_python-httpx/0.27
+=== RUN   TestRule_AC4_R5Strong/deny_Python/3.12_aiohttp/3.9
+=== RUN   TestRule_AC4_R5Strong/deny_curl/8.5.0
+=== RUN   TestRule_AC4_R5Strong/deny_Wget/1.21
+=== RUN   TestRule_AC4_R5Strong/deny_Scrapy/2.11
+=== RUN   TestRule_AC4_R5Strong/deny_Puppeteer
+=== RUN   TestRule_AC4_R5Strong/deny_Playwright/1.48
+=== RUN   TestRule_AC4_R5Strong/deny_Selenium/4.25
+=== RUN   TestRule_AC4_R5Strong/weak_Go-http-client/1.1
+=== RUN   TestRule_AC4_R5Strong/weak_okhttp/4.12
+=== RUN   TestRule_AC4_R5Strong/weak_node-fetch/1.0
+=== RUN   TestRule_AC4_R5Strong/weak_axios/1.7.2
+--- PASS: TestRule_AC4_R5Strong (0.02s)
+    --- PASS: TestRule_AC4_R5Strong/empty_UA (0.00s)
+    --- PASS: TestRule_AC4_R5Strong/wd_true (0.00s)
+    --- PASS: TestRule_AC4_R5Strong/wd_false (0.00s)
+    --- PASS: TestRule_AC4_R5Strong/missing_payload (0.00s)
+    --- PASS: TestRule_AC4_R5Strong/browser_UA (0.00s)
+    --- PASS: TestRule_AC4_R5Strong/case-insensitive (0.00s)
+    --- PASS: TestRule_AC4_R5Strong/custom_list_replaces_built-in_(built-in_entry_no_longer_matches) (0.00s)
+    --- PASS: TestRule_AC4_R5Strong/custom_list_entry (0.00s)
+    --- PASS: TestRule_AC4_R5Strong/deny_HeadlessChrome/131.0 (0.00s)
+    --- PASS: TestRule_AC4_R5Strong/deny_PhantomJS/2.1 (0.00s)
+    --- PASS: TestRule_AC4_R5Strong/deny_python-requests/2.31 (0.00s)
+    --- PASS: TestRule_AC4_R5Strong/deny_python-httpx/0.27 (0.00s)
+    --- PASS: TestRule_AC4_R5Strong/deny_Python/3.12_aiohttp/3.9 (0.00s)
+    --- PASS: TestRule_AC4_R5Strong/deny_curl/8.5.0 (0.00s)
+    --- PASS: TestRule_AC4_R5Strong/deny_Wget/1.21 (0.00s)
+    --- PASS: TestRule_AC4_R5Strong/deny_Scrapy/2.11 (0.00s)
+    --- PASS: TestRule_AC4_R5Strong/deny_Puppeteer (0.00s)
+    --- PASS: TestRule_AC4_R5Strong/deny_Playwright/1.48 (0.00s)
+    --- PASS: TestRule_AC4_R5Strong/deny_Selenium/4.25 (0.00s)
+    --- PASS: TestRule_AC4_R5Strong/weak_Go-http-client/1.1 (0.00s)
+    --- PASS: TestRule_AC4_R5Strong/weak_okhttp/4.12 (0.00s)
+    --- PASS: TestRule_AC4_R5Strong/weak_node-fetch/1.0 (0.00s)
+    --- PASS: TestRule_AC4_R5Strong/weak_axios/1.7.2 (0.00s)
+=== RUN   TestRule_AC4_R5Weak
+=== RUN   TestRule_AC4_R5Weak/gl_false_only
+=== RUN   TestRule_AC4_R5Weak/fc_2_only
+=== RUN   TestRule_AC4_R5Weak/tz_mismatch_only
+=== RUN   TestRule_AC4_R5Weak/gl_false_+_fc_2
+=== RUN   TestRule_AC4_R5Weak/gl_false_+_fc_3_(at_threshold,_not_weak)
+=== RUN   TestRule_AC4_R5Weak/fc_2_+_tz_mismatch
+=== RUN   TestRule_AC4_R5Weak/gl_false_+_tz_mismatch
+=== RUN   TestRule_AC4_R5Weak/all_three_weak
+=== RUN   TestRule_AC4_R5Weak/DST-aware_zone_agrees_(Berlin_winter_+60)
+=== RUN   TestRule_AC4_R5Weak/DST-aware_zone_disagrees_(Berlin_winter_+120)
+=== RUN   TestRule_AC4_R5Weak/invalid_zone_is_not_evaluated
+=== RUN   TestRule_AC4_R5Weak/iPhone:_fc_not_evaluated
+=== RUN   TestRule_AC4_R5Weak/Android:_fc_not_evaluated
+=== RUN   TestRule_AC4_R5Weak/mobile:_gl_false_+_tz_mismatch_still_weak_x2
+=== RUN   TestRule_AC4_R5Weak/strong_+_2_weak_=_R5_only
+=== RUN   TestRule_AC4_R5Weak/weak_signs_absent
+--- PASS: TestRule_AC4_R5Weak (0.01s)
+    --- PASS: TestRule_AC4_R5Weak/gl_false_only (0.00s)
+    --- PASS: TestRule_AC4_R5Weak/fc_2_only (0.00s)
+    --- PASS: TestRule_AC4_R5Weak/tz_mismatch_only (0.00s)
+    --- PASS: TestRule_AC4_R5Weak/gl_false_+_fc_2 (0.00s)
+    --- PASS: TestRule_AC4_R5Weak/gl_false_+_fc_3_(at_threshold,_not_weak) (0.00s)
+    --- PASS: TestRule_AC4_R5Weak/fc_2_+_tz_mismatch (0.00s)
+    --- PASS: TestRule_AC4_R5Weak/gl_false_+_tz_mismatch (0.00s)
+    --- PASS: TestRule_AC4_R5Weak/all_three_weak (0.00s)
+    --- PASS: TestRule_AC4_R5Weak/DST-aware_zone_agrees_(Berlin_winter_+60) (0.00s)
+    --- PASS: TestRule_AC4_R5Weak/DST-aware_zone_disagrees_(Berlin_winter_+120) (0.00s)
+    --- PASS: TestRule_AC4_R5Weak/invalid_zone_is_not_evaluated (0.00s)
+    --- PASS: TestRule_AC4_R5Weak/iPhone:_fc_not_evaluated (0.00s)
+    --- PASS: TestRule_AC4_R5Weak/Android:_fc_not_evaluated (0.00s)
+    --- PASS: TestRule_AC4_R5Weak/mobile:_gl_false_+_tz_mismatch_still_weak_x2 (0.00s)
+    --- PASS: TestRule_AC4_R5Weak/strong_+_2_weak_=_R5_only (0.00s)
+    --- PASS: TestRule_AC4_R5Weak/weak_signs_absent (0.00s)
+=== RUN   TestRule_AC4_R6
+=== RUN   TestRule_AC4_R6/4_identities
+=== RUN   TestRule_AC4_R6/3_identities
+=== RUN   TestRule_AC4_R6/unknown_(-1,_phase_1)
+=== RUN   TestRule_AC4_R6/zero-value_state_(unknown)
+--- PASS: TestRule_AC4_R6 (0.00s)
+    --- PASS: TestRule_AC4_R6/4_identities (0.00s)
+    --- PASS: TestRule_AC4_R6/3_identities (0.00s)
+    --- PASS: TestRule_AC4_R6/unknown_(-1,_phase_1) (0.00s)
+    --- PASS: TestRule_AC4_R6/zero-value_state_(unknown) (0.00s)
+=== RUN   TestRule_AC4_R7
+=== RUN   TestRule_AC4_R7/3_identities
+=== RUN   TestRule_AC4_R7/2_identities
+=== RUN   TestRule_AC4_R7/4_identities
+=== RUN   TestRule_AC4_R7/sq_absent
+=== RUN   TestRule_AC4_R7/sn_out_of_range_(11)
+=== RUN   TestRule_AC4_R7/sb_absent
+=== RUN   TestRule_AC4_R7/sb_out_of_range_(3)
+=== RUN   TestRule_AC4_R7/unknown_state
+=== RUN   TestRule_AC4_R7/config_min_events_16:_sn_12
+=== RUN   TestRule_AC4_R7/config_min_buckets_8:_sb_6
+=== RUN   TestRule_AC4_R7/config_min_ids_5:_4_identities
+--- PASS: TestRule_AC4_R7 (0.01s)
+    --- PASS: TestRule_AC4_R7/3_identities (0.00s)
+    --- PASS: TestRule_AC4_R7/2_identities (0.00s)
+    --- PASS: TestRule_AC4_R7/4_identities (0.00s)
+    --- PASS: TestRule_AC4_R7/sq_absent (0.00s)
+    --- PASS: TestRule_AC4_R7/sn_out_of_range_(11) (0.00s)
+    --- PASS: TestRule_AC4_R7/sb_absent (0.00s)
+    --- PASS: TestRule_AC4_R7/sb_out_of_range_(3) (0.00s)
+    --- PASS: TestRule_AC4_R7/unknown_state (0.00s)
+    --- PASS: TestRule_AC4_R7/config_min_events_16:_sn_12 (0.00s)
+    --- PASS: TestRule_AC4_R7/config_min_buckets_8:_sb_6 (0.00s)
+    --- PASS: TestRule_AC4_R7/config_min_ids_5:_4_identities (0.00s)
+=== RUN   TestEvaluate_AC7_UnknownStateUsesStatelessRulesOnly
+--- PASS: TestEvaluate_AC7_UnknownStateUsesStatelessRulesOnly (0.00s)
+=== RUN   TestEvaluate_AC4_OnlyKnownRuleIDs
+--- PASS: TestEvaluate_AC4_OnlyKnownRuleIDs (0.00s)
+=== RUN   TestScore_AC8_DefaultOutcomesTable
+=== RUN   TestScore_AC8_DefaultOutcomesTable/missing_payload,_browser_UA
+=== RUN   TestScore_AC8_DefaultOutcomesTable/missing_payload,_identity_holds_a_slot
+=== RUN   TestScore_AC8_DefaultOutcomesTable/raw_HTTP_python-requests
+=== RUN   TestScore_AC8_DefaultOutcomesTable/headless_default
+=== RUN   TestScore_AC8_DefaultOutcomesTable/stealth_fixed_rhythm
+=== RUN   TestScore_AC8_DefaultOutcomesTable/account_farm
+=== RUN   TestScore_AC8_DefaultOutcomesTable/shared_fp_only
+=== RUN   TestScore_AC8_DefaultOutcomesTable/replay_small_proxy_pool
+=== RUN   TestScore_AC8_DefaultOutcomesTable/replay_distinct_networks
+=== RUN   TestScore_AC8_DefaultOutcomesTable/human_on_CGNAT_/24
+=== RUN   TestScore_AC8_DefaultOutcomesTable/cluster_+_fast_click
+=== RUN   TestScore_AC8_DefaultOutcomesTable/cluster_+_privacy_browser
+=== RUN   TestScore_AC8_DefaultOutcomesTable/cluster_+_fast_+_privacy
+=== RUN   TestScore_AC8_DefaultOutcomesTable/one_weak:_R2
+=== RUN   TestScore_AC8_DefaultOutcomesTable/one_weak:_R5W
+=== RUN   TestScore_AC8_DefaultOutcomesTable/one_weak:_R1
+=== RUN   TestScore_AC8_DefaultOutcomesTable/fast_click_+_privacy_browser
+=== RUN   TestScore_AC8_DefaultOutcomesTable/R1_+_R7
+--- PASS: TestScore_AC8_DefaultOutcomesTable (0.01s)
+    --- PASS: TestScore_AC8_DefaultOutcomesTable/missing_payload,_browser_UA (0.00s)
+    --- PASS: TestScore_AC8_DefaultOutcomesTable/missing_payload,_identity_holds_a_slot (0.00s)
+    --- PASS: TestScore_AC8_DefaultOutcomesTable/raw_HTTP_python-requests (0.00s)
+    --- PASS: TestScore_AC8_DefaultOutcomesTable/headless_default (0.00s)
+    --- PASS: TestScore_AC8_DefaultOutcomesTable/stealth_fixed_rhythm (0.00s)
+    --- PASS: TestScore_AC8_DefaultOutcomesTable/account_farm (0.00s)
+    --- PASS: TestScore_AC8_DefaultOutcomesTable/shared_fp_only (0.00s)
+    --- PASS: TestScore_AC8_DefaultOutcomesTable/replay_small_proxy_pool (0.00s)
+    --- PASS: TestScore_AC8_DefaultOutcomesTable/replay_distinct_networks (0.00s)
+    --- PASS: TestScore_AC8_DefaultOutcomesTable/human_on_CGNAT_/24 (0.00s)
+    --- PASS: TestScore_AC8_DefaultOutcomesTable/cluster_+_fast_click (0.00s)
+    --- PASS: TestScore_AC8_DefaultOutcomesTable/cluster_+_privacy_browser (0.00s)
+    --- PASS: TestScore_AC8_DefaultOutcomesTable/cluster_+_fast_+_privacy (0.00s)
+    --- PASS: TestScore_AC8_DefaultOutcomesTable/one_weak:_R2 (0.00s)
+    --- PASS: TestScore_AC8_DefaultOutcomesTable/one_weak:_R5W (0.00s)
+    --- PASS: TestScore_AC8_DefaultOutcomesTable/one_weak:_R1 (0.00s)
+    --- PASS: TestScore_AC8_DefaultOutcomesTable/fast_click_+_privacy_browser (0.00s)
+    --- PASS: TestScore_AC8_DefaultOutcomesTable/R1_+_R7 (0.00s)
+=== RUN   TestScore_AC8_NoisyOrRounded
+--- PASS: TestScore_AC8_NoisyOrRounded (0.00s)
+=== RUN   TestScore_AC8_TierBoundariesLowerInclusive
+--- PASS: TestScore_AC8_TierBoundariesLowerInclusive (0.01s)
+=== RUN   TestScore_AC8_BlockEligibilityCap
+--- PASS: TestScore_AC8_BlockEligibilityCap (0.00s)
+=== RUN   TestScore_AC11_RejoinKeepsSlotUnlessBlock
+--- PASS: TestScore_AC11_RejoinKeepsSlotUnlessBlock (0.00s)
+=== RUN   TestScore_AC12_Sticky
+--- PASS: TestScore_AC12_Sticky (0.00s)
+=== RUN   TestScore_AC10_AC13_AppliedMatrix
+--- PASS: TestScore_AC10_AC13_AppliedMatrix (0.00s)
+=== RUN   TestScore_AC14_FiredSorted
+--- PASS: TestScore_AC14_FiredSorted (0.00s)
+=== RUN   TestEvaluate_AC15_DecisionHasNoRawValues
+--- PASS: TestEvaluate_AC15_DecisionHasNoRawValues (0.00s)
+=== RUN   TestDecodeSignals_AC3_ValidPayload
+--- PASS: TestDecodeSignals_AC3_ValidPayload (0.00s)
+=== RUN   TestDecodeSignals_AC3_UnknownFieldsIgnored
+--- PASS: TestDecodeSignals_AC3_UnknownFieldsIgnored (0.00s)
+=== RUN   TestDecodeSignals_AC3_InvalidPayloadReasons
+=== RUN   TestDecodeSignals_AC3_InvalidPayloadReasons/nil_(signals_absent)
+=== RUN   TestDecodeSignals_AC3_InvalidPayloadReasons/empty
+=== RUN   TestDecodeSignals_AC3_InvalidPayloadReasons/json_null
+=== RUN   TestDecodeSignals_AC3_InvalidPayloadReasons/string
+=== RUN   TestDecodeSignals_AC3_InvalidPayloadReasons/array
+=== RUN   TestDecodeSignals_AC3_InvalidPayloadReasons/number
+=== RUN   TestDecodeSignals_AC3_InvalidPayloadReasons/bool
+=== RUN   TestDecodeSignals_AC3_InvalidPayloadReasons/empty_object_(demo.sh_/_k6)
+=== RUN   TestDecodeSignals_AC3_InvalidPayloadReasons/v_absent
+=== RUN   TestDecodeSignals_AC3_InvalidPayloadReasons/v_2
+=== RUN   TestDecodeSignals_AC3_InvalidPayloadReasons/v_0
+=== RUN   TestDecodeSignals_AC3_InvalidPayloadReasons/v_string
+=== RUN   TestDecodeSignals_AC3_InvalidPayloadReasons/truncated_json
+=== RUN   TestDecodeSignals_AC3_InvalidPayloadReasons/garbage
+=== RUN   TestDecodeSignals_AC3_InvalidPayloadReasons/over_4_KiB
+--- PASS: TestDecodeSignals_AC3_InvalidPayloadReasons (0.00s)
+    --- PASS: TestDecodeSignals_AC3_InvalidPayloadReasons/nil_(signals_absent) (0.00s)
+    --- PASS: TestDecodeSignals_AC3_InvalidPayloadReasons/empty (0.00s)
+    --- PASS: TestDecodeSignals_AC3_InvalidPayloadReasons/json_null (0.00s)
+    --- PASS: TestDecodeSignals_AC3_InvalidPayloadReasons/string (0.00s)
+    --- PASS: TestDecodeSignals_AC3_InvalidPayloadReasons/array (0.00s)
+    --- PASS: TestDecodeSignals_AC3_InvalidPayloadReasons/number (0.00s)
+    --- PASS: TestDecodeSignals_AC3_InvalidPayloadReasons/bool (0.00s)
+    --- PASS: TestDecodeSignals_AC3_InvalidPayloadReasons/empty_object_(demo.sh_/_k6) (0.00s)
+    --- PASS: TestDecodeSignals_AC3_InvalidPayloadReasons/v_absent (0.00s)
+    --- PASS: TestDecodeSignals_AC3_InvalidPayloadReasons/v_2 (0.00s)
+    --- PASS: TestDecodeSignals_AC3_InvalidPayloadReasons/v_0 (0.00s)
+    --- PASS: TestDecodeSignals_AC3_InvalidPayloadReasons/v_string (0.00s)
+    --- PASS: TestDecodeSignals_AC3_InvalidPayloadReasons/truncated_json (0.00s)
+    --- PASS: TestDecodeSignals_AC3_InvalidPayloadReasons/garbage (0.00s)
+    --- PASS: TestDecodeSignals_AC3_InvalidPayloadReasons/over_4_KiB (0.00s)
+=== RUN   TestDecodeSignals_AC3_VersionOnlyIsValidButEmpty
+--- PASS: TestDecodeSignals_AC3_VersionOnlyIsValidButEmpty (0.00s)
+=== RUN   TestDecodeSignals_AC3_SizeCapBoundary
+--- PASS: TestDecodeSignals_AC3_SizeCapBoundary (0.00s)
+=== RUN   TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload
+=== RUN   TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/pe_over
+=== RUN   TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/tzo_over
+=== RUN   TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/fp_short
+=== RUN   TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/sn_under
+=== RUN   TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/sb_over
+=== RUN   TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/rt_neg
+=== RUN   TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/fc_over
+=== RUN   TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/sn_over
+=== RUN   TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/sq_upper
+=== RUN   TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/fp_chars
+=== RUN   TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/sb_under
+=== RUN   TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/iv_item
+=== RUN   TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/iv_length
+=== RUN   TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/rt_over
+=== RUN   TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/sq_short
+=== RUN   TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/tz_chars
+--- PASS: TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload (0.01s)
+    --- PASS: TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/pe_over (0.00s)
+    --- PASS: TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/tzo_over (0.00s)
+    --- PASS: TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/fp_short (0.00s)
+    --- PASS: TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/sn_under (0.00s)
+    --- PASS: TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/sb_over (0.00s)
+    --- PASS: TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/rt_neg (0.00s)
+    --- PASS: TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/fc_over (0.00s)
+    --- PASS: TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/sn_over (0.00s)
+    --- PASS: TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/sq_upper (0.00s)
+    --- PASS: TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/fp_chars (0.00s)
+    --- PASS: TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/sb_under (0.00s)
+    --- PASS: TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/iv_item (0.00s)
+    --- PASS: TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/iv_length (0.00s)
+    --- PASS: TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/rt_over (0.00s)
+    --- PASS: TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/sq_short (0.00s)
+    --- PASS: TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/tz_chars (0.00s)
+=== RUN   TestDecodeSignals_AC3_WrongTypeDropsOnlyThatField
+=== RUN   TestDecodeSignals_AC3_WrongTypeDropsOnlyThatField/rt_string
+=== RUN   TestDecodeSignals_AC3_WrongTypeDropsOnlyThatField/pe_bool
+=== RUN   TestDecodeSignals_AC3_WrongTypeDropsOnlyThatField/iv_object
+=== RUN   TestDecodeSignals_AC3_WrongTypeDropsOnlyThatField/wd_string
+=== RUN   TestDecodeSignals_AC3_WrongTypeDropsOnlyThatField/gl_number
+=== RUN   TestDecodeSignals_AC3_WrongTypeDropsOnlyThatField/tz_number
+=== RUN   TestDecodeSignals_AC3_WrongTypeDropsOnlyThatField/sq_null
+=== RUN   TestDecodeSignals_AC3_WrongTypeDropsOnlyThatField/iv_strs
+=== RUN   TestDecodeSignals_AC3_WrongTypeDropsOnlyThatField/fp_array
+--- PASS: TestDecodeSignals_AC3_WrongTypeDropsOnlyThatField (0.00s)
+    --- PASS: TestDecodeSignals_AC3_WrongTypeDropsOnlyThatField/rt_string (0.00s)
+    --- PASS: TestDecodeSignals_AC3_WrongTypeDropsOnlyThatField/pe_bool (0.00s)
+    --- PASS: TestDecodeSignals_AC3_WrongTypeDropsOnlyThatField/iv_object (0.00s)
+    --- PASS: TestDecodeSignals_AC3_WrongTypeDropsOnlyThatField/wd_string (0.00s)
+    --- PASS: TestDecodeSignals_AC3_WrongTypeDropsOnlyThatField/gl_number (0.00s)
+    --- PASS: TestDecodeSignals_AC3_WrongTypeDropsOnlyThatField/tz_number (0.00s)
+    --- PASS: TestDecodeSignals_AC3_WrongTypeDropsOnlyThatField/sq_null (0.00s)
+    --- PASS: TestDecodeSignals_AC3_WrongTypeDropsOnlyThatField/iv_strs (0.00s)
+    --- PASS: TestDecodeSignals_AC3_WrongTypeDropsOnlyThatField/fp_array (0.00s)
+=== RUN   TestDecodeSignals_AC3_WrongTypeFieldIsAbsentForRules
+--- PASS: TestDecodeSignals_AC3_WrongTypeFieldIsAbsentForRules (0.00s)
+=== RUN   TestDecodeSignals_AC3_NumbersRounded
+--- PASS: TestDecodeSignals_AC3_NumbersRounded (0.00s)
+=== RUN   FuzzEvaluate
+=== RUN   FuzzEvaluate/seed#0
+=== RUN   FuzzEvaluate/seed#1
+=== RUN   FuzzEvaluate/seed#2
+=== RUN   FuzzEvaluate/seed#3
+--- PASS: FuzzEvaluate (0.00s)
+    --- PASS: FuzzEvaluate/seed#0 (0.00s)
+    --- PASS: FuzzEvaluate/seed#1 (0.00s)
+    --- PASS: FuzzEvaluate/seed#2 (0.00s)
+    --- PASS: FuzzEvaluate/seed#3 (0.00s)
+=== RUN   FuzzDecodeSignals
+=== RUN   FuzzDecodeSignals/seed#0
+=== RUN   FuzzDecodeSignals/seed#1
+=== RUN   FuzzDecodeSignals/seed#2
+=== RUN   FuzzDecodeSignals/seed#3
+=== RUN   FuzzDecodeSignals/seed#4
+=== RUN   FuzzDecodeSignals/seed#5
+=== RUN   FuzzDecodeSignals/seed#6
+=== RUN   FuzzDecodeSignals/seed#7
+=== RUN   FuzzDecodeSignals/seed#8
+=== RUN   FuzzDecodeSignals/seed#9
+=== RUN   FuzzDecodeSignals/seed#10
+=== RUN   FuzzDecodeSignals/seed#11
+=== RUN   FuzzDecodeSignals/seed#12
+=== RUN   FuzzDecodeSignals/seed#13
+--- PASS: FuzzDecodeSignals (0.00s)
+    --- PASS: FuzzDecodeSignals/seed#0 (0.00s)
+    --- PASS: FuzzDecodeSignals/seed#1 (0.00s)
+    --- PASS: FuzzDecodeSignals/seed#2 (0.00s)
+    --- PASS: FuzzDecodeSignals/seed#3 (0.00s)
+    --- PASS: FuzzDecodeSignals/seed#4 (0.00s)
+    --- PASS: FuzzDecodeSignals/seed#5 (0.00s)
+    --- PASS: FuzzDecodeSignals/seed#6 (0.00s)
+    --- PASS: FuzzDecodeSignals/seed#7 (0.00s)
+    --- PASS: FuzzDecodeSignals/seed#8 (0.00s)
+    --- PASS: FuzzDecodeSignals/seed#9 (0.00s)
+    --- PASS: FuzzDecodeSignals/seed#10 (0.00s)
+    --- PASS: FuzzDecodeSignals/seed#11 (0.00s)
+    --- PASS: FuzzDecodeSignals/seed#12 (0.00s)
+    --- PASS: FuzzDecodeSignals/seed#13 (0.00s)
+PASS
+ok  	github.com/eventflow/eventflow/libs/go/antibot	75.942s
+?   	github.com/eventflow/eventflow/libs/go/antibot/corpus	[no test files]
+=== RUN   TestFix2_R21_PoolExhaustionIsClassified
+--- PASS: TestFix2_R21_PoolExhaustionIsClassified (0.15s)
+=== RUN   TestKeys_R31_AllKeysDeclaredUnderOneTag
+--- PASS: TestKeys_R31_AllKeysDeclaredUnderOneTag (0.00s)
+PASS
+ok  	github.com/eventflow/eventflow/libs/go/antibot/redisstate	3.299s
+=== RUN   TestAccessToken_KyRoiXacMinhDuocDungClaims
+--- PASS: TestAccessToken_KyRoiXacMinhDuocDungClaims (0.00s)
+=== RUN   TestAccessToken_CoXacThucOTPDiTheoToken
+--- PASS: TestAccessToken_CoXacThucOTPDiTheoToken (0.00s)
+=== RUN   TestAccessToken_ThietBiDiTheoToken
+--- PASS: TestAccessToken_ThietBiDiTheoToken (0.00s)
+=== RUN   TestAccessToken_HetHanTraLoiRieng
+--- PASS: TestAccessToken_HetHanTraLoiRieng (0.00s)
+=== RUN   TestAccessToken_TuChoiTokenGiaMao
+=== RUN   TestAccessToken_TuChoiTokenGiaMao/alg_none
+=== RUN   TestAccessToken_TuChoiTokenGiaMao/alg_HS512
+=== RUN   TestAccessToken_TuChoiTokenGiaMao/typ_khac_access
+=== RUN   TestAccessToken_TuChoiTokenGiaMao/sua_payload
+=== RUN   TestAccessToken_TuChoiTokenGiaMao/chuoi_rac
+=== RUN   TestAccessToken_TuChoiTokenGiaMao/rong
+=== RUN   TestAccessToken_TuChoiTokenGiaMao/khac_secret
+=== RUN   TestAccessToken_TuChoiTokenGiaMao/jwt_cu_khong_iss
+--- PASS: TestAccessToken_TuChoiTokenGiaMao (0.00s)
+    --- PASS: TestAccessToken_TuChoiTokenGiaMao/alg_none (0.00s)
+    --- PASS: TestAccessToken_TuChoiTokenGiaMao/alg_HS512 (0.00s)
+    --- PASS: TestAccessToken_TuChoiTokenGiaMao/typ_khac_access (0.00s)
+    --- PASS: TestAccessToken_TuChoiTokenGiaMao/sua_payload (0.00s)
+    --- PASS: TestAccessToken_TuChoiTokenGiaMao/chuoi_rac (0.00s)
+    --- PASS: TestAccessToken_TuChoiTokenGiaMao/rong (0.00s)
+    --- PASS: TestAccessToken_TuChoiTokenGiaMao/khac_secret (0.00s)
+    --- PASS: TestAccessToken_TuChoiTokenGiaMao/jwt_cu_khong_iss (0.00s)
+=== RUN   TestAccessToken_SecretNganBiTuChoi
+--- PASS: TestAccessToken_SecretNganBiTuChoi (0.00s)
+=== RUN   TestAccessToken_ThieuClaimBatBuocKhongKy
+--- PASS: TestAccessToken_ThieuClaimBatBuocKhongKy (0.00s)
+=== RUN   TestQueueTokenSecretFromEnv
+=== RUN   TestQueueTokenSecretFromEnv/dev_thieu_secret_dung_mac_dinh
+=== RUN   TestQueueTokenSecretFromEnv/production_thieu_secret_bi_tu_choi
+=== RUN   TestQueueTokenSecretFromEnv/secret_ngan_bi_tu_choi
+=== RUN   TestQueueTokenSecretFromEnv/secret_hop_le
+--- PASS: TestQueueTokenSecretFromEnv (0.00s)
+    --- PASS: TestQueueTokenSecretFromEnv/dev_thieu_secret_dung_mac_dinh (0.00s)
+    --- PASS: TestQueueTokenSecretFromEnv/production_thieu_secret_bi_tu_choi (0.00s)
+    --- PASS: TestQueueTokenSecretFromEnv/secret_ngan_bi_tu_choi (0.00s)
+    --- PASS: TestQueueTokenSecretFromEnv/secret_hop_le (0.00s)
+=== RUN   TestPrincipal_StripXoaMoiHeaderGiaDanh
+--- PASS: TestPrincipal_StripXoaMoiHeaderGiaDanh (0.00s)
+=== RUN   TestPrincipal_SetGhiDeGiaTriCuaClient
+--- PASS: TestPrincipal_SetGhiDeGiaTriCuaClient (0.00s)
+=== RUN   TestPrincipal_VerifiedChiLaTrueKhiGatewayGan
+--- PASS: TestPrincipal_VerifiedChiLaTrueKhiGatewayGan (0.00s)
+=== RUN   TestPrincipal_ThietBiChiTuGatewayVaPhaiLaUUID
+--- PASS: TestPrincipal_ThietBiChiTuGatewayVaPhaiLaUUID (0.00s)
+=== RUN   TestPrincipal_FromHeadersTuChoiGiaTriSai
+=== RUN   TestPrincipal_FromHeadersTuChoiGiaTriSai/thieu_id
+=== RUN   TestPrincipal_FromHeadersTuChoiGiaTriSai/id_khong_uuid
+=== RUN   TestPrincipal_FromHeadersTuChoiGiaTriSai/role_la
+=== RUN   TestPrincipal_FromHeadersTuChoiGiaTriSai/thieu_role
+=== RUN   TestPrincipal_FromHeadersTuChoiGiaTriSai/role_viet_hoa
+--- PASS: TestPrincipal_FromHeadersTuChoiGiaTriSai (0.00s)
+    --- PASS: TestPrincipal_FromHeadersTuChoiGiaTriSai/thieu_id (0.00s)
+    --- PASS: TestPrincipal_FromHeadersTuChoiGiaTriSai/id_khong_uuid (0.00s)
+    --- PASS: TestPrincipal_FromHeadersTuChoiGiaTriSai/role_la (0.00s)
+    --- PASS: TestPrincipal_FromHeadersTuChoiGiaTriSai/thieu_role (0.00s)
+    --- PASS: TestPrincipal_FromHeadersTuChoiGiaTriSai/role_viet_hoa (0.00s)
+=== RUN   TestNewQREngine_SecretValidation
+--- PASS: TestNewQREngine_SecretValidation (0.00s)
+=== RUN   TestQREngine_SignAndVerify_Success
+--- PASS: TestQREngine_SignAndVerify_Success (0.00s)
+=== RUN   TestQREngine_TamperedPayload_Rejected
+--- PASS: TestQREngine_TamperedPayload_Rejected (0.00s)
+=== RUN   TestQREngine_InvalidSignature_Rejected
+--- PASS: TestQREngine_InvalidSignature_Rejected (0.00s)
+=== RUN   TestQREngine_ExpiredQR_Rejected
+--- PASS: TestQREngine_ExpiredQR_Rejected (0.00s)
+=== RUN   TestQREngine_InvalidFormatAndMissingClaims
+--- PASS: TestQREngine_InvalidFormatAndMissingClaims (0.00s)
+=== RUN   TestQueueToken_KyRoiXacMinh
+--- PASS: TestQueueToken_KyRoiXacMinh (0.00s)
+=== RUN   TestQueueToken_HetHanTraLoiRieng
+--- PASS: TestQueueToken_HetHanTraLoiRieng (0.00s)
+=== RUN   TestQueueToken_TuChoiTokenGiaMao
+=== RUN   TestQueueToken_TuChoiTokenGiaMao/sua_chu_ky
+=== RUN   TestQueueToken_TuChoiTokenGiaMao/thua_phan
+=== RUN   TestQueueToken_TuChoiTokenGiaMao/khong_phai_base64
+=== RUN   TestQueueToken_TuChoiTokenGiaMao/khac_secret
+=== RUN   TestQueueToken_TuChoiTokenGiaMao/thieu_chu_ky
+=== RUN   TestQueueToken_TuChoiTokenGiaMao/payload_rac
+=== RUN   TestQueueToken_TuChoiTokenGiaMao/hex_cu_(truoc_EV-137)
+=== RUN   TestQueueToken_TuChoiTokenGiaMao/rong
+=== RUN   TestQueueToken_TuChoiTokenGiaMao/doi_payload
+--- PASS: TestQueueToken_TuChoiTokenGiaMao (0.00s)
+    --- PASS: TestQueueToken_TuChoiTokenGiaMao/sua_chu_ky (0.00s)
+    --- PASS: TestQueueToken_TuChoiTokenGiaMao/thua_phan (0.00s)
+    --- PASS: TestQueueToken_TuChoiTokenGiaMao/khong_phai_base64 (0.00s)
+    --- PASS: TestQueueToken_TuChoiTokenGiaMao/khac_secret (0.00s)
+    --- PASS: TestQueueToken_TuChoiTokenGiaMao/thieu_chu_ky (0.00s)
+    --- PASS: TestQueueToken_TuChoiTokenGiaMao/payload_rac (0.00s)
+    --- PASS: TestQueueToken_TuChoiTokenGiaMao/hex_cu_(truoc_EV-137) (0.00s)
+    --- PASS: TestQueueToken_TuChoiTokenGiaMao/rong (0.00s)
+    --- PASS: TestQueueToken_TuChoiTokenGiaMao/doi_payload (0.00s)
+=== RUN   TestQueueToken_KhongLanVoiLoaiTokenKhac
+--- PASS: TestQueueToken_KhongLanVoiLoaiTokenKhac (0.00s)
+=== RUN   TestQueueToken_Matches
+--- PASS: TestQueueToken_Matches (0.00s)
+=== RUN   TestQueueToken_KyTuChoiThieuClaim
+--- PASS: TestQueueToken_KyTuChoiThieuClaim (0.00s)
+PASS
+ok  	github.com/eventflow/eventflow/libs/go/authx	1.738s
+=== RUN   TestWriteProblem_DungDinhDangRFC7807
+--- PASS: TestWriteProblem_DungDinhDangRFC7807 (0.00s)
+=== RUN   TestWriteProblemType_GhiDungType
+--- PASS: TestWriteProblemType_GhiDungType (0.00s)
+=== RUN   TestWriteJSON
+--- PASS: TestWriteJSON (0.00s)
+=== RUN   TestChain_PhanTuDauLaLopNgoaiCung
+--- PASS: TestChain_PhanTuDauLaLopNgoaiCung (0.00s)
+=== RUN   TestRequestID
+=== RUN   TestRequestID/giu_id_hop_le_tu_ben_ngoai
+=== RUN   TestRequestID/tu_sinh_khi_thieu
+=== RUN   TestRequestID/bo_id_khong_an_toan
+--- PASS: TestRequestID (0.00s)
+    --- PASS: TestRequestID/giu_id_hop_le_tu_ben_ngoai (0.00s)
+    --- PASS: TestRequestID/tu_sinh_khi_thieu (0.00s)
+    --- PASS: TestRequestID/bo_id_khong_an_toan (0.00s)
+=== RUN   TestRecover_PanicThanh500_KhongLoChiTiet
+--- PASS: TestRecover_PanicThanh500_KhongLoChiTiet (0.00s)
+=== RUN   TestRecover_DaGuiHeader_KhongGhiDeMaTrangThai
+--- PASS: TestRecover_DaGuiHeader_KhongGhiDeMaTrangThai (0.00s)
+=== RUN   TestRecover_ErrAbortHandlerDuocNemLai
+--- PASS: TestRecover_ErrAbortHandlerDuocNemLai (0.00s)
+=== RUN   TestAccessLog_GhiRouteMauVaMaTrangThai
+--- PASS: TestAccessLog_GhiRouteMauVaMaTrangThai (0.00s)
+=== RUN   TestAccessLog_ProbeVaMetricsGhiODebug
+=== RUN   TestAccessLog_ProbeVaMetricsGhiODebug//healthz
+=== RUN   TestAccessLog_ProbeVaMetricsGhiODebug//readyz
+=== RUN   TestAccessLog_ProbeVaMetricsGhiODebug//metrics
+--- PASS: TestAccessLog_ProbeVaMetricsGhiODebug (0.00s)
+    --- PASS: TestAccessLog_ProbeVaMetricsGhiODebug//healthz (0.00s)
+    --- PASS: TestAccessLog_ProbeVaMetricsGhiODebug//readyz (0.00s)
+    --- PASS: TestAccessLog_ProbeVaMetricsGhiODebug//metrics (0.00s)
+=== RUN   TestMiddleware_GiuDuocFlusherChoSSE
+--- PASS: TestMiddleware_GiuDuocFlusherChoSSE (0.00s)
+=== RUN   TestHealth
+=== RUN   TestHealth/khong_co_check_thi_san_sang
+=== RUN   TestHealth/readyz_503_khi_co_phu_thuoc_hong,_healthz_van_200
+=== RUN   TestHealth/check_nhan_context_co_han
+--- PASS: TestHealth (0.00s)
+    --- PASS: TestHealth/khong_co_check_thi_san_sang (0.00s)
+    --- PASS: TestHealth/readyz_503_khi_co_phu_thuoc_hong,_healthz_van_200 (0.00s)
+    --- PASS: TestHealth/check_nhan_context_co_han (0.00s)
+=== RUN   TestServe_TatEm_ChoRequestDangChayXong
+--- PASS: TestServe_TatEm_ChoRequestDangChayXong (0.28s)
+=== RUN   TestServe_LoiListener_DuocTraVe
+--- PASS: TestServe_LoiListener_DuocTraVe (0.00s)
+=== RUN   TestRun_DiaChiDangDung_TraLoi
+--- PASS: TestRun_DiaChiDangDung_TraLoi (0.00s)
+PASS
+ok  	github.com/eventflow/eventflow/libs/go/httpx	2.497s
+=== RUN   TestThieuHoacSaiKhoa_Tra400VaKhongChayHandler
+=== RUN   TestThieuHoacSaiKhoa_Tra400VaKhongChayHandler/thieu
+=== RUN   TestThieuHoacSaiKhoa_Tra400VaKhongChayHandler/co_khoang
+=== RUN   TestThieuHoacSaiKhoa_Tra400VaKhongChayHandler/dieu_khien
+=== RUN   TestThieuHoacSaiKhoa_Tra400VaKhongChayHandler/tieng_viet
+=== RUN   TestThieuHoacSaiKhoa_Tra400VaKhongChayHandler/qua_dai
+--- PASS: TestThieuHoacSaiKhoa_Tra400VaKhongChayHandler (0.00s)
+    --- PASS: TestThieuHoacSaiKhoa_Tra400VaKhongChayHandler/thieu (0.00s)
+    --- PASS: TestThieuHoacSaiKhoa_Tra400VaKhongChayHandler/co_khoang (0.00s)
+    --- PASS: TestThieuHoacSaiKhoa_Tra400VaKhongChayHandler/dieu_khien (0.00s)
+    --- PASS: TestThieuHoacSaiKhoa_Tra400VaKhongChayHandler/tieng_viet (0.00s)
+    --- PASS: TestThieuHoacSaiKhoa_Tra400VaKhongChayHandler/qua_dai (0.00s)
+=== RUN   TestKhoaDoi_Tra400
+--- PASS: TestKhoaDoi_Tra400 (0.00s)
+=== RUN   TestGoiLai_TraDungResponseCuVaKhongChayLai
+--- PASS: TestGoiLai_TraDungResponseCuVaKhongChayLai (0.00s)
+=== RUN   TestLoiNghiepVu4xx_DuocNhoDeKhachKhongBiLamPhienLai
+--- PASS: TestLoiNghiepVu4xx_DuocNhoDeKhachKhongBiLamPhienLai (0.00s)
+=== RUN   TestKhacDuongDan_LaHaiKhoaDocLap
+--- PASS: TestKhacDuongDan_LaHaiKhoaDocLap (0.00s)
+=== RUN   TestDongThoiCungKhoa_ChiMotHandlerChay
+--- PASS: TestDongThoiCungKhoa_ChiMotHandlerChay (0.01s)
+=== RUN   TestCungKhoaKhacBody_Tra422
+--- PASS: TestCungKhoaKhacBody_Tra422 (0.00s)
+=== RUN   TestCungKhoaKhacNguoi_Tra422VaKhongLoResponse
+--- PASS: TestCungKhoaKhacNguoi_Tra422VaKhongLoResponse (0.00s)
+=== RUN   TestHashPhanBietRanhGioiTruong
+--- PASS: TestHashPhanBietRanhGioiTruong (0.00s)
+=== RUN   TestLoi5xx_XoaKhoaDeThuLaiThatSu
+--- PASS: TestLoi5xx_XoaKhoaDeThuLaiThatSu (0.00s)
+=== RUN   TestPanic_XoaKhoaVaDePanicDiTiep
+--- PASS: TestPanic_XoaKhoaVaDePanicDiTiep (0.00s)
+=== RUN   TestHetTTL_KhoaDuocDungLaiNhuMoi
+--- PASS: TestHetTTL_KhoaDuocDungLaiNhuMoi (0.00s)
+=== RUN   TestQuaLease_RequestSauTiepQuanVaChuCuKhongGhiDe
+2026/11/22 06:12:09 ERROR idempotency: khong luu duoc response err="idem: khoa da bi tiep quan" endpoint="POST /v1/events/e1/holds"
+--- PASS: TestQuaLease_RequestSauTiepQuanVaChuCuKhongGhiDe (0.00s)
+=== RUN   TestClientNgatGiuaChung_VanLuuResponse
+--- PASS: TestClientNgatGiuaChung_VanLuuResponse (0.00s)
+=== RUN   TestStoreLoi_Tra503VaKhongChayHandler
+2026/11/22 06:12:09 ERROR idempotency: khong giu duoc khoa err="postgres chet" endpoint="POST /v1/events/e1/holds"
+--- PASS: TestStoreLoi_Tra503VaKhongChayHandler (0.00s)
+=== RUN   TestHandlerNhanDuocBodyNguyenVen
+--- PASS: TestHandlerNhanDuocBodyNguyenVen (0.00s)
+=== RUN   TestBodyQuaLon_Tra413
+--- PASS: TestBodyQuaLon_Tra413 (0.00s)
+PASS
+ok  	github.com/eventflow/eventflow/libs/go/idem	1.788s
+=== RUN   TestConfigValidate
+=== RUN   TestConfigValidate/gia_han_qua_thua_>_ttl/2
+=== RUN   TestConfigValidate/thieu_khoa
+=== RUN   TestConfigValidate/thieu_epoch_key
+=== RUN   TestConfigValidate/thieu_id
+=== RUN   TestConfigValidate/ttl_khong_duong
+=== RUN   TestConfigValidate/gia_han_khong_duong
+--- PASS: TestConfigValidate (0.00s)
+    --- PASS: TestConfigValidate/gia_han_qua_thua_>_ttl/2 (0.00s)
+    --- PASS: TestConfigValidate/thieu_khoa (0.00s)
+    --- PASS: TestConfigValidate/thieu_epoch_key (0.00s)
+    --- PASS: TestConfigValidate/thieu_id (0.00s)
+    --- PASS: TestConfigValidate/ttl_khong_duong (0.00s)
+    --- PASS: TestConfigValidate/gia_han_khong_duong (0.00s)
+=== RUN   TestRun_KhongLaLeaderThiKhongChayViec
+--- PASS: TestRun_KhongLaLeaderThiKhongChayViec (0.15s)
+=== RUN   TestRun_NhanEpochTangDanMoiNhiemKy
+--- PASS: TestRun_NhanEpochTangDanMoiNhiemKy (0.04s)
+=== RUN   TestRun_MatKhoaThiHuyViecVaKhongNhaKhoaCuaNguoiKhac
+--- PASS: TestRun_MatKhoaThiHuyViecVaKhongNhaKhoaCuaNguoiKhac (0.05s)
+=== RUN   TestRun_LoiGiaHan_ThoangQuaThiGiu_KeoDaiThiThoaiVi
+--- PASS: TestRun_LoiGiaHan_ThoangQuaThiGiu_KeoDaiThiThoaiVi (0.30s)
+=== RUN   TestRun_TatEm_NhaKhoaDeFailoverNgay
+--- PASS: TestRun_TatEm_NhaKhoaDeFailoverNgay (0.00s)
+=== RUN   TestIsFenced
+--- PASS: TestIsFenced (0.00s)
+PASS
+ok  	github.com/eventflow/eventflow/libs/go/leader	2.230s
+=== RUN   TestRecorder_P99VaTyLeLoi
+--- PASS: TestRecorder_P99VaTyLeLoi (0.00s)
+=== RUN   TestRecorder_CuaSoTruot_MauCuBiLoai
+--- PASS: TestRecorder_CuaSoTruot_MauCuBiLoai (0.00s)
+=== RUN   TestRecorder_KhongCoYeuCau
+--- PASS: TestRecorder_KhongCoYeuCau (0.00s)
+=== RUN   TestRecorder_ReservoirGioiHanBoNhoVaGiuP99
+--- PASS: TestRecorder_ReservoirGioiHanBoNhoVaGiuP99 (0.03s)
+PASS
+ok  	github.com/eventflow/eventflow/libs/go/loadsignal	1.555s
+=== RUN   TestAttemptHeader_TenHeader
+--- PASS: TestAttemptHeader_TenHeader (0.00s)
+=== RUN   TestDecide_BangQuyetDinh
+=== RUN   TestDecide_BangQuyetDinh/thanh_cong_lan_dau
+=== RUN   TestDecide_BangQuyetDinh/thanh_cong_lan_cuoi
+=== RUN   TestDecide_BangQuyetDinh/thanh_cong_du_khong_retry_duoc
+=== RUN   TestDecide_BangQuyetDinh/loi_lan_1_con_retry
+=== RUN   TestDecide_BangQuyetDinh/loi_lan_2_con_retry
+=== RUN   TestDecide_BangQuyetDinh/loi_lan_3_bang_max
+=== RUN   TestDecide_BangQuyetDinh/loi_attempt_vuot_max
+=== RUN   TestDecide_BangQuyetDinh/max_1_loi_lan_dau
+=== RUN   TestDecide_BangQuyetDinh/loi_vinh_vien_lan_dau
+=== RUN   TestDecide_BangQuyetDinh/loi_vinh_vien_bi_boc
+=== RUN   TestDecide_BangQuyetDinh/loi_vinh_vien_boc_hai_lop
+=== RUN   TestDecide_BangQuyetDinh/khong_co_retry_exchange
+--- PASS: TestDecide_BangQuyetDinh (0.00s)
+    --- PASS: TestDecide_BangQuyetDinh/thanh_cong_lan_dau (0.00s)
+    --- PASS: TestDecide_BangQuyetDinh/thanh_cong_lan_cuoi (0.00s)
+    --- PASS: TestDecide_BangQuyetDinh/thanh_cong_du_khong_retry_duoc (0.00s)
+    --- PASS: TestDecide_BangQuyetDinh/loi_lan_1_con_retry (0.00s)
+    --- PASS: TestDecide_BangQuyetDinh/loi_lan_2_con_retry (0.00s)
+    --- PASS: TestDecide_BangQuyetDinh/loi_lan_3_bang_max (0.00s)
+    --- PASS: TestDecide_BangQuyetDinh/loi_attempt_vuot_max (0.00s)
+    --- PASS: TestDecide_BangQuyetDinh/max_1_loi_lan_dau (0.00s)
+    --- PASS: TestDecide_BangQuyetDinh/loi_vinh_vien_lan_dau (0.00s)
+    --- PASS: TestDecide_BangQuyetDinh/loi_vinh_vien_bi_boc (0.00s)
+    --- PASS: TestDecide_BangQuyetDinh/loi_vinh_vien_boc_hai_lop (0.00s)
+    --- PASS: TestDecide_BangQuyetDinh/khong_co_retry_exchange (0.00s)
+=== RUN   TestDecide_BaHanhDongKhacNhau
+--- PASS: TestDecide_BaHanhDongKhacNhau (0.00s)
+=== RUN   TestAttemptOf_DocHeader
+=== RUN   TestAttemptOf_DocHeader/headers_nil
+=== RUN   TestAttemptOf_DocHeader/thieu_header
+=== RUN   TestAttemptOf_DocHeader/int32
+=== RUN   TestAttemptOf_DocHeader/int64
+=== RUN   TestAttemptOf_DocHeader/int
+=== RUN   TestAttemptOf_DocHeader/int16
+=== RUN   TestAttemptOf_DocHeader/chuoi_so
+=== RUN   TestAttemptOf_DocHeader/chuoi_rac
+=== RUN   TestAttemptOf_DocHeader/kieu_la
+=== RUN   TestAttemptOf_DocHeader/bang_0
+=== RUN   TestAttemptOf_DocHeader/am
+=== RUN   TestAttemptOf_DocHeader/chuoi_am
+=== RUN   TestAttemptOf_DocHeader/int8
+=== RUN   TestAttemptOf_DocHeader/uint8
+=== RUN   TestAttemptOf_DocHeader/uint16
+=== RUN   TestAttemptOf_DocHeader/uint32
+=== RUN   TestAttemptOf_DocHeader/uint64
+=== RUN   TestAttemptOf_DocHeader/uint8_bang_0
+=== RUN   TestAttemptOf_DocHeader/uint64_bang_0
+=== RUN   TestAttemptOf_DocHeader/int8_am
+=== RUN   TestAttemptOf_DocHeader/int_am
+=== RUN   TestAttemptOf_DocHeader/uint64_tran
+=== RUN   TestAttemptOf_DocHeader/int64_tran
+=== RUN   TestAttemptOf_DocHeader/chuoi_tran
+--- PASS: TestAttemptOf_DocHeader (0.00s)
+    --- PASS: TestAttemptOf_DocHeader/headers_nil (0.00s)
+    --- PASS: TestAttemptOf_DocHeader/thieu_header (0.00s)
+    --- PASS: TestAttemptOf_DocHeader/int32 (0.00s)
+    --- PASS: TestAttemptOf_DocHeader/int64 (0.00s)
+    --- PASS: TestAttemptOf_DocHeader/int (0.00s)
+    --- PASS: TestAttemptOf_DocHeader/int16 (0.00s)
+    --- PASS: TestAttemptOf_DocHeader/chuoi_so (0.00s)
+    --- PASS: TestAttemptOf_DocHeader/chuoi_rac (0.00s)
+    --- PASS: TestAttemptOf_DocHeader/kieu_la (0.00s)
+    --- PASS: TestAttemptOf_DocHeader/bang_0 (0.00s)
+    --- PASS: TestAttemptOf_DocHeader/am (0.00s)
+    --- PASS: TestAttemptOf_DocHeader/chuoi_am (0.00s)
+    --- PASS: TestAttemptOf_DocHeader/int8 (0.00s)
+    --- PASS: TestAttemptOf_DocHeader/uint8 (0.00s)
+    --- PASS: TestAttemptOf_DocHeader/uint16 (0.00s)
+    --- PASS: TestAttemptOf_DocHeader/uint32 (0.00s)
+    --- PASS: TestAttemptOf_DocHeader/uint64 (0.00s)
+    --- PASS: TestAttemptOf_DocHeader/uint8_bang_0 (0.00s)
+    --- PASS: TestAttemptOf_DocHeader/uint64_bang_0 (0.00s)
+    --- PASS: TestAttemptOf_DocHeader/int8_am (0.00s)
+    --- PASS: TestAttemptOf_DocHeader/int_am (0.00s)
+    --- PASS: TestAttemptOf_DocHeader/uint64_tran (0.00s)
+    --- PASS: TestAttemptOf_DocHeader/int64_tran (0.00s)
+    --- PASS: TestAttemptOf_DocHeader/chuoi_tran (0.00s)
+=== RUN   TestCopyHeaders_BoHeaderBrokerGiuPhanCon
+--- PASS: TestCopyHeaders_BoHeaderBrokerGiuPhanCon (0.00s)
+=== RUN   TestCopyHeaders_NilAnToan
+--- PASS: TestCopyHeaders_NilAnToan (0.00s)
+=== RUN   TestConsumerConfig_Validate
+=== RUN   TestConsumerConfig_Validate/mac_dinh_MaxAttempts_3_Prefetch_10
+=== RUN   TestConsumerConfig_Validate/giu_gia_tri_tuong_minh
+=== RUN   TestConsumerConfig_Validate/khong_retry_exchange_van_hop_le
+=== RUN   TestConsumerConfig_Validate/thieu_DeadLetterExchange_bi_tu_choi
+=== RUN   TestConsumerConfig_Validate/thieu_Queue_bi_tu_choi
+=== RUN   TestConsumerConfig_Validate/chi_co_RetryKey_bi_tu_choi
+=== RUN   TestConsumerConfig_Validate/chi_co_RetryExchange_bi_tu_choi
+=== RUN   TestConsumerConfig_Validate/MaxAttempts_am_bi_tu_choi
+--- PASS: TestConsumerConfig_Validate (0.00s)
+    --- PASS: TestConsumerConfig_Validate/mac_dinh_MaxAttempts_3_Prefetch_10 (0.00s)
+    --- PASS: TestConsumerConfig_Validate/giu_gia_tri_tuong_minh (0.00s)
+    --- PASS: TestConsumerConfig_Validate/khong_retry_exchange_van_hop_le (0.00s)
+    --- PASS: TestConsumerConfig_Validate/thieu_DeadLetterExchange_bi_tu_choi (0.00s)
+    --- PASS: TestConsumerConfig_Validate/thieu_Queue_bi_tu_choi (0.00s)
+    --- PASS: TestConsumerConfig_Validate/chi_co_RetryKey_bi_tu_choi (0.00s)
+    --- PASS: TestConsumerConfig_Validate/chi_co_RetryExchange_bi_tu_choi (0.00s)
+    --- PASS: TestConsumerConfig_Validate/MaxAttempts_am_bi_tu_choi (0.00s)
+=== RUN   TestConsume_TuChoiCauHinhThieuDLX
+--- PASS: TestConsume_TuChoiCauHinhThieuDLX (0.00s)
+=== RUN   TestCallHandler_PanicThanhLoi
+--- PASS: TestCallHandler_PanicThanhLoi (0.00s)
+=== RUN   TestCallHandler_TraNguyenLoiVaNil
+--- PASS: TestCallHandler_TraNguyenLoiVaNil (0.00s)
+=== RUN   TestNewDelivery_HeadersLaBanSao
+--- PASS: TestNewDelivery_HeadersLaBanSao (0.00s)
+=== RUN   TestForwardMessage_GiuThuocTinh
+--- PASS: TestForwardMessage_GiuThuocTinh (0.00s)
+=== RUN   TestConsumeWiring_DeliveriesDongTraLoiQosVaCancel
+=== RUN   TestConsumeWiring_DeliveriesDongTraLoiQosVaCancel/prefetch_tuong_minh
+=== RUN   TestConsumeWiring_DeliveriesDongTraLoiQosVaCancel/prefetch_mac_dinh
+--- PASS: TestConsumeWiring_DeliveriesDongTraLoiQosVaCancel (0.00s)
+    --- PASS: TestConsumeWiring_DeliveriesDongTraLoiQosVaCancel/prefetch_tuong_minh (0.00s)
+    --- PASS: TestConsumeWiring_DeliveriesDongTraLoiQosVaCancel/prefetch_mac_dinh (0.00s)
+=== RUN   TestConsumeWiring_HuyCtxCancelConsumer
+--- PASS: TestConsumeWiring_HuyCtxCancelConsumer (0.02s)
+=== RUN   TestConsumeWiring_KhongRetryExchangeLoiDauVaoDLQ
+--- PASS: TestConsumeWiring_KhongRetryExchangeLoiDauVaoDLQ (0.00s)
+=== RUN   TestConsumeWiring_CoRetryExchangeLoiDauDiRetry
+--- PASS: TestConsumeWiring_CoRetryExchangeLoiDauDiRetry (0.00s)
+=== RUN   TestRoutingKeyGoc_GiuQuaRetry
+--- PASS: TestRoutingKeyGoc_GiuQuaRetry (0.00s)
+=== RUN   TestPublisher_AckTraNilVaDatThuocTinh
+--- PASS: TestPublisher_AckTraNilVaDatThuocTinh (0.00s)
+=== RUN   TestPublisher_PublishIDKhacNhauMoiLan
+--- PASS: TestPublisher_PublishIDKhacNhauMoiLan (0.00s)
+=== RUN   TestPublisher_ReturnCuKhacIDBiBoQua
+--- PASS: TestPublisher_ReturnCuKhacIDBiBoQua (0.00s)
+=== RUN   TestPublisher_ReturnDungIDThanhErrUnroutable
+--- PASS: TestPublisher_ReturnDungIDThanhErrUnroutable (0.00s)
+=== RUN   TestPublisher_NackThanhErrNacked
+--- PASS: TestPublisher_NackThanhErrNacked (0.00s)
+=== RUN   TestPublisher_KenhDongKhiChoConfirmKhongQuayVong
+--- PASS: TestPublisher_KenhDongKhiChoConfirmKhongQuayVong (0.00s)
+=== RUN   TestPublisher_ReturnsDaDongTruocKhiPublishKhongQuayVong
+--- PASS: TestPublisher_ReturnsDaDongTruocKhiPublishKhongQuayVong (0.00s)
+=== RUN   TestPublisher_KenhDaDongTuTruoc
+--- PASS: TestPublisher_KenhDaDongTuTruoc (0.00s)
+=== RUN   TestPublisher_HuyCtxKhiDangChoConfirm
+--- PASS: TestPublisher_HuyCtxKhiDangChoConfirm (0.05s)
+=== RUN   TestPublisher_NhieuReturnCuKhongLamMatReturnMoi
+--- PASS: TestPublisher_NhieuReturnCuKhongLamMatReturnMoi (0.11s)
+=== RUN   TestPublisher_GuiDuThuocTinhAMQP
+--- PASS: TestPublisher_GuiDuThuocTinhAMQP (0.00s)
+=== RUN   TestPublisher_PublishDongThoiChiLanUnroutableLoi
+--- PASS: TestPublisher_PublishDongThoiChiLanUnroutableLoi (1.71s)
+=== RUN   TestPublisher_LoiGuiKhiKenhVuaDongThanhErrClosed
+--- PASS: TestPublisher_LoiGuiKhiKenhVuaDongThanhErrClosed (0.00s)
+=== RUN   TestAITopology_Exchanges
+--- PASS: TestAITopology_Exchanges (0.00s)
+=== RUN   TestAITopology_DanhSachQueue
+--- PASS: TestAITopology_DanhSachQueue (0.00s)
+=== RUN   TestAITopology_HangGocKhongDLXKhongPriority
+--- PASS: TestAITopology_HangGocKhongDLXKhongPriority (0.00s)
+=== RUN   TestAITopology_HangTreRiengTungCongViec
+--- PASS: TestAITopology_HangTreRiengTungCongViec (0.00s)
+=== RUN   TestAITopology_DLQ
+--- PASS: TestAITopology_DLQ (0.00s)
+=== RUN   TestAITopology_Bindings
+--- PASS: TestAITopology_Bindings (0.00s)
+=== RUN   TestAITopology_BindingKhongMoCoi
+--- PASS: TestAITopology_BindingKhongMoCoi (0.00s)
+=== RUN   TestTicketingTopology_HoldReleasedGiuNguyen
+--- PASS: TestTicketingTopology_HoldReleasedGiuNguyen (0.00s)
+=== RUN   TestNotificationTopology_EmailGiuNguyen
+--- PASS: TestNotificationTopology_EmailGiuNguyen (0.00s)
+=== RUN   TestSink_MoiExchangeSuKienCoHangNhanMoiKey
+--- PASS: TestSink_MoiExchangeSuKienCoHangNhanMoiKey (0.00s)
+=== RUN   TestConsumer_RetryQuayVeDungHangGoc
+--- PASS: TestConsumer_RetryQuayVeDungHangGoc (0.00s)
+=== RUN   TestPaymentTopology_Exchange
+--- PASS: TestPaymentTopology_Exchange (0.00s)
+=== RUN   TestMerge_GopTheoThuTu
+--- PASS: TestMerge_GopTheoThuTu (0.00s)
+=== RUN   TestMerge_TopologyThatDuSoLuong
+--- PASS: TestMerge_TopologyThatDuSoLuong (0.00s)
+=== RUN   TestDeclare_LoiChiOQueueDeclareKhongBiNuot
+=== RUN   TestDeclare_LoiChiOQueueDeclareKhongBiNuot/ai.chat.q
+=== RUN   TestDeclare_LoiChiOQueueDeclareKhongBiNuot/ai.dlq
+=== RUN   TestDeclare_LoiChiOQueueDeclareKhongBiNuot/ai.report.retry
+--- PASS: TestDeclare_LoiChiOQueueDeclareKhongBiNuot (0.00s)
+    --- PASS: TestDeclare_LoiChiOQueueDeclareKhongBiNuot/ai.chat.q (0.00s)
+    --- PASS: TestDeclare_LoiChiOQueueDeclareKhongBiNuot/ai.dlq (0.00s)
+    --- PASS: TestDeclare_LoiChiOQueueDeclareKhongBiNuot/ai.report.retry (0.00s)
+=== RUN   TestDeclare_ThuTuVaDoiSo
+--- PASS: TestDeclare_ThuTuVaDoiSo (0.00s)
+=== RUN   TestDeclare_LoiBocTenDoiTuongVaDungLai
+=== RUN   TestDeclare_LoiBocTenDoiTuongVaDungLai/ai.retry
+=== RUN   TestDeclare_LoiBocTenDoiTuongVaDungLai/ai.chat.retry
+=== RUN   TestDeclare_LoiBocTenDoiTuongVaDungLai/ai.dlq
+--- PASS: TestDeclare_LoiBocTenDoiTuongVaDungLai (0.00s)
+    --- PASS: TestDeclare_LoiBocTenDoiTuongVaDungLai/ai.retry (0.00s)
+    --- PASS: TestDeclare_LoiBocTenDoiTuongVaDungLai/ai.chat.retry (0.00s)
+    --- PASS: TestDeclare_LoiBocTenDoiTuongVaDungLai/ai.dlq (0.00s)
+=== RUN   TestDeclare_GoiHaiLanKhongLoi
+--- PASS: TestDeclare_GoiHaiLanKhongLoi (0.00s)
+=== RUN   TestDefinitionsJSON_KhopTopologyCode
+--- PASS: TestDefinitionsJSON_KhopTopologyCode (0.01s)
+=== RUN   TestDefinitionsJSON_ChuanHoaPhanBietKieu
+--- PASS: TestDefinitionsJSON_ChuanHoaPhanBietKieu (0.00s)
+=== RUN   TestUniqueIndex_BaoTrung
+--- PASS: TestUniqueIndex_BaoTrung (0.00s)
+=== RUN   TestParseDefinitions_TuChoiFileSai
+=== RUN   TestParseDefinitions_TuChoiFileSai/co_parameter
+=== RUN   TestParseDefinitions_TuChoiFileSai/global_parameter
+=== RUN   TestParseDefinitions_TuChoiFileSai/hop_le
+=== RUN   TestParseDefinitions_TuChoiFileSai/khoa_trung
+=== RUN   TestParseDefinitions_TuChoiFileSai/khoa_la_o_queue
+=== RUN   TestParseDefinitions_TuChoiFileSai/khoa_la_o_goc
+=== RUN   TestParseDefinitions_TuChoiFileSai/co_policy
+--- PASS: TestParseDefinitions_TuChoiFileSai (0.00s)
+    --- PASS: TestParseDefinitions_TuChoiFileSai/co_parameter (0.00s)
+    --- PASS: TestParseDefinitions_TuChoiFileSai/global_parameter (0.00s)
+    --- PASS: TestParseDefinitions_TuChoiFileSai/hop_le (0.00s)
+    --- PASS: TestParseDefinitions_TuChoiFileSai/khoa_trung (0.00s)
+    --- PASS: TestParseDefinitions_TuChoiFileSai/khoa_la_o_queue (0.00s)
+    --- PASS: TestParseDefinitions_TuChoiFileSai/khoa_la_o_goc (0.00s)
+    --- PASS: TestParseDefinitions_TuChoiFileSai/co_policy (0.00s)
+=== RUN   TestFindDuplicateKeys_LongNhau
+--- PASS: TestFindDuplicateKeys_LongNhau (0.00s)
+=== RUN   TestTrace_PublishRoiConsumeCungTraceID
+--- PASS: TestTrace_PublishRoiConsumeCungTraceID (0.00s)
+=== RUN   TestTrace_HeadersNilAnToan
+--- PASS: TestTrace_HeadersNilAnToan (0.00s)
+=== RUN   TestTrace_GiuTraceQuaBaLanRetry
+--- PASS: TestTrace_GiuTraceQuaBaLanRetry (0.00s)
+PASS
+ok  	github.com/eventflow/eventflow/libs/go/mq	3.081s
+=== RUN   TestHTTP_SpanVaMetricTheoMauRoute
+--- PASS: TestHTTP_SpanVaMetricTheoMauRoute (0.00s)
+=== RUN   TestHTTP_TrongChuoiMiddlewareThat_VanThayMauRoute
+--- PASS: TestHTTP_TrongChuoiMiddlewareThat_VanThayMauRoute (0.00s)
+=== RUN   TestHTTP_5xxDanhDauSpanLoi
+--- PASS: TestHTTP_5xxDanhDauSpanLoi (0.00s)
+=== RUN   TestHTTP_NoiTraceTuHeaderTraceparent
+--- PASS: TestHTTP_NoiTraceTuHeaderTraceparent (0.00s)
+=== RUN   TestHTTP_KhongKhopRoute_NhanUnmatched
+--- PASS: TestHTTP_KhongKhopRoute_NhanUnmatched (0.00s)
+=== RUN   TestLogHandler_GanTraceID
+--- PASS: TestLogHandler_GanTraceID (0.00s)
+=== RUN   TestLogHandler_KhongCoSpan_KhongThemTruong
+--- PASS: TestLogHandler_KhongCoSpan_KhongThemTruong (0.00s)
+=== RUN   TestAMQP_TraceDiQuaHeader
+--- PASS: TestAMQP_TraceDiQuaHeader (0.00s)
+=== RUN   TestAMQPHeaders_GetChapNhanByteVaBoQuaKieuLa
+--- PASS: TestAMQPHeaders_GetChapNhanByteVaBoQuaKieuLa (0.00s)
+=== RUN   TestInit_KhongCoEndpoint_VanChay
+--- PASS: TestInit_KhongCoEndpoint_VanChay (0.00s)
+=== RUN   TestErrorHandler_ChiLogMotLanMoiKhoang
+--- PASS: TestErrorHandler_ChiLogMotLanMoiKhoang (0.00s)
+=== RUN   TestMetricsHandler_PhucVuMetric
+--- PASS: TestMetricsHandler_PhucVuMetric (0.00s)
+=== RUN   TestInjectHTTP_GhiTraceparentCuaSpanHienTai
+--- PASS: TestInjectHTTP_GhiTraceparentCuaSpanHienTai (0.00s)
+=== RUN   TestTraceparent_LuuRoiKhoiPhuc
+--- PASS: TestTraceparent_LuuRoiKhoiPhuc (0.00s)
+PASS
+ok  	github.com/eventflow/eventflow/libs/go/otelx	1.166s
+=== RUN   TestProtector_MaHoaGiaiMaDungAAD
+--- PASS: TestProtector_MaHoaGiaiMaDungAAD (0.00s)
+=== RUN   TestProtector_TuChoiBanMaSaiNguCanh
+--- PASS: TestProtector_TuChoiBanMaSaiNguCanh (0.00s)
+=== RUN   TestProtector_HashCoDinhVaPhuThuocKhoa
+--- PASS: TestProtector_HashCoDinhVaPhuThuocKhoa (0.00s)
+=== RUN   TestProtector_KhoaHong
+--- PASS: TestProtector_KhoaHong (0.00s)
+=== RUN   TestNormalizePhoneVN
+--- PASS: TestNormalizePhoneVN (0.00s)
+=== RUN   TestRedact_ChePIIVaBiMatTrongLog
+--- PASS: TestRedact_ChePIIVaBiMatTrongLog (0.00s)
+=== RUN   TestRedact_WithAttrsCungDuocChe
+--- PASS: TestRedact_WithAttrsCungDuocChe (0.00s)
+=== RUN   TestMask
+--- PASS: TestMask (0.00s)
+PASS
+ok  	github.com/eventflow/eventflow/libs/go/pii	1.587s
+?   	github.com/eventflow/eventflow/libs/go/redisx	[no test files]
+=== RUN   TestGooseUp_CatPhanUp
+--- PASS: TestGooseUp_CatPhanUp (0.00s)
+=== RUN   TestGooseUp_KhongCoDown
+--- PASS: TestGooseUp_KhongCoDown (0.00s)
+=== RUN   TestGooseUp_CRLF
+--- PASS: TestGooseUp_CRLF (0.00s)
+=== RUN   TestGooseUp_TuChoiFileKhongHopLe
+=== RUN   TestGooseUp_TuChoiFileKhongHopLe/thieu_marker_Up
+=== RUN   TestGooseUp_TuChoiFileKhongHopLe/phan_Up_rong
+=== RUN   TestGooseUp_TuChoiFileKhongHopLe/rong
+--- PASS: TestGooseUp_TuChoiFileKhongHopLe (0.00s)
+    --- PASS: TestGooseUp_TuChoiFileKhongHopLe/thieu_marker_Up (0.00s)
+    --- PASS: TestGooseUp_TuChoiFileKhongHopLe/phan_Up_rong (0.00s)
+    --- PASS: TestGooseUp_TuChoiFileKhongHopLe/rong (0.00s)
+=== RUN   TestMigrationFiles_SapTheoTen
+--- PASS: TestMigrationFiles_SapTheoTen (0.01s)
+=== RUN   TestMigrationFiles_ThuMucRongLaLoi
+--- PASS: TestMigrationFiles_ThuMucRongLaLoi (0.00s)
+=== RUN   TestWriteUpScripts_MigrationThatCuaRepo
+--- PASS: TestWriteUpScripts_MigrationThatCuaRepo (0.06s)
+PASS
+ok  	github.com/eventflow/eventflow/libs/go/testx	2.039s
+PASS lines (tests+subtests): 559, baseline before task: 262
+skips (info):
+--- SKIP: TestCorpus_AC18_RecordedSessions (0.00s)
+--- SKIP: TestEvaluate_AC5_P99 (0.00s)
+ok: libs/go

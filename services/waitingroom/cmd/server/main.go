@@ -11,8 +11,10 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/redis/go-redis/v9"
 
+	"github.com/eventflow/eventflow/libs/go/antibot"
 	"github.com/eventflow/eventflow/libs/go/authx"
 	"github.com/eventflow/eventflow/libs/go/httpx"
 	"github.com/eventflow/eventflow/libs/go/loadsignal"
@@ -84,7 +86,23 @@ func run(log *slog.Logger) error {
 	// QUEUE_REQUIRE_DEVICE=false cho phep join khi phien chua gan thiet bi (chi dev / k6).
 	requireDevice := env("QUEUE_REQUIRE_DEVICE", "true") != "false"
 
-	h := httpadapter.New(store{queue}, nil, log).WithQueueTokens(queueSecret, requireDevice)
+	// Anti-bot (antibot-phase1): cau hinh sai thi khong khoi dong (AC-16); off = guard khong duoc noi (AC-13).
+	abCfg, err := antibot.LoadConfig(os.Getenv)
+	if err != nil {
+		return err
+	}
+	var guard httpadapter.BotGuard
+	var abMetrics *antibot.Metrics
+	if abCfg.Mode != antibot.ModeOff {
+		pool, closePool := postgresadapter.NewPoolFromEnv(ctx, os.Getenv, log)
+		defer closePool()
+		g, m, closeGuard := buildGuard(ctx, abCfg, env("REDIS_ADDR", "localhost:6379"), pool, prometheus.DefaultRegisterer, log)
+		defer closeGuard()
+		guard, abMetrics = g, m
+	}
+
+	h := httpadapter.New(store{queue}, guard, log).WithQueueTokens(queueSecret, requireDevice).
+		WithSlowLanePenalty(abCfg.SlowLanePenalty).WithAntibotMetrics(abMetrics)
 
 	// Ops API (EVF-60, EVF-117). Postgres chi de ghi audit: thieu / hong DATABASE_URL thi lenh ghi de
 	// fail-closed, con doc trang thai, duong mua ve va readiness van chay (AC-12).
@@ -119,6 +137,19 @@ func (s store) Join(ctx context.Context, eventID, identityID, token string) (htt
 		return httpadapter.JoinResult{}, err
 	}
 	return httpadapter.JoinResult{State: r.State, Token: r.Token, Rank: r.Rank, IsNew: r.IsNew}, nil
+}
+
+// JoinLane va Revoke lam store thoa httpadapter.LaneStore (anti-bot, contracts 2).
+func (s store) JoinLane(ctx context.Context, eventID, identityID, token string, lane domain.Lane, penalty int64) (httpadapter.JoinResult, error) {
+	r, err := s.q.JoinLane(ctx, eventID, identityID, token, lane, penalty)
+	if err != nil {
+		return httpadapter.JoinResult{}, err
+	}
+	return httpadapter.JoinResult{State: r.State, Token: r.Token, Rank: r.Rank, IsNew: r.IsNew}, nil
+}
+
+func (s store) Revoke(ctx context.Context, eventID, identityID string) (bool, error) {
+	return s.q.Revoke(ctx, eventID, identityID)
 }
 
 func (s store) Status(ctx context.Context, eventID, token string) (domain.Position, error) {

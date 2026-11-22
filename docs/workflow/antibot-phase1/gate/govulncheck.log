@@ -1,0 +1,1077 @@
+== libs/go HEAD (exit 3)
+=== Symbol Results ===
+
+Vulnerability #1: GO-2026-6865
+    Panic on two-block frames in github.com/klauspost/compress
+  More info: https://pkg.go.dev/vuln/GO-2026-6865
+  Module: github.com/klauspost/compress
+    Found in: github.com/klauspost/compress@v1.19.1
+    Fixed in: github.com/klauspost/compress@v1.20.2
+    Example traces found:
+      #1: testx/testx.go:89:15: testx.Shutdown calls fmt.Fprintf, which eventually calls fse.Decompress
+      #2: testx/testx.go:89:15: testx.Shutdown calls fmt.Fprintf, which eventually calls huff0.ReadTable
+
+Vulnerability #2: GO-2026-6859
+    HTTP/1 server crash due to MaxBytesReader header race in net/http
+  More info: https://pkg.go.dev/vuln/GO-2026-6859
+  Standard library
+    Found in: net/http@go1.27
+    Fixed in: net/http@go1.27.4
+    Example traces found:
+      #1: otelx/otelx.go:18:2: otelx.init calls otlptracehttp.init, which eventually calls http.CanonicalHeaderKey
+      #2: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls http.Client.Do
+      #3: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http.Get
+      #4: otelx/http.go:10:2: otelx.init calls prometheus.init, which eventually calls http.HandleFunc
+      #5: testx/redis.go:23:23: testx.startRedis calls redis.Run, which eventually calls http.Header.Add
+      #6: authx/principal.go:59:8: authx.StripIdentityHeaders calls http.Header.Del
+      #7: otelx/http.go:102:14: otelx.Traceparent calls http.Header.Get
+      #8: authx/principal.go:66:7: authx.SetIdentityHeaders calls http.Header.Set
+      #9: otelx/http.go:112:44: otelx.ContextWithTraceparent calls propagation.compositeTextMapPropagator.Extract, which eventually calls http.Header.Values
+      #10: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls http.NewRequestWithContext
+      #11: otelx/otelx.go:45:43: otelx.Init calls trace.WithBatcher, which eventually calls http.ParseTime
+      #12: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http.ReadResponse
+      #13: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls http.Request.UserAgent
+      #14: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls http.Request.Write
+      #15: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http.Response.Write
+      #16: otelx/metrics.go:25:12: otelx.ServeMetrics calls http.ServeMux.Handle
+      #17: httpx/health.go:21:16: httpx.Health calls http.ServeMux.HandleFunc
+      #18: httpx/server.go:56:16: httpx.Serve calls http.Server.Close
+      #19: httpx/server.go:41:32: httpx.Serve calls http.Server.Serve
+      #20: httpx/server.go:55:24: httpx.Serve calls http.Server.Shutdown
+      #21: otelx/otelx.go:40:32: otelx.Init calls otlptracehttp.New, which eventually calls http.Transport.Clone
+      #22: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls http.Transport.CloseIdleConnections
+      #23: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls http.Transport.RoundTrip
+      #24: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http.body.Close
+      #25: pii/crypto.go:77:24: pii.Protector.Encrypt calls rand.Read, which eventually calls http.body.Read
+      #26: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http.bodyEOFSignal.Close
+      #27: pii/crypto.go:77:24: pii.Protector.Encrypt calls rand.Read, which eventually calls http.bodyEOFSignal.Read
+      #28: testx/testx.go:88:18: testx.Shutdown calls exec.writerDescriptor, which eventually calls http.bodyLocked.Read
+      #29: redisx/scripts.go:48:36: redisx.ScriptSet.LoadFS calls redis.NewScript, which eventually calls http.bufioFlushWriter.Write
+      #30: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http.cancelTimerBody.Close
+      #31: pii/crypto.go:77:24: pii.Protector.Encrypt calls rand.Read, which eventually calls http.cancelTimerBody.Read
+      #32: testx/testx.go:89:15: testx.Shutdown calls fmt.Fprintf, which eventually calls http.checkConnErrorWriter.Write
+      #33: testx/testx.go:89:15: testx.Shutdown calls fmt.Fprintf, which eventually calls http.chunkWriter.Write
+      #34: testx/testx.go:88:18: testx.Shutdown calls exec.writerDescriptor, which eventually calls http.connReader.Read
+      #35: pii/crypto.go:77:24: pii.Protector.Encrypt calls rand.Read, which eventually calls http.expectContinueReader.Close
+      #36: testx/testx.go:88:18: testx.Shutdown calls exec.writerDescriptor, which eventually calls http.expectContinueReader.Read
+      #37: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http.gzipReader.Close
+      #38: pii/crypto.go:77:24: pii.Protector.Encrypt calls rand.Read, which eventually calls http.gzipReader.Read
+      #39: httpx/middleware.go:102:10: httpx.StatusWriter.Flush calls http.http2ResponseWriter.Flush
+      #40: pii/crypto.go:77:24: pii.Protector.Encrypt calls rand.Read, which eventually calls http.loggingConn.Read
+      #41: testx/testx.go:89:15: testx.Shutdown calls fmt.Fprintf, which calls http.loggingConn.Write
+      #42: testx/testx.go:88:18: testx.Shutdown calls exec.writerDescriptor, which eventually calls http.maxBytesReader.Read
+      #43: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http.onceCloseListener.Close
+      #44: testx/testx.go:88:18: testx.Shutdown calls exec.writerDescriptor, which eventually calls http.persistConn.Read
+      #45: testx/testx.go:88:18: testx.Shutdown calls exec.writerDescriptor, which eventually calls http.persistConnWriter.ReadFrom
+      #46: testx/testx.go:89:15: testx.Shutdown calls fmt.Fprintf, which eventually calls http.persistConnWriter.Write
+      #47: pii/crypto.go:77:24: pii.Protector.Encrypt calls rand.Read, which eventually calls http.readTrackingBody.Close
+      #48: testx/testx.go:88:18: testx.Shutdown calls exec.writerDescriptor, which eventually calls http.readTrackingBody.Read
+      #49: pii/crypto.go:77:24: pii.Protector.Encrypt calls rand.Read, which eventually calls http.readWriteCloserBody.Read
+      #50: httpx/middleware.go:102:10: httpx.StatusWriter.Flush calls http.response.Flush
+      #51: testx/testx.go:88:18: testx.Shutdown calls exec.writerDescriptor, which eventually calls http.response.ReadFrom
+      #52: httpx/middleware.go:91:34: httpx.StatusWriter.Write calls http.response.Write
+      #53: httpx/middleware.go:84:30: httpx.StatusWriter.WriteHeader calls http.response.WriteHeader
+      #54: redisx/scripts.go:48:36: redisx.ScriptSet.LoadFS calls redis.NewScript, which eventually calls http.response.WriteString
+      #55: httpx/middleware.go:91:34: httpx.StatusWriter.Write calls http.timeoutWriter.Write
+      #56: httpx/middleware.go:84:30: httpx.StatusWriter.WriteHeader calls http.timeoutWriter.WriteHeader
+      #57: antibot/redisstate/store.go:183:69: redisstate.isNoScript calls http.transportReadFromServerError.Error
+
+Vulnerability #3: GO-2026-6809
+    Distrust compromised intermediate certificates in crypto/x509
+  More info: https://pkg.go.dev/vuln/GO-2026-6809
+  Standard library
+    Found in: crypto/x509@go1.27
+    Fixed in: crypto/x509@go1.27.3
+    Example traces found:
+      #1: httpx/server.go:41:32: httpx.Serve calls http.Server.Serve, which eventually calls x509.Certificate.Verify
+
+Vulnerability #4: GO-2026-6617
+    HTTP/2 server crash due to HPACK encoder race in net/http
+  More info: https://pkg.go.dev/vuln/GO-2026-6617
+  Module: golang.org/x/net
+    Found in: golang.org/x/net@v0.58.0
+    Fixed in: golang.org/x/net@v0.60.0
+    Example traces found:
+      #1: antibot/redisstate/store.go:183:69: redisstate.isNoScript calls http2.ConnectionError.Error
+      #2: pii/redact.go:107:44: pii.redactAttr calls http2.ErrCode.String
+      #3: pii/redact.go:107:44: pii.redactAttr calls http2.FrameHeader.String
+      #4: pii/redact.go:107:44: pii.redactAttr calls http2.FrameType.String
+      #5: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http2.Framer.ReadFrame
+      #6: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http2.Framer.ReadFrameForHeader
+      #7: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http2.Framer.ReadFrameHeader
+      #8: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http2.Framer.WriteContinuation
+      #9: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http2.Framer.WriteGoAway
+      #10: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http2.Framer.WriteHeaders
+      #11: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http2.Framer.WritePing
+      #12: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http2.Framer.WriteRSTStream
+      #13: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http2.Framer.WriteSettings
+      #14: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http2.Framer.WriteSettingsAck
+      #15: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http2.Framer.WriteWindowUpdate
+      #16: pii/redact.go:107:44: pii.redactAttr calls http2.SettingID.String
+      #17: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http2.SettingsFrame.ForeachSetting
+      #18: antibot/redisstate/store.go:183:69: redisstate.isNoScript calls http2.StreamError.Error
+      #19: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls http2.Transport.RoundTrip
+      #20: antibot/redisstate/store.go:183:69: redisstate.isNoScript calls http2.connError.Error
+      #21: antibot/redisstate/store.go:183:69: redisstate.isNoScript calls http2.duplicatePseudoHeaderError.Error
+      #22: antibot/redisstate/store.go:183:69: redisstate.isNoScript calls http2.headerFieldNameError.Error
+      #23: antibot/redisstate/store.go:183:69: redisstate.isNoScript calls http2.headerFieldValueError.Error
+      #24: antibot/redisstate/store.go:183:69: redisstate.isNoScript calls http2.pseudoHeaderError.Error
+
+  Standard library
+    Found in: net/http/internal/http2@go1.27
+    Fixed in: net/http/internal/http2@go1.27.2
+    Example traces found:
+      #1: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls http2.NetHTTPClientConn.Close
+      #2: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls http2.NetHTTPClientConn.Close
+      #3: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls http2.NetHTTPClientConn.RoundTrip
+      #4: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls http2.NetHTTPClientConn.RoundTrip
+      #5: httpx/server.go:55:24: httpx.Serve calls http.Server.Shutdown, which calls http2.Server.GracefulShutdown
+      #6: httpx/server.go:55:24: httpx.Serve calls http.Server.Shutdown, which calls http2.Server.GracefulShutdown
+      #7: httpx/server.go:41:32: httpx.Serve calls http.Server.Serve, which eventually calls http2.Server.ServeConn
+      #8: httpx/server.go:41:32: httpx.Serve calls http.Server.Serve, which eventually calls http2.Server.ServeConn
+      #9: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls http2.Transport.AddConn
+      #10: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls http2.Transport.AddConn
+      #11: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls http2.Transport.CloseIdleConnections
+      #12: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls http2.Transport.CloseIdleConnections
+      #13: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls http2.Transport.NewClientConn
+      #14: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls http2.Transport.NewClientConn
+      #15: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls http2.Transport.RoundTrip
+      #16: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls http2.Transport.RoundTrip
+      #17: testx/testx.go:89:15: testx.Shutdown calls fmt.Fprintf, which eventually calls http2.bufferedWriterTimeoutWriter.Write
+      #18: testx/testx.go:89:15: testx.Shutdown calls fmt.Fprintf, which eventually calls http2.bufferedWriterTimeoutWriter.Write
+      #19: testx/testx.go:89:15: testx.Shutdown calls fmt.Fprintf, which eventually calls http2.chunkWriter.Write
+      #20: testx/testx.go:89:15: testx.Shutdown calls fmt.Fprintf, which eventually calls http2.chunkWriter.Write
+      #21: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http2.gzipReader.Close
+      #22: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http2.gzipReader.Close
+      #23: pii/crypto.go:77:24: pii.Protector.Encrypt calls rand.Read, which eventually calls http2.gzipReader.Read
+      #24: pii/crypto.go:77:24: pii.Protector.Encrypt calls rand.Read, which eventually calls http2.gzipReader.Read
+      #25: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls http2.requestBody.Close
+      #26: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls http2.requestBody.Close
+      #27: httpx/middleware.go:102:10: httpx.StatusWriter.Flush calls http.http2ResponseWriter.Flush, which calls http2.responseWriter.FlushError
+      #28: httpx/middleware.go:102:10: httpx.StatusWriter.Flush calls http.http2ResponseWriter.Flush, which calls http2.responseWriter.FlushError
+      #29: httpx/middleware.go:91:34: httpx.StatusWriter.Write calls http2.responseWriter.Write
+      #30: httpx/middleware.go:91:34: httpx.StatusWriter.Write calls http2.responseWriter.Write
+      #31: httpx/middleware.go:84:30: httpx.StatusWriter.WriteHeader calls http2.responseWriter.WriteHeader
+      #32: httpx/middleware.go:84:30: httpx.StatusWriter.WriteHeader calls http2.responseWriter.WriteHeader
+      #33: redisx/scripts.go:48:36: redisx.ScriptSet.LoadFS calls redis.NewScript, which eventually calls http2.responseWriter.WriteString
+      #34: redisx/scripts.go:48:36: redisx.ScriptSet.LoadFS calls redis.NewScript, which eventually calls http2.responseWriter.WriteString
+      #35: testx/testx.go:89:15: testx.Shutdown calls fmt.Fprintf, which eventually calls http2.stickyErrWriter.Write
+      #36: testx/testx.go:89:15: testx.Shutdown calls fmt.Fprintf, which eventually calls http2.stickyErrWriter.Write
+      #37: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http2.transportResponseBody.Close
+      #38: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http2.transportResponseBody.Close
+      #39: pii/crypto.go:77:24: pii.Protector.Encrypt calls rand.Read, which eventually calls http2.transportResponseBody.Read
+      #40: pii/crypto.go:77:24: pii.Protector.Encrypt calls rand.Read, which eventually calls http2.transportResponseBody.Read
+
+Vulnerability #5: GO-2026-6613
+    HTTP/1 server connection desynchronization after 2xx CONNECT response in
+    net/http
+  More info: https://pkg.go.dev/vuln/GO-2026-6613
+  Standard library
+    Found in: net/http@go1.27
+    Fixed in: net/http@go1.27.2
+    Example traces found:
+      #1: otelx/otelx.go:18:2: otelx.init calls otlptracehttp.init, which eventually calls http.CanonicalHeaderKey
+      #2: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls http.Client.Do
+      #3: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http.Get
+      #4: otelx/http.go:10:2: otelx.init calls prometheus.init, which eventually calls http.HandleFunc
+      #5: testx/redis.go:23:23: testx.startRedis calls redis.Run, which eventually calls http.Header.Add
+      #6: authx/principal.go:59:8: authx.StripIdentityHeaders calls http.Header.Del
+      #7: otelx/http.go:102:14: otelx.Traceparent calls http.Header.Get
+      #8: authx/principal.go:66:7: authx.SetIdentityHeaders calls http.Header.Set
+      #9: otelx/http.go:112:44: otelx.ContextWithTraceparent calls propagation.compositeTextMapPropagator.Extract, which eventually calls http.Header.Values
+      #10: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls http.NewRequestWithContext
+      #11: otelx/otelx.go:45:43: otelx.Init calls trace.WithBatcher, which eventually calls http.ParseTime
+      #12: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http.ReadResponse
+      #13: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls http.Request.UserAgent
+      #14: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls http.Request.Write
+      #15: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http.Response.Write
+      #16: otelx/metrics.go:25:12: otelx.ServeMetrics calls http.ServeMux.Handle
+      #17: httpx/health.go:21:16: httpx.Health calls http.ServeMux.HandleFunc
+      #18: httpx/server.go:56:16: httpx.Serve calls http.Server.Close
+      #19: httpx/server.go:41:32: httpx.Serve calls http.Server.Serve
+      #20: httpx/server.go:55:24: httpx.Serve calls http.Server.Shutdown
+      #21: otelx/otelx.go:40:32: otelx.Init calls otlptracehttp.New, which eventually calls http.Transport.Clone
+      #22: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls http.Transport.CloseIdleConnections
+      #23: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls http.Transport.RoundTrip
+      #24: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http.body.Close
+      #25: pii/crypto.go:77:24: pii.Protector.Encrypt calls rand.Read, which eventually calls http.body.Read
+      #26: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http.bodyEOFSignal.Close
+      #27: pii/crypto.go:77:24: pii.Protector.Encrypt calls rand.Read, which eventually calls http.bodyEOFSignal.Read
+      #28: testx/testx.go:88:18: testx.Shutdown calls exec.writerDescriptor, which eventually calls http.bodyLocked.Read
+      #29: redisx/scripts.go:48:36: redisx.ScriptSet.LoadFS calls redis.NewScript, which eventually calls http.bufioFlushWriter.Write
+      #30: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http.cancelTimerBody.Close
+      #31: pii/crypto.go:77:24: pii.Protector.Encrypt calls rand.Read, which eventually calls http.cancelTimerBody.Read
+      #32: testx/testx.go:89:15: testx.Shutdown calls fmt.Fprintf, which eventually calls http.checkConnErrorWriter.Write
+      #33: testx/testx.go:89:15: testx.Shutdown calls fmt.Fprintf, which eventually calls http.chunkWriter.Write
+      #34: testx/testx.go:88:18: testx.Shutdown calls exec.writerDescriptor, which eventually calls http.connReader.Read
+      #35: pii/crypto.go:77:24: pii.Protector.Encrypt calls rand.Read, which eventually calls http.expectContinueReader.Close
+      #36: testx/testx.go:88:18: testx.Shutdown calls exec.writerDescriptor, which eventually calls http.expectContinueReader.Read
+      #37: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http.gzipReader.Close
+      #38: pii/crypto.go:77:24: pii.Protector.Encrypt calls rand.Read, which eventually calls http.gzipReader.Read
+      #39: httpx/middleware.go:102:10: httpx.StatusWriter.Flush calls http.http2ResponseWriter.Flush
+      #40: pii/crypto.go:77:24: pii.Protector.Encrypt calls rand.Read, which eventually calls http.loggingConn.Read
+      #41: testx/testx.go:89:15: testx.Shutdown calls fmt.Fprintf, which calls http.loggingConn.Write
+      #42: testx/testx.go:88:18: testx.Shutdown calls exec.writerDescriptor, which eventually calls http.maxBytesReader.Read
+      #43: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http.onceCloseListener.Close
+      #44: testx/testx.go:88:18: testx.Shutdown calls exec.writerDescriptor, which eventually calls http.persistConn.Read
+      #45: testx/testx.go:88:18: testx.Shutdown calls exec.writerDescriptor, which eventually calls http.persistConnWriter.ReadFrom
+      #46: testx/testx.go:89:15: testx.Shutdown calls fmt.Fprintf, which eventually calls http.persistConnWriter.Write
+      #47: pii/crypto.go:77:24: pii.Protector.Encrypt calls rand.Read, which eventually calls http.readTrackingBody.Close
+      #48: testx/testx.go:88:18: testx.Shutdown calls exec.writerDescriptor, which eventually calls http.readTrackingBody.Read
+      #49: pii/crypto.go:77:24: pii.Protector.Encrypt calls rand.Read, which eventually calls http.readWriteCloserBody.Read
+      #50: httpx/middleware.go:102:10: httpx.StatusWriter.Flush calls http.response.Flush
+      #51: testx/testx.go:88:18: testx.Shutdown calls exec.writerDescriptor, which eventually calls http.response.ReadFrom
+      #52: httpx/middleware.go:91:34: httpx.StatusWriter.Write calls http.response.Write
+      #53: httpx/middleware.go:84:30: httpx.StatusWriter.WriteHeader calls http.response.WriteHeader
+      #54: redisx/scripts.go:48:36: redisx.ScriptSet.LoadFS calls redis.NewScript, which eventually calls http.response.WriteString
+      #55: httpx/middleware.go:91:34: httpx.StatusWriter.Write calls http.timeoutWriter.Write
+      #56: httpx/middleware.go:84:30: httpx.StatusWriter.WriteHeader calls http.timeoutWriter.WriteHeader
+      #57: antibot/redisstate/store.go:183:69: redisstate.isNoScript calls http.transportReadFromServerError.Error
+
+Vulnerability #6: GO-2026-6612
+    Double flow control refund on HTTP/2 server streams in net/http
+  More info: https://pkg.go.dev/vuln/GO-2026-6612
+  Module: golang.org/x/net
+    Found in: golang.org/x/net@v0.58.0
+    Fixed in: golang.org/x/net@v0.60.0
+    Example traces found:
+      #1: antibot/redisstate/store.go:183:69: redisstate.isNoScript calls http2.ConnectionError.Error
+      #2: pii/redact.go:107:44: pii.redactAttr calls http2.ErrCode.String
+      #3: pii/redact.go:107:44: pii.redactAttr calls http2.FrameHeader.String
+      #4: pii/redact.go:107:44: pii.redactAttr calls http2.FrameType.String
+      #5: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http2.Framer.ReadFrame
+      #6: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http2.Framer.ReadFrameForHeader
+      #7: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http2.Framer.ReadFrameHeader
+      #8: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http2.Framer.WriteContinuation
+      #9: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http2.Framer.WriteGoAway
+      #10: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http2.Framer.WriteHeaders
+      #11: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http2.Framer.WritePing
+      #12: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http2.Framer.WriteRSTStream
+      #13: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http2.Framer.WriteSettings
+      #14: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http2.Framer.WriteSettingsAck
+      #15: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http2.Framer.WriteWindowUpdate
+      #16: pii/redact.go:107:44: pii.redactAttr calls http2.SettingID.String
+      #17: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http2.SettingsFrame.ForeachSetting
+      #18: antibot/redisstate/store.go:183:69: redisstate.isNoScript calls http2.StreamError.Error
+      #19: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls http2.Transport.RoundTrip
+      #20: antibot/redisstate/store.go:183:69: redisstate.isNoScript calls http2.connError.Error
+      #21: antibot/redisstate/store.go:183:69: redisstate.isNoScript calls http2.duplicatePseudoHeaderError.Error
+      #22: antibot/redisstate/store.go:183:69: redisstate.isNoScript calls http2.headerFieldNameError.Error
+      #23: antibot/redisstate/store.go:183:69: redisstate.isNoScript calls http2.headerFieldValueError.Error
+      #24: antibot/redisstate/store.go:183:69: redisstate.isNoScript calls http2.pseudoHeaderError.Error
+
+  Standard library
+    Found in: net/http/internal/http2@go1.27
+    Fixed in: net/http/internal/http2@go1.27.2
+    Example traces found:
+      #1: httpx/server.go:41:32: httpx.Serve calls http.Server.Serve, which eventually calls http2.Server.ServeConn
+      #2: httpx/server.go:41:32: httpx.Serve calls http.Server.Serve, which eventually calls http2.Server.ServeConn
+      #3: pii/crypto.go:77:24: pii.Protector.Encrypt calls rand.Read, which eventually calls http2.requestBody.Close
+      #4: pii/crypto.go:77:24: pii.Protector.Encrypt calls rand.Read, which eventually calls http2.requestBody.Close
+      #5: testx/testx.go:88:18: testx.Shutdown calls exec.writerDescriptor, which eventually calls http2.requestBody.Read
+      #6: testx/testx.go:88:18: testx.Shutdown calls exec.writerDescriptor, which eventually calls http2.requestBody.Read
+
+Vulnerability #7: GO-2026-6611
+    Excessive CPU consumption from repeated initial window changes in net/http
+  More info: https://pkg.go.dev/vuln/GO-2026-6611
+  Module: golang.org/x/net
+    Found in: golang.org/x/net@v0.58.0
+    Fixed in: golang.org/x/net@v0.60.0
+    Example traces found:
+      #1: antibot/redisstate/store.go:183:69: redisstate.isNoScript calls http2.ConnectionError.Error
+      #2: pii/redact.go:107:44: pii.redactAttr calls http2.ErrCode.String
+      #3: pii/redact.go:107:44: pii.redactAttr calls http2.FrameHeader.String
+      #4: pii/redact.go:107:44: pii.redactAttr calls http2.FrameType.String
+      #5: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http2.Framer.ReadFrame
+      #6: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http2.Framer.ReadFrameForHeader
+      #7: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http2.Framer.ReadFrameHeader
+      #8: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http2.Framer.WriteContinuation
+      #9: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http2.Framer.WriteGoAway
+      #10: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http2.Framer.WriteHeaders
+      #11: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http2.Framer.WritePing
+      #12: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http2.Framer.WriteRSTStream
+      #13: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http2.Framer.WriteSettings
+      #14: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http2.Framer.WriteSettingsAck
+      #15: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http2.Framer.WriteWindowUpdate
+      #16: pii/redact.go:107:44: pii.redactAttr calls http2.SettingID.String
+      #17: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http2.SettingsFrame.ForeachSetting
+      #18: antibot/redisstate/store.go:183:69: redisstate.isNoScript calls http2.StreamError.Error
+      #19: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls http2.Transport.RoundTrip
+      #20: antibot/redisstate/store.go:183:69: redisstate.isNoScript calls http2.connError.Error
+      #21: antibot/redisstate/store.go:183:69: redisstate.isNoScript calls http2.duplicatePseudoHeaderError.Error
+      #22: antibot/redisstate/store.go:183:69: redisstate.isNoScript calls http2.headerFieldNameError.Error
+      #23: antibot/redisstate/store.go:183:69: redisstate.isNoScript calls http2.headerFieldValueError.Error
+      #24: antibot/redisstate/store.go:183:69: redisstate.isNoScript calls http2.pseudoHeaderError.Error
+
+  Standard library
+    Found in: net/http/internal/http2@go1.27
+    Fixed in: net/http/internal/http2@go1.27.2
+    Example traces found:
+      #1: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls http2.NetHTTPClientConn.Close
+      #2: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls http2.NetHTTPClientConn.Close
+      #3: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls http2.NetHTTPClientConn.RoundTrip
+      #4: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls http2.NetHTTPClientConn.RoundTrip
+      #5: httpx/server.go:55:24: httpx.Serve calls http.Server.Shutdown, which calls http2.Server.GracefulShutdown
+      #6: httpx/server.go:55:24: httpx.Serve calls http.Server.Shutdown, which calls http2.Server.GracefulShutdown
+      #7: httpx/server.go:41:32: httpx.Serve calls http.Server.Serve, which eventually calls http2.Server.ServeConn
+      #8: httpx/server.go:41:32: httpx.Serve calls http.Server.Serve, which eventually calls http2.Server.ServeConn
+      #9: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls http2.Transport.AddConn
+      #10: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls http2.Transport.AddConn
+      #11: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls http2.Transport.CloseIdleConnections
+      #12: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls http2.Transport.CloseIdleConnections
+      #13: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls http2.Transport.NewClientConn
+      #14: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls http2.Transport.NewClientConn
+      #15: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls http2.Transport.RoundTrip
+      #16: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls http2.Transport.RoundTrip
+      #17: testx/testx.go:89:15: testx.Shutdown calls fmt.Fprintf, which eventually calls http2.bufferedWriterTimeoutWriter.Write
+      #18: testx/testx.go:89:15: testx.Shutdown calls fmt.Fprintf, which eventually calls http2.bufferedWriterTimeoutWriter.Write
+      #19: testx/testx.go:89:15: testx.Shutdown calls fmt.Fprintf, which eventually calls http2.chunkWriter.Write
+      #20: testx/testx.go:89:15: testx.Shutdown calls fmt.Fprintf, which eventually calls http2.chunkWriter.Write
+      #21: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http2.gzipReader.Close
+      #22: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http2.gzipReader.Close
+      #23: pii/crypto.go:77:24: pii.Protector.Encrypt calls rand.Read, which eventually calls http2.gzipReader.Read
+      #24: pii/crypto.go:77:24: pii.Protector.Encrypt calls rand.Read, which eventually calls http2.gzipReader.Read
+      #25: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls http2.requestBody.Close
+      #26: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls http2.requestBody.Close
+      #27: httpx/middleware.go:102:10: httpx.StatusWriter.Flush calls http.http2ResponseWriter.Flush, which calls http2.responseWriter.FlushError
+      #28: httpx/middleware.go:102:10: httpx.StatusWriter.Flush calls http.http2ResponseWriter.Flush, which calls http2.responseWriter.FlushError
+      #29: httpx/middleware.go:91:34: httpx.StatusWriter.Write calls http2.responseWriter.Write
+      #30: httpx/middleware.go:91:34: httpx.StatusWriter.Write calls http2.responseWriter.Write
+      #31: httpx/middleware.go:84:30: httpx.StatusWriter.WriteHeader calls http2.responseWriter.WriteHeader
+      #32: httpx/middleware.go:84:30: httpx.StatusWriter.WriteHeader calls http2.responseWriter.WriteHeader
+      #33: redisx/scripts.go:48:36: redisx.ScriptSet.LoadFS calls redis.NewScript, which eventually calls http2.responseWriter.WriteString
+      #34: redisx/scripts.go:48:36: redisx.ScriptSet.LoadFS calls redis.NewScript, which eventually calls http2.responseWriter.WriteString
+      #35: testx/testx.go:89:15: testx.Shutdown calls fmt.Fprintf, which eventually calls http2.stickyErrWriter.Write
+      #36: testx/testx.go:89:15: testx.Shutdown calls fmt.Fprintf, which eventually calls http2.stickyErrWriter.Write
+      #37: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http2.transportResponseBody.Close
+      #38: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http2.transportResponseBody.Close
+      #39: pii/crypto.go:77:24: pii.Protector.Encrypt calls rand.Read, which eventually calls http2.transportResponseBody.Read
+      #40: pii/crypto.go:77:24: pii.Protector.Encrypt calls rand.Read, which eventually calls http2.transportResponseBody.Read
+
+Vulnerability #8: GO-2026-6610
+    HTTP/2 transport accepts malformed framing-related headers in net/http
+  More info: https://pkg.go.dev/vuln/GO-2026-6610
+  Module: golang.org/x/net
+    Found in: golang.org/x/net@v0.58.0
+    Fixed in: golang.org/x/net@v0.60.0
+    Example traces found:
+      #1: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls http2.Transport.RoundTrip
+
+  Standard library
+    Found in: net/http/internal/http2@go1.27
+    Fixed in: net/http/internal/http2@go1.27.2
+    Example traces found:
+      #1: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls http2.Transport.AddConn
+      #2: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls http2.Transport.AddConn
+      #3: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls http2.Transport.NewClientConn
+      #4: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls http2.Transport.NewClientConn
+      #5: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls http2.Transport.RoundTrip
+      #6: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls http2.Transport.RoundTrip
+
+Vulnerability #9: GO-2026-6608
+    Memory limit bypass when parsing MIME headers in net/textproto,
+    mime/multipart
+  More info: https://pkg.go.dev/vuln/GO-2026-6608
+  Standard library
+    Found in: net/textproto@go1.27
+    Fixed in: net/textproto@go1.27.2
+    Example traces found:
+      #1: httpx/server.go:41:32: httpx.Serve calls http.Server.Serve, which eventually calls multipart.Reader.ReadForm
+      #2: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls textproto.Reader.ReadMIMEHeader
+
+Vulnerability #10: GO-2026-6607
+    Reject malformed ECH outer extension references in crypto/tls
+  More info: https://pkg.go.dev/vuln/GO-2026-6607
+  Standard library
+    Found in: crypto/tls@go1.27
+    Fixed in: crypto/tls@go1.27.2
+    Example traces found:
+      #1: httpx/server.go:41:32: httpx.Serve calls http.Server.Serve, which eventually calls tls.Conn.HandshakeContext
+      #2: pii/crypto.go:77:24: pii.Protector.Encrypt calls rand.Read, which eventually calls tls.Conn.Read
+      #3: testx/testx.go:89:15: testx.Shutdown calls fmt.Fprintf, which calls tls.Conn.Write
+      #4: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls tls.Dial
+      #5: antibot/redisstate/store.go:31:24: redisstate.NewClient calls redis.NewClient, which eventually calls tls.DialWithDialer
+      #6: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls tls.Dialer.DialContext
+
+Vulnerability #11: GO-2026-6605
+    HTTP/1 client connection desynchronization after CONNECT rejection in
+    net/http
+  More info: https://pkg.go.dev/vuln/GO-2026-6605
+  Standard library
+    Found in: net/http@go1.27
+    Fixed in: net/http@go1.27.2
+    Example traces found:
+      #1: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls http.Client.Do
+      #2: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http.Get
+      #3: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls http.Transport.CloseIdleConnections
+      #4: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls http.Transport.RoundTrip
+
+Vulnerability #12: GO-2026-6603
+    HTTP/2 server memory exhaustion due to Trailer headers in net/http
+  More info: https://pkg.go.dev/vuln/GO-2026-6603
+  Module: golang.org/x/net
+    Found in: golang.org/x/net@v0.58.0
+    Fixed in: golang.org/x/net@v0.60.0
+    Example traces found:
+      #1: antibot/redisstate/store.go:183:69: redisstate.isNoScript calls http2.ConnectionError.Error
+      #2: pii/redact.go:107:44: pii.redactAttr calls http2.ErrCode.String
+      #3: pii/redact.go:107:44: pii.redactAttr calls http2.FrameHeader.String
+      #4: pii/redact.go:107:44: pii.redactAttr calls http2.FrameType.String
+      #5: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http2.Framer.ReadFrame
+      #6: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http2.Framer.ReadFrameForHeader
+      #7: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http2.Framer.ReadFrameHeader
+      #8: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http2.Framer.WriteContinuation
+      #9: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http2.Framer.WriteGoAway
+      #10: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http2.Framer.WriteHeaders
+      #11: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http2.Framer.WritePing
+      #12: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http2.Framer.WriteRSTStream
+      #13: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http2.Framer.WriteSettings
+      #14: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http2.Framer.WriteSettingsAck
+      #15: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http2.Framer.WriteWindowUpdate
+      #16: pii/redact.go:107:44: pii.redactAttr calls http2.SettingID.String
+      #17: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http2.SettingsFrame.ForeachSetting
+      #18: antibot/redisstate/store.go:183:69: redisstate.isNoScript calls http2.StreamError.Error
+      #19: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls http2.Transport.RoundTrip
+      #20: antibot/redisstate/store.go:183:69: redisstate.isNoScript calls http2.connError.Error
+      #21: antibot/redisstate/store.go:183:69: redisstate.isNoScript calls http2.duplicatePseudoHeaderError.Error
+      #22: antibot/redisstate/store.go:183:69: redisstate.isNoScript calls http2.headerFieldNameError.Error
+      #23: antibot/redisstate/store.go:183:69: redisstate.isNoScript calls http2.headerFieldValueError.Error
+      #24: antibot/redisstate/store.go:183:69: redisstate.isNoScript calls http2.pseudoHeaderError.Error
+
+  Standard library
+    Found in: net/http/internal/http2@go1.27
+    Fixed in: net/http/internal/http2@go1.27.2
+    Example traces found:
+      #1: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls http2.NetHTTPClientConn.Close
+      #2: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls http2.NetHTTPClientConn.Close
+      #3: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls http2.NetHTTPClientConn.RoundTrip
+      #4: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls http2.NetHTTPClientConn.RoundTrip
+      #5: httpx/server.go:55:24: httpx.Serve calls http.Server.Shutdown, which calls http2.Server.GracefulShutdown
+      #6: httpx/server.go:55:24: httpx.Serve calls http.Server.Shutdown, which calls http2.Server.GracefulShutdown
+      #7: httpx/server.go:41:32: httpx.Serve calls http.Server.Serve, which eventually calls http2.Server.ServeConn
+      #8: httpx/server.go:41:32: httpx.Serve calls http.Server.Serve, which eventually calls http2.Server.ServeConn
+      #9: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls http2.Transport.AddConn
+      #10: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls http2.Transport.AddConn
+      #11: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls http2.Transport.CloseIdleConnections
+      #12: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls http2.Transport.CloseIdleConnections
+      #13: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls http2.Transport.NewClientConn
+      #14: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls http2.Transport.NewClientConn
+      #15: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls http2.Transport.RoundTrip
+      #16: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls http2.Transport.RoundTrip
+      #17: testx/testx.go:89:15: testx.Shutdown calls fmt.Fprintf, which eventually calls http2.bufferedWriterTimeoutWriter.Write
+      #18: testx/testx.go:89:15: testx.Shutdown calls fmt.Fprintf, which eventually calls http2.bufferedWriterTimeoutWriter.Write
+      #19: testx/testx.go:89:15: testx.Shutdown calls fmt.Fprintf, which eventually calls http2.chunkWriter.Write
+      #20: testx/testx.go:89:15: testx.Shutdown calls fmt.Fprintf, which eventually calls http2.chunkWriter.Write
+      #21: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http2.gzipReader.Close
+      #22: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http2.gzipReader.Close
+      #23: pii/crypto.go:77:24: pii.Protector.Encrypt calls rand.Read, which eventually calls http2.gzipReader.Read
+      #24: pii/crypto.go:77:24: pii.Protector.Encrypt calls rand.Read, which eventually calls http2.gzipReader.Read
+      #25: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls http2.requestBody.Close
+      #26: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls http2.requestBody.Close
+      #27: httpx/middleware.go:102:10: httpx.StatusWriter.Flush calls http.http2ResponseWriter.Flush, which calls http2.responseWriter.FlushError
+      #28: httpx/middleware.go:102:10: httpx.StatusWriter.Flush calls http.http2ResponseWriter.Flush, which calls http2.responseWriter.FlushError
+      #29: httpx/middleware.go:91:34: httpx.StatusWriter.Write calls http2.responseWriter.Write
+      #30: httpx/middleware.go:91:34: httpx.StatusWriter.Write calls http2.responseWriter.Write
+      #31: httpx/middleware.go:84:30: httpx.StatusWriter.WriteHeader calls http2.responseWriter.WriteHeader
+      #32: httpx/middleware.go:84:30: httpx.StatusWriter.WriteHeader calls http2.responseWriter.WriteHeader
+      #33: redisx/scripts.go:48:36: redisx.ScriptSet.LoadFS calls redis.NewScript, which eventually calls http2.responseWriter.WriteString
+      #34: redisx/scripts.go:48:36: redisx.ScriptSet.LoadFS calls redis.NewScript, which eventually calls http2.responseWriter.WriteString
+      #35: testx/testx.go:89:15: testx.Shutdown calls fmt.Fprintf, which eventually calls http2.stickyErrWriter.Write
+      #36: testx/testx.go:89:15: testx.Shutdown calls fmt.Fprintf, which eventually calls http2.stickyErrWriter.Write
+      #37: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http2.transportResponseBody.Close
+      #38: testx/testx.go:49:11: testx.started.get calls sync.Once.Do, which eventually calls http2.transportResponseBody.Close
+      #39: pii/crypto.go:77:24: pii.Protector.Encrypt calls rand.Read, which eventually calls http2.transportResponseBody.Read
+      #40: pii/crypto.go:77:24: pii.Protector.Encrypt calls rand.Read, which eventually calls http2.transportResponseBody.Read
+
+Vulnerability #13: GO-2026-6600
+    Recognize yield as regexp preceder keyword in html/template
+  More info: https://pkg.go.dev/vuln/GO-2026-6600
+  Standard library
+    Found in: html/template@go1.27
+    Fixed in: html/template@go1.27.2
+    Example traces found:
+      #1: httpx/server.go:41:32: httpx.Serve calls http.Server.Serve, which eventually calls template.Template.Execute
+      #2: httpx/server.go:41:32: httpx.Serve calls http.Server.Serve, which eventually calls template.Template.ExecuteTemplate
+
+Vulnerability #14: GO-2026-6599
+    Reset context tracking on consecutive template expressions in html/template
+  More info: https://pkg.go.dev/vuln/GO-2026-6599
+  Standard library
+    Found in: html/template@go1.27
+    Fixed in: html/template@go1.27.2
+    Example traces found:
+      #1: httpx/server.go:41:32: httpx.Serve calls http.Server.Serve, which eventually calls template.Template.Execute
+      #2: httpx/server.go:41:32: httpx.Serve calls http.Server.Serve, which eventually calls template.Template.ExecuteTemplate
+
+Vulnerability #15: GO-2026-6253
+    moby/go-archive: Crafted tar archive can write outside the extraction
+    directory in github.com/moby/go-archive
+  More info: https://pkg.go.dev/vuln/GO-2026-6253
+  Module: github.com/moby/go-archive
+    Found in: github.com/moby/go-archive@v0.2.0
+    Fixed in: github.com/moby/go-archive@v0.3.0
+    Example traces found:
+      #1: testx/redis.go:23:23: testx.startRedis calls redis.Run, which eventually calls archive.TarWithOptions
+      #2: testx/testx.go:26:2: testx.init calls testcontainers.init, which calls archive.init
+      #3: testx/testx.go:89:15: testx.Shutdown calls fmt.Fprintf, which eventually calls archive.init
+      #4: testx/redis.go:23:23: testx.startRedis calls redis.Run, which eventually calls compression.CompressStream
+      #5: testx/testx.go:89:15: testx.Shutdown calls fmt.Fprintf, which eventually calls compression.init
+      #6: testx/testx.go:26:2: testx.init calls testcontainers.init, which eventually calls compression.init
+      #7: testx/redis.go:23:23: testx.startRedis calls redis.Run, which eventually calls compression.nopWriteCloser.Close
+      #8: testx/redis.go:23:23: testx.startRedis calls redis.Run, which eventually calls tarheader.FileInfoHeaderNoLookups
+      #9: testx/testx.go:26:2: testx.init calls testcontainers.init, which eventually calls tarheader.init
+      #10: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls tarheader.nosysFileInfo.Gname
+      #11: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls tarheader.nosysFileInfo.Sys
+      #12: testx/testx.go:70:68: testx.terminate calls testcontainers.TerminateContainer, which eventually calls tarheader.nosysFileInfo.Uname
+
+Your code is affected by 15 vulnerabilities from 2 modules and the Go standard library.
+This scan also found 3 vulnerabilities in packages you import and 3
+vulnerabilities in modules you require, but your code doesn't appear to call
+these vulnerabilities.
+Use '-show verbose' for more details.
+== libs/go BASE 918667c (exit 3)
+Vulnerability #1: GO-2026-6865
+    Found in: github.com/klauspost/compress@v1.19.1
+Vulnerability #2: GO-2026-6859
+    Found in: net/http@go1.27
+Vulnerability #3: GO-2026-6809
+    Found in: crypto/x509@go1.27
+Vulnerability #4: GO-2026-6617
+    Found in: golang.org/x/net@v0.58.0
+    Found in: net/http/internal/http2@go1.27
+Vulnerability #5: GO-2026-6613
+    Found in: net/http@go1.27
+Vulnerability #6: GO-2026-6612
+    Found in: golang.org/x/net@v0.58.0
+    Found in: net/http/internal/http2@go1.27
+Vulnerability #7: GO-2026-6611
+    Found in: golang.org/x/net@v0.58.0
+    Found in: net/http/internal/http2@go1.27
+Vulnerability #8: GO-2026-6610
+    Found in: golang.org/x/net@v0.58.0
+    Found in: net/http/internal/http2@go1.27
+Vulnerability #9: GO-2026-6608
+    Found in: net/textproto@go1.27
+Vulnerability #10: GO-2026-6607
+    Found in: crypto/tls@go1.27
+Vulnerability #11: GO-2026-6605
+    Found in: net/http@go1.27
+Vulnerability #12: GO-2026-6603
+    Found in: golang.org/x/net@v0.58.0
+    Found in: net/http/internal/http2@go1.27
+Vulnerability #13: GO-2026-6600
+    Found in: html/template@go1.27
+Vulnerability #14: GO-2026-6599
+    Found in: html/template@go1.27
+Vulnerability #15: GO-2026-6253
+    Found in: github.com/moby/go-archive@v0.2.0
+libs/go reachable advisories: HEAD=15 BASE=15
+ok: libs/go no advisory reachable at HEAD that is not reachable at 918667c
+== services/waitingroom HEAD (exit 3)
+=== Symbol Results ===
+
+Vulnerability #1: GO-2026-6859
+    HTTP/1 server crash due to MaxBytesReader header race in net/http
+  More info: https://pkg.go.dev/vuln/GO-2026-6859
+  Standard library
+    Found in: net/http@go1.27
+    Fixed in: net/http@go1.27.4
+    Example traces found:
+      #1: cmd/server/main.go:21:2: server.init calls otelx.init, which eventually calls http.CanonicalHeaderKey
+      #2: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http.Client.Do
+      #3: internal/adapter/metrics/prom.go:8:2: metrics.init calls prometheus.init, which eventually calls http.HandleFunc
+      #4: internal/adapter/postgres/bot_decisions.go:137:14: postgres.DecisionWriter.Close calls sync.Once.Do, which eventually calls http.Header.Add
+      #5: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http.Header.Get
+      #6: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http.Header.Set
+      #7: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http.NewRequestWithContext
+      #8: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http.ParseTime
+      #9: internal/adapter/postgres/bot_decisions.go:137:14: postgres.DecisionWriter.Close calls sync.Once.Do, which eventually calls http.ReadResponse
+      #10: internal/adapter/postgres/bot_decisions.go:137:14: postgres.DecisionWriter.Close calls sync.Once.Do, which eventually calls http.Request.Write
+      #11: internal/adapter/postgres/bot_decisions.go:137:14: postgres.DecisionWriter.Close calls sync.Once.Do, which eventually calls http.Response.Write
+      #12: cmd/server/main.go:118:12: server.run calls http.ServeMux.Handle
+      #13: internal/adapter/http/handler.go:91:16: http.Handler.Routes calls http.ServeMux.HandleFunc
+      #14: cmd/server/main.go:128:18: server.run calls httpx.Run, which eventually calls http.Server.Close
+      #15: cmd/server/main.go:128:18: server.run calls httpx.Run, which eventually calls http.Server.Serve
+      #16: cmd/server/main.go:128:18: server.run calls httpx.Run, which eventually calls http.Server.Shutdown
+      #17: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http.Transport.Clone
+      #18: cmd/controller/main.go:250:18: controller.instanceID calls rand.Read, which eventually calls http.body.Close
+      #19: internal/adapter/redis/ops_state.go:116:22: redis.LoadSignalCheckout.Checkout calls loadsignal.Reader.Read, which eventually calls http.body.Read
+      #20: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http.bodyEOFSignal.Close
+      #21: cmd/controller/main.go:250:18: controller.instanceID calls rand.Read, which eventually calls http.bodyEOFSignal.Read
+      #22: cmd/controller/main.go:250:18: controller.instanceID calls rand.Read, which eventually calls http.bodyLocked.Read
+      #23: internal/adapter/redis/queue.go:41:21: redis.NewQueue calls redisx.ScriptSet.LoadFS, which eventually calls http.bufioFlushWriter.Write
+      #24: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http.cancelTimerBody.Close
+      #25: cmd/controller/main.go:250:18: controller.instanceID calls rand.Read, which eventually calls http.cancelTimerBody.Read
+      #26: internal/adapter/redis/queue.go:41:21: redis.NewQueue calls redisx.ScriptSet.LoadFS, which eventually calls http.checkConnErrorWriter.Write
+      #27: internal/adapter/redis/queue.go:41:21: redis.NewQueue calls redisx.ScriptSet.LoadFS, which eventually calls http.chunkWriter.Write
+      #28: cmd/controller/main.go:250:18: controller.instanceID calls rand.Read, which eventually calls http.connReader.Read
+      #29: cmd/controller/main.go:250:18: controller.instanceID calls rand.Read, which eventually calls http.expectContinueReader.Close
+      #30: internal/adapter/redis/ops_state.go:116:22: redis.LoadSignalCheckout.Checkout calls loadsignal.Reader.Read, which eventually calls http.expectContinueReader.Read
+      #31: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http.gzipReader.Close
+      #32: cmd/controller/main.go:250:18: controller.instanceID calls rand.Read, which eventually calls http.gzipReader.Read
+      #33: cmd/controller/main.go:250:18: controller.instanceID calls rand.Read, which eventually calls http.loggingConn.Read
+      #34: internal/adapter/postgres/bot_decisions.go:222:14: postgres.DecisionWriter.flush calls fmt.Fprintf, which calls http.loggingConn.Write
+      #35: cmd/controller/main.go:250:18: controller.instanceID calls rand.Read, which eventually calls http.maxBytesReader.Read
+      #36: internal/adapter/postgres/bot_decisions.go:137:14: postgres.DecisionWriter.Close calls sync.Once.Do, which eventually calls http.onceCloseListener.Close
+      #37: cmd/controller/main.go:250:18: controller.instanceID calls rand.Read, which eventually calls http.persistConn.Read
+      #38: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http.persistConnWriter.ReadFrom
+      #39: internal/adapter/redis/queue.go:41:21: redis.NewQueue calls redisx.ScriptSet.LoadFS, which eventually calls http.persistConnWriter.Write
+      #40: cmd/controller/main.go:250:18: controller.instanceID calls rand.Read, which eventually calls http.readTrackingBody.Close
+      #41: internal/adapter/redis/ops_state.go:116:22: redis.LoadSignalCheckout.Checkout calls loadsignal.Reader.Read, which eventually calls http.readTrackingBody.Read
+      #42: cmd/controller/main.go:250:18: controller.instanceID calls rand.Read, which eventually calls http.readWriteCloserBody.Read
+      #43: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http.response.ReadFrom
+      #44: internal/adapter/redis/queue.go:41:21: redis.NewQueue calls redisx.ScriptSet.LoadFS, which eventually calls http.response.Write
+      #45: internal/adapter/redis/queue.go:41:21: redis.NewQueue calls redisx.ScriptSet.LoadFS, which eventually calls http.response.WriteHeader
+      #46: internal/adapter/redis/queue.go:41:21: redis.NewQueue calls redisx.ScriptSet.LoadFS, which eventually calls http.response.WriteString
+      #47: internal/adapter/redis/queue.go:41:21: redis.NewQueue calls redisx.ScriptSet.LoadFS, which eventually calls http.timeoutWriter.Write
+      #48: internal/adapter/redis/queue.go:41:21: redis.NewQueue calls redisx.ScriptSet.LoadFS, which eventually calls http.timeoutWriter.WriteHeader
+      #49: internal/adapter/redis/queue.go:166:20: redis.fenceErr calls leader.IsFenced, which calls http.transportReadFromServerError.Error
+
+Vulnerability #2: GO-2026-6809
+    Distrust compromised intermediate certificates in crypto/x509
+  More info: https://pkg.go.dev/vuln/GO-2026-6809
+  Standard library
+    Found in: crypto/x509@go1.27
+    Fixed in: crypto/x509@go1.27.3
+    Example traces found:
+      #1: internal/adapter/redis/queue.go:41:21: redis.NewQueue calls redisx.ScriptSet.LoadFS, which eventually calls x509.Certificate.Verify
+
+Vulnerability #3: GO-2026-6617
+    HTTP/2 server crash due to HPACK encoder race in net/http
+  More info: https://pkg.go.dev/vuln/GO-2026-6617
+  Module: golang.org/x/net
+    Found in: golang.org/x/net@v0.58.0
+    Fixed in: golang.org/x/net@v0.60.0
+    Example traces found:
+      #1: internal/adapter/redis/queue.go:166:20: redis.fenceErr calls leader.IsFenced, which calls http2.ConnectionError.Error
+      #2: internal/adapter/redis/queue.go:56:20: redis.blockKey calls fmt.Sprintf, which eventually calls http2.ErrCode.String
+      #3: internal/adapter/redis/queue.go:56:20: redis.blockKey calls fmt.Sprintf, which eventually calls http2.FrameHeader.String
+      #4: internal/adapter/redis/queue.go:56:20: redis.blockKey calls fmt.Sprintf, which eventually calls http2.FrameType.String
+      #5: internal/adapter/postgres/bot_decisions.go:137:14: postgres.DecisionWriter.Close calls sync.Once.Do, which eventually calls http2.Framer.ReadFrame
+      #6: internal/adapter/postgres/bot_decisions.go:137:14: postgres.DecisionWriter.Close calls sync.Once.Do, which eventually calls http2.Framer.ReadFrameForHeader
+      #7: internal/adapter/postgres/bot_decisions.go:137:14: postgres.DecisionWriter.Close calls sync.Once.Do, which eventually calls http2.Framer.ReadFrameHeader
+      #8: internal/adapter/postgres/bot_decisions.go:137:14: postgres.DecisionWriter.Close calls sync.Once.Do, which eventually calls http2.Framer.WriteContinuation
+      #9: internal/adapter/postgres/bot_decisions.go:137:14: postgres.DecisionWriter.Close calls sync.Once.Do, which eventually calls http2.Framer.WriteGoAway
+      #10: internal/adapter/postgres/bot_decisions.go:137:14: postgres.DecisionWriter.Close calls sync.Once.Do, which eventually calls http2.Framer.WriteHeaders
+      #11: internal/adapter/postgres/bot_decisions.go:137:14: postgres.DecisionWriter.Close calls sync.Once.Do, which eventually calls http2.Framer.WritePing
+      #12: internal/adapter/postgres/bot_decisions.go:137:14: postgres.DecisionWriter.Close calls sync.Once.Do, which eventually calls http2.Framer.WriteRSTStream
+      #13: internal/adapter/postgres/bot_decisions.go:137:14: postgres.DecisionWriter.Close calls sync.Once.Do, which eventually calls http2.Framer.WriteSettings
+      #14: internal/adapter/postgres/bot_decisions.go:137:14: postgres.DecisionWriter.Close calls sync.Once.Do, which eventually calls http2.Framer.WriteSettingsAck
+      #15: internal/adapter/postgres/bot_decisions.go:137:14: postgres.DecisionWriter.Close calls sync.Once.Do, which eventually calls http2.Framer.WriteWindowUpdate
+      #16: internal/adapter/redis/queue.go:56:20: redis.blockKey calls fmt.Sprintf, which eventually calls http2.SettingID.String
+      #17: internal/adapter/postgres/bot_decisions.go:137:14: postgres.DecisionWriter.Close calls sync.Once.Do, which eventually calls http2.SettingsFrame.ForeachSetting
+      #18: internal/adapter/redis/queue.go:166:20: redis.fenceErr calls leader.IsFenced, which calls http2.StreamError.Error
+      #19: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http2.Transport.RoundTrip
+      #20: internal/adapter/redis/queue.go:166:20: redis.fenceErr calls leader.IsFenced, which calls http2.connError.Error
+      #21: internal/adapter/redis/queue.go:166:20: redis.fenceErr calls leader.IsFenced, which calls http2.duplicatePseudoHeaderError.Error
+      #22: internal/adapter/redis/queue.go:166:20: redis.fenceErr calls leader.IsFenced, which calls http2.headerFieldNameError.Error
+      #23: internal/adapter/redis/queue.go:166:20: redis.fenceErr calls leader.IsFenced, which calls http2.headerFieldValueError.Error
+      #24: internal/adapter/redis/queue.go:166:20: redis.fenceErr calls leader.IsFenced, which calls http2.pseudoHeaderError.Error
+
+  Standard library
+    Found in: net/http/internal/http2@go1.27
+    Fixed in: net/http/internal/http2@go1.27.2
+    Example traces found:
+      #1: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http2.NetHTTPClientConn.Close
+      #2: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http2.NetHTTPClientConn.Close
+      #3: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http2.NetHTTPClientConn.RoundTrip
+      #4: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http2.NetHTTPClientConn.RoundTrip
+      #5: cmd/server/main.go:128:18: server.run calls httpx.Run, which eventually calls http2.Server.GracefulShutdown
+      #6: cmd/server/main.go:128:18: server.run calls httpx.Run, which eventually calls http2.Server.GracefulShutdown
+      #7: cmd/server/main.go:128:18: server.run calls httpx.Run, which eventually calls http2.Server.ServeConn
+      #8: cmd/server/main.go:128:18: server.run calls httpx.Run, which eventually calls http2.Server.ServeConn
+      #9: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http2.Transport.AddConn
+      #10: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http2.Transport.AddConn
+      #11: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http2.Transport.NewClientConn
+      #12: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http2.Transport.NewClientConn
+      #13: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http2.Transport.RoundTrip
+      #14: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http2.Transport.RoundTrip
+      #15: internal/adapter/redis/queue.go:41:21: redis.NewQueue calls redisx.ScriptSet.LoadFS, which eventually calls http2.bufferedWriterTimeoutWriter.Write
+      #16: internal/adapter/redis/queue.go:41:21: redis.NewQueue calls redisx.ScriptSet.LoadFS, which eventually calls http2.bufferedWriterTimeoutWriter.Write
+      #17: internal/adapter/redis/queue.go:41:21: redis.NewQueue calls redisx.ScriptSet.LoadFS, which eventually calls http2.chunkWriter.Write
+      #18: internal/adapter/redis/queue.go:41:21: redis.NewQueue calls redisx.ScriptSet.LoadFS, which eventually calls http2.chunkWriter.Write
+      #19: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http2.gzipReader.Close
+      #20: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http2.gzipReader.Close
+      #21: cmd/controller/main.go:250:18: controller.instanceID calls rand.Read, which eventually calls http2.gzipReader.Read
+      #22: cmd/controller/main.go:250:18: controller.instanceID calls rand.Read, which eventually calls http2.gzipReader.Read
+      #23: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http2.requestBody.Close
+      #24: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http2.requestBody.Close
+      #25: internal/adapter/http/handler.go:282:17: http.Handler.stream calls http.http2ResponseWriter.Flush, which calls http2.responseWriter.FlushError
+      #26: internal/adapter/http/handler.go:282:17: http.Handler.stream calls http.http2ResponseWriter.Flush, which calls http2.responseWriter.FlushError
+      #27: internal/adapter/redis/queue.go:41:21: redis.NewQueue calls redisx.ScriptSet.LoadFS, which eventually calls http2.responseWriter.Write
+      #28: internal/adapter/redis/queue.go:41:21: redis.NewQueue calls redisx.ScriptSet.LoadFS, which eventually calls http2.responseWriter.Write
+      #29: internal/adapter/redis/queue.go:41:21: redis.NewQueue calls redisx.ScriptSet.LoadFS, which eventually calls http2.responseWriter.WriteHeader
+      #30: internal/adapter/redis/queue.go:41:21: redis.NewQueue calls redisx.ScriptSet.LoadFS, which eventually calls http2.responseWriter.WriteHeader
+      #31: internal/adapter/redis/queue.go:41:21: redis.NewQueue calls redisx.ScriptSet.LoadFS, which eventually calls http2.responseWriter.WriteString
+      #32: internal/adapter/redis/queue.go:41:21: redis.NewQueue calls redisx.ScriptSet.LoadFS, which eventually calls http2.responseWriter.WriteString
+      #33: internal/adapter/redis/queue.go:41:21: redis.NewQueue calls redisx.ScriptSet.LoadFS, which eventually calls http2.stickyErrWriter.Write
+      #34: internal/adapter/redis/queue.go:41:21: redis.NewQueue calls redisx.ScriptSet.LoadFS, which eventually calls http2.stickyErrWriter.Write
+      #35: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http2.transportResponseBody.Close
+      #36: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http2.transportResponseBody.Close
+      #37: cmd/controller/main.go:250:18: controller.instanceID calls rand.Read, which eventually calls http2.transportResponseBody.Read
+      #38: cmd/controller/main.go:250:18: controller.instanceID calls rand.Read, which eventually calls http2.transportResponseBody.Read
+
+Vulnerability #4: GO-2026-6613
+    HTTP/1 server connection desynchronization after 2xx CONNECT response in
+    net/http
+  More info: https://pkg.go.dev/vuln/GO-2026-6613
+  Standard library
+    Found in: net/http@go1.27
+    Fixed in: net/http@go1.27.2
+    Example traces found:
+      #1: cmd/server/main.go:21:2: server.init calls otelx.init, which eventually calls http.CanonicalHeaderKey
+      #2: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http.Client.Do
+      #3: internal/adapter/metrics/prom.go:8:2: metrics.init calls prometheus.init, which eventually calls http.HandleFunc
+      #4: internal/adapter/postgres/bot_decisions.go:137:14: postgres.DecisionWriter.Close calls sync.Once.Do, which eventually calls http.Header.Add
+      #5: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http.Header.Get
+      #6: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http.Header.Set
+      #7: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http.NewRequestWithContext
+      #8: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http.ParseTime
+      #9: internal/adapter/postgres/bot_decisions.go:137:14: postgres.DecisionWriter.Close calls sync.Once.Do, which eventually calls http.ReadResponse
+      #10: internal/adapter/postgres/bot_decisions.go:137:14: postgres.DecisionWriter.Close calls sync.Once.Do, which eventually calls http.Request.Write
+      #11: internal/adapter/postgres/bot_decisions.go:137:14: postgres.DecisionWriter.Close calls sync.Once.Do, which eventually calls http.Response.Write
+      #12: cmd/server/main.go:118:12: server.run calls http.ServeMux.Handle
+      #13: internal/adapter/http/handler.go:91:16: http.Handler.Routes calls http.ServeMux.HandleFunc
+      #14: cmd/server/main.go:128:18: server.run calls httpx.Run, which eventually calls http.Server.Close
+      #15: cmd/server/main.go:128:18: server.run calls httpx.Run, which eventually calls http.Server.Serve
+      #16: cmd/server/main.go:128:18: server.run calls httpx.Run, which eventually calls http.Server.Shutdown
+      #17: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http.Transport.Clone
+      #18: cmd/controller/main.go:250:18: controller.instanceID calls rand.Read, which eventually calls http.body.Close
+      #19: internal/adapter/redis/ops_state.go:116:22: redis.LoadSignalCheckout.Checkout calls loadsignal.Reader.Read, which eventually calls http.body.Read
+      #20: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http.bodyEOFSignal.Close
+      #21: cmd/controller/main.go:250:18: controller.instanceID calls rand.Read, which eventually calls http.bodyEOFSignal.Read
+      #22: cmd/controller/main.go:250:18: controller.instanceID calls rand.Read, which eventually calls http.bodyLocked.Read
+      #23: internal/adapter/redis/queue.go:41:21: redis.NewQueue calls redisx.ScriptSet.LoadFS, which eventually calls http.bufioFlushWriter.Write
+      #24: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http.cancelTimerBody.Close
+      #25: cmd/controller/main.go:250:18: controller.instanceID calls rand.Read, which eventually calls http.cancelTimerBody.Read
+      #26: internal/adapter/redis/queue.go:41:21: redis.NewQueue calls redisx.ScriptSet.LoadFS, which eventually calls http.checkConnErrorWriter.Write
+      #27: internal/adapter/redis/queue.go:41:21: redis.NewQueue calls redisx.ScriptSet.LoadFS, which eventually calls http.chunkWriter.Write
+      #28: cmd/controller/main.go:250:18: controller.instanceID calls rand.Read, which eventually calls http.connReader.Read
+      #29: cmd/controller/main.go:250:18: controller.instanceID calls rand.Read, which eventually calls http.expectContinueReader.Close
+      #30: internal/adapter/redis/ops_state.go:116:22: redis.LoadSignalCheckout.Checkout calls loadsignal.Reader.Read, which eventually calls http.expectContinueReader.Read
+      #31: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http.gzipReader.Close
+      #32: cmd/controller/main.go:250:18: controller.instanceID calls rand.Read, which eventually calls http.gzipReader.Read
+      #33: cmd/controller/main.go:250:18: controller.instanceID calls rand.Read, which eventually calls http.loggingConn.Read
+      #34: internal/adapter/postgres/bot_decisions.go:222:14: postgres.DecisionWriter.flush calls fmt.Fprintf, which calls http.loggingConn.Write
+      #35: cmd/controller/main.go:250:18: controller.instanceID calls rand.Read, which eventually calls http.maxBytesReader.Read
+      #36: internal/adapter/postgres/bot_decisions.go:137:14: postgres.DecisionWriter.Close calls sync.Once.Do, which eventually calls http.onceCloseListener.Close
+      #37: cmd/controller/main.go:250:18: controller.instanceID calls rand.Read, which eventually calls http.persistConn.Read
+      #38: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http.persistConnWriter.ReadFrom
+      #39: internal/adapter/redis/queue.go:41:21: redis.NewQueue calls redisx.ScriptSet.LoadFS, which eventually calls http.persistConnWriter.Write
+      #40: cmd/controller/main.go:250:18: controller.instanceID calls rand.Read, which eventually calls http.readTrackingBody.Close
+      #41: internal/adapter/redis/ops_state.go:116:22: redis.LoadSignalCheckout.Checkout calls loadsignal.Reader.Read, which eventually calls http.readTrackingBody.Read
+      #42: cmd/controller/main.go:250:18: controller.instanceID calls rand.Read, which eventually calls http.readWriteCloserBody.Read
+      #43: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http.response.ReadFrom
+      #44: internal/adapter/redis/queue.go:41:21: redis.NewQueue calls redisx.ScriptSet.LoadFS, which eventually calls http.response.Write
+      #45: internal/adapter/redis/queue.go:41:21: redis.NewQueue calls redisx.ScriptSet.LoadFS, which eventually calls http.response.WriteHeader
+      #46: internal/adapter/redis/queue.go:41:21: redis.NewQueue calls redisx.ScriptSet.LoadFS, which eventually calls http.response.WriteString
+      #47: internal/adapter/redis/queue.go:41:21: redis.NewQueue calls redisx.ScriptSet.LoadFS, which eventually calls http.timeoutWriter.Write
+      #48: internal/adapter/redis/queue.go:41:21: redis.NewQueue calls redisx.ScriptSet.LoadFS, which eventually calls http.timeoutWriter.WriteHeader
+      #49: internal/adapter/redis/queue.go:166:20: redis.fenceErr calls leader.IsFenced, which calls http.transportReadFromServerError.Error
+
+Vulnerability #5: GO-2026-6612
+    Double flow control refund on HTTP/2 server streams in net/http
+  More info: https://pkg.go.dev/vuln/GO-2026-6612
+  Module: golang.org/x/net
+    Found in: golang.org/x/net@v0.58.0
+    Fixed in: golang.org/x/net@v0.60.0
+    Example traces found:
+      #1: internal/adapter/redis/queue.go:166:20: redis.fenceErr calls leader.IsFenced, which calls http2.ConnectionError.Error
+      #2: internal/adapter/redis/queue.go:56:20: redis.blockKey calls fmt.Sprintf, which eventually calls http2.ErrCode.String
+      #3: internal/adapter/redis/queue.go:56:20: redis.blockKey calls fmt.Sprintf, which eventually calls http2.FrameHeader.String
+      #4: internal/adapter/redis/queue.go:56:20: redis.blockKey calls fmt.Sprintf, which eventually calls http2.FrameType.String
+      #5: internal/adapter/postgres/bot_decisions.go:137:14: postgres.DecisionWriter.Close calls sync.Once.Do, which eventually calls http2.Framer.ReadFrame
+      #6: internal/adapter/postgres/bot_decisions.go:137:14: postgres.DecisionWriter.Close calls sync.Once.Do, which eventually calls http2.Framer.ReadFrameForHeader
+      #7: internal/adapter/postgres/bot_decisions.go:137:14: postgres.DecisionWriter.Close calls sync.Once.Do, which eventually calls http2.Framer.ReadFrameHeader
+      #8: internal/adapter/postgres/bot_decisions.go:137:14: postgres.DecisionWriter.Close calls sync.Once.Do, which eventually calls http2.Framer.WriteContinuation
+      #9: internal/adapter/postgres/bot_decisions.go:137:14: postgres.DecisionWriter.Close calls sync.Once.Do, which eventually calls http2.Framer.WriteGoAway
+      #10: internal/adapter/postgres/bot_decisions.go:137:14: postgres.DecisionWriter.Close calls sync.Once.Do, which eventually calls http2.Framer.WriteHeaders
+      #11: internal/adapter/postgres/bot_decisions.go:137:14: postgres.DecisionWriter.Close calls sync.Once.Do, which eventually calls http2.Framer.WritePing
+      #12: internal/adapter/postgres/bot_decisions.go:137:14: postgres.DecisionWriter.Close calls sync.Once.Do, which eventually calls http2.Framer.WriteRSTStream
+      #13: internal/adapter/postgres/bot_decisions.go:137:14: postgres.DecisionWriter.Close calls sync.Once.Do, which eventually calls http2.Framer.WriteSettings
+      #14: internal/adapter/postgres/bot_decisions.go:137:14: postgres.DecisionWriter.Close calls sync.Once.Do, which eventually calls http2.Framer.WriteSettingsAck
+      #15: internal/adapter/postgres/bot_decisions.go:137:14: postgres.DecisionWriter.Close calls sync.Once.Do, which eventually calls http2.Framer.WriteWindowUpdate
+      #16: internal/adapter/redis/queue.go:56:20: redis.blockKey calls fmt.Sprintf, which eventually calls http2.SettingID.String
+      #17: internal/adapter/postgres/bot_decisions.go:137:14: postgres.DecisionWriter.Close calls sync.Once.Do, which eventually calls http2.SettingsFrame.ForeachSetting
+      #18: internal/adapter/redis/queue.go:166:20: redis.fenceErr calls leader.IsFenced, which calls http2.StreamError.Error
+      #19: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http2.Transport.RoundTrip
+      #20: internal/adapter/redis/queue.go:166:20: redis.fenceErr calls leader.IsFenced, which calls http2.connError.Error
+      #21: internal/adapter/redis/queue.go:166:20: redis.fenceErr calls leader.IsFenced, which calls http2.duplicatePseudoHeaderError.Error
+      #22: internal/adapter/redis/queue.go:166:20: redis.fenceErr calls leader.IsFenced, which calls http2.headerFieldNameError.Error
+      #23: internal/adapter/redis/queue.go:166:20: redis.fenceErr calls leader.IsFenced, which calls http2.headerFieldValueError.Error
+      #24: internal/adapter/redis/queue.go:166:20: redis.fenceErr calls leader.IsFenced, which calls http2.pseudoHeaderError.Error
+
+  Standard library
+    Found in: net/http/internal/http2@go1.27
+    Fixed in: net/http/internal/http2@go1.27.2
+    Example traces found:
+      #1: cmd/server/main.go:128:18: server.run calls httpx.Run, which eventually calls http2.Server.ServeConn
+      #2: cmd/server/main.go:128:18: server.run calls httpx.Run, which eventually calls http2.Server.ServeConn
+      #3: cmd/controller/main.go:250:18: controller.instanceID calls rand.Read, which eventually calls http2.requestBody.Close
+      #4: cmd/controller/main.go:250:18: controller.instanceID calls rand.Read, which eventually calls http2.requestBody.Close
+      #5: internal/adapter/redis/ops_state.go:116:22: redis.LoadSignalCheckout.Checkout calls loadsignal.Reader.Read, which eventually calls http2.requestBody.Read
+      #6: internal/adapter/redis/ops_state.go:116:22: redis.LoadSignalCheckout.Checkout calls loadsignal.Reader.Read, which eventually calls http2.requestBody.Read
+
+Vulnerability #6: GO-2026-6611
+    Excessive CPU consumption from repeated initial window changes in net/http
+  More info: https://pkg.go.dev/vuln/GO-2026-6611
+  Module: golang.org/x/net
+    Found in: golang.org/x/net@v0.58.0
+    Fixed in: golang.org/x/net@v0.60.0
+    Example traces found:
+      #1: internal/adapter/redis/queue.go:166:20: redis.fenceErr calls leader.IsFenced, which calls http2.ConnectionError.Error
+      #2: internal/adapter/redis/queue.go:56:20: redis.blockKey calls fmt.Sprintf, which eventually calls http2.ErrCode.String
+      #3: internal/adapter/redis/queue.go:56:20: redis.blockKey calls fmt.Sprintf, which eventually calls http2.FrameHeader.String
+      #4: internal/adapter/redis/queue.go:56:20: redis.blockKey calls fmt.Sprintf, which eventually calls http2.FrameType.String
+      #5: internal/adapter/postgres/bot_decisions.go:137:14: postgres.DecisionWriter.Close calls sync.Once.Do, which eventually calls http2.Framer.ReadFrame
+      #6: internal/adapter/postgres/bot_decisions.go:137:14: postgres.DecisionWriter.Close calls sync.Once.Do, which eventually calls http2.Framer.ReadFrameForHeader
+      #7: internal/adapter/postgres/bot_decisions.go:137:14: postgres.DecisionWriter.Close calls sync.Once.Do, which eventually calls http2.Framer.ReadFrameHeader
+      #8: internal/adapter/postgres/bot_decisions.go:137:14: postgres.DecisionWriter.Close calls sync.Once.Do, which eventually calls http2.Framer.WriteContinuation
+      #9: internal/adapter/postgres/bot_decisions.go:137:14: postgres.DecisionWriter.Close calls sync.Once.Do, which eventually calls http2.Framer.WriteGoAway
+      #10: internal/adapter/postgres/bot_decisions.go:137:14: postgres.DecisionWriter.Close calls sync.Once.Do, which eventually calls http2.Framer.WriteHeaders
+      #11: internal/adapter/postgres/bot_decisions.go:137:14: postgres.DecisionWriter.Close calls sync.Once.Do, which eventually calls http2.Framer.WritePing
+      #12: internal/adapter/postgres/bot_decisions.go:137:14: postgres.DecisionWriter.Close calls sync.Once.Do, which eventually calls http2.Framer.WriteRSTStream
+      #13: internal/adapter/postgres/bot_decisions.go:137:14: postgres.DecisionWriter.Close calls sync.Once.Do, which eventually calls http2.Framer.WriteSettings
+      #14: internal/adapter/postgres/bot_decisions.go:137:14: postgres.DecisionWriter.Close calls sync.Once.Do, which eventually calls http2.Framer.WriteSettingsAck
+      #15: internal/adapter/postgres/bot_decisions.go:137:14: postgres.DecisionWriter.Close calls sync.Once.Do, which eventually calls http2.Framer.WriteWindowUpdate
+      #16: internal/adapter/redis/queue.go:56:20: redis.blockKey calls fmt.Sprintf, which eventually calls http2.SettingID.String
+      #17: internal/adapter/postgres/bot_decisions.go:137:14: postgres.DecisionWriter.Close calls sync.Once.Do, which eventually calls http2.SettingsFrame.ForeachSetting
+      #18: internal/adapter/redis/queue.go:166:20: redis.fenceErr calls leader.IsFenced, which calls http2.StreamError.Error
+      #19: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http2.Transport.RoundTrip
+      #20: internal/adapter/redis/queue.go:166:20: redis.fenceErr calls leader.IsFenced, which calls http2.connError.Error
+      #21: internal/adapter/redis/queue.go:166:20: redis.fenceErr calls leader.IsFenced, which calls http2.duplicatePseudoHeaderError.Error
+      #22: internal/adapter/redis/queue.go:166:20: redis.fenceErr calls leader.IsFenced, which calls http2.headerFieldNameError.Error
+      #23: internal/adapter/redis/queue.go:166:20: redis.fenceErr calls leader.IsFenced, which calls http2.headerFieldValueError.Error
+      #24: internal/adapter/redis/queue.go:166:20: redis.fenceErr calls leader.IsFenced, which calls http2.pseudoHeaderError.Error
+
+  Standard library
+    Found in: net/http/internal/http2@go1.27
+    Fixed in: net/http/internal/http2@go1.27.2
+    Example traces found:
+      #1: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http2.NetHTTPClientConn.Close
+      #2: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http2.NetHTTPClientConn.Close
+      #3: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http2.NetHTTPClientConn.RoundTrip
+      #4: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http2.NetHTTPClientConn.RoundTrip
+      #5: cmd/server/main.go:128:18: server.run calls httpx.Run, which eventually calls http2.Server.GracefulShutdown
+      #6: cmd/server/main.go:128:18: server.run calls httpx.Run, which eventually calls http2.Server.GracefulShutdown
+      #7: cmd/server/main.go:128:18: server.run calls httpx.Run, which eventually calls http2.Server.ServeConn
+      #8: cmd/server/main.go:128:18: server.run calls httpx.Run, which eventually calls http2.Server.ServeConn
+      #9: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http2.Transport.AddConn
+      #10: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http2.Transport.AddConn
+      #11: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http2.Transport.NewClientConn
+      #12: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http2.Transport.NewClientConn
+      #13: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http2.Transport.RoundTrip
+      #14: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http2.Transport.RoundTrip
+      #15: internal/adapter/redis/queue.go:41:21: redis.NewQueue calls redisx.ScriptSet.LoadFS, which eventually calls http2.bufferedWriterTimeoutWriter.Write
+      #16: internal/adapter/redis/queue.go:41:21: redis.NewQueue calls redisx.ScriptSet.LoadFS, which eventually calls http2.bufferedWriterTimeoutWriter.Write
+      #17: internal/adapter/redis/queue.go:41:21: redis.NewQueue calls redisx.ScriptSet.LoadFS, which eventually calls http2.chunkWriter.Write
+      #18: internal/adapter/redis/queue.go:41:21: redis.NewQueue calls redisx.ScriptSet.LoadFS, which eventually calls http2.chunkWriter.Write
+      #19: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http2.gzipReader.Close
+      #20: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http2.gzipReader.Close
+      #21: cmd/controller/main.go:250:18: controller.instanceID calls rand.Read, which eventually calls http2.gzipReader.Read
+      #22: cmd/controller/main.go:250:18: controller.instanceID calls rand.Read, which eventually calls http2.gzipReader.Read
+      #23: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http2.requestBody.Close
+      #24: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http2.requestBody.Close
+      #25: internal/adapter/http/handler.go:282:17: http.Handler.stream calls http.http2ResponseWriter.Flush, which calls http2.responseWriter.FlushError
+      #26: internal/adapter/http/handler.go:282:17: http.Handler.stream calls http.http2ResponseWriter.Flush, which calls http2.responseWriter.FlushError
+      #27: internal/adapter/redis/queue.go:41:21: redis.NewQueue calls redisx.ScriptSet.LoadFS, which eventually calls http2.responseWriter.Write
+      #28: internal/adapter/redis/queue.go:41:21: redis.NewQueue calls redisx.ScriptSet.LoadFS, which eventually calls http2.responseWriter.Write
+      #29: internal/adapter/redis/queue.go:41:21: redis.NewQueue calls redisx.ScriptSet.LoadFS, which eventually calls http2.responseWriter.WriteHeader
+      #30: internal/adapter/redis/queue.go:41:21: redis.NewQueue calls redisx.ScriptSet.LoadFS, which eventually calls http2.responseWriter.WriteHeader
+      #31: internal/adapter/redis/queue.go:41:21: redis.NewQueue calls redisx.ScriptSet.LoadFS, which eventually calls http2.responseWriter.WriteString
+      #32: internal/adapter/redis/queue.go:41:21: redis.NewQueue calls redisx.ScriptSet.LoadFS, which eventually calls http2.responseWriter.WriteString
+      #33: internal/adapter/redis/queue.go:41:21: redis.NewQueue calls redisx.ScriptSet.LoadFS, which eventually calls http2.stickyErrWriter.Write
+      #34: internal/adapter/redis/queue.go:41:21: redis.NewQueue calls redisx.ScriptSet.LoadFS, which eventually calls http2.stickyErrWriter.Write
+      #35: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http2.transportResponseBody.Close
+      #36: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http2.transportResponseBody.Close
+      #37: cmd/controller/main.go:250:18: controller.instanceID calls rand.Read, which eventually calls http2.transportResponseBody.Read
+      #38: cmd/controller/main.go:250:18: controller.instanceID calls rand.Read, which eventually calls http2.transportResponseBody.Read
+
+Vulnerability #7: GO-2026-6610
+    HTTP/2 transport accepts malformed framing-related headers in net/http
+  More info: https://pkg.go.dev/vuln/GO-2026-6610
+  Module: golang.org/x/net
+    Found in: golang.org/x/net@v0.58.0
+    Fixed in: golang.org/x/net@v0.60.0
+    Example traces found:
+      #1: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http2.Transport.RoundTrip
+
+  Standard library
+    Found in: net/http/internal/http2@go1.27
+    Fixed in: net/http/internal/http2@go1.27.2
+    Example traces found:
+      #1: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http2.Transport.AddConn
+      #2: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http2.Transport.AddConn
+      #3: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http2.Transport.NewClientConn
+      #4: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http2.Transport.NewClientConn
+      #5: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http2.Transport.RoundTrip
+      #6: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http2.Transport.RoundTrip
+
+Vulnerability #8: GO-2026-6608
+    Memory limit bypass when parsing MIME headers in net/textproto,
+    mime/multipart
+  More info: https://pkg.go.dev/vuln/GO-2026-6608
+  Standard library
+    Found in: net/textproto@go1.27
+    Fixed in: net/textproto@go1.27.2
+    Example traces found:
+      #1: cmd/server/main.go:128:18: server.run calls httpx.Run, which eventually calls multipart.Reader.ReadForm
+      #2: internal/adapter/postgres/bot_decisions.go:137:14: postgres.DecisionWriter.Close calls sync.Once.Do, which eventually calls textproto.Reader.ReadMIMEHeader
+
+Vulnerability #9: GO-2026-6607
+    Reject malformed ECH outer extension references in crypto/tls
+  More info: https://pkg.go.dev/vuln/GO-2026-6607
+  Standard library
+    Found in: crypto/tls@go1.27
+    Fixed in: crypto/tls@go1.27.2
+    Example traces found:
+      #1: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls tls.Conn.HandshakeContext
+      #2: cmd/controller/main.go:250:18: controller.instanceID calls rand.Read, which eventually calls tls.Conn.Read
+      #3: internal/adapter/redis/queue.go:41:21: redis.NewQueue calls redisx.ScriptSet.LoadFS, which eventually calls tls.Conn.Write
+      #4: cmd/controller/main.go:103:24: controller.run calls redis.NewClient, which eventually calls tls.DialWithDialer
+      #5: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls tls.Dialer.DialContext
+
+Vulnerability #10: GO-2026-6605
+    HTTP/1 client connection desynchronization after CONNECT rejection in
+    net/http
+  More info: https://pkg.go.dev/vuln/GO-2026-6605
+  Standard library
+    Found in: net/http@go1.27
+    Fixed in: net/http@go1.27.2
+    Example traces found:
+      #1: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http.Client.Do
+
+Vulnerability #11: GO-2026-6603
+    HTTP/2 server memory exhaustion due to Trailer headers in net/http
+  More info: https://pkg.go.dev/vuln/GO-2026-6603
+  Module: golang.org/x/net
+    Found in: golang.org/x/net@v0.58.0
+    Fixed in: golang.org/x/net@v0.60.0
+    Example traces found:
+      #1: internal/adapter/redis/queue.go:166:20: redis.fenceErr calls leader.IsFenced, which calls http2.ConnectionError.Error
+      #2: internal/adapter/redis/queue.go:56:20: redis.blockKey calls fmt.Sprintf, which eventually calls http2.ErrCode.String
+      #3: internal/adapter/redis/queue.go:56:20: redis.blockKey calls fmt.Sprintf, which eventually calls http2.FrameHeader.String
+      #4: internal/adapter/redis/queue.go:56:20: redis.blockKey calls fmt.Sprintf, which eventually calls http2.FrameType.String
+      #5: internal/adapter/postgres/bot_decisions.go:137:14: postgres.DecisionWriter.Close calls sync.Once.Do, which eventually calls http2.Framer.ReadFrame
+      #6: internal/adapter/postgres/bot_decisions.go:137:14: postgres.DecisionWriter.Close calls sync.Once.Do, which eventually calls http2.Framer.ReadFrameForHeader
+      #7: internal/adapter/postgres/bot_decisions.go:137:14: postgres.DecisionWriter.Close calls sync.Once.Do, which eventually calls http2.Framer.ReadFrameHeader
+      #8: internal/adapter/postgres/bot_decisions.go:137:14: postgres.DecisionWriter.Close calls sync.Once.Do, which eventually calls http2.Framer.WriteContinuation
+      #9: internal/adapter/postgres/bot_decisions.go:137:14: postgres.DecisionWriter.Close calls sync.Once.Do, which eventually calls http2.Framer.WriteGoAway
+      #10: internal/adapter/postgres/bot_decisions.go:137:14: postgres.DecisionWriter.Close calls sync.Once.Do, which eventually calls http2.Framer.WriteHeaders
+      #11: internal/adapter/postgres/bot_decisions.go:137:14: postgres.DecisionWriter.Close calls sync.Once.Do, which eventually calls http2.Framer.WritePing
+      #12: internal/adapter/postgres/bot_decisions.go:137:14: postgres.DecisionWriter.Close calls sync.Once.Do, which eventually calls http2.Framer.WriteRSTStream
+      #13: internal/adapter/postgres/bot_decisions.go:137:14: postgres.DecisionWriter.Close calls sync.Once.Do, which eventually calls http2.Framer.WriteSettings
+      #14: internal/adapter/postgres/bot_decisions.go:137:14: postgres.DecisionWriter.Close calls sync.Once.Do, which eventually calls http2.Framer.WriteSettingsAck
+      #15: internal/adapter/postgres/bot_decisions.go:137:14: postgres.DecisionWriter.Close calls sync.Once.Do, which eventually calls http2.Framer.WriteWindowUpdate
+      #16: internal/adapter/redis/queue.go:56:20: redis.blockKey calls fmt.Sprintf, which eventually calls http2.SettingID.String
+      #17: internal/adapter/postgres/bot_decisions.go:137:14: postgres.DecisionWriter.Close calls sync.Once.Do, which eventually calls http2.SettingsFrame.ForeachSetting
+      #18: internal/adapter/redis/queue.go:166:20: redis.fenceErr calls leader.IsFenced, which calls http2.StreamError.Error
+      #19: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http2.Transport.RoundTrip
+      #20: internal/adapter/redis/queue.go:166:20: redis.fenceErr calls leader.IsFenced, which calls http2.connError.Error
+      #21: internal/adapter/redis/queue.go:166:20: redis.fenceErr calls leader.IsFenced, which calls http2.duplicatePseudoHeaderError.Error
+      #22: internal/adapter/redis/queue.go:166:20: redis.fenceErr calls leader.IsFenced, which calls http2.headerFieldNameError.Error
+      #23: internal/adapter/redis/queue.go:166:20: redis.fenceErr calls leader.IsFenced, which calls http2.headerFieldValueError.Error
+      #24: internal/adapter/redis/queue.go:166:20: redis.fenceErr calls leader.IsFenced, which calls http2.pseudoHeaderError.Error
+
+  Standard library
+    Found in: net/http/internal/http2@go1.27
+    Fixed in: net/http/internal/http2@go1.27.2
+    Example traces found:
+      #1: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http2.NetHTTPClientConn.Close
+      #2: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http2.NetHTTPClientConn.Close
+      #3: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http2.NetHTTPClientConn.RoundTrip
+      #4: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http2.NetHTTPClientConn.RoundTrip
+      #5: cmd/server/main.go:128:18: server.run calls httpx.Run, which eventually calls http2.Server.GracefulShutdown
+      #6: cmd/server/main.go:128:18: server.run calls httpx.Run, which eventually calls http2.Server.GracefulShutdown
+      #7: cmd/server/main.go:128:18: server.run calls httpx.Run, which eventually calls http2.Server.ServeConn
+      #8: cmd/server/main.go:128:18: server.run calls httpx.Run, which eventually calls http2.Server.ServeConn
+      #9: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http2.Transport.AddConn
+      #10: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http2.Transport.AddConn
+      #11: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http2.Transport.NewClientConn
+      #12: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http2.Transport.NewClientConn
+      #13: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http2.Transport.RoundTrip
+      #14: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http2.Transport.RoundTrip
+      #15: internal/adapter/redis/queue.go:41:21: redis.NewQueue calls redisx.ScriptSet.LoadFS, which eventually calls http2.bufferedWriterTimeoutWriter.Write
+      #16: internal/adapter/redis/queue.go:41:21: redis.NewQueue calls redisx.ScriptSet.LoadFS, which eventually calls http2.bufferedWriterTimeoutWriter.Write
+      #17: internal/adapter/redis/queue.go:41:21: redis.NewQueue calls redisx.ScriptSet.LoadFS, which eventually calls http2.chunkWriter.Write
+      #18: internal/adapter/redis/queue.go:41:21: redis.NewQueue calls redisx.ScriptSet.LoadFS, which eventually calls http2.chunkWriter.Write
+      #19: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http2.gzipReader.Close
+      #20: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http2.gzipReader.Close
+      #21: cmd/controller/main.go:250:18: controller.instanceID calls rand.Read, which eventually calls http2.gzipReader.Read
+      #22: cmd/controller/main.go:250:18: controller.instanceID calls rand.Read, which eventually calls http2.gzipReader.Read
+      #23: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http2.requestBody.Close
+      #24: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http2.requestBody.Close
+      #25: internal/adapter/http/handler.go:282:17: http.Handler.stream calls http.http2ResponseWriter.Flush, which calls http2.responseWriter.FlushError
+      #26: internal/adapter/http/handler.go:282:17: http.Handler.stream calls http.http2ResponseWriter.Flush, which calls http2.responseWriter.FlushError
+      #27: internal/adapter/redis/queue.go:41:21: redis.NewQueue calls redisx.ScriptSet.LoadFS, which eventually calls http2.responseWriter.Write
+      #28: internal/adapter/redis/queue.go:41:21: redis.NewQueue calls redisx.ScriptSet.LoadFS, which eventually calls http2.responseWriter.Write
+      #29: internal/adapter/redis/queue.go:41:21: redis.NewQueue calls redisx.ScriptSet.LoadFS, which eventually calls http2.responseWriter.WriteHeader
+      #30: internal/adapter/redis/queue.go:41:21: redis.NewQueue calls redisx.ScriptSet.LoadFS, which eventually calls http2.responseWriter.WriteHeader
+      #31: internal/adapter/redis/queue.go:41:21: redis.NewQueue calls redisx.ScriptSet.LoadFS, which eventually calls http2.responseWriter.WriteString
+      #32: internal/adapter/redis/queue.go:41:21: redis.NewQueue calls redisx.ScriptSet.LoadFS, which eventually calls http2.responseWriter.WriteString
+      #33: internal/adapter/redis/queue.go:41:21: redis.NewQueue calls redisx.ScriptSet.LoadFS, which eventually calls http2.stickyErrWriter.Write
+      #34: internal/adapter/redis/queue.go:41:21: redis.NewQueue calls redisx.ScriptSet.LoadFS, which eventually calls http2.stickyErrWriter.Write
+      #35: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http2.transportResponseBody.Close
+      #36: cmd/controller/main.go:91:34: controller.run calls otelx.Init, which eventually calls http2.transportResponseBody.Close
+      #37: cmd/controller/main.go:250:18: controller.instanceID calls rand.Read, which eventually calls http2.transportResponseBody.Read
+      #38: cmd/controller/main.go:250:18: controller.instanceID calls rand.Read, which eventually calls http2.transportResponseBody.Read
+
+Vulnerability #12: GO-2026-6600
+    Recognize yield as regexp preceder keyword in html/template
+  More info: https://pkg.go.dev/vuln/GO-2026-6600
+  Standard library
+    Found in: html/template@go1.27
+    Fixed in: html/template@go1.27.2
+    Example traces found:
+      #1: cmd/server/main.go:128:18: server.run calls httpx.Run, which eventually calls template.Template.Execute
+      #2: cmd/server/main.go:128:18: server.run calls httpx.Run, which eventually calls template.Template.ExecuteTemplate
+
+Vulnerability #13: GO-2026-6599
+    Reset context tracking on consecutive template expressions in html/template
+  More info: https://pkg.go.dev/vuln/GO-2026-6599
+  Standard library
+    Found in: html/template@go1.27
+    Fixed in: html/template@go1.27.2
+    Example traces found:
+      #1: cmd/server/main.go:128:18: server.run calls httpx.Run, which eventually calls template.Template.Execute
+      #2: cmd/server/main.go:128:18: server.run calls httpx.Run, which eventually calls template.Template.ExecuteTemplate
+
+Your code is affected by 13 vulnerabilities from the Go standard library.
+This scan also found 2 vulnerabilities in packages you import and 2
+vulnerabilities in modules you require, but your code doesn't appear to call
+these vulnerabilities.
+Use '-show verbose' for more details.
+== services/waitingroom BASE 918667c (exit 3)
+Vulnerability #1: GO-2026-6859
+    Found in: net/http@go1.27
+Vulnerability #2: GO-2026-6809
+    Found in: crypto/x509@go1.27
+Vulnerability #3: GO-2026-6617
+    Found in: golang.org/x/net@v0.58.0
+    Found in: net/http/internal/http2@go1.27
+Vulnerability #4: GO-2026-6613
+    Found in: net/http@go1.27
+Vulnerability #5: GO-2026-6612
+    Found in: golang.org/x/net@v0.58.0
+    Found in: net/http/internal/http2@go1.27
+Vulnerability #6: GO-2026-6611
+    Found in: golang.org/x/net@v0.58.0
+    Found in: net/http/internal/http2@go1.27
+Vulnerability #7: GO-2026-6610
+    Found in: golang.org/x/net@v0.58.0
+    Found in: net/http/internal/http2@go1.27
+Vulnerability #8: GO-2026-6608
+    Found in: net/textproto@go1.27
+Vulnerability #9: GO-2026-6607
+    Found in: crypto/tls@go1.27
+Vulnerability #10: GO-2026-6605
+    Found in: net/http@go1.27
+Vulnerability #11: GO-2026-6603
+    Found in: golang.org/x/net@v0.58.0
+    Found in: net/http/internal/http2@go1.27
+Vulnerability #12: GO-2026-6600
+    Found in: html/template@go1.27
+Vulnerability #13: GO-2026-6599
+    Found in: html/template@go1.27
+services/waitingroom reachable advisories: HEAD=13 BASE=13
+ok: services/waitingroom no advisory reachable at HEAD that is not reachable at 918667c

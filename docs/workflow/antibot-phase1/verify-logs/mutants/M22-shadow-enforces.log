@@ -1,0 +1,11 @@
+--- FAIL: TestGuard_AC13_ShadowAlwaysPasses (0.00s)
+    guard_test.go:268: shadow: {Action:BLOCK Applied:BLOCK Score:0.91 Fired:[R2 R5] Tags:[MODE_SHADOW] FPHash:6be96bfc92bf67f1afd377073cfb1d8d NetPrefix:198.51.100.0/24}
+--- FAIL: TestScore_AC10_AC13_AppliedMatrix (0.00s)
+    score_test.go:271: shadow/slow_lane tier CHALLENGE: got CHALLENGE/SLOW_LANE, want applied PASS
+    score_test.go:271: shadow/pass tier SLOW_LANE: got SLOW_LANE/SLOW_LANE, want applied PASS
+    score_test.go:271: shadow/pass tier BLOCK: got BLOCK/BLOCK, want applied PASS
+FAIL
+FAIL	github.com/eventflow/eventflow/libs/go/antibot	8.731s
+?   	github.com/eventflow/eventflow/libs/go/antibot/corpus	[no test files]
+ok  	github.com/eventflow/eventflow/libs/go/antibot/redisstate	1.852s
+FAIL

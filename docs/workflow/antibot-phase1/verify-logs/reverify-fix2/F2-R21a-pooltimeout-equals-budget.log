@@ -1,0 +1,7 @@
+ok  	github.com/eventflow/eventflow/libs/go/antibot	9.509s
+?   	github.com/eventflow/eventflow/libs/go/antibot/corpus	[no test files]
+--- FAIL: TestFix2_R21_PoolExhaustionIsClassified (0.00s)
+    pool_test.go:65: PoolTimeout 20ms not below the budget 20ms
+FAIL
+FAIL	github.com/eventflow/eventflow/libs/go/antibot/redisstate	1.995s
+FAIL

@@ -1,0 +1,9 @@
+--- FAIL: TestFix1_R5_ProductionRefusesDevKeys (0.00s)
+    fixround1_test.go:242: production accepted dev key "devAntibotHashKeyLocalClusterOnlyNeverProdA=" (err <nil>)
+    fixround1_test.go:242: production accepted dev key "ZXZlbnRmbG93LWFudGlib3QtZGV2LWtleS0wMDAwMDA=" (err <nil>)
+    fixround1_test.go:242: production accepted dev key "MDEyMzQ1Njc4OS1kZXYtMDEyMzQ1Njc4OWFiY2RlZmc=" (err <nil>)
+FAIL
+FAIL	github.com/eventflow/eventflow/libs/go/antibot	8.853s
+?   	github.com/eventflow/eventflow/libs/go/antibot/corpus	[no test files]
+ok  	github.com/eventflow/eventflow/libs/go/antibot/redisstate	1.964s
+FAIL

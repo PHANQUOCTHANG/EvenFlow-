@@ -146,6 +146,11 @@ replacements:
       - select: {kind: Secret, name: eventflow-auth}
         fieldPaths: [data.QUEUE_TOKEN_SECRET]
         options: {create: true}
+  - source: {kind: Secret, name: eventflow-dev-secrets-source, fieldPath: data.ANTIBOT_HASH_KEY}
+    targets:
+      - select: {kind: Secret, name: eventflow-auth}
+        fieldPaths: [data.ANTIBOT_HASH_KEY]
+        options: {create: true}
   - source: {kind: Secret, name: eventflow-dev-secrets-source, fieldPath: data.HMAC_QR_SECRET}
     targets:
       - select: {kind: Secret, name: eventflow-qr}

@@ -1,0 +1,25 @@
+--- FAIL: TestFix1_Amendment2_WorkedExamples (0.00s)
+    --- FAIL: TestFix1_Amendment2_WorkedExamples/X-5_okhttp,_valid_signals (0.00s)
+        fixround1_test.go:307: fired R5W score 0.45 action CHALLENGE tags [], want  0 PASS capped=false
+--- FAIL: TestRule_AC4_R5Weak (0.00s)
+    --- FAIL: TestRule_AC4_R5Weak/gl_false_only (0.00s)
+        rules_test.go:196: R5=false R5W=true, want false false (fired R5W)
+    --- FAIL: TestRule_AC4_R5Weak/fc_2_only (0.00s)
+        rules_test.go:196: R5=false R5W=true, want false false (fired R5W)
+    --- FAIL: TestRule_AC4_R5Weak/tz_mismatch_only (0.00s)
+        rules_test.go:196: R5=false R5W=true, want false false (fired R5W)
+    --- FAIL: TestRule_AC4_R5Weak/gl_false_+_fc_3_(at_threshold,_not_weak) (0.00s)
+        rules_test.go:196: R5=false R5W=true, want false false (fired R5W)
+    --- FAIL: TestRule_AC4_R5Weak/DST-aware_zone_agrees_(Berlin_winter_+60) (0.00s)
+        rules_test.go:196: R5=false R5W=true, want false false (fired R5W)
+    --- FAIL: TestRule_AC4_R5Weak/invalid_zone_is_not_evaluated (0.00s)
+        rules_test.go:196: R5=false R5W=true, want false false (fired R5W)
+    --- FAIL: TestRule_AC4_R5Weak/iPhone:_fc_not_evaluated (0.00s)
+        rules_test.go:196: R5=false R5W=true, want false false (fired R5W)
+    --- FAIL: TestRule_AC4_R5Weak/Android:_fc_not_evaluated (0.00s)
+        rules_test.go:196: R5=false R5W=true, want false false (fired R5W)
+FAIL
+FAIL	github.com/eventflow/eventflow/libs/go/antibot	9.672s
+?   	github.com/eventflow/eventflow/libs/go/antibot/corpus	[no test files]
+ok  	github.com/eventflow/eventflow/libs/go/antibot/redisstate	2.314s
+FAIL

@@ -1,0 +1,666 @@
+=== RUN   TestLoadConfig_AC16_DefaultsInDev
+--- PASS: TestLoadConfig_AC16_DefaultsInDev (0.00s)
+=== RUN   TestLoadConfig_AC16_ProductionWithKey
+--- PASS: TestLoadConfig_AC16_ProductionWithKey (0.00s)
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/mode
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/weight_not_number
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/weight_one
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/weight_negative
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/weight_unknown_rule
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/weight_malformed
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/weight_legacy_R4_(split_into_R4D/R4N)
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/breaker_garbage
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/breaker_zero_calls
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/breaker_too_many_calls
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/breaker_window_too_short
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/breaker_open_too_long
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/rules_legacy_R4_FP_MAX
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/rules_share_out_of_range
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/rules_CV_zero
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/rules_count_fractional
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/tiers_not_increasing
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/tiers_equal
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/tiers_zero
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/tiers_one
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/tiers_count
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/tiers_text
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/fallback
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/penalty_zero
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/penalty_huge
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/penalty_text
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/rules_unknown_key
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/rules_not_number
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/rules_negative
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/rules_zero
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/timeout_zero
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/timeout_over
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/sample_over
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/sample_negative
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/key_missing_in_production
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/key_short_in_production
+=== RUN   TestLoadConfig_AC16_InvalidValueNamesVariable/key_not_base64_in_production
+--- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable (0.00s)
+    --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/mode (0.00s)
+    --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/weight_not_number (0.00s)
+    --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/weight_one (0.00s)
+    --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/weight_negative (0.00s)
+    --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/weight_unknown_rule (0.00s)
+    --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/weight_malformed (0.00s)
+    --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/weight_legacy_R4_(split_into_R4D/R4N) (0.00s)
+    --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/breaker_garbage (0.00s)
+    --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/breaker_zero_calls (0.00s)
+    --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/breaker_too_many_calls (0.00s)
+    --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/breaker_window_too_short (0.00s)
+    --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/breaker_open_too_long (0.00s)
+    --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/rules_legacy_R4_FP_MAX (0.00s)
+    --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/rules_share_out_of_range (0.00s)
+    --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/rules_CV_zero (0.00s)
+    --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/rules_count_fractional (0.00s)
+    --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/tiers_not_increasing (0.00s)
+    --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/tiers_equal (0.00s)
+    --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/tiers_zero (0.00s)
+    --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/tiers_one (0.00s)
+    --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/tiers_count (0.00s)
+    --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/tiers_text (0.00s)
+    --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/fallback (0.00s)
+    --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/penalty_zero (0.00s)
+    --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/penalty_huge (0.00s)
+    --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/penalty_text (0.00s)
+    --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/rules_unknown_key (0.00s)
+    --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/rules_not_number (0.00s)
+    --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/rules_negative (0.00s)
+    --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/rules_zero (0.00s)
+    --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/timeout_zero (0.00s)
+    --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/timeout_over (0.00s)
+    --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/sample_over (0.00s)
+    --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/sample_negative (0.00s)
+    --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/key_missing_in_production (0.00s)
+    --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/key_short_in_production (0.00s)
+    --- PASS: TestLoadConfig_AC16_InvalidValueNamesVariable/key_not_base64_in_production (0.00s)
+=== RUN   TestLoadConfig_AC16_ShadowAlsoValidates
+--- PASS: TestLoadConfig_AC16_ShadowAlsoValidates (0.00s)
+=== RUN   TestLoadConfig_AC16_OffSkipsValidation
+--- PASS: TestLoadConfig_AC16_OffSkipsValidation (0.00s)
+=== RUN   TestLoadConfig_AC16_ModesAccepted
+--- PASS: TestLoadConfig_AC16_ModesAccepted (0.00s)
+=== RUN   TestLoadConfig_AC16_PartialListsMergeAndValidValuesLoad
+--- PASS: TestLoadConfig_AC16_PartialListsMergeAndValidValuesLoad (0.00s)
+=== RUN   TestCorpus_AC18_DefaultConfig
+    corpus_test.go:324: 
+        family                      n   PASS   SLOW  BLOCK  demoted
+        raw_http                  200      0     99    101   100.0%
+        headless                  200      0      0    200   100.0%
+        stealth_rhythm            200      0    200      0   100.0%
+        account_farm              200     12    188      0    94.0%
+        replay_proxy_pool         200     30    170      0    85.0%
+        replay_residential         50     50      0      0     0.0%
+        human/autorepeat           12     12      0      0     0.0%
+        human/cgnat                78     78      0      0     0.0%
+        human/desktop            1657   1657      0      0     0.0%
+        human/fast                 36     36      0      0     0.0%
+        human/household           149    144      5      0     3.4%
+        human/keyboard             35     35      0      0     0.0%
+        human/mobile             2788   2788      0      0     0.0%
+        human/privacy             223    223      0      0     0.0%
+        human/tzspoof              22     22      0      0     0.0%
+        
+        rule       bots   humans   (sessions whose deciding decision fired the rule)
+        R1          200        1
+        R2          400        3
+        R3          200        0
+        R4D         188        5
+        R4N         377       20
+        R5          400        0
+        R5W           5       39
+        R6            0        0
+        R7          246        0
+        
+    corpus_test.go:327: bots caught 95.80% (958/1000), humans demoted 0.10% (5/5000)
+--- PASS: TestCorpus_AC18_DefaultConfig (0.27s)
+=== RUN   TestCorpus_AC18_HumansOnBothSidesOfThresholds
+    corpus_test.go:405: rt<120:3 rt 120-400:54 | ivCV<0.10:1 >=:2331 | fc<3:70 >=3:1850 | gl off:111 | fp shared >3:5 2-3:62 | /24 >30 ids:2
+    corpus_test.go:413: not reachable by humans by construction: R1-server (needs >= 4 joins without a slot), R6 (dormant), R7 (needs a shared digest)
+--- PASS: TestCorpus_AC18_HumansOnBothSidesOfThresholds (0.08s)
+=== RUN   TestCorpus_AC18_SensitivityTable
+    corpus_test.go:457: 
+        threshold       scale    value     bots %     humans %
+        R1_CLIENT_CV      0.8    0.080     95.80%        0.10%
+        R1_CLIENT_CV      1.0    0.100     95.80%        0.10%
+        R1_CLIENT_CV      1.2    0.120     95.80%        0.10%
+        R2_MS             0.8       96     89.70%        0.10%
+        R2_MS             1.0      120     95.80%        0.10%
+        R2_MS             1.2      144     95.80%        0.10%
+        R4D_MAX           0.8        2     96.20%        0.34%
+        R4D_MAX           1.0        3     95.80%        0.10%
+        R4D_MAX           1.2        4     95.40%        0.00%
+        R4N_MAX           0.8       24     96.40%        0.10%
+        R4N_MAX           1.0       30     95.80%        0.10%
+        R4N_MAX           1.2       36     95.20%        0.10%
+        R5_FONTS_MIN      0.8        2     95.80%        0.10%
+        R5_FONTS_MIN      1.0        3     95.80%        0.10%
+        R5_FONTS_MIN      1.2        4     95.80%        0.10%
+        R7_MIN_IDS        0.8        2     95.80%        0.10%
+        R7_MIN_IDS        1.0        3     95.80%        0.10%
+        R7_MIN_IDS        1.2        4     95.80%        0.10%
+        
+--- PASS: TestCorpus_AC18_SensitivityTable (3.98s)
+=== RUN   TestCorpus_GeneratorDeterministic
+--- PASS: TestCorpus_GeneratorDeterministic (0.18s)
+=== RUN   TestCorpus_AC18_RecordedSessions
+    corpus_test.go:482: PENDING (AC-18): no recorded sessions in testdata/corpus/recorded yet; the team records 50-100 with the real collector
+--- SKIP: TestCorpus_AC18_RecordedSessions (0.00s)
+=== RUN   TestEvaluate_AC5_P99
+    engine_bench_test.go:69: pure engine (batch 50) p50=20.128µs p99=50.388µs max=60.486µs
+--- PASS: TestEvaluate_AC5_P99 (0.23s)
+=== RUN   TestFix1_X1_CancelledParentIsNotARedisFailure
+--- PASS: TestFix1_X1_CancelledParentIsNotARedisFailure (0.00s)
+=== RUN   TestFix1_X1_CancelDuringObserveIsNotCounted
+--- PASS: TestFix1_X1_CancelDuringObserveIsNotCounted (0.01s)
+=== RUN   TestFix1_X2_ShortStallDoesNotOpenBreaker
+--- PASS: TestFix1_X2_ShortStallDoesNotOpenBreaker (0.00s)
+=== RUN   TestFix1_X2_LastingSlownessOpensBreaker
+--- PASS: TestFix1_X2_LastingSlownessOpensBreaker (0.30s)
+=== RUN   TestFix1_X2_PoolExhaustionNeverOpensBreaker
+--- PASS: TestFix1_X2_PoolExhaustionNeverOpensBreaker (0.30s)
+=== RUN   TestFix1_X2_HalfOpenProbe
+--- PASS: TestFix1_X2_HalfOpenProbe (0.77s)
+=== RUN   TestFix1_R5_ProductionRefusesDevKeys
+--- PASS: TestFix1_R5_ProductionRefusesDevKeys (0.00s)
+=== RUN   TestFix1_Amendment2_WorkedExamples
+=== RUN   TestFix1_Amendment2_WorkedExamples/X-4_python-requests_+_forged_pe:1
+=== RUN   TestFix1_Amendment2_WorkedExamples/X-4_wd_true_alone
+=== RUN   TestFix1_Amendment2_WorkedExamples/missing_payload,_browser
+=== RUN   TestFix1_Amendment2_WorkedExamples/raw_HTTP_python-requests
+=== RUN   TestFix1_Amendment2_WorkedExamples/X-5_okhttp,_no_signals
+=== RUN   TestFix1_Amendment2_WorkedExamples/X-5_okhttp,_valid_signals
+=== RUN   TestFix1_Amendment2_WorkedExamples/X-5_okhttp_+_privacy_browser_sign
+=== RUN   TestFix1_Amendment2_WorkedExamples/headless_default
+=== RUN   TestFix1_Amendment2_WorkedExamples/shared_fp_only_(X-6_withdrawn,_R4D_0.60)
+=== RUN   TestFix1_Amendment2_WorkedExamples/account_farm
+=== RUN   TestFix1_Amendment2_WorkedExamples/shared_fp_+_privacy_browser
+--- PASS: TestFix1_Amendment2_WorkedExamples (0.00s)
+    --- PASS: TestFix1_Amendment2_WorkedExamples/X-4_python-requests_+_forged_pe:1 (0.00s)
+    --- PASS: TestFix1_Amendment2_WorkedExamples/X-4_wd_true_alone (0.00s)
+    --- PASS: TestFix1_Amendment2_WorkedExamples/missing_payload,_browser (0.00s)
+    --- PASS: TestFix1_Amendment2_WorkedExamples/raw_HTTP_python-requests (0.00s)
+    --- PASS: TestFix1_Amendment2_WorkedExamples/X-5_okhttp,_no_signals (0.00s)
+    --- PASS: TestFix1_Amendment2_WorkedExamples/X-5_okhttp,_valid_signals (0.00s)
+    --- PASS: TestFix1_Amendment2_WorkedExamples/X-5_okhttp_+_privacy_browser_sign (0.00s)
+    --- PASS: TestFix1_Amendment2_WorkedExamples/headless_default (0.00s)
+    --- PASS: TestFix1_Amendment2_WorkedExamples/shared_fp_only_(X-6_withdrawn,_R4D_0.60) (0.00s)
+    --- PASS: TestFix1_Amendment2_WorkedExamples/account_farm (0.00s)
+    --- PASS: TestFix1_Amendment2_WorkedExamples/shared_fp_+_privacy_browser (0.00s)
+=== RUN   TestFix1_Amendment2_Corpus
+    fixround1_test.go:332: Amendment 2:
+        raw_http               200/200 demoted
+        headless               200/200 demoted
+        stealth_rhythm         200/200 demoted
+        account_farm           188/200 demoted
+        replay_proxy_pool      170/200 demoted
+        replay_residential     0/50 demoted
+        bots caught 95.80% (958/1000), humans demoted 0.10% (5/5000)
+--- PASS: TestFix1_Amendment2_Corpus (0.30s)
+=== RUN   TestFix2_M16_OneProbeDuringRealHalfOpen
+--- PASS: TestFix2_M16_OneProbeDuringRealHalfOpen (0.16s)
+=== RUN   TestFix2_R23_NonProbeResultIgnoredWhileHalfOpen
+--- PASS: TestFix2_R23_NonProbeResultIgnoredWhileHalfOpen (0.17s)
+=== RUN   TestFix2_R23_NonProbeFailureIgnoredWhileHalfOpen
+--- PASS: TestFix2_R23_NonProbeFailureIgnoredWhileHalfOpen (0.43s)
+=== RUN   TestFix2_R22_RandomKeyWithDevIsAccepted
+--- PASS: TestFix2_R22_RandomKeyWithDevIsAccepted (0.00s)
+=== RUN   TestGolden_AC3_WebSnapshotsDecode
+=== RUN   TestGolden_AC3_WebSnapshotsDecode/click_only.json
+=== RUN   TestGolden_AC3_WebSnapshotsDecode/mobile_touch.json
+=== RUN   TestGolden_AC3_WebSnapshotsDecode/scripted_keyboard.json
+--- PASS: TestGolden_AC3_WebSnapshotsDecode (0.00s)
+    --- PASS: TestGolden_AC3_WebSnapshotsDecode/click_only.json (0.00s)
+    --- PASS: TestGolden_AC3_WebSnapshotsDecode/mobile_touch.json (0.00s)
+    --- PASS: TestGolden_AC3_WebSnapshotsDecode/scripted_keyboard.json (0.00s)
+=== RUN   TestGuard_AC6_ObserveGetsHashPrefixAndSq
+--- PASS: TestGuard_AC6_ObserveGetsHashPrefixAndSq (0.00s)
+=== RUN   TestGuard_AC7_TimeoutDegrades
+--- PASS: TestGuard_AC7_TimeoutDegrades (0.00s)
+=== RUN   TestGuard_AC7_ErrorDegrades
+--- PASS: TestGuard_AC7_ErrorDegrades (0.00s)
+=== RUN   TestGuard_AC7_PanicPasses
+--- PASS: TestGuard_AC7_PanicPasses (0.00s)
+=== RUN   TestGuard_AC7_BreakerOpensAndCloses
+--- PASS: TestGuard_AC7_BreakerOpensAndCloses (0.30s)
+=== RUN   TestGuard_AC3_InvalidSignalsMetric
+--- PASS: TestGuard_AC3_InvalidSignalsMetric (0.00s)
+=== RUN   TestGuard_AC17_DecisionMetrics
+--- PASS: TestGuard_AC17_DecisionMetrics (0.00s)
+=== RUN   TestGuard_AC14_SinkSelection
+--- PASS: TestGuard_AC14_SinkSelection (0.47s)
+=== RUN   TestGuard_AC12_StickyBlocks
+--- PASS: TestGuard_AC12_StickyBlocks (0.00s)
+=== RUN   TestGuard_AC13_ShadowAlwaysPasses
+--- PASS: TestGuard_AC13_ShadowAlwaysPasses (0.00s)
+=== RUN   TestGuard_AC15_NoRawValuesInDecision
+--- PASS: TestGuard_AC15_NoRawValuesInDecision (0.00s)
+=== RUN   TestGuard_AC7_ConcurrentDecide
+--- PASS: TestGuard_AC7_ConcurrentDecide (0.08s)
+=== RUN   TestFPHash_AC15_IsTruncatedHMAC
+--- PASS: TestFPHash_AC15_IsTruncatedHMAC (0.00s)
+=== RUN   TestNetPrefix_AC15
+--- PASS: TestNetPrefix_AC15 (0.00s)
+=== RUN   TestEvaluate_AC4_BaselineFiresNothing
+--- PASS: TestEvaluate_AC4_BaselineFiresNothing (0.00s)
+=== RUN   TestRule_AC4_R1Client
+=== RUN   TestRule_AC4_R1Client/8_intervals_CV_0.09
+=== RUN   TestRule_AC4_R1Client/8_intervals_CV_0_(fixed_rhythm)
+=== RUN   TestRule_AC4_R1Client/7_intervals_CV_0_(below_min_samples)
+=== RUN   TestRule_AC4_R1Client/8_intervals_CV_exactly_0.10
+=== RUN   TestRule_AC4_R1Client/8_intervals_CV_0.12
+=== RUN   TestRule_AC4_R1Client/32_intervals_CV_0
+=== RUN   TestRule_AC4_R1Client/iv_absent
+=== RUN   TestRule_AC4_R1Client/config_min_10:_9_samples
+=== RUN   TestRule_AC4_R1Client/config_CV_0.15:_CV_0.12
+--- PASS: TestRule_AC4_R1Client (0.00s)
+    --- PASS: TestRule_AC4_R1Client/8_intervals_CV_0.09 (0.00s)
+    --- PASS: TestRule_AC4_R1Client/8_intervals_CV_0_(fixed_rhythm) (0.00s)
+    --- PASS: TestRule_AC4_R1Client/7_intervals_CV_0_(below_min_samples) (0.00s)
+    --- PASS: TestRule_AC4_R1Client/8_intervals_CV_exactly_0.10 (0.00s)
+    --- PASS: TestRule_AC4_R1Client/8_intervals_CV_0.12 (0.00s)
+    --- PASS: TestRule_AC4_R1Client/32_intervals_CV_0 (0.00s)
+    --- PASS: TestRule_AC4_R1Client/iv_absent (0.00s)
+    --- PASS: TestRule_AC4_R1Client/config_min_10:_9_samples (0.00s)
+    --- PASS: TestRule_AC4_R1Client/config_CV_0.15:_CV_0.12 (0.00s)
+=== RUN   TestRule_AC4_R1Server
+=== RUN   TestRule_AC4_R1Server/4_equal_gaps
+=== RUN   TestRule_AC4_R1Server/4_gaps_CV_0.04
+=== RUN   TestRule_AC4_R1Server/3_equal_gaps
+=== RUN   TestRule_AC4_R1Server/4_gaps_CV_exactly_0.05
+=== RUN   TestRule_AC4_R1Server/4_gaps_CV_0.06
+=== RUN   TestRule_AC4_R1Server/8_equal_gaps
+=== RUN   TestRule_AC4_R1Server/unknown_state
+--- PASS: TestRule_AC4_R1Server (0.00s)
+    --- PASS: TestRule_AC4_R1Server/4_equal_gaps (0.00s)
+    --- PASS: TestRule_AC4_R1Server/4_gaps_CV_0.04 (0.00s)
+    --- PASS: TestRule_AC4_R1Server/3_equal_gaps (0.00s)
+    --- PASS: TestRule_AC4_R1Server/4_gaps_CV_exactly_0.05 (0.00s)
+    --- PASS: TestRule_AC4_R1Server/4_gaps_CV_0.06 (0.00s)
+    --- PASS: TestRule_AC4_R1Server/8_equal_gaps (0.00s)
+    --- PASS: TestRule_AC4_R1Server/unknown_state (0.00s)
+=== RUN   TestRule_AC4_R2
+=== RUN   TestRule_AC4_R2/rt_119
+=== RUN   TestRule_AC4_R2/rt_120
+=== RUN   TestRule_AC4_R2/rt_121
+=== RUN   TestRule_AC4_R2/rt_0
+=== RUN   TestRule_AC4_R2/rt_absent
+=== RUN   TestRule_AC4_R2/rt_out_of_range
+=== RUN   TestRule_AC4_R2/config_200:_rt_150
+--- PASS: TestRule_AC4_R2 (0.00s)
+    --- PASS: TestRule_AC4_R2/rt_119 (0.00s)
+    --- PASS: TestRule_AC4_R2/rt_120 (0.00s)
+    --- PASS: TestRule_AC4_R2/rt_121 (0.00s)
+    --- PASS: TestRule_AC4_R2/rt_0 (0.00s)
+    --- PASS: TestRule_AC4_R2/rt_absent (0.00s)
+    --- PASS: TestRule_AC4_R2/rt_out_of_range (0.00s)
+    --- PASS: TestRule_AC4_R2/config_200:_rt_150 (0.00s)
+=== RUN   TestRule_AC4_R3
+=== RUN   TestRule_AC4_R3/all_zero
+=== RUN   TestRule_AC4_R3/one_pointer_event_(the_click)
+=== RUN   TestRule_AC4_R3/keyboard_only_(Enter)
+=== RUN   TestRule_AC4_R3/scroll_only
+=== RUN   TestRule_AC4_R3/missing_payload
+=== RUN   TestRule_AC4_R3/bad_json
+--- PASS: TestRule_AC4_R3 (0.00s)
+    --- PASS: TestRule_AC4_R3/all_zero (0.00s)
+    --- PASS: TestRule_AC4_R3/one_pointer_event_(the_click) (0.00s)
+    --- PASS: TestRule_AC4_R3/keyboard_only_(Enter) (0.00s)
+    --- PASS: TestRule_AC4_R3/scroll_only (0.00s)
+    --- PASS: TestRule_AC4_R3/missing_payload (0.00s)
+    --- PASS: TestRule_AC4_R3/bad_json (0.00s)
+=== RUN   TestRule_AC4_VersionOnlyScoresR3Only
+--- PASS: TestRule_AC4_VersionOnlyScoresR3Only (0.00s)
+=== RUN   TestRule_AC4_R4D
+=== RUN   TestRule_AC4_R4D/4_identities
+=== RUN   TestRule_AC4_R4D/3_identities
+=== RUN   TestRule_AC4_R4D/2_identities
+=== RUN   TestRule_AC4_R4D/64_identities_(cap)
+=== RUN   TestRule_AC4_R4D/no_fp_in_payload
+=== RUN   TestRule_AC4_R4D/unknown_state
+=== RUN   TestRule_AC4_R4D/config_max_5:_5_identities
+--- PASS: TestRule_AC4_R4D (0.00s)
+    --- PASS: TestRule_AC4_R4D/4_identities (0.00s)
+    --- PASS: TestRule_AC4_R4D/3_identities (0.00s)
+    --- PASS: TestRule_AC4_R4D/2_identities (0.00s)
+    --- PASS: TestRule_AC4_R4D/64_identities_(cap) (0.00s)
+    --- PASS: TestRule_AC4_R4D/no_fp_in_payload (0.00s)
+    --- PASS: TestRule_AC4_R4D/unknown_state (0.00s)
+    --- PASS: TestRule_AC4_R4D/config_max_5:_5_identities (0.00s)
+=== RUN   TestRule_AC4_R4N
+=== RUN   TestRule_AC4_R4N/31_identities
+=== RUN   TestRule_AC4_R4N/30_identities
+=== RUN   TestRule_AC4_R4N/29_identities
+=== RUN   TestRule_AC4_R4N/suppressed_prefix
+=== RUN   TestRule_AC4_R4N/unknown_state
+--- PASS: TestRule_AC4_R4N (0.00s)
+    --- PASS: TestRule_AC4_R4N/31_identities (0.00s)
+    --- PASS: TestRule_AC4_R4N/30_identities (0.00s)
+    --- PASS: TestRule_AC4_R4N/29_identities (0.00s)
+    --- PASS: TestRule_AC4_R4N/suppressed_prefix (0.00s)
+    --- PASS: TestRule_AC4_R4N/unknown_state (0.00s)
+=== RUN   TestRule_AC4_R5Strong
+=== RUN   TestRule_AC4_R5Strong/empty_UA
+=== RUN   TestRule_AC4_R5Strong/wd_true
+=== RUN   TestRule_AC4_R5Strong/wd_false
+=== RUN   TestRule_AC4_R5Strong/missing_payload
+=== RUN   TestRule_AC4_R5Strong/browser_UA
+=== RUN   TestRule_AC4_R5Strong/case-insensitive
+=== RUN   TestRule_AC4_R5Strong/custom_list_replaces_built-in_(built-in_entry_no_longer_matches)
+=== RUN   TestRule_AC4_R5Strong/custom_list_entry
+=== RUN   TestRule_AC4_R5Strong/deny_HeadlessChrome/131.0
+=== RUN   TestRule_AC4_R5Strong/deny_PhantomJS/2.1
+=== RUN   TestRule_AC4_R5Strong/deny_python-requests/2.31
+=== RUN   TestRule_AC4_R5Strong/deny_python-httpx/0.27
+=== RUN   TestRule_AC4_R5Strong/deny_Python/3.12_aiohttp/3.9
+=== RUN   TestRule_AC4_R5Strong/deny_curl/8.5.0
+=== RUN   TestRule_AC4_R5Strong/deny_Wget/1.21
+=== RUN   TestRule_AC4_R5Strong/deny_Scrapy/2.11
+=== RUN   TestRule_AC4_R5Strong/deny_Puppeteer
+=== RUN   TestRule_AC4_R5Strong/deny_Playwright/1.48
+=== RUN   TestRule_AC4_R5Strong/deny_Selenium/4.25
+=== RUN   TestRule_AC4_R5Strong/weak_Go-http-client/1.1
+=== RUN   TestRule_AC4_R5Strong/weak_okhttp/4.12
+=== RUN   TestRule_AC4_R5Strong/weak_node-fetch/1.0
+=== RUN   TestRule_AC4_R5Strong/weak_axios/1.7.2
+--- PASS: TestRule_AC4_R5Strong (0.00s)
+    --- PASS: TestRule_AC4_R5Strong/empty_UA (0.00s)
+    --- PASS: TestRule_AC4_R5Strong/wd_true (0.00s)
+    --- PASS: TestRule_AC4_R5Strong/wd_false (0.00s)
+    --- PASS: TestRule_AC4_R5Strong/missing_payload (0.00s)
+    --- PASS: TestRule_AC4_R5Strong/browser_UA (0.00s)
+    --- PASS: TestRule_AC4_R5Strong/case-insensitive (0.00s)
+    --- PASS: TestRule_AC4_R5Strong/custom_list_replaces_built-in_(built-in_entry_no_longer_matches) (0.00s)
+    --- PASS: TestRule_AC4_R5Strong/custom_list_entry (0.00s)
+    --- PASS: TestRule_AC4_R5Strong/deny_HeadlessChrome/131.0 (0.00s)
+    --- PASS: TestRule_AC4_R5Strong/deny_PhantomJS/2.1 (0.00s)
+    --- PASS: TestRule_AC4_R5Strong/deny_python-requests/2.31 (0.00s)
+    --- PASS: TestRule_AC4_R5Strong/deny_python-httpx/0.27 (0.00s)
+    --- PASS: TestRule_AC4_R5Strong/deny_Python/3.12_aiohttp/3.9 (0.00s)
+    --- PASS: TestRule_AC4_R5Strong/deny_curl/8.5.0 (0.00s)
+    --- PASS: TestRule_AC4_R5Strong/deny_Wget/1.21 (0.00s)
+    --- PASS: TestRule_AC4_R5Strong/deny_Scrapy/2.11 (0.00s)
+    --- PASS: TestRule_AC4_R5Strong/deny_Puppeteer (0.00s)
+    --- PASS: TestRule_AC4_R5Strong/deny_Playwright/1.48 (0.00s)
+    --- PASS: TestRule_AC4_R5Strong/deny_Selenium/4.25 (0.00s)
+    --- PASS: TestRule_AC4_R5Strong/weak_Go-http-client/1.1 (0.00s)
+    --- PASS: TestRule_AC4_R5Strong/weak_okhttp/4.12 (0.00s)
+    --- PASS: TestRule_AC4_R5Strong/weak_node-fetch/1.0 (0.00s)
+    --- PASS: TestRule_AC4_R5Strong/weak_axios/1.7.2 (0.00s)
+=== RUN   TestRule_AC4_R5Weak
+=== RUN   TestRule_AC4_R5Weak/gl_false_only
+=== RUN   TestRule_AC4_R5Weak/fc_2_only
+=== RUN   TestRule_AC4_R5Weak/tz_mismatch_only
+=== RUN   TestRule_AC4_R5Weak/gl_false_+_fc_2
+=== RUN   TestRule_AC4_R5Weak/gl_false_+_fc_3_(at_threshold,_not_weak)
+=== RUN   TestRule_AC4_R5Weak/fc_2_+_tz_mismatch
+=== RUN   TestRule_AC4_R5Weak/gl_false_+_tz_mismatch
+=== RUN   TestRule_AC4_R5Weak/all_three_weak
+=== RUN   TestRule_AC4_R5Weak/DST-aware_zone_agrees_(Berlin_winter_+60)
+=== RUN   TestRule_AC4_R5Weak/DST-aware_zone_disagrees_(Berlin_winter_+120)
+=== RUN   TestRule_AC4_R5Weak/invalid_zone_is_not_evaluated
+=== RUN   TestRule_AC4_R5Weak/iPhone:_fc_not_evaluated
+=== RUN   TestRule_AC4_R5Weak/Android:_fc_not_evaluated
+=== RUN   TestRule_AC4_R5Weak/mobile:_gl_false_+_tz_mismatch_still_weak_x2
+=== RUN   TestRule_AC4_R5Weak/strong_+_2_weak_=_R5_only
+=== RUN   TestRule_AC4_R5Weak/weak_signs_absent
+--- PASS: TestRule_AC4_R5Weak (0.00s)
+    --- PASS: TestRule_AC4_R5Weak/gl_false_only (0.00s)
+    --- PASS: TestRule_AC4_R5Weak/fc_2_only (0.00s)
+    --- PASS: TestRule_AC4_R5Weak/tz_mismatch_only (0.00s)
+    --- PASS: TestRule_AC4_R5Weak/gl_false_+_fc_2 (0.00s)
+    --- PASS: TestRule_AC4_R5Weak/gl_false_+_fc_3_(at_threshold,_not_weak) (0.00s)
+    --- PASS: TestRule_AC4_R5Weak/fc_2_+_tz_mismatch (0.00s)
+    --- PASS: TestRule_AC4_R5Weak/gl_false_+_tz_mismatch (0.00s)
+    --- PASS: TestRule_AC4_R5Weak/all_three_weak (0.00s)
+    --- PASS: TestRule_AC4_R5Weak/DST-aware_zone_agrees_(Berlin_winter_+60) (0.00s)
+    --- PASS: TestRule_AC4_R5Weak/DST-aware_zone_disagrees_(Berlin_winter_+120) (0.00s)
+    --- PASS: TestRule_AC4_R5Weak/invalid_zone_is_not_evaluated (0.00s)
+    --- PASS: TestRule_AC4_R5Weak/iPhone:_fc_not_evaluated (0.00s)
+    --- PASS: TestRule_AC4_R5Weak/Android:_fc_not_evaluated (0.00s)
+    --- PASS: TestRule_AC4_R5Weak/mobile:_gl_false_+_tz_mismatch_still_weak_x2 (0.00s)
+    --- PASS: TestRule_AC4_R5Weak/strong_+_2_weak_=_R5_only (0.00s)
+    --- PASS: TestRule_AC4_R5Weak/weak_signs_absent (0.00s)
+=== RUN   TestRule_AC4_R6
+=== RUN   TestRule_AC4_R6/4_identities
+=== RUN   TestRule_AC4_R6/3_identities
+=== RUN   TestRule_AC4_R6/unknown_(-1,_phase_1)
+=== RUN   TestRule_AC4_R6/zero-value_state_(unknown)
+--- PASS: TestRule_AC4_R6 (0.00s)
+    --- PASS: TestRule_AC4_R6/4_identities (0.00s)
+    --- PASS: TestRule_AC4_R6/3_identities (0.00s)
+    --- PASS: TestRule_AC4_R6/unknown_(-1,_phase_1) (0.00s)
+    --- PASS: TestRule_AC4_R6/zero-value_state_(unknown) (0.00s)
+=== RUN   TestRule_AC4_R7
+=== RUN   TestRule_AC4_R7/3_identities
+=== RUN   TestRule_AC4_R7/2_identities
+=== RUN   TestRule_AC4_R7/4_identities
+=== RUN   TestRule_AC4_R7/sq_absent
+=== RUN   TestRule_AC4_R7/sn_out_of_range_(11)
+=== RUN   TestRule_AC4_R7/sb_absent
+=== RUN   TestRule_AC4_R7/sb_out_of_range_(3)
+=== RUN   TestRule_AC4_R7/unknown_state
+=== RUN   TestRule_AC4_R7/config_min_events_16:_sn_12
+=== RUN   TestRule_AC4_R7/config_min_buckets_8:_sb_6
+=== RUN   TestRule_AC4_R7/config_min_ids_5:_4_identities
+--- PASS: TestRule_AC4_R7 (0.00s)
+    --- PASS: TestRule_AC4_R7/3_identities (0.00s)
+    --- PASS: TestRule_AC4_R7/2_identities (0.00s)
+    --- PASS: TestRule_AC4_R7/4_identities (0.00s)
+    --- PASS: TestRule_AC4_R7/sq_absent (0.00s)
+    --- PASS: TestRule_AC4_R7/sn_out_of_range_(11) (0.00s)
+    --- PASS: TestRule_AC4_R7/sb_absent (0.00s)
+    --- PASS: TestRule_AC4_R7/sb_out_of_range_(3) (0.00s)
+    --- PASS: TestRule_AC4_R7/unknown_state (0.00s)
+    --- PASS: TestRule_AC4_R7/config_min_events_16:_sn_12 (0.00s)
+    --- PASS: TestRule_AC4_R7/config_min_buckets_8:_sb_6 (0.00s)
+    --- PASS: TestRule_AC4_R7/config_min_ids_5:_4_identities (0.00s)
+=== RUN   TestEvaluate_AC7_UnknownStateUsesStatelessRulesOnly
+--- PASS: TestEvaluate_AC7_UnknownStateUsesStatelessRulesOnly (0.00s)
+=== RUN   TestEvaluate_AC4_OnlyKnownRuleIDs
+--- PASS: TestEvaluate_AC4_OnlyKnownRuleIDs (0.00s)
+=== RUN   TestScore_AC8_DefaultOutcomesTable
+=== RUN   TestScore_AC8_DefaultOutcomesTable/missing_payload,_browser_UA
+=== RUN   TestScore_AC8_DefaultOutcomesTable/missing_payload,_identity_holds_a_slot
+=== RUN   TestScore_AC8_DefaultOutcomesTable/raw_HTTP_python-requests
+=== RUN   TestScore_AC8_DefaultOutcomesTable/headless_default
+=== RUN   TestScore_AC8_DefaultOutcomesTable/stealth_fixed_rhythm
+=== RUN   TestScore_AC8_DefaultOutcomesTable/account_farm
+=== RUN   TestScore_AC8_DefaultOutcomesTable/shared_fp_only
+=== RUN   TestScore_AC8_DefaultOutcomesTable/replay_small_proxy_pool
+=== RUN   TestScore_AC8_DefaultOutcomesTable/replay_distinct_networks
+=== RUN   TestScore_AC8_DefaultOutcomesTable/human_on_CGNAT_/24
+=== RUN   TestScore_AC8_DefaultOutcomesTable/cluster_+_fast_click
+=== RUN   TestScore_AC8_DefaultOutcomesTable/cluster_+_privacy_browser
+=== RUN   TestScore_AC8_DefaultOutcomesTable/cluster_+_fast_+_privacy
+=== RUN   TestScore_AC8_DefaultOutcomesTable/one_weak:_R2
+=== RUN   TestScore_AC8_DefaultOutcomesTable/one_weak:_R5W
+=== RUN   TestScore_AC8_DefaultOutcomesTable/one_weak:_R1
+=== RUN   TestScore_AC8_DefaultOutcomesTable/fast_click_+_privacy_browser
+=== RUN   TestScore_AC8_DefaultOutcomesTable/R1_+_R7
+--- PASS: TestScore_AC8_DefaultOutcomesTable (0.00s)
+    --- PASS: TestScore_AC8_DefaultOutcomesTable/missing_payload,_browser_UA (0.00s)
+    --- PASS: TestScore_AC8_DefaultOutcomesTable/missing_payload,_identity_holds_a_slot (0.00s)
+    --- PASS: TestScore_AC8_DefaultOutcomesTable/raw_HTTP_python-requests (0.00s)
+    --- PASS: TestScore_AC8_DefaultOutcomesTable/headless_default (0.00s)
+    --- PASS: TestScore_AC8_DefaultOutcomesTable/stealth_fixed_rhythm (0.00s)
+    --- PASS: TestScore_AC8_DefaultOutcomesTable/account_farm (0.00s)
+    --- PASS: TestScore_AC8_DefaultOutcomesTable/shared_fp_only (0.00s)
+    --- PASS: TestScore_AC8_DefaultOutcomesTable/replay_small_proxy_pool (0.00s)
+    --- PASS: TestScore_AC8_DefaultOutcomesTable/replay_distinct_networks (0.00s)
+    --- PASS: TestScore_AC8_DefaultOutcomesTable/human_on_CGNAT_/24 (0.00s)
+    --- PASS: TestScore_AC8_DefaultOutcomesTable/cluster_+_fast_click (0.00s)
+    --- PASS: TestScore_AC8_DefaultOutcomesTable/cluster_+_privacy_browser (0.00s)
+    --- PASS: TestScore_AC8_DefaultOutcomesTable/cluster_+_fast_+_privacy (0.00s)
+    --- PASS: TestScore_AC8_DefaultOutcomesTable/one_weak:_R2 (0.00s)
+    --- PASS: TestScore_AC8_DefaultOutcomesTable/one_weak:_R5W (0.00s)
+    --- PASS: TestScore_AC8_DefaultOutcomesTable/one_weak:_R1 (0.00s)
+    --- PASS: TestScore_AC8_DefaultOutcomesTable/fast_click_+_privacy_browser (0.00s)
+    --- PASS: TestScore_AC8_DefaultOutcomesTable/R1_+_R7 (0.00s)
+=== RUN   TestScore_AC8_NoisyOrRounded
+--- PASS: TestScore_AC8_NoisyOrRounded (0.00s)
+=== RUN   TestScore_AC8_TierBoundariesLowerInclusive
+--- PASS: TestScore_AC8_TierBoundariesLowerInclusive (0.00s)
+=== RUN   TestScore_AC8_BlockEligibilityCap
+--- PASS: TestScore_AC8_BlockEligibilityCap (0.00s)
+=== RUN   TestScore_AC11_RejoinKeepsSlotUnlessBlock
+--- PASS: TestScore_AC11_RejoinKeepsSlotUnlessBlock (0.00s)
+=== RUN   TestScore_AC12_Sticky
+--- PASS: TestScore_AC12_Sticky (0.00s)
+=== RUN   TestScore_AC10_AC13_AppliedMatrix
+--- PASS: TestScore_AC10_AC13_AppliedMatrix (0.00s)
+=== RUN   TestScore_AC14_FiredSorted
+--- PASS: TestScore_AC14_FiredSorted (0.00s)
+=== RUN   TestEvaluate_AC15_DecisionHasNoRawValues
+--- PASS: TestEvaluate_AC15_DecisionHasNoRawValues (0.00s)
+=== RUN   TestDecodeSignals_AC3_ValidPayload
+--- PASS: TestDecodeSignals_AC3_ValidPayload (0.00s)
+=== RUN   TestDecodeSignals_AC3_UnknownFieldsIgnored
+--- PASS: TestDecodeSignals_AC3_UnknownFieldsIgnored (0.00s)
+=== RUN   TestDecodeSignals_AC3_InvalidPayloadReasons
+=== RUN   TestDecodeSignals_AC3_InvalidPayloadReasons/nil_(signals_absent)
+=== RUN   TestDecodeSignals_AC3_InvalidPayloadReasons/empty
+=== RUN   TestDecodeSignals_AC3_InvalidPayloadReasons/json_null
+=== RUN   TestDecodeSignals_AC3_InvalidPayloadReasons/string
+=== RUN   TestDecodeSignals_AC3_InvalidPayloadReasons/array
+=== RUN   TestDecodeSignals_AC3_InvalidPayloadReasons/number
+=== RUN   TestDecodeSignals_AC3_InvalidPayloadReasons/bool
+=== RUN   TestDecodeSignals_AC3_InvalidPayloadReasons/empty_object_(demo.sh_/_k6)
+=== RUN   TestDecodeSignals_AC3_InvalidPayloadReasons/v_absent
+=== RUN   TestDecodeSignals_AC3_InvalidPayloadReasons/v_2
+=== RUN   TestDecodeSignals_AC3_InvalidPayloadReasons/v_0
+=== RUN   TestDecodeSignals_AC3_InvalidPayloadReasons/v_string
+=== RUN   TestDecodeSignals_AC3_InvalidPayloadReasons/truncated_json
+=== RUN   TestDecodeSignals_AC3_InvalidPayloadReasons/garbage
+=== RUN   TestDecodeSignals_AC3_InvalidPayloadReasons/over_4_KiB
+--- PASS: TestDecodeSignals_AC3_InvalidPayloadReasons (0.00s)
+    --- PASS: TestDecodeSignals_AC3_InvalidPayloadReasons/nil_(signals_absent) (0.00s)
+    --- PASS: TestDecodeSignals_AC3_InvalidPayloadReasons/empty (0.00s)
+    --- PASS: TestDecodeSignals_AC3_InvalidPayloadReasons/json_null (0.00s)
+    --- PASS: TestDecodeSignals_AC3_InvalidPayloadReasons/string (0.00s)
+    --- PASS: TestDecodeSignals_AC3_InvalidPayloadReasons/array (0.00s)
+    --- PASS: TestDecodeSignals_AC3_InvalidPayloadReasons/number (0.00s)
+    --- PASS: TestDecodeSignals_AC3_InvalidPayloadReasons/bool (0.00s)
+    --- PASS: TestDecodeSignals_AC3_InvalidPayloadReasons/empty_object_(demo.sh_/_k6) (0.00s)
+    --- PASS: TestDecodeSignals_AC3_InvalidPayloadReasons/v_absent (0.00s)
+    --- PASS: TestDecodeSignals_AC3_InvalidPayloadReasons/v_2 (0.00s)
+    --- PASS: TestDecodeSignals_AC3_InvalidPayloadReasons/v_0 (0.00s)
+    --- PASS: TestDecodeSignals_AC3_InvalidPayloadReasons/v_string (0.00s)
+    --- PASS: TestDecodeSignals_AC3_InvalidPayloadReasons/truncated_json (0.00s)
+    --- PASS: TestDecodeSignals_AC3_InvalidPayloadReasons/garbage (0.00s)
+    --- PASS: TestDecodeSignals_AC3_InvalidPayloadReasons/over_4_KiB (0.00s)
+=== RUN   TestDecodeSignals_AC3_VersionOnlyIsValidButEmpty
+--- PASS: TestDecodeSignals_AC3_VersionOnlyIsValidButEmpty (0.00s)
+=== RUN   TestDecodeSignals_AC3_SizeCapBoundary
+--- PASS: TestDecodeSignals_AC3_SizeCapBoundary (0.00s)
+=== RUN   TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload
+=== RUN   TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/sn_over
+=== RUN   TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/sq_short
+=== RUN   TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/sn_under
+=== RUN   TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/iv_item
+=== RUN   TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/iv_length
+=== RUN   TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/pe_over
+=== RUN   TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/tz_chars
+=== RUN   TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/sb_under
+=== RUN   TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/sb_over
+=== RUN   TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/rt_neg
+=== RUN   TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/tzo_over
+=== RUN   TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/sq_upper
+=== RUN   TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/fp_short
+=== RUN   TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/rt_over
+=== RUN   TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/fc_over
+=== RUN   TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/fp_chars
+--- PASS: TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload (0.00s)
+    --- PASS: TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/sn_over (0.00s)
+    --- PASS: TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/sq_short (0.00s)
+    --- PASS: TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/sn_under (0.00s)
+    --- PASS: TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/iv_item (0.00s)
+    --- PASS: TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/iv_length (0.00s)
+    --- PASS: TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/pe_over (0.00s)
+    --- PASS: TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/tz_chars (0.00s)
+    --- PASS: TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/sb_under (0.00s)
+    --- PASS: TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/sb_over (0.00s)
+    --- PASS: TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/rt_neg (0.00s)
+    --- PASS: TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/tzo_over (0.00s)
+    --- PASS: TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/sq_upper (0.00s)
+    --- PASS: TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/fp_short (0.00s)
+    --- PASS: TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/rt_over (0.00s)
+    --- PASS: TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/fc_over (0.00s)
+    --- PASS: TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/fp_chars (0.00s)
+=== RUN   TestDecodeSignals_AC3_WrongTypeDropsOnlyThatField
+=== RUN   TestDecodeSignals_AC3_WrongTypeDropsOnlyThatField/iv_object
+=== RUN   TestDecodeSignals_AC3_WrongTypeDropsOnlyThatField/iv_strs
+=== RUN   TestDecodeSignals_AC3_WrongTypeDropsOnlyThatField/fp_array
+=== RUN   TestDecodeSignals_AC3_WrongTypeDropsOnlyThatField/sq_null
+=== RUN   TestDecodeSignals_AC3_WrongTypeDropsOnlyThatField/wd_string
+=== RUN   TestDecodeSignals_AC3_WrongTypeDropsOnlyThatField/gl_number
+=== RUN   TestDecodeSignals_AC3_WrongTypeDropsOnlyThatField/tz_number
+=== RUN   TestDecodeSignals_AC3_WrongTypeDropsOnlyThatField/rt_string
+=== RUN   TestDecodeSignals_AC3_WrongTypeDropsOnlyThatField/pe_bool
+--- PASS: TestDecodeSignals_AC3_WrongTypeDropsOnlyThatField (0.00s)
+    --- PASS: TestDecodeSignals_AC3_WrongTypeDropsOnlyThatField/iv_object (0.00s)
+    --- PASS: TestDecodeSignals_AC3_WrongTypeDropsOnlyThatField/iv_strs (0.00s)
+    --- PASS: TestDecodeSignals_AC3_WrongTypeDropsOnlyThatField/fp_array (0.00s)
+    --- PASS: TestDecodeSignals_AC3_WrongTypeDropsOnlyThatField/sq_null (0.00s)
+    --- PASS: TestDecodeSignals_AC3_WrongTypeDropsOnlyThatField/wd_string (0.00s)
+    --- PASS: TestDecodeSignals_AC3_WrongTypeDropsOnlyThatField/gl_number (0.00s)
+    --- PASS: TestDecodeSignals_AC3_WrongTypeDropsOnlyThatField/tz_number (0.00s)
+    --- PASS: TestDecodeSignals_AC3_WrongTypeDropsOnlyThatField/rt_string (0.00s)
+    --- PASS: TestDecodeSignals_AC3_WrongTypeDropsOnlyThatField/pe_bool (0.00s)
+=== RUN   TestDecodeSignals_AC3_WrongTypeFieldIsAbsentForRules
+--- PASS: TestDecodeSignals_AC3_WrongTypeFieldIsAbsentForRules (0.00s)
+=== RUN   TestDecodeSignals_AC3_NumbersRounded
+--- PASS: TestDecodeSignals_AC3_NumbersRounded (0.00s)
+=== RUN   FuzzEvaluate
+=== RUN   FuzzEvaluate/seed#0
+=== RUN   FuzzEvaluate/seed#1
+=== RUN   FuzzEvaluate/seed#2
+=== RUN   FuzzEvaluate/seed#3
+--- PASS: FuzzEvaluate (0.00s)
+    --- PASS: FuzzEvaluate/seed#0 (0.00s)
+    --- PASS: FuzzEvaluate/seed#1 (0.00s)
+    --- PASS: FuzzEvaluate/seed#2 (0.00s)
+    --- PASS: FuzzEvaluate/seed#3 (0.00s)
+=== RUN   FuzzDecodeSignals
+=== RUN   FuzzDecodeSignals/seed#0
+=== RUN   FuzzDecodeSignals/seed#1
+=== RUN   FuzzDecodeSignals/seed#2
+=== RUN   FuzzDecodeSignals/seed#3
+=== RUN   FuzzDecodeSignals/seed#4
+=== RUN   FuzzDecodeSignals/seed#5
+=== RUN   FuzzDecodeSignals/seed#6
+=== RUN   FuzzDecodeSignals/seed#7
+=== RUN   FuzzDecodeSignals/seed#8
+=== RUN   FuzzDecodeSignals/seed#9
+=== RUN   FuzzDecodeSignals/seed#10
+=== RUN   FuzzDecodeSignals/seed#11
+=== RUN   FuzzDecodeSignals/seed#12
+=== RUN   FuzzDecodeSignals/seed#13
+--- PASS: FuzzDecodeSignals (0.00s)
+    --- PASS: FuzzDecodeSignals/seed#0 (0.00s)
+    --- PASS: FuzzDecodeSignals/seed#1 (0.00s)
+    --- PASS: FuzzDecodeSignals/seed#2 (0.00s)
+    --- PASS: FuzzDecodeSignals/seed#3 (0.00s)
+    --- PASS: FuzzDecodeSignals/seed#4 (0.00s)
+    --- PASS: FuzzDecodeSignals/seed#5 (0.00s)
+    --- PASS: FuzzDecodeSignals/seed#6 (0.00s)
+    --- PASS: FuzzDecodeSignals/seed#7 (0.00s)
+    --- PASS: FuzzDecodeSignals/seed#8 (0.00s)
+    --- PASS: FuzzDecodeSignals/seed#9 (0.00s)
+    --- PASS: FuzzDecodeSignals/seed#10 (0.00s)
+    --- PASS: FuzzDecodeSignals/seed#11 (0.00s)
+    --- PASS: FuzzDecodeSignals/seed#12 (0.00s)
+    --- PASS: FuzzDecodeSignals/seed#13 (0.00s)
+PASS
+ok  	github.com/eventflow/eventflow/libs/go/antibot	10.167s
+?   	github.com/eventflow/eventflow/libs/go/antibot/corpus	[no test files]
+=== RUN   TestFix2_R21_PoolExhaustionIsClassified
+--- PASS: TestFix2_R21_PoolExhaustionIsClassified (0.14s)
+=== RUN   TestKeys_R31_AllKeysDeclaredUnderOneTag
+--- PASS: TestKeys_R31_AllKeysDeclaredUnderOneTag (0.00s)
+PASS
+ok  	github.com/eventflow/eventflow/libs/go/antibot/redisstate	2.384s

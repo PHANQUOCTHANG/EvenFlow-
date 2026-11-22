@@ -12,20 +12,28 @@
 -- KEYS[4] = wr:{ev}:seq       STR   bo dem tang dan
 -- KEYS[5] = wr:{ev}:meta      HASH  sale_start_ms, shuffled
 -- KEYS[6] = wr:{ev}:sess      HASH  token -> json(identity, state, joined_at)
+-- KEYS[7] = wr:{ev}:lobby_slow SET  token  (anti-bot slow lane truoc T0; tuy chon)
+-- KEYS[8] = ab:{ev}:blk:{id}  STR   co chan 24 h cua anti-bot (tuy chon; chi doc tren duong lane)
 --
 -- ARGV[1] = identity_id
 -- ARGV[2] = token moi (goi tao san, chi dung khi chua ton tai)
 -- ARGV[3] = now_ms
 -- ARGV[4] = session_ttl_seconds
+-- ARGV[5] = lane 'n' | 's' (tuy chon). Thieu = duong develop: lane n, KHONG kiem tra co chan.
+-- ARGV[6] = slow lane penalty P (tuy chon, mac dinh 100000)
 --
 -- Tra ve: { state, token, rank, is_new }
 --   state: "LOBBY" | "QUEUED" | "ADMITTED" | "SOLD_OUT" (chi khi khach moi vao luc het ve han)
+--          | "BLOCKED" (chi duong lane: co chan ton tai va chua co cho; khong cap token)
 --   rank : -1 neu con trong LOBBY (chua co thu tu)
 
 local identity = ARGV[1]
 local newtok   = ARGV[2]
 local now      = tonumber(ARGV[3])
 local ttl      = tonumber(ARGV[4])
+local lane     = ARGV[5]
+local penalty  = tonumber(ARGV[6] or '100000')
+local slowKey  = KEYS[7]
 
 -- 1. Idempotent: da co token thi tra lai nguyen trang thai cu.
 local existing = redis.call('HGET', KEYS[1], identity)
@@ -37,8 +45,17 @@ if existing then
   if redis.call('SISMEMBER', KEYS[2], existing) == 1 then
     return { 'LOBBY', existing, -1, 0 }
   end
+  if slowKey and redis.call('SISMEMBER', slowKey, existing) == 1 then
+    return { 'LOBBY', existing, -1, 0 }
+  end
   -- Khong o lobby cung khong o queue -> da duoc admit (hoac het han).
   return { 'ADMITTED', existing, 0, 0 }
+end
+
+-- 1a. Anti-bot (D6): tren duong lane, co chan 24 h (revoke.lua dat) thi khong cap cho moi.
+-- Cho da co o tren van duoc tra truoc (BR-Q3, D12).
+if lane and KEYS[8] and redis.call('EXISTS', KEYS[8]) == 1 then
+  return { 'BLOCKED', '', -1, 0 }
 end
 
 -- 1b. Het ve han (EV-146): khong ghi danh them ai vao hang vo vong. Nguoi da co cho o tren van duoc tra
@@ -58,13 +75,33 @@ local state, rank
 
 if now < sale_start and shuffled ~= '1' then
   -- Truoc T0: vao LOBBY, KHONG cap thu tu. Vao som khong co loi the (BR-Q1).
-  redis.call('SADD', KEYS[2], newtok)
-  redis.call('EXPIRE', KEYS[2], ttl)
+  -- Slow lane vao lobby rieng; lottery xep ca lobby nay sau nhom chinh (shuffle.lua).
+  local lobby = KEYS[2]
+  if lane == 's' and slowKey then
+    lobby = slowKey
+  end
+  redis.call('SADD', lobby, newtok)
+  redis.call('EXPIRE', lobby, ttl)
   state, rank = 'LOBBY', -1
 else
   -- Sau T0: noi duoi FIFO. Offset 1e12 dam bao luon dung sau nhom lottery.
   local seq = redis.call('INCR', KEYS[4])
-  redis.call('ZADD', KEYS[3], 1000000000000 + seq, newtok)
+  local score = 1000000000000 + seq
+  if lane == 's' then
+    -- Slow lane sau T0: 1e12 + seq + P + m, de moi nguoi slow lobby truoc T0 luon dung truoc nguoi slow vao
+    -- sau T0 (P-13). m = slow_lottery_size sau shuffle; GIUA T0 va shuffle (R-3 / X-7) m = SCARD lobby_slow,
+    -- vi lobby nay da chot (khong con ai vao truoc T0) va shuffle se xep no o 1e12 + P + 1..m.
+    local m
+    if shuffled == '1' then
+      m = tonumber(redis.call('HGET', KEYS[5], 'slow_lottery_size') or '0')
+    elseif slowKey then
+      m = redis.call('SCARD', slowKey)
+    else
+      m = 0
+    end
+    score = score + penalty + m
+  end
+  redis.call('ZADD', KEYS[3], score, newtok)
   redis.call('EXPIRE', KEYS[3], ttl)
   state = 'QUEUED'
   rank = redis.call('ZRANK', KEYS[3], newtok) + 1

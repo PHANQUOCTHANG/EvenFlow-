@@ -1,0 +1,16 @@
+--- FAIL: TestRule_AC4_R7 (0.00s)
+    --- FAIL: TestRule_AC4_R7/sn_out_of_range_(11) (0.00s)
+        rules_test.go:43: R7 fired=true, want false (fired R7)
+    --- FAIL: TestRule_AC4_R7/sb_absent (0.00s)
+        rules_test.go:43: R7 fired=true, want false (fired R7)
+    --- FAIL: TestRule_AC4_R7/sb_out_of_range_(3) (0.00s)
+        rules_test.go:43: R7 fired=true, want false (fired R7)
+    --- FAIL: TestRule_AC4_R7/config_min_events_16:_sn_12 (0.00s)
+        rules_test.go:43: R7 fired=true, want false (fired R7)
+    --- FAIL: TestRule_AC4_R7/config_min_buckets_8:_sb_6 (0.00s)
+        rules_test.go:43: R7 fired=true, want false (fired R7)
+FAIL
+FAIL	github.com/eventflow/eventflow/libs/go/antibot	8.927s
+?   	github.com/eventflow/eventflow/libs/go/antibot/corpus	[no test files]
+ok  	github.com/eventflow/eventflow/libs/go/antibot/redisstate	1.825s
+FAIL

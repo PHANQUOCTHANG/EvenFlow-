@@ -1,0 +1,10 @@
+--- FAIL: TestAntibotJoin_Contracts_InputBuiltFromRequest (0.00s)
+    antibot_handler_test.go:357: ClientIP 10.0.0.1, want first X-Forwarded-For element
+--- FAIL: TestAntibotJoin_Contracts_ClientIP (0.00s)
+    antibot_handler_test.go:389: XFF "not-an-ip, 1.2.3.4": ClientIP 1.2.3.4, want invalid IP
+    antibot_handler_test.go:389: XFF "2001:db8::1, 10.0.0.1": ClientIP 10.0.0.1, want 2001:db8::1
+FAIL
+FAIL	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/http	3.837s
+ok  	github.com/eventflow/eventflow/services/waitingroom/cmd/server	0.214s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/postgres	0.213s
+FAIL

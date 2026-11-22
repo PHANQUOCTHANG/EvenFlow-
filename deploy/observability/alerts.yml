@@ -75,3 +75,40 @@ groups:
         expr: ai_semantic_cache_hit_ratio < 0.7
         for: 5m
         labels: { severity: warning }
+
+  # Anti-bot trong waitingroom (antibot-phase1, contracts 6). Test: alerts_antibot_test.yml.
+  - name: eventflow-antibot
+    rules:
+      # Redis cua anti-bot cham / loi / breaker mo: quyet dinh chi con luat khong trang thai (D7). Join khong
+      # bao gio bi tu choi vi loi nay, nhung R1-server, R4, R7 tam tat.
+      - alert: AntibotDegraded
+        expr: sum(rate(antibot_degraded_total[5m])) / sum(rate(antibot_decisions_total[5m])) > 0.01
+        for: 5m
+        labels: { severity: warning }
+        annotations:
+          summary: "Hon 1% quyet dinh anti-bot dang DEGRADED (Redis cham/loi hoac breaker mo)"
+
+      # Ngan sach 5 ms cua Decide tren duong join nong nhat (AC-5).
+      - alert: AntibotSlow
+        expr: histogram_quantile(0.99, sum by (le) (rate(antibot_decide_seconds_bucket[5m]))) > 0.005
+        for: 5m
+        labels: { severity: warning }
+        annotations:
+          summary: "p99 cua antibot Decide vuot 5 ms"
+
+      # Ty le BLOCK duoc ap dung bat thuong: nghi chan nham nguoi that (FP) hoac mot dot tan cong lon.
+      - alert: AntibotBlockSpike
+        expr: sum(rate(antibot_decisions_total{applied="BLOCK"}[5m])) / sum(rate(antibot_decisions_total[5m])) > 0.20
+        for: 5m
+        labels: { severity: critical }
+        annotations:
+          summary: "Hon 20% lan join dang bi anti-bot BLOCK"
+
+      # Mot prefix mang chiem > R4N_SHARE so join: thuong la mot proxy/LB thieu trong TRUSTED_PROXY_CIDRS (moi
+      # khach cung mot IP), nen R4N dang bi tat cho prefix do.
+      - alert: AntibotNetSuppressed
+        expr: sum(increase(antibot_net_suppressed_total[5m])) > 0
+        for: 5m
+        labels: { severity: warning }
+        annotations:
+          summary: "R4N bi tat vi mot prefix mang chiem qua nhieu join (kiem tra TRUSTED_PROXY_CIDRS)"

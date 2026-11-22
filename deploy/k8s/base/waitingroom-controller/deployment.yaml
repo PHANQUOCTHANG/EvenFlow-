@@ -91,6 +91,12 @@ spec:
                 configMapKeyRef:
                   name: eventflow-endpoints
                   key: OTEL_EXPORTER_OTLP_ENDPOINT
+            # Anti-bot slow lane: shuffle.lua places the slow lobby P positions later (same value as waitingroom).
+            - name: ANTIBOT_SLOW_LANE_PENALTY
+              valueFrom:
+                configMapKeyRef:
+                  name: eventflow-app-config
+                  key: ANTIBOT_SLOW_LANE_PENALTY
             - name: ACTIVE_EVENT_IDS
               valueFrom:
                 configMapKeyRef:

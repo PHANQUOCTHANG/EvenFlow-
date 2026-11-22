@@ -1,0 +1,71 @@
+=== RUN   TestCorpus_AC18_DefaultConfig
+    corpus_test.go:324: 
+        family                      n   PASS   SLOW  BLOCK  demoted
+        raw_http                  200      0     99    101   100.0%
+        headless                  200      0      0    200   100.0%
+        stealth_rhythm            200      0    200      0   100.0%
+        account_farm              200     12    188      0    94.0%
+        replay_proxy_pool         200     30    170      0    85.0%
+        replay_residential         50     50      0      0     0.0%
+        human/autorepeat           12     12      0      0     0.0%
+        human/cgnat                78     78      0      0     0.0%
+        human/desktop            1657   1657      0      0     0.0%
+        human/fast                 36     36      0      0     0.0%
+        human/household           149    144      5      0     3.4%
+        human/keyboard             35     35      0      0     0.0%
+        human/mobile             2788   2788      0      0     0.0%
+        human/privacy             223    223      0      0     0.0%
+        human/tzspoof              22     22      0      0     0.0%
+        
+        rule       bots   humans   (sessions whose deciding decision fired the rule)
+        R1          200        1
+        R2          400        3
+        R3          200        0
+        R4D         188        5
+        R4N         377       20
+        R5          400        0
+        R5W           5       39
+        R6            0        0
+        R7          246        0
+        
+    corpus_test.go:327: bots caught 95.80% (958/1000), humans demoted 0.10% (5/5000)
+--- PASS: TestCorpus_AC18_DefaultConfig (0.28s)
+=== RUN   TestCorpus_AC18_HumansOnBothSidesOfThresholds
+    corpus_test.go:405: rt<120:3 rt 120-400:54 | ivCV<0.10:1 >=:2331 | fc<3:70 >=3:1850 | gl off:111 | fp shared >3:5 2-3:62 | /24 >30 ids:2
+    corpus_test.go:413: not reachable by humans by construction: R1-server (needs >= 4 joins without a slot), R6 (dormant), R7 (needs a shared digest)
+--- PASS: TestCorpus_AC18_HumansOnBothSidesOfThresholds (0.08s)
+=== RUN   TestCorpus_AC18_SensitivityTable
+    corpus_test.go:457: 
+        threshold       scale    value     bots %     humans %
+        R1_CLIENT_CV      0.8    0.080     95.80%        0.10%
+        R1_CLIENT_CV      1.0    0.100     95.80%        0.10%
+        R1_CLIENT_CV      1.2    0.120     95.80%        0.10%
+        R2_MS             0.8       96     89.70%        0.10%
+        R2_MS             1.0      120     95.80%        0.10%
+        R2_MS             1.2      144     95.80%        0.10%
+        R4D_MAX           0.8        2     96.20%        0.34%
+        R4D_MAX           1.0        3     95.80%        0.10%
+        R4D_MAX           1.2        4     95.40%        0.00%
+        R4N_MAX           0.8       24     96.40%        0.10%
+        R4N_MAX           1.0       30     95.80%        0.10%
+        R4N_MAX           1.2       36     95.20%        0.10%
+        R5_FONTS_MIN      0.8        2     95.80%        0.10%
+        R5_FONTS_MIN      1.0        3     95.80%        0.10%
+        R5_FONTS_MIN      1.2        4     95.80%        0.10%
+        R7_MIN_IDS        0.8        2     95.80%        0.10%
+        R7_MIN_IDS        1.0        3     95.80%        0.10%
+        R7_MIN_IDS        1.2        4     95.80%        0.10%
+        
+--- PASS: TestCorpus_AC18_SensitivityTable (3.90s)
+=== RUN   TestCorpus_GeneratorDeterministic
+--- PASS: TestCorpus_GeneratorDeterministic (0.18s)
+=== RUN   TestCorpus_AC18_RecordedSessions
+    corpus_test.go:482: PENDING (AC-18): no recorded sessions in testdata/corpus/recorded yet; the team records 50-100 with the real collector
+--- SKIP: TestCorpus_AC18_RecordedSessions (0.00s)
+=== RUN   TestEvaluate_AC5_P99
+    engine_bench_test.go:69: pure engine (batch 50) p50=20.02µs p99=50.402µs max=60.098µs
+--- PASS: TestEvaluate_AC5_P99 (0.24s)
+PASS
+ok  	github.com/eventflow/eventflow/libs/go/antibot	6.376s
+corpus: bots caught 95.80% (958/1000), humans demoted 0.10% (5/5000)
+ok: bots caught 95.80% >= 95%, humans demoted 0.10% < 1%

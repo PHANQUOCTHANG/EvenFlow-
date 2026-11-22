@@ -1,0 +1,8 @@
+--- FAIL: TestRule_AC4_R5Weak (0.00s)
+    --- FAIL: TestRule_AC4_R5Weak/invalid_zone_is_not_evaluated (0.00s)
+        rules_test.go:196: R5=false R5W=true, want false false (fired R5W)
+FAIL
+FAIL	github.com/eventflow/eventflow/libs/go/antibot	9.587s
+?   	github.com/eventflow/eventflow/libs/go/antibot/corpus	[no test files]
+ok  	github.com/eventflow/eventflow/libs/go/antibot/redisstate	2.199s
+FAIL

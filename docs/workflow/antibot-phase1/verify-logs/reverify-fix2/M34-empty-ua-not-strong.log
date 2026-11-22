@@ -1,0 +1,8 @@
+--- FAIL: TestRule_AC4_R5Strong (0.00s)
+    --- FAIL: TestRule_AC4_R5Strong/empty_UA (0.00s)
+        rules_test.go:43: R5 fired=false, want true (fired )
+FAIL
+FAIL	github.com/eventflow/eventflow/libs/go/antibot	9.685s
+?   	github.com/eventflow/eventflow/libs/go/antibot/corpus	[no test files]
+ok  	github.com/eventflow/eventflow/libs/go/antibot/redisstate	2.180s
+FAIL

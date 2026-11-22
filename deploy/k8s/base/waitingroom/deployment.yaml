@@ -103,6 +103,26 @@ spec:
                 secretKeyRef:
                   name: eventflow-auth
                   key: QUEUE_TOKEN_SECRET
+            # Anti-bot (antibot-phase1, contracts 7): fp HMAC key (required when APP_ENV=production and the
+            # mode is not off), mode and slow-lane penalty from the overlay's app config.
+            # optional (R-6): a missing key never blocks the pod, so ANTIBOT_MODE=off stays a rollback; the app
+            # refuses to start without it when APP_ENV=production and the mode is not off (AC-16).
+            - name: ANTIBOT_HASH_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: eventflow-auth
+                  key: ANTIBOT_HASH_KEY
+                  optional: true
+            - name: ANTIBOT_MODE
+              valueFrom:
+                configMapKeyRef:
+                  name: eventflow-app-config
+                  key: ANTIBOT_MODE
+            - name: ANTIBOT_SLOW_LANE_PENALTY
+              valueFrom:
+                configMapKeyRef:
+                  name: eventflow-app-config
+                  key: ANTIBOT_SLOW_LANE_PENALTY
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true

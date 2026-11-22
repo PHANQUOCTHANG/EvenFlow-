@@ -12,6 +12,7 @@ import { useT } from "@/components/i18n/locale-provider";
 import { Badge, Button, Spinner } from "@/components/ui";
 import { useQueueStatus } from "@/hooks/use-queue-status";
 import { useServerTimeSync } from "@/hooks/use-server-time-sync";
+import { clearSignals, readSignals } from "@/lib/antibot-signals";
 import { ApiError } from "@/lib/api-client";
 import { joinQueue, QueueError } from "@/lib/queue-client";
 import { cn } from "@/lib/cn";
@@ -64,9 +65,11 @@ export function WaitingRoom({
         setIsJoining(true);
         setJoinError(null);
 
-        const res = await joinQueue(eventId, {}, { jitter: false });
+        // Anti-bot (EV-173): gui snapshot cua trang su kien, ca khi join lai; khong co thi {"v":1} (khong phai {}).
+        const res = await joinQueue(eventId, readSignals(eventId) ?? { v: 1 }, { jitter: false });
         if (!cancelled) {
           if (res.state === "SOLD_OUT" || !res.queue_token) {
+            clearSignals(eventId); // khach roi su kien: het ve
             setSoldOut(true);
             return;
           }
@@ -128,6 +131,11 @@ export function WaitingRoom({
   }, [error, eventId]);
 
   const state = soldOut ? "SOLD_OUT" : (snapshot?.state ?? "LOBBY");
+
+  // Man het ve = khach roi su kien: bo snapshot anti-bot (EV-173).
+  useEffect(() => {
+    if (state === "SOLD_OUT") clearSignals(eventId);
+  }, [state, eventId]);
 
   // 3. Tự động điều hướng sang bước chọn vé khi đã tới lượt (AC-6)
   useEffect(() => {

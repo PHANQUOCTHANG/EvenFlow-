@@ -1,0 +1,9 @@
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/http	3.825s
+ok  	github.com/eventflow/eventflow/services/waitingroom/cmd/server	0.303s
+--- FAIL: TestFix2_M53_DBActionMapping (0.00s)
+    bot_decisions_internal_test.go:17: dbAction("PASS") = "PASS", want "ALLOW"
+    bot_decisions_internal_test.go:17: dbAction("") = "", want "ALLOW"
+    bot_decisions_internal_test.go:25: row {eventID:aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa identityID:bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb fp:<nil> ip:203.0.113.0/24 score:0.25 action:PASS fired:[R4N MODE_SHADOW]}
+FAIL
+FAIL	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/postgres	0.197s
+FAIL

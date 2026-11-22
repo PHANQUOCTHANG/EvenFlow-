@@ -1,0 +1,7 @@
+--- FAIL: TestGuard_AC14_SinkSelection (0.00s)
+    guard_test.go:226: PASS rows offered with sample 0: 50
+FAIL
+FAIL	github.com/eventflow/eventflow/libs/go/antibot	8.399s
+?   	github.com/eventflow/eventflow/libs/go/antibot/corpus	[no test files]
+ok  	github.com/eventflow/eventflow/libs/go/antibot/redisstate	1.925s
+FAIL

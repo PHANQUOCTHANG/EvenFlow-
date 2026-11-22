@@ -1,0 +1,10 @@
+--- FAIL: TestRule_AC4_R2 (0.00s)
+    --- FAIL: TestRule_AC4_R2/rt_120 (0.00s)
+        rules_test.go:43: R2 fired=true, want false (fired R2)
+--- FAIL: TestDecodeSignals_AC3_NumbersRounded (0.00s)
+    signals_test.go:194: rt=119.6: R2 fired=true, want false (fired R2)
+FAIL
+FAIL	github.com/eventflow/eventflow/libs/go/antibot	9.458s
+?   	github.com/eventflow/eventflow/libs/go/antibot/corpus	[no test files]
+ok  	github.com/eventflow/eventflow/libs/go/antibot/redisstate	2.163s
+FAIL

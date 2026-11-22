@@ -1,0 +1,7 @@
+--- FAIL: TestFix2_R23_NonProbeFailureIgnoredWhileHalfOpen (0.43s)
+    fixround2_test.go:139: no probe 260 ms after the failed probe: the late non-probe failure also doubled the open time
+FAIL
+FAIL	github.com/eventflow/eventflow/libs/go/antibot	9.764s
+?   	github.com/eventflow/eventflow/libs/go/antibot/corpus	[no test files]
+ok  	github.com/eventflow/eventflow/libs/go/antibot/redisstate	2.343s
+FAIL

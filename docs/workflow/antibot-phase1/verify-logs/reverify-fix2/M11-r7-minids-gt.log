@@ -1,0 +1,21 @@
+--- FAIL: TestRule_AC4_R7 (0.00s)
+    --- FAIL: TestRule_AC4_R7/3_identities (0.00s)
+        rules_test.go:43: R7 fired=false, want true (fired )
+--- FAIL: TestScore_AC8_DefaultOutcomesTable (0.00s)
+    --- FAIL: TestScore_AC8_DefaultOutcomesTable/replay_small_proxy_pool (0.00s)
+        score_test.go:86: fired = R4N, want R4N,R7
+        score_test.go:89: score = 0.25, want 0.625
+        score_test.go:92: action/applied = PASS/PASS, want SLOW_LANE/SLOW_LANE
+    --- FAIL: TestScore_AC8_DefaultOutcomesTable/replay_distinct_networks (0.00s)
+        score_test.go:86: fired = , want R7
+        score_test.go:89: score = 0, want 0.5
+        score_test.go:92: action/applied = PASS/PASS, want CHALLENGE/PASS
+    --- FAIL: TestScore_AC8_DefaultOutcomesTable/R1_+_R7 (0.00s)
+        score_test.go:86: fired = R1, want R1,R7
+        score_test.go:89: score = 0.5, want 0.75
+        score_test.go:92: action/applied = CHALLENGE/PASS, want SLOW_LANE/SLOW_LANE
+FAIL
+FAIL	github.com/eventflow/eventflow/libs/go/antibot	9.397s
+?   	github.com/eventflow/eventflow/libs/go/antibot/corpus	[no test files]
+ok  	github.com/eventflow/eventflow/libs/go/antibot/redisstate	2.040s
+FAIL

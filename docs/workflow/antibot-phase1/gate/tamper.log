@@ -1,0 +1,33 @@
+ok: frozen unchanged: apps/web/src/components/event/event-action-panel.antibot.test.tsx
+ok: frozen unchanged: apps/web/src/components/queue/waiting-room.antibot.test.tsx
+ok: TCR-approved change only by TCR commits (f3ce1a6 82252a4 8fc8ede): apps/web/src/lib/antibot-signals.test.ts (4+/2-)
+ok: frozen unchanged: libs/go/antibot/config_test.go
+ok: TCR-approved change only by TCR commits (f3ce1a6 82252a4 8fc8ede): libs/go/antibot/corpus/corpus.go (6+/5-)
+ok: TCR-approved change only by TCR commits (f3ce1a6 82252a4 8fc8ede): libs/go/antibot/corpus_test.go (3+/3-)
+ok: frozen unchanged: libs/go/antibot/engine_bench_test.go
+ok: frozen unchanged: libs/go/antibot/golden_test.go
+ok: frozen unchanged: libs/go/antibot/guard_test.go
+ok: frozen unchanged: libs/go/antibot/helpers_test.go
+ok: frozen unchanged: libs/go/antibot/privacy_test.go
+ok: frozen unchanged: libs/go/antibot/race_off_test.go
+ok: frozen unchanged: libs/go/antibot/race_on_test.go
+ok: TCR-approved change only by TCR commits (f3ce1a6 82252a4 8fc8ede): libs/go/antibot/redisstate/store_integration_test.go (2+/2-)
+ok: TCR-approved change only by TCR commits (f3ce1a6 82252a4 8fc8ede): libs/go/antibot/rules_test.go (5+/2-)
+ok: TCR-approved change only by TCR commits (f3ce1a6 82252a4 8fc8ede): libs/go/antibot/score_test.go (4+/4-)
+ok: frozen unchanged: libs/go/antibot/signals_test.go
+ok: frozen unchanged: libs/go/antibot/testdata/corpus/README.md
+ok: frozen unchanged: libs/go/antibot/testdata/signals/click_only.json
+ok: frozen unchanged: libs/go/antibot/testdata/signals/mobile_touch.json
+ok: frozen unchanged: libs/go/antibot/testdata/signals/scripted_keyboard.json
+ok: frozen unchanged: services/waitingroom/internal/adapter/http/antibot_handler_test.go
+ok: frozen unchanged: services/waitingroom/internal/adapter/postgres/bot_decisions_integration_test.go
+ok: frozen unchanged: services/waitingroom/internal/adapter/postgres/bot_decisions_test.go
+ok: TCR-approved change only by TCR commits (f3ce1a6 82252a4 8fc8ede): services/waitingroom/internal/adapter/redis/lane_integration_test.go (4+/2-)
+ok: TCR-approved change only by TCR commits (f3ce1a6 82252a4 8fc8ede): services/waitingroom/test/antibot/antibot_bot_test.go (19+/3-)
+ok: all 408 test files present at 918667c are unchanged
+info: 141 k8s policy fixture files regenerated (TCR N-5, docs/workflow/k8s-all/tcr-applied.md; sync checked by gen_fixtures.py --check in step k8s)
+ok: no skip/only added after 36aab08
+info: skips present in the frozen tests (approved at freeze):
+  1584:+		t.Skip("sensitivity table skipped in -short")
+  1631:+		t.Skip("PENDING (AC-18): no recorded sessions in testdata/corpus/recorded yet; the team records 50-100 with the real collector")
+  1696:+		t.Skip("latency assertion skipped under -race / -short")

@@ -1,0 +1,22 @@
+--- FAIL: TestRule_AC4_R5Strong (0.00s)
+    --- FAIL: TestRule_AC4_R5Strong/case-insensitive (0.00s)
+        rules_test.go:43: R5 fired=false, want true (fired )
+    --- FAIL: TestRule_AC4_R5Strong/deny_HeadlessChrome/131.0 (0.00s)
+        rules_test.go:43: R5 fired=false, want true (fired )
+    --- FAIL: TestRule_AC4_R5Strong/deny_PhantomJS/2.1 (0.00s)
+        rules_test.go:43: R5 fired=false, want true (fired )
+    --- FAIL: TestRule_AC4_R5Strong/deny_Wget/1.21 (0.00s)
+        rules_test.go:43: R5 fired=false, want true (fired )
+    --- FAIL: TestRule_AC4_R5Strong/deny_Scrapy/2.11 (0.00s)
+        rules_test.go:43: R5 fired=false, want true (fired )
+    --- FAIL: TestRule_AC4_R5Strong/deny_Puppeteer (0.00s)
+        rules_test.go:43: R5 fired=false, want true (fired )
+    --- FAIL: TestRule_AC4_R5Strong/deny_Playwright/1.48 (0.00s)
+        rules_test.go:43: R5 fired=false, want true (fired )
+    --- FAIL: TestRule_AC4_R5Strong/deny_Selenium/4.25 (0.00s)
+        rules_test.go:43: R5 fired=false, want true (fired )
+FAIL
+FAIL	github.com/eventflow/eventflow/libs/go/antibot	8.667s
+?   	github.com/eventflow/eventflow/libs/go/antibot/corpus	[no test files]
+ok  	github.com/eventflow/eventflow/libs/go/antibot/redisstate	1.877s
+FAIL

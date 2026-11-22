@@ -1,0 +1,7 @@
+--- FAIL: TestAntibotJoin_AC11_SlowLaneSameResponse (0.00s)
+    antibot_handler_test.go:269: store calls [{method:JoinLane ev:e1 id:11111111-1111-4111-8111-111111111111 lane:n penalty:100000}], want JoinLane(slow, P>0)
+FAIL
+FAIL	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/http	3.863s
+ok  	github.com/eventflow/eventflow/services/waitingroom/cmd/server	0.224s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/postgres	0.227s
+FAIL

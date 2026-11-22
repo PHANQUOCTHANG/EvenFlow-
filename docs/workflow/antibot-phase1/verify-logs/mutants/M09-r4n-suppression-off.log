@@ -1,0 +1,8 @@
+--- FAIL: TestRule_AC4_R4N (0.00s)
+    --- FAIL: TestRule_AC4_R4N/suppressed_prefix (0.00s)
+        rules_test.go:43: R4N fired=true, want false (fired R4N)
+FAIL
+FAIL	github.com/eventflow/eventflow/libs/go/antibot	8.963s
+?   	github.com/eventflow/eventflow/libs/go/antibot/corpus	[no test files]
+ok  	github.com/eventflow/eventflow/libs/go/antibot/redisstate	1.974s
+FAIL

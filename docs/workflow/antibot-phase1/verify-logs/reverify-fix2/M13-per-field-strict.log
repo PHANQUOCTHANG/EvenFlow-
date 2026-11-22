@@ -1,0 +1,13 @@
+--- FAIL: TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload (0.00s)
+    --- FAIL: TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/rt_over (0.00s)
+        signals_test.go:131: one out-of-range field invalidated the payload: reason="bad_json" missing=true
+    --- FAIL: TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/rt_neg (0.00s)
+        signals_test.go:131: one out-of-range field invalidated the payload: reason="bad_json" missing=true
+--- FAIL: TestDecodeSignals_AC3_WrongTypeDropsOnlyThatField (0.00s)
+    --- FAIL: TestDecodeSignals_AC3_WrongTypeDropsOnlyThatField/rt_string (0.00s)
+        signals_test.go:158: wrong-typed field invalidated the payload: reason="bad_json" missing=true
+FAIL
+FAIL	github.com/eventflow/eventflow/libs/go/antibot	9.606s
+?   	github.com/eventflow/eventflow/libs/go/antibot/corpus	[no test files]
+ok  	github.com/eventflow/eventflow/libs/go/antibot/redisstate	2.190s
+FAIL

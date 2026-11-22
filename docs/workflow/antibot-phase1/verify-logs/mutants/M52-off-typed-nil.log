@@ -1,0 +1,7 @@
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/http	3.892s
+--- FAIL: TestBuildGuard_AC13_OffIsUntypedNil (0.00s)
+    guard_test.go:25: off: guard (*antibot.Guard)(nil) metrics <nil>, want untyped nil
+FAIL
+FAIL	github.com/eventflow/eventflow/services/waitingroom/cmd/server	0.316s
+ok  	github.com/eventflow/eventflow/services/waitingroom/internal/adapter/postgres	0.214s
+FAIL

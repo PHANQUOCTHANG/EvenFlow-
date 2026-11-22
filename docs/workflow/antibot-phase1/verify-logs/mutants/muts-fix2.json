@@ -1,0 +1,79 @@
+[
+ {
+  "id": "M16-halfopen-many-probes",
+  "suite": "G",
+  "file": "libs/go/antibot/guard.go",
+  "old": "\t\tif b.probing {\n\t\t\treturn false, false\n\t\t}\n",
+  "new": ""
+ },
+ {
+  "id": "M47-shadow-pass-via-lane-path",
+  "suite": "W",
+  "file": "services/waitingroom/internal/adapter/http/antibot.go",
+  "old": "if !hasLanes || hasTag(d, antibot.TagModeShadow) {",
+  "new": "if !hasLanes {"
+ },
+ {
+  "id": "M53-pass-stored-as-PASS",
+  "suite": "W",
+  "file": "services/waitingroom/internal/adapter/postgres/bot_decisions.go",
+  "old": "\t\treturn \"ALLOW\"",
+  "new": "\t\treturn string(a)"
+ },
+ {
+  "id": "M61-web-soldout-not-cleared",
+  "suite": "WEB",
+  "file": "apps/web/src/components/queue/waiting-room.tsx",
+  "old": "    if (state === \"SOLD_OUT\") clearSignals(eventId);\n",
+  "new": ""
+ },
+ {
+  "id": "F2-R21a-pooltimeout-equals-budget",
+  "suite": "G",
+  "file": "libs/go/antibot/redisstate/store.go",
+  "old": "\tpoolWait := timeout / 2\n",
+  "new": "\tpoolWait := timeout\n"
+ },
+ {
+  "id": "F2-R21b-pool-timeout-not-detected",
+  "suite": "G",
+  "file": "libs/go/antibot/redisstate/store.go",
+  "old": "return strings.Contains(err.Error(), \"connection pool timeout\")",
+  "new": "return false && strings.Contains(err.Error(), \"connection pool timeout\")"
+ },
+ {
+  "id": "F2-R22a-marker-case-sensitive",
+  "suite": "G",
+  "file": "libs/go/antibot/config.go",
+  "old": "\tl := strings.ToLower(s)\n",
+  "new": "\tl := s\n"
+ },
+ {
+  "id": "F2-R22b-plain-dev-substring",
+  "suite": "G",
+  "file": "libs/go/antibot/config.go",
+  "old": "bytes.Equal(key, devHashKey) || hasDevMarker(v) || hasDevMarker(string(key))",
+  "new": "bytes.Equal(key, devHashKey) || strings.Contains(v, \"dev\") || bytes.Contains(key, []byte(\"dev\"))"
+ },
+ {
+  "id": "F2-R23a-nonprobe-success-closes",
+  "suite": "G",
+  "file": "libs/go/antibot/guard.go",
+  "old": "\tif probe {\n\t\tb.state, b.probing, b.openFor = brClosed, false, 0",
+  "new": "\tif probe || b.state == brHalfOpen {\n\t\tb.state, b.probing, b.openFor = brClosed, false, 0"
+ },
+ {
+  "id": "F2-R23b-nonprobe-failure-retrips",
+  "suite": "G",
+  "file": "libs/go/antibot/guard.go",
+  "old": "\tif probe {\n\t\tif kind == failPool {",
+  "new": "\tif probe || b.state == brHalfOpen {\n\t\tif kind == failPool {"
+ },
+ {
+  "id": "F2-R25-reset-not-called",
+  "suite": "WEB",
+  "file": "apps/web/src/lib/session.ts",
+  "old": "  resetSignalCollector(); // R2-5: the in-memory anti-bot counters belong to the previous account too\n",
+  "new": "  void resetSignalCollector;\n"
+ }
+]

@@ -1,12 +1,13 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { useLocale, useT } from "@/components/i18n/locale-provider";
 import { Button, ServerExpiryCountdown, Spinner } from "@/components/ui";
 import { useServerCountdown } from "@/hooks/use-server-countdown";
 import { useServerTimeSync } from "@/hooks/use-server-time-sync";
+import { snapshotSignals, startSignalCollector } from "@/lib/antibot-signals";
 import type { EventStatus } from "@/lib/types/event";
 import {
   type JitterOptions,
@@ -43,6 +44,9 @@ export function EventActionPanel({
   const { offsetMs } = useServerTimeSync();
   const { expired, ready } = useServerCountdown(saleStartAt, offsetMs);
 
+  // Anti-bot (EV-173): collector passive tren trang su kien; snapshot luc bam join.
+  useEffect(() => startSignalCollector(eventId), [eventId]);
+
   const [isJittering, setIsJittering] = useState(false);
   const [jitterProgress, setJitterProgress] = useState<JitterProgress | null>(null);
 
@@ -52,6 +56,8 @@ export function EventActionPanel({
   const handleAction = async () => {
     if (!isTimeForSale || isJittering) return;
 
+    // Snapshot TRUOC jitter: rt la thoi gian toi cu bam that, khong cong 0..5 s cho.
+    snapshotSignals(eventId);
     setIsJittering(true);
 
     await sleepWithJitter((p) => setJitterProgress(p), jitterOptions);

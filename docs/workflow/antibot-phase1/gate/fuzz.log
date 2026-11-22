@@ -1,0 +1,32 @@
+== FuzzDecodeSignals
+fuzz: elapsed: 0s, gathering baseline coverage: 0/591 completed
+fuzz: elapsed: 3s, gathering baseline coverage: 591/591 completed, now fuzzing with 32 workers
+fuzz: elapsed: 3s, execs: 66999 (22299/sec), new interesting: 0 (total: 591)
+fuzz: elapsed: 6s, execs: 441387 (124937/sec), new interesting: 0 (total: 591)
+fuzz: elapsed: 9s, execs: 843852 (134198/sec), new interesting: 2 (total: 593)
+fuzz: elapsed: 12s, execs: 1266967 (140908/sec), new interesting: 4 (total: 595)
+fuzz: elapsed: 15s, execs: 1670412 (134603/sec), new interesting: 6 (total: 597)
+fuzz: elapsed: 18s, execs: 2066688 (132078/sec), new interesting: 8 (total: 599)
+fuzz: elapsed: 21s, execs: 2478764 (137359/sec), new interesting: 9 (total: 600)
+fuzz: elapsed: 24s, execs: 2936433 (152560/sec), new interesting: 10 (total: 601)
+fuzz: elapsed: 27s, execs: 3348176 (137252/sec), new interesting: 11 (total: 602)
+fuzz: elapsed: 30s, execs: 3763258 (138300/sec), new interesting: 12 (total: 603)
+fuzz: elapsed: 31s, execs: 3763258 (0/sec), new interesting: 12 (total: 603)
+PASS
+ok  	github.com/eventflow/eventflow/libs/go/antibot	31.275s
+== FuzzEvaluate
+fuzz: elapsed: 0s, gathering baseline coverage: 0/740 completed
+fuzz: elapsed: 3s, gathering baseline coverage: 739/740 completed
+fuzz: elapsed: 3s, gathering baseline coverage: 740/740 completed, now fuzzing with 32 workers
+fuzz: elapsed: 6s, execs: 339037 (112766/sec), new interesting: 3 (total: 743)
+fuzz: elapsed: 9s, execs: 687358 (115983/sec), new interesting: 4 (total: 744)
+fuzz: elapsed: 12s, execs: 1037783 (116861/sec), new interesting: 6 (total: 746)
+fuzz: elapsed: 15s, execs: 1388704 (116897/sec), new interesting: 6 (total: 746)
+fuzz: elapsed: 18s, execs: 1742010 (117912/sec), new interesting: 6 (total: 746)
+fuzz: elapsed: 21s, execs: 2099033 (118901/sec), new interesting: 7 (total: 747)
+fuzz: elapsed: 24s, execs: 2451979 (117574/sec), new interesting: 8 (total: 748)
+fuzz: elapsed: 27s, execs: 2810725 (119608/sec), new interesting: 8 (total: 748)
+fuzz: elapsed: 30s, execs: 3161477 (117065/sec), new interesting: 8 (total: 748)
+fuzz: elapsed: 31s, execs: 3161477 (0/sec), new interesting: 8 (total: 748)
+PASS
+ok  	github.com/eventflow/eventflow/libs/go/antibot	31.543s

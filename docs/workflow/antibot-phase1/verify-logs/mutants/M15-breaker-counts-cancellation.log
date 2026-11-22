@@ -1,0 +1,7 @@
+--- FAIL: TestFix1_X1_CancelDuringObserveIsNotCounted (0.01s)
+    fixround1_test.go:117: client abort during Observe counted as 1 Redis failures
+FAIL
+FAIL	github.com/eventflow/eventflow/libs/go/antibot	8.854s
+?   	github.com/eventflow/eventflow/libs/go/antibot/corpus	[no test files]
+ok  	github.com/eventflow/eventflow/libs/go/antibot/redisstate	1.851s
+FAIL

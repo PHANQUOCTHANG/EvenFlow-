@@ -1,0 +1,10 @@
+--- FAIL: TestRule_AC4_R4D (0.00s)
+    --- FAIL: TestRule_AC4_R4D/3_identities (0.00s)
+        rules_test.go:43: R4D fired=true, want false (fired R4D)
+    --- FAIL: TestRule_AC4_R4D/config_max_5:_5_identities (0.00s)
+        rules_test.go:43: R4D fired=true, want false (fired R4D)
+FAIL
+FAIL	github.com/eventflow/eventflow/libs/go/antibot	8.816s
+?   	github.com/eventflow/eventflow/libs/go/antibot/corpus	[no test files]
+ok  	github.com/eventflow/eventflow/libs/go/antibot/redisstate	1.805s
+FAIL

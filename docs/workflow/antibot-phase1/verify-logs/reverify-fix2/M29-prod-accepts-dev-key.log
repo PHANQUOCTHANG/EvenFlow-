@@ -1,0 +1,13 @@
+--- FAIL: TestFix1_R5_ProductionRefusesDevKeys (0.00s)
+    fixround1_test.go:242: production accepted dev key "devAntibotHashKeyLocalClusterOnlyNeverProdA=" (err <nil>)
+    fixround1_test.go:242: production accepted dev key "ZXZlbnRmbG93LWFudGlib3QtZGV2LWtleS0wMDAwMDA=" (err <nil>)
+    fixround1_test.go:242: production accepted dev key "MDEyMzQ1Njc4OS1ERVYtQU5USUJPVC0wMTIzNDU2Nzg5" (err <nil>)
+--- FAIL: TestFix2_R22_RandomKeyWithDevIsAccepted (0.00s)
+    fixround2_test.go:167: production accepted dev-marked key "DEVANTIBOThashKeyLocalClusterOnlyNeverProdA="
+    fixround2_test.go:167: production accepted dev-marked key "a2V5LWZvci1OZXZlclByb2QtdXNlLTAxMjM0NTY3ODk="
+    fixround2_test.go:167: production accepted dev-marked key "ZXZlbnRmbG93LWFudGlib3QtZGV2LWtleS0wMDAwMDA="
+FAIL
+FAIL	github.com/eventflow/eventflow/libs/go/antibot	9.621s
+?   	github.com/eventflow/eventflow/libs/go/antibot/corpus	[no test files]
+ok  	github.com/eventflow/eventflow/libs/go/antibot/redisstate	2.213s
+FAIL

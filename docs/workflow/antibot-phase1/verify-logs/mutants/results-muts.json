@@ -1,0 +1,646 @@
+[
+ {
+  "id": "M01-cap-dropped",
+  "status": "KILLED",
+  "rc": 1,
+  "secs": 12,
+  "fails": [
+   "--- FAIL: TestFix1_Amendment2_WorkedExamples (0.00s)",
+   "--- FAIL: TestFix1_Amendment2_WorkedExamples/missing_payload,_browser (0.00s)",
+   "--- FAIL: TestFix1_Amendment2_WorkedExamples/X-5_okhttp,_no_signals (0.00s)",
+   "--- FAIL: TestGuard_AC17_DecisionMetrics (0.00s)",
+   "--- FAIL: TestScore_AC8_DefaultOutcomesTable (0.00s)",
+   "--- FAIL: TestScore_AC8_DefaultOutcomesTable/missing_payload,_browser_UA (0.00s)",
+   "--- FAIL: TestScore_AC8_DefaultOutcomesTable/missing_payload,_identity_holds_a_slot (0.00s)",
+   "--- FAIL: TestScore_AC8_BlockEligibilityCap (0.00s)"
+  ]
+ },
+ {
+  "id": "M02-capped-tag-missing",
+  "status": "KILLED",
+  "rc": 1,
+  "secs": 12,
+  "fails": [
+   "--- FAIL: TestFix1_Amendment2_WorkedExamples (0.00s)",
+   "--- FAIL: TestFix1_Amendment2_WorkedExamples/missing_payload,_browser (0.00s)",
+   "--- FAIL: TestFix1_Amendment2_WorkedExamples/X-5_okhttp,_no_signals (0.00s)",
+   "--- FAIL: TestGuard_AC17_DecisionMetrics (0.00s)",
+   "--- FAIL: TestScore_AC8_DefaultOutcomesTable (0.00s)",
+   "--- FAIL: TestScore_AC8_DefaultOutcomesTable/missing_payload,_browser_UA (0.00s)",
+   "--- FAIL: TestScore_AC8_DefaultOutcomesTable/missing_payload,_identity_holds_a_slot (0.00s)",
+   "--- FAIL: TestScore_AC8_BlockEligibilityCap (0.00s)"
+  ]
+ },
+ {
+  "id": "M03-rejoin-removed",
+  "status": "KILLED",
+  "rc": 1,
+  "secs": 12,
+  "fails": [
+   "--- FAIL: TestScore_AC8_DefaultOutcomesTable (0.00s)",
+   "--- FAIL: TestScore_AC8_DefaultOutcomesTable/missing_payload,_identity_holds_a_slot (0.00s)",
+   "--- FAIL: TestScore_AC11_RejoinKeepsSlotUnlessBlock (0.00s)"
+  ]
+ },
+ {
+  "id": "M04-rejoin-shields-block",
+  "status": "KILLED",
+  "rc": 1,
+  "secs": 11,
+  "fails": [
+   "--- FAIL: TestScore_AC11_RejoinKeepsSlotUnlessBlock (0.00s)"
+  ]
+ },
+ {
+  "id": "M05-block-without-positive-sign",
+  "status": "KILLED",
+  "rc": 1,
+  "secs": 11,
+  "fails": [
+   "--- FAIL: TestFix1_Amendment2_WorkedExamples (0.00s)",
+   "--- FAIL: TestFix1_Amendment2_WorkedExamples/missing_payload,_browser (0.00s)",
+   "--- FAIL: TestFix1_Amendment2_WorkedExamples/X-5_okhttp,_no_signals (0.00s)",
+   "--- FAIL: TestGuard_AC17_DecisionMetrics (0.00s)",
+   "--- FAIL: TestScore_AC8_DefaultOutcomesTable (0.00s)",
+   "--- FAIL: TestScore_AC8_DefaultOutcomesTable/missing_payload,_browser_UA (0.00s)",
+   "--- FAIL: TestScore_AC8_DefaultOutcomesTable/missing_payload,_identity_holds_a_slot (0.00s)",
+   "--- FAIL: TestScore_AC8_BlockEligibilityCap (0.00s)"
+  ]
+ },
+ {
+  "id": "M06-tier-block-gt",
+  "status": "KILLED",
+  "rc": 1,
+  "secs": 11,
+  "fails": [
+   "--- FAIL: TestFix1_Amendment2_WorkedExamples (0.00s)",
+   "--- FAIL: TestFix1_Amendment2_WorkedExamples/X-4_python-requests_+_forged_pe:1 (0.00s)",
+   "--- FAIL: TestFix1_Amendment2_WorkedExamples/X-4_wd_true_alone (0.00s)",
+   "--- FAIL: TestScore_AC8_TierBoundariesLowerInclusive (0.00s)"
+  ]
+ },
+ {
+  "id": "M07-tier-challenge-gt",
+  "status": "KILLED",
+  "rc": 1,
+  "secs": 11,
+  "fails": [
+   "--- FAIL: TestScore_AC8_TierBoundariesLowerInclusive (0.00s)"
+  ]
+ },
+ {
+  "id": "M08-tier-from-unrounded",
+  "status": "KILLED",
+  "rc": 1,
+  "secs": 11,
+  "fails": [
+   "--- FAIL: TestScore_AC8_TierBoundariesLowerInclusive (0.00s)"
+  ]
+ },
+ {
+  "id": "M09-r4n-suppression-off",
+  "status": "KILLED",
+  "rc": 1,
+  "secs": 11,
+  "fails": [
+   "--- FAIL: TestRule_AC4_R4N (0.00s)",
+   "--- FAIL: TestRule_AC4_R4N/suppressed_prefix (0.00s)"
+  ]
+ },
+ {
+  "id": "M10-r7-floors-dropped",
+  "status": "KILLED",
+  "rc": 1,
+  "secs": 11,
+  "fails": [
+   "--- FAIL: TestRule_AC4_R7 (0.00s)",
+   "--- FAIL: TestRule_AC4_R7/sn_out_of_range_(11) (0.00s)",
+   "--- FAIL: TestRule_AC4_R7/sb_absent (0.00s)",
+   "--- FAIL: TestRule_AC4_R7/sb_out_of_range_(3) (0.00s)",
+   "--- FAIL: TestRule_AC4_R7/config_min_events_16:_sn_12 (0.00s)",
+   "--- FAIL: TestRule_AC4_R7/config_min_buckets_8:_sb_6 (0.00s)"
+  ]
+ },
+ {
+  "id": "M11-r7-minids-gt",
+  "status": "KILLED",
+  "rc": 1,
+  "secs": 11,
+  "fails": [
+   "--- FAIL: TestRule_AC4_R7 (0.00s)",
+   "--- FAIL: TestRule_AC4_R7/3_identities (0.00s)",
+   "--- FAIL: TestScore_AC8_DefaultOutcomesTable (0.00s)",
+   "--- FAIL: TestScore_AC8_DefaultOutcomesTable/replay_small_proxy_pool (0.00s)",
+   "--- FAIL: TestScore_AC8_DefaultOutcomesTable/replay_distinct_networks (0.00s)",
+   "--- FAIL: TestScore_AC8_DefaultOutcomesTable/R1_+_R7 (0.00s)"
+  ]
+ },
+ {
+  "id": "M12-decoder-cap-4097",
+  "status": "KILLED",
+  "rc": 1,
+  "secs": 11,
+  "fails": [
+   "--- FAIL: TestDecodeSignals_AC3_InvalidPayloadReasons (0.00s)",
+   "--- FAIL: TestDecodeSignals_AC3_InvalidPayloadReasons/over_4_KiB (0.00s)"
+  ]
+ },
+ {
+  "id": "M13-per-field-strict",
+  "status": "KILLED",
+  "rc": 1,
+  "secs": 11,
+  "fails": [
+   "--- FAIL: TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload (0.00s)",
+   "--- FAIL: TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/rt_over (0.00s)",
+   "--- FAIL: TestDecodeSignals_AC3_OutOfRangeFieldDoesNotInvalidatePayload/rt_neg (0.00s)",
+   "--- FAIL: TestDecodeSignals_AC3_WrongTypeDropsOnlyThatField (0.00s)",
+   "--- FAIL: TestDecodeSignals_AC3_WrongTypeDropsOnlyThatField/rt_string (0.00s)"
+  ]
+ },
+ {
+  "id": "M14-recover-removed",
+  "status": "KILLED",
+  "rc": 1,
+  "secs": 11,
+  "fails": [
+   "--- FAIL: TestGuard_AC7_PanicPasses (0.00s)"
+  ]
+ },
+ {
+  "id": "M15-breaker-counts-cancellation",
+  "status": "KILLED",
+  "rc": 1,
+  "secs": 11,
+  "fails": [
+   "--- FAIL: TestFix1_X1_CancelDuringObserveIsNotCounted (0.01s)"
+  ]
+ },
+ {
+  "id": "M16-halfopen-many-probes",
+  "status": "SURVIVED",
+  "rc": 0,
+  "secs": 11,
+  "fails": []
+ },
+ {
+  "id": "M17-breaker-never-opens",
+  "status": "KILLED",
+  "rc": 1,
+  "secs": 10,
+  "fails": [
+   "--- FAIL: TestFix1_X2_LastingSlownessOpensBreaker (0.30s)",
+   "--- FAIL: TestFix1_X2_HalfOpenProbe (0.29s)",
+   "--- FAIL: TestGuard_AC7_BreakerOpensAndCloses (0.00s)"
+  ]
+ },
+ {
+  "id": "M18-no-observe-timeout",
+  "status": "KILLED",
+  "rc": 124,
+  "secs": 600,
+  "fails": []
+ },
+ {
+  "id": "M19-invalid-metric-missing",
+  "status": "KILLED",
+  "rc": 1,
+  "secs": 11,
+  "fails": [
+   "--- FAIL: TestGuard_AC3_InvalidSignalsMetric (0.00s)"
+  ]
+ },
+ {
+  "id": "M20-bodyerr-ignored",
+  "status": "KILLED",
+  "rc": 1,
+  "secs": 11,
+  "fails": [
+   "--- FAIL: TestGuard_AC3_InvalidSignalsMetric (0.00s)"
+  ]
+ },
+ {
+  "id": "M21-sink-every-pass",
+  "status": "KILLED",
+  "rc": 1,
+  "secs": 11,
+  "fails": [
+   "--- FAIL: TestGuard_AC14_SinkSelection (0.00s)"
+  ]
+ },
+ {
+  "id": "M22-shadow-enforces",
+  "status": "KILLED",
+  "rc": 1,
+  "secs": 11,
+  "fails": [
+   "--- FAIL: TestGuard_AC13_ShadowAlwaysPasses (0.00s)",
+   "--- FAIL: TestScore_AC10_AC13_AppliedMatrix (0.00s)"
+  ]
+ },
+ {
+  "id": "M23-sticky-score-not-1",
+  "status": "KILLED",
+  "rc": 1,
+  "secs": 11,
+  "fails": [
+   "--- FAIL: TestGuard_AC12_StickyBlocks (0.00s)",
+   "--- FAIL: TestScore_AC12_Sticky (0.00s)"
+  ]
+ },
+ {
+  "id": "M24-fallback-ignored",
+  "status": "KILLED",
+  "rc": 1,
+  "secs": 11,
+  "fails": [
+   "--- FAIL: TestScore_AC10_AC13_AppliedMatrix (0.00s)"
+  ]
+ },
+ {
+  "id": "M25-privacy-full-ipv4",
+  "status": "KILLED",
+  "rc": 1,
+  "secs": 11,
+  "fails": [
+   "--- FAIL: TestCorpus_AC18_DefaultConfig (0.26s)",
+   "--- FAIL: TestCorpus_AC18_HumansOnBothSidesOfThresholds (0.08s)",
+   "--- FAIL: TestFix1_Amendment2_Corpus (0.27s)",
+   "--- FAIL: TestGuard_AC6_ObserveGetsHashPrefixAndSq (0.00s)",
+   "--- FAIL: TestGuard_AC15_NoRawValuesInDecision (0.00s)",
+   "--- FAIL: TestNetPrefix_AC15 (0.00s)",
+   "--- FAIL: TestEvaluate_AC15_DecisionHasNoRawValues (0.00s)"
+  ]
+ },
+ {
+  "id": "M26-privacy-ipv6-full",
+  "status": "KILLED",
+  "rc": 1,
+  "secs": 11,
+  "fails": [
+   "--- FAIL: TestNetPrefix_AC15 (0.00s)"
+  ]
+ },
+ {
+  "id": "M27-fphash-key-unused",
+  "status": "KILLED",
+  "rc": 1,
+  "secs": 11,
+  "fails": [
+   "--- FAIL: TestFPHash_AC15_IsTruncatedHMAC (0.00s)"
+  ]
+ },
+ {
+  "id": "M28-fphash-length-40",
+  "status": "KILLED",
+  "rc": 1,
+  "secs": 11,
+  "fails": [
+   "--- FAIL: TestFPHash_AC15_IsTruncatedHMAC (0.00s)",
+   "--- FAIL: FuzzEvaluate (0.00s)",
+   "--- FAIL: FuzzEvaluate/seed#0 (0.00s)"
+  ]
+ },
+ {
+  "id": "M29-prod-accepts-dev-key",
+  "status": "KILLED",
+  "rc": 1,
+  "secs": 11,
+  "fails": [
+   "--- FAIL: TestFix1_R5_ProductionRefusesDevKeys (0.00s)"
+  ]
+ },
+ {
+  "id": "M30-prod-missing-key-ok",
+  "status": "KILLED",
+  "rc": 1,
+  "secs": 11,
+  "fails": [
+   "--- FAIL: TestLoadConfig_AC16_InvalidValueNamesVariable (0.00s)",
+   "--- FAIL: TestLoadConfig_AC16_InvalidValueNamesVariable/key_missing_in_production (0.00s)"
+  ]
+ },
+ {
+  "id": "M31-off-validates",
+  "status": "KILLED",
+  "rc": 1,
+  "secs": 11,
+  "fails": [
+   "--- FAIL: TestLoadConfig_AC16_OffSkipsValidation (0.00s)"
+  ]
+ },
+ {
+  "id": "M32-error-without-var-name",
+  "status": "KILLED",
+  "rc": 1,
+  "secs": 11,
+  "fails": [
+   "--- FAIL: TestLoadConfig_AC16_InvalidValueNamesVariable (0.00s)",
+   "--- FAIL: TestLoadConfig_AC16_InvalidValueNamesVariable/weight_not_number (0.00s)",
+   "--- FAIL: TestLoadConfig_AC16_InvalidValueNamesVariable/weight_one (0.00s)",
+   "--- FAIL: TestLoadConfig_AC16_InvalidValueNamesVariable/weight_negative (0.00s)",
+   "--- FAIL: TestLoadConfig_AC16_InvalidValueNamesVariable/weight_unknown_rule (0.00s)",
+   "--- FAIL: TestLoadConfig_AC16_InvalidValueNamesVariable/weight_malformed (0.00s)",
+   "--- FAIL: TestLoadConfig_AC16_InvalidValueNamesVariable/weight_legacy_R4_(split_into_R4D/R4N) (0.00s)",
+   "--- FAIL: TestLoadConfig_AC16_InvalidValueNamesVariable/breaker_garbage (0.00s)"
+  ]
+ },
+ {
+  "id": "M33-ua-not-lowercased",
+  "status": "KILLED",
+  "rc": 1,
+  "secs": 11,
+  "fails": [
+   "--- FAIL: TestRule_AC4_R5Strong (0.00s)",
+   "--- FAIL: TestRule_AC4_R5Strong/case-insensitive (0.00s)",
+   "--- FAIL: TestRule_AC4_R5Strong/deny_HeadlessChrome/131.0 (0.00s)",
+   "--- FAIL: TestRule_AC4_R5Strong/deny_PhantomJS/2.1 (0.00s)",
+   "--- FAIL: TestRule_AC4_R5Strong/deny_Wget/1.21 (0.00s)",
+   "--- FAIL: TestRule_AC4_R5Strong/deny_Scrapy/2.11 (0.00s)",
+   "--- FAIL: TestRule_AC4_R5Strong/deny_Puppeteer (0.00s)",
+   "--- FAIL: TestRule_AC4_R5Strong/deny_Playwright/1.48 (0.00s)"
+  ]
+ },
+ {
+  "id": "M34-empty-ua-not-strong",
+  "status": "KILLED",
+  "rc": 1,
+  "secs": 11,
+  "fails": [
+   "--- FAIL: TestRule_AC4_R5Strong (0.00s)",
+   "--- FAIL: TestRule_AC4_R5Strong/empty_UA (0.00s)"
+  ]
+ },
+ {
+  "id": "M35-mobile-fc-exemption-dropped",
+  "status": "KILLED",
+  "rc": 1,
+  "secs": 11,
+  "fails": [
+   "--- FAIL: TestRule_AC4_R5Weak (0.00s)",
+   "--- FAIL: TestRule_AC4_R5Weak/iPhone:_fc_not_evaluated (0.00s)",
+   "--- FAIL: TestRule_AC4_R5Weak/Android:_fc_not_evaluated (0.00s)"
+  ]
+ },
+ {
+  "id": "M36-r5w-one-weak",
+  "status": "KILLED",
+  "rc": 1,
+  "secs": 11,
+  "fails": [
+   "--- FAIL: TestFix1_Amendment2_WorkedExamples (0.00s)",
+   "--- FAIL: TestFix1_Amendment2_WorkedExamples/X-5_okhttp,_valid_signals (0.00s)",
+   "--- FAIL: TestRule_AC4_R5Weak (0.00s)",
+   "--- FAIL: TestRule_AC4_R5Weak/gl_false_only (0.00s)",
+   "--- FAIL: TestRule_AC4_R5Weak/fc_2_only (0.00s)",
+   "--- FAIL: TestRule_AC4_R5Weak/tz_mismatch_only (0.00s)",
+   "--- FAIL: TestRule_AC4_R5Weak/gl_false_+_fc_3_(at_threshold,_not_weak) (0.00s)",
+   "--- FAIL: TestRule_AC4_R5Weak/DST-aware_zone_agrees_(Berlin_winter_+60) (0.00s)"
+  ]
+ },
+ {
+  "id": "M37-r6-fires-on-dormant",
+  "status": "KILLED",
+  "rc": 1,
+  "secs": 11,
+  "fails": [
+   "--- FAIL: TestCorpus_AC18_DefaultConfig (0.26s)",
+   "--- FAIL: TestFix1_Amendment2_WorkedExamples (0.00s)",
+   "--- FAIL: TestFix1_Amendment2_WorkedExamples/X-4_python-requests_+_forged_pe:1 (0.00s)",
+   "--- FAIL: TestFix1_Amendment2_WorkedExamples/X-4_wd_true_alone (0.00s)",
+   "--- FAIL: TestFix1_Amendment2_WorkedExamples/missing_payload,_browser (0.00s)",
+   "--- FAIL: TestFix1_Amendment2_WorkedExamples/raw_HTTP_python-requests (0.00s)",
+   "--- FAIL: TestFix1_Amendment2_WorkedExamples/X-5_okhttp,_no_signals (0.00s)",
+   "--- FAIL: TestFix1_Amendment2_WorkedExamples/X-5_okhttp,_valid_signals (0.00s)"
+  ]
+ },
+ {
+  "id": "M38-r1-client-le",
+  "status": "KILLED",
+  "rc": 1,
+  "secs": 11,
+  "fails": [
+   "--- FAIL: TestRule_AC4_R1Client (0.00s)",
+   "--- FAIL: TestRule_AC4_R1Client/8_intervals_CV_exactly_0.10 (0.00s)"
+  ]
+ },
+ {
+  "id": "M39-r2-le",
+  "status": "KILLED",
+  "rc": 1,
+  "secs": 11,
+  "fails": [
+   "--- FAIL: TestRule_AC4_R2 (0.00s)",
+   "--- FAIL: TestRule_AC4_R2/rt_120 (0.00s)",
+   "--- FAIL: TestDecodeSignals_AC3_NumbersRounded (0.00s)"
+  ]
+ },
+ {
+  "id": "M40-r4d-ge",
+  "status": "KILLED",
+  "rc": 1,
+  "secs": 11,
+  "fails": [
+   "--- FAIL: TestRule_AC4_R4D (0.00s)",
+   "--- FAIL: TestRule_AC4_R4D/3_identities (0.00s)",
+   "--- FAIL: TestRule_AC4_R4D/config_max_5:_5_identities (0.00s)"
+  ]
+ },
+ {
+  "id": "M41-score-not-rounded",
+  "status": "KILLED",
+  "rc": 1,
+  "secs": 11,
+  "fails": [
+   "--- FAIL: TestScore_AC8_NoisyOrRounded (0.00s)",
+   "--- FAIL: TestScore_AC8_TierBoundariesLowerInclusive (0.00s)"
+  ]
+ },
+ {
+  "id": "M42-invalid-zone-disagrees",
+  "status": "KILLED",
+  "rc": 1,
+  "secs": 11,
+  "fails": [
+   "--- FAIL: TestRule_AC4_R5Weak (0.00s)",
+   "--- FAIL: TestRule_AC4_R5Weak/invalid_zone_is_not_evaluated (0.00s)"
+  ]
+ },
+ {
+  "id": "M43-ua-cut-none",
+  "status": "KILLED",
+  "rc": 1,
+  "secs": 7,
+  "fails": [
+   "--- FAIL: TestAntibotJoin_Contracts_InputBuiltFromRequest (0.00s)"
+  ]
+ },
+ {
+  "id": "M44-block-without-revoke",
+  "status": "KILLED",
+  "rc": 1,
+  "secs": 7,
+  "fails": [
+   "--- FAIL: TestAntibotJoin_AC12_BlockDeniesAndRevokes (0.00s)"
+  ]
+ },
+ {
+  "id": "M45-slow-uses-normal-lane",
+  "status": "KILLED",
+  "rc": 1,
+  "secs": 6,
+  "fails": [
+   "--- FAIL: TestAntibotJoin_AC11_SlowLaneSameResponse (0.00s)"
+  ]
+ },
+ {
+  "id": "M46-pass-uses-slow-lane",
+  "status": "KILLED",
+  "rc": 1,
+  "secs": 6,
+  "fails": [
+   "--- FAIL: TestAntibotJoin_AC9_PassIsDevelop (0.00s)"
+  ]
+ },
+ {
+  "id": "M47-shadow-pass-via-lane-path",
+  "status": "SURVIVED",
+  "rc": 0,
+  "secs": 6,
+  "fails": []
+ },
+ {
+  "id": "M48-xff-wrong-element",
+  "status": "KILLED",
+  "rc": 1,
+  "secs": 6,
+  "fails": [
+   "--- FAIL: TestAntibotJoin_Contracts_InputBuiltFromRequest (0.00s)",
+   "--- FAIL: TestAntibotJoin_Contracts_ClientIP (0.00s)"
+  ]
+ },
+ {
+  "id": "M49-blocked-state-200",
+  "status": "KILLED",
+  "rc": 1,
+  "secs": 6,
+  "fails": [
+   "--- FAIL: TestAntibotJoin_D6_JoinLaneBlocked (0.00s)"
+  ]
+ },
+ {
+  "id": "M50-sticky-revokes-again",
+  "status": "KILLED",
+  "rc": 1,
+  "secs": 6,
+  "fails": [
+   "--- FAIL: TestFix1_R2_StickyDoesNotRevokeAgain (0.00s)"
+  ]
+ },
+ {
+  "id": "M51-oversize-body-rejected",
+  "status": "KILLED",
+  "rc": 1,
+  "secs": 6,
+  "fails": [
+   "--- FAIL: TestAntibotJoin_AC3_BadBodiesStillJoin (0.00s)",
+   "--- FAIL: TestAntibotJoin_AC3_BadBodiesStillJoin/over_4_KiB (0.00s)"
+  ]
+ },
+ {
+  "id": "M52-off-typed-nil",
+  "status": "KILLED",
+  "rc": 1,
+  "secs": 6,
+  "fails": [
+   "--- FAIL: TestBuildGuard_AC13_OffIsUntypedNil (0.00s)"
+  ]
+ },
+ {
+  "id": "M53-pass-stored-as-PASS",
+  "status": "SURVIVED",
+  "rc": 0,
+  "secs": 6,
+  "fails": []
+ },
+ {
+  "id": "M54-nil-pool-not-counted",
+  "status": "KILLED",
+  "rc": 1,
+  "secs": 6,
+  "fails": [
+   "--- FAIL: TestDecisionWriter_AC14_NoPoolDropsAndCounts (0.00s)"
+  ]
+ },
+ {
+  "id": "M55-web-key-repeat-counted",
+  "status": "KILLED",
+  "rc": 1,
+  "secs": 7,
+  "fails": [
+   "\u001b[31m   \u001b[31m\u00d7\u001b[31m antibot collector, fix round 1\u001b[2m > \u001b[22mX-8 / R-7: auto-repeat keydowns are counted but never enter iv (no machine rhythm for R1)\u001b[90m 58\u001b[2mms\u001b[22m\u001b[31m\u001b[39m",
+   "\u001b[31m\u001b[1m\u001b[7m FAIL \u001b[27m\u001b[22m\u001b[39m src/lib/antibot-signals.fixround1.test.ts\u001b[2m > \u001b[22mantibot collector, fix round 1\u001b[2m > \u001b[22mX-8 / R-7: auto-repeat keydowns are counted but never enter iv (no machine rhythm for R1)"
+  ]
+ },
+ {
+  "id": "M56-web-listeners-not-passive",
+  "status": "KILLED",
+  "rc": 1,
+  "secs": 7,
+  "fails": [
+   "\u001b[31m   \u001b[31m\u00d7\u001b[31m EventActionPanel collects anti-bot signals (EV-173, AC-1)\u001b[2m > \u001b[22mstarts a passive collector on mount\u001b[90m 54\u001b[2mms\u001b[22m\u001b[31m\u001b[39m",
+   "\u001b[31m   \u001b[31m\u00d7\u001b[31m antibot signal collector (EV-173, AC-1, AC-2, contracts 1 R2)\u001b[2m > \u001b[22mAC-2: all collector listeners are registered passive\u001b[90m 7\u001b[2mms\u001b[22m\u001b[31m\u001b[39m",
+   "\u001b[31m\u001b[1m\u001b[7m FAIL \u001b[27m\u001b[22m\u001b[39m src/lib/antibot-signals.test.ts\u001b[2m > \u001b[22mantibot signal collector (EV-173, AC-1, AC-2, contracts 1 R2)\u001b[2m > \u001b[22mAC-2: all collector listeners are registered passive",
+   "\u001b[31m\u001b[1m\u001b[7m FAIL \u001b[27m\u001b[22m\u001b[39m src/components/event/event-action-panel.antibot.test.tsx\u001b[2m > \u001b[22mEventActionPanel collects anti-bot signals (EV-173, AC-1)\u001b[2m > \u001b[22mstarts a passive collector on mount"
+  ]
+ },
+ {
+  "id": "M57-web-pointermove-in-iv",
+  "status": "KILLED",
+  "rc": 1,
+  "secs": 7,
+  "fails": [
+   "\u001b[31m   \u001b[31m\u00d7\u001b[31m antibot signal collector (EV-173, AC-1, AC-2, contracts 1 R2)\u001b[2m > \u001b[22mAC-2 (R2, D14): pointermove is sampled at most once per 100 ms and never enters iv\u001b[90m 12\u001b[2mms\u001b[22m\u001b[31m\u001b[39m",
+   "\u001b[31m\u001b[1m\u001b[7m FAIL \u001b[27m\u001b[22m\u001b[39m src/lib/antibot-signals.test.ts\u001b[2m > \u001b[22mantibot signal collector (EV-173, AC-1, AC-2, contracts 1 R2)\u001b[2m > \u001b[22mAC-2 (R2, D14): pointermove is sampled at most once per 100 ms and never enters iv"
+  ]
+ },
+ {
+  "id": "M58-web-count-cap-raised",
+  "status": "KILLED",
+  "rc": 1,
+  "secs": 7,
+  "fails": [
+   "\u001b[31m   \u001b[31m\u00d7\u001b[31m antibot signal collector (EV-173, AC-1, AC-2, contracts 1 R2)\u001b[2m > \u001b[22mAC-2: counts are capped at 10000 and intervals at 32 items, each 0..60000\u001b[90m 254\u001b[2mms\u001b[22m\u001b[31m\u001b[39m",
+   "\u001b[31m\u001b[1m\u001b[7m FAIL \u001b[27m\u001b[22m\u001b[39m src/lib/antibot-signals.test.ts\u001b[2m > \u001b[22mantibot signal collector (EV-173, AC-1, AC-2, contracts 1 R2)\u001b[2m > \u001b[22mAC-2: counts are capped at 10000 and intervals at 32 items, each 0..60000"
+  ]
+ },
+ {
+  "id": "M59-web-snapshot-kept-on-logout",
+  "status": "KILLED",
+  "rc": 1,
+  "secs": 7,
+  "fails": [
+   "\u001b[31m   \u001b[31m\u00d7\u001b[31m antibot collector, fix round 1\u001b[2m > \u001b[22mX-6: logout removes every anti-bot snapshot from sessionStorage\u001b[90m 9\u001b[2mms\u001b[22m\u001b[31m\u001b[39m",
+   "\u001b[31m   \u001b[31m\u00d7\u001b[31m antibot collector, fix round 1\u001b[2m > \u001b[22mX-6: switching to another account removes the previous account's snapshot\u001b[90m 3\u001b[2mms\u001b[22m\u001b[31m\u001b[39m",
+   "\u001b[31m\u001b[1m\u001b[7m FAIL \u001b[27m\u001b[22m\u001b[39m src/lib/antibot-signals.fixround1.test.ts\u001b[2m > \u001b[22mantibot collector, fix round 1\u001b[2m > \u001b[22mX-6: logout removes every anti-bot snapshot from sessionStorage",
+   "\u001b[31m\u001b[1m\u001b[7m FAIL \u001b[27m\u001b[22m\u001b[39m src/lib/antibot-signals.fixround1.test.ts\u001b[2m > \u001b[22mantibot collector, fix round 1\u001b[2m > \u001b[22mX-6: switching to another account removes the previous account's snapshot"
+  ]
+ },
+ {
+  "id": "M60-web-empty-object-not-v1",
+  "status": "KILLED",
+  "rc": 1,
+  "secs": 7,
+  "fails": [
+   "\u001b[31m   \u001b[31m\u00d7\u001b[31m WaitingRoom sends the anti-bot snapshot (EV-173, AC-1, Amendment 1 revision)\u001b[2m > \u001b[22mno snapshot: still auto-joins, with signals {\"v\":1} (not {})\u001b[90m 37\u001b[2mms\u001b[22m\u001b[31m\u001b[39m",
+   "\u001b[31m\u001b[1m\u001b[7m FAIL \u001b[27m\u001b[22m\u001b[39m src/components/queue/waiting-room.antibot.test.tsx\u001b[2m > \u001b[22mWaitingRoom sends the anti-bot snapshot (EV-173, AC-1, Amendment 1 revision)\u001b[2m > \u001b[22mno snapshot: still auto-joins, with signals {\"v\":1} (not {})"
+  ]
+ },
+ {
+  "id": "M61-web-soldout-not-cleared",
+  "status": "SURVIVED",
+  "rc": 0,
+  "secs": 7,
+  "fails": []
+ }
+]

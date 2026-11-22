@@ -40,7 +40,7 @@
 ---
 {"apiVersion":"v1","data":{"AMQP_URL":"YW1xcDovL2V2ZW50ZmxvdzpkZXYtcHdAZXZlbnRmbG93LXJhYmJpdG1xOjU2NzIv"},"kind":"Secret","metadata":{"name":"eventflow-mq-5g8h2k9m4t","namespace":"eventflow"},"type":"Opaque"}
 ---
-{"apiVersion":"v1","data":{"JWT_SECRET":"ZGV2LWp3dC1zZWNyZXQtY2hhbmdlLW1lLTAxMjM0NTY3ODk=","QUEUE_TOKEN_SECRET":"ZGV2LXF1ZXVlLXRva2VuLXNlY3JldC0wMTIzNDU2Nzg5"},"kind":"Secret","metadata":{"name":"eventflow-auth-5g8h2k9m4t","namespace":"eventflow"},"type":"Opaque"}
+{"apiVersion":"v1","data":{"ANTIBOT_HASH_KEY":"ZGV2LWFudGlib3QtaGFzaC1rZXktMDEyMzQ1Njc4OWFi","JWT_SECRET":"ZGV2LWp3dC1zZWNyZXQtY2hhbmdlLW1lLTAxMjM0NTY3ODk=","QUEUE_TOKEN_SECRET":"ZGV2LXF1ZXVlLXRva2VuLXNlY3JldC0wMTIzNDU2Nzg5"},"kind":"Secret","metadata":{"name":"eventflow-auth-5g8h2k9m4t","namespace":"eventflow"},"type":"Opaque"}
 ---
 {"apiVersion":"v1","data":{"HMAC_QR_SECRET":"ZGV2LWhtYWMtcXItc2VjcmV0LTAxMjM0NTY3ODk="},"kind":"Secret","metadata":{"name":"eventflow-qr-5g8h2k9m4t","namespace":"eventflow"},"type":"Opaque"}
 ---
