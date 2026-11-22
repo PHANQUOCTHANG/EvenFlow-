@@ -1,0 +1,455 @@
+v22.21.0
+TAP version 13
+# Subtest: identityFor uses the 9000 range with a 12-digit decimal suffix (matches seed-load.sh)
+ok 1 - identityFor uses the 9000 range with a 12-digit decimal suffix (matches seed-load.sh)
+  ---
+  duration_ms: 3.4541
+  type: 'test'
+  ...
+# Subtest: deviceFor is stable, distinct per identity and a valid anti-bot fp
+ok 2 - deviceFor is stable, distinct per identity and a valid anti-bot fp
+  ---
+  duration_ms: 0.5057
+  type: 'test'
+  ...
+# Subtest: idemKey is lt-{RUN_ID}-{identity}-{step} and a valid Idempotency-Key
+ok 3 - idemKey is lt-{RUN_ID}-{identity}-{step} and a valid Idempotency-Key
+  ---
+  duration_ms: 0.5738
+  type: 'test'
+  ...
+# Subtest: idemKey rejects bad run ids, identities and steps
+ok 4 - idemKey rejects bad run ids, identities and steps
+  ---
+  duration_ms: 0.5017
+  type: 'test'
+  ...
+# Subtest: 200: sleeps poll_after_ms from the body
+ok 5 - 200: sleeps poll_after_ms from the body
+  ---
+  duration_ms: 0.5008
+  type: 'test'
+  ...
+# Subtest: 304: sleeps X-Poll-After-Ms (header lookup is case-insensitive)
+ok 6 - 304: sleeps X-Poll-After-Ms (header lookup is case-insensitive)
+  ---
+  duration_ms: 0.3887
+  type: 'test'
+  ...
+# Subtest: 429: sleeps Retry-After seconds
+ok 7 - 429: sleeps Retry-After seconds
+  ---
+  duration_ms: 0.3281
+  type: 'test'
+  ...
+# Subtest: missing or invalid server value: floor 1000 ms
+ok 8 - missing or invalid server value: floor 1000 ms
+  ---
+  duration_ms: 0.2167
+  type: 'test'
+  ...
+# Subtest: jitter is added on top and the delay is never below the server value
+ok 9 - jitter is added on top and the delay is never below the server value
+  ---
+  duration_ms: 1.3978
+  type: 'test'
+  ...
+# Subtest: guardTarget allows local targets
+ok 10 - guardTarget allows local targets
+  ---
+  duration_ms: 1.0664
+  type: 'test'
+  ...
+# Subtest: guardTarget refuses remote targets unless ALLOW_REMOTE=1
+ok 11 - guardTarget refuses remote targets unless ALLOW_REMOTE=1
+  ---
+  duration_ms: 1.8663
+  type: 'test'
+  ...
+# Subtest: guardTarget rejects malformed BASE
+ok 12 - guardTarget rejects malformed BASE
+  ---
+  duration_ms: 0.297
+  type: 'test'
+  ...
+# Subtest: shouldReplay samples about REPLAY_RATIO
+ok 13 - shouldReplay samples about REPLAY_RATIO
+  ---
+  duration_ms: 2.5921
+  type: 'test'
+  ...
+# Subtest: mulberry32 is deterministic per seed and in [0,1)
+ok 14 - mulberry32 is deterministic per seed and in [0,1)
+  ---
+  duration_ms: 0.2129
+  type: 'test'
+  ...
+# Subtest: token matches the fixture signed by Go authx.SignAccessToken
+ok 15 - token matches the fixture signed by Go authx.SignAccessToken
+  ---
+  duration_ms: 2.5592
+  type: 'test'
+  ...
+# Subtest: claims carry iss, aud, typ, ver, did, role, sub, jti, iat, exp
+ok 16 - claims carry iss, aud, typ, ver, did, role, sub, jti, iat, exp
+  ---
+  duration_ms: 1.6304
+  type: 'test'
+  ...
+# Subtest: role defaults to buyer and a wrong secret changes the signature
+ok 17 - role defaults to buyer and a wrong secret changes the signature
+  ---
+  duration_ms: 0.4332
+  type: 'test'
+  ...
+# Subtest: accessClaims rejects missing sub, did, jti or times
+ok 18 - accessClaims rejects missing sub, did, jti or times
+  ---
+  duration_ms: 1.3838
+  type: 'test'
+  ...
+# Subtest: base64url has no padding and handles UTF-8
+ok 19 - base64url has no padding and handles UTF-8
+  ---
+  duration_ms: 0.3697
+  type: 'test'
+  ...
+# Subtest: token expiry is at least run end + 5 minutes (AC-4, AC-9)
+ok 20 - token expiry is at least run end + 5 minutes (AC-4, AC-9)
+  ---
+  duration_ms: 0.3121
+  type: 'test'
+  ...
+# Subtest: every profile loads and exports its scenario functions
+ok 21 - every profile loads and exports its scenario functions
+  ---
+  duration_ms: 81.4393
+  type: 'test'
+  ...
+# Subtest: init refuses an unknown profile, a malformed value and a remote BASE
+ok 22 - init refuses an unknown profile, a malformed value and a remote BASE
+  ---
+  duration_ms: 42.7248
+  type: 'test'
+  ...
+# [load] profile=smoke run=rwire event=22222222-2222-4222-8222-000000000194 ticket_type=tt-1 users=50 quota=200 (must equal the seeded QUOTA) hold_ttl=600s webhook_rate=8/s
+# Subtest: a smoke iteration buys a ticket through the gateway with a minted token and no auth call
+ok 23 - a smoke iteration buys a ticket through the gateway with a minted token and no auth call
+  ---
+  duration_ms: 16.4055
+  type: 'test'
+  ...
+# [load] profile=smoke run=rwire event=22222222-2222-4222-8222-000000000194 ticket_type=tt-1 users=50 quota=200 (must equal the seeded QUOTA) hold_ttl=600s webhook_rate=8/s
+# Subtest: a replay that returns another hold_id counts idem_mismatch
+ok 24 - a replay that returns another hold_id counts idem_mismatch
+  ---
+  duration_ms: 16.9891
+  type: 'test'
+  ...
+# [load] profile=smoke run=rmwqoyl1k event=22222222-2222-4222-8222-000000000194 ticket_type=tt-1 users=50 quota=200 (must equal the seeded QUOTA) hold_ttl=600s webhook_rate=8/s
+# Subtest: hold 409 is sold out, not a failure
+ok 25 - hold 409 is sold out, not a failure
+  ---
+  duration_ms: 10.5052
+  type: 'test'
+  ...
+# Subtest: handleSummary writes results/{profile}-{RUN_ID}.json and a text table
+ok 26 - handleSummary writes results/{profile}-{RUN_ID}.json and a text table
+  ---
+  duration_ms: 10.083
+  type: 'test'
+  ...
+# Subtest: pure helpers do not import k6/*
+ok 27 - pure helpers do not import k6/*
+  ---
+  duration_ms: 3.8914
+  type: 'test'
+  ...
+# Subtest: five profiles
+ok 28 - five profiles
+  ---
+  duration_ms: 2.9242
+  type: 'test'
+  ...
+# Subtest: parseDurationS accepts k6-style durations
+ok 29 - parseDurationS accepts k6-style durations
+  ---
+  duration_ms: 0.451
+  type: 'test'
+  ...
+# Subtest: parseDurationS rejects bad durations
+ok 30 - parseDurationS rejects bad durations
+  ---
+  duration_ms: 0.8176
+  type: 'test'
+  ...
+# Subtest: default profile is smoke
+ok 31 - default profile is smoke
+  ---
+  duration_ms: 1.5825
+  type: 'test'
+  ...
+# Subtest: unknown profile throws at init
+ok 32 - unknown profile throws at init
+  ---
+  duration_ms: 0.4407
+  type: 'test'
+  ...
+# Subtest: malformed values throw at init
+ok 33 - malformed values throw at init
+  ---
+  duration_ms: 1.9844
+  type: 'test'
+  ...
+# Subtest: smoke defaults: 20 VUs x 1 join, USERS=50, QUOTA=200, SLO_SCALE=4
+ok 34 - smoke defaults: 20 VUs x 1 join, USERS=50, QUOTA=200, SLO_SCALE=4
+  ---
+  duration_ms: 1.1587
+  type: 'test'
+  ...
+# Subtest: spike defaults reach JOIN_TARGET=100000 arrivals within JOIN_RAMP=5s
+ok 35 - spike defaults reach JOIN_TARGET=100000 arrivals within JOIN_RAMP=5s
+  ---
+  duration_ms: 0.7586
+  type: 'test'
+  ...
+# Subtest: spike honours JOIN_TARGET, JOIN_RAMP, JITTER_MS overrides
+ok 36 - spike honours JOIN_TARGET, JOIN_RAMP, JITTER_MS overrides
+  ---
+  duration_ms: 1.1752
+  type: 'test'
+  ...
+# Subtest: wait defaults 20000 VUs for 30m and honours overrides
+ok 37 - wait defaults 20000 VUs for 30m and honours overrides
+  ---
+  duration_ms: 0.9174
+  type: 'test'
+  ...
+# Subtest: checkout defaults 200/s for 5m and honours overrides
+ok 38 - checkout defaults 200/s for 5m and honours overrides
+  ---
+  duration_ms: 0.4473
+  type: 'test'
+  ...
+# Subtest: full runs spike at 0s, wait from 10s, checkout from 60s
+ok 39 - full runs spike at 0s, wait from 10s, checkout from 60s
+  ---
+  duration_ms: 0.2974
+  type: 'test'
+  ...
+# Subtest: identity ranges never overlap and fit USERS
+ok 40 - identity ranges never overlap and fit USERS
+  ---
+  duration_ms: 0.7244
+  type: 'test'
+  ...
+# Subtest: USERS smaller than the identities a profile needs throws
+ok 41 - USERS smaller than the identities a profile needs throws
+  ---
+  duration_ms: 0.3643
+  type: 'test'
+  ...
+# Subtest: thresholds encode the SLOs at SLO_SCALE=1
+ok 42 - thresholds encode the SLOs at SLO_SCALE=1
+  ---
+  duration_ms: 1.1377
+  type: 'test'
+  ...
+# Subtest: count invariants abort on fail; latency thresholds do not
+ok 43 - count invariants abort on fail; latency thresholds do not
+  ---
+  duration_ms: 0.2394
+  type: 'test'
+  ...
+# Subtest: SLO_SCALE scales latency only, never the count invariants
+ok 44 - SLO_SCALE scales latency only, never the count invariants
+  ---
+  duration_ms: 0.2848
+  type: 'test'
+  ...
+# Subtest: smoke requires the end-to-end evidence of AC-1
+ok 45 - smoke requires the end-to-end evidence of AC-1
+  ---
+  duration_ms: 0.225
+  type: 'test'
+  ...
+# Subtest: summary exposes p(99) and 304/409 are not failures
+ok 46 - summary exposes p(99) and 304/409 are not failures
+  ---
+  duration_ms: 0.2148
+  type: 'test'
+  ...
+# Subtest: R-1: checkout and full default WEBHOOK_RATE to CHECKOUT_RATE
+ok 47 - R-1: checkout and full default WEBHOOK_RATE to CHECKOUT_RATE
+  ---
+  duration_ms: 3.4394
+  type: 'test'
+  ...
+# Subtest: R-1: WEBHOOK_RATE below CHECKOUT_RATE is refused at init
+ok 48 - R-1: WEBHOOK_RATE below CHECKOUT_RATE is refused at init
+  ---
+  duration_ms: 1.8204
+  type: 'test'
+  ...
+# Subtest: R-1: the 4800th buyer of a default checkout wave posts its webhook without waiting
+ok 49 - R-1: the 4800th buyer of a default checkout wave posts its webhook without waiting
+  ---
+  duration_ms: 0.5004
+  type: 'test'
+  ...
+# Subtest: R-1: a webhook delay never ends inside the last 60 s of the hold
+ok 50 - R-1: a webhook delay never ends inside the last 60 s of the hold
+  ---
+  duration_ms: 0.8457
+  type: 'test'
+  ...
+# Subtest: R-1: HOLD_TTL defaults to the seed value and is validated
+ok 51 - R-1: HOLD_TTL defaults to the seed value and is validated
+  ---
+  duration_ms: 0.7863
+  type: 'test'
+  ...
+# Subtest: R-3: every profile uses DEFAULT_QUOTA and the oversell threshold follows it
+ok 52 - R-3: every profile uses DEFAULT_QUOTA and the oversell threshold follows it
+  ---
+  duration_ms: 1.79
+  type: 'test'
+  ...
+# Subtest: R-3: seed-load.sh reads QUOTA and HOLD_TTL defaults from profiles.js (no second copy)
+ok 53 - R-3: seed-load.sh reads QUOTA and HOLD_TTL defaults from profiles.js (no second copy)
+  ---
+  duration_ms: 1.9593
+  type: 'test'
+  ...
+# Subtest: R-4: profiles with a checkout phase require purchases, no issue timeout and successful steps
+ok 54 - R-4: profiles with a checkout phase require purchases, no issue timeout and successful steps
+  ---
+  duration_ms: 0.9247
+  type: 'test'
+  ...
+# Subtest: R-8: a remote BASE needs ALLOW_REMOTE=1 and REMOTE_CONFIRM=<host>
+ok 55 - R-8: a remote BASE needs ALLOW_REMOTE=1 and REMOTE_CONFIRM=<host>
+  ---
+  duration_ms: 0.8313
+  type: 'test'
+  ...
+# Subtest: R-2: LOAD_EVENT outside the load range (e.g. the demo event) is refused before docker runs
+ok 56 - R-2: LOAD_EVENT outside the load range (e.g. the demo event) is refused before docker runs
+  ---
+  duration_ms: 517.0708
+  type: 'test'
+  ...
+# Subtest: R-2: a remote docker context or DOCKER_HOST is refused unless ALLOW_REMOTE=1
+ok 57 - R-2: a remote docker context or DOCKER_HOST is refused unless ALLOW_REMOTE=1
+  ---
+  duration_ms: 440.5057
+  type: 'test'
+  ...
+# [load] profile=smoke run=rmwqoykyg event=22222222-2222-4222-8222-000000000194 ticket_type=tt-1 users=50 quota=200 (must equal the seeded QUOTA) hold_ttl=600s webhook_rate=8/s
+# Subtest: R-6: setup accepts FEW_LEFT and rejects SOLD_OUT
+ok 58 - R-6: setup accepts FEW_LEFT and rejects SOLD_OUT
+  ---
+  duration_ms: 46.6362
+  type: 'test'
+  ...
+# [load] profile=smoke run=rmwqoykz6 event=22222222-2222-4222-8222-000000000194 ticket_type=tt-1 users=50 quota=200 (must equal the seeded QUOTA) hold_ttl=600s webhook_rate=8/s
+# Subtest: R-7: without RUN_ID and without setup_data the result file still gets a unique run id
+ok 59 - R-7: without RUN_ID and without setup_data the result file still gets a unique run id
+  ---
+  duration_ms: 14.4197
+  type: 'test'
+  ...
+# [load] profile=smoke run=rfix event=22222222-2222-4222-8222-000000000194 ticket_type=tt-1 users=50 quota=200 (must equal the seeded QUOTA) hold_ttl=600s webhook_rate=8/s
+# Subtest: R-7: RUN_ID wins when given
+ok 60 - R-7: RUN_ID wins when given
+  ---
+  duration_ms: 14.3194
+  type: 'test'
+  ...
+# Subtest: modes are realistic, min, none
+ok 61 - modes are realistic, min, none
+  ---
+  duration_ms: 4.2611
+  type: 'test'
+  ...
+# Subtest: realistic payload satisfies every v1 range
+ok 62 - realistic payload satisfies every v1 range
+  ---
+  duration_ms: 28.5308
+  type: 'test'
+  ...
+# Subtest: realistic payload looks human to R1/R2/R5/R5W/wd/gl
+ok 63 - realistic payload looks human to R1/R2/R5/R5W/wd/gl
+  ---
+  duration_ms: 13.8166
+  type: 'test'
+  ...
+# Subtest: fp is the VU device id; tz and tzo are consistent
+ok 64 - fp is the VU device id; tz and tzo are consistent
+  ---
+  duration_ms: 1.1021
+  type: 'test'
+  ...
+# Subtest: sq is unique per identity (R7 replay rule must not fire)
+ok 65 - sq is unique per identity (R7 replay rule must not fire)
+  ---
+  duration_ms: 83.4091
+  type: 'test'
+  ...
+# Subtest: same identity and seed give the same payload (deterministic)
+ok 66 - same identity and seed give the same payload (deterministic)
+  ---
+  duration_ms: 0.4114
+  type: 'test'
+  ...
+# Subtest: serialised size <= 2 KiB
+ok 67 - serialised size <= 2 KiB
+  ---
+  duration_ms: 8.5759
+  type: 'test'
+  ...
+# Subtest: min sends {v:1} and none sends {}
+ok 68 - min sends {v:1} and none sends {}
+  ---
+  duration_ms: 0.2737
+  type: 'test'
+  ...
+# Subtest: fnv1a64Hex matches the FNV-1a 64 reference vectors
+ok 69 - fnv1a64Hex matches the FNV-1a 64 reference vectors
+  ---
+  duration_ms: 0.7544
+  type: 'test'
+  ...
+# Subtest: oversell suspected only when distinct successful holds exceed QUOTA
+ok 70 - oversell suspected only when distinct successful holds exceed QUOTA
+  ---
+  duration_ms: 1.5729
+  type: 'test'
+  ...
+# Subtest: text summary lists each SLO with target, actual and PASS/FAIL
+ok 71 - text summary lists each SLO with target, actual and PASS/FAIL
+  ---
+  duration_ms: 1.1179
+  type: 'test'
+  ...
+# Subtest: a failed threshold or an oversell suspicion makes the summary FAIL
+ok 72 - a failed threshold or an oversell suspicion makes the summary FAIL
+  ---
+  duration_ms: 1.8692
+  type: 'test'
+  ...
+# Subtest: results go to tests/load/results/{profile}-{RUN_ID}.json
+ok 73 - results go to tests/load/results/{profile}-{RUN_ID}.json
+  ---
+  duration_ms: 0.9177
+  type: 'test'
+  ...
+1..73
+# tests 73
+# suites 0
+# pass 73
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1169.4593

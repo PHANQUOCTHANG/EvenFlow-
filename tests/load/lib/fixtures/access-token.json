@@ -1,0 +1,20 @@
+{
+  "_comment": "Access token signed once by libs/go/authx.SignAccessToken (Go, golang-jwt v5). jwt.test.mjs checks that tests/load/lib/jwt.js produces the exact same bytes. The secret is the compose DEV default (deploy/compose/docker-compose.yml), not a real secret.",
+  "generator": "temporary file libs/go/authx/zz_fixture_gen_test.go (not committed), run with: cd libs/go/authx && go test -run TestZZGenLoadFixture -v .",
+  "generator_go": [
+    "secret := []byte(\"dev-jwt-secret-change-me-0123456789\")",
+    "iat := time.Unix(1767225600, 0).UTC()",
+    "c := AccessClaims{Subject: \"00000000-0000-4000-9000-000000000001\", Role: \"buyer\", ID: \"lt-fixture-000000000001\", Verified: true, DeviceID: \"ltd-000000000001\", IssuedAt: iat, ExpiresAt: iat.Add(2 * time.Hour)}",
+    "tok, _ := SignAccessToken(secret, c)  // then VerifyAccessToken(secret, tok, iat.Add(time.Minute)) == nil"
+  ],
+  "secret": "dev-jwt-secret-change-me-0123456789",
+  "claims": {
+    "sub": "00000000-0000-4000-9000-000000000001",
+    "role": "buyer",
+    "jti": "lt-fixture-000000000001",
+    "did": "ltd-000000000001",
+    "iatS": 1767225600,
+    "expS": 1767232800
+  },
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYnV5ZXIiLCJ0eXAiOiJhY2Nlc3MiLCJ2ZXIiOnRydWUsImRpZCI6Imx0ZC0wMDAwMDAwMDAwMDEiLCJpc3MiOiJldmVudGZsb3ctaWRlbnRpdHkiLCJzdWIiOiIwMDAwMDAwMC0wMDAwLTQwMDAtOTAwMC0wMDAwMDAwMDAwMDEiLCJhdWQiOlsiZXZlbnRmbG93LWFwaSJdLCJleHAiOjE3NjcyMzI4MDAsImlhdCI6MTc2NzIyNTYwMCwianRpIjoibHQtZml4dHVyZS0wMDAwMDAwMDAwMDEifQ.WnBCrKdBU1pIKQwOay60qTCsxxKIsVS_dU15eSAv54U"
+}

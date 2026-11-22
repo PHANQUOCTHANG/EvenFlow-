@@ -1,0 +1,21 @@
+{
+  "task": "k6-load-suite",
+  "commit_sha": "e3bd2c1bda39bed039a3e09f85834c55d21eb093",
+  "base": "918667c",
+  "tests_frozen": "9f69937",
+  "generated_at": "2026-11-21T17:38:14Z",
+  "exit_codes": "0 pass, 77 NOT RUN, other fail",
+  "results": {
+    "node-unit": {"exit": 0, "log": "gate/node-unit.log"},
+    "bash-syntax": {"exit": 0, "log": "gate/bash-syntax.log"},
+    "shellcheck": {"exit": 77, "log": "gate/shellcheck.log"},
+    "k6-inspect": {"exit": 77, "log": "gate/k6-inspect.log"},
+    "make-dry-run": {"exit": 0, "log": "gate/make-dry-run.log"},
+    "load-smoke": {"exit": 77, "log": "gate/load-smoke.log"},
+    "scope": {"exit": 0, "log": "gate/scope.log"},
+    "tamper": {"exit": 0, "log": "gate/tamper.log"},
+    "secrets": {"exit": 0, "log": "gate/secrets.log"}
+  },
+  "not_run": ["shellcheck","k6-inspect","load-smoke"],
+  "verdict": "PASS"
+}
